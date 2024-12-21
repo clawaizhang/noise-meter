@@ -1,5 +1,4 @@
 import { PermissionService } from '../services/PermissionService'
-import { Permissions } from '@ohos.abilityAccessCtrl'
 
 @Component
 export struct PermissionError {
@@ -13,7 +12,7 @@ export struct PermissionError {
           .fontSize(16)
           .fontColor('#F44336')
         
-        Text('去设置')
+        Text('授予权限')
           .fontSize(16)
           .fontColor('#2196F3')
           .margin({ left: 10 })

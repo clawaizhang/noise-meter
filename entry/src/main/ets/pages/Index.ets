@@ -106,7 +106,7 @@ struct Index {
 
       const granted = await this.permissionService?.requestPermissions(['ohos.permission.MICROPHONE'])
       if (!granted) {
-        this.permissionError = '获取麦克风权限失败，请在系统设置中授予权限'
+        this.permissionError = '获取麦克风权限失败，请'
       }
     } catch (err) {
       this.permissionError = '权限检查失败'
