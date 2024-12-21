@@ -2,11 +2,20 @@ import abilityAccessCtrl, { Permissions } from '@ohos.abilityAccessCtrl'
 import bundleManager from '@ohos.bundle.bundleManager'
 import common from '@ohos.app.ability.common'
 
+export interface PermissionCallback {
+  onPermissionGranted: () => void;
+}
+
 export class PermissionService {
   private context: common.UIAbilityContext
+  private callback: PermissionCallback | null = null
 
   constructor(context: common.UIAbilityContext) {
     this.context = context
+  }
+
+  public setCallback(callback: PermissionCallback) {
+    this.callback = callback
   }
 
   /**
@@ -36,7 +45,11 @@ export class PermissionService {
     try {
       const atManager = abilityAccessCtrl.createAtManager()
       await atManager.requestPermissionsFromUser(this.context, permissions)
-      return true
+      const hasPermission = await this.checkPermission(permissions[0])
+      if (hasPermission) {
+        this.callback?.onPermissionGranted()
+      }
+      return hasPermission
     } catch (err) {
       console.error('请求权限失败:', err)
       return false
@@ -51,6 +64,13 @@ export class PermissionService {
     try {
       const atManager = abilityAccessCtrl.createAtManager()
       await atManager.requestPermissionOnSetting(this.context, permissions)
+      // 等待一段时间后检查权限状态
+      setTimeout(async () => {
+        const hasPermission = await this.checkPermission(permissions[0])
+        if (hasPermission) {
+          this.callback?.onPermissionGranted()
+        }
+      }, 1000)
     } catch (err) {
       console.error('打开设置页面失败:', err)
     }
