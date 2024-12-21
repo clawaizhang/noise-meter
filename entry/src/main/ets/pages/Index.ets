@@ -18,6 +18,11 @@ struct Index {
   @State maxDB: number = 0
   // 最小分贝值
   @State minDB: number = 100
+  // 添加平均分贝值状态
+  @State avgDB: number = 0
+  // 添加采样总数和总和用于计算平均值
+  private sampleCount: number = 0
+  private sampleSum: number = 0
   // 是否正在录音
   @State isRecording: boolean = false
   // 波形图数据数组
@@ -76,6 +81,10 @@ struct Index {
           this.currentDB = db
           this.maxDB = Math.max(this.maxDB, db)
           this.minDB = Math.min(this.minDB, db)
+          // 更新平均值计算
+          this.sampleSum += db
+          this.sampleCount++
+          this.avgDB = Math.round(this.sampleSum / this.sampleCount)
           this.waveData.shift()
           this.waveData.push(db)
         }
@@ -112,6 +121,10 @@ struct Index {
     }
 
     try {
+      // 重置平均值计算
+      this.sampleCount = 0
+      this.sampleSum = 0
+      this.avgDB = 0
       // 启动音频捕获
       await this.audioCapture.start()
       this.isRecording = true
@@ -196,6 +209,15 @@ struct Index {
           Text('最小值')
             .fontSize(16)
           Text(`${this.minDB}`)
+            .fontSize(24)
+            .fontWeight(FontWeight.Bold)
+        }
+        .margin({ right: 40 })
+
+        Column() {
+          Text('平均值')
+            .fontSize(16)
+          Text(`${this.avgDB}`)
             .fontSize(24)
             .fontWeight(FontWeight.Bold)
         }
