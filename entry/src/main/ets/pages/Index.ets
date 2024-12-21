@@ -38,8 +38,17 @@ struct Index {
     this.audioService.setListener({
       onDBValueChange: (db: number) => {
         this.currentDB = db
-        this.maxDB = Math.max(this.maxDB, db)
-        this.minDB = Math.min(this.minDB, db)
+        if (this.sampleCount === 0) {
+          this.maxDB = db
+          this.minDB = db
+        } else {
+          if (db > this.maxDB) {
+            this.maxDB = db
+          }
+          if (db < this.minDB) {
+            this.minDB = db
+          }
+        }
         this.sampleSum += db
         this.sampleCount++
         this.avgDB = Math.round(this.sampleSum / this.sampleCount)
@@ -94,9 +103,14 @@ struct Index {
       }
     }
 
+    // 重置所有统计数据
+    this.maxDB = 0
+    this.minDB = 0
+    this.currentDB = 0
     this.sampleCount = 0
     this.sampleSum = 0
     this.avgDB = 0
+    this.waveData = new Array<number>(100).fill(0)
 
     await this.audioService?.startRecording()
     this.isRecording = this.audioService?.isCurrentlyRecording() ?? false
