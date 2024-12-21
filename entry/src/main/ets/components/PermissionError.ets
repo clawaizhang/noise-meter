@@ -1,4 +1,4 @@
-import bundleManager from '@ohos.bundle.bundleManager'
+import abilityAccessCtrl from '@ohos.abilityAccessCtrl'
 import common from '@ohos.app.ability.common'
 import { BusinessError } from '@ohos.base'
 
@@ -7,22 +7,19 @@ export struct PermissionError {
   @Prop errorMessage: string
 
   private openPermissionSettings() {
-    let context = getContext(this) as common.UIAbilityContext
-    let bundleName = context.applicationInfo.name
-    bundleManager.getBundleInfoForSelf(bundleManager.BundleFlag.GET_BUNDLE_INFO_WITH_APPLICATION)
-      .then((bundleInfo: bundleManager.BundleInfo) => {
-        let tokenId = bundleInfo.appInfo.accessTokenId
-        let uri = `permission://app/permission/application-detail?tokenId=${tokenId}&bundleName=${bundleName}`
-        context.startAbility({
-          action: 'action.settings.app.info',
-          uri: uri
-        }).catch((err: BusinessError) => {
-          console.error('打开设置页面失败:', err.message)
+    try {
+      let atManager: abilityAccessCtrl.AtManager = abilityAccessCtrl.createAtManager()
+      let context: common.UIAbilityContext = getContext(this) as common.UIAbilityContext
+      atManager.requestPermissionOnSetting(context, ['ohos.permission.MICROPHONE'])
+        .then((data: Array<number>) => {
+          console.info('权限设置结果:', JSON.stringify(data))
         })
-      })
-      .catch((err: BusinessError) => {
-        console.error('获取应用信息失败:', err.message)
-      })
+        .catch((err: BusinessError) => {
+          console.error('打开设置页面失败:', JSON.stringify(err))
+        })
+    } catch (err) {
+      console.error('创建权限管理器失败:', err)
+    }
   }
 
   build() {
