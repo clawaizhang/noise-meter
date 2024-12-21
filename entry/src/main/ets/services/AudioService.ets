@@ -87,12 +87,16 @@ export class AudioService {
    * 开始录音
    */
   public async startRecording(): Promise<void> {
-    if (!this.audioCapture || this.isRecording) {
+    if (this.isRecording) {
       return;
     }
 
     try {
-      await this.audioCapture.start();
+      // 每次开始录音前都重新初始化音频捕获器
+      if (!this.audioCapture) {
+        await this.initAudioCapture();
+      }
+      await this.audioCapture?.start();
       this.isRecording = true;
     } catch (err) {
       const error = err as BusinessError;
@@ -111,6 +115,9 @@ export class AudioService {
 
     try {
       await this.audioCapture.stop();
+      // 清除音频缓存
+      await this.audioCapture.release();
+      this.audioCapture = null;
       this.isRecording = false;
     } catch (err) {
       const error = err as BusinessError;
