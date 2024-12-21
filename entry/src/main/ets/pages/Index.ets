@@ -2,6 +2,9 @@
 import audio from '@ohos.multimedia.audio'
 // 导入错误处理模块
 import { BusinessError } from '@ohos.base'
+// 导入权限相关模块
+import bundleManager from '@ohos.bundle.bundleManager'
+import abilityAccessCtrl, { Permissions } from '@ohos.abilityAccessCtrl'
 
 // 波形图点的接口定义
 interface WavePoint {
@@ -37,11 +40,15 @@ struct Index {
   private readonly SAMPLE_FORMAT: audio.AudioSampleFormat = audio.AudioSampleFormat.SAMPLE_FORMAT_S16LE
   // 缓冲区大小
   private readonly BUFFER_SIZE: number = 2048
+  // 添加权限状态
+  @State hasPermission: boolean = false
+  // 添加权限检查错误信息
+  @State permissionError: string = ''
 
   // 组件生命周期-创建
   aboutToAppear(): void {
-    // 初始化音频捕获器
-    this.initAudioCapture()
+    // 检查并请求权限
+    this.checkAndRequestPermission()
   }
 
   // 组件生命周期-销毁
@@ -51,6 +58,42 @@ struct Index {
     // 移除事件监听
     if (this.audioCapture) {
       this.audioCapture.off('readData')
+    }
+  }
+
+  // 检查并请求麦克风权限
+  private async checkAndRequestPermission() {
+    try {
+      // 获取应用程序的bundleInfo
+      const bundleInfo =
+        await bundleManager.getBundleInfoForSelf(bundleManager.BundleFlag.GET_BUNDLE_INFO_WITH_APPLICATION)
+      const tokenId = bundleInfo.appInfo.accessTokenId
+
+      // 创建AtManager实例
+      const atManager = abilityAccessCtrl.createAtManager()
+
+      // 检查是否已有权限
+      const result = await atManager.checkAccessToken(tokenId, 'ohos.permission.MICROPHONE')
+      if (result === abilityAccessCtrl.GrantStatus.PERMISSION_GRANTED) {
+        this.hasPermission = true
+        // 初始化音频捕获器
+        this.initAudioCapture()
+        return
+      }
+
+      // 请求权限
+      try {
+        await atManager.requestPermissionsFromUser(globalThis.mainAbilityContext, ['ohos.permission.MICROPHONE'])
+        this.hasPermission = true
+        // 初始化音频捕获器
+        this.initAudioCapture()
+      } catch (err) {
+        this.permissionError = '获取麦克风权限失败，请在系统设置中授予权限'
+        console.error('请求权限失败:', err.message)
+      }
+    } catch (err) {
+      this.permissionError = '权限检查失败，请重试'
+      console.error('权限检查失败:', err.message)
     }
   }
 
@@ -114,8 +157,15 @@ struct Index {
     return Math.max(0, Math.min(120, Math.round(db + 120)))
   }
 
-  // 开始录音
+  // 开始录音前检查权限
   async startRecording(): Promise<void> {
+    if (!this.hasPermission) {
+      await this.checkAndRequestPermission()
+      if (!this.hasPermission) {
+        return
+      }
+    }
+
     if (!this.audioCapture || this.isRecording) {
       return
     }
@@ -128,7 +178,6 @@ struct Index {
       // 启动音频捕获
       await this.audioCapture.start()
       this.isRecording = true
-
     } catch (err) {
       console.error('启动音频捕获失败:', err.message)
     }
@@ -178,6 +227,14 @@ struct Index {
           .fontWeight(FontWeight.Bold)
       }
       .margin({ top: 20, bottom: 20 })
+
+      // 权限错误提示
+      if (this.permissionError !== '') {
+        Text(this.permissionError)
+          .fontSize(16)
+          .fontColor('#F44336')
+          .margin({ bottom: 20 })
+      }
 
       // 主要分贝显示区域
       Column() {
@@ -245,6 +302,8 @@ struct Index {
       .width(200)
       .height(50)
       .backgroundColor(this.isRecording ? '#FF4081' : '#2196F3')
+      .enabled(this.hasPermission) // 根据权限状态启用/禁用按钮
+      .opacity(this.hasPermission ? 1 : 0.5) // 根据权限状态调整透明度
       .onClick(() => {
         if (this.isRecording) {
           this.stopRecording()
