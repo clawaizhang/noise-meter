@@ -72,7 +72,7 @@ export class PermissionService {
         }
       }, 1000)
     } catch (err) {
-      console.error('打开设置页面失败:', err)
+      console.error('打开设置页面失败:', JSON.stringify(err))
     }
   }
 } 

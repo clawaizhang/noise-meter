@@ -78,6 +78,7 @@ export class AudioService {
       });
     } catch (err) {
       const error = err as BusinessError;
+      console.error('初始化音频捕获器失败:', JSON.stringify(error));
       this.listener?.onError(`初始化音频捕获器失败: ${error.message}`);
     }
   }
@@ -95,6 +96,7 @@ export class AudioService {
       this.isRecording = true;
     } catch (err) {
       const error = err as BusinessError;
+      console.error('启动音频捕获失败:', JSON.stringify(error));
       this.listener?.onError(`启动音频捕获失败: ${error.message}`);
     }
   }
@@ -112,6 +114,7 @@ export class AudioService {
       this.isRecording = false;
     } catch (err) {
       const error = err as BusinessError;
+      console.error('停止音频捕获失败:', JSON.stringify(error));
       this.listener?.onError(`停止音频捕获失败: ${error.message}`);
     }
   }
@@ -127,6 +130,7 @@ export class AudioService {
         this.audioCapture = null;
       } catch (err) {
         const error = err as BusinessError;
+        console.error('释放音频资源失败:', JSON.stringify(error));
         this.listener?.onError(`释放音频资源失败: ${error.message}`);
       }
     }

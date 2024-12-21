@@ -40,7 +40,7 @@ struct Index {
         try {
           await this.audioService?.initAudioCapture()
         } catch (err) {
-          console.error('初始化音频捕获器失败:', err)
+          console.error('初始化音频捕获器失败:', JSON.stringify(err))
           this.permissionError = '初始化音频捕获器失败，请重试'
           this.hasPermission = false
         }
@@ -97,7 +97,7 @@ struct Index {
         try {
           await this.audioService?.initAudioCapture()
         } catch (err) {
-          console.error('初始化音频捕获器失败:', err)
+          console.error('初始化音频捕获器失败:', JSON.stringify(err))
           this.permissionError = '初始化音频捕获器失败，请重试'
           this.hasPermission = false
         }
@@ -110,7 +110,7 @@ struct Index {
       }
     } catch (err) {
       this.permissionError = '权限检查失败'
-      console.error('权限检查失败:', err)
+      console.error('权限检查失败:', JSON.stringify(err))
     }
   }
 
@@ -140,7 +140,7 @@ struct Index {
       await this.audioService?.startRecording()
       this.isRecording = this.audioService?.isCurrentlyRecording() ?? false
     } catch (err) {
-      console.error('启动录音失败:', err)
+      console.error('启动录音失败:', JSON.stringify(err))
       this.permissionError = '启动录音失败，请重试'
       this.hasPermission = false
     }
