@@ -7,11 +7,11 @@ export struct WaveformView {
     Row() {
       Polyline({ width: '100%', height: 100 })
         .points(this.waveData.map((value, index) => [
-          (index / (this.waveData.length - 1)) * this.containerWidth,
-          100 - value
+          Math.floor((index / (this.waveData.length - 1)) * this.containerWidth),
+          Math.floor(100 - value)
         ]))
         .stroke(Color.Blue)
-        .strokeWidth(2)
+        .strokeWidth(1)
     }
     .width('100%')
     .height(100)
