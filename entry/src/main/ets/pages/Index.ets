@@ -24,8 +24,6 @@ struct Index {
   @State waveData: Array<number> = new Array<number>(100).fill(0)
   // 音频捕获器实例
   private audioCapture: audio.AudioCapturer | null = null
-  // 定时器ID
-  private timer: number = -1
   // 音频采样率
   private readonly SAMPLE_RATE: number = 44100
   // 音频通道数
@@ -45,6 +43,10 @@ struct Index {
   aboutToDisappear(): void {
     // 停止录音
     this.stopRecording()
+    // 移除事件监听
+    if (this.audioCapture) {
+      this.audioCapture.off('readData')
+    }
   }
 
   // 初始化音频捕获器
@@ -66,6 +68,18 @@ struct Index {
 
       // 创建音频捕获器
       this.audioCapture = await audio.createAudioCapturer(capturerOptions)
+
+      // 添加数据读取事件监听
+      this.audioCapture.on('readData', (buffer: ArrayBuffer): void => {
+        if (buffer && buffer.byteLength > 0) {
+          const db: number = this.calculateDB(buffer, buffer.byteLength)
+          this.currentDB = db
+          this.maxDB = Math.max(this.maxDB, db)
+          this.minDB = Math.min(this.minDB, db)
+          this.waveData.shift()
+          this.waveData.push(db)
+        }
+      })
 
     } catch (err) {
       console.error('初始化音频捕获器失败:', err.message)
@@ -102,56 +116,13 @@ struct Index {
       await this.audioCapture.start()
       this.isRecording = true
 
-      // 创建定时器定期读取音频数据
-      this.timer = setInterval((): void => {
-        this.readAudioData()
-      }, 50)
-
     } catch (err) {
       console.error('启动音频捕获失败:', err.message)
     }
   }
 
-  // 读取音频数据
-  private readAudioData(): void {
-    if (!this.audioCapture || !this.isRecording) {
-      return
-    }
-
-    try {
-      // 直接读取指定大小的数据
-      this.audioCapture.read(this.BUFFER_SIZE, false, (error: BusinessError | null, buffer: ArrayBuffer): void => {
-        if (error) {
-          console.error('读取音频数据失败:', error.message)
-          return
-        }
-
-        // 检查是否成功读取数据
-        if (buffer && buffer.byteLength > 0) {
-          // 计算分贝值
-          const db: number = this.calculateDB(buffer, buffer.byteLength)
-          this.currentDB = db
-          this.maxDB = Math.max(this.maxDB, db)
-          this.minDB = Math.min(this.minDB, db)
-
-          // 更新波形图数据
-          this.waveData.shift()
-          this.waveData.push(db)
-        }
-      })
-    } catch (err) {
-      console.error('读取音频数据失败:', err.message)
-    }
-  }
-
   // 停止录音
   async stopRecording(): Promise<void> {
-    // 清除定时器
-    if (this.timer !== -1) {
-      clearInterval(this.timer)
-      this.timer = -1
-    }
-
     // 停止音频捕获
     if (this.audioCapture && this.isRecording) {
       try {
