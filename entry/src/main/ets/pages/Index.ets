@@ -5,6 +5,8 @@ import { BusinessError } from '@ohos.base'
 // 导入权限相关模块
 import bundleManager from '@ohos.bundle.bundleManager'
 import abilityAccessCtrl, { Permissions } from '@ohos.abilityAccessCtrl'
+// 导入音频服务
+import { AudioService } from '../services/AudioService'
 
 // 波形图点的接口定义
 interface WavePoint {
@@ -30,16 +32,8 @@ struct Index {
   @State isRecording: boolean = false
   // 波形图数据数组
   @State waveData: Array<number> = new Array<number>(100).fill(0)
-  // 音频捕获器实例
-  private audioCapture: audio.AudioCapturer | null = null
-  // 音频采样率
-  private readonly SAMPLE_RATE: number = 44100
-  // 音频通道数
-  private readonly CHANNELS: number = 1
-  // 音频采样格式
-  private readonly SAMPLE_FORMAT: audio.AudioSampleFormat = audio.AudioSampleFormat.SAMPLE_FORMAT_S16LE
-  // 缓冲区大小
-  private readonly BUFFER_SIZE: number = 2048
+  // 音频服务实例
+  private audioService: AudioService | null = null
   // 添加权限状态
   @State hasPermission: boolean = false
   // 添加权限检查错误信息
@@ -47,18 +41,42 @@ struct Index {
 
   // 组件生命周期-创建
   aboutToAppear(): void {
+    // 创建音频服务实例
+    this.audioService = new AudioService({
+      sampleRate: 44100,
+      channels: 1,
+      sampleFormat: audio.AudioSampleFormat.SAMPLE_FORMAT_S16LE,
+      bufferSize: 2048
+    })
+
+    // 设置音频服务监听器
+    this.audioService.setListener({
+      onDBValueChange: (db: number) => {
+        this.currentDB = db
+        this.maxDB = Math.max(this.maxDB, db)
+        this.minDB = Math.min(this.minDB, db)
+        // 更新平均值计算
+        this.sampleSum += db
+        this.sampleCount++
+        this.avgDB = Math.round(this.sampleSum / this.sampleCount)
+        // 更新波形图数据
+        this.waveData.shift()
+        this.waveData.push(db)
+      },
+      onError: (error: string) => {
+        console.error(error)
+        this.permissionError = error
+      }
+    })
+
     // 检查并请求权限
     this.checkAndRequestPermission()
   }
 
   // 组件生命周期-销毁
   aboutToDisappear(): void {
-    // 停止录音
-    this.stopRecording()
-    // 移除事件监听
-    if (this.audioCapture) {
-      this.audioCapture.off('readData')
-    }
+    // 释放音频服务资源
+    this.audioService?.release()
   }
 
   // 检查并请求麦克风权限
@@ -76,8 +94,8 @@ struct Index {
       const result = await atManager.checkAccessToken(tokenId, 'ohos.permission.MICROPHONE')
       if (result === abilityAccessCtrl.GrantStatus.PERMISSION_GRANTED) {
         this.hasPermission = true
-        // 初始化音频捕获器
-        this.initAudioCapture()
+        // 初始化音频服务
+        await this.audioService?.initAudioCapture()
         return
       }
 
@@ -85,8 +103,8 @@ struct Index {
       try {
         await atManager.requestPermissionsFromUser(globalThis.mainAbilityContext, ['ohos.permission.MICROPHONE'])
         this.hasPermission = true
-        // 初始化音频捕获器
-        this.initAudioCapture()
+        // 初始化音频服务
+        await this.audioService?.initAudioCapture()
       } catch (err) {
         this.permissionError = '获取麦克风权限失败，请在系统设置中授予权限'
         console.error('请求权限失败:', err.message)
@@ -97,68 +115,8 @@ struct Index {
     }
   }
 
-  // 初始化音频捕获器
-  async initAudioCapture(): Promise<void> {
-    try {
-      // 创建音频捕获器配置
-      const capturerOptions: audio.AudioCapturerOptions = {
-        streamInfo: {
-          samplingRate: this.SAMPLE_RATE,
-          channels: this.CHANNELS,
-          sampleFormat: this.SAMPLE_FORMAT,
-          encodingType: audio.AudioEncodingType.ENCODING_TYPE_RAW
-        },
-        capturerInfo: {
-          source: audio.SourceType.SOURCE_TYPE_MIC,
-          capturerFlags: 0
-        }
-      }
-
-      // 创建音频捕获器
-      this.audioCapture = await audio.createAudioCapturer(capturerOptions)
-
-      // 添加数据读取事件监听
-      this.audioCapture.on('readData', (buffer: ArrayBuffer): void => {
-        if (buffer && buffer.byteLength > 0) {
-          const db: number = this.calculateDB(buffer, buffer.byteLength)
-          this.currentDB = db
-          this.maxDB = Math.max(this.maxDB, db)
-          this.minDB = Math.min(this.minDB, db)
-          // 更新平均值计算
-          this.sampleSum += db
-          this.sampleCount++
-          this.avgDB = Math.round(this.sampleSum / this.sampleCount)
-          this.waveData.shift()
-          this.waveData.push(db)
-        }
-      })
-
-    } catch (err) {
-      console.error('初始化音频捕获器失败:', err.message)
-    }
-  }
-
-  // 计算音频数据的分贝值
-  private calculateDB(buffer: ArrayBuffer, length: number): number {
-    // 将缓冲区数据转换为16位整数数组
-    const samples: Int16Array = new Int16Array(buffer, 0, length / 2)
-    let sum: number = 0
-
-    // 计算均方根（RMS）
-    for (let i = 0; i < samples.length; i++) {
-      sum += samples[i] * samples[i]
-    }
-    const rms: number = Math.sqrt(sum / samples.length)
-
-    // 将RMS转换为分贝值（参考值：16位音频的最大值是32767）
-    const db: number = 20 * Math.log10(rms / 32767)
-
-    // 归一化到0-120分贝范围
-    return Math.max(0, Math.min(120, Math.round(db + 120)))
-  }
-
-  // 开始录音前检查权限
-  async startRecording(): Promise<void> {
+  // 开始录音
+  private async startRecording(): Promise<void> {
     if (!this.hasPermission) {
       await this.checkAndRequestPermission()
       if (!this.hasPermission) {
@@ -166,34 +124,20 @@ struct Index {
       }
     }
 
-    if (!this.audioCapture || this.isRecording) {
-      return
-    }
+    // 重置平均值计算
+    this.sampleCount = 0
+    this.sampleSum = 0
+    this.avgDB = 0
 
-    try {
-      // 重置平均值计算
-      this.sampleCount = 0
-      this.sampleSum = 0
-      this.avgDB = 0
-      // 启动音频捕获
-      await this.audioCapture.start()
-      this.isRecording = true
-    } catch (err) {
-      console.error('启动音频捕获失败:', err.message)
-    }
+    // 启动录音
+    await this.audioService?.startRecording()
+    this.isRecording = this.audioService?.isCurrentlyRecording() ?? false
   }
 
   // 停止录音
-  async stopRecording(): Promise<void> {
-    // 停止音频捕获
-    if (this.audioCapture && this.isRecording) {
-      try {
-        await this.audioCapture.stop()
-        this.isRecording = false
-      } catch (err) {
-        console.error('停止音频捕获失败:', err.message)
-      }
-    }
+  private async stopRecording(): Promise<void> {
+    await this.audioService?.stopRecording()
+    this.isRecording = this.audioService?.isCurrentlyRecording() ?? false
   }
 
   // 构建波形图组件
