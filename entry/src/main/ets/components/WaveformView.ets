@@ -6,10 +6,12 @@ export struct WaveformView {
   @State private lineWidth: number = 1
   private readonly axisPadding: number = 30
   private readonly rightPadding: number = 10
+  private readonly yAxisWidth: number = 25
+  private readonly yAxisMargin: number = 5
   private readonly yAxisLabels: number[] = [100, 60, 30, 0]
 
   private getDrawingWidth(): number {
-    return this.containerWidth - this.axisPadding - this.rightPadding
+    return this.containerWidth - this.axisPadding - this.rightPadding - this.yAxisWidth - this.yAxisMargin
   }
 
   build() {
@@ -23,10 +25,10 @@ export struct WaveformView {
               .fontColor('#666666')
           })
         }
-        .width(25)
+        .width(this.yAxisWidth)
         .height(this.waveHeight)
         .alignItems(HorizontalAlign.End)
-        .margin({ right: 5 })
+        .margin({ right: this.yAxisMargin })
         .justifyContent(FlexAlign.SpaceBetween)
 
         // 波形图区域
@@ -62,7 +64,7 @@ export struct WaveformView {
             .width('100%')
             .height('100%')
             .points(this.waveData.map((value, index) => [
-              index * this.getDrawingWidth() / (this.waveData.length - 1),
+              index * (this.containerWidth - this.yAxisWidth - this.yAxisMargin - this.rightPadding) / (this.waveData.length - 1),
               this.waveHeight - value
             ]))
             .stroke(Color.Blue)
@@ -72,11 +74,12 @@ export struct WaveformView {
         }
         .width('100%')
         .height(this.waveHeight)
+        .backgroundColor('#F5F5F5')
         .padding({ right: this.rightPadding })
+
       }
       .width('100%')
       .height(this.waveHeight)
-      .backgroundColor('#F5F5F5')
 
       // X轴刻度
       Row() {
