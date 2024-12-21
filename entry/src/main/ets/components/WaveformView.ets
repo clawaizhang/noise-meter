@@ -4,14 +4,13 @@ export struct WaveformView {
   private containerWidth: number = 0
   @State private waveHeight: number = 100
   @State private lineWidth: number = 1
-  private readonly axisPadding: number = 30
-  private readonly rightPadding: number = 10
-  private readonly yAxisWidth: number = 25
+  private readonly yAxisWidth: number = 20
   private readonly yAxisMargin: number = 5
+  private readonly rightPadding: number = 5
   private readonly yAxisLabels: number[] = [100, 60, 30, 0]
 
   private getDrawingWidth(): number {
-    return this.containerWidth - this.axisPadding - this.rightPadding - this.yAxisWidth - this.yAxisMargin
+    return this.containerWidth - this.yAxisWidth - this.yAxisMargin - this.rightPadding
   }
 
   build() {
@@ -91,7 +90,7 @@ export struct WaveformView {
       }
       .width('100%')
       .height(20)
-      .padding({ left: this.axisPadding, right: this.rightPadding })
+      .padding({ left: this.yAxisWidth + this.yAxisMargin, right: this.rightPadding })
       .justifyContent(FlexAlign.SpaceBetween)
     }
     .margin({ top: 20, bottom: 20 })
