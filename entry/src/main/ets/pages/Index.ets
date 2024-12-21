@@ -103,17 +103,27 @@ struct Index {
       }
     }
 
-    // 重置所有统计数据
-    this.maxDB = 0
-    this.minDB = 0
-    this.currentDB = 0
-    this.sampleCount = 0
-    this.sampleSum = 0
-    this.avgDB = 0
-    this.waveData = new Array<number>(100).fill(0)
+    try {
+      // 确保音频捕获器已初始化
+      if (!this.audioService?.isInitialized()) {
+        await this.audioService?.initAudioCapture()
+      }
 
-    await this.audioService?.startRecording()
-    this.isRecording = this.audioService?.isCurrentlyRecording() ?? false
+      // 重置所有统计数据
+      this.maxDB = 0
+      this.minDB = 0
+      this.currentDB = 0
+      this.sampleCount = 0
+      this.sampleSum = 0
+      this.avgDB = 0
+      this.waveData = new Array<number>(100).fill(0)
+
+      await this.audioService?.startRecording()
+      this.isRecording = this.audioService?.isCurrentlyRecording() ?? false
+    } catch (err) {
+      console.error('启动录音失败:', err)
+      this.permissionError = '启动录音失败，请重试'
+    }
   }
 
   private async stopRecording(): Promise<void> {

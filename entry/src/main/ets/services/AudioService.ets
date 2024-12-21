@@ -40,6 +40,13 @@ export class AudioService {
   }
 
   /**
+   * 检查音频捕获器是否已初始化
+   */
+  public isInitialized(): boolean {
+    return this.audioCapture !== null;
+  }
+
+  /**
    * 初始化音频捕获器
    */
   public async initAudioCapture(): Promise<void> {
