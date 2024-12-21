@@ -18,46 +18,50 @@ export struct WaveformView {
       Row() {
         Column() {
           Stack() {
-            // 水平网格线
-            Column() {
-              ForEach(this.yAxisLabels, (value: number) => {
-                Row()
-                  .width('100%')
-                  .height(1)
-                  .backgroundColor('#EEEEEE')
-              })
-            }
-            .width('100%')
-            .height('100%')
-            .justifyContent(FlexAlign.SpaceBetween)
-            .padding({ left: this.leftPadding })
-
-            // 垂直网格线
-            Row() {
-              ForEach([0, 1, 2, 3], (value: number) => {
-                Column()
-                  .width(1)
-                  .height('100%')
-                  .backgroundColor('#EEEEEE')
-              })
-            }
-            .width('100%')
-            .height('100%')
-            .justifyContent(FlexAlign.SpaceBetween)
-            .padding({ left: this.leftPadding })
-
-            // 波形图
-            Polyline()
+            // 波形图区域
+            Stack() {
+              // 水平网格线
+              Column() {
+                ForEach(this.yAxisLabels, (value: number) => {
+                  Row()
+                    .width('100%')
+                    .height(1)
+                    .backgroundColor('#EEEEEE')
+                })
+              }
               .width('100%')
               .height('100%')
-              .points(this.waveData.map((value, index) => [
-                this.leftPadding + (this.waveData.length - 1 - index) * (this.getDrawingWidth()) / (this.waveData.length - 1),
-                this.waveHeight - value
-              ]).reverse())
-              .stroke(Color.Blue)
-              .strokeWidth(this.lineWidth)
-              .strokeLineJoin(LineJoinStyle.Round)
-              .strokeLineCap(LineCapStyle.Round)
+              .justifyContent(FlexAlign.SpaceBetween)
+
+              // 垂直网格线
+              Row() {
+                ForEach([0, 1, 2, 3], (value: number) => {
+                  Column()
+                    .width(1)
+                    .height('100%')
+                    .backgroundColor('#EEEEEE')
+                })
+              }
+              .width('100%')
+              .height('100%')
+              .justifyContent(FlexAlign.SpaceBetween)
+
+              // 波形图
+              Polyline()
+                .width('100%')
+                .height('100%')
+                .points([...this.waveData].reverse().map((value, index) => [
+                  index * this.getDrawingWidth() / (this.waveData.length - 1),
+                  this.waveHeight - value
+                ]))
+                .stroke(Color.Blue)
+                .strokeWidth(this.lineWidth)
+                .strokeLineJoin(LineJoinStyle.Round)
+                .strokeLineCap(LineCapStyle.Round)
+            }
+            .width('100%')
+            .height('100%')
+            .margin({ left: this.leftPadding })
 
             // Y轴刻度
             Column() {
@@ -80,7 +84,7 @@ export struct WaveformView {
 
           // X轴刻度
           Row() {
-            ForEach([0, 1, 2, 3], (value: number) => {
+            ForEach([3, 2, 1, 0], (value: number) => {
               Text(value + 's')
                 .fontSize(12)
                 .fontColor('#666666')
