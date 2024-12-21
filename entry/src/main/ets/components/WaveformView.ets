@@ -10,7 +10,7 @@ export struct WaveformView {
   private readonly yAxisLabels: number[] = [100, 60, 30, 0]
 
   private getDrawingWidth(): number {
-    return this.containerWidth - this.rightPadding - this.leftPadding
+    return (this.containerWidth * 0.9) - this.rightPadding - this.leftPadding
   }
 
   build() {
@@ -51,7 +51,7 @@ export struct WaveformView {
               .width('100%')
               .height('100%')
               .points(this.waveData.map((value, index) => [
-                this.leftPadding + (this.waveData.length - 1 - index) * this.getDrawingWidth() / (this.waveData.length - 1),
+                this.leftPadding + (this.waveData.length - 1 - index) * (this.getDrawingWidth()) / (this.waveData.length - 1),
                 this.waveHeight - value
               ]).reverse())
               .stroke(Color.Blue)
