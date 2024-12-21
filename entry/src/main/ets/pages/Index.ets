@@ -32,6 +32,21 @@ struct Index {
   aboutToAppear(): void {
     this.permissionService = new PermissionService(getContext(this) as common.UIAbilityContext)
     
+    // 设置权限回调
+    this.permissionService.setCallback({
+      onPermissionGranted: async () => {
+        this.hasPermission = true
+        this.permissionError = ''
+        try {
+          await this.audioService?.initAudioCapture()
+        } catch (err) {
+          console.error('初始化音频捕获器失败:', err)
+          this.permissionError = '初始化音频捕获器失败，请重试'
+          this.hasPermission = false
+        }
+      }
+    })
+    
     this.audioService = new AudioService({
       sampleRate: 44100,
       channels: 1,
@@ -78,15 +93,19 @@ struct Index {
       
       if (hasPermission) {
         this.hasPermission = true
-        await this.audioService?.initAudioCapture()
+        this.permissionError = ''
+        try {
+          await this.audioService?.initAudioCapture()
+        } catch (err) {
+          console.error('初始化音频捕获器失败:', err)
+          this.permissionError = '初始化音频捕获器失败，请重试'
+          this.hasPermission = false
+        }
         return
       }
 
       const granted = await this.permissionService?.requestPermissions(['ohos.permission.MICROPHONE'])
-      if (granted) {
-        this.hasPermission = true
-        await this.audioService?.initAudioCapture()
-      } else {
+      if (!granted) {
         this.permissionError = '获取麦克风权限失败，请在系统设置中授予权限'
       }
     } catch (err) {
@@ -123,6 +142,7 @@ struct Index {
     } catch (err) {
       console.error('启动录音失败:', err)
       this.permissionError = '启动录音失败，请重试'
+      this.hasPermission = false
     }
   }
 
