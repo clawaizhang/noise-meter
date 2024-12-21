@@ -81,7 +81,7 @@ struct Index {
         console.error('请求权限失败:', err.message)
       }
     } catch (err) {
-      this.permissionError = '权限检查失败，请重试'
+      this.permissionError = '权限检查失败'
       console.error('权限检查失败:', err.message)
     }
   }
