@@ -2,7 +2,7 @@
   "string": [
     {
       "name": "module_desc",
-      "value": "module description"
+      "value": "模块描述"
     },
     {
       "name": "EntryAbility_desc",
@@ -10,7 +10,19 @@
     },
     {
       "name": "EntryAbility_label",
-      "value": "label"
+      "value": "噪音分贝仪"
+    },
+    {
+      "name": "microphone_reason",
+      "value": "需要使用麦克风来测量环境噪音"
+    },
+    {
+      "name": "internet_reason",
+      "value": "需要访问网络以加载广告内容"
+    },
+    {
+      "name": "bundle_reason",
+      "value": "需要获取应用包信息以支持广告服务"
     }
   ]
 }

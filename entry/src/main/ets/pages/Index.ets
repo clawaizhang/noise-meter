@@ -7,6 +7,8 @@ import bundleManager from '@ohos.bundle.bundleManager'
 import abilityAccessCtrl, { Permissions } from '@ohos.abilityAccessCtrl'
 // 导入音频服务
 import { AudioService } from '../services/AudioService'
+// 导入广告模块
+import { advertising, AutoAdComponent } from '@kit.AdsKit'
 
 // 波形图点的接口定义
 interface WavePoint {
@@ -34,7 +36,7 @@ struct Index {
   @State waveData: Array<number> = new Array<number>(100).fill(0)
   // 音频服务实例
   private audioService: AudioService | null = null
-  // 添加权限状态
+  // 权限状态
   @State hasPermission: boolean = false
   // 添加权限检查错误信息
   @State permissionError: string = ''
@@ -83,8 +85,7 @@ struct Index {
   private async checkAndRequestPermission() {
     try {
       // 获取应用程序的bundleInfo
-      const bundleInfo =
-        await bundleManager.getBundleInfoForSelf(bundleManager.BundleFlag.GET_BUNDLE_INFO_WITH_APPLICATION)
+      const bundleInfo = await bundleManager.getBundleInfoForSelf(bundleManager.BundleFlag.GET_BUNDLE_INFO_WITH_APPLICATION)
       const tokenId = bundleInfo.appInfo.accessTokenId
 
       // 创建AtManager实例
@@ -101,7 +102,7 @@ struct Index {
 
       // 请求权限
       try {
-        await atManager.requestPermissionsFromUser(globalThis.mainAbilityContext, ['ohos.permission.MICROPHONE'])
+        await atManager.requestPermissionsFromUser(getContext(this), ['ohos.permission.MICROPHONE'])
         this.hasPermission = true
         // 初始化音频服务
         await this.audioService?.initAudioCapture()
@@ -172,7 +173,7 @@ struct Index {
       }
       .margin({ top: 20, bottom: 20 })
 
-      // 权限错误提示
+      // 权限误示
       if (this.permissionError !== '') {
         Text(this.permissionError)
           .fontSize(16)
@@ -246,8 +247,8 @@ struct Index {
       .width(200)
       .height(50)
       .backgroundColor(this.isRecording ? '#FF4081' : '#2196F3')
-      .enabled(this.hasPermission) // 根据权限状态启用/禁用按钮
-      .opacity(this.hasPermission ? 1 : 0.5) // 根据权限状态调整透明度
+      .enabled(this.hasPermission)
+      .opacity(this.hasPermission ? 1 : 0.5)
       .onClick(() => {
         if (this.isRecording) {
           this.stopRecording()
@@ -255,6 +256,48 @@ struct Index {
           this.startRecording()
         }
       })
+      .margin({ bottom: 20 })
+
+      // 底部广告
+      AutoAdComponent({
+        adParam: {
+          adId: 'testw6vs28auh3', // 广告位ID，需替换为实际的广告位ID
+          adType: 1 // 广告类型为横幅广告，使用数字类型
+        },
+        adOptions: {
+          // 广告选项配置
+          height: 150, // 广告高度
+          width: 1080 // 广告宽度，使用数字类型
+        },
+        displayOptions: {
+          // 广告显示选项
+          backgroundColor: '#F5F5F5' // 广告背景色
+        },
+        interactionListener: {
+          // 广告交互监听器
+          onStatusChanged: (status: string, ad: advertising.Advertisement, data: string) => {
+            switch (status) {
+              case 'AD_LOAD':
+                console.info('广告加载成功')
+                break
+              case 'AD_FAIL':
+                console.error('广告加载失败:', data)
+                break
+              case 'AD_CLOSED':
+                console.info('广告被关闭')
+                break
+              case 'AD_CLICKED':
+                console.info('广告被点击')
+                break
+              case 'AD_OPEN':
+                console.info('广告被打开')
+                break
+            }
+          }
+        }
+      })
+      .width('100%')
+      .height(150)
     }
     .width('100%')
     .height('100%')
