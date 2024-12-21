@@ -2,19 +2,25 @@
 export struct WaveformView {
   @Prop waveData: Array<number>
   private containerWidth: number = 0
+  @State private waveHeight: number = 100
+  @State private lineWidth: number = 1
 
   build() {
     Row() {
-      Polyline({ width: '100%', height: 100 })
+      Polyline()
+        .width('100%')
+        .height(this.waveHeight)
         .points(this.waveData.map((value, index) => [
-          Math.floor((index / (this.waveData.length - 1)) * this.containerWidth),
-          Math.floor(100 - value)
+          (index / (this.waveData.length - 1)) * this.containerWidth,
+          this.waveHeight - value
         ]))
         .stroke(Color.Blue)
-        .strokeWidth(1)
+        .strokeWidth(this.lineWidth)
+        .strokeLineJoin(LineJoinStyle.Round)
+        .strokeLineCap(LineCapStyle.Round)
     }
     .width('100%')
-    .height(100)
+    .height(this.waveHeight)
     .backgroundColor('#F5F5F5')
     .margin({ top: 20, bottom: 20 })
     .onAreaChange((oldArea: Area, newArea: Area) => {
