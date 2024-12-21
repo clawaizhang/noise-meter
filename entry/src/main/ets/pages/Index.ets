@@ -1,9 +1,10 @@
 // 导入音频处理模块
 import audio from '@ohos.multimedia.audio'
 import { BusinessError } from '@ohos.base'
-import bundleManager from '@ohos.bundle.bundleManager'
+import common from '@ohos.app.ability.common'
 import abilityAccessCtrl, { Permissions } from '@ohos.abilityAccessCtrl'
 import { AudioService } from '../services/AudioService'
+import { PermissionService } from '../services/PermissionService'
 import { HeaderTitle } from '../components/HeaderTitle'
 import { PermissionError } from '../components/PermissionError'
 import { DBDisplay } from '../components/DBDisplay'
@@ -24,10 +25,13 @@ struct Index {
   @State isRecording: boolean = false
   @State waveData: Array<number> = new Array<number>(100).fill(0)
   private audioService: AudioService | null = null
+  private permissionService: PermissionService | null = null
   @State hasPermission: boolean = false
   @State permissionError: string = ''
 
   aboutToAppear(): void {
+    this.permissionService = new PermissionService(getContext(this) as common.UIAbilityContext)
+    
     this.audioService = new AudioService({
       sampleRate: 44100,
       channels: 1,
@@ -70,28 +74,24 @@ struct Index {
 
   private async checkAndRequestPermission() {
     try {
-      const bundleInfo = await bundleManager.getBundleInfoForSelf(bundleManager.BundleFlag.GET_BUNDLE_INFO_WITH_APPLICATION)
-      const tokenId = bundleInfo.appInfo.accessTokenId
-      const atManager = abilityAccessCtrl.createAtManager()
-      const result = await atManager.checkAccessToken(tokenId, 'ohos.permission.MICROPHONE')
+      const hasPermission = await this.permissionService?.checkPermission('ohos.permission.MICROPHONE')
       
-      if (result === abilityAccessCtrl.GrantStatus.PERMISSION_GRANTED) {
+      if (hasPermission) {
         this.hasPermission = true
         await this.audioService?.initAudioCapture()
         return
       }
 
-      try {
-        await atManager.requestPermissionsFromUser(getContext(this), ['ohos.permission.MICROPHONE'])
+      const granted = await this.permissionService?.requestPermissions(['ohos.permission.MICROPHONE'])
+      if (granted) {
         this.hasPermission = true
         await this.audioService?.initAudioCapture()
-      } catch (err) {
+      } else {
         this.permissionError = '获取麦克风权限失败，请在系统设置中授予权限'
-        console.error('请求权限失败:', err.message)
       }
     } catch (err) {
       this.permissionError = '权限检查失败'
-      console.error('权限检查失败:', err.message)
+      console.error('权限检查失败:', err)
     }
   }
 
@@ -141,7 +141,10 @@ struct Index {
     Column() {
       HeaderTitle()
       
-      PermissionError({ errorMessage: this.permissionError })
+      PermissionError({ 
+        errorMessage: this.permissionError,
+        permissionService: this.permissionService
+      })
       
       DBDisplay({
         currentDB: this.currentDB,
