@@ -211,6 +211,7 @@ struct Index {
           Text(`${this.minDB}`)
             .fontSize(24)
             .fontWeight(FontWeight.Bold)
+            .fontColor(this.getDBColor(this.minDB))
         }
         .margin({ right: 40 })
 
@@ -220,6 +221,7 @@ struct Index {
           Text(`${this.avgDB}`)
             .fontSize(24)
             .fontWeight(FontWeight.Bold)
+            .fontColor(this.getDBColor(this.avgDB))
         }
         .margin({ right: 40 })
 
@@ -229,6 +231,7 @@ struct Index {
           Text(`${this.maxDB}`)
             .fontSize(24)
             .fontWeight(FontWeight.Bold)
+            .fontColor(this.getDBColor(this.maxDB))
         }
       }
       .margin({ top: 20, bottom: 30 })
@@ -257,19 +260,19 @@ struct Index {
   }
 
   // 获取分贝值对应的颜色
-  private getDBColor(): string {
-    if (this.currentDB < 30) {
-      return '#4CAF50'
-    } // 绿色 - 安静
-    if (this.currentDB < 60) {
-      return '#2196F3'
-    } // 蓝色 - 正常
-    if (this.currentDB < 90) {
-      return '#FFC107'
-    } // 黄色 - 较吵
-    if (this.currentDB < 100) {
-      return '#FF9800'
-    } // 橙色 - 吵闹
+  private getDBColor(db: number = this.currentDB): string {
+    if (db < 30) {
+      return '#4CAF50' // 绿色 - 安静
+    }
+    if (db < 60) {
+      return '#2196F3' // 蓝色 - 正常
+    }
+    if (db < 90) {
+      return '#FFC107' // 黄色 - 较吵
+    }
+    if (db < 100) {
+      return '#FF9800' // 橙色 - 吵闹
+    }
     return '#F44336' // 红色 - 危险
   }
 
