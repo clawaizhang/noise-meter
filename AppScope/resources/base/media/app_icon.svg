@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="120px" height="120px" viewBox="0 0 120 120" version="1.1" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+        <linearGradient x1="50%" y1="0%" x2="50%" y2="100%" id="linearGradient">
+            <stop stop-color="#2196F3" offset="0%"></stop>
+            <stop stop-color="#1565C0" offset="100%"></stop>
+        </linearGradient>
+    </defs>
+    <g stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <!-- 背景圆 -->
+        <circle fill="url(#linearGradient)" cx="60" cy="60" r="56"></circle>
+        
+        <!-- 声波纹圈 -->
+        <circle stroke="#FFFFFF" stroke-width="2" opacity="0.3" cx="60" cy="60" r="45"></circle>
+        <circle stroke="#FFFFFF" stroke-width="2" opacity="0.5" cx="60" cy="60" r="35"></circle>
+        <circle stroke="#FFFFFF" stroke-width="2" opacity="0.7" cx="60" cy="60" r="25"></circle>
+        
+        <!-- 中心扬声器图标 -->
+        <path d="M60,35 L70,45 L70,75 L60,85 L50,75 L50,45 L60,35 Z" fill="#FFFFFF"></path>
+        
+        <!-- 动态声波线条 -->
+        <path d="M75,45 C85,45 90,60 90,60 C90,60 85,75 75,75" stroke="#FFFFFF" stroke-width="3" fill="none" stroke-linecap="round"></path>
+        <path d="M80,40 C95,40 100,60 100,60 C100,60 95,80 80,80" stroke="#FFFFFF" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.7"></path>
+        
+        <!-- 左侧声波 -->
+        <path d="M45,45 C35,45 30,60 30,60 C30,60 35,75 45,75" stroke="#FFFFFF" stroke-width="3" fill="none" stroke-linecap="round"></path>
+        <path d="M40,40 C25,40 20,60 20,60 C20,60 25,80 40,80" stroke="#FFFFFF" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.7"></path>
+        
+        <!-- dB文字 -->
+        <text x="54" y="65" font-family="Arial-BoldMT" font-size="12" fill="#1565C0" style="font-weight: bold;">dB</text>
+    </g>
+</svg>
