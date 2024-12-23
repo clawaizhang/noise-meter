@@ -150,6 +150,22 @@ struct Index {
     return '危险噪音'
   }
 
+  private async onSettingsReturn() {
+    // 检查权限状态并更新UI
+    const hasPermission = await PermissionUtil.checkPermissions('ohos.permission.MICROPHONE')
+    if (hasPermission) {
+      this.hasPermission = true
+      this.permissionError = ''
+      try {
+        await this.audioService?.initAudioCapture()
+      } catch (err) {
+        console.error('初始化音频捕获器失败:', JSON.stringify(err))
+        this.permissionError = '初始化音频捕获器失败，请重试'
+        this.hasPermission = false
+      }
+    }
+  }
+
   build() {
     Column() {
       HeaderTitle()
@@ -164,8 +180,9 @@ struct Index {
               .fontSize(14)
               .fontColor('#2196F3')
               .margin({ left: 4 })
-              .onClick(() => {
-                PermissionUtil.requestPermissionsEasy(['ohos.permission.MICROPHONE'])
+              .onClick(async () => {
+                await PermissionUtil.requestPermissionsEasy(['ohos.permission.MICROPHONE'])
+                this.onSettingsReturn()
               })
           }
         }
