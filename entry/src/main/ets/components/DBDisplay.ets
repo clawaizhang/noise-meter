@@ -8,9 +8,9 @@ export struct DBDisplay {
   @Link maxDB: number
   @Link avgDB: number
   @Link currentDB: number
+  @Link @Watch('onRecordingStateChange')isRecording: boolean
+  @Link hasMicPermission: boolean
   getDBColor: (db: number) => string = () => '#666666'
-  @State isRecording: boolean = false
-  @State hasMicPermission: boolean = false
   @State permissionError: string = ''
   private sampleCount: number = 0
   private sampleSum: number = 0
@@ -23,6 +23,67 @@ export struct DBDisplay {
 
   aboutToDisappear() {
     this.audioService?.release()
+  }
+
+
+  async onRecordingStateChange(isRecording: boolean) {
+    if (isRecording) {
+      await this.startRecording()
+    } else {
+      await this.stopRecording()
+    }
+  }
+
+  @Builder
+  ErrorMessage() {
+    if (this.permissionError) {
+      Row() {
+        Text(this.permissionError)
+          .fontSize(14)
+          .fontColor('#FF4081')
+        if (this.permissionError.includes('手动开启')) {
+          Text('去设置')
+            .fontSize(14)
+            .fontColor('#2196F3')
+            .margin({ left: 4 })
+            .onClick(async () => {
+              await PermissionUtil.requestPermissionsEasy(['ohos.permission.MICROPHONE'])
+              this.checkAndRequestPermission()
+            })
+        }
+      }
+      .width('100%')
+      .justifyContent(FlexAlign.Center)
+      .margin({ bottom: 20 })
+    }
+  }
+
+  @Builder
+  DBValue() {
+    Row() {
+      Column() {
+        Text(this.currentDB.toFixed(1))
+          .fontSize(64)
+          .fontWeight(FontWeight.Bold)
+          .fontColor(this.getDBColor(this.currentDB))
+        Text('dB')
+          .fontSize(24)
+          .fontColor('#666666')
+          .margin({ top: 8 })
+        Text(this.getNoiseLevel())
+          .fontSize(16)
+          .fontColor('#666666')
+          .margin({ top: 8 })
+      }
+      .width('100%')
+      .alignItems(HorizontalAlign.Center)
+    }
+    .width('100%')
+    .height(200)
+    .backgroundColor('#F5F5F5')
+    .borderRadius(16)
+    .justifyContent(FlexAlign.Center)
+    .margin({ bottom: 20 })
   }
 
   private initAudioService() {
@@ -98,6 +159,7 @@ export struct DBDisplay {
     if (!this.hasMicPermission) {
       await this.checkAndRequestPermission()
       if (!this.hasMicPermission) {
+        this.isRecording = false
         return
       }
     }
@@ -117,17 +179,19 @@ export struct DBDisplay {
       this.avgDB = 0
 
       await this.audioService?.startRecording()
-      this.isRecording = this.audioService?.isCurrentlyRecording() ?? false
+      if (!(this.audioService?.isCurrentlyRecording() ?? false)) {
+        this.isRecording = false
+      }
     } catch (err) {
       console.error('启动录音失败:', JSON.stringify(err))
       this.permissionError = '启动录音失败，请重试'
       this.hasMicPermission = false
+      this.isRecording = false
     }
   }
 
   private async stopRecording() {
     await this.audioService?.stopRecording()
-    this.isRecording = this.audioService?.isCurrentlyRecording() ?? false
   }
 
   private getNoiseLevel(): string {
@@ -140,66 +204,8 @@ export struct DBDisplay {
 
   build() {
     Column() {
-      if (this.permissionError) {
-        Row() {
-          Text(this.permissionError)
-            .fontSize(14)
-            .fontColor('#FF4081')
-          if (this.permissionError.includes('手动开启')) {
-            Text('去设置')
-              .fontSize(14)
-              .fontColor('#2196F3')
-              .margin({ left: 4 })
-              .onClick(async () => {
-                await PermissionUtil.requestPermissionsEasy(['ohos.permission.MICROPHONE'])
-                this.checkAndRequestPermission()
-              })
-          }
-        }
-        .width('100%')
-        .justifyContent(FlexAlign.Center)
-        .margin({ bottom: 20 })
-      }
-
-      Row() {
-        Column() {
-          Text(this.currentDB.toFixed(1))
-            .fontSize(64)
-            .fontWeight(FontWeight.Bold)
-            .fontColor(this.getDBColor(this.currentDB))
-          Text('dB')
-            .fontSize(24)
-            .fontColor('#666666')
-            .margin({ top: 8 })
-          Text(this.getNoiseLevel())
-            .fontSize(16)
-            .fontColor('#666666')
-            .margin({ top: 8 })
-        }
-        .width('100%')
-        .alignItems(HorizontalAlign.Center)
-      }
-      .width('100%')
-      .height(200)
-      .backgroundColor('#F5F5F5')
-      .borderRadius(16)
-      .justifyContent(FlexAlign.Center)
-      .margin({ bottom: 20 })
-
-      Button(this.isRecording ? '停止测量' : '开始测量')
-        .width('100%')
-        .height(50)
-        .fontSize(18)
-        .fontWeight(FontWeight.Medium)
-        .backgroundColor(this.isRecording ? '#FF4081' : '#2196F3')
-        .enabled(this.hasMicPermission)
-        .onClick(() => {
-          if (this.isRecording) {
-            this.stopRecording()
-          } else {
-            this.startRecording()
-          }
-        })
+      this.ErrorMessage()
+      this.DBValue()
     }
   }
 } 
