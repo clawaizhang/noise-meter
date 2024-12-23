@@ -8,7 +8,6 @@ import { PermissionService } from '../services/PermissionService'
 import { HeaderTitle } from '../components/HeaderTitle'
 import { PermissionError } from '../components/PermissionError'
 import { DBDisplay } from '../components/DBDisplay'
-import { WaveformView } from '../components/WaveformView'
 import { StatisticsView } from '../components/StatisticsView'
 import { ControlButton } from '../components/ControlButton'
 import { AdView } from '../components/AdView'
@@ -23,7 +22,6 @@ struct Index {
   private sampleCount: number = 0
   private sampleSum: number = 0
   @State isRecording: boolean = false
-  @State waveData: Array<number> = new Array<number>(100).fill(0)
   private audioService: AudioService | null = null
   private permissionService: PermissionService | null = null
   @State hasPermission: boolean = false
@@ -71,8 +69,6 @@ struct Index {
         this.sampleSum += db
         this.sampleCount++
         this.avgDB = Math.round(this.sampleSum / this.sampleCount)
-        this.waveData.shift()
-        this.waveData.push(db)
       },
       onError: (error: string) => {
         console.error(error)
@@ -135,7 +131,6 @@ struct Index {
       this.sampleCount = 0
       this.sampleSum = 0
       this.avgDB = 0
-      this.waveData = new Array<number>(100).fill(0)
 
       await this.audioService?.startRecording()
       this.isRecording = this.audioService?.isCurrentlyRecording() ?? false
@@ -181,10 +176,6 @@ struct Index {
         getDBColor: this.getDBColor.bind(this),
         getNoiseLevel: this.getNoiseLevel.bind(this)
       })
-      
-      Row() {
-        WaveformView({ waveData: this.waveData })
-      }
       
       StatisticsView({
         minDB: this.minDB,

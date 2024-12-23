@@ -19,6 +19,10 @@
     {
       "name": "media_reason",
       "value": "需要访问媒体权限以处理音频数据"
+    },
+    {
+      "name": "internet_reason",
+      "value": "需要访问网络以加载图表组件"
     }
   ]
 }
