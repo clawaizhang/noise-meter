@@ -8,7 +8,9 @@ export struct DBDisplay {
   @Link maxDB: number
   @Link avgDB: number
   @Link currentDB: number
-  @Link @Watch('onRecordingStateChange') isRecording: boolean
+  @Link
+  @Watch('onRecordingStateChange')
+  isRecording: boolean
   @Link hasMicPermission: boolean
   getDBColor: (db: number) => string = () => '#666666'
   @State permissionError: string = ''
@@ -25,8 +27,8 @@ export struct DBDisplay {
     this.audioService?.release()
   }
 
-  async onRecordingStateChange(isRecording: boolean) {
-    if (isRecording) {
+  private async onRecordingStateChange() {
+    if (this.isRecording) {
       await this.startRecording()
     } else {
       await this.stopRecording()
