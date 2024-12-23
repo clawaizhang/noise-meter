@@ -19,7 +19,8 @@ struct Index {
   private sampleSum: number = 0
   @State isRecording: boolean = false
   private audioService: AudioService | null = null
-  @State hasPermission: boolean = false
+  @State hasMicPermission: boolean = false
+  @State hasLocationPermission: boolean = false
   @State permissionError: string = ''
 
   aboutToAppear(): void {
@@ -54,54 +55,77 @@ struct Index {
       }
     })
 
-    this.checkAndRequestPermission()
+    this.checkAndRequestPermissions()
   }
 
   aboutToDisappear(): void {
     this.audioService?.release()
   }
 
-  private async checkAndRequestPermission() {
+  private async checkAndRequestPermissions() {
+    await Promise.all([
+      this.checkAndRequestMicPermission(),
+      this.checkAndRequestLocationPermission()
+    ])
+  }
+
+  private async checkAndRequestMicPermission() {
     try {
-      const hasPermission = await PermissionUtil.checkPermissions('ohos.permission.MICROPHONE')
-      
-      if (hasPermission) {
-        this.hasPermission = true
+      const hasMicPermission = await PermissionUtil.checkPermissions('ohos.permission.MICROPHONE')
+      if (hasMicPermission) {
+        this.hasMicPermission = true
         this.permissionError = ''
         try {
           await this.audioService?.initAudioCapture()
         } catch (err) {
           console.error('初始化音频捕获器失败:', JSON.stringify(err))
           this.permissionError = '初始化音频捕获器失败，请重试'
-          this.hasPermission = false
+          this.hasMicPermission = false
         }
         return
       }
 
       const granted = await PermissionUtil.requestPermissions(['ohos.permission.MICROPHONE'])
       if (granted) {
-        this.hasPermission = true
+        this.hasMicPermission = true
         this.permissionError = ''
         try {
           await this.audioService?.initAudioCapture()
         } catch (err) {
           console.error('初始化音频捕获器失败:', JSON.stringify(err))
           this.permissionError = '初始化音频捕获器失败，请重试'
-          this.hasPermission = false
+          this.hasMicPermission = false
         }
       } else {
         this.permissionError = '获取麦克风权限失败，请在设置中手动开启'
       }
     } catch (err) {
-      this.permissionError = '权限检查失败'
-      console.error('权限检查失败:', JSON.stringify(err))
+      this.permissionError = '麦克风权限检查失败'
+      console.error('麦克风权限检查失败:', JSON.stringify(err))
+    }
+  }
+
+  private async checkAndRequestLocationPermission() {
+    try {
+      const hasLocationPermission = await PermissionUtil.checkPermissions('ohos.permission.LOCATION')
+      if (hasLocationPermission) {
+        this.hasLocationPermission = true
+        return
+      }
+
+      const granted = await PermissionUtil.requestPermissions(['ohos.permission.LOCATION'])
+      if (granted) {
+        this.hasLocationPermission = true
+      }
+    } catch (err) {
+      console.error('位置权限检查失败:', JSON.stringify(err))
     }
   }
 
   private async startRecording(): Promise<void> {
-    if (!this.hasPermission) {
-      await this.checkAndRequestPermission()
-      if (!this.hasPermission) {
+    if (!this.hasMicPermission) {
+      await this.checkAndRequestMicPermission()
+      if (!this.hasMicPermission) {
         return
       }
     }
@@ -125,7 +149,7 @@ struct Index {
     } catch (err) {
       console.error('启动录音失败:', JSON.stringify(err))
       this.permissionError = '启动录音失败，请重试'
-      this.hasPermission = false
+      this.hasMicPermission = false
     }
   }
 
@@ -151,19 +175,10 @@ struct Index {
   }
 
   private async onSettingsReturn() {
-    // 检查权限状态并更新UI
-    const hasPermission = await PermissionUtil.checkPermissions('ohos.permission.MICROPHONE')
-    if (hasPermission) {
-      this.hasPermission = true
-      this.permissionError = ''
-      try {
-        await this.audioService?.initAudioCapture()
-      } catch (err) {
-        console.error('初始化音频捕获器失败:', JSON.stringify(err))
-        this.permissionError = '初始化音频捕获器失败，请重试'
-        this.hasPermission = false
-      }
-    }
+    await Promise.all([
+      this.checkAndRequestMicPermission(),
+      this.checkAndRequestLocationPermission()
+    ])
   }
 
   build() {
@@ -181,7 +196,7 @@ struct Index {
               .fontColor('#2196F3')
               .margin({ left: 4 })
               .onClick(async () => {
-                await PermissionUtil.requestPermissionsEasy(['ohos.permission.MICROPHONE'])
+                await PermissionUtil.requestPermissionsEasy(['ohos.permission.MICROPHONE', 'ohos.permission.LOCATION'])
                 this.onSettingsReturn()
               })
           }
@@ -204,11 +219,11 @@ struct Index {
         getDBColor: this.getDBColor
       })
 
-      LocationDisplay()
+      LocationDisplay({ hasLocationPermission: this.hasLocationPermission })
       
       ControlButton({
         isRecording: this.isRecording,
-        hasPermission: this.hasPermission,
+        hasPermission: this.hasMicPermission,
         onToggleRecording: () => {
           if (this.isRecording) {
             this.stopRecording()
@@ -217,8 +232,6 @@ struct Index {
           }
         }
       })
-      
-      // AdView()
     }
     .width('100%')
     .height('100%')

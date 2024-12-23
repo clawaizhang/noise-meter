@@ -1,32 +1,13 @@
-import { LocationUtil, PermissionUtil } from '@pura/harmony-utils'
+import { LocationUtil } from '@pura/harmony-utils'
 
 @Component
 export struct LocationDisplay {
   @State location: string = '正在获取位置...'
-  @State hasPermission: boolean = false
+  @Link hasLocationPermission: boolean
 
   aboutToAppear() {
-    this.checkAndRequestPermission()
-  }
-
-  private async checkAndRequestPermission() {
-    try {
-      const hasPermission = await PermissionUtil.checkPermissions('ohos.permission.LOCATION')
-      if (hasPermission) {
-        this.hasPermission = true
-        this.getLocation()
-      } else {
-        const granted = await PermissionUtil.requestPermissionsEasy(['ohos.permission.LOCATION'])
-        if (granted) {
-          this.hasPermission = true
-          this.getLocation()
-        } else {
-          this.location = '无法获取位置信息'
-        }
-      }
-    } catch (err) {
-      console.error('位置权限检查失败:', JSON.stringify(err))
-      this.location = '位置权限检查失败'
+    if (this.hasLocationPermission) {
+      this.getLocation()
     }
   }
 
@@ -52,7 +33,7 @@ export struct LocationDisplay {
         .height(20)
         .margin({ right: 8 })
         .fillColor('#666666')
-      Text(this.location)
+      Text(this.hasLocationPermission ? this.location : '等待位置权限...')
         .fontSize(14)
         .fontColor('#666666')
     }
