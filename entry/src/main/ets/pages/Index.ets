@@ -1,16 +1,12 @@
 // 导入音频处理模块
 import audio from '@ohos.multimedia.audio'
-import { BusinessError } from '@ohos.base'
 import common from '@ohos.app.ability.common'
-import abilityAccessCtrl, { Permissions } from '@ohos.abilityAccessCtrl'
 import { AudioService } from '../services/AudioService'
-import { PermissionService } from '../services/PermissionService'
 import { HeaderTitle } from '../components/HeaderTitle'
-import { PermissionError } from '../components/PermissionError'
 import { DBDisplay } from '../components/DBDisplay'
 import { StatisticsView } from '../components/StatisticsView'
 import { ControlButton } from '../components/ControlButton'
-import { AdView } from '../components/AdView'
+import { PermissionUtil } from '@pura/harmony-utils'
 
 @Entry
 @Component
@@ -23,28 +19,10 @@ struct Index {
   private sampleSum: number = 0
   @State isRecording: boolean = false
   private audioService: AudioService | null = null
-  private permissionService: PermissionService | null = null
   @State hasPermission: boolean = false
   @State permissionError: string = ''
 
   aboutToAppear(): void {
-    this.permissionService = new PermissionService(getContext(this) as common.UIAbilityContext)
-    
-    // 设置权限回调
-    this.permissionService.setCallback({
-      onPermissionGranted: async () => {
-        this.hasPermission = true
-        this.permissionError = ''
-        try {
-          await this.audioService?.initAudioCapture()
-        } catch (err) {
-          console.error('初始化音频捕获器失败:', JSON.stringify(err))
-          this.permissionError = '初始化音频捕获器失败，请重试'
-          this.hasPermission = false
-        }
-      }
-    })
-    
     this.audioService = new AudioService({
       sampleRate: 44100,
       channels: 1,
@@ -85,7 +63,7 @@ struct Index {
 
   private async checkAndRequestPermission() {
     try {
-      const hasPermission = await this.permissionService?.checkPermission('ohos.permission.MICROPHONE')
+      const hasPermission = await PermissionUtil.checkPermissions('ohos.permission.MICROPHONE')
       
       if (hasPermission) {
         this.hasPermission = true
@@ -100,9 +78,19 @@ struct Index {
         return
       }
 
-      const granted = await this.permissionService?.requestPermissions(['ohos.permission.MICROPHONE'])
-      if (!granted) {
-        this.permissionError = '获取麦克风权限失败，请'
+      const granted = await PermissionUtil.requestPermissions(['ohos.permission.MICROPHONE'])
+      if (granted) {
+        this.hasPermission = true
+        this.permissionError = ''
+        try {
+          await this.audioService?.initAudioCapture()
+        } catch (err) {
+          console.error('初始化音频捕获器失败:', JSON.stringify(err))
+          this.permissionError = '初始化音频捕获器失败，请重试'
+          this.hasPermission = false
+        }
+      } else {
+        this.permissionError = '获取麦克风权限失败，请在设置中手动开启'
       }
     } catch (err) {
       this.permissionError = '权限检查失败'
@@ -166,10 +154,25 @@ struct Index {
     Column() {
       HeaderTitle()
       
-      PermissionError({ 
-        errorMessage: this.permissionError,
-        permissionService: this.permissionService
-      })
+      if (this.permissionError) {
+        Row() {
+          Text(this.permissionError)
+            .fontSize(14)
+            .fontColor('#FF4081')
+          if (this.permissionError.includes('手动开启')) {
+            Text('去设置')
+              .fontSize(14)
+              .fontColor('#2196F3')
+              .margin({ left: 4 })
+              .onClick(() => {
+                PermissionUtil.requestPermissionsEasy(['ohos.permission.MICROPHONE'])
+              })
+          }
+        }
+        .width('100%')
+        .justifyContent(FlexAlign.Center)
+        .margin({ bottom: 20 })
+      }
       
       DBDisplay({
         currentDB: this.currentDB,
