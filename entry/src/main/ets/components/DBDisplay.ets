@@ -1,54 +1,205 @@
+import { PermissionUtil } from '@pura/harmony-utils'
+import audio from '@ohos.multimedia.audio'
+import { AudioService } from '../services/AudioService'
+
 @Component
 export struct DBDisplay {
-  @Prop currentDB: number
-  getDBColor: (db?: number) => string = () => '#4CAF50'
-  getNoiseLevel: () => string = () => '安静环境'
+  @Link minDB: number
+  @Link maxDB: number
+  @Link avgDB: number
+  @Link currentDB: number
+  getDBColor: (db: number) => string = () => '#666666'
+  @State isRecording: boolean = false
+  @State hasMicPermission: boolean = false
+  @State permissionError: string = ''
+  private sampleCount: number = 0
+  private sampleSum: number = 0
+  private audioService: AudioService | null = null
+
+  aboutToAppear() {
+    this.initAudioService()
+    this.checkAndRequestPermission()
+  }
+
+  aboutToDisappear() {
+    this.audioService?.release()
+  }
+
+  private initAudioService() {
+    this.audioService = new AudioService({
+      sampleRate: 44100,
+      channels: 1,
+      sampleFormat: audio.AudioSampleFormat.SAMPLE_FORMAT_S16LE,
+      bufferSize: 2048
+    })
+
+    this.audioService.setListener({
+      onDBValueChange: (db: number) => {
+        this.currentDB = db
+        if (this.sampleCount === 0) {
+          this.maxDB = db
+          this.minDB = db
+        } else {
+          if (db > this.maxDB) {
+            this.maxDB = db
+          }
+          if (db < this.minDB) {
+            this.minDB = db
+          }
+        }
+        this.sampleSum += db
+        this.sampleCount++
+        this.avgDB = Math.round(this.sampleSum / this.sampleCount)
+      },
+      onError: (error: string) => {
+        console.error(error)
+        this.permissionError = error
+      }
+    })
+  }
+
+  private async checkAndRequestPermission() {
+    try {
+      const hasMicPermission = await PermissionUtil.checkPermissions('ohos.permission.MICROPHONE')
+      if (hasMicPermission) {
+        this.hasMicPermission = true
+        this.permissionError = ''
+        try {
+          await this.audioService?.initAudioCapture()
+        } catch (err) {
+          console.error('初始化音频捕获器失败:', JSON.stringify(err))
+          this.permissionError = '初始化音频捕获器失败，请重试'
+          this.hasMicPermission = false
+        }
+        return
+      }
+
+      const granted = await PermissionUtil.requestPermissions(['ohos.permission.MICROPHONE'])
+      if (granted) {
+        this.hasMicPermission = true
+        this.permissionError = ''
+        try {
+          await this.audioService?.initAudioCapture()
+        } catch (err) {
+          console.error('初始化音频捕获器失败:', JSON.stringify(err))
+          this.permissionError = '初始化音频捕获器失败，请重试'
+          this.hasMicPermission = false
+        }
+      } else {
+        this.permissionError = '获取麦克风权限失败，请在设置中手动开启'
+      }
+    } catch (err) {
+      this.permissionError = '麦克风权限检查失败'
+      console.error('麦克风权限检查失败:', JSON.stringify(err))
+    }
+  }
+
+  private async startRecording() {
+    if (!this.hasMicPermission) {
+      await this.checkAndRequestPermission()
+      if (!this.hasMicPermission) {
+        return
+      }
+    }
+
+    try {
+      // 确保音频捕获器已初始化
+      if (!this.audioService?.isInitialized()) {
+        await this.audioService?.initAudioCapture()
+      }
+
+      // 重置所有统计数据
+      this.maxDB = 0
+      this.minDB = 100
+      this.currentDB = 0
+      this.sampleCount = 0
+      this.sampleSum = 0
+      this.avgDB = 0
+
+      await this.audioService?.startRecording()
+      this.isRecording = this.audioService?.isCurrentlyRecording() ?? false
+    } catch (err) {
+      console.error('启动录音失败:', JSON.stringify(err))
+      this.permissionError = '启动录音失败，请重试'
+      this.hasMicPermission = false
+    }
+  }
+
+  private async stopRecording() {
+    await this.audioService?.stopRecording()
+    this.isRecording = this.audioService?.isCurrentlyRecording() ?? false
+  }
+
+  private getNoiseLevel(): string {
+    if (this.currentDB < 30) return '安静环境'
+    if (this.currentDB < 60) return '正常对话'
+    if (this.currentDB < 90) return '城市喧闹'
+    if (this.currentDB < 100) return '工业噪音'
+    return '危险噪音'
+  }
 
   build() {
     Column() {
-      Row() {
-        Column() {
-          Stack({ alignContent: Alignment.Center }) {
-            Gauge({ value: this.currentDB / 120 * 100 })
-              .width(200)
-              .height(200)
-              .colors(new LinearGradient([
-                { color: '#64BB5C', offset: 0 },     // 0-30dB 绿色
-                { color: '#A4C93B', offset: 0.25 },  // 30-60dB 浅绿
-                { color: '#FFD700', offset: 0.5 },   // 60-90dB 黄色
-                { color: '#FFA500', offset: 0.75 },  // 90-105dB 橙色
-                { color: '#FF4500', offset: 1 }      // 105-120dB 红色
-              ]))
-              .startAngle(210)
-              .endAngle(510)
-              .strokeWidth(30)
-              .zIndex(2)
-
-            Row() {
-              Text(this.currentDB.toFixed(0))
-                .fontSize(40)
-                .fontWeight(FontWeight.Bold)
-                .fontColor(this.getDBColor())
-              Text('dB')
-                .fontSize(16)
-                .fontWeight(FontWeight.Normal)
-                .fontColor(this.getDBColor())
-                .margin({ left: 2, top: 20 })
-            }
-            .justifyContent(FlexAlign.Center)
-            .alignItems(VerticalAlign.Bottom)
-            .zIndex(1)
+      if (this.permissionError) {
+        Row() {
+          Text(this.permissionError)
+            .fontSize(14)
+            .fontColor('#FF4081')
+          if (this.permissionError.includes('手动开启')) {
+            Text('去设置')
+              .fontSize(14)
+              .fontColor('#2196F3')
+              .margin({ left: 4 })
+              .onClick(async () => {
+                await PermissionUtil.requestPermissionsEasy(['ohos.permission.MICROPHONE'])
+                this.checkAndRequestPermission()
+              })
           }
         }
+        .width('100%')
+        .justifyContent(FlexAlign.Center)
+        .margin({ bottom: 20 })
       }
-      .margin({ top: 20 })
 
-      Text(this.getNoiseLevel())
-        .fontSize(16)
-        .fontColor('#666666')
-        .margin({ top: 10 })
+      Row() {
+        Column() {
+          Text(this.currentDB.toFixed(1))
+            .fontSize(64)
+            .fontWeight(FontWeight.Bold)
+            .fontColor(this.getDBColor(this.currentDB))
+          Text('dB')
+            .fontSize(24)
+            .fontColor('#666666')
+            .margin({ top: 8 })
+          Text(this.getNoiseLevel())
+            .fontSize(16)
+            .fontColor('#666666')
+            .margin({ top: 8 })
+        }
+        .width('100%')
+        .alignItems(HorizontalAlign.Center)
+      }
+      .width('100%')
+      .height(200)
+      .backgroundColor('#F5F5F5')
+      .borderRadius(16)
+      .justifyContent(FlexAlign.Center)
+      .margin({ bottom: 20 })
+
+      Button(this.isRecording ? '停止测量' : '开始测量')
+        .width('100%')
+        .height(50)
+        .fontSize(18)
+        .fontWeight(FontWeight.Medium)
+        .backgroundColor(this.isRecording ? '#FF4081' : '#2196F3')
+        .enabled(this.hasMicPermission)
+        .onClick(() => {
+          if (this.isRecording) {
+            this.stopRecording()
+          } else {
+            this.startRecording()
+          }
+        })
     }
-    .width('100%')
-    .alignItems(HorizontalAlign.Center)
   }
 } 
