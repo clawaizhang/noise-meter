@@ -32,14 +32,25 @@ export struct DBDisplay {
   }
 
   aboutToDisappear() {
-    this.audioService?.release()
+    try {
+      // 先停止录音
+      this.audioService?.stopRecording()
+      // 释放音频捕获器资源
+      this.audioService?.release()
+      // 清空音频服务实例
+      this.audioService = null
+      // 重置状态
+      this.isRecording = false
+      this.hasMicPermission = false
+    } catch (err) {
+      console.error('释放录音资源失败:', JSON.stringify(err))
+    }
   }
 
   private async onRecordingStateChange() {
     if (this.isRecording) {
-      await this.startRecording()
-    } else {
-      await this.stopRecording()
+      // 开始测量时重置第一次测量标志
+      this.isFirstMeasurement = true
     }
   }
 
@@ -107,25 +118,28 @@ export struct DBDisplay {
 
     this.audioService.setListener({
       onDBValueChange: (db: number) => {
-        this.currentDB = db
-        // 每次开始新的测量时，第一个数据作为初始值
-        if (this.isFirstMeasurement) {
-          this.maxDB = db
-          this.minDB = db
-          this.avgDB = db
-          this.sampleSum = db
-          this.sampleCount = 1
-          this.isFirstMeasurement = false
-        } else {
-          if (db > this.maxDB) {
+        // 只在测量状态时更新数据
+        if (this.isRecording) {
+          this.currentDB = db
+          // 每次开始新的测量时，第一个数据作为初始值
+          if (this.isFirstMeasurement) {
             this.maxDB = db
-          }
-          if (db < this.minDB) {
             this.minDB = db
+            this.avgDB = db
+            this.sampleSum = db
+            this.sampleCount = 1
+            this.isFirstMeasurement = false
+          } else {
+            if (db > this.maxDB) {
+              this.maxDB = db
+            }
+            if (db < this.minDB) {
+              this.minDB = db
+            }
+            this.sampleSum += db
+            this.sampleCount++
+            this.avgDB = Math.round(this.sampleSum / this.sampleCount)
           }
-          this.sampleSum += db
-          this.sampleCount++
-          this.avgDB = Math.round(this.sampleSum / this.sampleCount)
         }
       },
       onError: (error: string) => {
@@ -133,6 +147,9 @@ export struct DBDisplay {
         this.permissionError = error
       }
     })
+
+    // 初始化后立即开始录音
+    this.startRecording()
   }
 
   private async checkAndRequestPermission() {
@@ -143,6 +160,8 @@ export struct DBDisplay {
         this.permissionError = ''
         try {
           await this.audioService?.initAudioCapture()
+          // 权限获取后立即开始录音
+          await this.startRecording()
         } catch (err) {
           console.error('初始化音频捕获器失败:', JSON.stringify(err))
           this.permissionError = '初始化音频捕获器失败，请重试'
@@ -157,6 +176,8 @@ export struct DBDisplay {
         this.permissionError = ''
         try {
           await this.audioService?.initAudioCapture()
+          // 权限获取后立即开始录音
+          await this.startRecording()
         } catch (err) {
           console.error('初始化音频捕获器失败:', JSON.stringify(err))
           this.permissionError = '初始化音频捕获器失败，请重试'
@@ -185,9 +206,6 @@ export struct DBDisplay {
       if (!this.audioService?.isInitialized()) {
         await this.audioService?.initAudioCapture()
       }
-
-      // 重置第一次测量标志
-      this.isFirstMeasurement = true
 
       await this.audioService?.startRecording()
       if (!(this.audioService?.isCurrentlyRecording() ?? false)) {
