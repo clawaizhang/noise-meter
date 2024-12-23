@@ -43,16 +43,44 @@ struct Index {
 
       Blank()
 
-      Button(this.isRecording ? '停止测量' : '开始测量')
+      Button() {
+        Row() {
+          if (this.isRecording) {
+            Image($r('app.media.ic_stop'))
+              .width(28)
+              .height(28)
+              .margin({ right: 12 })
+              .fillColor('#FFFFFF')
+            Text('停止测量')
+              .fontSize(18)
+              .fontWeight(FontWeight.Medium)
+              .fontColor('#FFFFFF')
+          } else {
+            Image($r('app.media.ic_play'))
+              .width(28)
+              .height(28)
+              .margin({ right: 12 })
+              .fillColor('#FFFFFF')
+            Text('开始测量')
+              .fontSize(18)
+              .fontWeight(FontWeight.Medium)
+              .fontColor('#FFFFFF')
+          }
+        }
         .width('100%')
-        .height(50)
-        .fontSize(18)
-        .fontWeight(FontWeight.Medium)
-        .backgroundColor(this.isRecording ? '#FF4081' : '#2196F3')
-        .enabled(this.hasMicPermission)
-        .onClick(() => {
-          this.isRecording = !this.isRecording
-        })
+        .height('100%')
+        .justifyContent(FlexAlign.Center)
+        .alignItems(VerticalAlign.Center)
+      }
+      .width('60%')
+      .height(48)
+      .backgroundColor(this.isRecording ? '#FF4081' : '#2196F3')
+      .enabled(this.hasMicPermission)
+      .margin({ bottom: 24 })
+      .borderRadius(24)
+      .onClick(() => {
+        this.isRecording = !this.isRecording
+      })
     }
     .width('100%')
     .height('100%')
