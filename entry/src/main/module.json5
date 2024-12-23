@@ -22,6 +22,16 @@
         }
       },
       {
+        "name": "ohos.permission.LOCATION",
+        "reason": "$string:location_reason",
+        "usedScene": {
+          "abilities": [
+            "EntryAbility"
+          ],
+          "when": "always"
+        }
+      },
+      {
         "name": "ohos.permission.INTERNET",
         "reason": "$string:internet_reason",
         "usedScene": {

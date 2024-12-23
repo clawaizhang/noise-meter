@@ -1,11 +1,11 @@
 // 导入音频处理模块
 import audio from '@ohos.multimedia.audio'
-import common from '@ohos.app.ability.common'
 import { AudioService } from '../services/AudioService'
 import { HeaderTitle } from '../components/HeaderTitle'
 import { DBDisplay } from '../components/DBDisplay'
 import { StatisticsView } from '../components/StatisticsView'
 import { ControlButton } from '../components/ControlButton'
+import { LocationDisplay } from '../components/LocationDisplay'
 import { PermissionUtil } from '@pura/harmony-utils'
 
 @Entry
@@ -193,16 +193,18 @@ struct Index {
       
       DBDisplay({
         currentDB: this.currentDB,
-        getDBColor: this.getDBColor.bind(this),
-        getNoiseLevel: this.getNoiseLevel.bind(this)
+        getDBColor: this.getDBColor,
+        getNoiseLevel: this.getNoiseLevel
       })
       
       StatisticsView({
         minDB: this.minDB,
         avgDB: this.avgDB,
         maxDB: this.maxDB,
-        getDBColor: this.getDBColor.bind(this)
+        getDBColor: this.getDBColor
       })
+
+      LocationDisplay()
       
       ControlButton({
         isRecording: this.isRecording,
