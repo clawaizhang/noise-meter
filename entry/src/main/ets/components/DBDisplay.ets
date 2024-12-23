@@ -19,6 +19,13 @@ export struct DBDisplay {
   private audioService: AudioService | null = null
 
   aboutToAppear() {
+    this.maxDB = 0
+    this.minDB = 100
+    this.currentDB = 0
+    this.sampleCount = 0
+    this.sampleSum = 0
+    this.avgDB = 0
+    
     this.initAudioService()
     this.checkAndRequestPermission()
   }
@@ -171,14 +178,6 @@ export struct DBDisplay {
         await this.audioService?.initAudioCapture()
       }
 
-      // 重置所有统计数据
-      this.maxDB = 0
-      this.minDB = 100
-      this.currentDB = 0
-      this.sampleCount = 0
-      this.sampleSum = 0
-      this.avgDB = 0
-
       await this.audioService?.startRecording()
       if (!(this.audioService?.isCurrentlyRecording() ?? false)) {
         this.isRecording = false
@@ -192,7 +191,13 @@ export struct DBDisplay {
   }
 
   private async stopRecording() {
-    await this.audioService?.stopRecording()
+    try {
+      await this.audioService?.stopRecording()
+      // 停止录音时不重置分贝值，保留最后的状态
+    } catch (err) {
+      console.error('停止录音失败:', JSON.stringify(err))
+      this.permissionError = '停止录音失败，请重试'
+    }
   }
 
   private getNoiseLevel(): string {

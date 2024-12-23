@@ -115,7 +115,7 @@ export class AudioService {
 
     try {
       await this.audioCapture.stop();
-      // 清除音频缓存
+      // 释放音频捕获器资源
       await this.audioCapture.release();
       this.audioCapture = null;
       this.isRecording = false;
