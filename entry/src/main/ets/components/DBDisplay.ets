@@ -17,6 +17,7 @@ export struct DBDisplay {
   private sampleCount: number = 0
   private sampleSum: number = 0
   private audioService: AudioService | null = null
+  private isFirstMeasurement: boolean = true
 
   aboutToAppear() {
     this.maxDB = 0
@@ -102,15 +103,19 @@ export struct DBDisplay {
       bufferSize: 2048
     })
 
+    this.isFirstMeasurement = true
+
     this.audioService.setListener({
       onDBValueChange: (db: number) => {
         this.currentDB = db
-        if (this.sampleCount === 0) {
+        // 每次开始新的测量时，第一个数据作为初始值
+        if (this.isFirstMeasurement) {
           this.maxDB = db
           this.minDB = db
           this.avgDB = db
           this.sampleSum = db
           this.sampleCount = 1
+          this.isFirstMeasurement = false
         } else {
           if (db > this.maxDB) {
             this.maxDB = db
@@ -181,8 +186,8 @@ export struct DBDisplay {
         await this.audioService?.initAudioCapture()
       }
 
-      // 重置采样计数，这样下一个值会被当作第一个值处理
-      this.sampleCount = 0
+      // 重置第一次测量标志
+      this.isFirstMeasurement = true
 
       await this.audioService?.startRecording()
       if (!(this.audioService?.isCurrentlyRecording() ?? false)) {
