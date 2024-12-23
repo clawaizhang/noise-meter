@@ -20,7 +20,7 @@ export struct DBDisplay {
 
   aboutToAppear() {
     this.maxDB = 0
-    this.minDB = 100
+    this.minDB = 0
     this.currentDB = 0
     this.sampleCount = 0
     this.sampleSum = 0
@@ -108,6 +108,9 @@ export struct DBDisplay {
         if (this.sampleCount === 0) {
           this.maxDB = db
           this.minDB = db
+          this.avgDB = db
+          this.sampleSum = db
+          this.sampleCount = 1
         } else {
           if (db > this.maxDB) {
             this.maxDB = db
@@ -115,10 +118,10 @@ export struct DBDisplay {
           if (db < this.minDB) {
             this.minDB = db
           }
+          this.sampleSum += db
+          this.sampleCount++
+          this.avgDB = Math.round(this.sampleSum / this.sampleCount)
         }
-        this.sampleSum += db
-        this.sampleCount++
-        this.avgDB = Math.round(this.sampleSum / this.sampleCount)
       },
       onError: (error: string) => {
         console.error(error)
@@ -177,6 +180,9 @@ export struct DBDisplay {
       if (!this.audioService?.isInitialized()) {
         await this.audioService?.initAudioCapture()
       }
+
+      // 重置采样计数，这样下一个值会被当作第一个值处理
+      this.sampleCount = 0
 
       await this.audioService?.startRecording()
       if (!(this.audioService?.isCurrentlyRecording() ?? false)) {
