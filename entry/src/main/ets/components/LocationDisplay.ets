@@ -79,7 +79,8 @@ export struct LocationDisplay {
           .fontSize(14)
           .fontColor('#2196F3')
           .margin({ left: 8 })
-          .onClick(() => {
+          .onClick(async () => {
+            await PermissionUtil.requestPermissionsEasy([LocationDisplay.PERMISSION_APPROXIMATELY_LOCATION, LocationDisplay.PERMISSION_LOCATION])
             this.checkAndRequestPermission()
           })
       }
