@@ -71,9 +71,18 @@ export struct LocationDisplay {
         .height(20)
         .margin({ right: 8 })
         .fillColor('#666666')
-      Text(this.hasLocationPermission ? this.location : '等待位置权限...')
+      Text(this.location)
         .fontSize(14)
         .fontColor('#666666')
+      if (!this.hasLocationPermission) {
+        Text('获取位置')
+          .fontSize(14)
+          .fontColor('#2196F3')
+          .margin({ left: 8 })
+          .onClick(() => {
+            this.checkAndRequestPermission()
+          })
+      }
     }
     .width('100%')
     .justifyContent(FlexAlign.Center)
