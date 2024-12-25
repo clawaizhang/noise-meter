@@ -5,18 +5,23 @@ import { HeaderTitle } from './src/main/ets/components/base/HeaderTitle';
 import { DecibelMeter } from './src/main/ets/components/business/DecibelMeter';
 import { StatisticsView } from './src/main/ets/components/business/StatisticsView';
 import type { StatisticsDataPoint } from './src/main/ets/components/business/StatisticsView';
-import { LocationDisplay } from './src/main/ets/components/business/LocationDisplay';
+import { LocationDisplay, type LocationStyle } from './src/main/ets/components/business/LocationDisplay';
 
 // Services
 import { AudioService } from './src/main/ets/services/AudioService';
 
-const NoiseDetectionLib = {
-  HeaderTitle,
-  DecibelMeter,
-  StatisticsView,
-  LocationDisplay,
-  AudioService
-};
+/**
+ * 噪音检测库接口
+ */
+export class NoiseDetectionLibClass {
+  HeaderTitle = HeaderTitle;
+  DecibelMeter = DecibelMeter;
+  StatisticsView = StatisticsView;
+  LocationDisplay = LocationDisplay;
+  AudioService = AudioService;
+}
+
+const NoiseDetectionLib = new NoiseDetectionLibClass();
 
 export default NoiseDetectionLib;
 export {
@@ -26,4 +31,4 @@ export {
   LocationDisplay,
   AudioService
 };
-export type { StatisticsDataPoint };
+export type { StatisticsDataPoint, LocationStyle };

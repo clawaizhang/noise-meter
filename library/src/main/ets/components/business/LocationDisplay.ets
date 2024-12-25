@@ -6,7 +6,7 @@ import geoLocationManager from '@ohos.geoLocationManager';
 /**
  * 位置显示组件样式接口
  */
-interface LocationStyle {
+export interface LocationStyle {
   iconSize?: number;
   fontSize?: number;
   textColor?: string;
@@ -29,7 +29,7 @@ export struct LocationDisplay {
   };
 
   // 权限常量
-  private static readonly PERMISSION_LIST: Array<Permissions> = [
+  public static readonly PERMISSION_LIST: Array<Permissions> = [
     'ohos.permission.LOCATION' as Permissions,
     'ohos.permission.APPROXIMATELY_LOCATION' as Permissions
   ];
