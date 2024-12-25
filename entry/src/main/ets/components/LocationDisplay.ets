@@ -1,9 +1,14 @@
 import { LocationUtil, PermissionUtil } from '@pura/harmony-utils'
+import { Permissions } from '@kit.AbilityKit'
 
 @Component
 export struct LocationDisplay {
   @State location: string = '正在获取位置...'
   @State hasLocationPermission: boolean = false
+  @State permissionError: string = ''
+
+  private static readonly PERMISSION_LOCATION: Permissions = 'ohos.permission.LOCATION'
+  private static readonly PERMISSION_APPROXIMATELY_LOCATION: Permissions = 'ohos.permission.APPROXIMATELY_LOCATION'
 
   aboutToAppear() {
     this.checkAndRequestPermission()
@@ -11,23 +16,36 @@ export struct LocationDisplay {
 
   private async checkAndRequestPermission() {
     try {
-      const hasPermission = await PermissionUtil.checkPermissions('ohos.permission.LOCATION')
-      if (hasPermission) {
+      // 先检查大致位置权限
+      const hasApproxLocationPermission = await PermissionUtil.checkPermissions(LocationDisplay.PERMISSION_APPROXIMATELY_LOCATION)
+      // 再检查精确位置权限
+      const hasLocationPermission = await PermissionUtil.checkPermissions(LocationDisplay.PERMISSION_LOCATION)
+
+      if (hasApproxLocationPermission && hasLocationPermission) {
+        // 已有全部权限
         this.hasLocationPermission = true
-        this.getLocation()
+        this.permissionError = ''
+        await this.getLocation()
         return
       }
 
-      const granted = await PermissionUtil.requestPermissions(['ohos.permission.LOCATION'])
+      // 请求权限
+      const permissions: Permissions[] = [LocationDisplay.PERMISSION_APPROXIMATELY_LOCATION]
+      if (!hasLocationPermission) {
+        permissions.push(LocationDisplay.PERMISSION_LOCATION)
+      }
+
+      const granted = await PermissionUtil.requestPermissions(permissions)
       if (granted) {
         this.hasLocationPermission = true
-        this.getLocation()
+        this.permissionError = ''
+        await this.getLocation()
       } else {
-        this.location = '无法获取位置信息'
+        this.permissionError = '获取位置权限失败，请在设置中手动开启'
       }
     } catch (err) {
+      this.permissionError = '位置权限检查失败'
       console.error('位置权限检查失败:', JSON.stringify(err))
-      this.location = '位置权限检查失败'
     }
   }
 

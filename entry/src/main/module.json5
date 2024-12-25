@@ -18,7 +18,17 @@
           "abilities": [
             "EntryAbility"
           ],
-          "when": "always"
+          "when": "inuse"
+        }
+      },
+      {
+        "name": "ohos.permission.APPROXIMATELY_LOCATION",
+        "reason": "$string:location_reason",
+        "usedScene": {
+          "abilities": [
+            "EntryAbility"
+          ],
+          "when": "inuse"
         }
       },
       {
@@ -28,7 +38,7 @@
           "abilities": [
             "EntryAbility"
           ],
-          "when": "always"
+          "when": "inuse"
         }
       },
       {
