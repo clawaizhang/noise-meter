@@ -1,8 +1,19 @@
 {
-  "name": "library",
+  "name": "@ohos/library",
   "version": "1.0.0",
   "description": "Common components and services library",
-  "main": "index.ets",
+  "main": "Index.ets",
+  "type": "module",
+  "keywords": [
+    "components",
+    "services",
+    "harmonyos",
+    "arkts"
+  ],
+  "author": "yu.zhang",
+  "license": "ISC",
   "dependencies": {
-  }
+    "@pura/harmony-utils": "^1.0.0"
+  },
+  "devDependencies": {}
 } 

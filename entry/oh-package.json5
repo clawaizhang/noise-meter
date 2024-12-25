@@ -1,10 +1,10 @@
 {
   "name": "entry",
   "version": "1.0.0",
-  "description": "Please describe the basic information.",
-  "main": "",
-  "author": "",
-  "license": "",
+  "description": "Noise detection application",
+  "main": "Index.ets",
+  "author": "yu.zhang",
+  "license": "ISC",
   "dependencies": {
     "@ohos/library": "file:../library"
   }

@@ -4,20 +4,23 @@
  * @param title - 统计标题
  */
 
+/**
+ * 统计数据点接口
+ */
+export interface StatisticsDataPoint {
+  timestamp: number;
+  value: number;
+}
+
 interface Point {
   x: number;
   y: number;
 }
 
-interface DataPoint {
-  timestamp: number;
-  value: number;
-}
-
 @Component
 export struct StatisticsView {
-  @Prop data: Array<DataPoint> = [];
   @Prop title: string = '';
+  @Prop data: Array<StatisticsDataPoint> = [];
   @State chartWidth: string | number = '100%';
   @State chartHeight: number = 200;
   @State chartLineColor: string = '#007DFF';
