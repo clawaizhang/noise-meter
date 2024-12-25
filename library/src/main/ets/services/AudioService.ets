@@ -42,6 +42,7 @@ export class AudioService {
   private isRecording: boolean = false;
   private onDecibelChange: ((decibel: number) => void) | null = null;
   private decibelService: DecibelService = new DecibelService();
+  private isStoppingRecording: boolean = false;
 
   /**
    * 检查麦克风权限
@@ -69,8 +70,8 @@ export class AudioService {
    * @returns Promise<void>
    */
   async startRecording(callback: (decibel: number) => void): Promise<void> {
-    if (this.isRecording) {
-      throw new Error('已经在录音中');
+    if (this.isRecording || this.isStoppingRecording) {
+      throw new Error('已经在录音中或正在停止录音');
     }
 
     // 检查麦克风权限
@@ -86,13 +87,12 @@ export class AudioService {
 
       // 设置readData事件监听
       this.audioCapturer.on('readData', (buffer: ArrayBuffer) => {
+        if (!this.isRecording || this.isStoppingRecording) {
+          return;
+        }
         if (buffer && buffer.byteLength > 0 && this.onDecibelChange) {
-          console.info(`收到音频数据: ${buffer.byteLength} 字节`);
           const decibel = this.decibelService.calculateDecibel(buffer, buffer.byteLength);
-          console.info(`计算得到分贝值: ${decibel}`);
           this.onDecibelChange(decibel);
-        } else {
-          console.warn('收到无效的音频数据');
         }
       });
 
@@ -114,28 +114,31 @@ export class AudioService {
    * @returns Promise<void>
    */
   async stopRecording(): Promise<void> {
-    if (!this.isRecording || !this.audioCapturer) {
+    if (!this.isRecording || !this.audioCapturer || this.isStoppingRecording) {
       return;
     }
 
     try {
-      // 移除readData事件监听
-      this.audioCapturer.off('readData');
-      console.info('移除事件监听');
-      
-      await this.audioCapturer.stop();
-      console.info('音频捕获器停止');
-      
-      await this.audioCapturer.release();
-      console.info('音频捕获器释放');
-      
-      this.audioCapturer = null;
+      this.isStoppingRecording = true;
       this.isRecording = false;
       this.onDecibelChange = null;
+
+      // 移除readData事件监听
+      this.audioCapturer.off('readData');
+      
+      // 使用Promise.all并行执行停止和释放操作
+      await Promise.all([
+        this.audioCapturer.stop(),
+        this.audioCapturer.release()
+      ]);
+      
+      this.audioCapturer = null;
     } catch (err) {
       const error = new Error('停止录音失败：' + (err instanceof Error ? err.message : String(err)));
       console.error(error.message);
       throw error;
+    } finally {
+      this.isStoppingRecording = false;
     }
   }
 } 
