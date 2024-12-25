@@ -74,14 +74,21 @@ export struct LocationDisplay {
       Text(this.location)
         .fontSize(14)
         .fontColor('#666666')
-      if (!this.hasLocationPermission) {
+      if (this.permissionError || this.location === '获取位置失败') {
         Text('获取位置')
           .fontSize(14)
           .fontColor('#2196F3')
           .margin({ left: 8 })
           .onClick(async () => {
-            await PermissionUtil.requestPermissionsEasy([LocationDisplay.PERMISSION_APPROXIMATELY_LOCATION, LocationDisplay.PERMISSION_LOCATION])
-            this.checkAndRequestPermission()
+            const granted = await PermissionUtil.requestPermissionsEasy([
+              LocationDisplay.PERMISSION_APPROXIMATELY_LOCATION,
+              LocationDisplay.PERMISSION_LOCATION
+            ])
+            if (granted) {
+              this.hasLocationPermission = true
+              this.permissionError = ''
+              await this.getLocation()
+            }
           })
       }
     }
