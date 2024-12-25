@@ -1,6 +1,3 @@
-// Base Components
-import { HeaderTitle } from './src/main/ets/components/base/HeaderTitle';
-
 // Business Components
 import { DecibelMeter } from './src/main/ets/components/business/DecibelMeter';
 import { StatisticsView } from './src/main/ets/components/business/StatisticsView';
@@ -14,7 +11,6 @@ import { AudioService } from './src/main/ets/services/AudioService';
  * 噪音检测库接口
  */
 export class NoiseDetectionLibClass {
-  HeaderTitle = HeaderTitle;
   DecibelMeter = DecibelMeter;
   StatisticsView = StatisticsView;
   LocationDisplay = LocationDisplay;
@@ -25,7 +21,6 @@ const NoiseDetectionLib = new NoiseDetectionLibClass();
 
 export default NoiseDetectionLib;
 export {
-  HeaderTitle,
   DecibelMeter,
   StatisticsView,
   LocationDisplay,

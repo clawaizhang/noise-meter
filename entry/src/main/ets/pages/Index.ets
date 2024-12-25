@@ -2,7 +2,6 @@ import prompt from '@ohos.prompt';
 import {
   DecibelMeter,
   StatisticsView,
-  HeaderTitle,
   AudioService,
   type StatisticsDataPoint
 } from '@ohos/library';
@@ -17,11 +16,10 @@ struct Index {
 
   build() {
     Column() {
-      HeaderTitle({
-        title: '噪音检测',
-        fontSize: 28,
-        marginTop: 30
-      })
+      Text('噪音检测')
+        .fontSize(28)
+        .fontWeight(FontWeight.Medium)
+        .margin({ top: 30, bottom: 20 })
 
       DecibelMeter({
         currentDecibel: this.currentDecibel,
@@ -58,7 +56,7 @@ struct Index {
     try {
       await this.audioService.startRecording((decibel: number) => {
         this.currentDecibel = decibel;
-        // 记录历���数据
+        // 记录历史数据
         this.decibelHistory.push({
           timestamp: Date.now(),
           value: decibel
