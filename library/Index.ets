@@ -6,6 +6,7 @@ import { LocationDisplay, type LocationStyle } from './src/main/ets/components/b
 
 // Services
 import { AudioService } from './src/main/ets/services/AudioService';
+import { DecibelService } from './src/main/ets/services/DecibelService';
 
 /**
  * 噪音检测库接口
@@ -15,6 +16,7 @@ export class NoiseDetectionLibClass {
   StatisticsView = StatisticsView;
   LocationDisplay = LocationDisplay;
   AudioService = AudioService;
+  DecibelService = DecibelService;
 }
 
 const NoiseDetectionLib = new NoiseDetectionLibClass();
@@ -24,6 +26,7 @@ export {
   DecibelMeter,
   StatisticsView,
   LocationDisplay,
-  AudioService
+  AudioService,
+  DecibelService
 };
 export type { StatisticsDataPoint, LocationStyle };
