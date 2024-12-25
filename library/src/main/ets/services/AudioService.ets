@@ -1,4 +1,5 @@
 import audio from '@ohos.multimedia.audio';
+import { PermissionUtil } from '@pura/harmony-utils';
 
 /**
  * 音频服务类
@@ -41,23 +42,52 @@ export class AudioService {
   private onDecibelChange: ((decibel: number) => void) | null = null;
 
   /**
+   * 检查麦克风权限
+   * @private
+   * @returns Promise<boolean>
+   */
+  private async checkMicrophonePermission(): Promise<boolean> {
+    try {
+      const hasPermission = await PermissionUtil.checkPermissions('ohos.permission.MICROPHONE');
+      if (hasPermission) {
+        return true;
+      }
+
+      const granted = await PermissionUtil.requestPermissions(['ohos.permission.MICROPHONE']);
+      return granted;
+    } catch (err) {
+      console.error('Failed to check/request microphone permission:', err);
+      return false;
+    }
+  }
+
+  /**
    * 开始录音并计算分贝值
    * @param callback - 分贝值变化回调
    * @returns Promise<void>
    */
   async startRecording(callback: (decibel: number) => void): Promise<void> {
     if (this.isRecording) {
-      throw new Error('Already recording');
+      throw new Error('已经在录音中');
+    }
+
+    // 检查麦克风权限
+    const hasPermission = await this.checkMicrophonePermission();
+    if (!hasPermission) {
+      throw new Error('没有麦克风权限');
     }
 
     try {
+      // 创建音频捕获器
       this.audioCapturer = await audio.createAudioCapturer(this.audioCapturerOptions);
+      
+      // 启动音频捕获器
       await this.audioCapturer.start();
       this.isRecording = true;
       this.onDecibelChange = callback;
       this.startCalculatingDecibel();
     } catch (err) {
-      const error = new Error('Failed to start recording: ' + (err instanceof Error ? err.message : String(err)));
+      const error = new Error('启动录音失败：' + (err instanceof Error ? err.message : String(err)));
       console.error(error.message);
       throw error;
     }
@@ -79,7 +109,7 @@ export class AudioService {
       this.isRecording = false;
       this.onDecibelChange = null;
     } catch (err) {
-      const error = new Error('Failed to stop recording: ' + (err instanceof Error ? err.message : String(err)));
+      const error = new Error('停止录音失败：' + (err instanceof Error ? err.message : String(err)));
       console.error(error.message);
       throw error;
     }
@@ -109,7 +139,7 @@ export class AudioService {
         }
         setTimeout(calculateDecibel, 100); // 每100ms计算一次
       } catch (err) {
-        console.error('Error reading audio data:', err instanceof Error ? err.message : String(err));
+        console.error('读取音频数据失败:', err instanceof Error ? err.message : String(err));
       }
     };
 
