@@ -1,0 +1,20 @@
+{
+  "string": [
+    {
+      "name": "module_desc",
+      "value": "噪音检测应用"
+    },
+    {
+      "name": "EntryAbility_desc",
+      "value": "噪音检测应用"
+    },
+    {
+      "name": "EntryAbility_label",
+      "value": "噪音检测"
+    },
+    {
+      "name": "microphone_permission_reason",
+      "value": "需要使用麦克风来检测环境噪音"
+    }
+  ]
+}
