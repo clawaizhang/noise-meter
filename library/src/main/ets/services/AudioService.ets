@@ -1,10 +1,9 @@
 import audio from '@ohos.multimedia.audio';
 import { PermissionUtil } from '@pura/harmony-utils';
-import { DecibelService } from './DecibelService';
 
 /**
  * 音频服务类
- * 提供音频录制功能
+ * 提供音频采集功能
  */
 
 interface AudioStreamInfo {
@@ -40,9 +39,8 @@ export class AudioService {
 
   private audioCapturer: audio.AudioCapturer | null = null;
   private isRecording: boolean = false;
-  private onDecibelChange: ((decibel: number) => void) | null = null;
-  private decibelService: DecibelService = new DecibelService();
   private isStoppingRecording: boolean = false;
+  private onAudioData: ((buffer: ArrayBuffer) => void) | null = null;
 
   /**
    * 检查麦克风权限
@@ -65,11 +63,11 @@ export class AudioService {
   }
 
   /**
-   * 开始录音并计算分贝值
-   * @param callback - 分贝值变化回调
+   * 开始录音
+   * @param callback - 音频数据回调
    * @returns Promise<void>
    */
-  async startRecording(callback: (decibel: number) => void): Promise<void> {
+  async startRecording(callback: (buffer: ArrayBuffer) => void): Promise<void> {
     if (this.isRecording || this.isStoppingRecording) {
       throw new Error('已经在录音中或正在停止录音');
     }
@@ -90,9 +88,8 @@ export class AudioService {
         if (!this.isRecording || this.isStoppingRecording) {
           return;
         }
-        if (buffer && buffer.byteLength > 0 && this.onDecibelChange) {
-          const decibel = this.decibelService.calculateDecibel(buffer, buffer.byteLength);
-          this.onDecibelChange(decibel);
+        if (buffer && buffer.byteLength > 0 && this.onAudioData) {
+          this.onAudioData(buffer);
         }
       });
 
@@ -101,7 +98,7 @@ export class AudioService {
       console.info('音频捕获器启动成功');
 
       this.isRecording = true;
-      this.onDecibelChange = callback;
+      this.onAudioData = callback;
     } catch (err) {
       const error = new Error('启动录音失败：' + (err instanceof Error ? err.message : String(err)));
       console.error(error.message);
@@ -121,7 +118,7 @@ export class AudioService {
     try {
       this.isStoppingRecording = true;
       this.isRecording = false;
-      this.onDecibelChange = null;
+      this.onAudioData = null;
 
       // 移除readData事件监听
       this.audioCapturer.off('readData');
@@ -140,5 +137,13 @@ export class AudioService {
     } finally {
       this.isStoppingRecording = false;
     }
+  }
+
+  /**
+   * 获取音频配置
+   * @returns AudioStreamInfo
+   */
+  getAudioConfig(): AudioStreamInfo {
+    return this.audioCapturerOptions.streamInfo;
   }
 } 
