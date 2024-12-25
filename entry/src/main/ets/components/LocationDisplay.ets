@@ -1,5 +1,6 @@
 import { LocationUtil, PermissionUtil } from '@pura/harmony-utils'
 import { Permissions } from '@kit.AbilityKit'
+import geoLocationManager from '@ohos.geoLocationManager'
 
 @Component
 export struct LocationDisplay {
@@ -14,15 +15,18 @@ export struct LocationDisplay {
     this.checkAndRequestPermission()
   }
 
+  aboutToDisappear() {
+    // 清理位置监听器
+    LocationUtil.offLocationChange()
+  }
+
   private async checkAndRequestPermission() {
     try {
-      // 先检查大致位置权限
-      const hasApproxLocationPermission = await PermissionUtil.checkPermissions(LocationDisplay.PERMISSION_APPROXIMATELY_LOCATION)
-      // 再检查精确位置权限
+      // 检查所有位置权限
       const hasLocationPermission = await PermissionUtil.checkPermissions(LocationDisplay.PERMISSION_LOCATION)
-
-      if (hasApproxLocationPermission && hasLocationPermission) {
-        // 已有全部权限
+      const hasApproxPermission = await PermissionUtil.checkPermissions(LocationDisplay.PERMISSION_APPROXIMATELY_LOCATION)
+      
+      if (hasLocationPermission && hasApproxPermission) {
         this.hasLocationPermission = true
         this.permissionError = ''
         await this.getLocation()
@@ -30,37 +34,45 @@ export struct LocationDisplay {
       }
 
       // 请求权限
-      const permissions: Permissions[] = [LocationDisplay.PERMISSION_APPROXIMATELY_LOCATION]
-      if (!hasLocationPermission) {
-        permissions.push(LocationDisplay.PERMISSION_LOCATION)
-      }
-
-      const granted = await PermissionUtil.requestPermissions(permissions)
+      const granted = await PermissionUtil.requestPermissions([
+        LocationDisplay.PERMISSION_LOCATION,
+        LocationDisplay.PERMISSION_APPROXIMATELY_LOCATION
+      ])
       if (granted) {
         this.hasLocationPermission = true
         this.permissionError = ''
         await this.getLocation()
       } else {
-        this.permissionError = '获取位置权限失败，请在设置中手动开启'
+        this.updateError('获取位置权限失败，请在设置中手动开启')
       }
     } catch (err) {
-      this.permissionError = '位置权限检查失败'
       console.error('位置权限检查失败:', JSON.stringify(err))
+      this.updateError('位置权限检查失败')
     }
+  }
+
+  private updateError(error: string) {
+    this.permissionError = error
+    this.hasLocationPermission = false
+    this.location = error
   }
 
   private async getLocation() {
     try {
       const location = await LocationUtil.getCurrentLocation()
-      this.location = `位置: ${location.latitude.toFixed(4)}°, ${location.longitude.toFixed(4)}°`
-
+      this.updateLocation(location)
+      
       // 监听位置变化
-      LocationUtil.onLocationChangeEasy((location) => {
-        this.location = `位置: ${location.latitude.toFixed(4)}°, ${location.longitude.toFixed(4)}°`
-      })
+      LocationUtil.onLocationChangeEasy(this.updateLocation)
     } catch (err) {
       console.error('获取位置失败:', JSON.stringify(err))
-      this.location = '获取位置失败'
+      this.updateError('获取位置失败')
+    }
+  }
+
+  private updateLocation(location: geoLocationManager.Location) {
+    if (location.latitude !== undefined && location.longitude !== undefined) {
+      this.location = `位置: ${location.latitude.toFixed(4)}°, ${location.longitude.toFixed(4)}°`
     }
   }
 
@@ -81,8 +93,8 @@ export struct LocationDisplay {
           .margin({ left: 8 })
           .onClick(async () => {
             const granted = await PermissionUtil.requestPermissionsEasy([
-              LocationDisplay.PERMISSION_APPROXIMATELY_LOCATION,
-              LocationDisplay.PERMISSION_LOCATION
+              LocationDisplay.PERMISSION_LOCATION,
+              LocationDisplay.PERMISSION_APPROXIMATELY_LOCATION
             ])
             if (granted) {
               this.hasLocationPermission = true
