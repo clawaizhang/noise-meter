@@ -9,57 +9,43 @@ export struct DecibelMeter {
   @Prop currentDecibel: number = 0;
   @State maxDecibel: number = 120;
   @State minDecibel: number = 0;
-  @State meterWidth: number = 300;
-  @State meterHeight: number = 150;
+
+  private getDecibelColor(value: number): string {
+    if (value < 60) return '#4CAF50';  // 安全
+    if (value < 90) return '#FFC107';  // 警告
+    if (value < 100) return '#FF9800'; // 危险
+    return '#F44336';                  // 极度危险
+  }
+
+  private getDecibelLevel(value: number): string {
+    if (value < 30) return '安静';
+    if (value < 60) return '正常';
+    if (value < 90) return '嘈杂';
+    if (value < 100) return '危险';
+    return '极度危险';
+  }
 
   build() {
     Column() {
-      // 分贝值显示
-      Text(this.currentDecibel.toFixed(1) + ' dB')
-        .fontSize(32)
+      Text(this.currentDecibel.toFixed(1))
+        .fontSize(64)
         .fontWeight(FontWeight.Bold)
-        .margin({ bottom: 20 })
-
-      // 分贝计表盘
-      Stack() {
-        // 背景圆弧
-        Shape() {
-          Path()
-            .width(this.meterWidth)
-            .height(this.meterHeight)
-            .commands('M 0 ' + this.meterHeight + ' A ' + this.meterHeight + ' ' + this.meterHeight + ' 0 0 1 ' + this.meterWidth + ' ' + this.meterHeight)
-            .stroke('#E0E0E0')
-            .strokeWidth(10)
-            .fill('none')
-        }
-
-        // 当前值指示器
-        Shape() {
-          Path()
-            .width(this.meterWidth)
-            .height(this.meterHeight)
-            .commands('M 0 ' + this.meterHeight + ' A ' + this.meterHeight + ' ' + this.meterHeight + ' 0 0 1 ' + 
-              (this.meterWidth * (this.currentDecibel / this.maxDecibel)) + ' ' + this.meterHeight)
-            .stroke('#007DFF')
-            .strokeWidth(10)
-            .fill('none')
-        }
-
-        // 刻度值
-        Row() {
-          Text(this.minDecibel + '')
-            .fontSize(12)
-            .fontColor('#999999')
-          Blank()
-          Text(this.maxDecibel + '')
-            .fontSize(12)
-            .fontColor('#999999')
-        }
-        .width(this.meterWidth)
-        .position({ y: this.meterHeight + 20 })
+        .fontColor(this.getDecibelColor(this.currentDecibel))
+      
+      Row() {
+        Text('dB')
+          .fontSize(20)
+          .fontColor('#666666')
+        Text(this.getDecibelLevel(this.currentDecibel))
+          .fontSize(16)
+          .fontColor('#666666')
+          .margin({ left: 8 })
       }
-      .width(this.meterWidth)
-      .height(this.meterHeight + 40)
+      .margin({ top: 8 })
     }
+    .backgroundColor('#F5F5F5')
+    .borderRadius(16)
+    .width('100%')
+    .padding(20)
   }
 } 
