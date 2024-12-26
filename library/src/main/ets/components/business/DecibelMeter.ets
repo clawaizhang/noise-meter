@@ -29,8 +29,8 @@ export struct DecibelMeter {
       this.audioService.startRecording((buffer: ArrayBuffer) => {
         // 使用DecibelService计算分贝值
         const db = this.decibelService.calculateDecibel(buffer, buffer.byteLength)
-        this.currentDecibel = db
-        this.updateStatistics(db)
+        this.currentDecibel = Math.round(db)
+        this.updateStatistics(this.currentDecibel)
       })
     }
   }
@@ -55,7 +55,7 @@ export struct DecibelMeter {
       // 计算累计平均值
       this.dbSum += value
       this.dbCount++
-      this.avgDecibel = this.dbSum / this.dbCount
+      this.avgDecibel = Math.round(this.dbSum / this.dbCount)
     }
   }
 
@@ -67,73 +67,150 @@ export struct DecibelMeter {
           .fontSize(14)
           .fontColor('#666666')
           .margin({ bottom: 4 })
-        Text(this.minDecibel.toFixed(1))
-          .fontSize(20)
-          .fontWeight(FontWeight.Bold)
-          .fontColor(this.decibelService.getDecibelColor(this.minDecibel))
+        Row() {
+          Text(this.minDecibel.toString())
+            .fontSize(24)
+            .fontWeight(FontWeight.Bold)
+            .fontColor(this.decibelService.getDecibelColor(this.minDecibel))
+          Text(' 分贝')
+            .fontSize(12)
+            .fontColor('#666666')
+            .margin({ left: 2 })
+            .alignSelf(ItemAlign.End)
+            .margin({ bottom: 4 })
+        }
       }
       .layoutWeight(1)
       .alignItems(HorizontalAlign.Center)
+
+      Divider()
+        .width(1)
+        .height(40)
+        .backgroundColor('#E0E0E0')
+        .margin({ left: 8, right: 8 })
 
       Column() {
         Text('平均值')
           .fontSize(14)
           .fontColor('#666666')
           .margin({ bottom: 4 })
-        Text(this.avgDecibel.toFixed(1))
-          .fontSize(20)
-          .fontWeight(FontWeight.Bold)
-          .fontColor(this.decibelService.getDecibelColor(this.avgDecibel))
+        Row() {
+          Text(this.avgDecibel.toString())
+            .fontSize(24)
+            .fontWeight(FontWeight.Bold)
+            .fontColor(this.decibelService.getDecibelColor(this.avgDecibel))
+          Text(' 分贝')
+            .fontSize(12)
+            .fontColor('#666666')
+            .margin({ left: 2 })
+            .alignSelf(ItemAlign.End)
+            .margin({ bottom: 4 })
+        }
       }
       .layoutWeight(1)
       .alignItems(HorizontalAlign.Center)
+
+      Divider()
+        .width(1)
+        .height(40)
+        .backgroundColor('#E0E0E0')
+        .margin({ left: 8, right: 8 })
 
       Column() {
         Text('最大值')
           .fontSize(14)
           .fontColor('#666666')
           .margin({ bottom: 4 })
-        Text(this.maxDecibel.toFixed(1))
-          .fontSize(20)
-          .fontWeight(FontWeight.Bold)
-          .fontColor(this.decibelService.getDecibelColor(this.maxDecibel))
+        Row() {
+          Text(this.maxDecibel.toString())
+            .fontSize(24)
+            .fontWeight(FontWeight.Bold)
+            .fontColor(this.decibelService.getDecibelColor(this.maxDecibel))
+          Text(' 分贝')
+            .fontSize(12)
+            .fontColor('#666666')
+            .margin({ left: 2 })
+            .alignSelf(ItemAlign.End)
+            .margin({ bottom: 4 })
+        }
       }
       .layoutWeight(1)
       .alignItems(HorizontalAlign.Center)
     }
     .width('100%')
-    .margin({ top: 16, bottom: 16 })
+    .margin({ top: 24 })
   }
 
   build() {
     Column() {
-      // 分贝值显示
-      Text(this.currentDecibel.toFixed(1))
-        .fontSize(64)
-        .fontWeight(FontWeight.Bold)
-        .fontColor(this.decibelService.getDecibelColor(this.currentDecibel))
-        .margin({ top: 20, bottom: 8 })
+      // 分贝显示卡片
+      Column() {
+        // 分贝值显示
+        Row() {
+          Text(this.currentDecibel.toString())
+            .fontSize(72)
+            .fontWeight(FontWeight.Bold)
+            .fontColor(this.decibelService.getDecibelColor(this.currentDecibel))
+          Text(' 分贝')
+            .fontSize(20)
+            .fontColor('#666666')
+            .margin({ left: 4 })
+            .alignSelf(ItemAlign.End)
+            .margin({ bottom: 16 })
+        }
 
-      Text(this.decibelService.getDecibelLevel(this.currentDecibel))
-        .fontSize(16)
-        .fontColor('#666666')
-        .margin({ bottom: 20 })
+        Text(this.decibelService.getDecibelLevel(this.currentDecibel))
+          .fontSize(16)
+          .fontColor('#666666')
+          .margin({ top: 8, bottom: 16 })
 
-      // 统计数据显示
-      this.StatisticsRow()
+        // 分割线
+        if (this.currentDecibel > 0) {
+          Divider()
+            .width('90%')
+            .color('#E0E0E0')
+            .margin({ top: 8, bottom: 8 })
+
+          // 统计数据显示
+          this.StatisticsRow()
+        }
+      }
+      .width('100%')
+      .padding(24)
+      .backgroundColor(Color.White)
+      .borderRadius(24)
+      .shadow({ radius: 20, color: '#1A000000', offsetY: 4 })
 
       // 开始/停止按钮
-      Button(this.isRecording ? '停止' : '开始')
-        .width(120)
-        .height(40)
-        .backgroundColor(this.isRecording ? '#FF4081' : '#4CAF50')
-        .onClick(() => {
+      Button({
+        type: ButtonType.Capsule,
+        stateEffect: true
+      }) {
+        Row() {
           if (this.isRecording) {
-            this.stopRecording()
-          } else {
-            this.startRecording()
+            Image($r('app.media.ic_stop'))
+              .width(24)
+              .height(24)
+              .margin({ right: 8 })
+              .fillColor(Color.White)
           }
-        })
+          Text(this.isRecording ? '停止检测' : '开始检测')
+            .fontSize(18)
+            .fontWeight(FontWeight.Medium)
+            .fontColor(Color.White)
+        }
+      }
+      .width(180)
+      .height(56)
+      .margin({ top: 32 })
+      .backgroundColor(this.isRecording ? '#FF4081' : '#2196F3')
+      .onClick(() => {
+        if (this.isRecording) {
+          this.stopRecording()
+        } else {
+          this.startRecording()
+        }
+      })
     }
     .width('100%')
     .alignItems(HorizontalAlign.Center)

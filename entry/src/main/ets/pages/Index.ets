@@ -32,6 +32,7 @@ struct Index {
       }
       .width('100%')
       .height('100%')
+      .padding({ left: 16, right: 16 })
       .justifyContent(FlexAlign.SpaceEvenly)
       .alignItems(HorizontalAlign.Center)
     }
