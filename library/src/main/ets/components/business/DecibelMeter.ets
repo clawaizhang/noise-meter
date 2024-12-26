@@ -35,7 +35,6 @@ export struct DecibelMeter {
     try {
       await this.audioService.stopRecording();
       this.isRecording = false;
-      this.currentDecibel = 0;
     } catch (err) {
       console.error('停止录音失败:', err);
     }
