@@ -3,13 +3,44 @@ import { LocationDisplay, DecibelMeter } from '@ohos/library';
 @Entry
 @Component
 struct Index {
+  @State bgColor: string = '#F1F3F5'
+
   build() {
-    Column() {
-      LocationDisplay()
-        .margin({ top: 16, bottom: 8 })
-      
-      DecibelMeter()
+    Stack({ alignContent: Alignment.Center }) {
+      // 背景
+      Column()
+        .width('100%')
+        .height('100%')
+        .backgroundColor(this.bgColor)
+
+      Column() {
+        // 顶部位置信息
+        Column() {
+          LocationDisplay()
+        }
+        .width('92%')
+        .padding(16)
+        .borderRadius(24)
+        .backgroundColor(Color.White)
+        .margin({ top: 24, bottom: 16 })
+        .shadow({ radius: 12, color: '#1A000000', offsetY: 2 })
+
+        // 噪音检测区域
+        Column() {
+          DecibelMeter()
+        }
+        .width('92%')
+        .padding({ top: 24, bottom: 24, left: 20, right: 20 })
+        .borderRadius(24)
+        .backgroundColor(Color.White)
+        .shadow({ radius: 12, color: '#1A000000', offsetY: 2 })
+      }
+      .width('100%')
+      .height('100%')
+      .justifyContent(FlexAlign.SpaceEvenly)  // 均匀分布
+      .alignItems(HorizontalAlign.Center)      // 水平居中
     }
     .width('100%')
+    .height('100%')
   }
 }
