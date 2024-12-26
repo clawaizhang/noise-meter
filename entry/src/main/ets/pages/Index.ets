@@ -34,7 +34,6 @@ struct Index {
     try {
       await this.audioService.stopRecording();
       this.isRecording = false;
-      this.currentDecibel = 0;
     } catch (err) {
       prompt.showToast({
         message: '停止录音失败：' + (err instanceof Error ? err.message : String(err)),
