@@ -1,4 +1,5 @@
-import { LocationDisplay, DecibelMeter } from '@ohos/library';
+import { LocationDisplay } from '@ohos/library';
+import { NoiseDecibel } from '../components/NoiseDecibel';
 
 @Entry
 @Component
@@ -26,19 +27,13 @@ struct Index {
         .shadow({ radius: 12, color: '#1A000000', offsetY: 2 })
 
         // 噪音检测区域
-        Column() {
-          DecibelMeter()
-        }
-        .width('92%')
-        .padding({ top: 24, bottom: 24, left: 20, right: 20 })
-        .borderRadius(24)
-        .backgroundColor(Color.White)
-        .shadow({ radius: 12, color: '#1A000000', offsetY: 2 })
+        NoiseDecibel()
+          .width('92%')
       }
       .width('100%')
       .height('100%')
-      .justifyContent(FlexAlign.SpaceEvenly)  // 均匀分布
-      .alignItems(HorizontalAlign.Center)      // 水平居中
+      .justifyContent(FlexAlign.SpaceEvenly)
+      .alignItems(HorizontalAlign.Center)
     }
     .width('100%')
     .height('100%')

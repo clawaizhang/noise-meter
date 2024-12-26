@@ -1,78 +1,141 @@
-import { DecibelService } from '../../services/DecibelService';
 import { AudioService } from '../../services/AudioService';
+import { DecibelService } from '../../services/DecibelService';
 
-/**
- * 分贝计组件
- */
 @Component
 export struct DecibelMeter {
-  @State currentDecibel: number = 0;
-  @State maxDecibel: number = 120;
-  @State minDecibel: number = 0;
-  @State isRecording: boolean = false;
-  private decibelService: DecibelService = new DecibelService();
-  private audioService: AudioService = new AudioService();
+  @State private currentDecibel: number = 0
+  @State private minDecibel: number = 0
+  @State private maxDecibel: number = 0
+  @State private avgDecibel: number = 0
+  @State private isRecording: boolean = false
+  private decibelService: DecibelService = new DecibelService()
+  private audioService: AudioService = new AudioService()
+  private dbCount: number = 0
+  private dbSum: number = 0
+
+  aboutToAppear() {
+    // 初始化录音
+    this.startRecording()
+  }
 
   aboutToDisappear() {
+    // 停止录音
+    this.stopRecording()
+  }
+
+  private startRecording() {
+    if (!this.isRecording) {
+      this.isRecording = true
+      this.audioService.startRecording((buffer: ArrayBuffer) => {
+        // 使用DecibelService计算分贝值
+        const db = this.decibelService.calculateDecibel(buffer, buffer.byteLength)
+        this.currentDecibel = db
+        this.updateStatistics(db)
+      })
+    }
+  }
+
+  private stopRecording() {
     if (this.isRecording) {
-      this.stopRecording();
+      this.isRecording = false
+      this.audioService.stopRecording()
     }
   }
 
-  private async startRecording() {
-    try {
-      await this.audioService.startRecording((buffer: ArrayBuffer) => {
-        const decibel = this.decibelService.calculateDecibel(buffer, buffer.byteLength);
-        this.currentDecibel = decibel;
-      });
-      this.isRecording = true;
-    } catch (err) {
-      console.error('启动录音失败:', err);
+  private updateStatistics(value: number) {
+    if (value > 0) {
+      // 更新最小值
+      if (this.minDecibel === 0 || value < this.minDecibel) {
+        this.minDecibel = value
+      }
+      // 更新最大值
+      if (value > this.maxDecibel) {
+        this.maxDecibel = value
+      }
+      // 计算累计平均值
+      this.dbSum += value
+      this.dbCount++
+      this.avgDecibel = this.dbSum / this.dbCount
     }
   }
 
-  private async stopRecording() {
-    try {
-      await this.audioService.stopRecording();
-      this.isRecording = false;
-    } catch (err) {
-      console.error('停止录音失败:', err);
+  @Builder
+  StatisticsRow() {
+    Row() {
+      Column() {
+        Text('最小值')
+          .fontSize(14)
+          .fontColor('#666666')
+          .margin({ bottom: 4 })
+        Text(this.minDecibel.toFixed(1))
+          .fontSize(20)
+          .fontWeight(FontWeight.Bold)
+          .fontColor(this.decibelService.getDecibelColor(this.minDecibel))
+      }
+      .layoutWeight(1)
+      .alignItems(HorizontalAlign.Center)
+
+      Column() {
+        Text('平均值')
+          .fontSize(14)
+          .fontColor('#666666')
+          .margin({ bottom: 4 })
+        Text(this.avgDecibel.toFixed(1))
+          .fontSize(20)
+          .fontWeight(FontWeight.Bold)
+          .fontColor(this.decibelService.getDecibelColor(this.avgDecibel))
+      }
+      .layoutWeight(1)
+      .alignItems(HorizontalAlign.Center)
+
+      Column() {
+        Text('最大值')
+          .fontSize(14)
+          .fontColor('#666666')
+          .margin({ bottom: 4 })
+        Text(this.maxDecibel.toFixed(1))
+          .fontSize(20)
+          .fontWeight(FontWeight.Bold)
+          .fontColor(this.decibelService.getDecibelColor(this.maxDecibel))
+      }
+      .layoutWeight(1)
+      .alignItems(HorizontalAlign.Center)
     }
+    .width('100%')
+    .margin({ top: 16, bottom: 16 })
   }
 
   build() {
     Column() {
+      // 分贝值显示
       Text(this.currentDecibel.toFixed(1))
         .fontSize(64)
         .fontWeight(FontWeight.Bold)
         .fontColor(this.decibelService.getDecibelColor(this.currentDecibel))
-      
-      Row() {
-        Text('dB')
-          .fontSize(20)
-          .fontColor('#666666')
-        Text(this.decibelService.getDecibelLevel(this.currentDecibel))
-          .fontSize(16)
-          .fontColor('#666666')
-          .margin({ left: 8 })
-      }
-      .margin({ top: 8, bottom: 20 })
+        .margin({ top: 20, bottom: 8 })
 
+      Text(this.decibelService.getDecibelLevel(this.currentDecibel))
+        .fontSize(16)
+        .fontColor('#666666')
+        .margin({ bottom: 20 })
+
+      // 统计数据显示
+      this.StatisticsRow()
+
+      // 开始/停止按钮
       Button(this.isRecording ? '停止' : '开始')
         .width(120)
         .height(40)
-        .backgroundColor(this.isRecording ? '#F44336' : '#4CAF50')
+        .backgroundColor(this.isRecording ? '#FF4081' : '#4CAF50')
         .onClick(() => {
           if (this.isRecording) {
-            this.stopRecording();
+            this.stopRecording()
           } else {
-            this.startRecording();
+            this.startRecording()
           }
         })
     }
-    .backgroundColor('#F5F5F5')
-    .borderRadius(16)
     .width('100%')
-    .padding(20)
+    .alignItems(HorizontalAlign.Center)
   }
 } 
