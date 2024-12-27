@@ -18,15 +18,15 @@
     },
     {
       "name": "location_permission_reason",
-      "value": "需要使用位置信息来记录噪音检测位置"
-    },
-    {
-      "name": "location_background_permission_reason",
-      "value": "需要在后台使用位置信息来持续记录噪音检测位置"
+      "value": "需要获取位置信息来记录噪音检测位置"
     },
     {
       "name": "internet_permission_reason",
-      "value": "需要访问网络获取位置信息服务"
+      "value": "需要访问网络以获取位置信息"
+    },
+    {
+      "name": "network_permission_reason",
+      "value": "需要获取网络状态以确保位置服务正常工作"
     }
   ]
 }
