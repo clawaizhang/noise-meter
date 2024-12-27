@@ -204,7 +204,9 @@ export struct DecibelMeter {
       }
       .width('100%')
       .margin({ top: 16, left: 16, right: 16 })
-      .shadow({ radius: 20, color: '#1A000000', offsetY: 4 })
+      .backgroundColor(Color.White)
+      .borderRadius(24)
+      .shadow({ radius: 1, color: '#1A000000', offsetY: 2 })
 
       // 位置显示
       Column() {
@@ -215,7 +217,7 @@ export struct DecibelMeter {
       .borderRadius(20)
       .backgroundColor(Color.White)
       .margin({ top: 16, bottom: 16, left: 16, right: 16 })
-      .shadow({ radius: 12, color: '#1A000000', offsetY: 2 })
+      .shadow({ radius: 1, color: '#1A000000', offsetY: 2 })
 
       // 开始/停止按钮
       Button({

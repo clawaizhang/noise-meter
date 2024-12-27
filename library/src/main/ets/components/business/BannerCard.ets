@@ -37,7 +37,7 @@ export struct BannerCard {
       .height(96)
       .padding(8)
       .backgroundColor(Color.White)
-      .borderRadius(16)
+      .borderRadius(24)
       .onClick(() => {
         if (this.onItemClick) {
           this.onItemClick()
@@ -45,6 +45,9 @@ export struct BannerCard {
       })
     }
     .width('100%')
-    .shadow({ radius: 12, color: '#1A000000', offsetY: 2 })
+    .backgroundColor(Color.White)
+    .borderRadius(24)
+    .alignItems(HorizontalAlign.Center)
+    .shadow({ radius: 1, color: '#1A000000', offsetY: 2 })
   }
 } 
