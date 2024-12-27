@@ -20,10 +20,10 @@ struct Index {
           LocationDisplay()
         }
         .width('92%')
-        .padding(16)
+        .padding(12)
         .borderRadius(24)
         .backgroundColor(Color.White)
-        .margin({ top: 24, bottom: 16 })
+        .margin({ top: 16, bottom: 12 })
         .shadow({ radius: 12, color: '#1A000000', offsetY: 2 })
 
         // 噪音检测区域
@@ -33,7 +33,7 @@ struct Index {
       .width('100%')
       .height('100%')
       .padding({ left: 16, right: 16 })
-      .justifyContent(FlexAlign.SpaceEvenly)
+      .justifyContent(FlexAlign.Start)
       .alignItems(HorizontalAlign.Center)
     }
     .width('100%')
