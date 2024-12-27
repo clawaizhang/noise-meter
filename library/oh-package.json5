@@ -13,7 +13,9 @@
   "author": "yu.zhang",
   "license": "ISC",
   "dependencies": {
-    "@pura/harmony-utils": "^1.0.0"
+    "@pura/harmony-utils": "^1.0.0",
+    "@amap/amap_lbs_common": "^1.1.0",
+    "@amap/amap_lbs_location": "^1.1.0"
   },
   "devDependencies": {}
 } 
