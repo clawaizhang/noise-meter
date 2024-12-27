@@ -48,14 +48,6 @@ export struct LocationDisplay {
   }
 
   async aboutToAppear() {
-    // 请求位置权限
-    const hasPermission = await this.requestLocationPermission();
-    if (!hasPermission) {
-      this.location = '缺少位置权限';
-      this.address = '请授予位置权限以使用定位功能';
-      return;
-    }
-
     // 设置Key
     AMapLocationManagerImpl.setApiKey("7dd65efe926c70f43ab42a7686cd8140");
 
@@ -97,8 +89,6 @@ export struct LocationDisplay {
         this.isRefreshing = false;
       }
     });
-    // 开始单次定位
-    this.startSingleLocation();
   }
 
   private async requestLocationPermission(): Promise<boolean> {
@@ -242,17 +232,25 @@ export struct LocationDisplay {
             .fontColor(this.style?.textColor ?? '#000000')
         }
 
-        Blank()  // 添加弹性空间
+        Blank()
 
         // 添加开关控件
         Toggle({ type: ToggleType.Switch, isOn: this.isLocationEnabled })
           .selectedColor('#0091FF')
           .switchPointColor('#FFFFFF')
-          .onChange((isOn: boolean) => {
+          .onChange(async (isOn: boolean) => {
             this.isLocationEnabled = isOn;
             if (isOn) {
-              // 开启时立即获取一次位置
-              this.startSingleLocation();
+              // 开启时请求权限并获取位置
+              const hasPermission = await this.requestLocationPermission();
+              if (hasPermission) {
+                this.startSingleLocation();
+              } else {
+                // 如果权限被拒绝，关闭开关
+                this.isLocationEnabled = false;
+                this.location = '缺少位置权限';
+                this.address = '请授予位置权限以使用定位功能';
+              }
             }
           })
       }
