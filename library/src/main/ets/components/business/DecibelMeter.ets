@@ -1,6 +1,7 @@
 import { AudioService } from '../../services/AudioService';
 import { DecibelService } from '../../services/DecibelService';
 import { LocationDisplay } from './LocationDisplay'
+import router from '@ohos.router';
 
 @Component
 export struct DecibelMeter {
@@ -145,42 +146,63 @@ export struct DecibelMeter {
   build() {
     Column() {
       // 分贝显示卡片
-      Column() {
-        // 分贝值显示
-        Row() {
-          Text(this.currentDecibel.toString())
-            .fontSize(72)
-            .fontWeight(FontWeight.Bold)
-            .fontColor(this.decibelService.getDecibelColor(this.currentDecibel))
-          Text(' 分贝')
-            .fontSize(20)
+      Stack({ alignContent: Alignment.TopEnd }) {
+        Column() {
+          // 分贝值显示
+          Row() {
+            Text(this.currentDecibel.toString())
+              .fontSize(72)
+              .fontWeight(FontWeight.Bold)
+              .fontColor(this.decibelService.getDecibelColor(this.currentDecibel))
+            Text(' 分贝')
+              .fontSize(20)
+              .fontColor('#666666')
+              .margin({ left: 8 })
+              .alignSelf(ItemAlign.End)
+              .margin({ bottom: 20 })
+          }
+          .margin({ top: 12 })
+
+          Text(this.decibelService.getDecibelLevel(this.currentDecibel))
+            .fontSize(16)
             .fontColor('#666666')
-            .margin({ left: 8 })
-            .alignSelf(ItemAlign.End)
-            .margin({ bottom: 20 })
+            .margin({ top: 12, bottom: 20 })
+
+          // 分割线
+          if (this.currentDecibel > 0) {
+            Divider()
+              .width('92%')
+              .color('#E0E0E0')
+              .margin({ top: 12, bottom: 16 })
+
+            // 统计数据显示
+            this.StatisticsRow()
+          }
         }
-        .margin({ top: 12 })
+        .width('100%')
+        .padding({ top: 28, bottom: 28, left: 24, right: 24 })
+        .backgroundColor(Color.White)
+        .borderRadius(24)
 
-        Text(this.decibelService.getDecibelLevel(this.currentDecibel))
-          .fontSize(16)
-          .fontColor('#666666')
-          .margin({ top: 12, bottom: 20 })
-
-        // 分割线
-        if (this.currentDecibel > 0) {
-          Divider()
-            .width('92%')
-            .color('#E0E0E0')
-            .margin({ top: 12, bottom: 16 })
-
-          // 统计数据显示
-          this.StatisticsRow()
+        // 历史记录按钮
+        Button() {
+          Image($r('app.media.ic_history'))
+            .width(24)
+            .height(24)
+            .fillColor('#2196F3')
         }
+        .type(ButtonType.Circle)
+        .width(40)
+        .height(40)
+        .margin({ top: 16, right: 16 })
+        .backgroundColor('#F5F5F5')
+        .onClick(() => {
+          router.pushUrl({
+            url: 'pages/DecibelHistory'
+          })
+        })
       }
       .width('100%')
-      .padding({ top: 28, bottom: 28, left: 24, right: 24 })
-      .backgroundColor(Color.White)
-      .borderRadius(24)
       .margin({ top: 16, left: 16, right: 16 })
       .shadow({ radius: 20, color: '#1A000000', offsetY: 4 })
 
