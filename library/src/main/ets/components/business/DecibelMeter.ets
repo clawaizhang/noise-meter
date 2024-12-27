@@ -1,5 +1,6 @@
 import { AudioService } from '../../services/AudioService';
 import { DecibelService } from '../../services/DecibelService';
+import { LocationDisplay } from './LocationDisplay'
 
 @Component
 export struct DecibelMeter {
@@ -66,7 +67,7 @@ export struct DecibelMeter {
         Text('最小值')
           .fontSize(14)
           .fontColor('#666666')
-          .margin({ bottom: 4 })
+          .margin({ bottom: 8 })
         Row() {
           Text(this.minDecibel.toString())
             .fontSize(24)
@@ -75,7 +76,7 @@ export struct DecibelMeter {
           Text(' 分贝')
             .fontSize(12)
             .fontColor('#666666')
-            .margin({ left: 2 })
+            .margin({ left: 4 })
             .alignSelf(ItemAlign.End)
             .margin({ bottom: 4 })
         }
@@ -85,15 +86,15 @@ export struct DecibelMeter {
 
       Divider()
         .width(1)
-        .height(40)
+        .height(44)
         .backgroundColor('#E0E0E0')
-        .margin({ left: 8, right: 8 })
+        .margin({ left: 12, right: 12 })
 
       Column() {
         Text('平均值')
           .fontSize(14)
           .fontColor('#666666')
-          .margin({ bottom: 4 })
+          .margin({ bottom: 8 })
         Row() {
           Text(this.avgDecibel.toString())
             .fontSize(24)
@@ -102,7 +103,7 @@ export struct DecibelMeter {
           Text(' 分贝')
             .fontSize(12)
             .fontColor('#666666')
-            .margin({ left: 2 })
+            .margin({ left: 4 })
             .alignSelf(ItemAlign.End)
             .margin({ bottom: 4 })
         }
@@ -112,15 +113,15 @@ export struct DecibelMeter {
 
       Divider()
         .width(1)
-        .height(40)
+        .height(44)
         .backgroundColor('#E0E0E0')
-        .margin({ left: 8, right: 8 })
+        .margin({ left: 12, right: 12 })
 
       Column() {
         Text('最大值')
           .fontSize(14)
           .fontColor('#666666')
-          .margin({ bottom: 4 })
+          .margin({ bottom: 8 })
         Row() {
           Text(this.maxDecibel.toString())
             .fontSize(24)
@@ -129,7 +130,7 @@ export struct DecibelMeter {
           Text(' 分贝')
             .fontSize(12)
             .fontColor('#666666')
-            .margin({ left: 2 })
+            .margin({ left: 4 })
             .alignSelf(ItemAlign.End)
             .margin({ bottom: 4 })
         }
@@ -138,7 +139,7 @@ export struct DecibelMeter {
       .alignItems(HorizontalAlign.Center)
     }
     .width('100%')
-    .margin({ top: 24 })
+    .margin({ top: 16 })
   }
 
   build() {
@@ -154,32 +155,45 @@ export struct DecibelMeter {
           Text(' 分贝')
             .fontSize(20)
             .fontColor('#666666')
-            .margin({ left: 4 })
+            .margin({ left: 8 })
             .alignSelf(ItemAlign.End)
-            .margin({ bottom: 16 })
+            .margin({ bottom: 20 })
         }
+        .margin({ top: 12 })
 
         Text(this.decibelService.getDecibelLevel(this.currentDecibel))
           .fontSize(16)
           .fontColor('#666666')
-          .margin({ top: 8, bottom: 16 })
+          .margin({ top: 12, bottom: 20 })
 
         // 分割线
         if (this.currentDecibel > 0) {
           Divider()
-            .width('90%')
+            .width('92%')
             .color('#E0E0E0')
-            .margin({ top: 8, bottom: 8 })
+            .margin({ top: 12, bottom: 16 })
 
           // 统计数据显示
           this.StatisticsRow()
         }
       }
       .width('100%')
-      .padding(24)
+      .padding({ top: 28, bottom: 28, left: 24, right: 24 })
       .backgroundColor(Color.White)
       .borderRadius(24)
+      .margin({ top: 16, left: 16, right: 16 })
       .shadow({ radius: 20, color: '#1A000000', offsetY: 4 })
+
+      // 位置显示
+      Column() {
+        LocationDisplay()
+      }
+      .width('100%')
+      .padding({ left: 20, right: 20, top: 16, bottom: 16 })
+      .borderRadius(20)
+      .backgroundColor(Color.White)
+      .margin({ top: 16, bottom: 16, left: 16, right: 16 })
+      .shadow({ radius: 12, color: '#1A000000', offsetY: 2 })
 
       // 开始/停止按钮
       Button({
@@ -200,9 +214,9 @@ export struct DecibelMeter {
             .fontColor(Color.White)
         }
       }
-      .width(180)
+      .width('100%')
       .height(56)
-      .margin({ top: 32 })
+      .margin({ top: 0, left: 16, right: 16 })
       .backgroundColor(this.isRecording ? '#FF4081' : '#2196F3')
       .onClick(() => {
         if (this.isRecording) {
@@ -213,6 +227,7 @@ export struct DecibelMeter {
       })
     }
     .width('100%')
+    .padding({ top: 8, bottom: 16 })
     .alignItems(HorizontalAlign.Center)
   }
 } 

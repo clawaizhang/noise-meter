@@ -27,17 +27,6 @@ struct Index {
         .width('92%')
         .margin({ top: 16, bottom: 12 })
 
-        // 顶部位置信息
-        Column() {
-          LocationDisplay()
-        }
-        .width('92%')
-        .padding(12)
-        .borderRadius(24)
-        .backgroundColor(Color.White)
-        .margin({ top: 0, bottom: 12 })
-        .shadow({ radius: 12, color: '#1A000000', offsetY: 2 })
-
         // 噪音检测区域
         NoiseDecibel()
           .width('92%')
