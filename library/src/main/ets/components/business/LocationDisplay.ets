@@ -31,6 +31,7 @@ export struct LocationDisplay {
   @State location: string = '正在获取位置...';
   @State address: string = '';
   @State isRefreshing: boolean = false;
+  @State isLocationEnabled: boolean = false;  // 添加位置开关状态
   private locationManager?: AMapLocationManagerImpl;
   @Prop style?: LocationStyle;
 
@@ -144,7 +145,7 @@ export struct LocationDisplay {
   aboutToDisappear() {
     // 组件销毁时释放资源
     if (this.locationManager) {
-      this.locationManager.stopUpdatingLocation();  // 停��定位更新
+      this.locationManager.stopUpdatingLocation();  // 停止定位更新
       this.locationManager = undefined;
     }
   }
@@ -226,60 +227,87 @@ export struct LocationDisplay {
   build() {
     Column() {
       Row() {
-        Column() {
-          this.LocationIcon({
-            size: 24,
-            color: this.style?.iconColor ?? '#666666'
-          })
+        Row() {
+          Column() {
+            this.LocationIcon({
+              size: 24,
+              color: this.style?.iconColor ?? '#666666'
+            })
+          }
+          .margin({ right: 8 })
+          
+          Text('当前位置')
+            .fontSize(16)
+            .fontWeight(FontWeight.Medium)
+            .fontColor(this.style?.textColor ?? '#000000')
         }
-        .margin({ right: 8 })
-        
-        Text('当前位置')
-          .fontSize(16)
-          .fontWeight(FontWeight.Medium)
-          .fontColor(this.style?.textColor ?? '#000000')
+
+        Blank()  // 添加弹性空间
+
+        // 添加开关控件
+        Toggle({ type: ToggleType.Switch, isOn: this.isLocationEnabled })
+          .selectedColor('#0091FF')
+          .switchPointColor('#FFFFFF')
+          .onChange((isOn: boolean) => {
+            this.isLocationEnabled = isOn;
+            if (isOn) {
+              // 开启时立即获取一次位置
+              this.startSingleLocation();
+            }
+          })
       }
       .width('100%')
       .margin({ bottom: 12 })
 
-      Text(this.location)
-        .fontSize(14)
-        .fontColor(this.style?.textColor ?? '#666666')
-        .margin({ bottom: 4 })
-        .textAlign(TextAlign.Start)
-        .width('100%')
-
-      if (this.address) {
-        Text(this.address)
+      if (this.isLocationEnabled) {
+        // 只在开启状态显示位置信息
+        Text(this.location)
           .fontSize(14)
           .fontColor(this.style?.textColor ?? '#666666')
+          .margin({ bottom: 4 })
+          .textAlign(TextAlign.Start)
+          .width('100%')
+
+        if (this.address) {
+          Text(this.address)
+            .fontSize(14)
+            .fontColor(this.style?.textColor ?? '#666666')
+            .margin({ top: 4 })
+            .textAlign(TextAlign.Start)
+            .width('100%')
+        }
+
+        Button({ type: ButtonType.Normal, stateEffect: true }) {
+          this.RefreshButton()
+        }
+        .width(110)
+        .height(32)
+        .margin({ top: 16 })
+        .borderRadius(16)
+        .backgroundColor(this.isRefreshing ? '#0091FF' : '#0091FF')
+        .enabled(!this.isRefreshing)
+        .onClick(() => {
+          this.startSingleLocation();
+        })
+        .animation({
+          duration: 250,
+          curve: Curve.EaseInOut,
+          iterations: 1,
+          playMode: PlayMode.Normal
+        })
+        .scale({
+          x: this.isRefreshing ? 0.98 : 1,
+          y: this.isRefreshing ? 0.98 : 1
+        })
+      } else {
+        // 关闭状态显示提示文本
+        Text('开启后可查看位置信息')
+          .fontSize(14)
+          .fontColor('#999999')
           .margin({ top: 4 })
           .textAlign(TextAlign.Start)
           .width('100%')
       }
-
-      Button({ type: ButtonType.Normal, stateEffect: true }) {
-        this.RefreshButton()
-      }
-      .width(110)
-      .height(32)
-      .margin({ top: 16 })
-      .borderRadius(16)
-      .backgroundColor(this.isRefreshing ? '#0091FF' : '#0091FF')
-      .enabled(!this.isRefreshing)
-      .onClick(() => {
-        this.startSingleLocation();
-      })
-      .animation({
-        duration: 250,
-        curve: Curve.EaseInOut,
-        iterations: 1,
-        playMode: PlayMode.Normal
-      })
-      .scale({
-        x: this.isRefreshing ? 0.98 : 1,
-        y: this.isRefreshing ? 0.98 : 1
-      })
     }
     .width('100%')
     .alignItems(HorizontalAlign.Start)
