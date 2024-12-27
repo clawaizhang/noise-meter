@@ -17,6 +17,15 @@ export interface LocationStyle {
   iconColor?: string;
 }
 
+/**
+ * 图标配置接口
+ */
+interface IconOptions {
+  size?: number;
+  color?: string;
+  isRefreshing?: boolean;
+}
+
 @Component
 export struct LocationDisplay {
   @State location: string = '正在获取位置...';
@@ -135,19 +144,96 @@ export struct LocationDisplay {
   aboutToDisappear() {
     // 组件销毁时释放资源
     if (this.locationManager) {
-      this.locationManager.stopUpdatingLocation();  // 停止定位更新
+      this.locationManager.stopUpdatingLocation();  // 停��定位更新
       this.locationManager = undefined;
     }
+  }
+
+  @Builder
+  LocationIcon(options: IconOptions) {
+    Stack() {
+      // 定位图标外圈
+      Circle()
+        .width(options?.size ?? 24)
+        .height(options?.size ?? 24)
+        .stroke(options?.color ?? '#666666')
+        .strokeWidth(2)
+        .fill('none')
+      
+      // 定位图标中心点
+      Circle()
+        .width((options?.size ?? 24) * 0.4)
+        .height((options?.size ?? 24) * 0.4)
+        .fill(options?.color ?? '#666666')
+    }
+  }
+
+  @Builder
+  RefreshIcon(options: IconOptions) {
+    Row() {
+      Image($r('app.media.ic_refresh'))
+        .width(16)
+        .height(16)
+        .fillColor(options?.color ?? '#FFFFFF')
+        .objectFit(ImageFit.Contain)
+        .rotate({
+          angle: options?.isRefreshing ? 360 : 0,
+          centerX: '50%',
+          centerY: '50%'
+        })
+        .animation(options?.isRefreshing ? {
+          duration: 1000,
+          curve: Curve.EaseInOut,
+          iterations: -1,
+          playMode: PlayMode.Normal
+        } : undefined)
+    }
+    .width(16)
+    .height(16)
+    .justifyContent(FlexAlign.Center)
+  }
+
+  @Builder
+  RefreshButton() {
+    Row() {
+      if (this.isRefreshing) {
+        LoadingProgress()
+          .width(16)
+          .height(16)
+          .color('#FFFFFF')
+          .backgroundColor('transparent')
+          .margin({ right: 4 })
+      } else {
+        Row() {
+          this.RefreshIcon({
+            color: '#FFFFFF',
+            isRefreshing: this.isRefreshing
+          })
+        }
+        .margin({ right: 4 })
+      }
+      Text(this.isRefreshing ? '定位中...' : '刷新位置')
+        .fontSize(14)
+        .fontWeight(FontWeight.Regular)
+        .fontColor('#FFFFFF')
+    }
+    .alignItems(VerticalAlign.Center)
+    .justifyContent(FlexAlign.Center)
+    .width('100%')
+    .height('100%')
   }
 
   build() {
     Column() {
       Row() {
-        Image($r('app.media.ic_location'))
-          .width(24)
-          .height(24)
-          .margin({ right: 8 })
-          .fillColor(this.style?.iconColor ?? '#666666')
+        Column() {
+          this.LocationIcon({
+            size: 24,
+            color: this.style?.iconColor ?? '#666666'
+          })
+        }
+        .margin({ right: 8 })
+        
         Text('当前位置')
           .fontSize(16)
           .fontWeight(FontWeight.Medium)
@@ -173,31 +259,30 @@ export struct LocationDisplay {
       }
 
       Button({ type: ButtonType.Normal, stateEffect: true }) {
-        Row() {
-          if (this.isRefreshing) {
-            LoadingProgress()
-              .width(20)
-              .height(20)
-              .color(Color.White)
-              .margin({ right: 8 })
-          }
-          Text(this.isRefreshing ? '正在刷新...' : '刷新位置')
-            .fontSize(16)
-            .fontColor(Color.White)
-        }
+        this.RefreshButton()
       }
-      .width(140)
-      .height(44)
+      .width(110)
+      .height(32)
       .margin({ top: 16 })
-      .borderRadius(22)
-      .backgroundColor(this.isRefreshing ? '#999999' : (this.style?.buttonColor ?? '#007DFF'))
+      .borderRadius(16)
+      .backgroundColor(this.isRefreshing ? '#0091FF' : '#0091FF')
       .enabled(!this.isRefreshing)
       .onClick(() => {
         this.startSingleLocation();
       })
+      .animation({
+        duration: 250,
+        curve: Curve.EaseInOut,
+        iterations: 1,
+        playMode: PlayMode.Normal
+      })
+      .scale({
+        x: this.isRefreshing ? 0.98 : 1,
+        y: this.isRefreshing ? 0.98 : 1
+      })
     }
     .width('100%')
     .alignItems(HorizontalAlign.Start)
-    .backgroundColor(this.style?.backgroundColor ?? Color.White)
+    .backgroundColor(this.style?.backgroundColor ?? '#FFFFFF')
   }
 } 
