@@ -217,6 +217,8 @@ struct DecibelHistory {
   @State records: DecibelRecord[] = [];
   @State selectedRecord: DecibelRecord | null = null;
   @State showingDeleteButtonId: string = '';  // 当前显示删除按钮的记录ID
+  @State currentSlidingId: string = '';  // 当前正在滑动的记录ID
+  @State currentSlideOffset: number = 0;  // 当前滑动的偏移量
   private startX: number = 0;
   private recordService: DecibelRecordService = new DecibelRecordService(getContext(this) as common.UIAbilityContext);
   private decibelService: DecibelService = new DecibelService();
@@ -324,23 +326,37 @@ struct DecibelHistory {
           .color('#F5F5F5')
       }
       .backgroundColor(Color.White)
+      .translate({ 
+        x: this.showingDeleteButtonId === record.id ? -80 : 
+           (this.showingDeleteButtonId === '' ? 0 : 
+           (record.id === this.currentSlidingId ? Math.min(0, Math.max(-80, this.currentSlideOffset)) : 0))
+      })
+      .animation({
+        duration: this.showingDeleteButtonId === record.id || this.showingDeleteButtonId === '' ? 300 : 0,
+        curve: Curve.EaseOut
+      })
       .gesture(
         GestureGroup(GestureMode.Parallel,
           PanGesture()
             .onActionStart((event: GestureEvent) => {
               if (this.showingDeleteButtonId !== record.id) {
                 this.startX = event.offsetX;
+                this.currentSlidingId = record.id;
+                this.currentSlideOffset = 0;
               }
             })
             .onActionUpdate((event: GestureEvent) => {
-              if (this.showingDeleteButtonId !== record.id) {
+              if (this.showingDeleteButtonId !== record.id && this.currentSlidingId === record.id) {
                 const deltaX = event.offsetX - this.startX;
-                if (deltaX < -20) {  // 左滑超过20像素时显示删除按钮
+                this.currentSlideOffset = deltaX;
+                if (deltaX < -10) {  // 减小滑动阈值到10像素
                   this.showingDeleteButtonId = record.id;
                 }
               }
             })
             .onActionEnd(() => {
+              this.currentSlidingId = '';
+              this.currentSlideOffset = 0;
               // 松开手指时，如果滑动距离不够，隐藏删除按钮
               if (this.showingDeleteButtonId !== record.id) {
                 animateTo({ duration: 300 }, () => {
