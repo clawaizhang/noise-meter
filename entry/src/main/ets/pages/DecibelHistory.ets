@@ -54,7 +54,15 @@ struct DetailDialog {
                 Text('检测时间')
                   .fontSize(14)
                   .fontColor('#666666')
-                Text(new Date(this.selectedRecord!.timestamp).toLocaleString())
+                Text(new Date(this.selectedRecord!.timestamp).toLocaleString('zh-CN', {
+                  year: 'numeric',
+                  month: '2-digit',
+                  day: '2-digit',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  second: '2-digit',
+                  hour12: false
+                }))
                   .fontSize(14)
                   .fontColor('#333333')
               }
@@ -294,72 +302,91 @@ struct DecibelHistory {
     Stack() {
       Column() {
         Row() {
-          Column() {
-            Text(new Date(record.timestamp).toLocaleString())
-              .fontSize(14)
-              .fontColor('#666666')
-              .margin({ bottom: 8 })
-            if (record.location) {
-              Text(record.location)
+          // 左侧区域：收藏图标和时间信息
+          Row() {
+            // 收藏图标区域
+            Row() {
+              if (record.isFavorite) {
+                Image($r('app.media.ic_favorite'))
+                  .width(16)
+                  .height(16)
+                  .fillColor('#FF4081')
+              }
+            }
+            .width(24)
+            .height(16)
+            .justifyContent(FlexAlign.Center)
+            
+            // 时间和位置信息
+            Column() {
+              Text(new Date(record.timestamp).toLocaleString('zh-CN', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: false
+              }))
+                .fontSize(14)
+                .fontColor('#666666')
+                .margin({ bottom: 8 })
+              if (record.location) {
+                Text(record.location)
+                  .fontSize(12)
+                  .fontColor('#999999')
+              }
+              Text(`检测时长: ${Math.round(record.duration / 1000)}秒`)
                 .fontSize(12)
                 .fontColor('#999999')
+                .margin({ top: 8 })
             }
-          }
-          .alignItems(HorizontalAlign.Start)
-          .margin({ right: record.isFavorite ? 8 : 0 })
-
-          if (record.isFavorite) {
-            Image($r('app.media.ic_favorite'))
-              .width(16)
-              .height(16)
-              .fillColor('#FF4081')
-              .margin({ right: 8 })
-          }
-
-          Column() {
-            Row() {
-              Column() {
-                Text('最小值')
-                  .fontSize(12)
-                  .fontColor('#666666')
-                  .margin({ bottom: 4 })
-                Text(record.minDecibel.toString())
-                  .fontSize(16)
-                  .fontWeight(FontWeight.Medium)
-                  .fontColor(this.decibelService.getDecibelColor(record.minDecibel))
-              }
-
-              Column() {
-                Text('平均值')
-                  .fontSize(12)
-                  .fontColor('#666666')
-                  .margin({ bottom: 4 })
-                Text(record.avgDecibel.toString())
-                  .fontSize(16)
-                  .fontWeight(FontWeight.Medium)
-                  .fontColor(this.decibelService.getDecibelColor(record.avgDecibel))
-              }
-              .margin({ left: 24, right: 24 })
-
-              Column() {
-                Text('最大值')
-                  .fontSize(12)
-                  .fontColor('#666666')
-                  .margin({ bottom: 4 })
-                Text(record.maxDecibel.toString())
-                  .fontSize(16)
-                  .fontWeight(FontWeight.Medium)
-                  .fontColor(this.decibelService.getDecibelColor(record.maxDecibel))
-              }
-            }
-
-            Text(`检测时长: ${Math.round(record.duration / 1000)}秒`)
-              .fontSize(12)
-              .fontColor('#999999')
-              .margin({ top: 8 })
+            .alignItems(HorizontalAlign.Start)
           }
           .layoutWeight(1)
-          .alignItems(HorizontalAlign.End)
+          .alignItems(VerticalAlign.Top)
+
+          // 右侧区域：分贝值信息
+          Row() {
+            Column() {
+              Text('最小值')
+                .fontSize(12)
+                .fontColor('#666666')
+                .margin({ bottom: 4 })
+              Text(record.minDecibel.toString())
+                .fontSize(16)
+                .fontWeight(FontWeight.Medium)
+                .fontColor(this.decibelService.getDecibelColor(record.minDecibel))
+            }
+            .alignItems(HorizontalAlign.Center)
+
+            Column() {
+              Text('平均值')
+                .fontSize(12)
+                .fontColor('#666666')
+                .margin({ bottom: 4 })
+              Text(record.avgDecibel.toString())
+                .fontSize(16)
+                .fontWeight(FontWeight.Medium)
+                .fontColor(this.decibelService.getDecibelColor(record.avgDecibel))
+            }
+            .margin({ left: 16, right: 16 })
+            .alignItems(HorizontalAlign.Center)
+
+            Column() {
+              Text('最大值')
+                .fontSize(12)
+                .fontColor('#666666')
+                .margin({ bottom: 4 })
+              Text(record.maxDecibel.toString())
+                .fontSize(16)
+                .fontWeight(FontWeight.Medium)
+                .fontColor(this.decibelService.getDecibelColor(record.maxDecibel))
+            }
+            .alignItems(HorizontalAlign.Center)
+          }
+          .layoutWeight(1)
+          .justifyContent(FlexAlign.SpaceEvenly)
         }
         .width('100%')
         .padding(16)
@@ -403,7 +430,7 @@ struct DecibelHistory {
             if (this.currentSlidingId === record.id) {
               const deltaX = event.offsetX - this.startX;
               if (this.hasDeleteButtonOnStart) {
-                // 如果开始时有删除按钮，则只处理右滑隐藏
+                // 果开始时有删除按钮，则只处理右滑隐藏
                 this.currentSlideOffset = Math.max(-80, Math.min(0, -80 + deltaX));
                 if (deltaX > 40) {  // 右滑超过一半距离时隐藏删除按钮
                   this.showingDeleteButtonId = '';
@@ -427,7 +454,7 @@ struct DecibelHistory {
                 this.currentSlideOffset = this.showingDeleteButtonId === record.id ? -80 : 0;
               } else {
                 // 如果开始时没有删除按钮，则处理收藏和显示删除按钮的操作
-                if (this.currentSlideOffset < -40) {  // 左滑超过一半距离时显示删除按钮
+                if (this.currentSlideOffset < -40) {  // 左滑超过半距离时显示删除按钮
                   this.showingDeleteButtonId = record.id;
                   this.currentSlideOffset = -80;
                 } else if (this.currentSlideOffset > 40) {  // 右滑超过阈值时收藏/取消收藏
@@ -510,7 +537,7 @@ struct DecibelHistory {
 
   build() {
     Column() {
-      // 顶部导航栏
+      // 顶部导航
       Row() {
         Image($r('app.media.ic_back'))
           .width(24)
