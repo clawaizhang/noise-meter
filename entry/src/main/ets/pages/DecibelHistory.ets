@@ -19,9 +19,18 @@ struct DetailDialog {
       if (this.selectedRecord) {
         // 标题栏
         Row() {
-          Text('检测详情')
-            .fontSize(18)
-            .fontWeight(FontWeight.Medium)
+          Row() {
+            Text('检测详情')
+              .fontSize(18)
+              .fontWeight(FontWeight.Medium)
+            if (this.selectedRecord!.isFavorite) {
+              Image($r('app.media.ic_favorite'))
+                .width(20)
+                .height(20)
+                .fillColor('#FF4081')
+                .margin({ left: 8 })
+            }
+          }
           Blank()
           Button() {
             Image($r('app.media.ic_close'))
@@ -303,14 +312,18 @@ struct DecibelHistory {
               .margin({ bottom: 8 })
 
             Row() {
-              // 收藏图标区域
-              if (record.isFavorite) {
-                Image($r('app.media.ic_favorite'))
-                  .width(16)
-                  .height(16)
-                  .fillColor('#FF4081')
-                  .margin({ right: 8 })
+              // 收藏图标区域，固定宽度
+              Row() {
+                if (record.isFavorite) {
+                  Image($r('app.media.ic_favorite'))
+                    .width(16)
+                    .height(16)
+                    .fillColor('#FF4081')
+                }
               }
+              .width(24)  // 固定宽度
+              .height(16)
+              .justifyContent(FlexAlign.Start)  // 左对齐
 
               // 时间信息
               Text(new Date(record.timestamp).toLocaleString('zh-CN', {
@@ -440,7 +453,7 @@ struct DecibelHistory {
                 }
                 this.currentSlideOffset = this.showingDeleteButtonId === record.id ? -80 : 0;
               } else {
-                // 如果开始时没有删除按钮，则处理收藏和显��删除按钮的操作
+                // 如果开始时没有删除按钮，则处理收藏和显示删除按钮的操作
                 if (this.currentSlideOffset < -40) {  // 左滑超过一半距离时显示删除按钮
                   this.showingDeleteButtonId = record.id;
                   this.currentSlideOffset = -80;
