@@ -1,5 +1,6 @@
-import { LocationDisplay, BannerCard } from '@ohos/library';
+import { BannerCard } from '@ohos/library';
 import { NoiseDecibel } from '../components/NoiseDecibel';
+import { common } from '@kit.AbilityKit';
 
 @Entry
 @Component
@@ -16,16 +17,18 @@ struct Index {
 
       Column() {
         // 广告Banner
-        BannerCard({
-          title: "噪音检测专业版",
-          description: "解锁更多高级功能，提供更专业的噪音分析",
-          imageUrl: "/common/images/default_banner.png",
-          onItemClick: () => {
-            console.info('Banner clicked')
-          }
-        })
+        Row() {
+          BannerCard({
+            context: getContext(this) as common.Context,
+            adId: 'testw6vs28auh3',
+            onItemClick: () => {
+              console.info('广告被点击了');
+            }
+          })
+        }
         .width('92%')
-        .margin({ top: 16, bottom: 12 })
+        .height(57)
+        .margin({ top: 12, bottom: 12 })
 
         // 噪音检测区域
         NoiseDecibel()
