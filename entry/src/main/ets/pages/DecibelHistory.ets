@@ -48,21 +48,20 @@ struct DecibelHistory {
 
   async showDetailDialog() {
     try {
-      let dialogContent: ComponentContent<DialogParams>;
-      const closeDialog = () => {
+      const dialogParams = new DialogParams(this.selectedRecord, null);
+      const dialogContent = new ComponentContent(
+        this.getUIContext(),
+        wrapBuilder(buildDialog),
+        dialogParams
+      );
+
+      dialogParams.closeDialog = () => {
         try {
           this.promptAction.closeCustomDialog(dialogContent);
         } catch (error) {
           console.error('关闭弹窗失败:', error);
         }
       };
-
-      const dialogParams = new DialogParams(this.selectedRecord, closeDialog);
-      dialogContent = new ComponentContent(
-        this.getUIContext(),
-        wrapBuilder(buildDialog),
-        dialogParams
-      );
 
       await this.promptAction.openCustomDialog(dialogContent, {
         alignment: DialogAlignment.Bottom,
