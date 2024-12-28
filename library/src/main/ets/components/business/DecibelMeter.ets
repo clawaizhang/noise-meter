@@ -4,8 +4,18 @@ import { LocationService } from '../../services/LocationService';
 import { DecibelRecord } from '../../models/DecibelRecord';
 import { DecibelRecordService } from '../../services/DecibelRecordService';
 import { LocationDisplay } from './LocationDisplay'
+import { DialogParams, DialogService } from '../../services/DialogService';
 import router from '@ohos.router';
 import common from '@ohos.app.ability.common';
+import { DetailDialog } from './DetailDialog';
+
+@Builder
+function buildDialog(params: DialogParams) {
+  DetailDialog({
+    selectedRecord: params.selectedRecord,
+    closeDialog: params.closeDialog
+  })
+}
 
 @Component
 export struct DecibelMeter {
@@ -19,6 +29,7 @@ export struct DecibelMeter {
   private audioService: AudioService = new AudioService(getContext() as common.UIAbilityContext)
   private locationService: LocationService = LocationService.getInstance()
   private recordService: DecibelRecordService = new DecibelRecordService(getContext() as common.UIAbilityContext)
+  private dialogService: DialogService = new DialogService()
   private dbCount: number = 0
   private dbSum: number = 0
   private context?: common.UIAbilityContext
@@ -114,6 +125,9 @@ export struct DecibelMeter {
           locationInfo?.address  // 使用可选链操作符获取地址
         );
         await this.recordService.saveRecord(record);
+
+        // 显示详情弹窗
+        this.dialogService.showDetailDialog(this.getUIContext(), wrapBuilder(buildDialog), record);
 
         // 重置数据
         this.values = [];
