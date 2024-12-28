@@ -22,42 +22,66 @@ export struct DecibelMeter {
     if (this.context) {
       this.audioService = new AudioService(this.context);
     }
-    // 初始化录音
-    this.startRecording()
   }
 
   aboutToDisappear() {
-    // 停止录音
-    this.stopRecording()
+    // 停止音频采集
+    this.stopAudioCapture();
+  }
+
+  private async startAudioCapture() {
+    try {
+      await this.audioService.startCapture();
+    } catch (error) {
+      console.error('启动音频采集失败:', error);
+      // 重置录音状态
+      this.isRecording = false;
+    }
+  }
+
+  private async stopAudioCapture() {
+    try {
+      await this.audioService.stopCapture();
+    } catch (error) {
+      console.error('停止音频采集失败:', error);
+    }
   }
 
   private async startRecording() {
     if (!this.isRecording) {
       try {
-        this.isRecording = true
-        await this.audioService.startRecording((buffer: ArrayBuffer) => {
+        this.isRecording = true;
+        // 如果没有在采集音频，先启动采集
+        if (!this.audioService.isAudioCapturing()) {
+          await this.startAudioCapture();
+        }
+        
+        // 开始处理音频数据
+        this.audioService.startProcessing((buffer: ArrayBuffer) => {
           // 使用DecibelService计算分贝值
-          const db = this.decibelService.calculateDecibel(buffer, buffer.byteLength)
-          this.currentDecibel = Math.round(db)
-          this.updateStatistics(this.currentDecibel)
-        })
+          const db = this.decibelService.calculateDecibel(buffer, buffer.byteLength);
+          this.currentDecibel = Math.round(db);
+          this.updateStatistics(this.currentDecibel);
+        });
       } catch (error) {
         // 如果启动失败（包括权限问题），重置状态
-        this.isRecording = false
-        this.currentDecibel = 0
-        this.minDecibel = 0
-        this.maxDecibel = 0
-        this.avgDecibel = 0
-        this.dbCount = 0
-        this.dbSum = 0
+        this.isRecording = false;
+        this.currentDecibel = 0;
+        this.minDecibel = 0;
+        this.maxDecibel = 0;
+        this.avgDecibel = 0;
+        this.dbCount = 0;
+        this.dbSum = 0;
       }
     }
   }
 
   private stopRecording() {
     if (this.isRecording) {
-      this.isRecording = false
-      this.audioService.stopRecording()
+      this.isRecording = false;
+      // 只停止处理音频数据，不停止采集
+      this.audioService.stopProcessing();
+      // 保留最后的分贝值显示，不重置数据
     }
   }
 

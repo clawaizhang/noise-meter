@@ -41,8 +41,9 @@ export class AudioService {
   };
 
   private audioCapturer: audio.AudioCapturer | null = null;
-  private isRecording: boolean = false;
-  private isStoppingRecording: boolean = false;
+  private isCapturing: boolean = false;  // 是否正在采集音频
+  private isProcessing: boolean = false; // 是否正在处理音频数据
+  private isStoppingCapture: boolean = false;
   private onAudioData: ((buffer: ArrayBuffer) => void) | null = null;
   private context: common.UIAbilityContext;
   private lastProcessTime: number = 0;
@@ -92,13 +93,12 @@ export class AudioService {
   }
 
   /**
-   * 开始录音
-   * @param callback - 音频数据回调
+   * 开始音频采集
    * @returns Promise<void>
    */
-  async startRecording(callback: (buffer: ArrayBuffer) => void): Promise<void> {
-    if (this.isRecording || this.isStoppingRecording) {
-      throw new Error('已经在录音中或正在停止录音');
+  async startCapture(): Promise<void> {
+    if (this.isCapturing || this.isStoppingCapture) {
+      return;
     }
 
     // 检查麦克风权限
@@ -114,16 +114,18 @@ export class AudioService {
 
       // 设置readData事件监听
       this.audioCapturer.on('readData', (buffer: ArrayBuffer) => {
-        if (!this.isRecording || this.isStoppingRecording) {
+        if (!this.isCapturing || this.isStoppingCapture) {
           return;
         }
         
-        const currentTime = Date.now();
-        if (currentTime - this.lastProcessTime >= this.PROCESS_INTERVAL) {
-          if (buffer && buffer.byteLength > 0 && this.onAudioData) {
-            this.onAudioData(buffer);
+        if (this.isProcessing) {
+          const currentTime = Date.now();
+          if (currentTime - this.lastProcessTime >= this.PROCESS_INTERVAL) {
+            if (buffer && buffer.byteLength > 0 && this.onAudioData) {
+              this.onAudioData(buffer);
+            }
+            this.lastProcessTime = currentTime;
           }
-          this.lastProcessTime = currentTime;
         }
       });
 
@@ -131,28 +133,27 @@ export class AudioService {
       await this.audioCapturer.start();
       console.info('音频捕获器启动成功');
 
-      this.isRecording = true;
-      this.onAudioData = callback;
-      this.lastProcessTime = Date.now();
+      this.isCapturing = true;
     } catch (err) {
-      const error = new Error('启动录音失败：' + (err instanceof Error ? err.message : String(err)));
+      const error = new Error('启动音频采集失败：' + (err instanceof Error ? err.message : String(err)));
       console.error(error.message);
       throw error;
     }
   }
 
   /**
-   * 停止录音
+   * 停止音频采集
    * @returns Promise<void>
    */
-  async stopRecording(): Promise<void> {
-    if (!this.isRecording || !this.audioCapturer || this.isStoppingRecording) {
+  async stopCapture(): Promise<void> {
+    if (!this.isCapturing || !this.audioCapturer || this.isStoppingCapture) {
       return;
     }
 
     try {
-      this.isStoppingRecording = true;
-      this.isRecording = false;
+      this.isStoppingCapture = true;
+      this.isCapturing = false;
+      this.isProcessing = false;
       this.onAudioData = null;
 
       // 移除readData事件监听
@@ -166,12 +167,30 @@ export class AudioService {
       
       this.audioCapturer = null;
     } catch (err) {
-      const error = new Error('停止录音失败：' + (err instanceof Error ? err.message : String(err)));
+      const error = new Error('停止音频采集失败：' + (err instanceof Error ? err.message : String(err)));
       console.error(error.message);
       throw error;
     } finally {
-      this.isStoppingRecording = false;
+      this.isStoppingCapture = false;
     }
+  }
+
+  /**
+   * 开始处理音频数据
+   * @param callback - 音频数据回调
+   */
+  startProcessing(callback: (buffer: ArrayBuffer) => void): void {
+    this.isProcessing = true;
+    this.onAudioData = callback;
+    this.lastProcessTime = Date.now();
+  }
+
+  /**
+   * 停止处理音频数据
+   */
+  stopProcessing(): void {
+    this.isProcessing = false;
+    this.onAudioData = null;
   }
 
   /**
@@ -180,5 +199,19 @@ export class AudioService {
    */
   getAudioConfig(): AudioStreamInfo {
     return this.audioCapturerOptions.streamInfo;
+  }
+
+  /**
+   * 是否正在采集音频
+   */
+  isAudioCapturing(): boolean {
+    return this.isCapturing;
+  }
+
+  /**
+   * 是否正在处理音频数据
+   */
+  isAudioProcessing(): boolean {
+    return this.isProcessing;
   }
 } 
