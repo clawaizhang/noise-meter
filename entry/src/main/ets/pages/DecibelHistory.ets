@@ -328,55 +328,56 @@ struct DecibelHistory {
       .backgroundColor(Color.White)
       .translate({ 
         x: this.showingDeleteButtonId === record.id ? -80 : 
-           (this.showingDeleteButtonId === '' ? 0 : 
-           (record.id === this.currentSlidingId ? Math.min(0, Math.max(-80, this.currentSlideOffset)) : 0))
+           (record.id === this.currentSlidingId ? Math.min(0, Math.max(-80, this.currentSlideOffset)) : 0)
       })
       .animation({
-        duration: this.showingDeleteButtonId === record.id || this.showingDeleteButtonId === '' ? 300 : 0,
+        duration: 300,
         curve: Curve.EaseOut
       })
       .gesture(
-        GestureGroup(GestureMode.Parallel,
-          PanGesture()
-            .onActionStart((event: GestureEvent) => {
-              if (this.showingDeleteButtonId !== record.id) {
-                this.startX = event.offsetX;
-                this.currentSlidingId = record.id;
-                this.currentSlideOffset = 0;
-              }
-            })
-            .onActionUpdate((event: GestureEvent) => {
-              if (this.showingDeleteButtonId !== record.id && this.currentSlidingId === record.id) {
-                const deltaX = event.offsetX - this.startX;
-                this.currentSlideOffset = deltaX;
-                if (deltaX < -10) {  // 减小滑动阈值到10像素
+        PanGesture()
+          .onActionStart((event: GestureEvent) => {
+            // 如果当前项已显示删除按钮，则允许右滑隐藏
+            this.startX = event.offsetX;
+            this.currentSlidingId = record.id;
+            this.currentSlideOffset = this.showingDeleteButtonId === record.id ? -80 : 0;
+          })
+          .onActionUpdate((event: GestureEvent) => {
+            if (this.currentSlidingId === record.id) {
+              const deltaX = event.offsetX - this.startX;
+              if (this.showingDeleteButtonId === record.id) {
+                // 已显示删除按钮时，处理右滑隐藏
+                this.currentSlideOffset = Math.max(-80, Math.min(0, -80 + deltaX));
+                if (deltaX > 40) {  // 右滑超过一半距离时隐藏删除按钮
+                  this.showingDeleteButtonId = '';
+                }
+              } else {
+                // 未显示删除按钮时，处理左滑显示
+                this.currentSlideOffset = Math.max(-80, Math.min(0, deltaX));
+                if (deltaX < -40) {  // 左滑超过一半距离时显示删除按钮
                   this.showingDeleteButtonId = record.id;
                 }
               }
-            })
-            .onActionEnd(() => {
+            }
+          })
+          .onActionEnd(() => {
+            if (this.currentSlidingId === record.id) {
+              const finalOffset = this.currentSlideOffset;
+              if (this.showingDeleteButtonId === record.id) {
+                // 已显示删除按钮时
+                if (finalOffset > -40) {  // 右滑超过一半距离时隐藏
+                  this.showingDeleteButtonId = '';
+                }
+              } else {
+                // 未显示删除按钮时
+                if (finalOffset < -40) {  // 左滑超过一半距离时显示
+                  this.showingDeleteButtonId = record.id;
+                }
+              }
               this.currentSlidingId = '';
               this.currentSlideOffset = 0;
-              // 松开手指时，如果滑动距离不够，隐藏删除按钮
-              if (this.showingDeleteButtonId !== record.id) {
-                animateTo({ duration: 300 }, () => {
-                  this.showingDeleteButtonId = '';
-                });
-              }
-            }),
-          TapGesture()
-            .onAction(() => {
-              if (this.showingDeleteButtonId === record.id) {
-                // 隐藏删除按钮
-                animateTo({ duration: 300 }, () => {
-                  this.showingDeleteButtonId = '';
-                });
-              } else {
-                this.selectedRecord = record;
-                this.dialogController.open();
-              }
-            })
-        )
+            }
+          })
       )
 
       if (this.showingDeleteButtonId === record.id) {
@@ -411,9 +412,7 @@ struct DecibelHistory {
         .translate({ x: -80 })
         .animation({
           duration: 300,
-          curve: Curve.EaseOut,
-          iterations: 1,
-          playMode: PlayMode.Normal
+          curve: Curve.EaseOut
         })
       }
     }
@@ -445,7 +444,13 @@ struct DecibelHistory {
         List() {
           ForEach(this.records, (record: DecibelRecord) => {
             ListItem() {
-              this.RecordItem(record)
+              Column() {
+                this.RecordItem(record)
+                Divider()
+                  .width('100%')
+                  .height(8)
+                  .color('#F5F5F5')
+              }
             }
           })
         }
