@@ -86,27 +86,8 @@ export class LocationService {
         const addresses = await geoLocationManager.getAddressesFromLocation(reverseGeocodeRequest);
         let address = '未获取到详细地址';
         
-        if (addresses && addresses.length > 0) {
-          const addressParts = [
-            addresses[0].countryName,
-            addresses[0].administrativeArea,
-            addresses[0].locality,
-            addresses[0].subLocality,
-            addresses[0].roadName,
-            addresses[0].premises
-          ];
-
-          // 添加具体地点名称
-          if (addresses[0].placeName) {
-            addressParts.push(addresses[0].placeName);
-          }
-
-          // 添加额外的描述信息
-          if (addresses[0].descriptions && addresses[0].descriptions.length > 0) {
-            addressParts.push(addresses[0].descriptions[0]);
-          }
-
-          address = addressParts.filter(Boolean).join('');
+        if (addresses && addresses.length > 0 && addresses[0].placeName) {
+          address = addresses[0].placeName;
         }
 
         resolve({
