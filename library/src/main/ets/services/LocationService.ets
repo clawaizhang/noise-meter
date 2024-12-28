@@ -10,6 +10,7 @@ export interface LocationInfo {
 
 export class LocationService {
   private static instance: LocationService;
+  private cachedLocation: LocationInfo | null = null;
 
   private constructor() {}
 
@@ -90,14 +91,20 @@ export class LocationService {
           address = addresses[0].placeName;
         }
 
-        resolve({
+        this.cachedLocation = {
           coordinates: `${location.latitude.toFixed(6)}, ${location.longitude.toFixed(6)}`,
           address: address
-        });
+        };
+
+        resolve(this.cachedLocation);
       } catch (error) {
         reject(new Error(`Location failed: ${error.message}`));
       }
     });
+  }
+
+  public getCachedLocation(): LocationInfo | null {
+    return this.cachedLocation;
   }
 
   public stopLocation() {

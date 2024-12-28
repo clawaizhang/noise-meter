@@ -1,11 +1,11 @@
 import { AudioService } from '../../services/AudioService';
 import { DecibelService } from '../../services/DecibelService';
-import { LocationDisplay } from './LocationDisplay'
+import { LocationService } from '../../services/LocationService';
 import { DecibelRecord } from '../../models/DecibelRecord';
 import { DecibelRecordService } from '../../services/DecibelRecordService';
+import { LocationDisplay } from './LocationDisplay'
 import router from '@ohos.router';
 import common from '@ohos.app.ability.common';
-import animator from '@ohos.animator';
 
 @Component
 export struct DecibelMeter {
@@ -17,18 +17,18 @@ export struct DecibelMeter {
   @State private showStats: boolean = false
   private decibelService: DecibelService = new DecibelService()
   private audioService: AudioService = new AudioService(getContext() as common.UIAbilityContext)
+  private locationService: LocationService = LocationService.getInstance()
   private recordService: DecibelRecordService = new DecibelRecordService(getContext() as common.UIAbilityContext)
   private dbCount: number = 0
   private dbSum: number = 0
   private context?: common.UIAbilityContext
+  private values: number[] = []
   private startTime: number = 0
-  private decibelValues: number[] = []  // 存储每次检测的分贝值
 
   aboutToAppear() {
     // 如果提供了外部context，重新初始化AudioService
     if (this.context) {
       this.audioService = new AudioService(this.context);
-      this.recordService = new DecibelRecordService(this.context);
     }
   }
 
@@ -58,13 +58,12 @@ export struct DecibelMeter {
   private async startRecording() {
     if (!this.isRecording) {
       try {
-        // 重置计数器和分贝值数组
+        this.isRecording = true;
+        this.startTime = new Date().getTime();
+        this.values = [];
         this.dbCount = 0;
         this.dbSum = 0;
-        this.decibelValues = [];
-        this.startTime = new Date().getTime();
 
-        this.isRecording = true;
         // 如果没有在采集音频，先启动采集
         if (!this.audioService.isAudioCapturing()) {
           await this.startAudioCapture();
@@ -75,6 +74,7 @@ export struct DecibelMeter {
           // 使用DecibelService计算分贝值
           const db = this.decibelService.calculateDecibel(buffer, buffer.byteLength);
           this.currentDecibel = Math.round(db);
+          this.values.push(this.currentDecibel);
           this.updateStatistics(this.currentDecibel);
         });
       } catch (error) {
@@ -86,7 +86,8 @@ export struct DecibelMeter {
         this.avgDecibel = 0;
         this.dbCount = 0;
         this.dbSum = 0;
-        this.decibelValues = [];
+        this.values = [];
+        this.startTime = 0;
       }
     }
   }
@@ -97,19 +98,28 @@ export struct DecibelMeter {
       // 只停止处理音频数据，不停止采集
       this.audioService.stopProcessing();
 
-      // 保存历史记录
       try {
+        // 获取缓存的位置信息
+        const locationInfo = this.locationService.getCachedLocation();
+        // 计算检测时长
         const duration = new Date().getTime() - this.startTime;
+
+        // 创建并保存记录
         const record = new DecibelRecord(
           this.minDecibel,
           this.maxDecibel,
           this.avgDecibel,
           duration,
-          [...this.decibelValues]  // 复制分贝值数组
+          [...this.values],
+          locationInfo?.address  // 使用可选链操作符获取地址
         );
         await this.recordService.saveRecord(record);
+
+        // 重置数据
+        this.values = [];
+        this.startTime = 0;
       } catch (error) {
-        console.error('保存历史记录失败:', error);
+        console.error('保存记录失败:', error);
       }
     }
   }
@@ -117,7 +127,7 @@ export struct DecibelMeter {
   private updateStatistics(value: number) {
     if (value > 0) {
       // 记录分贝值
-      this.decibelValues.push(value);
+      this.values.push(value);
       
       if (this.dbCount === 0) {
         // 第一次检测到的值作为初始值
@@ -225,15 +235,6 @@ export struct DecibelMeter {
     }
     .width('100%')
     .margin({ top: 16 })
-    .opacity(this.showStats ? 1 : 0)
-    .scale({ x: this.showStats ? 1 : 0.9, y: this.showStats ? 1 : 0.9 })
-    .animation({
-      duration: 300,
-      curve: Curve.EaseOut,
-      delay: 100,
-      iterations: 1,
-      playMode: PlayMode.Normal
-    })
   }
 
   build() {
@@ -267,14 +268,6 @@ export struct DecibelMeter {
               .width('92%')
               .color('#E0E0E0')
               .margin({ top: 12, bottom: 16 })
-              .opacity(this.showStats ? 1 : 0)
-              .animation({
-                duration: 300,
-                curve: Curve.EaseOut,
-                delay: 0,
-                iterations: 1,
-                playMode: PlayMode.Normal
-              })
 
             // 统计数据显示
             this.StatisticsRow()
@@ -345,10 +338,9 @@ export struct DecibelMeter {
       .backgroundColor(this.isRecording ? '#FF4081' : '#2196F3')
       .onClick(() => {
         if (this.isRecording) {
-          // 直接停止检测，保持统计数据显示
-          this.stopRecording();
+          this.stopRecording()
         } else {
-          this.startRecording();
+          this.startRecording()
         }
       })
     }
