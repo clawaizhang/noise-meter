@@ -3,6 +3,7 @@ import { DecibelService } from '../../services/DecibelService';
 import { LocationDisplay } from './LocationDisplay'
 import router from '@ohos.router';
 import common from '@ohos.app.ability.common';
+import animator from '@ohos.animator';
 
 @Component
 export struct DecibelMeter {
@@ -11,6 +12,7 @@ export struct DecibelMeter {
   @State private maxDecibel: number = 0
   @State private avgDecibel: number = 0
   @State private isRecording: boolean = false
+  @State private showStats: boolean = false
   private decibelService: DecibelService = new DecibelService()
   private audioService: AudioService = new AudioService(getContext() as common.UIAbilityContext)
   private dbCount: number = 0
@@ -96,6 +98,10 @@ export struct DecibelMeter {
         this.minDecibel = value;
         this.maxDecibel = value;
         this.avgDecibel = value;
+        // 延迟显示统计区域，添加动画效果
+        animateTo({ duration: 300, curve: Curve.EaseOut }, () => {
+          this.showStats = true;
+        })
       } else {
         // 更新最小值
         if (value < this.minDecibel) {
@@ -193,6 +199,15 @@ export struct DecibelMeter {
     }
     .width('100%')
     .margin({ top: 16 })
+    .opacity(this.showStats ? 1 : 0)
+    .scale({ x: this.showStats ? 1 : 0.9, y: this.showStats ? 1 : 0.9 })
+    .animation({
+      duration: 300,
+      curve: Curve.EaseOut,
+      delay: 100,
+      iterations: 1,
+      playMode: PlayMode.Normal
+    })
   }
 
   build() {
@@ -226,6 +241,14 @@ export struct DecibelMeter {
               .width('92%')
               .color('#E0E0E0')
               .margin({ top: 12, bottom: 16 })
+              .opacity(this.showStats ? 1 : 0)
+              .animation({
+                duration: 300,
+                curve: Curve.EaseOut,
+                delay: 0,
+                iterations: 1,
+                playMode: PlayMode.Normal
+              })
 
             // 统计数据显示
             this.StatisticsRow()
@@ -296,9 +319,10 @@ export struct DecibelMeter {
       .backgroundColor(this.isRecording ? '#FF4081' : '#2196F3')
       .onClick(() => {
         if (this.isRecording) {
-          this.stopRecording()
+          // 直接停止检测，保持统计数据显示
+          this.stopRecording();
         } else {
-          this.startRecording()
+          this.startRecording();
         }
       })
     }
