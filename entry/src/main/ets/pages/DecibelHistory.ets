@@ -235,6 +235,47 @@ struct DecibelHistory {
     autoCancel: true
   });
 
+  // 显示删除确认对话框
+  showDeleteConfirmDialog() {
+    AlertDialog.show({
+      title: '删除记录',
+      message: '确定要删除这条记录吗？',
+      autoCancel: true,
+      alignment: DialogAlignment.Center,
+      primaryButton: {
+        value: '取消',
+        fontColor: '#666666',
+        backgroundColor: '#F5F5F5',
+        action: () => {
+          // 不执行任何操作
+        }
+      },
+      secondaryButton: {
+        value: '删除',
+        fontColor: '#FFFFFF',
+        backgroundColor: '#FF4081',
+        action: async () => {
+          try {
+            const recordToDelete = this.records.find(r => r.id === this.showingDeleteButtonId);
+            if (recordToDelete) {
+              // 从列表中移除该记录
+              const index = this.records.findIndex(r => r.id === recordToDelete.id);
+              if (index !== -1) {
+                this.records.splice(index, 1);
+              }
+              // 更新存储
+              await this.recordService.saveRecords(this.records);
+              // 隐藏删除按钮
+              this.showingDeleteButtonId = '';
+            }
+          } catch (error) {
+            console.error('删除记录失败:', error);
+          }
+        }
+      }
+    });
+  }
+
   aboutToAppear() {
     this.loadRecords();
   }
@@ -352,7 +393,7 @@ struct DecibelHistory {
                   this.showingDeleteButtonId = '';
                 }
               } else {
-                // 未显示删除按钮时，处理左滑显示
+                // 未显示删除按钮时，处��左滑显示
                 this.currentSlideOffset = Math.max(-80, Math.min(0, deltaX));
                 if (deltaX < -40) {  // 左滑超过一半距离时显示删除按钮
                   this.showingDeleteButtonId = record.id;
@@ -393,19 +434,8 @@ struct DecibelHistory {
           .type(ButtonType.Normal)
           .backgroundColor('#FF4081')
           .onClick(async () => {
-            try {
-              // 从列表中移除该记录
-              const index = this.records.findIndex(r => r.id === record.id);
-              if (index !== -1) {
-                this.records.splice(index, 1);
-              }
-              // 更新存储
-              await this.recordService.saveRecords(this.records);
-              // 隐藏删除按钮
-              this.showingDeleteButtonId = '';
-            } catch (error) {
-              console.error('删除记录失败:', error);
-            }
+            // 显示删除确认对话框
+            this.showDeleteConfirmDialog();
           })
         }
         .width(80)
