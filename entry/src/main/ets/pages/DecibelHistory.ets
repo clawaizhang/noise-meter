@@ -4,7 +4,8 @@ import { DecibelService } from '@ohos/library/src/main/ets/services/DecibelServi
 import { DetailDialog } from '../components/DetailDialog';
 import router from '@ohos.router';
 import common from '@ohos.app.ability.common';
-import { ComponentContent, promptAction, PromptAction } from '@kit.ArkUI';
+import { PromptAction } from '@kit.ArkUI';
+import { DialogService } from '../services/DialogService';
 
 class DialogParams {
   selectedRecord: DecibelRecord | null = null;
@@ -38,45 +39,13 @@ struct DecibelHistory {
   private recordService: DecibelRecordService = new DecibelRecordService(getContext(this) as common.UIAbilityContext);
   private decibelService: DecibelService = new DecibelService();
   private promptAction: PromptAction = this.getUIContext().getPromptAction();
+  private dialogService: DialogService = new DialogService();
 
   @Builder
   DetailDialogBuilder() {
     DetailDialog({
       selectedRecord: this.selectedRecord,
     })
-  }
-
-  async showDetailDialog() {
-    try {
-      let dialogContent: ComponentContent<DialogParams>;
-      const closeDialog = () => {
-        try {
-          this.promptAction.closeCustomDialog(dialogContent);
-        } catch (error) {
-          console.error('关闭弹窗失败:', error);
-        }
-      };
-
-      const dialogParams = new DialogParams(this.selectedRecord, closeDialog);
-      dialogContent = new ComponentContent(
-        this.getUIContext(),
-        wrapBuilder(buildDialog),
-        dialogParams
-      );
-
-      const dialogOptions: promptAction.BaseDialogOptions = {
-        alignment: DialogAlignment.Bottom,
-        offset: { dx: 0, dy: 0 },
-        transition: TransitionEffect.move(TransitionEdge.BOTTOM).animation({
-          duration: 300,
-          curve: Curve.EaseOut
-        })
-      };
-
-      await this.promptAction.openCustomDialog(dialogContent, dialogOptions);
-    } catch (error) {
-      console.error('打开弹窗失败:', error);
-    }
   }
 
   // 显示删除确认对话框
@@ -367,6 +336,10 @@ struct DecibelHistory {
         })
       }
     }
+  }
+
+  showDetailDialog() {
+    this.dialogService.showDetailDialog(this.getUIContext(), wrapBuilder(buildDialog), this.selectedRecord);
   }
 
   build() {
