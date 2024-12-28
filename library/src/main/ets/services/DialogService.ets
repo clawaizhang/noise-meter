@@ -38,7 +38,6 @@ export class DialogService {
       const dialogOptions: promptAction.BaseDialogOptions = {
         alignment: DialogAlignment.Bottom,
         offset: { dx: 0, dy: 0 },
-        autoCancel: false,
         transition: TransitionEffect.move(TransitionEdge.BOTTOM).animation({
           duration: 300,
           curve: Curve.EaseOut

@@ -79,7 +79,7 @@ export struct DecibelMeter {
         if (!this.audioService.isAudioCapturing()) {
           await this.startAudioCapture();
         }
-        
+
         // 开始处理音频数据
         this.audioService.startProcessing((buffer: ArrayBuffer) => {
           // 使用DecibelService计算分贝值
@@ -112,7 +112,7 @@ export struct DecibelMeter {
       try {
         // 获取缓存的位置信息
         const locationInfo = this.locationService.getCachedLocation();
-        // 计算检测时长
+        // 计算检测��长
         const duration = new Date().getTime() - this.startTime;
 
         // 创建并保存记录
@@ -122,7 +122,7 @@ export struct DecibelMeter {
           this.avgDecibel,
           duration,
           [...this.values],
-          locationInfo?.address  // 使用可选链操作符获取地址
+          locationInfo?.address// 使用可选链操作符获取地址
         );
         await this.recordService.saveRecord(record);
 
@@ -142,7 +142,7 @@ export struct DecibelMeter {
     if (value > 0) {
       // 记录分贝值
       this.values.push(value);
-      
+
       if (this.dbCount === 0) {
         // 第一次检测到的值作为初始值
         this.minDecibel = value;
@@ -157,7 +157,7 @@ export struct DecibelMeter {
         if (value < this.minDecibel) {
           this.minDecibel = value;
         }
-        // 更新最大值
+        // ���新最大值
         if (value > this.maxDecibel) {
           this.maxDecibel = value;
         }
@@ -288,9 +288,25 @@ export struct DecibelMeter {
           }
         }
         .width('100%')
-        .padding({ top: 28, bottom: 28, left: 24, right: 24 })
+        .padding({
+          top: 28,
+          bottom: 28,
+          left: 24,
+          right: 24
+        })
         .backgroundColor(Color.White)
         .borderRadius(24)
+        .onClick(() => {
+          const record = new DecibelRecord(
+            this.minDecibel,
+            this.maxDecibel,
+            this.avgDecibel,
+            this.startTime == 0 ? 0 : new Date().getTime() - this.startTime,
+            [...this.values],
+            this.locationService.getCachedLocation()?.address
+          );
+          this.dialogService.showDetailDialog(this.getUIContext(), wrapBuilder(buildDialog), record);
+        })
 
         // 历史记录按钮
         Button() {
@@ -321,10 +337,20 @@ export struct DecibelMeter {
         LocationDisplay()
       }
       .width('100%')
-      .padding({ left: 20, right: 20, top: 16, bottom: 16 })
+      .padding({
+        left: 20,
+        right: 20,
+        top: 16,
+        bottom: 16
+      })
       .borderRadius(20)
       .backgroundColor(Color.White)
-      .margin({ top: 16, bottom: 16, left: 16, right: 16 })
+      .margin({
+        top: 16,
+        bottom: 16,
+        left: 16,
+        right: 16
+      })
       .shadow({ radius: 1, color: '#1A000000', offsetY: 2 })
 
       // 开始/停止按钮
