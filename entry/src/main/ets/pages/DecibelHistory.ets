@@ -48,20 +48,21 @@ struct DecibelHistory {
 
   async showDetailDialog() {
     try {
-      const dialogParams = new DialogParams(this.selectedRecord, null);
-      const dialogContent = new ComponentContent(
-        this.getUIContext(),
-        wrapBuilder(buildDialog),
-        dialogParams
-      );
-
-      dialogParams.closeDialog = () => {
+      let dialogContent: ComponentContent<DialogParams>;
+      const closeDialog = () => {
         try {
           this.promptAction.closeCustomDialog(dialogContent);
         } catch (error) {
           console.error('关闭弹窗失败:', error);
         }
       };
+
+      const dialogParams = new DialogParams(this.selectedRecord, closeDialog);
+      dialogContent = new ComponentContent(
+        this.getUIContext(),
+        wrapBuilder(buildDialog),
+        dialogParams
+      );
 
       await this.promptAction.openCustomDialog(dialogContent, {
         alignment: DialogAlignment.Bottom,
@@ -451,7 +452,7 @@ struct DecibelHistory {
             .height(120)
             .fillColor('#CCCCCC')
             .margin({ bottom: 16 })
-          Text('暂无历史记录')
+          Text('暂无��史记录')
             .fontSize(16)
             .fontColor('#999999')
           Text('完成一次检测后即可查看记录')
