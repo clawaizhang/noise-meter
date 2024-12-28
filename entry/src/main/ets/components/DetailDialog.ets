@@ -207,16 +207,31 @@ function ChartBuilder(selectedRecord: DecibelRecord, decibelService: DecibelServ
 export struct DetailDialog {
   @Prop selectedRecord: DecibelRecord | null;
   @BuilderParam closeDialog: () => void;
+  @State translateY: number = 0;
+  private startY: number = 0;
   private decibelService: DecibelService = new DecibelService();
 
   build() {
     Column() {
-      if (this.selectedRecord) {
-        DialogTitleBuilder(this.selectedRecord, () => {
-          this.closeDialog()
-        })
+      // 顶部拖动条
+      Row() {
+        Row()
+          .width(40)
+          .height(4)
+          .borderRadius(2)
+          .backgroundColor('#DDDDDD')
+      }
+      .width('100%')
+      .height(20)
+      .justifyContent(FlexAlign.Center)
 
-        Scroll() {
+      // 内容区域
+      Column() {
+        if (this.selectedRecord) {
+          DialogTitleBuilder(this.selectedRecord, () => {
+            this.closeDialog()
+          })
+
           Column() {
             BasicInfoBuilder(this.selectedRecord)
             StatisticsBuilder(this.selectedRecord, this.decibelService)
@@ -225,28 +240,40 @@ export struct DetailDialog {
           .width('100%')
           .padding({ left: 16, right: 16, bottom: 16 })
         }
-        .layoutWeight(1)
-        .width('100%')
       }
+      .width('100%')
     }
     .width('100%')
-    .height('90%')
-    .backgroundColor('#F5F5F5')
-    .borderRadius({ topLeft: 24, topRight: 24 })
-    .clip(true)
+    .backgroundColor(Color.White)
+    .borderRadius({ topLeft: 16, topRight: 16 })
+    .translate({ y: this.translateY })
     .gesture(
-      GestureGroup(GestureMode.Exclusive,
-        TapGesture()
-          .onAction(() => {
-            // 点击空白区域关闭弹窗
-            this.closeDialog()
-          }),
-        PanGesture({ direction: PanDirection.Up })
-          .onActionStart(() => {
-            // 上滑时不关闭弹窗
-            return false;
-          })
-      )
+      PanGesture({ direction: PanDirection.Vertical })
+        .onActionStart((event: GestureEvent) => {
+          this.startY = event.offsetY;
+        })
+        .onActionUpdate((event: GestureEvent) => {
+          const deltaY = event.offsetY - this.startY;
+          // 只允许向下滑动
+          if (deltaY > 0) {
+            this.translateY = deltaY;
+          }
+        })
+        .onActionEnd(() => {
+          if (this.translateY > 100) {
+            // 如果下滑超过阈值，关闭弹窗
+            this.closeDialog();
+          } else {
+            // 否则回弹
+            animateTo({ duration: 300, curve: Curve.EaseOut }, () => {
+              this.translateY = 0;
+            });
+          }
+        })
     )
+    .animation({
+      duration: 300,
+      curve: Curve.EaseOut
+    })
   }
 } 
