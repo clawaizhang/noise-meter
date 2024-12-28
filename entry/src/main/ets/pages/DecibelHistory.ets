@@ -4,11 +4,12 @@ import { DecibelService } from '@ohos/library/src/main/ets/services/DecibelServi
 import { DetailDialog } from '../components/DetailDialog';
 import router from '@ohos.router';
 import common from '@ohos.app.ability.common';
-import { ComponentContent, PromptAction } from '@kit.ArkUI';
+import { ComponentContent, promptAction, PromptAction } from '@kit.ArkUI';
 
 class DialogParams {
   selectedRecord: DecibelRecord | null = null;
-  closeDialog: () => void = () => {};
+  closeDialog: () => void = () => {
+  };
 
   constructor(selectedRecord: DecibelRecord | null, closeDialog: () => void) {
     this.selectedRecord = selectedRecord;
@@ -29,15 +30,14 @@ function buildDialog(params: DialogParams) {
 struct DecibelHistory {
   @State records: DecibelRecord[] = [];
   @State selectedRecord: DecibelRecord | null = null;
-  @State showingDeleteButtonId: string = '';  // 当前显示删除按钮的记录ID
-  @State currentSlidingId: string = '';  // 当前正在滑动的记录ID
-  @State currentSlideOffset: number = 0;  // 当前滑动的偏移量
+  @State showingDeleteButtonId: string = ''; // 当前显示删除按钮的记录ID
+  @State currentSlidingId: string = ''; // 当前正在滑动的记录ID
+  @State currentSlideOffset: number = 0; // 当前滑动的偏移量
   private startX: number = 0;
-  private hasDeleteButtonOnStart: boolean = false;  // 滑动开始时是否有删除按钮示
+  private hasDeleteButtonOnStart: boolean = false; // 滑动开始时是否有删除按钮示
   private recordService: DecibelRecordService = new DecibelRecordService(getContext(this) as common.UIAbilityContext);
   private decibelService: DecibelService = new DecibelService();
   private promptAction: PromptAction = this.getUIContext().getPromptAction();
-  private currentDialogId: number | null = null;
 
   @Builder
   DetailDialogBuilder() {
@@ -64,10 +64,17 @@ struct DecibelHistory {
         dialogParams
       );
 
-      await this.promptAction.openCustomDialog(dialogContent, {
+      const dialogOptions: promptAction.BaseDialogOptions = {
         alignment: DialogAlignment.Bottom,
-        offset: { dx: 0, dy: 0 }
-      });
+        offset: { dx: 0, dy: 0 },
+        autoCancel: false,
+        transition: TransitionEffect.move(TransitionEdge.BOTTOM).animation({
+          duration: 300,
+          curve: Curve.EaseOut
+        })
+      };
+
+      await this.promptAction.openCustomDialog(dialogContent, dialogOptions);
     } catch (error) {
       console.error('打开弹窗失败:', error);
     }
@@ -149,9 +156,9 @@ struct DecibelHistory {
                     .fillColor('#FF4081')
                 }
               }
-              .width(24)  // 固定宽度
+              .width(24) // 固定宽度
               .height(16)
-              .justifyContent(FlexAlign.Start)  // 左对齐
+              .justifyContent(FlexAlign.Start) // 左对齐
 
               // 时间信息
               Text(new Date(record.timestamp).toLocaleString('zh-CN', {
@@ -232,15 +239,15 @@ struct DecibelHistory {
           .color('#F5F5F5')
       }
       .backgroundColor(Color.White)
-      .translate({ 
-        x: this.showingDeleteButtonId === record.id ? -80 : 
-           (record.id === this.currentSlidingId ? Math.min(0, Math.max(-80, this.currentSlideOffset)) : 0)
+      .translate({
+        x: this.showingDeleteButtonId === record.id ? -80 :
+          (record.id === this.currentSlidingId ? Math.min(0, Math.max(-80, this.currentSlideOffset)) : 0)
       })
       .scale({
-        x: record.id === this.currentSlidingId && this.currentSlideOffset > 40 ? 
-           0.95 + (80 - this.currentSlideOffset) / 800 : 1,
-        y: record.id === this.currentSlidingId && this.currentSlideOffset > 40 ? 
-           0.95 + (80 - this.currentSlideOffset) / 800 : 1
+        x: record.id === this.currentSlidingId && this.currentSlideOffset > 40 ?
+          0.95 + (80 - this.currentSlideOffset) / 800 : 1,
+        y: record.id === this.currentSlidingId && this.currentSlideOffset > 40 ?
+          0.95 + (80 - this.currentSlideOffset) / 800 : 1
       })
       .animation({
         duration: 300,
@@ -260,13 +267,13 @@ struct DecibelHistory {
               if (this.hasDeleteButtonOnStart) {
                 // 如果开始时有删除按钮，则只处理右滑隐藏
                 this.currentSlideOffset = Math.max(-80, Math.min(0, -80 + deltaX));
-                if (deltaX > 40) {  // 右滑一半距离时隐藏删除按钮
+                if (deltaX > 40) { // 右滑一半距离时隐藏删除按钮
                   this.showingDeleteButtonId = '';
                 }
               } else {
                 // 如果开始时没有删除按钮，则处理左右滑动
                 this.currentSlideOffset = Math.max(-80, Math.min(80, deltaX));
-                if (deltaX < -40) {  // 左滑超过一半距离时显示删除按钮
+                if (deltaX < -40) { // 左滑超过一半距离时显示删除按钮
                   this.showingDeleteButtonId = record.id;
                 }
               }
@@ -276,16 +283,16 @@ struct DecibelHistory {
             if (this.currentSlidingId === record.id) {
               if (this.hasDeleteButtonOnStart) {
                 // 如果开始时有删除按钮，则只处理隐藏删除按钮的操作
-                if (this.currentSlideOffset > -40) {  // 右滑超过一半距离时隐藏
+                if (this.currentSlideOffset > -40) { // 右滑超过一半距离时隐藏
                   this.showingDeleteButtonId = '';
                 }
                 this.currentSlideOffset = this.showingDeleteButtonId === record.id ? -80 : 0;
               } else {
                 // 如果开始时没有删除按钮，则处理收藏和显示删除按钮的操作
-                if (this.currentSlideOffset < -40) {  // 左滑超过一半距离时显示删除按钮
+                if (this.currentSlideOffset < -40) { // 左滑超过一半距离时显示删除按钮
                   this.showingDeleteButtonId = record.id;
                   this.currentSlideOffset = -80;
-                } else if (this.currentSlideOffset > 40) {  // 右滑超过阈值时收藏/取消收藏
+                } else if (this.currentSlideOffset > 40) { // 右滑超过阈值时收藏/取消收藏
                   record.isFavorite = !record.isFavorite;
                   // 更新存储
                   this.recordService.saveRecords(this.records);
@@ -313,14 +320,14 @@ struct DecibelHistory {
           .onClick(() => {
             record.isFavorite = !record.isFavorite;
             this.recordService.saveRecords(this.records);
-            this.currentSlideOffset = 0;  // 点击后收起按钮
+            this.currentSlideOffset = 0; // 点击后收起按钮
             this.currentSlidingId = '';
           })
         }
         .width(80)
         .height(90)
         .position({ x: '-80vp', y: 0 })
-        .translate({ 
+        .translate({
           x: this.currentSlideOffset > 0 ? Math.min(80, this.currentSlideOffset) : 0
         })
         .opacity(Math.min(1, Math.abs(this.currentSlideOffset) / 80))
@@ -349,12 +356,12 @@ struct DecibelHistory {
         .width(80)
         .height(90)
         .position({ x: '100%', y: 0 })
-        .translate({ 
-          x: this.showingDeleteButtonId === record.id ? -80 : 
-             Math.max(-80, Math.min(0, this.currentSlideOffset + 80))
+        .translate({
+          x: this.showingDeleteButtonId === record.id ? -80 :
+          Math.max(-80, Math.min(0, this.currentSlideOffset + 80))
         })
-        .opacity(this.showingDeleteButtonId === record.id ? 1 : 
-                Math.min(1, Math.abs(this.currentSlideOffset) / 80))
+        .opacity(this.showingDeleteButtonId === record.id ? 1 :
+        Math.min(1, Math.abs(this.currentSlideOffset) / 80))
         .animation({
           duration: 300,
           curve: Curve.EaseOut
@@ -452,7 +459,7 @@ struct DecibelHistory {
             .height(120)
             .fillColor('#CCCCCC')
             .margin({ bottom: 16 })
-          Text('暂无��史记录')
+          Text('暂无历史记录')
             .fontSize(16)
             .fontColor('#999999')
           Text('完成一次检测后即可查看记录')
