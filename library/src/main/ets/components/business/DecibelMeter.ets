@@ -1,6 +1,8 @@
 import { AudioService } from '../../services/AudioService';
 import { DecibelService } from '../../services/DecibelService';
 import { LocationDisplay } from './LocationDisplay'
+import { DecibelRecord } from '../../models/DecibelRecord';
+import { DecibelRecordService } from '../../services/DecibelRecordService';
 import router from '@ohos.router';
 import common from '@ohos.app.ability.common';
 import animator from '@ohos.animator';
@@ -15,14 +17,18 @@ export struct DecibelMeter {
   @State private showStats: boolean = false
   private decibelService: DecibelService = new DecibelService()
   private audioService: AudioService = new AudioService(getContext() as common.UIAbilityContext)
+  private recordService: DecibelRecordService = new DecibelRecordService(getContext() as common.UIAbilityContext)
   private dbCount: number = 0
   private dbSum: number = 0
   private context?: common.UIAbilityContext
+  private startTime: number = 0
+  private decibelValues: number[] = []  // 存储每次检测的分贝值
 
   aboutToAppear() {
     // 如果提供了外部context，重新初始化AudioService
     if (this.context) {
       this.audioService = new AudioService(this.context);
+      this.recordService = new DecibelRecordService(this.context);
     }
   }
 
@@ -52,9 +58,11 @@ export struct DecibelMeter {
   private async startRecording() {
     if (!this.isRecording) {
       try {
-        // 重置计数器，但不重置显示的值
+        // 重置计数器和分贝值数组
         this.dbCount = 0;
         this.dbSum = 0;
+        this.decibelValues = [];
+        this.startTime = new Date().getTime();
 
         this.isRecording = true;
         // 如果没有在采集音频，先启动采集
@@ -78,21 +86,39 @@ export struct DecibelMeter {
         this.avgDecibel = 0;
         this.dbCount = 0;
         this.dbSum = 0;
+        this.decibelValues = [];
       }
     }
   }
 
-  private stopRecording() {
+  private async stopRecording() {
     if (this.isRecording) {
       this.isRecording = false;
       // 只停止处理音频数据，不停止采集
       this.audioService.stopProcessing();
-      // 保留最后的分贝值显示，不重置数据
+
+      // 保存历史记录
+      try {
+        const duration = new Date().getTime() - this.startTime;
+        const record = new DecibelRecord(
+          this.minDecibel,
+          this.maxDecibel,
+          this.avgDecibel,
+          duration,
+          [...this.decibelValues]  // 复制分贝值数组
+        );
+        await this.recordService.saveRecord(record);
+      } catch (error) {
+        console.error('保存历史记录失败:', error);
+      }
     }
   }
 
   private updateStatistics(value: number) {
     if (value > 0) {
+      // 记录分贝值
+      this.decibelValues.push(value);
+      
       if (this.dbCount === 0) {
         // 第一次检测到的值作为初始值
         this.minDecibel = value;
