@@ -165,37 +165,53 @@ function ChartBuilder(selectedRecord: DecibelRecord, decibelService: DecibelServ
       .alignSelf(ItemAlign.Start)
       .margin({ bottom: 12 })
 
-    Row() {
-      List({ space: 2, scroller: new Scroller() }) {
-        ForEach(selectedRecord!.values, (value: number, index: number) => {
-          ListItem() {
-            Column() {
-              Text(value.toString())
-                .fontSize(10)
-                .fontColor(decibelService.getDecibelColor(value))
-                .margin({ bottom: 4 })
-              Column() {
-                Column()
-                  .width(4)
-                  .height(value)
-                  .backgroundColor(decibelService.getDecibelColor(value))
-              }
-              .width(4)
-              .height(100)
-              .backgroundColor('#F5F5F5')
-              .alignItems(HorizontalAlign.Center)
-              .justifyContent(FlexAlign.End)
-            }
-          }
-        })
+    if (selectedRecord!.values.length === 0) {
+      Column() {
+        Image($r('app.media.ic_empty'))
+          .width(32)
+          .height(32)
+          .fillColor('#999999')
+          .margin({ bottom: 8 })
+        Text('暂无分贝值变化数据')
+          .fontSize(14)
+          .fontColor('#999999')
       }
-      .listDirection(Axis.Horizontal)
+      .width('100%')
+      .justifyContent(FlexAlign.Center)
+      .margin({ top: 20, bottom: 20 })
+    } else {
+      Row() {
+        List({ space: 2, scroller: new Scroller() }) {
+          ForEach(selectedRecord!.values, (value: number, index: number) => {
+            ListItem() {
+              Column() {
+                Text(value.toString())
+                  .fontSize(10)
+                  .fontColor(decibelService.getDecibelColor(value))
+                  .margin({ bottom: 4 })
+                Column() {
+                  Column()
+                    .width(4)
+                    .height(value)
+                    .backgroundColor(decibelService.getDecibelColor(value))
+                }
+                .width(4)
+                .height(100)
+                .backgroundColor('#F5F5F5')
+                .alignItems(HorizontalAlign.Center)
+                .justifyContent(FlexAlign.End)
+              }
+            }
+          })
+        }
+        .listDirection(Axis.Horizontal)
+        .width('100%')
+        .height(140)
+        .edgeEffect(EdgeEffect.Spring)
+      }
       .width('100%')
       .height(140)
-      .edgeEffect(EdgeEffect.Spring)
     }
-    .width('100%')
-    .height(140)
   }
   .width('100%')
   .padding(16)
