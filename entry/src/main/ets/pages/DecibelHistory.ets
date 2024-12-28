@@ -199,6 +199,8 @@ struct DetailDialog {
     .width('100%')
     .height('90%')
     .backgroundColor('#F5F5F5')
+    .borderRadius({ topLeft: 24, topRight: 24 })
+    .clip(true)
   }
 }
 
