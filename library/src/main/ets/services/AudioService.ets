@@ -45,6 +45,8 @@ export class AudioService {
   private isStoppingRecording: boolean = false;
   private onAudioData: ((buffer: ArrayBuffer) => void) | null = null;
   private context: common.UIAbilityContext;
+  private lastProcessTime: number = 0;
+  private readonly PROCESS_INTERVAL: number = 500; // 处理间隔，单位毫秒
 
   constructor(context: common.UIAbilityContext) {
     this.context = context;
@@ -115,8 +117,13 @@ export class AudioService {
         if (!this.isRecording || this.isStoppingRecording) {
           return;
         }
-        if (buffer && buffer.byteLength > 0 && this.onAudioData) {
-          this.onAudioData(buffer);
+        
+        const currentTime = Date.now();
+        if (currentTime - this.lastProcessTime >= this.PROCESS_INTERVAL) {
+          if (buffer && buffer.byteLength > 0 && this.onAudioData) {
+            this.onAudioData(buffer);
+          }
+          this.lastProcessTime = currentTime;
         }
       });
 
@@ -126,6 +133,7 @@ export class AudioService {
 
       this.isRecording = true;
       this.onAudioData = callback;
+      this.lastProcessTime = Date.now();
     } catch (err) {
       const error = new Error('启动录音失败：' + (err instanceof Error ? err.message : String(err)));
       console.error(error.message);

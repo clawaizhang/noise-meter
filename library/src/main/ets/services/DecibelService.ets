@@ -5,7 +5,7 @@
 export class DecibelService {
   private readonly REF_VALUE: number = 32767.0;  // 16位音频的最大值
   private readonly MIN_DB: number = -90.0;       // 最小分贝值
-  private readonly SMOOTH_FACTOR: number = 0.2;  // 平滑因子
+  private readonly SMOOTH_FACTOR: number = 0.6;  // 平滑因子，增大以减少衰减
   private lastDecibel: number = 0;               // 上一次的分贝值
 
   /**
@@ -28,17 +28,23 @@ export class DecibelService {
 
     // 使用均方根值和最大值的组合
     const rms = Math.sqrt(sum / int16Array.length);
-    const combined = Math.max(rms, maxAbs * 0.7);  // 使用RMS和峰值的组合
+    const combined = Math.max(rms, maxAbs * 0.8);  // 增加峰值的权重
     
     // 计算分贝值
-    let decibel = 20 * Math.log10(combined / this.REF_VALUE);
+    let decibel = 20 * Math.log10(Math.max(combined, 1) / this.REF_VALUE);
     
     // 限制最小值
     decibel = Math.max(this.MIN_DB, decibel);
     
-    // 应用平滑处理
-    decibel = this.lastDecibel + this.SMOOTH_FACTOR * (decibel - this.lastDecibel);
-    this.lastDecibel = decibel;
+    // 应用平滑处理，但不让值持续衰减
+    if (Math.abs(decibel - this.lastDecibel) > 10) {
+      // 如果变化太大，快速响应
+      this.lastDecibel = decibel;
+    } else {
+      // 正常平滑处理
+      this.lastDecibel = this.lastDecibel + this.SMOOTH_FACTOR * (decibel - this.lastDecibel);
+    }
+    decibel = this.lastDecibel;
 
     // 归一化到0-120范围
     decibel = Math.max(0, Math.min(120, decibel + 90));
