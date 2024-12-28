@@ -50,6 +50,10 @@ export struct DecibelMeter {
   private async startRecording() {
     if (!this.isRecording) {
       try {
+        // 重置计数器，但不重置显示的值
+        this.dbCount = 0;
+        this.dbSum = 0;
+
         this.isRecording = true;
         // 如果没有在采集音频，先启动采集
         if (!this.audioService.isAudioCapturing()) {
@@ -87,18 +91,25 @@ export struct DecibelMeter {
 
   private updateStatistics(value: number) {
     if (value > 0) {
-      // 更新最小值
-      if (this.minDecibel === 0 || value < this.minDecibel) {
-        this.minDecibel = value
+      if (this.dbCount === 0) {
+        // 第一次检测到的值作为初始值
+        this.minDecibel = value;
+        this.maxDecibel = value;
+        this.avgDecibel = value;
+      } else {
+        // 更新最小值
+        if (value < this.minDecibel) {
+          this.minDecibel = value;
+        }
+        // 更新最大值
+        if (value > this.maxDecibel) {
+          this.maxDecibel = value;
+        }
       }
-      // 更新最大值
-      if (value > this.maxDecibel) {
-        this.maxDecibel = value
-      }
-      // 计算累计平均值
-      this.dbSum += value
-      this.dbCount++
-      this.avgDecibel = Math.round(this.dbSum / this.dbCount)
+      // 更新平均值
+      this.dbSum += value;
+      this.dbCount++;
+      this.avgDecibel = Math.round(this.dbSum / this.dbCount);
     }
   }
 
