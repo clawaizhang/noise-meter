@@ -1,0 +1,253 @@
+import { DecibelRecord } from '@ohos/library/src/main/ets/models/DecibelRecord';
+import { DecibelService } from '@ohos/library/src/main/ets/services/DecibelService';
+import { PromptAction } from '@kit.ArkUI';
+
+// 标题栏构建器
+@Builder
+function DialogTitleBuilder(selectedRecord: DecibelRecord, closeDialog: () => void) {
+  Row() {
+    Row() {
+      Text('检测详情')
+        .fontSize(18)
+        .fontWeight(FontWeight.Medium)
+      if (selectedRecord!.isFavorite) {
+        Image($r('app.media.ic_favorite'))
+          .width(20)
+          .height(20)
+          .fillColor('#FF4081')
+          .margin({ left: 8 })
+      }
+    }
+    Blank()
+    Button() {
+      Image($r('app.media.ic_close'))
+        .width(24)
+        .height(24)
+        .fillColor('#666666')
+    }
+    .type(ButtonType.Circle)
+    .backgroundColor(Color.Transparent)
+    .onClick(closeDialog)
+  }
+  .width('100%')
+  .height(56)
+  .padding({ left: 20, right: 12 })
+}
+
+// 基本信息构建器
+@Builder
+function BasicInfoBuilder(selectedRecord: DecibelRecord) {
+  Column() {
+    Text('基本信息')
+      .fontSize(16)
+      .fontWeight(FontWeight.Medium)
+      .alignSelf(ItemAlign.Start)
+      .margin({ bottom: 12 })
+
+    Row() {
+      Text('检测时间')
+        .fontSize(14)
+        .fontColor('#666666')
+      Text(new Date(selectedRecord!.timestamp).toLocaleString('zh-CN', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false
+      }))
+        .fontSize(14)
+        .fontColor('#333333')
+    }
+    .width('100%')
+    .justifyContent(FlexAlign.SpaceBetween)
+    .margin({ bottom: 8 })
+
+    Row() {
+      Text('检测时长')
+        .fontSize(14)
+        .fontColor('#666666')
+      Text(`${Math.round(selectedRecord!.duration / 1000)}秒`)
+        .fontSize(14)
+        .fontColor('#333333')
+    }
+    .width('100%')
+    .justifyContent(FlexAlign.SpaceBetween)
+    .margin({ bottom: 8 })
+
+    if (selectedRecord!.location) {
+      Row() {
+        Text('检测位置')
+          .fontSize(14)
+          .fontColor('#666666')
+        Text(selectedRecord!.location)
+          .fontSize(14)
+          .fontColor('#333333')
+      }
+      .width('100%')
+      .justifyContent(FlexAlign.SpaceBetween)
+      .margin({ bottom: 8 })
+    }
+  }
+  .width('100%')
+  .padding(16)
+  .backgroundColor(Color.White)
+  .borderRadius(12)
+  .margin({ bottom: 12 })
+}
+
+// 统计数据构建器
+@Builder
+function StatisticsBuilder(selectedRecord: DecibelRecord, decibelService: DecibelService) {
+  Column() {
+    Text('统计数据')
+      .fontSize(16)
+      .fontWeight(FontWeight.Medium)
+      .alignSelf(ItemAlign.Start)
+      .margin({ bottom: 12 })
+
+    Row() {
+      Column() {
+        Text('最小值')
+          .fontSize(12)
+          .fontColor('#666666')
+          .margin({ bottom: 4 })
+        Text(selectedRecord!.minDecibel.toString())
+          .fontSize(20)
+          .fontWeight(FontWeight.Medium)
+          .fontColor(decibelService.getDecibelColor(selectedRecord!.minDecibel))
+      }
+      .layoutWeight(1)
+      .alignItems(HorizontalAlign.Center)
+
+      Column() {
+        Text('平均值')
+          .fontSize(12)
+          .fontColor('#666666')
+          .margin({ bottom: 4 })
+        Text(selectedRecord!.avgDecibel.toString())
+          .fontSize(20)
+          .fontWeight(FontWeight.Medium)
+          .fontColor(decibelService.getDecibelColor(selectedRecord!.avgDecibel))
+      }
+      .layoutWeight(1)
+      .alignItems(HorizontalAlign.Center)
+
+      Column() {
+        Text('最大值')
+          .fontSize(12)
+          .fontColor('#666666')
+          .margin({ bottom: 4 })
+        Text(selectedRecord!.maxDecibel.toString())
+          .fontSize(20)
+          .fontWeight(FontWeight.Medium)
+          .fontColor(decibelService.getDecibelColor(selectedRecord!.maxDecibel))
+      }
+      .layoutWeight(1)
+      .alignItems(HorizontalAlign.Center)
+    }
+    .width('100%')
+  }
+  .width('100%')
+  .padding(16)
+  .backgroundColor(Color.White)
+  .borderRadius(12)
+  .margin({ bottom: 12 })
+}
+
+// 分贝值变化图表构建器
+@Builder
+function ChartBuilder(selectedRecord: DecibelRecord, decibelService: DecibelService) {
+  Column() {
+    Text('分贝值变化')
+      .fontSize(16)
+      .fontWeight(FontWeight.Medium)
+      .alignSelf(ItemAlign.Start)
+      .margin({ bottom: 12 })
+
+    Row() {
+      List({ space: 2, scroller: new Scroller() }) {
+        ForEach(selectedRecord!.values, (value: number, index: number) => {
+          ListItem() {
+            Column() {
+              Text(value.toString())
+                .fontSize(10)
+                .fontColor(decibelService.getDecibelColor(value))
+                .margin({ bottom: 4 })
+              Column() {
+                Column()
+                  .width(4)
+                  .height(value)
+                  .backgroundColor(decibelService.getDecibelColor(value))
+              }
+              .width(4)
+              .height(100)
+              .backgroundColor('#F5F5F5')
+              .alignItems(HorizontalAlign.Center)
+              .justifyContent(FlexAlign.End)
+            }
+          }
+        })
+      }
+      .listDirection(Axis.Horizontal)
+      .width('100%')
+      .height(140)
+      .edgeEffect(EdgeEffect.Spring)
+    }
+    .width('100%')
+    .height(140)
+  }
+  .width('100%')
+  .padding(16)
+  .backgroundColor(Color.White)
+  .borderRadius(12)
+}
+
+@Component
+export struct DetailDialog {
+  @Prop selectedRecord: DecibelRecord | null;
+  private decibelService: DecibelService = new DecibelService();
+
+  build() {
+    Column() {
+      if (this.selectedRecord) {
+        DialogTitleBuilder(this.selectedRecord, () => {
+          this.selectedRecord = null;
+        })
+
+        Scroll() {
+          Column() {
+            BasicInfoBuilder(this.selectedRecord)
+            StatisticsBuilder(this.selectedRecord, this.decibelService)
+            ChartBuilder(this.selectedRecord, this.decibelService)
+          }
+          .width('100%')
+          .padding({ left: 16, right: 16, bottom: 16 })
+        }
+        .layoutWeight(1)
+        .width('100%')
+        .backgroundColor('#F5F5F5')
+      }
+    }
+    .width('100%')
+    .height('90%')
+    .backgroundColor('#F5F5F5')
+    .borderRadius({ topLeft: 24, topRight: 24 })
+    .clip(true)
+    .gesture(
+      GestureGroup(GestureMode.Exclusive,
+        TapGesture()
+          .onAction(() => {
+            // 点击空白区域关闭弹窗
+            this.selectedRecord = null;
+          }),
+        PanGesture({ direction: PanDirection.Up })
+          .onActionStart(() => {
+            // 上滑时不关闭弹窗
+            return false;
+          })
+      )
+    )
+  }
+} 
