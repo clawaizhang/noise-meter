@@ -3,6 +3,8 @@ import { AMapPrivacyAgreeStatus, AMapPrivacyInfoStatus, AMapPrivacyShowStatus } 
 import { PermissionUtil } from '@pura/harmony-utils';
 import geoLocationManager from '@ohos.geoLocationManager';
 import promptAction from '@ohos.promptAction';
+import { abilityAccessCtrl, Context, common } from '@kit.AbilityKit';
+import { BusinessError } from '@kit.BasicServicesKit';
 
 /**
  * 位置显示组件的样式配置
@@ -109,8 +111,75 @@ export struct LocationDisplay {
     }
   }
 
+  private async checkLocationEnabled(): Promise<boolean> {
+    try {
+      const isEnabled = await geoLocationManager.isLocationEnabled();
+      this.isLocationEnabled = isEnabled;
+      return isEnabled;
+    } catch (error) {
+      console.error('检查定位服务状态失败:', error);
+      return false;
+    }
+  }
+
+  private async showLocationServiceDialog(): Promise<void> {
+    try {
+      // 获取当前Context
+      const context = getContext(this) as common.UIAbilityContext;
+      // 创建访问控制管理器实例
+      const atManager = abilityAccessCtrl.createAtManager();
+      
+      try {
+        // 请求开启定位服务
+        const result = await atManager.requestGlobalSwitch(context, abilityAccessCtrl.SwitchType.LOCATION);
+        if (result) {
+          // 如果用户同意开启定位服务，重新检查并开始定位
+          const isEnabled = await this.checkLocationEnabled();
+          if (isEnabled) {
+            this.startSingleLocation();
+          }
+        }
+      } catch (err) {
+        console.error('请求开启定位服务失败:', JSON.stringify(err));
+        // 如果发生错误，显示设置对话框
+        await promptAction.showDialog({
+          title: '定位服务未开启',
+          message: '请在系统设置中开启定位服务，以便获取位置信息',
+          buttons: [
+            {
+              text: '取消',
+              color: '#666666'
+            },
+            {
+              text: '去设置',
+              color: '#0091FF'
+            }
+          ]
+        }).then(async (result) => {
+          if (result.index === 1) {
+            try {
+              // 使用新的API重新请求开启定位服务
+              await atManager.requestGlobalSwitch(context, abilityAccessCtrl.SwitchType.LOCATION);
+            } catch (error) {
+              console.error('跳转到系统设置页面失败:', error);
+            }
+          }
+        });
+      }
+    } catch (error) {
+      console.error('显示定位服务对话框失败:', error);
+    }
+  }
+
   async startSingleLocation() {
     if (!this.locationManager) {
+      return;
+    }
+
+    // 首先检查定位服务是否开启
+    const isLocationEnabled = await this.checkLocationEnabled();
+    if (!isLocationEnabled) {
+      await this.showLocationServiceDialog();
       return;
     }
 
