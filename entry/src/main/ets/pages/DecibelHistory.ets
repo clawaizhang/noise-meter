@@ -159,26 +159,33 @@ struct DetailDialog {
                 .margin({ bottom: 12 })
 
               Row() {
-                ForEach(this.selectedRecord!.values, (value: number, index: number) => {
-                  Column() {
-                    Text(value.toString())
-                      .fontSize(10)
-                      .fontColor(this.decibelService.getDecibelColor(value))
-                      .margin({ bottom: 4 })
-                    Column() {
-                      Column()
+                List({ space: 2, scroller: new Scroller() }) {
+                  ForEach(this.selectedRecord!.values, (value: number, index: number) => {
+                    ListItem() {
+                      Column() {
+                        Text(value.toString())
+                          .fontSize(10)
+                          .fontColor(this.decibelService.getDecibelColor(value))
+                          .margin({ bottom: 4 })
+                        Column() {
+                          Column()
+                            .width(4)
+                            .height(value)
+                            .backgroundColor(this.decibelService.getDecibelColor(value))
+                        }
                         .width(4)
-                        .height(value)
-                        .backgroundColor(this.decibelService.getDecibelColor(value))
+                        .height(100)
+                        .backgroundColor('#F5F5F5')
+                        .alignItems(HorizontalAlign.Center)
+                        .justifyContent(FlexAlign.End)
+                      }
                     }
-                    .width(4)
-                    .height(100)
-                    .backgroundColor('#F5F5F5')
-                    .alignItems(HorizontalAlign.Center)
-                    .justifyContent(FlexAlign.End)
-                  }
-                  .margin({ right: index === this.selectedRecord!.values.length - 1 ? 0 : 2 })
-                })
+                  })
+                }
+                .listDirection(Axis.Horizontal)
+                .width('100%')
+                .height(140)
+                .edgeEffect(EdgeEffect.Spring)
               }
               .width('100%')
               .height(140)
@@ -333,20 +340,20 @@ struct DecibelHistory {
       .padding({ left: 16, right: 16 })
       .backgroundColor(Color.White)
 
-      // 历史记录列表
-      List() {
-        ForEach(this.records, (record: DecibelRecord) => {
-          ListItem() {
-            this.RecordItem(record)
-          }
-        })
-      }
-      .width('100%')
-      .layoutWeight(1)
-      .backgroundColor('#F5F5F5')
-
-      // 清空按钮
+      // 历史记录列表或空状态提示
       if (this.records.length > 0) {
+        List() {
+          ForEach(this.records, (record: DecibelRecord) => {
+            ListItem() {
+              this.RecordItem(record)
+            }
+          })
+        }
+        .width('100%')
+        .layoutWeight(1)
+        .backgroundColor('#F5F5F5')
+
+        // 清空按钮
         Button({
           type: ButtonType.Capsule
         }) {
@@ -366,6 +373,25 @@ struct DecibelHistory {
             console.error('清空历史记录失败:', error);
           }
         })
+      } else {
+        Column() {
+          Image($r('app.media.ic_empty'))
+            .width(120)
+            .height(120)
+            .fillColor('#CCCCCC')
+            .margin({ bottom: 16 })
+          Text('暂无历史记录')
+            .fontSize(16)
+            .fontColor('#999999')
+          Text('完成一次检测后即可查看记录')
+            .fontSize(14)
+            .fontColor('#999999')
+            .margin({ top: 8 })
+        }
+        .width('100%')
+        .layoutWeight(1)
+        .backgroundColor('#F5F5F5')
+        .justifyContent(FlexAlign.Center)
       }
     }
     .width('100%')
