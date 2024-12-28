@@ -1,6 +1,5 @@
 import { DecibelRecord } from '@ohos/library/src/main/ets/models/DecibelRecord';
 import { DecibelService } from '@ohos/library/src/main/ets/services/DecibelService';
-import { PromptAction } from '@kit.ArkUI';
 
 // 标题栏构建器
 @Builder
@@ -207,13 +206,14 @@ function ChartBuilder(selectedRecord: DecibelRecord, decibelService: DecibelServ
 @Component
 export struct DetailDialog {
   @Prop selectedRecord: DecibelRecord | null;
+  @BuilderParam closeDialog: () => void;
   private decibelService: DecibelService = new DecibelService();
 
   build() {
     Column() {
       if (this.selectedRecord) {
         DialogTitleBuilder(this.selectedRecord, () => {
-          this.selectedRecord = null;
+          this.closeDialog()
         })
 
         Scroll() {
@@ -227,7 +227,6 @@ export struct DetailDialog {
         }
         .layoutWeight(1)
         .width('100%')
-        .backgroundColor('#F5F5F5')
       }
     }
     .width('100%')
@@ -240,7 +239,7 @@ export struct DetailDialog {
         TapGesture()
           .onAction(() => {
             // 点击空白区域关闭弹窗
-            this.selectedRecord = null;
+            this.closeDialog()
           }),
         PanGesture({ direction: PanDirection.Up })
           .onActionStart(() => {

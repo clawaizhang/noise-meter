@@ -4,15 +4,24 @@ import { DecibelService } from '@ohos/library/src/main/ets/services/DecibelServi
 import { DetailDialog } from '../components/DetailDialog';
 import router from '@ohos.router';
 import common from '@ohos.app.ability.common';
-import { PromptAction, ComponentContent } from '@kit.ArkUI';
+import { ComponentContent, PromptAction } from '@kit.ArkUI';
 
-interface DialogOptions {
-  selectedRecord: DecibelRecord | null;
+class DialogParams {
+  selectedRecord: DecibelRecord | null = null;
+  closeDialog: () => void = () => {};
+
+  constructor(selectedRecord: DecibelRecord | null, closeDialog: () => void) {
+    this.selectedRecord = selectedRecord;
+    this.closeDialog = closeDialog;
+  }
 }
 
 @Builder
-function buildDetailDialog(options: DialogOptions) {
-  DetailDialog({ selectedRecord: options.selectedRecord })
+function buildDialog(params: DialogParams) {
+  DetailDialog({
+    selectedRecord: params.selectedRecord,
+    closeDialog: params.closeDialog
+  })
 }
 
 @Entry
@@ -24,35 +33,43 @@ struct DecibelHistory {
   @State currentSlidingId: string = '';  // 当前正在滑动的记录ID
   @State currentSlideOffset: number = 0;  // 当前滑动的偏移量
   private startX: number = 0;
-  private hasDeleteButtonOnStart: boolean = false;  // 滑动开始时是否有删除按钮显示
+  private hasDeleteButtonOnStart: boolean = false;  // 滑动开始时是否有删除按钮示
   private recordService: DecibelRecordService = new DecibelRecordService(getContext(this) as common.UIAbilityContext);
   private decibelService: DecibelService = new DecibelService();
   private promptAction: PromptAction = this.getUIContext().getPromptAction();
-  private currentDialogContent: ComponentContent<DialogOptions> | null = null;
+  private currentDialogId: number | null = null;
 
-  showDetailDialog() {
-    try {
-      const dialogContent = new ComponentContent<DialogOptions>(
-        this.getUIContext(),
-        wrapBuilder(buildDetailDialog),
-        { selectedRecord: this.selectedRecord }
-      );
-      this.currentDialogContent = dialogContent;
-      this.promptAction.openCustomDialog(dialogContent);
-    } catch (error) {
-      console.error('打开弹窗失败:', error);
-    }
+  @Builder
+  DetailDialogBuilder() {
+    DetailDialog({
+      selectedRecord: this.selectedRecord,
+    })
   }
 
-  closeDetailDialog() {
-    if (this.currentDialogContent) {
-      try {
-        this.promptAction.closeCustomDialog(this.currentDialogContent);
-        this.currentDialogContent = null;
-        this.selectedRecord = null;
-      } catch (error) {
-        console.error('关闭弹窗失败:', error);
-      }
+  async showDetailDialog() {
+    try {
+      let dialogContent: ComponentContent<DialogParams>;
+      const closeDialog = () => {
+        try {
+          this.promptAction.closeCustomDialog(dialogContent);
+        } catch (error) {
+          console.error('关闭弹窗失败:', error);
+        }
+      };
+
+      const dialogParams = new DialogParams(this.selectedRecord, closeDialog);
+      dialogContent = new ComponentContent(
+        this.getUIContext(),
+        wrapBuilder(buildDialog),
+        dialogParams
+      );
+
+      await this.promptAction.openCustomDialog(dialogContent, {
+        alignment: DialogAlignment.Bottom,
+        offset: { dx: 0, dy: 0 }
+      });
+    } catch (error) {
+      console.error('打开弹窗失败:', error);
     }
   }
 
@@ -79,7 +96,7 @@ struct DecibelHistory {
           try {
             const recordToDelete = this.records.find(r => r.id === this.showingDeleteButtonId);
             if (recordToDelete) {
-              // 从列表中移除该记录
+              // 从列表中除该记录
               const index = this.records.findIndex(r => r.id === recordToDelete.id);
               if (index !== -1) {
                 this.records.splice(index, 1);
@@ -243,7 +260,7 @@ struct DecibelHistory {
               if (this.hasDeleteButtonOnStart) {
                 // 如果开始时有删除按钮，则只处理右滑隐藏
                 this.currentSlideOffset = Math.max(-80, Math.min(0, -80 + deltaX));
-                if (deltaX > 40) {  // 右滑超过一半距离时隐藏删除按钮
+                if (deltaX > 40) {  // 右滑一半距离时隐藏删除按钮
                   this.showingDeleteButtonId = '';
                 }
               } else {
