@@ -2,6 +2,7 @@ import { AMapLocationManagerImpl, AMapLocationType, AMapLocation, AMapLocationEr
 import { AMapPrivacyAgreeStatus, AMapPrivacyInfoStatus, AMapPrivacyShowStatus } from '@amap/amap_lbs_common';
 import { PermissionUtil } from '@pura/harmony-utils';
 import geoLocationManager from '@ohos.geoLocationManager';
+import promptAction from '@ohos.promptAction';
 
 /**
  * 位置显示组件的样式配置
@@ -214,6 +215,46 @@ export struct LocationDisplay {
     .height('100%')
   }
 
+  private async showPermissionDialog(): Promise<void> {
+    try {
+      await promptAction.showDialog({
+        title: '需要位置权限',
+        message: '请在系统设置中开启位置权限，以便获取位置信息',
+        buttons: [
+          {
+            text: '取消',
+            color: '#666666'
+          },
+          {
+            text: '去设置',
+            color: '#0091FF'
+          }
+        ]
+      }).then(async (result) => {
+        if (result.index === 1) {
+          // 使用 PermissionUtil 拉起系统二次授权
+          await PermissionUtil.requestPermissionsEasy(['ohos.permission.APPROXIMATELY_LOCATION', 'ohos.permission.LOCATION']).then((granted) => {
+            if (granted) {
+              // 如果用户授予了权限，开启开关并开始定位
+              this.isLocationEnabled = true;
+              this.startSingleLocation();
+            } else {
+              // 如果用户在系统授权弹窗中拒绝，保持开关关闭
+              this.isLocationEnabled = false;
+            }
+          });
+        } else {
+          // 用户点击取消按钮，保持开关关闭
+          this.isLocationEnabled = false;
+        }
+      });
+    } catch (error) {
+      console.error('Failed to show permission dialog:', error);
+      // 发生错误时也保持开关关闭
+      this.isLocationEnabled = false;
+    }
+  }
+
   build() {
     Column() {
       Row() {
@@ -234,22 +275,27 @@ export struct LocationDisplay {
 
         Blank()
 
-        // 添加开关控件
         Toggle({ type: ToggleType.Switch, isOn: this.isLocationEnabled })
           .selectedColor('#0091FF')
           .switchPointColor('#FFFFFF')
           .onChange(async (isOn: boolean) => {
+            // 先设置开关状态
             this.isLocationEnabled = isOn;
+            
             if (isOn) {
               // 开启时请求权限并获取位置
               const hasPermission = await this.requestLocationPermission();
               if (hasPermission) {
                 this.startSingleLocation();
               } else {
-                // 如果权限被拒绝，关闭开关
+                // 如果权限被拒绝，显示权限提示对话框并关闭开关
                 this.isLocationEnabled = false;
-                this.location = '缺少位置权限';
-                this.address = '请授予位置权限以使用定位功能';
+                this.showPermissionDialog();
+              }
+            } else {
+              // 停止定位
+              if (this.locationManager) {
+                this.locationManager.stopUpdatingLocation();
               }
             }
           })
