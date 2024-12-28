@@ -1,10 +1,7 @@
-import { AMapLocationManagerImpl, AMapLocationType, AMapLocation, AMapLocationErrorInfo, AMapLocationOption, AMapLocationReGeocodeLanguage } from '@amap/amap_lbs_location';
-import { AMapPrivacyAgreeStatus, AMapPrivacyInfoStatus, AMapPrivacyShowStatus } from '@amap/amap_lbs_common';
-import { PermissionUtil } from '@pura/harmony-utils';
-import geoLocationManager from '@ohos.geoLocationManager';
 import promptAction from '@ohos.promptAction';
-import { abilityAccessCtrl, Context, common } from '@kit.AbilityKit';
-import { BusinessError } from '@kit.BasicServicesKit';
+import { LocationService, LocationInfo } from '../../services/LocationService';
+import common from '@ohos.app.ability.common';
+import { PermissionUtil } from '@pura/harmony-utils';
 
 /**
  * 位置显示组件的样式配置
@@ -12,10 +9,13 @@ import { BusinessError } from '@kit.BasicServicesKit';
 export interface LocationStyle {
   /** 背景颜色 */
   backgroundColor?: string;
+
   /** 文字颜色 */
   textColor?: string;
+
   /** 按钮颜色 */
   buttonColor?: string;
+
   /** 图标颜色 */
   iconColor?: string;
 }
@@ -34,91 +34,55 @@ export struct LocationDisplay {
   @State location: string = '正在获取位置...';
   @State address: string = '';
   @State isRefreshing: boolean = false;
-  @State isLocationEnabled: boolean = false;  // 添加位置开关状态
-  private locationManager?: AMapLocationManagerImpl;
+  @State isLocationEnabled: boolean = false;
+  private locationService: LocationService = LocationService.getInstance();
   @Prop style?: LocationStyle;
 
-  private getLocationOptions(): AMapLocationOption {
-    return {
-      priority: geoLocationManager.LocationRequestPriority.FIRST_FIX, // 定位优先级：首次定位优先
-      scenario: geoLocationManager.LocationRequestScenario.UNSET,    // 定位场景：默认
-      maxAccuracy: 0,                                               // 定位精度：最高精度
-      singleLocationTimeout: 8000,                                  // 单次定位超时时间：8秒
-      locatingWithReGeocode: true,                                  // 返回逆地理信息
-      reGeocodeLanguage: AMapLocationReGeocodeLanguage.Chinese,     // 逆地理编码语言：中文
-      isOffset: true                                                // 偏移：开启偏移
-    }
-  }
-
   async aboutToAppear() {
-    // 设置Key
-    AMapLocationManagerImpl.setApiKey("7dd65efe926c70f43ab42a7686cd8140");
+    await this.locationService.init(getContext(this));
+    // 不再在初始化时检查并设置定位服务状态
+    this.isLocationEnabled = false;
+    this.location = '开启���可查看位置信息';
+    this.address = '';
+  }
 
-    // 初始化隐私政策
-    AMapLocationManagerImpl.updatePrivacyShow(AMapPrivacyShowStatus.DidShow, AMapPrivacyInfoStatus.DidContain, getContext(this));
-    AMapLocationManagerImpl.updatePrivacyAgree(AMapPrivacyAgreeStatus.DidAgree, getContext(this));
-
-    // 初始化定位管理器
-    this.locationManager = new AMapLocationManagerImpl(getContext(this));
-    
-    // 设置定位参数
-    const options = this.getLocationOptions();
-    this.locationManager?.setLocationOption(AMapLocationType.Single, options);
-    
-    // 设置定位监听器
-    this.locationManager?.setLocationListener(AMapLocationType.Single, {
-      onLocationChanged: (location: AMapLocation) => {
-        // 定位成功
-        this.location = `${location.latitude.toFixed(6)}, ${location.longitude.toFixed(6)}`;
-        if (location.reGeo) {
-          const address = [
-            location.reGeo.province,
-            location.reGeo.city,
-            location.reGeo.district,
-            location.reGeo.street,
-            location.reGeo.poiName
-          ].filter(Boolean).join('');
-          this.address = address || '未获取到详细地址';
-        } else {
-          this.address = '未获取到详细地址';
+  async startSingleLocation() {
+    try {
+      // 先检查定位服务是否开启
+      const isServiceEnabled = await this.locationService.checkLocationEnabled();
+      if (!isServiceEnabled) {
+        // 如果定位服务未开启，确保开关关闭
+        this.isLocationEnabled = false;
+        // 示开启定位服务对话框
+        await this.showLocationServiceDialog();
+        // 再次检查定位服务状态
+        const isEnabled = await this.locationService.checkLocationEnabled();
+        if (!isEnabled) {
+          this.isLocationEnabled = false;
+          return;
         }
-        this.isRefreshing = false;
-      },
-      onLocationError: (errorInfo: AMapLocationErrorInfo) => {
-        // 定位失败
-        this.location = '定位失败';
-        this.address = `错误码: ${errorInfo.errorCode}, ${errorInfo.errorMsg}`;
-        console.error('Location failed:', errorInfo);
-        this.isRefreshing = false;
-      }
-    });
-  }
-
-  private async requestLocationPermission(): Promise<boolean> {
-    try {
-      // 检查位置权限
-      const hasPermission = await PermissionUtil.checkPermissions('ohos.permission.LOCATION');
-      if (hasPermission) {
-        return true;
       }
 
-      // 请求位置权限
-      const granted = await PermissionUtil.requestPermissions(['ohos.permission.APPROXIMATELY_LOCATION','ohos.permission.LOCATION']);
-      return granted;
-    } catch (error) {
-      console.error('Failed to request location permission:', error.message);
-      return false;
-    }
-  }
+      // 检查定位权限
+      const hasPermission = await this.locationService.requestLocationPermission();
+      if (!hasPermission) {
+        this.isLocationEnabled = false;
+        this.location = '缺少位置权限';
+        this.address = '请授予位置权限以使用定位功能';
+        return;
+      }
 
-  private async checkLocationEnabled(): Promise<boolean> {
-    try {
-      const isEnabled = await geoLocationManager.isLocationEnabled();
-      this.isLocationEnabled = isEnabled;
-      return isEnabled;
+      this.isRefreshing = true;
+      const locationInfo: LocationInfo = await this.locationService.requestSingleLocation();
+      this.location = locationInfo.coordinates;
+      this.address = locationInfo.address;
     } catch (error) {
-      console.error('检查定位服务状态失败:', error);
-      return false;
+      console.error('Failed to request location:', error.message);
+      this.location = '定位异常';
+      this.address = error.message;
+      this.isLocationEnabled = false;
+    } finally {
+      this.isRefreshing = false;
     }
   }
 
@@ -126,21 +90,32 @@ export struct LocationDisplay {
     try {
       // 获取当前Context
       const context = getContext(this) as common.UIAbilityContext;
-      // 创建访问控制管理器实例
-      const atManager = abilityAccessCtrl.createAtManager();
-      
+
       try {
         // 请求开启定位服务
-        const result = await atManager.requestGlobalSwitch(context, abilityAccessCtrl.SwitchType.LOCATION);
+        const result = await this.locationService.requestLocationService(context);
+        // 无论结果如何，都重新检查定位服务状态
+        const isEnabled = await this.locationService.checkLocationEnabled();
+        if (!isEnabled) {
+          this.isLocationEnabled = false;
+          return;
+        }
+
         if (result) {
           // 如果用户同意开启定位服务，重新检查并开始定位
-          const isEnabled = await this.checkLocationEnabled();
-          if (isEnabled) {
+          const hasPermission = await this.locationService.requestLocationPermission();
+          if (hasPermission) {
+            this.isLocationEnabled = true;
             this.startSingleLocation();
+          } else {
+            this.isLocationEnabled = false;
           }
+        } else {
+          this.isLocationEnabled = false;
         }
       } catch (err) {
         console.error('请求开启定位服务失败:', JSON.stringify(err));
+        this.isLocationEnabled = false;
         // 如果发生错误，显示设置对话框
         await promptAction.showDialog({
           title: '定位服务未开启',
@@ -159,69 +134,51 @@ export struct LocationDisplay {
           if (result.index === 1) {
             try {
               // 使用新的API重新请求开启定位服务
-              await atManager.requestGlobalSwitch(context, abilityAccessCtrl.SwitchType.LOCATION);
+              await this.locationService.requestLocationService(context);
+              // 再次检查定位服务是否真的开启
+              const isEnabled = await this.locationService.checkLocationEnabled();
+              if (!isEnabled) {
+                this.isLocationEnabled = false;
+                return;
+              }
+
+              // 如果定位服务已开启，继续请求权限
+              const hasPermission = await this.locationService.requestLocationPermission();
+              if (hasPermission) {
+                this.isLocationEnabled = true;
+                this.startSingleLocation();
+              } else {
+                this.isLocationEnabled = false;
+              }
             } catch (error) {
               console.error('跳转到系统设置页面失败:', error);
+              this.isLocationEnabled = false;
             }
+          } else {
+            this.isLocationEnabled = false;
           }
         });
       }
     } catch (error) {
       console.error('显示定位服务对话框失败:', error);
-    }
-  }
-
-  async startSingleLocation() {
-    if (!this.locationManager) {
-      return;
-    }
-
-    // 首先检查定位服务是否开启
-    const isLocationEnabled = await this.checkLocationEnabled();
-    if (!isLocationEnabled) {
-      await this.showLocationServiceDialog();
-      return;
-    }
-
-    // 检查权限
-    const hasPermission = await this.requestLocationPermission();
-    if (!hasPermission) {
-      this.location = '缺少位置权限';
-      this.address = '请授予位置权限以使用定位功能';
-      return;
-    }
-
-    try {
-      this.isRefreshing = true;
-      this.locationManager.requestSingleLocation();
-    } catch (error) {
-      console.error('Failed to request location:', error.message);
-      this.location = '定位异常';
-      this.address = error.message;
-      this.isRefreshing = false;
+      this.isLocationEnabled = false;
     }
   }
 
   aboutToDisappear() {
-    // 组件销毁时释放资源
-    if (this.locationManager) {
-      this.locationManager.stopUpdatingLocation();  // 停止定位更新
-      this.locationManager = undefined;
-    }
+    this.locationService.destroy();
   }
 
   @Builder
   LocationIcon(options: IconOptions) {
     Stack() {
-      // 定位图标外圈
       Circle()
         .width(options?.size ?? 24)
         .height(options?.size ?? 24)
         .stroke(options?.color ?? '#666666')
         .strokeWidth(2)
         .fill('none')
-      
-      // 定位图标中心点
+
       Circle()
         .width((options?.size ?? 24) * 0.4)
         .height((options?.size ?? 24) * 0.4)
@@ -235,7 +192,7 @@ export struct LocationDisplay {
       Image($r('app.media.ic_refresh'))
         .width(16)
         .height(16)
-        .fillColor(options?.color ?? '#FFFFFF')
+        .fillColor(options?.color ?? '#666666')
         .objectFit(ImageFit.Contain)
         .rotate({
           angle: options?.isRefreshing ? 360 : 0,
@@ -284,46 +241,6 @@ export struct LocationDisplay {
     .height('100%')
   }
 
-  private async showPermissionDialog(): Promise<void> {
-    try {
-      await promptAction.showDialog({
-        title: '需要位置权限',
-        message: '请在系统设置中开启位置权限，以便获取位置信息',
-        buttons: [
-          {
-            text: '取消',
-            color: '#666666'
-          },
-          {
-            text: '去设置',
-            color: '#0091FF'
-          }
-        ]
-      }).then(async (result) => {
-        if (result.index === 1) {
-          // 使用 PermissionUtil 拉起系统二次授权
-          await PermissionUtil.requestPermissionsEasy(['ohos.permission.APPROXIMATELY_LOCATION', 'ohos.permission.LOCATION']).then((granted) => {
-            if (granted) {
-              // 如果用户授予了权限，开启开关并开始定位
-              this.isLocationEnabled = true;
-              this.startSingleLocation();
-            } else {
-              // 如果用户在系统授权弹窗中拒绝，保持开关关闭
-              this.isLocationEnabled = false;
-            }
-          });
-        } else {
-          // 用户点击取消按钮，保持开关关闭
-          this.isLocationEnabled = false;
-        }
-      });
-    } catch (error) {
-      console.error('Failed to show permission dialog:', error);
-      // 发生错误时也保持开关关闭
-      this.isLocationEnabled = false;
-    }
-  }
-
   build() {
     Column() {
       Row() {
@@ -335,7 +252,7 @@ export struct LocationDisplay {
             })
           }
           .margin({ right: 8 })
-          
+
           Text('当前位置')
             .fontSize(16)
             .fontWeight(FontWeight.Medium)
@@ -344,28 +261,72 @@ export struct LocationDisplay {
 
         Blank()
 
-        Toggle({ type: ToggleType.Switch, isOn: this.isLocationEnabled })
+        Toggle({ type: ToggleType.Switch, isOn: $$this.isLocationEnabled })
           .selectedColor('#0091FF')
           .switchPointColor('#FFFFFF')
           .onChange(async (isOn: boolean) => {
-            // 先设置开关状态
-            this.isLocationEnabled = isOn;
-            
             if (isOn) {
-              // 开启时请求权限并获取位置
-              const hasPermission = await this.requestLocationPermission();
+              // 先检查定位服务是否开启
+              const isServiceEnabled = await this.locationService.checkLocationEnabled();
+              if (!isServiceEnabled) {
+                // 显示开启定位服务对话框
+                this.isLocationEnabled = false;
+                await this.showLocationServiceDialog();
+                return;
+              }
+
+              // 如果定位服务已开启，请求定位权限
+              const hasPermission = await this.locationService.requestLocationPermission();
               if (hasPermission) {
+                this.isLocationEnabled = true;
                 this.startSingleLocation();
               } else {
-                // 如果权限被拒绝，显示权限提示对话框并关闭开关
-                this.isLocationEnabled = false;
-                this.showPermissionDialog();
+                // 如果权限被拒绝，显示权限请求对话框
+                await promptAction.showDialog({
+                  title: '需要位置权限',
+                  message: '请授予位置权限，以便获取位置信息',
+                  buttons: [
+                    {
+                      text: '取消',
+                      color: '#666666'
+                    },
+                    {
+                      text: '去设置',
+                      color: '#0091FF'
+                    }
+                  ]
+                }).then(async (result) => {
+                  if (result.index === 1) {
+                    try {
+                      // 使用PermissionUtil拉起系统权限设置页面
+                      await PermissionUtil.requestPermissionsEasy(['ohos.permission.APPROXIMATELY_LOCATION',
+                        'ohos.permission.LOCATION']).then(async (granted: boolean) => {
+                        if (granted) {
+                          this.isLocationEnabled = true;
+                          this.startSingleLocation();
+                        } else {
+                          this.isLocationEnabled = false;
+                          this.location = '缺少位置权限';
+                          this.address = '请授予位置权限以使用定位功能';
+                        }
+                      });
+                    } catch (error) {
+                      console.error('跳转到权限设置页面失败:', error);
+                      this.isLocationEnabled = false;
+                      this.location = '缺少位置权限';
+                      this.address = '请授予位置权限以使用定位功能';
+                    }
+                  } else {
+                    // 用户点击取消
+                    this.isLocationEnabled = false;
+                    this.location = '缺少位置权限';
+                    this.address = '请授予位置权限以使用定位功能';
+                  }
+                });
               }
             } else {
-              // 停止定位
-              if (this.locationManager) {
-                this.locationManager.stopUpdatingLocation();
-              }
+              this.isLocationEnabled = false;
+              this.locationService.stopLocation();
             }
           })
       }
@@ -373,7 +334,6 @@ export struct LocationDisplay {
       .margin({ bottom: 12 })
 
       if (this.isLocationEnabled) {
-        // 只在开启状态显示位置信息
         Text(this.location)
           .fontSize(14)
           .fontColor(this.style?.textColor ?? '#666666')
@@ -413,7 +373,6 @@ export struct LocationDisplay {
           y: this.isRefreshing ? 0.98 : 1
         })
       } else {
-        // 关闭状态显示提示文本
         Text('开启后可查看位置信息')
           .fontSize(14)
           .fontColor('#999999')
