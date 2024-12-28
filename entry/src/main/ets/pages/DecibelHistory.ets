@@ -350,6 +350,14 @@ struct DecibelHistory {
           }
           .layoutWeight(1)
           .alignItems(HorizontalAlign.End)
+
+          if (record.isFavorite) {
+            Image($r('app.media.ic_favorite'))
+              .width(16)
+              .height(16)
+              .fillColor('#FF4081')
+              .margin({ left: 8 })
+          }
         }
         .width('100%')
         .padding(16)
@@ -378,7 +386,6 @@ struct DecibelHistory {
       .gesture(
         PanGesture()
           .onActionStart((event: GestureEvent) => {
-            // 如果当前项已显示删除按钮，则允许右滑隐藏
             this.startX = event.offsetX;
             this.currentSlidingId = record.id;
             this.currentSlideOffset = this.showingDeleteButtonId === record.id ? -80 : 0;
@@ -386,14 +393,21 @@ struct DecibelHistory {
           .onActionUpdate((event: GestureEvent) => {
             if (this.currentSlidingId === record.id) {
               const deltaX = event.offsetX - this.startX;
-              if (this.showingDeleteButtonId === record.id) {
+              if (deltaX > 40) {  // 右滑超过阈值时收藏/取消收藏
+                record.isFavorite = !record.isFavorite;
+                this.currentSlidingId = '';
+                this.currentSlideOffset = 0;
+                this.showingDeleteButtonId = '';
+                // 更新存储
+                this.recordService.saveRecords(this.records);
+              } else if (this.showingDeleteButtonId === record.id) {
                 // 已显示删除按钮时，处理右滑隐藏
                 this.currentSlideOffset = Math.max(-80, Math.min(0, -80 + deltaX));
                 if (deltaX > 40) {  // 右滑超过一半距离时隐藏删除按钮
                   this.showingDeleteButtonId = '';
                 }
               } else {
-                // 未显示删除按钮时，处��左滑显示
+                // 未显示删除按钮时，处理左滑显示
                 this.currentSlideOffset = Math.max(-80, Math.min(0, deltaX));
                 if (deltaX < -40) {  // 左滑超过一半距离时显示删除按钮
                   this.showingDeleteButtonId = record.id;
@@ -508,12 +522,34 @@ struct DecibelHistory {
         .backgroundColor('#FF4081')
         .margin({ bottom: 16 })
         .onClick(async () => {
-          try {
-            await this.recordService.clearRecords();
-            this.records = [];
-          } catch (error) {
-            console.error('清空历史记录失败:', error);
-          }
+          AlertDialog.show({
+            title: '清空历史记录',
+            message: '确定要清空历史记录吗？\n已收藏的记录将会保留',
+            alignment: DialogAlignment.Center,
+            primaryButton: {
+              value: '取消',
+              fontColor: '#666666',
+              backgroundColor: '#F5F5F5',
+              action: () => {
+                // 不执行任何操作
+              }
+            },
+            secondaryButton: {
+              value: '清空',
+              fontColor: '#FFFFFF',
+              backgroundColor: '#FF4081',
+              action: async () => {
+                try {
+                  // 保留收藏的记录
+                  const favoriteRecords = this.records.filter(r => r.isFavorite);
+                  this.records = favoriteRecords;
+                  await this.recordService.saveRecords(this.records);
+                } catch (error) {
+                  console.error('清空历史记录失败:', error);
+                }
+              }
+            }
+          });
         })
       } else {
         Column() {

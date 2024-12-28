@@ -10,6 +10,7 @@ export class DecibelRecord {
   duration: number;  // 检测持续时间（毫秒）
   location?: string;  // 检测位置（可选）
   values: number[];  // 每次检测的分贝值数组
+  isFavorite: boolean;  // 是否收藏
 
   constructor(
     minDecibel: number,
@@ -27,5 +28,6 @@ export class DecibelRecord {
     this.duration = duration;
     this.values = values;
     this.location = location;
+    this.isFavorite = false;  // 默认不收藏
   }
 } 
