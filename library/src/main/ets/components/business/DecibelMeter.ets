@@ -129,9 +129,6 @@ export struct DecibelMeter {
         // 显示详情弹窗
         this.dialogService.showDetailDialog(this.getUIContext(), wrapBuilder(buildDialog), record);
 
-        // 重置数据
-        this.values = [];
-        this.startTime = 0;
       } catch (error) {
         console.error('保存记录失败:', error);
       }
