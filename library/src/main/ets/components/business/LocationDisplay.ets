@@ -42,7 +42,7 @@ export struct LocationDisplay {
     await this.locationService.init(getContext(this));
     // 不再在初始化时检查并设置定位服务状态
     this.isLocationEnabled = false;
-    this.location = '开启���可查看位置信息';
+    this.location = '开启定位服务可查看位置信息';
     this.address = '';
   }
 
@@ -76,6 +76,7 @@ export struct LocationDisplay {
       const locationInfo: LocationInfo = await this.locationService.requestSingleLocation();
       this.location = locationInfo.coordinates;
       this.address = locationInfo.address;
+      this.isLocationEnabled = true;
     } catch (error) {
       console.error('Failed to request location:', error.message);
       this.location = '定位异常';

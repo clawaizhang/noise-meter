@@ -1,9 +1,7 @@
-import { AMapLocationManagerImpl, AMapLocationType, AMapLocation, AMapLocationErrorInfo, AMapLocationOption, AMapLocationReGeocodeLanguage } from '@amap/amap_lbs_location';
-import { AMapPrivacyAgreeStatus, AMapPrivacyInfoStatus, AMapPrivacyShowStatus } from '@amap/amap_lbs_common';
-import { PermissionUtil } from '@pura/harmony-utils';
 import geoLocationManager from '@ohos.geoLocationManager';
 import abilityAccessCtrl from '@ohos.abilityAccessCtrl';
 import common from '@ohos.app.ability.common';
+import { PermissionUtil } from '@pura/harmony-utils';
 
 export interface LocationInfo {
   coordinates: string;
@@ -11,7 +9,6 @@ export interface LocationInfo {
 }
 
 export class LocationService {
-  private locationManager?: AMapLocationManagerImpl;
   private static instance: LocationService;
 
   private constructor() {}
@@ -23,32 +20,8 @@ export class LocationService {
     return LocationService.instance;
   }
 
-  private getLocationOptions(): AMapLocationOption {
-    return {
-      priority: geoLocationManager.LocationRequestPriority.FIRST_FIX,
-      scenario: geoLocationManager.LocationRequestScenario.UNSET,
-      maxAccuracy: 0,
-      singleLocationTimeout: 8000,
-      locatingWithReGeocode: true,
-      reGeocodeLanguage: AMapLocationReGeocodeLanguage.Chinese,
-      isOffset: true
-    }
-  }
-
   public async init(context: Context) {
-    // 设置Key
-    AMapLocationManagerImpl.setApiKey("7dd65efe926c70f43ab42a7686cd8140");
-
-    // 初始化隐私政策
-    AMapLocationManagerImpl.updatePrivacyShow(AMapPrivacyShowStatus.DidShow, AMapPrivacyInfoStatus.DidContain, context);
-    AMapLocationManagerImpl.updatePrivacyAgree(AMapPrivacyAgreeStatus.DidAgree, context);
-
-    // 初始化定位管理器
-    this.locationManager = new AMapLocationManagerImpl(context);
-    
-    // 设置定位参数
-    const options = this.getLocationOptions();
-    this.locationManager?.setLocationOption(AMapLocationType.Single, options);
+    // 不需要特别初始化，直接使用 geoLocationManager
   }
 
   public async checkLocationEnabled(): Promise<boolean> {
@@ -88,52 +61,69 @@ export class LocationService {
   }
 
   public async requestSingleLocation(): Promise<LocationInfo> {
-    return new Promise((resolve, reject) => {
-      if (!this.locationManager) {
-        reject(new Error('Location manager not initialized'));
-        return;
-      }
+    return new Promise(async (resolve, reject) => {
+      try {
+        // 设置定位请求参数
+        const requestInfo: geoLocationManager.LocationRequest = {
+          priority: geoLocationManager.LocationRequestPriority.ACCURACY,
+          scenario: geoLocationManager.LocationRequestScenario.NAVIGATION,
+          timeInterval: 0,
+          distanceInterval: 0,
+          maxAccuracy: 0
+        };
 
-      this.locationManager.setLocationListener(AMapLocationType.Single, {
-        onLocationChanged: (location: AMapLocation) => {
-          const coordinates = `${location.latitude.toFixed(6)}, ${location.longitude.toFixed(6)}`;
-          let address = '未获取到详细地址';
-          
-          if (location.reGeo) {
-            address = [
-              location.reGeo.province,
-              location.reGeo.city,
-              location.reGeo.district,
-              location.reGeo.street,
-              location.reGeo.poiName
-            ].filter(Boolean).join('');
+        // 获取位置信息
+        const location = await geoLocationManager.getCurrentLocation(requestInfo);
+        
+        // 获取地理编码信息
+        const reverseGeocodeRequest: geoLocationManager.ReverseGeoCodeRequest = {
+          latitude: location.latitude,
+          longitude: location.longitude,
+          maxItems: 1,
+          locale: "zh_CN"
+        };
+
+        const addresses = await geoLocationManager.getAddressesFromLocation(reverseGeocodeRequest);
+        let address = '未获取到详细地址';
+        
+        if (addresses && addresses.length > 0) {
+          const addressParts = [
+            addresses[0].countryName,
+            addresses[0].administrativeArea,
+            addresses[0].locality,
+            addresses[0].subLocality,
+            addresses[0].roadName,
+            addresses[0].premises
+          ];
+
+          // 添加具体地点名称
+          if (addresses[0].placeName) {
+            addressParts.push(addresses[0].placeName);
           }
 
-          resolve({ coordinates, address });
-        },
-        onLocationError: (errorInfo: AMapLocationErrorInfo) => {
-          reject(new Error(`Location failed: ${errorInfo.errorCode}, ${errorInfo.errorMsg}`));
-        }
-      });
+          // 添加额外的描述信息
+          if (addresses[0].descriptions && addresses[0].descriptions.length > 0) {
+            addressParts.push(addresses[0].descriptions[0]);
+          }
 
-      try {
-        this.locationManager.requestSingleLocation();
+          address = addressParts.filter(Boolean).join('');
+        }
+
+        resolve({
+          coordinates: `${location.latitude.toFixed(6)}, ${location.longitude.toFixed(6)}`,
+          address: address
+        });
       } catch (error) {
-        reject(error);
+        reject(new Error(`Location failed: ${error.message}`));
       }
     });
   }
 
   public stopLocation() {
-    if (this.locationManager) {
-      this.locationManager.stopUpdatingLocation();
-    }
+    // 华为Location Kit不需要显式停止单次定位
   }
 
   public destroy() {
-    if (this.locationManager) {
-      this.locationManager.stopUpdatingLocation();
-      this.locationManager = undefined;
-    }
+    // 不需要特别清理
   }
 } 
