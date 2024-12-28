@@ -380,7 +380,7 @@ struct DecibelHistory {
           })
       )
 
-      if (this.showingDeleteButtonId === record.id) {
+      if (this.showingDeleteButtonId === record.id || this.currentSlidingId === record.id) {
         Row() {
           Button() {
             Image($r('app.media.ic_delete'))
@@ -389,7 +389,7 @@ struct DecibelHistory {
               .fillColor(Color.White)
           }
           .width(80)
-          .height(84)
+          .height(90)
           .type(ButtonType.Normal)
           .backgroundColor('#FF4081')
           .onClick(async () => {
@@ -408,8 +408,15 @@ struct DecibelHistory {
             }
           })
         }
+        .width(80)
+        .height(90)
         .position({ x: '100%', y: 0 })
-        .translate({ x: -80 })
+        .translate({ 
+          x: this.showingDeleteButtonId === record.id ? -80 : 
+             Math.max(-80, Math.min(0, this.currentSlideOffset + 80))
+        })
+        .opacity(this.showingDeleteButtonId === record.id ? 1 : 
+                Math.min(1, Math.abs(this.currentSlideOffset) / 80))
         .animation({
           duration: 300,
           curve: Curve.EaseOut
