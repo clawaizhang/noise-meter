@@ -220,6 +220,7 @@ struct DecibelHistory {
   @State currentSlidingId: string = '';  // 当前正在滑动的记录ID
   @State currentSlideOffset: number = 0;  // 当前滑动的偏移量
   private startX: number = 0;
+  private hasDeleteButtonOnStart: boolean = false;  // 滑动开始时是否有删除按钮显示
   private recordService: DecibelRecordService = new DecibelRecordService(getContext(this) as common.UIAbilityContext);
   private decibelService: DecibelService = new DecibelService();
   dialogController: CustomDialogController = new CustomDialogController({
@@ -305,6 +306,15 @@ struct DecibelHistory {
             }
           }
           .alignItems(HorizontalAlign.Start)
+          .margin({ right: record.isFavorite ? 8 : 0 })
+
+          if (record.isFavorite) {
+            Image($r('app.media.ic_favorite'))
+              .width(16)
+              .height(16)
+              .fillColor('#FF4081')
+              .margin({ right: 8 })
+          }
 
           Column() {
             Row() {
@@ -350,14 +360,6 @@ struct DecibelHistory {
           }
           .layoutWeight(1)
           .alignItems(HorizontalAlign.End)
-
-          if (record.isFavorite) {
-            Image($r('app.media.ic_favorite'))
-              .width(16)
-              .height(16)
-              .fillColor('#FF4081')
-              .margin({ left: 8 })
-          }
         }
         .width('100%')
         .padding(16)
@@ -379,6 +381,12 @@ struct DecibelHistory {
         x: this.showingDeleteButtonId === record.id ? -80 : 
            (record.id === this.currentSlidingId ? Math.min(0, Math.max(-80, this.currentSlideOffset)) : 0)
       })
+      .scale({
+        x: record.id === this.currentSlidingId && this.currentSlideOffset > 40 ? 
+           0.95 + (80 - this.currentSlideOffset) / 800 : 1,
+        y: record.id === this.currentSlidingId && this.currentSlideOffset > 40 ? 
+           0.95 + (80 - this.currentSlideOffset) / 800 : 1
+      })
       .animation({
         duration: 300,
         curve: Curve.EaseOut
@@ -388,27 +396,21 @@ struct DecibelHistory {
           .onActionStart((event: GestureEvent) => {
             this.startX = event.offsetX;
             this.currentSlidingId = record.id;
-            this.currentSlideOffset = this.showingDeleteButtonId === record.id ? -80 : 0;
+            this.hasDeleteButtonOnStart = this.showingDeleteButtonId === record.id;
+            this.currentSlideOffset = this.hasDeleteButtonOnStart ? -80 : 0;
           })
           .onActionUpdate((event: GestureEvent) => {
             if (this.currentSlidingId === record.id) {
               const deltaX = event.offsetX - this.startX;
-              if (deltaX > 40) {  // 右滑超过阈值时收藏/取消收藏
-                record.isFavorite = !record.isFavorite;
-                this.currentSlidingId = '';
-                this.currentSlideOffset = 0;
-                this.showingDeleteButtonId = '';
-                // 更新存储
-                this.recordService.saveRecords(this.records);
-              } else if (this.showingDeleteButtonId === record.id) {
-                // 已显示删除按钮时，处理右滑隐藏
+              if (this.hasDeleteButtonOnStart) {
+                // 如果开始时有删除按钮，则只处理右滑隐藏
                 this.currentSlideOffset = Math.max(-80, Math.min(0, -80 + deltaX));
                 if (deltaX > 40) {  // 右滑超过一半距离时隐藏删除按钮
                   this.showingDeleteButtonId = '';
                 }
               } else {
-                // 未显示删除按钮时，处理左滑显示
-                this.currentSlideOffset = Math.max(-80, Math.min(0, deltaX));
+                // 如果开始时没有删除按钮，则处理左右滑动
+                this.currentSlideOffset = Math.max(-80, Math.min(80, deltaX));
                 if (deltaX < -40) {  // 左滑超过一半距离时显示删除按钮
                   this.showingDeleteButtonId = record.id;
                 }
@@ -417,25 +419,62 @@ struct DecibelHistory {
           })
           .onActionEnd(() => {
             if (this.currentSlidingId === record.id) {
-              const finalOffset = this.currentSlideOffset;
-              if (this.showingDeleteButtonId === record.id) {
-                // 已显示删除按钮时
-                if (finalOffset > -40) {  // 右滑超过一半距离时隐藏
+              if (this.hasDeleteButtonOnStart) {
+                // 如果开始时有删除按钮，则只处理隐藏删除按钮的操作
+                if (this.currentSlideOffset > -40) {  // 右滑超过一半距离时隐藏
                   this.showingDeleteButtonId = '';
                 }
+                this.currentSlideOffset = this.showingDeleteButtonId === record.id ? -80 : 0;
               } else {
-                // 未显示删除按钮时
-                if (finalOffset < -40) {  // 左滑超过一半距离时显示
+                // 如果开始时没有删除按钮，则处理收藏和显示删除按钮的操作
+                if (this.currentSlideOffset < -40) {  // 左滑超过一半距离时显示删除按钮
                   this.showingDeleteButtonId = record.id;
+                  this.currentSlideOffset = -80;
+                } else if (this.currentSlideOffset > 40) {  // 右滑超过阈值时收藏/取消收藏
+                  record.isFavorite = !record.isFavorite;
+                  // 更新存储
+                  this.recordService.saveRecords(this.records);
                 }
+                this.currentSlideOffset = 0;
               }
               this.currentSlidingId = '';
-              this.currentSlideOffset = 0;
             }
           })
       )
 
       if (this.showingDeleteButtonId === record.id || this.currentSlidingId === record.id) {
+        // 左侧收藏按钮
+        Row() {
+          Button() {
+            Image($r('app.media.ic_favorite'))
+              .width(24)
+              .height(24)
+              .fillColor(record.isFavorite ? '#FF4081' : Color.White)
+          }
+          .width(80)
+          .height(90)
+          .type(ButtonType.Normal)
+          .backgroundColor(record.isFavorite ? '#FFE0EB' : '#FF4081')
+          .onClick(() => {
+            record.isFavorite = !record.isFavorite;
+            this.recordService.saveRecords(this.records);
+            this.currentSlideOffset = 0;  // 点击后收起按钮
+            this.currentSlidingId = '';
+          })
+        }
+        .width(80)
+        .height(90)
+        .position({ x: '-80vp', y: 0 })
+        .translate({ 
+          x: this.currentSlideOffset > 0 ? Math.min(80, this.currentSlideOffset) : 0
+        })
+        .opacity(Math.min(1, Math.abs(this.currentSlideOffset) / 80))
+        .animation({
+          duration: 300,
+          curve: Curve.EaseOut
+        })
+
+        // 右侧删除按钮
         Row() {
           Button() {
             Image($r('app.media.ic_delete'))
