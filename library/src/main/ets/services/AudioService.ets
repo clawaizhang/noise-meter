@@ -1,5 +1,8 @@
 import audio from '@ohos.multimedia.audio';
 import { PermissionUtil } from '@pura/harmony-utils';
+import common from '@ohos.app.ability.common';
+import abilityAccessCtrl from '@ohos.abilityAccessCtrl';
+import promptAction from '@ohos.promptAction';
 
 /**
  * 音频服务类
@@ -41,6 +44,11 @@ export class AudioService {
   private isRecording: boolean = false;
   private isStoppingRecording: boolean = false;
   private onAudioData: ((buffer: ArrayBuffer) => void) | null = null;
+  private context: common.UIAbilityContext;
+
+  constructor(context: common.UIAbilityContext) {
+    this.context = context;
+  }
 
   /**
    * 检查麦克风权限
@@ -55,6 +63,25 @@ export class AudioService {
       }
 
       const granted = await PermissionUtil.requestPermissions(['ohos.permission.MICROPHONE']);
+      if (!granted) {
+        // 用户拒绝了权限，显示提示对话框
+        const result = await promptAction.showDialog({
+          title: '需要录音权限',
+          message: '检测噪音需要使用麦克风，是否去设置开启权限？',
+          buttons: [
+            { text: '取消', color: '#666666' },
+            { text: '去设置', color: '#2196F3' }
+          ]
+        });
+
+        if (result.index === 1) {
+          // 用户点击了"去设置"
+          await PermissionUtil.requestPermissionOnSettingEasy(['ohos.permission.MICROPHONE']);
+          // 从设置页面返回后，重新检查权限
+          const newPermissionStatus = await PermissionUtil.checkPermissions('ohos.permission.MICROPHONE');
+          return newPermissionStatus;
+        }
+      }
       return granted;
     } catch (err) {
       console.error('Failed to check/request microphone permission:', err);

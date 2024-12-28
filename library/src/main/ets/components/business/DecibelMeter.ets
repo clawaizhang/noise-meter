@@ -2,6 +2,7 @@ import { AudioService } from '../../services/AudioService';
 import { DecibelService } from '../../services/DecibelService';
 import { LocationDisplay } from './LocationDisplay'
 import router from '@ohos.router';
+import common from '@ohos.app.ability.common';
 
 @Component
 export struct DecibelMeter {
@@ -11,11 +12,16 @@ export struct DecibelMeter {
   @State private avgDecibel: number = 0
   @State private isRecording: boolean = false
   private decibelService: DecibelService = new DecibelService()
-  private audioService: AudioService = new AudioService()
+  private audioService: AudioService = new AudioService(getContext() as common.UIAbilityContext)
   private dbCount: number = 0
   private dbSum: number = 0
+  private context?: common.UIAbilityContext
 
   aboutToAppear() {
+    // 如果提供了外部context，重新初始化AudioService
+    if (this.context) {
+      this.audioService = new AudioService(this.context);
+    }
     // 初始化录音
     this.startRecording()
   }
@@ -25,15 +31,26 @@ export struct DecibelMeter {
     this.stopRecording()
   }
 
-  private startRecording() {
+  private async startRecording() {
     if (!this.isRecording) {
-      this.isRecording = true
-      this.audioService.startRecording((buffer: ArrayBuffer) => {
-        // 使用DecibelService计算分贝值
-        const db = this.decibelService.calculateDecibel(buffer, buffer.byteLength)
-        this.currentDecibel = Math.round(db)
-        this.updateStatistics(this.currentDecibel)
-      })
+      try {
+        this.isRecording = true
+        await this.audioService.startRecording((buffer: ArrayBuffer) => {
+          // 使用DecibelService计算分贝值
+          const db = this.decibelService.calculateDecibel(buffer, buffer.byteLength)
+          this.currentDecibel = Math.round(db)
+          this.updateStatistics(this.currentDecibel)
+        })
+      } catch (error) {
+        // 如果启动失败（包括权限问题），重置状态
+        this.isRecording = false
+        this.currentDecibel = 0
+        this.minDecibel = 0
+        this.maxDecibel = 0
+        this.avgDecibel = 0
+        this.dbCount = 0
+        this.dbSum = 0
+      }
     }
   }
 
