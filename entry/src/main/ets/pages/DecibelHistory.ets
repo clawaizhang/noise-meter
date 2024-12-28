@@ -216,6 +216,8 @@ struct DetailDialog {
 struct DecibelHistory {
   @State records: DecibelRecord[] = [];
   @State selectedRecord: DecibelRecord | null = null;
+  @State showingDeleteButtonId: string = '';  // 当前显示删除按钮的记录ID
+  private startX: number = 0;
   private recordService: DecibelRecordService = new DecibelRecordService(getContext(this) as common.UIAbilityContext);
   private decibelService: DecibelService = new DecibelService();
   dialogController: CustomDialogController = new CustomDialogController({
@@ -245,78 +247,160 @@ struct DecibelHistory {
 
   @Builder
   RecordItem(record: DecibelRecord) {
-    Column() {
-      Row() {
-        Column() {
-          Text(new Date(record.timestamp).toLocaleString())
-            .fontSize(14)
-            .fontColor('#666666')
-            .margin({ bottom: 8 })
-          if (record.location) {
-            Text(record.location)
+    Stack() {
+      Column() {
+        Row() {
+          Column() {
+            Text(new Date(record.timestamp).toLocaleString())
+              .fontSize(14)
+              .fontColor('#666666')
+              .margin({ bottom: 8 })
+            if (record.location) {
+              Text(record.location)
+                .fontSize(12)
+                .fontColor('#999999')
+            }
+          }
+          .alignItems(HorizontalAlign.Start)
+
+          Column() {
+            Row() {
+              Column() {
+                Text('最小值')
+                  .fontSize(12)
+                  .fontColor('#666666')
+                  .margin({ bottom: 4 })
+                Text(record.minDecibel.toString())
+                  .fontSize(16)
+                  .fontWeight(FontWeight.Medium)
+                  .fontColor(this.decibelService.getDecibelColor(record.minDecibel))
+              }
+
+              Column() {
+                Text('平均值')
+                  .fontSize(12)
+                  .fontColor('#666666')
+                  .margin({ bottom: 4 })
+                Text(record.avgDecibel.toString())
+                  .fontSize(16)
+                  .fontWeight(FontWeight.Medium)
+                  .fontColor(this.decibelService.getDecibelColor(record.avgDecibel))
+              }
+              .margin({ left: 24, right: 24 })
+
+              Column() {
+                Text('最大值')
+                  .fontSize(12)
+                  .fontColor('#666666')
+                  .margin({ bottom: 4 })
+                Text(record.maxDecibel.toString())
+                  .fontSize(16)
+                  .fontWeight(FontWeight.Medium)
+                  .fontColor(this.decibelService.getDecibelColor(record.maxDecibel))
+              }
+            }
+
+            Text(`检测时长: ${Math.round(record.duration / 1000)}秒`)
               .fontSize(12)
               .fontColor('#999999')
+              .margin({ top: 8 })
           }
+          .layoutWeight(1)
+          .alignItems(HorizontalAlign.End)
         }
-        .alignItems(HorizontalAlign.Start)
-
-        Column() {
-          Row() {
-            Column() {
-              Text('最小值')
-                .fontSize(12)
-                .fontColor('#666666')
-                .margin({ bottom: 4 })
-              Text(record.minDecibel.toString())
-                .fontSize(16)
-                .fontWeight(FontWeight.Medium)
-                .fontColor(this.decibelService.getDecibelColor(record.minDecibel))
-            }
-
-            Column() {
-              Text('平均值')
-                .fontSize(12)
-                .fontColor('#666666')
-                .margin({ bottom: 4 })
-              Text(record.avgDecibel.toString())
-                .fontSize(16)
-                .fontWeight(FontWeight.Medium)
-                .fontColor(this.decibelService.getDecibelColor(record.avgDecibel))
-            }
-            .margin({ left: 24, right: 24 })
-
-            Column() {
-              Text('最大值')
-                .fontSize(12)
-                .fontColor('#666666')
-                .margin({ bottom: 4 })
-              Text(record.maxDecibel.toString())
-                .fontSize(16)
-                .fontWeight(FontWeight.Medium)
-                .fontColor(this.decibelService.getDecibelColor(record.maxDecibel))
-            }
+        .width('100%')
+        .padding(16)
+        .onClick(() => {
+          if (this.showingDeleteButtonId === record.id) {
+            this.showingDeleteButtonId = '';
+          } else {
+            this.selectedRecord = record;
+            this.dialogController.open();
           }
+        })
 
-          Text(`检测时长: ${Math.round(record.duration / 1000)}秒`)
-            .fontSize(12)
-            .fontColor('#999999')
-            .margin({ top: 8 })
-        }
-        .layoutWeight(1)
-        .alignItems(HorizontalAlign.End)
+        Divider()
+          .width('92%')
+          .color('#F5F5F5')
       }
-      .width('100%')
-      .padding(16)
-      .onClick(() => {
-        this.selectedRecord = record;
-        this.dialogController.open();
-      })
+      .backgroundColor(Color.White)
+      .gesture(
+        GestureGroup(GestureMode.Parallel,
+          PanGesture()
+            .onActionStart((event: GestureEvent) => {
+              if (this.showingDeleteButtonId !== record.id) {
+                this.startX = event.offsetX;
+              }
+            })
+            .onActionUpdate((event: GestureEvent) => {
+              if (this.showingDeleteButtonId !== record.id) {
+                const deltaX = event.offsetX - this.startX;
+                if (deltaX < -20) {  // 左滑超过20像素时显示删除按钮
+                  this.showingDeleteButtonId = record.id;
+                }
+              }
+            })
+            .onActionEnd(() => {
+              // 松开手指时，如果滑动距离不够，隐藏删除按钮
+              if (this.showingDeleteButtonId !== record.id) {
+                animateTo({ duration: 300 }, () => {
+                  this.showingDeleteButtonId = '';
+                });
+              }
+            }),
+          TapGesture()
+            .onAction(() => {
+              if (this.showingDeleteButtonId === record.id) {
+                // 隐藏删除按钮
+                animateTo({ duration: 300 }, () => {
+                  this.showingDeleteButtonId = '';
+                });
+              } else {
+                this.selectedRecord = record;
+                this.dialogController.open();
+              }
+            })
+        )
+      )
 
-      Divider()
-        .width('92%')
-        .color('#F5F5F5')
+      if (this.showingDeleteButtonId === record.id) {
+        Row() {
+          Button() {
+            Image($r('app.media.ic_delete'))
+              .width(24)
+              .height(24)
+              .fillColor(Color.White)
+          }
+          .width(80)
+          .height(84)
+          .type(ButtonType.Normal)
+          .backgroundColor('#FF4081')
+          .onClick(async () => {
+            try {
+              // 从列表中移除该记录
+              const index = this.records.findIndex(r => r.id === record.id);
+              if (index !== -1) {
+                this.records.splice(index, 1);
+              }
+              // 更新存储
+              await this.recordService.saveRecords(this.records);
+              // 隐藏删除按钮
+              this.showingDeleteButtonId = '';
+            } catch (error) {
+              console.error('删除记录失败:', error);
+            }
+          })
+        }
+        .position({ x: '100%', y: 0 })
+        .translate({ x: -80 })
+        .animation({
+          duration: 300,
+          curve: Curve.EaseOut,
+          iterations: 1,
+          playMode: PlayMode.Normal
+        })
+      }
     }
-    .backgroundColor(Color.White)
   }
 
   build() {

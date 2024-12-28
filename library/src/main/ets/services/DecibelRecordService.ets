@@ -60,6 +60,21 @@ export class DecibelRecordService {
   }
 
   /**
+   * 保存记录列表
+   */
+  async saveRecords(records: DecibelRecord[]): Promise<void> {
+    const preferences = await this.ensurePreferences();
+
+    try {
+      await preferences.put(RECORDS_KEY, JSON.stringify(records));
+      await preferences.flush();
+    } catch (error) {
+      console.error('保存记录列表失败:', error);
+      throw new Error('保存记录列表失败');
+    }
+  }
+
+  /**
    * 获取所有历史记录
    */
   async getRecords(): Promise<DecibelRecord[]> {
