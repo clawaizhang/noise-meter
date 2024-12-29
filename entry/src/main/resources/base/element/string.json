@@ -1,0 +1,36 @@
+{
+  "string": [
+    {
+      "name": "module_desc",
+      "value": "噪音检测应用"
+    },
+    {
+      "name": "EntryAbility_desc",
+      "value": "噪音检测应用"
+    },
+    {
+      "name": "EntryAbility_label",
+      "value": "噪音检测仪"
+    },
+    {
+      "name": "microphone_permission_reason",
+      "value": "需要使用麦克风来检测环境噪音"
+    },
+    {
+      "name": "location_permission_reason",
+      "value": "需要获取位置信息来记录噪音检测位置"
+    },
+    {
+      "name": "internet_reason",
+      "value": "需要访问网络以获取位置信息"
+    },
+    {
+      "name": "bundle_reason",
+      "value": "需要获取应用包信息以支持广告服务"
+    },
+    {
+      "name": "network_permission_reason",
+      "value": "需要获取网络状态以确保位置服务正常工作"
+    }
+  ]
+}
