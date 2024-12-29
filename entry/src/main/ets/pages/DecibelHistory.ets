@@ -315,7 +315,7 @@ struct DecibelHistory {
               })
           }
           .width(80)
-          .height(92)  // 设置为内容区域高度（内容区域padding 16 * 2 + 内容高度 60）
+          .height(96)  // 内容区域高度 + padding
           .type(ButtonType.Normal)
           .backgroundColor(record.isFavorite ? '#FFE0EB' : '#FF4081')
           .animation({
@@ -340,7 +340,7 @@ struct DecibelHistory {
           })
         }
         .width(80)
-        .height(92)  // 设置为内容区域高度
+        .height(96)  // 内容区域高度 + padding
         .position({ x: '-80vp', y: 0 })
         .translate({
           x: this.currentSlideOffset > 0 ? Math.min(80, this.currentSlideOffset) : 0
@@ -360,7 +360,7 @@ struct DecibelHistory {
               .fillColor(Color.White)
           }
           .width(80)
-          .height(92)  // 设置为内容区域高度
+          .height(96)  // 内容区域高度 + padding
           .type(ButtonType.Normal)
           .backgroundColor('#FF4081')
           .onClick(async () => {
@@ -369,7 +369,7 @@ struct DecibelHistory {
           })
         }
         .width(80)
-        .height(92)  // 设置为内容区域高度
+        .height(96)  // 内容区域高度 + padding
         .position({ x: '100%', y: 0 })
         .translate({
           x: this.showingDeleteButtonId === record.id ? -80 :
