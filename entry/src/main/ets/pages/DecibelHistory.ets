@@ -143,6 +143,12 @@ struct DecibelHistory {
                   .width(16)
                   .height(16)
                   .fillColor('#FF4081')
+                  .animation({
+                    duration: 450,
+                    curve: Curve.EaseInOut,
+                    iterations: 1,
+                    playMode: PlayMode.Normal
+                  })
               }
             }
             .width('100%')
@@ -275,6 +281,12 @@ struct DecibelHistory {
                   record.isFavorite = !record.isFavorite;
                   // 更新存储
                   this.recordService.saveRecords(this.records);
+                  // 显示操作提示
+                  this.promptAction.showToast({
+                    message: record.isFavorite ? '已添加到收藏' : '已取消收藏',
+                    duration: 2000,
+                    bottom: '50%'
+                  });
                   // 强制刷新界面
                   this.records = [...this.records];
                   this.currentSlideOffset = 0; // 点击后收起按钮
@@ -296,8 +308,10 @@ struct DecibelHistory {
               .height(24)
               .fillColor(record.isFavorite ? '#FF4081' : Color.White)
               .animation({
-                duration: 300,
-                curve: Curve.EaseOut
+                duration: 450,
+                curve: Curve.EaseInOut,
+                iterations: 1,
+                playMode: PlayMode.Normal
               })
           }
           .width(80)
@@ -305,12 +319,20 @@ struct DecibelHistory {
           .type(ButtonType.Normal)
           .backgroundColor(record.isFavorite ? '#FFE0EB' : '#FF4081')
           .animation({
-            duration: 300,
-            curve: Curve.EaseOut
+            duration: 450,
+            curve: Curve.EaseInOut,
+            iterations: 1,
+            playMode: PlayMode.Normal
           })
           .onClick(() => {
             record.isFavorite = !record.isFavorite;
             this.recordService.saveRecords(this.records);
+            // 显示操作提示
+            this.promptAction.showToast({
+              message: record.isFavorite ? '已添加到收藏' : '已取消收藏',
+              duration: 2000,
+              bottom: '50%'
+            });
             // 强制刷新界面
             this.records = [...this.records];
             this.currentSlideOffset = 0; // 点击后收起按钮
