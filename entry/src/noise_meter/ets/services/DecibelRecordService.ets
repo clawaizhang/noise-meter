@@ -1,4 +1,4 @@
-import { DecibelRecord } from '../models/DecibelRecord';
+import { DecibelRecord } from '../../../library/ets/models/DecibelRecord';
 import dataPreferences from '@ohos.data.preferences';
 import common from '@ohos.app.ability.common';
 

@@ -1,5 +1,5 @@
-import { BannerCard } from '@ohos/library';
 import { common } from '@kit.AbilityKit';
+import { BannerCard } from '../library/ets/components/business/BannerCard';
 import { NoiseDecibel } from './ets/components/NoiseDecibel';
 
 @Component

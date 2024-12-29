@@ -3,7 +3,6 @@
   "description": "Please describe the basic information.",
   "dependencies": {
     "@pura/harmony-utils": "^1.0.0",
-    "@ohos/library": "file:library"
   },
   "devDependencies": {
     "@ohos/hypium": "1.0.18",

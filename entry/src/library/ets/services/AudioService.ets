@@ -1,7 +1,6 @@
 import audio from '@ohos.multimedia.audio';
 import { PermissionUtil } from '@pura/harmony-utils';
 import common from '@ohos.app.ability.common';
-import abilityAccessCtrl from '@ohos.abilityAccessCtrl';
 import promptAction from '@ohos.promptAction';
 
 /**

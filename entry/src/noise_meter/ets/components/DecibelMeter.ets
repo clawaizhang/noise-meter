@@ -1,13 +1,13 @@
-import { AudioService } from '../../services/AudioService';
-import { DecibelService } from '../../services/DecibelService';
-import { LocationService } from '../../services/LocationService';
-import { DecibelRecord } from '../../models/DecibelRecord';
-import { DecibelRecordService } from '../../services/DecibelRecordService';
-import { LocationDisplay } from './LocationDisplay'
-import { DialogParams, DialogService } from '../../services/DialogService';
+import { AudioService } from '../../../library/ets/services/AudioService';
+import { DecibelService } from '../services/DecibelService';
+import { LocationService } from '../../../library/ets/services/LocationService';
+import { DecibelRecord } from '../../../library/ets/models/DecibelRecord';
+import { DecibelRecordService } from '../services/DecibelRecordService';
+import { LocationDisplay } from '../../../library/ets/components/business/LocationDisplay'
+import { DialogParams, DialogService } from '../../../library/ets/services/DialogService';
 import router from '@ohos.router';
 import common from '@ohos.app.ability.common';
-import { DetailDialog } from './DetailDialog';
+import { DetailDialog } from '../../../library/ets/components/business/DetailDialog';
 
 @Builder
 function buildDialog(params: DialogParams) {

@@ -6,6 +6,6 @@
   "author": "yu.zhang",
   "license": "ISC",
   "dependencies": {
-    "@ohos/library": "file:../library"
+    "@pura/harmony-utils": "^1.0.0"
   }
 }

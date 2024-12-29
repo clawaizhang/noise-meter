@@ -1,5 +1,5 @@
-import { DecibelRecord } from '@ohos/library/src/main/ets/models/DecibelRecord';
-import { DecibelService } from '@ohos/library/src/main/ets/services/DecibelService';
+import { DecibelRecord } from "../../models/DecibelRecord"
+import { DecibelService } from "../../../../noise_meter/ets/services/DecibelService"
 
 // 标题栏构建器
 @Builder

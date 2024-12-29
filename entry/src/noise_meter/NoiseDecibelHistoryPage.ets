@@ -1,11 +1,11 @@
-import { DecibelRecord } from '@ohos/library/src/main/ets/models/DecibelRecord';
-import { DecibelRecordService } from '@ohos/library/src/main/ets/services/DecibelRecordService';
-import { DecibelService } from '@ohos/library/src/main/ets/services/DecibelService';
-import { DetailDialog } from '@ohos/library/src/main/ets/components/business/DetailDialog';
+import { DecibelRecord } from '../library/ets/models/DecibelRecord';
+import { DecibelRecordService } from './ets/services/DecibelRecordService';
+import { DecibelService } from './ets/services/DecibelService';
+import { DetailDialog } from '../library/ets/components/business/DetailDialog';
 import router from '@ohos.router';
 import common from '@ohos.app.ability.common';
 import { PromptAction } from '@kit.ArkUI';
-import { DialogService } from '@ohos/library/src/main/ets/services/DialogService';
+import { DialogService } from '../library/ets/services/DialogService';
 
 class DialogParams {
   selectedRecord: DecibelRecord | null = null;

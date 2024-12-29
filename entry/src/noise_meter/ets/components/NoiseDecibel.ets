@@ -1,4 +1,4 @@
-import { DecibelMeter } from '@ohos/library';
+import { DecibelMeter } from "./DecibelMeter"
 
 @Component
 export struct NoiseDecibel {

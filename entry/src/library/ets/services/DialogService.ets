@@ -1,5 +1,5 @@
 import { ComponentContent, promptAction } from '@kit.ArkUI';
-import { DecibelRecord } from '@ohos/library/src/main/ets/models/DecibelRecord';
+import { DecibelRecord } from '../models/DecibelRecord';
 
 export interface DialogParams {
   selectedRecord: DecibelRecord | null;
