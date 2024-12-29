@@ -106,7 +106,22 @@ struct DecibelHistory {
     Stack() {
       Column() {
         Row() {
-          // 左侧区域：收藏图标和时间信息
+          // 左侧收藏图标列
+          Row() {
+            if (record.isFavorite) {
+              Image($r('app.media.ic_favorite'))
+                .width(16)
+                .height(16)
+                .fillColor('#FF4081')
+            }
+          }
+          .width(24)
+          .height(48)
+          .justifyContent(FlexAlign.Start)
+          .alignItems(VerticalAlign.Center)
+          .margin({ right: 8 })
+
+          // 中间位置和时间信息列
           Column() {
             // 位置信息显示
             Text(record.location || '未获取位置信息')
@@ -114,33 +129,18 @@ struct DecibelHistory {
               .fontColor(record.location ? '#999999' : '#CCCCCC')
               .margin({ bottom: 8 })
 
-            Row() {
-              // 收藏图标区域，固定宽度
-              Row() {
-                if (record.isFavorite) {
-                  Image($r('app.media.ic_favorite'))
-                    .width(16)
-                    .height(16)
-                    .fillColor('#FF4081')
-                }
-              }
-              .width(24) // 固定宽度
-              .height(16)
-              .justifyContent(FlexAlign.Start) // 左对齐
-
-              // 时间信息
-              Text(new Date(record.timestamp).toLocaleString('zh-CN', {
-                year: 'numeric',
-                month: '2-digit',
-                day: '2-digit',
-                hour: '2-digit',
-                minute: '2-digit',
-                second: '2-digit',
-                hour12: false
-              }))
-                .fontSize(14)
-                .fontColor('#666666')
-            }
+            // 时间信息
+            Text(new Date(record.timestamp).toLocaleString('zh-CN', {
+              year: 'numeric',
+              month: '2-digit',
+              day: '2-digit',
+              hour: '2-digit',
+              minute: '2-digit',
+              second: '2-digit',
+              hour12: false
+            }))
+              .fontSize(14)
+              .fontColor('#666666')
           }
           .alignItems(HorizontalAlign.Start)
           .layoutWeight(1)
