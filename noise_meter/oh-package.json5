@@ -1,5 +1,5 @@
 {
-  "name": "entry",
+  "name": "noise_meter",
   "version": "1.0.0",
   "description": "Noise detection application",
   "main": "Index.ets",
@@ -9,4 +9,3 @@
     "@ohos/library": "file:../library"
   }
 }
-
