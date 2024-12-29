@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="120px" height="120px" viewBox="0 0 120 120" version="1.1" xmlns="http://www.w3.org/2000/svg">
+    <title>空状态图标</title>
+    <g stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <!-- 文件夹轮廓 -->
+        <path d="M20,30 L50,30 L60,40 L100,40 L100,90 L20,90 L20,30 Z" stroke="#000000" stroke-width="4"></path>
+        
+        <!-- 加号 -->
+        <path d="M70,55 L50,55 L50,65 L70,65 L70,85 L80,85 L80,65 L100,65 L100,55 L80,55 L80,35 L70,35 L70,55 Z" fill="#000000"></path>
+    </g>
+</svg> 
