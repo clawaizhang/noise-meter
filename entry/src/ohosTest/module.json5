@@ -1,6 +1,6 @@
 {
   "module": {
-    "name": "noise_meter_test",
+    "name": "entry_test",
     "type": "feature",
     "deviceTypes": [
       "phone"
