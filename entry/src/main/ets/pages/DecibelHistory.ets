@@ -80,6 +80,12 @@ struct DecibelHistory {
               await this.recordService.saveRecords(this.records);
               // 隐藏删除按钮
               this.showingDeleteButtonId = '';
+              // 显示删除成功提示
+              this.promptAction.showToast({
+                message: '删除成功',
+                duration: 2000,
+                bottom: '50%'
+              });
             }
           } catch (error) {
             console.error('删除记录失败:', error);
@@ -264,6 +270,14 @@ struct DecibelHistory {
                   record.isFavorite = !record.isFavorite;
                   // 更新存储
                   this.recordService.saveRecords(this.records);
+                  // 显示操作提示
+                  this.promptAction.showToast({
+                    message: record.isFavorite ? '已添加到收藏' : '已取消收藏',
+                    duration: 2000,
+                    bottom: '50%'
+                  });
+                  this.currentSlideOffset = 0; // 点击后收起按钮
+                  this.currentSlidingId = '';
                 }
                 this.currentSlideOffset = 0;
               }
@@ -288,6 +302,12 @@ struct DecibelHistory {
           .onClick(() => {
             record.isFavorite = !record.isFavorite;
             this.recordService.saveRecords(this.records);
+            // 显示操作提示
+            this.promptAction.showToast({
+              message: record.isFavorite ? '已添加到收藏' : '已取消收藏',
+              duration: 2000,
+              bottom: '50%'
+            });
             this.currentSlideOffset = 0; // 点击后收起按钮
             this.currentSlidingId = '';
           })
@@ -417,6 +437,12 @@ struct DecibelHistory {
                   const favoriteRecords = this.records.filter(r => r.isFavorite);
                   this.records = favoriteRecords;
                   await this.recordService.saveRecords(this.records);
+                  // 显示清空成功提示
+                  this.promptAction.showToast({
+                    message: '已清空历史记录',
+                    duration: 2000,
+                    bottom: '50%'
+                  });
                 } catch (error) {
                   console.error('清空历史记录失败:', error);
                 }
