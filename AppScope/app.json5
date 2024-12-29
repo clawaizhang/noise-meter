@@ -1,6 +1,6 @@
 {
   "app": {
-    "bundleName": "yu.zhang.myapplication",
+    "bundleName": "yu.zhang.myapplication.default",
     "vendor": "example",
     "versionCode": 1000000,
     "versionName": "1.0.0",
