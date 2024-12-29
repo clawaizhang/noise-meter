@@ -228,7 +228,7 @@ struct DecibelHistory {
         curve: Curve.EaseOut
       })
       .gesture(
-        PanGesture()
+        PanGesture({ direction: PanDirection.Horizontal })
           .onActionStart((event: GestureEvent) => {
             this.startX = event.offsetX;
             this.currentSlidingId = record.id;
@@ -452,6 +452,9 @@ struct DecibelHistory {
         .width('100%')
         .layoutWeight(1)
         .backgroundColor('#F5F5F5')
+        .scrollBar(BarState.Auto)
+        .edgeEffect(EdgeEffect.Spring)
+        .listDirection(Axis.Vertical)
       } else {
         Column() {
           Image($r('app.media.ic_empty'))
