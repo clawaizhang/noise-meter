@@ -2,31 +2,35 @@
   "string": [
     {
       "name": "module_desc",
-      "value": "一款专业的噪音测量工具，可以实时检测环境噪音分贝值，记录噪音数据，并提供历史记录查看功能。"
+      "value": "噪音检测应用"
     },
     {
       "name": "EntryAbility_desc",
-      "value": "噪音测量仪"
+      "value": "噪音检测应用"
     },
     {
       "name": "EntryAbility_label",
-      "value": "噪音测量仪"
+      "value": "噪音检测仪"
     },
     {
-      "name": "microphone_reason",
-      "value": "需要使用麦克风来测量环境噪音"
+      "name": "microphone_permission_reason",
+      "value": "需要使用麦克风来检测环境噪音"
+    },
+    {
+      "name": "location_permission_reason",
+      "value": "需要获取位置信息来记录噪音检测位置"
     },
     {
       "name": "internet_reason",
-      "value": "需要访问网络以加载广告内容"
+      "value": "需要访问网络以获取位置信息"
     },
     {
       "name": "bundle_reason",
       "value": "需要获取应用包信息以支持广告服务"
     },
     {
-      "name": "internet_permission",
-      "value": "用于加载广告内容"
+      "name": "network_permission_reason",
+      "value": "需要获取网络状态以确保位置服务正常工作"
     }
   ]
 }
