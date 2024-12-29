@@ -22,10 +22,16 @@
   ],
   "targets": [
     {
-      "name": "default"
+      "name": "default",
+      "runtimeOS": "HarmonyOS"
     },
     {
-      "name": "ohosTest"
+      "name": "noise_meter",
+      "runtimeOS": "HarmonyOS"
+    },
+    {
+      "name": "file_vault",
+      "runtimeOS": "HarmonyOS"
     }
   ]
 }

@@ -1,7 +1,6 @@
-@Entry
 @Component
-struct Index {
-  @State message: string = 'Hello World';
+export struct MainPage {
+  @State message: string = '文件保险箱'
 
   build() {
     Row() {
