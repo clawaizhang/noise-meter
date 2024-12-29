@@ -27,7 +27,7 @@ function buildDialog(params: DialogParams) {
 }
 
 @Component
-export struct NoiseDecibelHistory {
+export struct NoiseDecibelHistoryPage {
   @State records: DecibelRecord[] = [];
   @State selectedRecord: DecibelRecord | null = null;
   @State showingDeleteButtonId: string = ''; // 当前显示删除按钮的记录ID

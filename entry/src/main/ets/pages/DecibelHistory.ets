@@ -1,4 +1,4 @@
-import { NoiseDecibelHistory } from 'entry/NioseDecibelHistory'
+import { NoiseDecibelHistoryPage } from 'entry/NoiseDecibelHistoryPage'
 
 @Entry
 @Component
@@ -6,7 +6,7 @@ struct DecibelHistory {
 
   build() {
     Column(){
-      NoiseDecibelHistory()
+      NoiseDecibelHistoryPage()
     }
   }
-} 
+}

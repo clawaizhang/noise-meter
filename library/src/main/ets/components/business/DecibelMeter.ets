@@ -112,7 +112,7 @@ export struct DecibelMeter {
       try {
         // 获取缓存的位置信息
         const locationInfo = this.locationService.getCachedLocation();
-        // 计算检测��长
+        // 计算检测时长
         const duration = new Date().getTime() - this.startTime;
 
         // 创建并保存记录
@@ -154,7 +154,7 @@ export struct DecibelMeter {
         if (value < this.minDecibel) {
           this.minDecibel = value;
         }
-        // ���新最大值
+        // 更新最大值
         if (value > this.maxDecibel) {
           this.maxDecibel = value;
         }
@@ -320,7 +320,7 @@ export struct DecibelMeter {
         .onClick(() => {
           router.pushUrl({
             url: 'pages/DecibelHistory'
-          })
+          });
         })
       }
       .width('100%')

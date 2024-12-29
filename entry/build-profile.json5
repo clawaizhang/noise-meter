@@ -27,6 +27,7 @@
       "source": {
         "pages": [
           "pages/Index",
+          "pages/DecibelHistory",
         ],
         "sourceRoots": [
           "./src/noise_meter"
