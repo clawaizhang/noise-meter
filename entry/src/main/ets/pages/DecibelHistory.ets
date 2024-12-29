@@ -112,28 +112,15 @@ struct DecibelHistory {
     Stack() {
       Column() {
         Row() {
-          // 左侧收藏图标列
-          Row() {
-            if (record.isFavorite) {
-              Image($r('app.media.ic_favorite'))
-                .width(16)
-                .height(16)
-                .fillColor('#FF4081')
-            }
-          }
-          .width(24)
-          .height(48)
-          .justifyContent(FlexAlign.Start)
-          .alignItems(VerticalAlign.Center)
-          .margin({ right: 8 })
-
-          // 中间位置和时间信息列
+          // 左侧位置和时间信息列
           Column() {
-            // 位置信息显示
-            Text(record.location || '未获取位置信息')
-              .fontSize(12)
-              .fontColor(record.location ? '#999999' : '#CCCCCC')
-              .margin({ bottom: 8 })
+            Row() {
+              // 位置信息显示
+              Text(record.location || '未获取位置信息')
+                .fontSize(12)
+                .fontColor(record.location ? '#999999' : '#CCCCCC')
+            }
+            .height(20)  // 减小高度
 
             // 时间信息
             Text(new Date(record.timestamp).toLocaleString('zh-CN', {
@@ -147,6 +134,16 @@ struct DecibelHistory {
             }))
               .fontSize(14)
               .fontColor('#666666')
+              .margin({ top: 4 })  // 减小间距
+
+            // 收藏状态
+            if (record.isFavorite) {
+              Image($r('app.media.ic_favorite'))
+                .width(16)
+                .height(16)
+                .fillColor('#FF4081')
+                .margin({ top: 4 })  // 减小间距
+            }
           }
           .alignItems(HorizontalAlign.Start)
           .layoutWeight(1)
@@ -164,6 +161,7 @@ struct DecibelHistory {
                   .fontWeight(FontWeight.Medium)
                   .fontColor(this.decibelService.getDecibelColor(record.minDecibel))
               }
+              .height(40)  // 固定高度确保对齐
 
               Column() {
                 Text('平均值')
@@ -175,6 +173,7 @@ struct DecibelHistory {
                   .fontWeight(FontWeight.Medium)
                   .fontColor(this.decibelService.getDecibelColor(record.avgDecibel))
               }
+              .height(40)  // 固定高度确保对齐
               .margin({ left: 24, right: 24 })
 
               Column() {
@@ -187,8 +186,10 @@ struct DecibelHistory {
                   .fontWeight(FontWeight.Medium)
                   .fontColor(this.decibelService.getDecibelColor(record.maxDecibel))
               }
+              .height(40)  // 固定高度确保对齐
             }
 
+            // 检测时长
             Text(`检测时长: ${Math.round(record.duration / 1000)}秒`)
               .fontSize(12)
               .fontColor('#999999')
