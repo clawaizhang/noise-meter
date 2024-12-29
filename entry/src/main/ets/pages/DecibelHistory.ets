@@ -366,54 +366,31 @@ struct DecibelHistory {
     Column() {
       // 顶部导航栏
       Row() {
-        Image($r('app.media.ic_back'))
-          .width(24)
-          .height(24)
-          .fillColor('#333333')
-          .onClick(() => {
-            router.back();
-          })
-        Text('历史记录')
-          .fontSize(18)
-          .fontWeight(FontWeight.Medium)
-          .margin({ left: 16 })
-      }
-      .width('100%')
-      .height(56)
-      .padding({ left: 16, right: 16 })
-      .backgroundColor(Color.White)
-
-      // 历史记录列表或空状态提示
-      if (this.records.length > 0) {
-        List() {
-          ForEach(this.records, (record: DecibelRecord) => {
-            ListItem() {
-              Column() {
-                this.RecordItem(record)
-                Divider()
-                  .width('100%')
-                  .height(8)
-                  .color('#F5F5F5')
-              }
-            }
-          })
+        Row() {
+          Image($r('app.media.ic_back'))
+            .width(24)
+            .height(24)
+            .fillColor('#333333')
+            .onClick(() => {
+              router.back();
+            })
+          Text('历史记录')
+            .fontSize(18)
+            .fontWeight(FontWeight.Medium)
+            .margin({ left: 16 })
         }
-        .width('100%')
         .layoutWeight(1)
-        .backgroundColor('#F5F5F5')
 
         // 清空按钮
-        Button({
-          type: ButtonType.Capsule
-        }) {
-          Text('清空历史记录')
-            .fontSize(16)
-            .fontColor(Color.White)
+        Button() {
+          Text('清空')
+            .fontSize(14)
+            .fontColor('#666666')
         }
-        .width('92%')
-        .height(48)
-        .backgroundColor('#FF4081')
-        .margin({ bottom: 16 })
+        .height(32)
+        .backgroundColor('#F5F5F5')
+        .padding({ left: 12, right: 12 })
+        .borderRadius(16)
         .onClick(async () => {
           AlertDialog.show({
             title: '清空历史记录',
@@ -450,6 +427,31 @@ struct DecibelHistory {
             }
           });
         })
+      }
+      .width('100%')
+      .height(56)
+      .padding({ left: 16, right: 16 })
+      .backgroundColor(Color.White)
+      .justifyContent(FlexAlign.SpaceBetween)
+
+      // 历史记录列表或空状态提示
+      if (this.records.length > 0) {
+        List() {
+          ForEach(this.records, (record: DecibelRecord) => {
+            ListItem() {
+              Column() {
+                this.RecordItem(record)
+                Divider()
+                  .width('100%')
+                  .height(8)
+                  .color('#F5F5F5')
+              }
+            }
+          })
+        }
+        .width('100%')
+        .layoutWeight(1)
+        .backgroundColor('#F5F5F5')
       } else {
         Column() {
           Image($r('app.media.ic_empty'))
