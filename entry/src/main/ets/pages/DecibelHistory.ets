@@ -137,13 +137,17 @@ struct DecibelHistory {
               .margin({ top: 4 })  // 减小间距
 
             // 收藏状态
-            if (record.isFavorite) {
-              Image($r('app.media.ic_favorite'))
-                .width(16)
-                .height(16)
-                .fillColor('#FF4081')
-                .margin({ top: 4 })  // 减小间距
+            Row() {
+              if (record.isFavorite) {
+                Image($r('app.media.ic_favorite'))
+                  .width(16)
+                  .height(16)
+                  .fillColor('#FF4081')
+              }
             }
+            .width('100%')
+            .height(16)
+            .margin({ top: 4 })
           }
           .alignItems(HorizontalAlign.Start)
           .layoutWeight(1)
@@ -271,12 +275,8 @@ struct DecibelHistory {
                   record.isFavorite = !record.isFavorite;
                   // 更新存储
                   this.recordService.saveRecords(this.records);
-                  // 显示操作提示
-                  this.promptAction.showToast({
-                    message: record.isFavorite ? '已添加到收藏' : '已取消收藏',
-                    duration: 2000,
-                    bottom: '50%'
-                  });
+                  // 强制刷新界面
+                  this.records = [...this.records];
                   this.currentSlideOffset = 0; // 点击后收起按钮
                   this.currentSlidingId = '';
                 }
@@ -295,26 +295,30 @@ struct DecibelHistory {
               .width(24)
               .height(24)
               .fillColor(record.isFavorite ? '#FF4081' : Color.White)
+              .animation({
+                duration: 300,
+                curve: Curve.EaseOut
+              })
           }
           .width(80)
-          .height(90)
+          .height(92)  // 设置为内容区域高度（内容区域padding 16 * 2 + 内容高度 60）
           .type(ButtonType.Normal)
           .backgroundColor(record.isFavorite ? '#FFE0EB' : '#FF4081')
+          .animation({
+            duration: 300,
+            curve: Curve.EaseOut
+          })
           .onClick(() => {
             record.isFavorite = !record.isFavorite;
             this.recordService.saveRecords(this.records);
-            // 显示操作提示
-            this.promptAction.showToast({
-              message: record.isFavorite ? '已添加到收藏' : '已取消收藏',
-              duration: 2000,
-              bottom: '50%'
-            });
+            // 强制刷新界面
+            this.records = [...this.records];
             this.currentSlideOffset = 0; // 点击后收起按钮
             this.currentSlidingId = '';
           })
         }
         .width(80)
-        .height(90)
+        .height(92)  // 设置为内容区域高度
         .position({ x: '-80vp', y: 0 })
         .translate({
           x: this.currentSlideOffset > 0 ? Math.min(80, this.currentSlideOffset) : 0
@@ -334,7 +338,7 @@ struct DecibelHistory {
               .fillColor(Color.White)
           }
           .width(80)
-          .height(90)
+          .height(92)  // 设置为内容区域高度
           .type(ButtonType.Normal)
           .backgroundColor('#FF4081')
           .onClick(async () => {
@@ -343,7 +347,7 @@ struct DecibelHistory {
           })
         }
         .width(80)
-        .height(90)
+        .height(92)  // 设置为内容区域高度
         .position({ x: '100%', y: 0 })
         .translate({
           x: this.showingDeleteButtonId === record.id ? -80 :
