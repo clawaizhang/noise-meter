@@ -2,15 +2,15 @@
   "string": [
     {
       "name": "module_desc",
-      "value": "模块描述"
+      "value": "一款专业的噪音测量工具，可以实时检测环境噪音分贝值，记录噪音数据，并提供历史记录查看功能。"
     },
     {
       "name": "EntryAbility_desc",
-      "value": "description"
+      "value": "噪音测量仪"
     },
     {
       "name": "EntryAbility_label",
-      "value": "噪音分贝仪"
+      "value": "噪音测量仪"
     },
     {
       "name": "microphone_reason",
