@@ -3,10 +3,18 @@ import { MainPage } from 'entry/MainPage'
 @Entry
 @Component
 struct Index {
-
   build() {
-    Column(){
-      MainPage()
+    Navigation() {
+      Column() {
+        MainPage()
+      }
+      .width('100%')
+      .height('100%')
+      .backgroundColor('#F5F5F5')
     }
+    .title('噪音检测')
+    .titleMode(NavigationTitleMode.Mini)
+    .hideBackButton(true)
+    .backgroundColor('#F5F5F5')
   }
 }
