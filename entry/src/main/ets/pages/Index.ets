@@ -1,5 +1,10 @@
 import { MainPage } from 'entry/MainPage'
 
+@Builder
+function IndexBuilder(name: string, param: Object) {
+  Index()
+}
+
 @Entry
 @Component
 struct Index {

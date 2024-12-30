@@ -1,0 +1,14 @@
+{
+  "routerMap": [
+    {
+      "name": "Index",
+      "pageSourceFile": "src/main/ets/pages/Index.ets",
+      "buildFunction": "IndexBuilder"
+    },
+    {
+      "name": "DecibelHistory",
+      "pageSourceFile": "src/noise_meter/DecibelHistory.ets",
+      "buildFunction": "DecibelHistoryBuilder"
+    }
+  ]
+} 

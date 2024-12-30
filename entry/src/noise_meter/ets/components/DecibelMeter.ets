@@ -317,9 +317,8 @@ export struct DecibelMeter {
         .margin({ top: 16, right: 16 })
         .backgroundColor('#F5F5F5')
         .onClick(() => {
-          router.pushUrl({
-            url: 'pages/DecibelHistory'
-          });
+          const navStack = new NavPathStack();
+          navStack.pushPathByName('DecibelHistory', null, true);
         })
       }
       .width('100%')

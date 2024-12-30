@@ -26,8 +26,14 @@ function buildDialog(params: DialogParams) {
   })
 }
 
+@Builder
+function DecibelHistoryBuilder(name: string, param: Object) {
+  DecibelHistory()
+}
+
+
 @Component
-export struct NoiseDecibelHistoryPage {
+export struct DecibelHistory {
   @State records: DecibelRecord[] = [];
   @State selectedRecord: DecibelRecord | null = null;
   @State showingDeleteButtonId: string = ''; // 当前显示删除按钮的记录ID
@@ -389,120 +395,125 @@ export struct NoiseDecibelHistoryPage {
   }
 
   build() {
-    Column() {
-      // 顶部导航栏
-      Row() {
+    Navigation() {
+      Column() {
+        // 顶部导航栏
         Row() {
-          Image($r('app.media.ic_back'))
-            .width(24)
-            .height(24)
-            .fillColor('#333333')
-            .onClick(() => {
-              router.back();
-            })
-          Text('历史记录')
-            .fontSize(18)
-            .fontWeight(FontWeight.Medium)
-            .margin({ left: 16 })
-        }
-        .layoutWeight(1)
+          Row() {
+            Image($r('app.media.ic_back'))
+              .width(24)
+              .height(24)
+              .fillColor('#333333')
+              .onClick(() => {
+                router.back();
+              })
+            Text('历史记录')
+              .fontSize(18)
+              .fontWeight(FontWeight.Medium)
+              .margin({ left: 16 })
+          }
+          .layoutWeight(1)
 
-        // 清空按钮
-        Button() {
-          Text('清空')
-            .fontSize(14)
-            .fontColor('#666666')
-        }
-        .height(32)
-        .backgroundColor('#F5F5F5')
-        .padding({ left: 12, right: 12 })
-        .borderRadius(16)
-        .onClick(async () => {
-          AlertDialog.show({
-            title: '清空历史记录',
-            message: '确定要清空历史记录吗？\n已收藏的记录将会保留',
-            alignment: DialogAlignment.Center,
-            primaryButton: {
-              value: '取消',
-              fontColor: '#666666',
-              backgroundColor: '#F5F5F5',
-              action: () => {
-                // 不执行任何操作
-              }
-            },
-            secondaryButton: {
-              value: '清空',
-              fontColor: '#FFFFFF',
-              backgroundColor: '#FF4081',
-              action: async () => {
-                try {
-                  // 保留收藏的记录
-                  const favoriteRecords = this.records.filter(r => r.isFavorite);
-                  this.records = favoriteRecords;
-                  await this.recordService.saveRecords(this.records);
-                  // 显示清空成功提示
-                  this.promptAction.showToast({
-                    message: '已清空历史记录',
-                    duration: 2000,
-                    bottom: '50%'
-                  });
-                } catch (error) {
-                  console.error('清空历史记录失败:', error);
+          // 清空按钮
+          Button() {
+            Text('清空')
+              .fontSize(14)
+              .fontColor('#666666')
+          }
+          .height(32)
+          .backgroundColor('#F5F5F5')
+          .padding({ left: 12, right: 12 })
+          .borderRadius(16)
+          .onClick(async () => {
+            AlertDialog.show({
+              title: '清空历史记录',
+              message: '确定要清空历史记录吗？\n已收藏的记录将会保留',
+              alignment: DialogAlignment.Center,
+              primaryButton: {
+                value: '取消',
+                fontColor: '#666666',
+                backgroundColor: '#F5F5F5',
+                action: () => {
+                  // 不执行任何操作
+                }
+              },
+              secondaryButton: {
+                value: '清空',
+                fontColor: '#FFFFFF',
+                backgroundColor: '#FF4081',
+                action: async () => {
+                  try {
+                    // 保留收藏的记录
+                    const favoriteRecords = this.records.filter(r => r.isFavorite);
+                    this.records = favoriteRecords;
+                    await this.recordService.saveRecords(this.records);
+                    // 显示清空成功提示
+                    this.promptAction.showToast({
+                      message: '已清空历史记录',
+                      duration: 2000,
+                      bottom: '50%'
+                    });
+                  } catch (error) {
+                    console.error('清空历史记录失败:', error);
+                  }
                 }
               }
-            }
-          });
-        })
-      }
-      .width('100%')
-      .height(56)
-      .padding({ left: 16, right: 16 })
-      .backgroundColor(Color.White)
-      .justifyContent(FlexAlign.SpaceBetween)
-
-      // 历史记录列表或空状态提示
-      if (this.records.length > 0) {
-        List() {
-          ForEach(this.records, (record: DecibelRecord) => {
-            ListItem() {
-              Column() {
-                this.RecordItem(record)
-                Divider()
-                  .width('100%')
-                  .height(8)
-                  .color('#F5F5F5')
-              }
-            }
+            });
           })
         }
         .width('100%')
-        .layoutWeight(1)
-        .backgroundColor('#F5F5F5')
-        .scrollBar(BarState.Auto)
-        .edgeEffect(EdgeEffect.Spring)
-        .listDirection(Axis.Vertical)
-      } else {
-        Column() {
-          Image($r('app.media.ic_empty'))
-            .width(120)
-            .height(120)
-            .fillColor('#CCCCCC')
-            .margin({ bottom: 16 })
-          Text('暂无历史记录')
-            .fontSize(16)
-            .fontColor('#999999')
-          Text('完成一次检测后即可查看记录')
-            .fontSize(14)
-            .fontColor('#999999')
-            .margin({ top: 8 })
+        .height(56)
+        .padding({ left: 16, right: 16 })
+        .backgroundColor(Color.White)
+        .justifyContent(FlexAlign.SpaceBetween)
+
+        // 历史记录列表或空状态提示
+        if (this.records.length > 0) {
+          List() {
+            ForEach(this.records, (record: DecibelRecord) => {
+              ListItem() {
+                Column() {
+                  this.RecordItem(record)
+                  Divider()
+                    .width('100%')
+                    .height(8)
+                    .color('#F5F5F5')
+                }
+              }
+            })
+          }
+          .width('100%')
+          .layoutWeight(1)
+          .backgroundColor('#F5F5F5')
+          .scrollBar(BarState.Auto)
+          .edgeEffect(EdgeEffect.Spring)
+          .listDirection(Axis.Vertical)
+        } else {
+          Column() {
+            Image($r('app.media.ic_empty'))
+              .width(120)
+              .height(120)
+              .fillColor('#CCCCCC')
+              .margin({ bottom: 16 })
+            Text('暂无历史记录')
+              .fontSize(16)
+              .fontColor('#999999')
+            Text('完成一次检测后即可查看记录')
+              .fontSize(14)
+              .fontColor('#999999')
+              .margin({ top: 8 })
+          }
+          .width('100%')
+          .layoutWeight(1)
+          .backgroundColor('#F5F5F5')
+          .justifyContent(FlexAlign.Center)
         }
-        .width('100%')
-        .layoutWeight(1)
-        .backgroundColor('#F5F5F5')
-        .justifyContent(FlexAlign.Center)
       }
-    }
-    .width('100%')
-    .height('100%')
+      .width('100%')
+      .height('100%')    }
+    .title('历史记录')
+    .titleMode(NavigationTitleMode.Mini)
+    .hideBackButton(false)
+
   }
 } 
