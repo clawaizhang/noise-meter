@@ -1,6 +1,6 @@
 import { common } from '@kit.AbilityKit';
 import { BannerCard } from '../library/ets/components/business/BannerCard';
-import { NoiseDecibel } from './ets/components/NoiseDecibel';
+import { DecibelMeter } from './ets/components/DecibelMeter';
 
 @Component
 export struct MainPage {
@@ -30,7 +30,7 @@ export struct MainPage {
         .margin({ top: 12, bottom: 12 })
 
         // 噪音检测区域
-        NoiseDecibel()
+        DecibelMeter()
           .width('92%')
       }
       .width('100%')
