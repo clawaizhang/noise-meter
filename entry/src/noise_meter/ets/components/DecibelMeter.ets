@@ -274,15 +274,14 @@ export struct DecibelMeter {
             .margin({ top: 12, bottom: 20 })
 
           // 分割线
-          if (this.currentDecibel > 0) {
-            Divider()
-              .width('92%')
-              .color('#E0E0E0')
-              .margin({ top: 12, bottom: 16 })
+          Divider()
+            .width('92%')
+            .color('#E0E0E0')
+            .margin({ top: 12, bottom: 16 })
 
-            // 统计数据显示
-            this.StatisticsRow()
-          }
+          // 统计数据显示
+          this.StatisticsRow()
+
         }
         .width('100%')
         .padding({
