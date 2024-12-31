@@ -1,11 +1,11 @@
-import { DecibelRecord } from '../library/ets/models/DecibelRecord';
-import { DecibelRecordService } from './ets/services/DecibelRecordService';
-import { DecibelService } from './ets/services/DecibelService';
-import { DetailDialog } from '../library/ets/components/business/DetailDialog';
+import { DecibelRecord } from '../../library/ets/models/DecibelRecord';
+import { DecibelRecordService } from '../ets/services/DecibelRecordService';
+import { DecibelService } from '../ets/services/DecibelService';
+import { DetailDialog } from '../../library/ets/components/business/DetailDialog';
 import router from '@ohos.router';
 import common from '@ohos.app.ability.common';
 import { PromptAction } from '@kit.ArkUI';
-import { DialogService } from '../library/ets/services/DialogService';
+import { DialogService } from '../../library/ets/services/DialogService';
 
 class DialogParams {
   selectedRecord: DecibelRecord | null = null;
@@ -27,7 +27,7 @@ function buildDialog(params: DialogParams) {
 }
 
 @Builder
-function DecibelHistoryBuilder(name: string, param: Object) {
+function DecibelHistoryBuilder() {
   DecibelHistory()
 }
 
@@ -45,6 +45,7 @@ export struct DecibelHistory {
   private decibelService: DecibelService = new DecibelService();
   private promptAction: PromptAction = this.getUIContext().getPromptAction();
   private dialogService: DialogService = new DialogService();
+  navStack: NavPathStack = new NavPathStack()
 
   @Builder
   DetailDialogBuilder() {
@@ -395,7 +396,7 @@ export struct DecibelHistory {
   }
 
   build() {
-    Navigation() {
+    NavDestination() {
       Column() {
         // 顶部导航栏
         Row() {
@@ -512,8 +513,9 @@ export struct DecibelHistory {
       .width('100%')
       .height('100%')    }
     .title('历史记录')
-    .titleMode(NavigationTitleMode.Mini)
-    .hideBackButton(false)
+    .onReady((context: NavDestinationContext) => {
+      this.navStack = context.pathStack
+    })
 
   }
 } 

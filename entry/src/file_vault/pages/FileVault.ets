@@ -2,8 +2,13 @@ import photoAccessHelper from '@ohos.file.photoAccessHelper';
 import fs from '@ohos.file.fs';
 import common from '@ohos.app.ability.common';
 
+@Builder
+function FileVaultBuilder() {
+  FileVault()
+}
+
 @Component
-export struct MainPage {
+export struct FileVault {
   @State files: Array<FileInfo> = [];
   private context = getContext(this) as common.UIAbilityContext;
 

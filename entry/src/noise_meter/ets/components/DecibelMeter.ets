@@ -35,6 +35,9 @@ export struct DecibelMeter {
   private context?: common.UIAbilityContext
   private values: number[] = []
   private startTime: number = 0
+  navStack = new NavPathStack();
+
+
 
   aboutToAppear() {
     // 如果提供了外部context，重新初始化AudioService
@@ -317,8 +320,7 @@ export struct DecibelMeter {
         .margin({ top: 16, right: 16 })
         .backgroundColor('#F5F5F5')
         .onClick(() => {
-          const navStack = new NavPathStack();
-          navStack.pushPathByName('DecibelHistory', null, true);
+          this.navStack.pushPathByName('DecibelHistory', null, true);
         })
       }
       .width('100%')

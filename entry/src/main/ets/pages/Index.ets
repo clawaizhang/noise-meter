@@ -1,25 +1,27 @@
-import { MainPage } from 'entry/MainPage'
+import { getTitleName } from 'entry/MainPageInfo'
+import { getPageName } from 'entry/MainPageInfo'
 
 @Builder
-function IndexBuilder(name: string, param: Object) {
+function IndexBuilder() {
   Index()
 }
 
 @Entry
 @Component
 struct Index {
+  navStack: NavPathStack = new NavPathStack()
+
   build() {
-    Navigation() {
-      Column() {
-        MainPage()
-      }
-      .width('100%')
-      .height('100%')
-      .backgroundColor('#F5F5F5')
+    Navigation(this.navStack) {
     }
-    .title('噪音检测')
+    .title(getTitleName())
     .titleMode(NavigationTitleMode.Mini)
     .hideBackButton(true)
     .backgroundColor('#F5F5F5')
+    .onAppear(() => {
+      // this.navStack.pop()
+      this.navStack.replacePath(new NavPathInfo(getPageName(), undefined, () => {
+      }, true), true)
+    })
   }
 }

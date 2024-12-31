@@ -1,9 +1,9 @@
 import { common } from '@kit.AbilityKit';
-import { BannerCard } from '../library/ets/components/business/BannerCard';
-import { DecibelMeter } from './ets/components/DecibelMeter';
+import { BannerCard } from '../../library/ets/components/business/BannerCard';
+import { DecibelMeter } from '../ets/components/DecibelMeter';
 
 @Component
-export struct MainPage {
+export struct NoiseMeter {
   @State bgColor: string = '#F1F3F5'
 
   build() {
