@@ -406,7 +406,7 @@ export struct DetailDialog {
           Column() {
             BasicInfoBuilder(this.selectedRecord)
             StatisticsBuilder(this.selectedRecord, this.decibelService)
-            AudioPlaybackBuilder(this.selectedRecord)
+            this.AudioPlaybackBuilder(this.selectedRecord)
             ChartBuilder(this.selectedRecord, this.decibelService)
           }
           .width('100%')
