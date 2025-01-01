@@ -298,7 +298,7 @@ export struct DecibelMeter {
 
             Text(this.decibelService.getDecibelLevel(this.currentDecibel))
               .fontSize(16)
-              .fontColor('#666666')
+              .fontColor(this.decibelService.getDecibelColor(this.currentDecibel))
           }
           .width('92%')
           .height(20)
