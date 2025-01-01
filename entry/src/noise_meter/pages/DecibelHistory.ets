@@ -121,28 +121,36 @@ export struct DecibelHistory {
 
   @Builder
   HistoryTitle() {
-    Row() {
-      Image($r('app.media.ic_back'))
-        .width(24)
-        .height(24)
-        .fillColor('#333333')
-        .onClick(() => {
-          this.navStack.pop()
-        })
-      Row() {
-        Text('历史记录')
-          .fontSize(18)
-          .fontWeight(FontWeight.Medium)
-      }
+    Stack() {
+      Text('历史记录')
+        .fontSize(18)
+        .fontWeight(FontWeight.Medium)
+        .width('100%')
+        .textAlign(TextAlign.Center)
 
-      this.EmptyButton()
+      Row() {
+        Image($r('app.media.ic_back'))
+          .width(24)
+          .height(24)
+          .fillColor('#333333')
+          .onClick(() => {
+            this.navStack.pop()
+          })
+        Row() {
+        }
+        .layoutWeight(1)
+        Row() {
+          this.EmptyButton()
+        }
+        .width(56)
+      }
+      .width('100%')
+      .height(56)
+      .padding({ left: 16, right: 16 })
     }
     .width('100%')
     .height(56)
-    .padding({ left: 16, right: 16 })
     .backgroundColor(Color.White)
-    .justifyContent(FlexAlign.SpaceBetween)
-
   }
 
   async emptyAll() {
@@ -188,8 +196,10 @@ export struct DecibelHistory {
       Text('清空')
         .fontSize(14)
         .fontColor('#666666')
+        .textAlign(TextAlign.Center)
     }
     .height(32)
+    .width(56)
     .backgroundColor('#F5F5F5')
     .padding({ left: 12, right: 12 })
     .borderRadius(16)
