@@ -81,9 +81,7 @@ export struct DecibelMeter {
         this.values = [];
         this.dbCount = 0;
         this.dbSum = 0;
-        if (this.isRecordEnabled) {
-          this.audioData = [];
-        }
+        this.audioData = []; // 每次开始检测时清空音频数据
 
         // 如果没有在采集音频，先启动采集
         if (!this.audioService.isAudioCapturing()) {
@@ -99,10 +97,8 @@ export struct DecibelMeter {
           this.updateStatistics(this.currentDecibel);
           // 更新计时器
           this.recordingTime = Math.floor((new Date().getTime() - this.startTime) / 1000);
-          // 如果开启了录音，保存音频数据
-          if (this.isRecordEnabled) {
-            this.audioData.push(buffer);
-          }
+          // 始终记录音频数据
+          this.audioData.push(buffer);
         });
       } catch (error) {
         // 如果启动失败（包括权限问题），重置状态
@@ -140,8 +136,8 @@ export struct DecibelMeter {
           this.avgDecibel,
           duration,
           [...this.values],
-          locationInfo?.address,// 使用可选链操作符获取地址
-          this.isRecordEnabled ? [...this.audioData] : undefined // 如果开启了录音，保存音频数据
+          locationInfo?.address,
+          this.isRecordEnabled ? [...this.audioData] : undefined // 根据录音开关状态决定是否保存音频数据
         );
         await this.recordService.saveRecord(record);
 

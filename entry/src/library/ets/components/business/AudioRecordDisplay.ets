@@ -8,20 +8,16 @@ export struct AudioRecordDisplay {
   build() {
     Column() {
       Row() {
-        Row() {
-          Text('录音')
-            .fontSize(16)
-            .fontWeight(FontWeight.Medium)
-          Text(this.isRecordEnabled ? ' 已开启' : ' 已关闭')
-            .fontSize(14)
-            .fontColor(this.isRecordEnabled ? '#2196F3' : '#666666')
-        }
+        Text('录音')
+          .fontSize(16)
+          .fontWeight(FontWeight.Medium)
+          .fontColor('#000000')
 
         Blank()
 
         Toggle({ type: ToggleType.Switch, isOn: this.isRecordEnabled })
-          .selectedColor('#2196F3')
-          .switchPointColor(0xe5ffffff)
+          .selectedColor('#0091FF')
+          .switchPointColor('#FFFFFF')
           .onChange((isOn: boolean) => {
             this.isRecordEnabled = isOn;
           })
@@ -29,11 +25,15 @@ export struct AudioRecordDisplay {
       .width('100%')
       .height(56)
       .padding({ left: 16, right: 16 })
-      .justifyContent(FlexAlign.SpaceBetween)
 
-      if (!this.isRecordEnabled) {
+      if (this.isRecordEnabled) {
+        Text('本次检测期间的音频将被记录')
+          .fontSize(14)
+          .fontColor('#666666')
+          .margin({ left: 16, top: -8 })
+      } else {
         Text('开启后可记录检测过程中的音频')
-          .fontSize(12)
+          .fontSize(14)
           .fontColor('#999999')
           .margin({ left: 16, top: -8 })
       }
