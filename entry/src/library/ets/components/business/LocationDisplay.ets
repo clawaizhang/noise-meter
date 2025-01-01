@@ -242,6 +242,25 @@ export struct LocationDisplay {
     .height('100%')
   }
 
+  private formatLocation(location: string): string {
+    if (!location || !location.includes(',')) {
+      return '';
+    }
+    try {
+      const coords = location.split(',');
+      const lat = Number(coords[0]);
+      const lng = Number(coords[1]);
+      const formattedLocation = [lat, lng]
+        .map(num => !isNaN(num) ? num.toFixed(2) : '')
+        .filter(Boolean)
+        .join(',');
+      return formattedLocation;
+    } catch (error) {
+      console.error('格式化位置信息失败:', error);
+      return '';
+    }
+  }
+
   build() {
     Column() {
       Row() {
@@ -258,6 +277,13 @@ export struct LocationDisplay {
             .fontSize(16)
             .fontWeight(FontWeight.Medium)
             .fontColor(this.style?.textColor ?? '#000000')
+
+          if (this.isLocationEnabled && this.location) {
+            Text(this.formatLocation(this.location))
+              .fontSize(14)
+              .fontColor(this.style?.textColor ?? '#666666')
+              .margin({ left: 8 })
+          }
         }
 
         Blank()
@@ -335,44 +361,39 @@ export struct LocationDisplay {
       .margin({ bottom: 12 })
 
       if (this.isLocationEnabled) {
-        Text(this.location)
-          .fontSize(14)
-          .fontColor(this.style?.textColor ?? '#666666')
-          .margin({ bottom: 4 })
-          .textAlign(TextAlign.Start)
-          .width('100%')
-
-        if (this.address) {
-          Text(this.address)
+        Row() {
+          Text(this.address || '正在获取位置信息...')
             .fontSize(14)
             .fontColor(this.style?.textColor ?? '#666666')
-            .margin({ top: 4 })
             .textAlign(TextAlign.Start)
-            .width('100%')
-        }
+            .layoutWeight(1)
+            .textOverflow({ overflow: TextOverflow.None })
 
-        Button({ type: ButtonType.Normal, stateEffect: true }) {
-          this.RefreshButton()
+          Button({ type: ButtonType.Normal, stateEffect: true }) {
+            this.RefreshButton()
+          }
+          .width(110)
+          .height(32)
+          .borderRadius(16)
+          .backgroundColor(this.isRefreshing ? '#0091FF' : '#0091FF')
+          .enabled(!this.isRefreshing)
+          .onClick(() => {
+            this.startSingleLocation();
+          })
+          .animation({
+            duration: 250,
+            curve: Curve.EaseInOut,
+            iterations: 1,
+            playMode: PlayMode.Normal
+          })
+          .scale({
+            x: this.isRefreshing ? 0.98 : 1,
+            y: this.isRefreshing ? 0.98 : 1
+          })
+          .margin({ left: 16 })
         }
-        .width(110)
-        .height(32)
-        .margin({ top: 16 })
-        .borderRadius(16)
-        .backgroundColor(this.isRefreshing ? '#0091FF' : '#0091FF')
-        .enabled(!this.isRefreshing)
-        .onClick(() => {
-          this.startSingleLocation();
-        })
-        .animation({
-          duration: 250,
-          curve: Curve.EaseInOut,
-          iterations: 1,
-          playMode: PlayMode.Normal
-        })
-        .scale({
-          x: this.isRefreshing ? 0.98 : 1,
-          y: this.isRefreshing ? 0.98 : 1
-        })
+        .width('100%')
+        .alignItems(VerticalAlign.Center)
       } else {
         Text('开启后可查看位置信息')
           .fontSize(14)
