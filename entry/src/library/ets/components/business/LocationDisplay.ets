@@ -320,9 +320,10 @@ export struct LocationDisplay {
 
         Blank()
 
-        Toggle({ type: ToggleType.Switch, isOn: $$this.isLocationEnabled })
+        Toggle({ type: ToggleType.Switch, isOn: this.isLocationEnabled })
           .selectedColor('#0091FF')
           .switchPointColor('#FFFFFF')
+          .enabled(!this.isRefreshing)
           .onChange(async (isOn: boolean) => {
             if (isOn) {
               // 先检查定位服务是否开启
