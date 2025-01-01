@@ -291,7 +291,7 @@ export struct LocationDisplay {
             .onClick(() => {
               this.startSingleLocation();
             })
-            .margin({ right: 8, left: -4 })
+            .margin({ right: 8, left: -8 })
           } else {
             Column() {
               this.LocationIcon({
@@ -302,25 +302,30 @@ export struct LocationDisplay {
             .width(24)
             .height(24)
             .justifyContent(FlexAlign.Center)
-            .margin({ right: 8, left: -4 })
+            .margin({ right: 4, left: -8 })
           }
 
-          Text('当前位置')
+          Text('位置')
             .fontSize(16)
             .fontWeight(FontWeight.Medium)
             .fontColor(this.style?.textColor ?? '#000000')
 
-          if (this.isLocationEnabled && this.location) {
+          if (this.isLocationEnabled) {
             Text(this.formatLocation(this.location))
               .fontSize(14)
               .fontColor(this.style?.textColor ?? '#666666')
               .margin({ left: 8 })
+          } else {
+            Text('已关闭')
+              .fontSize(14)
+              .fontColor('#666666')
+              .margin({ left: 4 })
           }
         }
 
         Blank()
 
-        Toggle({ type: ToggleType.Switch, isOn: $$this.isLocationEnabled })
+        Toggle({ type: ToggleType.Switch, isOn: this.isLocationEnabled })
           .selectedColor('#0091FF')
           .switchPointColor('#FFFFFF')
           .enabled(!this.isRefreshing)
@@ -394,7 +399,8 @@ export struct LocationDisplay {
           })
       }
       .width('100%')
-      .height(48)
+      .height(40)
+      .alignItems(VerticalAlign.Center)
 
       if (this.isLocationEnabled) {
         Row() {
