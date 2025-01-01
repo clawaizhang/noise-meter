@@ -150,7 +150,7 @@ export struct DecibelHistory {
     }
     .width('100%')
     .height(56)
-    .backgroundColor(Color.White)
+    .backgroundColor('#F5F5F5')
   }
 
   async emptyAll() {
@@ -536,7 +536,9 @@ export struct DecibelHistory {
       }
       .width('100%')
       .height('100%')
+      .backgroundColor('#F5F5F5')
     }
     .hideTitleBar(true)
+    .backgroundColor('#F5F5F5')
   }
 } 
