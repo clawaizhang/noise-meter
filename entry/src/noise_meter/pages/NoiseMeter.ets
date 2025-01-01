@@ -32,19 +32,7 @@ export struct NoiseMeter {
           .backgroundColor(this.bgColor)
 
         Column() {
-          // 广告Banner
-          Row() {
-            BannerCard({
-              context: getContext(this) as common.Context,
-              adId: 'testw6vs28auh3',
-              onItemClick: () => {
-                console.info('广告被点击了');
-              }
-            })
-          }
-          .width('92%')
-          .height(57)
-          .margin({ top: 12, bottom: 12 })
+
 
           // 噪音检测区域
           DecibelMeter()

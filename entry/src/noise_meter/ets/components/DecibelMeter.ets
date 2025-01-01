@@ -10,6 +10,7 @@ import common from '@ohos.app.ability.common';
 import { DetailDialog } from '../../../library/ets/components/business/DetailDialog';
 import { noiseMeterNavStack } from '../../MainPageInfo';
 import { AudioRecordDisplay } from '../../../library/ets/components/business/AudioRecordDisplay';
+import { BannerCard } from '../../../library/ets/components/business/BannerCard';
 
 @Builder
 function buildDialog(params: DialogParams) {
@@ -143,7 +144,7 @@ export struct DecibelMeter {
           duration,
           [...this.values],
           locationInfo?.address,
-          this.isRecordEnabled ? [...this.audioData] : undefined // 根据录音开关状态决定是否保存音频数据
+          this.isRecordEnabled ? [...this.audioData] : undefined// 根据录音开关状态决定是否保存音频数据
         );
         await this.recordService.saveRecord(record);
 
@@ -156,13 +157,13 @@ export struct DecibelMeter {
         }
         // 30秒后释放音频流
         this.releaseTimer = setTimeout(async () => {
-          if (!this.isRecording) {  // 确保此时没有在录制
+          if (!this.isRecording) { // 确保此时没有在录制
             await this.audioService.stopProcessing();
             await this.audioService.stopCapture();
             await this.stopAudioCapture();
           }
           this.releaseTimer = -1;
-        }, 30000);  // 30秒 = 30000毫秒
+        }, 30000); // 30秒 = 30000毫秒
 
       } catch (error) {
         console.error('保存记录失败:', error);
@@ -363,21 +364,7 @@ export struct DecibelMeter {
           this.dialogService.showDetailDialog(this.getUIContext(), wrapBuilder(buildDialog), record);
         })
 
-        // 历史记录按钮
-        Button() {
-          Image($r('app.media.ic_history'))
-            .width(24)
-            .height(24)
-            .fillColor('#2196F3')
-        }
-        .type(ButtonType.Circle)
-        .width(40)
-        .height(40)
-        .margin({ top: 16, right: 16 })
-        .backgroundColor('#F5F5F5')
-        .onClick(() => {
-          this.navStack.pushPathByName('DecibelHistory', null, true);
-        })
+        this.HistoryRecordButton()
       }
       .width('100%')
       .margin({ top: 16, left: 16, right: 16 })
@@ -411,39 +398,75 @@ export struct DecibelMeter {
       })
       .shadow({ radius: 1, color: '#1A000000', offsetY: 2 })
 
-      // 开始/停止按钮
-      Button({
-        type: ButtonType.Capsule,
-        stateEffect: true
-      }) {
-        Row() {
-          if (this.isRecording) {
-            Image($r('app.media.ic_stop'))
-              .width(24)
-              .height(24)
-              .margin({ right: 8 })
-              .fillColor(Color.White)
+      this.StartStopButton()
+
+      Row() {
+        BannerCard({
+          context: getContext(this) as common.Context,
+          adId: 'testw6vs28auh3',
+          onItemClick: () => {
+            console.info('广告被点击了');
           }
-          Text(this.isRecording ? '停止检测' : '开始检测')
-            .fontSize(18)
-            .fontWeight(FontWeight.Medium)
-            .fontColor(Color.White)
-        }
+        })
       }
-      .width('100%')
-      .height(56)
-      .margin({ top: 0, left: 16, right: 16 })
-      .backgroundColor(this.isRecording ? '#666666' : '#2196F3')
-      .onClick(() => {
-        if (this.isRecording) {
-          this.stopRecording()
-        } else {
-          this.startRecording()
-        }
-      })
+      .height(57)
+      .margin({ top: 12, bottom: 12 })
     }
     .width('100%')
     .padding({ top: 8, bottom: 16 })
     .alignItems(HorizontalAlign.Center)
+  }
+
+  @Builder
+  HistoryRecordButton(){
+    // 历史记录按钮
+    Button() {
+      Image($r('app.media.ic_history'))
+        .width(24)
+        .height(24)
+        .fillColor('#2196F3')
+    }
+    .type(ButtonType.Circle)
+    .width(40)
+    .height(40)
+    .margin({ top: 16, right: 16 })
+    .backgroundColor('#F5F5F5')
+    .onClick(() => {
+      this.navStack.pushPathByName('DecibelHistory', null, true);
+    })
+  }
+
+  @Builder
+  StartStopButton(){
+    // 开始/停止按钮
+    Button({
+      type: ButtonType.Capsule,
+      stateEffect: true
+    }) {
+      Row() {
+        if (this.isRecording) {
+          Image($r('app.media.ic_stop'))
+            .width(24)
+            .height(24)
+            .margin({ right: 8 })
+            .fillColor(Color.White)
+        }
+        Text(this.isRecording ? '停止检测' : '开始检测')
+          .fontSize(18)
+          .fontWeight(FontWeight.Medium)
+          .fontColor(Color.White)
+      }
+    }
+    .width('100%')
+    .height(56)
+    .margin({ top: 0, left: 16, right: 16 })
+    .backgroundColor(this.isRecording ? '#666666' : '#2196F3')
+    .onClick(() => {
+      if (this.isRecording) {
+        this.stopRecording()
+      } else {
+        this.startRecording()
+      }
+    })
   }
 } 
