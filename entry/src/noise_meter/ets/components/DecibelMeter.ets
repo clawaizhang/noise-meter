@@ -11,7 +11,7 @@ import { DetailDialog } from '../../../library/ets/components/business/DetailDia
 import { noiseMeterNavStack } from '../../MainPageInfo';
 import { AudioRecordDisplay } from '../../../library/ets/components/business/AudioRecordDisplay';
 import { BannerCard } from '../../../library/ets/components/business/BannerCard';
-import { SerializedAudioData } from '../../../library/ets/services/AudioPlayerService';
+import { FileService } from '../../../library/ets/services/FileService';
 
 @Builder
 function buildDialog(params: DialogParams) {
@@ -37,6 +37,7 @@ export struct DecibelMeter {
   private locationService: LocationService = LocationService.getInstance()
   private recordService: DecibelRecordService = new DecibelRecordService(getContext() as common.UIAbilityContext)
   private dialogService: DialogService = new DialogService()
+  private fileService: FileService = new FileService(getContext() as common.Context)
   private dbCount: number = 0
   private dbSum: number = 0
   private context?: common.UIAbilityContext
@@ -137,14 +138,35 @@ export struct DecibelMeter {
         // 计算检测时长
         const duration = new Date().getTime() - this.startTime;
 
-        // 将音频数据转换为可序列化的格式
-        const serializedAudioData: SerializedAudioData[] | undefined = this.isRecordEnabled ? this.audioData.map(buffer => {
-          const view = new Uint8Array(buffer);
-          const serialized: SerializedAudioData = {
-            data: Array.from(view)
-          };
-          return serialized;
-        }) : undefined;
+        let audioFilePath: string | undefined;
+        
+        // 如果启用了录音且有音频数据
+        if (this.isRecordEnabled && this.audioData.length > 0) {
+          // 创建音频目录
+          const audioDir = 'audio_records';
+          try {
+            await this.fileService.createDirectory(audioDir);
+          } catch (error) {
+            // 目录可能已存在，忽略错误
+          }
+
+          // 合并所有音频数据
+          const totalLength = this.audioData.reduce((sum, buffer) => sum + buffer.byteLength, 0);
+          const mergedBuffer = new ArrayBuffer(totalLength);
+          const mergedView = new Uint8Array(mergedBuffer);
+          let offset = 0;
+          
+          for (const buffer of this.audioData) {
+            const view = new Uint8Array(buffer);
+            mergedView.set(view, offset);
+            offset += buffer.byteLength;
+          }
+
+          // 生成文件名并保存
+          const timestamp = new Date().getTime();
+          audioFilePath = `${audioDir}/audio_${timestamp}.raw`;
+          await this.fileService.saveFile(audioFilePath, mergedBuffer);
+        }
 
         // 创建并保存记录
         const record = new DecibelRecord(
@@ -154,12 +176,17 @@ export struct DecibelMeter {
           duration,
           [...this.values],
           locationInfo?.address,
-          serializedAudioData
+          audioFilePath
         );
         await this.recordService.saveRecord(record);
 
         // 显示详情弹窗
-        this.dialogService.showDetailDialog(this.getUIContext(), wrapBuilder(buildDialog), record);
+        this.dialogService.showDetailDialog(
+          this.getUIContext(),
+          wrapBuilder(buildDialog),
+          record,
+          getContext(this) as common.Context
+        );
 
         // 清除之前的定时器
         if (this.releaseTimer !== -1) {
@@ -371,7 +398,12 @@ export struct DecibelMeter {
             [...this.values],
             this.locationService.getCachedLocation()?.address
           );
-          this.dialogService.showDetailDialog(this.getUIContext(), wrapBuilder(buildDialog), record);
+          this.dialogService.showDetailDialog(
+            this.getUIContext(),
+            wrapBuilder(buildDialog),
+            record,
+            getContext(this) as common.Context
+          );
         })
 
         this.HistoryRecordButton()

@@ -1,6 +1,7 @@
 import { DecibelRecord } from "../../models/DecibelRecord"
 import { DecibelService } from "../../../../noise_meter/ets/services/DecibelService"
 import { AudioPlayerService } from "../../services/AudioPlayerService"
+import common from '@ohos.app.ability.common'
 
 // 标题栏构建器
 @Builder
@@ -274,45 +275,6 @@ function ChartBuilder(selectedRecord: DecibelRecord, decibelService: DecibelServ
   .borderRadius(12)
 }
 
-@Builder
-function AudioPlaybackBuilder(selectedRecord: DecibelRecord) {
-  if (selectedRecord!.audioData && selectedRecord!.audioData.length > 0) {
-    Column() {
-      Text('音频回放')
-        .fontSize(16)
-        .fontWeight(FontWeight.Medium)
-        .alignSelf(ItemAlign.Start)
-        .margin({ bottom: 12 })
-
-      Row() {
-        Button() {
-          Row() {
-            Image($r('app.media.ic_play'))
-              .width(20)
-              .height(20)
-              .fillColor('#666666')
-              .margin({ right: 8 })
-            Text('播放录音')
-              .fontSize(14)
-              .fontColor('#666666')
-          }
-        }
-        .type(ButtonType.Capsule)
-        .backgroundColor('#F5F5F5')
-        .height(36)
-        .padding({ left: 16, right: 16 })
-      }
-      .width('100%')
-      .justifyContent(FlexAlign.Center)
-    }
-    .width('100%')
-    .padding(16)
-    .backgroundColor(Color.White)
-    .borderRadius(12)
-    .margin({ bottom: 12 })
-  }
-}
-
 @Component
 export struct DetailDialog {
   @Prop selectedRecord: DecibelRecord | null;
@@ -321,16 +283,24 @@ export struct DetailDialog {
   @State isPlaying: boolean = false;
   private startY: number = 0;
   private decibelService: DecibelService = new DecibelService();
-  private audioPlayerService: AudioPlayerService = new AudioPlayerService();
+  private audioPlayerService!: AudioPlayerService;
+  @Prop context: common.Context;
+
+  aboutToAppear() {
+    // 初始化AudioPlayerService
+    this.audioPlayerService = new AudioPlayerService(this.context);
+  }
 
   aboutToDisappear() {
     // 停止音频播放
-    this.audioPlayerService.stopPlaying();
+    if (this.isPlaying) {
+      this.audioPlayerService.stop();
+    }
   }
 
   @Builder
-   AudioPlaybackBuilder(selectedRecord: DecibelRecord) {
-    if (selectedRecord!.audioData && selectedRecord!.audioData.length > 0) {
+  AudioPlaybackBuilder(selectedRecord: DecibelRecord) {
+    if (selectedRecord!.audioFilePath) {
       Column() {
         Text('音频回放')
           .fontSize(16)
@@ -358,11 +328,13 @@ export struct DetailDialog {
           .onClick(async () => {
             try {
               if (this.isPlaying) {
-                await this.audioPlayerService.stopPlaying();
+                await this.audioPlayerService.stop();
+                this.isPlaying = false;
               } else {
-                await this.audioPlayerService.playAudio(selectedRecord!.audioData!);
+                this.isPlaying = true;
+                await this.audioPlayerService.playAudioFile(selectedRecord!.audioFilePath!);
+                this.isPlaying = false;
               }
-              this.isPlaying = this.audioPlayerService.isAudioPlaying();
             } catch (error) {
               console.error('音频播放失败:', error);
               this.isPlaying = false;

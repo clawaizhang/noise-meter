@@ -1,35 +1,24 @@
 import { DecibelRecord } from '../../library/ets/models/DecibelRecord';
-import { DecibelRecordService } from '../ets/services/DecibelRecordService';
-import { DecibelService } from '../ets/services/DecibelService';
+import { DialogParams, DialogService } from '../../library/ets/services/DialogService';
 import { DetailDialog } from '../../library/ets/components/business/DetailDialog';
-import router from '@ohos.router';
 import common from '@ohos.app.ability.common';
-import { PromptAction } from '@kit.ArkUI';
-import { DialogService } from '../../library/ets/services/DialogService';
+import { PromptAction } from '@ohos.arkui.UIContext';
+import { DecibelService } from '../ets/services/DecibelService';
+import { DecibelRecordService } from '../ets/services/DecibelRecordService';
 import { noiseMeterNavStack } from '../MainPageInfo';
-
-export class DecibelHistoryController {
-  emptyAll = () => {
-  }
-}
-
-class DialogParams {
-  selectedRecord: DecibelRecord | null = null;
-  closeDialog: () => void = () => {
-  };
-
-  constructor(selectedRecord: DecibelRecord | null, closeDialog: () => void) {
-    this.selectedRecord = selectedRecord;
-    this.closeDialog = closeDialog;
-  }
-}
 
 @Builder
 function buildDialog(params: DialogParams) {
   DetailDialog({
     selectedRecord: params.selectedRecord,
-    closeDialog: params.closeDialog
+    closeDialog: params.closeDialog,
+    context: params.context
   })
+}
+
+export class DecibelHistoryController {
+  emptyAll = () => {
+  }
 }
 
 @Builder
@@ -497,7 +486,12 @@ export struct DecibelHistory {
   }
 
   showDetailDialog() {
-    this.dialogService.showDetailDialog(this.getUIContext(), wrapBuilder(buildDialog), this.selectedRecord);
+    this.dialogService.showDetailDialog(
+      this.getUIContext(),
+      wrapBuilder(buildDialog),
+      this.selectedRecord,
+      getContext(this) as common.Context
+    );
   }
 
   build() {

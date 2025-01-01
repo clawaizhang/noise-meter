@@ -1,14 +1,16 @@
 import { ComponentContent, promptAction } from '@kit.ArkUI';
 import { DecibelRecord } from '../models/DecibelRecord';
+import common from '@ohos.app.ability.common';
 
 export interface DialogParams {
   selectedRecord: DecibelRecord | null;
   closeDialog: () => void;
+  context: common.Context;
 }
 
 export class DialogService {
   async showDetailDialog(context: UIContext, wrappedBuilder: WrappedBuilder<[DialogParams]>,
-    record: DecibelRecord | null): Promise<void> {
+    record: DecibelRecord | null, appContext: common.Context): Promise<void> {
     try {
       const promptAction = context.getPromptAction();
       let dialogContent: ComponentContent<DialogParams>;
@@ -25,7 +27,8 @@ export class DialogService {
       // 创建弹窗内容
       const dialogParams: DialogParams = {
         selectedRecord: record,
-        closeDialog: closeDialog
+        closeDialog: closeDialog,
+        context: appContext
       };
 
       dialogContent = new ComponentContent(
