@@ -1,4 +1,5 @@
 import audio from '@ohos.multimedia.audio';
+import { BusinessError } from '@kit.BasicServicesKit';
 
 interface AudioStreamInfo {
   samplingRate: audio.AudioSamplingRate;
@@ -13,8 +14,8 @@ interface AudioRendererInfo {
 }
 
 interface AudioRendererOptions {
-  streamInfo: AudioStreamInfo;
-  rendererInfo: AudioRendererInfo;
+  streamInfo: audio.AudioStreamInfo;
+  rendererInfo: audio.AudioRendererInfo;
 }
 
 export interface SerializedAudioData {
@@ -32,56 +33,29 @@ export class AudioPlayerService {
   private resolveWrite: (() => void) | null = null;
   private rejectWrite: ((error: Error) => void) | null = null;
 
-  async createRenderer(): Promise<void> {
-    if (this.audioRenderer) {
-      return;
-    }
-
-    const audioRendererOptions: AudioRendererOptions = {
-      streamInfo: {
-        samplingRate: audio.AudioSamplingRate.SAMPLE_RATE_44100,
-        channels: audio.AudioChannel.CHANNEL_1,
-        sampleFormat: audio.AudioSampleFormat.SAMPLE_FORMAT_S16LE,
-        encodingType: audio.AudioEncodingType.ENCODING_TYPE_RAW
-      },
-      rendererInfo: {
-        usage: audio.StreamUsage.STREAM_USAGE_UNKNOWN,
-        rendererFlags: 0
-      }
-    };
-
-    try {
-      this.audioRenderer = await audio.createAudioRenderer(audioRendererOptions);
-      // 设置音量为最大
-      await this.audioRenderer.setVolume(1.0);
-      // 设置播放速度为正常
-      await this.audioRenderer.setSpeed(1.0);
-
-      // 设置writeData事件监听
-      this.audioRenderer.on('writeData', this.handleWriteData.bind(this));
-
-      // 启动渲染器
-      await this.audioRenderer.start();
-      console.info('音频渲染器创建并启动成功');
-    } catch (err) {
-      console.error('创建音频渲染器失败:', err);
-      throw new Error('创建音频渲染器失败');
-    }
-  }
-
-  private handleWriteData(length: number): void {
-    if (!this.currentBuffer || !this.isPlaying) {
-      return;
+  private handleWriteData = (data: ArrayBuffer): audio.AudioDataCallbackResult => {
+    if (!this.currentBuffer || !this.isPlaying || !this.audioRenderer) {
+      console.info('音频播放终止: 缓冲区为空或播放器未就绪');
+      this.stopPlaying().catch((err:BusinessError) => console.error('停止播放失败:', err));
+      return audio.AudioDataCallbackResult.INVALID;
     }
 
     try {
       const remainingLength = this.currentBuffer.byteLength - this.currentPosition;
       if (remainingLength > 0) {
-        const writeLength = Math.min(length, remainingLength);
-        const chunk = this.currentBuffer.slice(this.currentPosition, this.currentPosition + writeLength);
+        // 确保不超过系统缓冲区大小
+        const writeLength = Math.min(data.byteLength, remainingLength);
+        
+        // 从当前位置复制数据到系统缓冲区
+        const sourceView = new Uint8Array(this.currentBuffer, this.currentPosition, writeLength);
+        const targetView = new Uint8Array(data, 0, writeLength);
+        targetView.set(sourceView);
+        
         this.currentPosition += writeLength;
+        console.info(`写入音频数据: ${writeLength} 字节, 剩余: ${remainingLength - writeLength} 字节`);
 
         if (this.currentPosition >= this.currentBuffer.byteLength) {
+          console.info('音频播放完成');
           // 当前缓冲区已写完
           this.currentBuffer = null;
           this.currentPosition = 0;
@@ -90,15 +64,71 @@ export class AudioPlayerService {
             this.resolveWrite = null;
             this.rejectWrite = null;
           }
+          // 播放完成后停止播放器
+          this.stopPlaying().catch((err:BusinessError) => console.error('停止播放失败:', err));
+          return audio.AudioDataCallbackResult.INVALID;
         }
+
+        return audio.AudioDataCallbackResult.VALID;
       }
+
+      console.info('没有更多音频数据可写入');
+      // 没有更多数据，停止播放
+      this.stopPlaying().catch((err:BusinessError) => console.error('停止播放失败:', err));
+      return audio.AudioDataCallbackResult.INVALID;
     } catch (error) {
-      console.error('写入音频数据失败:', error);
+      console.error('处理音频数据失败:', error.message);
       if (this.rejectWrite) {
-        this.rejectWrite(new Error('写入音频数据失败'));
+        this.rejectWrite(error);
         this.resolveWrite = null;
         this.rejectWrite = null;
       }
+      // 发生错误时停止播放
+      this.stopPlaying().catch((err:BusinessError) => console.error('停止播放失败:', err));
+      return audio.AudioDataCallbackResult.INVALID;
+    }
+  }
+
+  async createRenderer(): Promise<void> {
+    if (this.audioRenderer) {
+      return;
+    }
+
+    try {
+      // 1. 创建音频渲染器实例
+      this.audioRenderer = await audio.createAudioRenderer({
+        streamInfo: {
+          samplingRate: audio.AudioSamplingRate.SAMPLE_RATE_48000,
+          channels: audio.AudioChannel.CHANNEL_2,
+          sampleFormat: audio.AudioSampleFormat.SAMPLE_FORMAT_F32LE,
+          encodingType: audio.AudioEncodingType.ENCODING_TYPE_RAW
+        },
+        rendererInfo: {
+          usage: audio.StreamUsage.STREAM_USAGE_MEDIA,
+          rendererFlags: 0
+        }
+      });
+      
+      // 2. 设置音频渲染器参数
+      await this.audioRenderer.setVolume(1.0);
+      await this.audioRenderer.setSpeed(1.0);
+      
+      // 3. 获取缓冲区大小
+      const bufferSize = await this.audioRenderer.getBufferSize();
+      console.info('音频渲染器缓冲区大小:', bufferSize);
+
+      // 4. 设置writeData事件监听
+      this.audioRenderer.on('writeData', this.handleWriteData);
+      this.audioRenderer.on('stateChange', (state: audio.AudioState) => {
+        console.info('音频渲染器状态变化:', state);
+      });
+
+      // 5. 启动渲染器
+      await this.audioRenderer.start();
+      console.info('音频渲染器创建并启动成功');
+    } catch (err) {
+      console.error('创建音频渲染器失败:', err);
+      throw new Error('创建音频渲染器失败');
     }
   }
 
@@ -172,17 +202,13 @@ export class AudioPlayerService {
         offset += buffer.byteLength;
       }
 
-      // 写入并播放音频数据
-      let position = 0;
-      const bufferSize = 4096; // 使用固定的缓冲区大小
-      while (position < totalLength && !this.shouldStop) {
-        const chunk = mergedBuffer.slice(position, Math.min(position + bufferSize, totalLength));
-        await this.writeAudioData(chunk);
-        await this.audioRenderer!.drain();
-        position += chunk.byteLength;
-      }
-
-      await this.stopPlaying();
+      // 设置当前缓冲区并等待播放完成
+      return new Promise<void>((resolve, reject) => {
+        this.currentBuffer = mergedBuffer;
+        this.currentPosition = 0;
+        this.resolveWrite = resolve;
+        this.rejectWrite = reject;
+      });
     } catch (err) {
       console.error('播放音频失败:', err);
       await this.stopPlaying();
