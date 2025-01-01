@@ -284,8 +284,8 @@ export struct LocationDisplay {
                   })
               }
             }
-            .width(24)
-            .height(24)
+            .width(20)
+            .height(20)
             .backgroundColor(this.style?.buttonColor ?? '#F5F5F5')
             .enabled(!this.isRefreshing)
             .onClick(() => {
