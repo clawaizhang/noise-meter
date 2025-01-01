@@ -371,7 +371,7 @@ export struct DecibelMeter {
       .width('100%')
       .height(56)
       .margin({ top: 0, left: 16, right: 16 })
-      .backgroundColor(this.isRecording ? '#FF4081' : '#2196F3')
+      .backgroundColor(this.isRecording ? '#666666' : '#2196F3')
       .onClick(() => {
         if (this.isRecording) {
           this.stopRecording()
