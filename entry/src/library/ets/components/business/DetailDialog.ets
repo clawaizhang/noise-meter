@@ -2,6 +2,7 @@ import { DecibelRecord } from "../../models/DecibelRecord"
 import { DecibelService } from "../../../../noise_meter/ets/services/DecibelService"
 import { AudioPlayerService } from "../../services/AudioPlayerService"
 import common from '@ohos.app.ability.common'
+import { FileService } from "../../services/FileService"
 
 // 标题栏构建器
 @Builder
@@ -285,10 +286,15 @@ export struct DetailDialog {
   private decibelService: DecibelService = new DecibelService();
   private audioPlayerService!: AudioPlayerService;
   @Prop context: common.Context;
+  @Prop fileService: FileService;
 
   aboutToAppear() {
-    // 初始化AudioPlayerService
-    this.audioPlayerService = new AudioPlayerService(this.context);
+    // 初始化AudioPlayerService，使用传入的FileService
+    if (this.context && this.fileService) {
+      this.audioPlayerService = new AudioPlayerService(this.context, this.fileService);
+    } else {
+      console.error('Context or FileService is not available');
+    }
   }
 
   aboutToDisappear() {

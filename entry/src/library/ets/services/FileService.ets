@@ -13,8 +13,10 @@ export class FileService {
   private filesDir: string;
 
   constructor(context: common.Context) {
+    if (!context) {
+      throw new Error('Context is required');
+    }
     this.context = context;
-    // 获取应用文件目录
     this.filesDir = this.context.filesDir;
   }
 

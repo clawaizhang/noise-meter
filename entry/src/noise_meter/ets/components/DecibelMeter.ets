@@ -181,11 +181,17 @@ export struct DecibelMeter {
         await this.recordService.saveRecord(record);
 
         // 显示详情弹窗
+        const appContext = getContext(this) as common.Context;
+        if (!appContext) {
+          console.error('Context is not available');
+          return;
+        }
+        
         this.dialogService.showDetailDialog(
           this.getUIContext(),
           wrapBuilder(buildDialog),
           record,
-          getContext(this) as common.Context
+          appContext
         );
 
         // 清除之前的定时器

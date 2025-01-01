@@ -1,17 +1,26 @@
 import { ComponentContent, promptAction } from '@kit.ArkUI';
 import { DecibelRecord } from '../models/DecibelRecord';
 import common from '@ohos.app.ability.common';
+import { FileService } from './FileService';
 
 export interface DialogParams {
   selectedRecord: DecibelRecord | null;
   closeDialog: () => void;
   context: common.Context;
+  fileService: FileService | null;
 }
 
 export class DialogService {
+  private fileService: FileService | null = null;
+
   async showDetailDialog(context: UIContext, wrappedBuilder: WrappedBuilder<[DialogParams]>,
     record: DecibelRecord | null, appContext: common.Context): Promise<void> {
     try {
+      // 初始化或获取FileService实例
+      if (!this.fileService) {
+        this.fileService = new FileService(appContext);
+      }
+
       const promptAction = context.getPromptAction();
       let dialogContent: ComponentContent<DialogParams>;
 
@@ -28,7 +37,8 @@ export class DialogService {
       const dialogParams: DialogParams = {
         selectedRecord: record,
         closeDialog: closeDialog,
-        context: appContext
+        context: appContext,
+        fileService: this.fileService  // 传递缓存的FileService实例
       };
 
       dialogContent = new ComponentContent(

@@ -7,14 +7,12 @@ import { FileService } from './FileService';
  * 音频播放服务
  */
 export class AudioPlayerService {
-  private context: common.Context;
-  private audioRenderer?: audio.AudioRenderer;
+  private audioRenderer: audio.AudioRenderer | null = null;
   private fileService: FileService;
   private isPlaying: boolean = false;
 
-  constructor(context: common.Context) {
-    this.context = context;
-    this.fileService = new FileService(context);
+  constructor(context: common.Context, fileService: FileService) {
+    this.fileService = fileService;
   }
 
   /**
@@ -77,7 +75,7 @@ export class AudioPlayerService {
       try {
         await this.audioRenderer.stop();
         await this.audioRenderer.release();
-        this.audioRenderer = undefined;
+        this.audioRenderer = null;
         this.isPlaying = false;
       } catch (error) {
         const businessError = error as BusinessError;
