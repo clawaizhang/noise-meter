@@ -6,6 +6,12 @@ import router from '@ohos.router';
 import common from '@ohos.app.ability.common';
 import { PromptAction } from '@kit.ArkUI';
 import { DialogService } from '../../library/ets/services/DialogService';
+import { noiseMeterNavStack } from '../MainPageInfo';
+
+export class DecibelHistoryController {
+  emptyAll = () => {
+  }
+}
 
 class DialogParams {
   selectedRecord: DecibelRecord | null = null;
@@ -34,6 +40,7 @@ function DecibelHistoryBuilder() {
 
 @Component
 export struct DecibelHistory {
+  @Consume(noiseMeterNavStack) navStack: NavPathStack
   @State records: DecibelRecord[] = [];
   @State selectedRecord: DecibelRecord | null = null;
   @State showingDeleteButtonId: string = ''; // 当前显示删除按钮的记录ID
@@ -45,7 +52,6 @@ export struct DecibelHistory {
   private decibelService: DecibelService = new DecibelService();
   private promptAction: PromptAction = this.getUIContext().getPromptAction();
   private dialogService: DialogService = new DialogService();
-  navStack: NavPathStack = new NavPathStack()
 
   @Builder
   DetailDialogBuilder() {
@@ -114,6 +120,83 @@ export struct DecibelHistory {
   }
 
   @Builder
+  HistoryTitle() {
+    Row() {
+      Image($r('app.media.ic_back'))
+        .width(24)
+        .height(24)
+        .fillColor('#333333')
+        .onClick(() => {
+          this.navStack.pop()
+        })
+      Row() {
+        Text('历史记录')
+          .fontSize(18)
+          .fontWeight(FontWeight.Medium)
+      }
+
+      this.EmptyButton()
+    }
+    .width('100%')
+    .height(56)
+    .padding({ left: 16, right: 16 })
+    .backgroundColor(Color.White)
+    .justifyContent(FlexAlign.SpaceBetween)
+
+  }
+
+  async emptyAll() {
+    AlertDialog.show({
+      title: '清空历史记录',
+      message: '确定要清空历史记录吗？\n已收藏的记录将会保留',
+      alignment: DialogAlignment.Center,
+      primaryButton: {
+        value: '取消',
+        fontColor: '#666666',
+        backgroundColor: '#F5F5F5',
+        action: () => {
+          // 不执行任何操作
+        }
+      },
+      secondaryButton: {
+        value: '清空',
+        fontColor: '#FFFFFF',
+        backgroundColor: '#FF4081',
+        action: async () => {
+          try {
+            // 保留收藏的记录
+            const favoriteRecords = this.records.filter(r => r.isFavorite);
+            this.records = favoriteRecords;
+            await this.recordService.saveRecords(this.records);
+            // 显示清空成功提示
+            this.promptAction.showToast({
+              message: '已清空历史记录',
+              duration: 2000,
+              bottom: '50%'
+            });
+          } catch (error) {
+            console.error('清空历史记录失败:', error);
+          }
+        }
+      }
+    });
+  }
+
+  @Builder
+  EmptyButton() {
+    Button() {
+      Text('清空')
+        .fontSize(14)
+        .fontColor('#666666')
+    }
+    .height(32)
+    .backgroundColor('#F5F5F5')
+    .padding({ left: 12, right: 12 })
+    .borderRadius(16)
+    .onClick(this.emptyAll)
+  }
+
+  @Builder
   RecordItem(record: DecibelRecord) {
     Stack() {
       Column() {
@@ -126,7 +209,7 @@ export struct DecibelHistory {
                 .fontSize(12)
                 .fontColor(record.location ? '#999999' : '#CCCCCC')
             }
-            .height(20)  // 减小高度
+            .height(20) // 减小高度
 
             // 时间信息
             Text(new Date(record.timestamp).toLocaleString('zh-CN', {
@@ -140,7 +223,7 @@ export struct DecibelHistory {
             }))
               .fontSize(14)
               .fontColor('#666666')
-              .margin({ top: 4 })  // 减小间距
+              .margin({ top: 4 }) // 减小间距
 
             // 收藏状态
             Row() {
@@ -177,7 +260,7 @@ export struct DecibelHistory {
                   .fontWeight(FontWeight.Medium)
                   .fontColor(this.decibelService.getDecibelColor(record.minDecibel))
               }
-              .height(40)  // 固定高度确保对齐
+              .height(40) // 固定高度确保对齐
 
               Column() {
                 Text('平均值')
@@ -189,7 +272,7 @@ export struct DecibelHistory {
                   .fontWeight(FontWeight.Medium)
                   .fontColor(this.decibelService.getDecibelColor(record.avgDecibel))
               }
-              .height(40)  // 固定高度确保对齐
+              .height(40) // 固定高度确保对齐
               .margin({ left: 24, right: 24 })
 
               Column() {
@@ -202,7 +285,7 @@ export struct DecibelHistory {
                   .fontWeight(FontWeight.Medium)
                   .fontColor(this.decibelService.getDecibelColor(record.maxDecibel))
               }
-              .height(40)  // 固定高度确保对齐
+              .height(40) // 固定高度确保对齐
             }
 
             // 检测时长
@@ -321,7 +404,7 @@ export struct DecibelHistory {
               })
           }
           .width(80)
-          .height(96)  // 内容区域高度 + padding
+          .height(96) // 内容区域高度 + padding
           .type(ButtonType.Normal)
           .backgroundColor(record.isFavorite ? '#FFE0EB' : '#FF4081')
           .animation({
@@ -346,7 +429,7 @@ export struct DecibelHistory {
           })
         }
         .width(80)
-        .height(96)  // 内容区域高度 + padding
+        .height(96) // 内容区域高度 + padding
         .position({ x: '-80vp', y: 0 })
         .translate({
           x: this.currentSlideOffset > 0 ? Math.min(80, this.currentSlideOffset) : 0
@@ -366,7 +449,7 @@ export struct DecibelHistory {
               .fillColor(Color.White)
           }
           .width(80)
-          .height(96)  // 内容区域高度 + padding
+          .height(96) // 内容区域高度 + padding
           .type(ButtonType.Normal)
           .backgroundColor('#FF4081')
           .onClick(async () => {
@@ -375,7 +458,7 @@ export struct DecibelHistory {
           })
         }
         .width(80)
-        .height(96)  // 内容区域高度 + padding
+        .height(96) // 内容区域高度 + padding
         .position({ x: '100%', y: 0 })
         .translate({
           x: this.showingDeleteButtonId === record.id ? -80 :
@@ -398,76 +481,7 @@ export struct DecibelHistory {
   build() {
     NavDestination() {
       Column() {
-        // 顶部导航栏
-        Row() {
-          Row() {
-            Image($r('app.media.ic_back'))
-              .width(24)
-              .height(24)
-              .fillColor('#333333')
-              .onClick(() => {
-                router.back();
-              })
-            Text('历史记录')
-              .fontSize(18)
-              .fontWeight(FontWeight.Medium)
-              .margin({ left: 16 })
-          }
-          .layoutWeight(1)
-
-          // 清空按钮
-          Button() {
-            Text('清空')
-              .fontSize(14)
-              .fontColor('#666666')
-          }
-          .height(32)
-          .backgroundColor('#F5F5F5')
-          .padding({ left: 12, right: 12 })
-          .borderRadius(16)
-          .onClick(async () => {
-            AlertDialog.show({
-              title: '清空历史记录',
-              message: '确定要清空历史记录吗？\n已收藏的记录将会保留',
-              alignment: DialogAlignment.Center,
-              primaryButton: {
-                value: '取消',
-                fontColor: '#666666',
-                backgroundColor: '#F5F5F5',
-                action: () => {
-                  // 不执行任何操作
-                }
-              },
-              secondaryButton: {
-                value: '清空',
-                fontColor: '#FFFFFF',
-                backgroundColor: '#FF4081',
-                action: async () => {
-                  try {
-                    // 保留收藏的记录
-                    const favoriteRecords = this.records.filter(r => r.isFavorite);
-                    this.records = favoriteRecords;
-                    await this.recordService.saveRecords(this.records);
-                    // 显示清空成功提示
-                    this.promptAction.showToast({
-                      message: '已清空历史记录',
-                      duration: 2000,
-                      bottom: '50%'
-                    });
-                  } catch (error) {
-                    console.error('清空历史记录失败:', error);
-                  }
-                }
-              }
-            });
-          })
-        }
-        .width('100%')
-        .height(56)
-        .padding({ left: 16, right: 16 })
-        .backgroundColor(Color.White)
-        .justifyContent(FlexAlign.SpaceBetween)
-
+        this.HistoryTitle()
         // 历史记录列表或空状态提示
         if (this.records.length > 0) {
           List() {
@@ -511,11 +525,8 @@ export struct DecibelHistory {
         }
       }
       .width('100%')
-      .height('100%')    }
-    .title('历史记录')
-    .onReady((context: NavDestinationContext) => {
-      this.navStack = context.pathStack
-    })
-
+      .height('100%')
+    }
+    .hideTitleBar(true)
   }
 } 
