@@ -220,8 +220,12 @@ export struct DecibelHistory {
               Text(record.location || '未获取位置信息')
                 .fontSize(12)
                 .fontColor(record.location ? '#999999' : '#CCCCCC')
+                .maxLines(1)
+                .textOverflow({ overflow: TextOverflow.Ellipsis })
+                .width('100%')
             }
             .height(20) // 减小高度
+            .width('100%')
 
             // 时间信息
             Text(new Date(record.timestamp).toLocaleString('zh-CN', {

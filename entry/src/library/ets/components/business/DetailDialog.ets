@@ -83,6 +83,11 @@ function BasicInfoBuilder(selectedRecord: DecibelRecord) {
         Text(selectedRecord!.location)
           .fontSize(14)
           .fontColor('#333333')
+          .textAlign(TextAlign.End)
+          .textOverflow({ overflow: TextOverflow.None })
+          .wordBreak({ wordBreak: BreakType.Break })
+          .maxLines(3)
+          .width('70%')
       }
       .width('100%')
       .justifyContent(FlexAlign.SpaceBetween)
