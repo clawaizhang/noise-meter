@@ -2,15 +2,16 @@
  * 噪音检测历史记录
  */
 export class DecibelRecord {
-  id: string;  // 记录ID
-  timestamp: number;  // 记录时间戳
-  minDecibel: number;  // 最小分贝值
-  maxDecibel: number;  // 最大分贝值
-  avgDecibel: number;  // 平均分贝值
-  duration: number;  // 检测持续时间（毫秒）
-  location?: string;  // 检测位置（可选）
-  values: number[];  // 每次检测的分贝值数组
-  isFavorite: boolean;  // 是否收藏
+  id: string;
+  timestamp: number;
+  minDecibel: number;
+  maxDecibel: number;
+  avgDecibel: number;
+  duration: number;
+  values: number[];
+  location?: string;
+  audioData?: ArrayBuffer[];
+  isFavorite: boolean;
 
   constructor(
     minDecibel: number,
@@ -18,7 +19,8 @@ export class DecibelRecord {
     avgDecibel: number,
     duration: number,
     values: number[],
-    location?: string
+    location?: string,
+    audioData?: ArrayBuffer[]
   ) {
     this.id = new Date().getTime().toString();
     this.timestamp = new Date().getTime();
@@ -28,6 +30,7 @@ export class DecibelRecord {
     this.duration = duration;
     this.values = values;
     this.location = location;
-    this.isFavorite = false;  // 默认不收藏
+    this.audioData = audioData;
+    this.isFavorite = false;
   }
 } 

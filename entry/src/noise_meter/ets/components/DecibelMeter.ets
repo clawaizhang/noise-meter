@@ -9,6 +9,7 @@ import router from '@ohos.router';
 import common from '@ohos.app.ability.common';
 import { DetailDialog } from '../../../library/ets/components/business/DetailDialog';
 import { noiseMeterNavStack } from '../../MainPageInfo';
+import { AudioRecordDisplay } from '../../../library/ets/components/business/AudioRecordDisplay';
 
 @Builder
 function buildDialog(params: DialogParams) {
@@ -27,6 +28,7 @@ export struct DecibelMeter {
   @State private isRecording: boolean = false
   @State private showStats: boolean = false
   @State private recordingTime: number = 0
+  @State private isRecordEnabled: boolean = false
   @Consume(noiseMeterNavStack) navStack: NavPathStack
   private decibelService: DecibelService = new DecibelService()
   private audioService: AudioService = new AudioService(getContext() as common.UIAbilityContext)
@@ -38,6 +40,7 @@ export struct DecibelMeter {
   private context?: common.UIAbilityContext
   private values: number[] = []
   private startTime: number = 0
+  private audioData: ArrayBuffer[] = []
 
   aboutToAppear() {
     // 如果提供了外部context，重新初始化AudioService
@@ -78,6 +81,9 @@ export struct DecibelMeter {
         this.values = [];
         this.dbCount = 0;
         this.dbSum = 0;
+        if (this.isRecordEnabled) {
+          this.audioData = [];
+        }
 
         // 如果没有在采集音频，先启动采集
         if (!this.audioService.isAudioCapturing()) {
@@ -93,6 +99,10 @@ export struct DecibelMeter {
           this.updateStatistics(this.currentDecibel);
           // 更新计时器
           this.recordingTime = Math.floor((new Date().getTime() - this.startTime) / 1000);
+          // 如果开启了录音，保存音频数据
+          if (this.isRecordEnabled) {
+            this.audioData.push(buffer);
+          }
         });
       } catch (error) {
         // 如果启动失败（包括权限问题），重置状态
@@ -106,6 +116,7 @@ export struct DecibelMeter {
         this.values = [];
         this.startTime = 0;
         this.recordingTime = 0;
+        this.audioData = [];
       }
     }
   }
@@ -129,7 +140,8 @@ export struct DecibelMeter {
           this.avgDecibel,
           duration,
           [...this.values],
-          locationInfo?.address// 使用可选链操作符获取地址
+          locationInfo?.address,// 使用可选链操作符获取地址
+          this.isRecordEnabled ? [...this.audioData] : undefined // 如果开启了录音，保存音频数据
         );
         await this.recordService.saveRecord(record);
 
@@ -356,6 +368,11 @@ export struct DecibelMeter {
       .backgroundColor(Color.White)
       .borderRadius(24)
       .shadow({ radius: 1, color: '#1A000000', offsetY: 2 })
+
+      // 录音显示
+      AudioRecordDisplay({
+        isRecordEnabled: $isRecordEnabled
+      })
 
       // 位置显示
       Column() {
