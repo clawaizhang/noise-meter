@@ -385,13 +385,13 @@ export struct DecibelMeter {
       .padding({
         left: 20,
         right: 20,
-        top: 16,
+        top: 12,
         bottom: 16
       })
       .borderRadius(20)
       .backgroundColor(Color.White)
       .margin({
-        top: 16,
+        top: 2,
         bottom: 16,
         left: 16,
         right: 16
