@@ -35,20 +35,21 @@ export struct AudioRecordDisplay {
           })
       }
       .width('100%')
-      .height(48)
+      .height(40)
+      .alignItems(VerticalAlign.Center)
 
       if (this.isRecordEnabled) {
         Text('本次检测期间的音频将被记录')
           .fontSize(14)
           .fontColor('#666666')
-          .margin({ left: 0, top: 4 })
+          .margin({ left: 0, top: 2 })
           .textAlign(TextAlign.Start)
           .width('100%')
       } else {
         Text('开启后可记录检测过程中的音频')
           .fontSize(14)
           .fontColor('#999999')
-          .margin({ left: 0, top: 4 })
+          .margin({ left: 0, top: 2 })
           .textAlign(TextAlign.Start)
           .width('100%')
       }

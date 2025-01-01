@@ -418,7 +418,7 @@ export struct LocationDisplay {
         Text('开启后可查看位置信息')
           .fontSize(14)
           .fontColor('#999999')
-          .margin({ top: 4 })
+          .margin({ top: 4, left: -4 })
           .textAlign(TextAlign.Start)
           .width('100%')
       }
