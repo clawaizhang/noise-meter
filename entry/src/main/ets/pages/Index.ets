@@ -1,4 +1,4 @@
-import { getTitleName, MainPage } from 'entry/MainPageInfo'
+import { MainPage } from 'entry/MainPageInfo'
 
 @Builder
 function IndexBuilder() {
@@ -8,15 +8,9 @@ function IndexBuilder() {
 @Entry
 @Component
 struct Index {
-  navStack: NavPathStack = new NavPathStack()
-
   build() {
-    Navigation(this.navStack) {
+    Column() {
       MainPage()
     }
-    .title(getTitleName())
-    .titleMode(NavigationTitleMode.Mini)
-    .hideBackButton(true)
-    .backgroundColor('#F5F5F5')
   }
 }

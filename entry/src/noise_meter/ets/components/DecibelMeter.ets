@@ -8,6 +8,7 @@ import { DialogParams, DialogService } from '../../../library/ets/services/Dialo
 import router from '@ohos.router';
 import common from '@ohos.app.ability.common';
 import { DetailDialog } from '../../../library/ets/components/business/DetailDialog';
+import { noiseMeterNavStack } from '../../MainPageInfo';
 
 @Builder
 function buildDialog(params: DialogParams) {
@@ -25,6 +26,7 @@ export struct DecibelMeter {
   @State private avgDecibel: number = 0
   @State private isRecording: boolean = false
   @State private showStats: boolean = false
+  @Consume(noiseMeterNavStack) navStack: NavPathStack
   private decibelService: DecibelService = new DecibelService()
   private audioService: AudioService = new AudioService(getContext() as common.UIAbilityContext)
   private locationService: LocationService = LocationService.getInstance()
@@ -35,9 +37,6 @@ export struct DecibelMeter {
   private context?: common.UIAbilityContext
   private values: number[] = []
   private startTime: number = 0
-  navStack = new NavPathStack();
-
-
 
   aboutToAppear() {
     // 如果提供了外部context，重新初始化AudioService
