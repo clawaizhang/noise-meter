@@ -70,15 +70,15 @@ export struct DecibelHistory {
       primaryButton: {
         value: '取消',
         fontColor: '#666666',
-        backgroundColor: '#F5F5F5',
+        backgroundColor: '#EEEEEE',
         action: () => {
           // 不执行任何操作
         }
       },
       secondaryButton: {
         value: '删除',
-        fontColor: '#FFFFFF',
-        backgroundColor: '#FF4081',
+        fontColor: '#666666',
+        backgroundColor: '#EEEEEE',
         action: async () => {
           try {
             const recordToDelete = this.records.find(r => r.id === this.showingDeleteButtonId);
@@ -161,15 +161,15 @@ export struct DecibelHistory {
       primaryButton: {
         value: '取消',
         fontColor: '#666666',
-        backgroundColor: '#F5F5F5',
+        backgroundColor: '#EEEEEE',
         action: () => {
           // 不执行任何操作
         }
       },
       secondaryButton: {
         value: '清空',
-        fontColor: '#FFFFFF',
-        backgroundColor: '#FF4081',
+        fontColor: '#666666',
+        backgroundColor: '#EEEEEE',
         action: async () => {
           try {
             // 保留收藏的记录
@@ -200,7 +200,7 @@ export struct DecibelHistory {
     }
     .height(32)
     .width(56)
-    .backgroundColor('#F5F5F5')
+    .backgroundColor('#EEEEEE')
     .padding({ left: 12, right: 12 })
     .borderRadius(16)
     .onClick(this.emptyAll)
@@ -461,7 +461,7 @@ export struct DecibelHistory {
           .width(80)
           .height(96) // 内容区域高度 + padding
           .type(ButtonType.Normal)
-          .backgroundColor('#FF4081')
+          .backgroundColor('#666666')
           .onClick(async () => {
             // 显示删除确认对话框
             this.showDeleteConfirmDialog();
