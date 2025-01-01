@@ -1,5 +1,6 @@
 import { DecibelRecord } from "../../models/DecibelRecord"
 import { DecibelService } from "../../../../noise_meter/ets/services/DecibelService"
+import { AudioPlayerService } from "../../services/AudioPlayerService"
 
 // 标题栏构建器
 @Builder
@@ -273,13 +274,113 @@ function ChartBuilder(selectedRecord: DecibelRecord, decibelService: DecibelServ
   .borderRadius(12)
 }
 
+@Builder
+function AudioPlaybackBuilder(selectedRecord: DecibelRecord) {
+  if (selectedRecord!.audioData && selectedRecord!.audioData.length > 0) {
+    Column() {
+      Text('音频回放')
+        .fontSize(16)
+        .fontWeight(FontWeight.Medium)
+        .alignSelf(ItemAlign.Start)
+        .margin({ bottom: 12 })
+
+      Row() {
+        Button() {
+          Row() {
+            Image($r('app.media.ic_play'))
+              .width(20)
+              .height(20)
+              .fillColor('#666666')
+              .margin({ right: 8 })
+            Text('播放录音')
+              .fontSize(14)
+              .fontColor('#666666')
+          }
+        }
+        .type(ButtonType.Capsule)
+        .backgroundColor('#F5F5F5')
+        .height(36)
+        .padding({ left: 16, right: 16 })
+      }
+      .width('100%')
+      .justifyContent(FlexAlign.Center)
+    }
+    .width('100%')
+    .padding(16)
+    .backgroundColor(Color.White)
+    .borderRadius(12)
+    .margin({ bottom: 12 })
+  }
+}
+
 @Component
 export struct DetailDialog {
   @Prop selectedRecord: DecibelRecord | null;
   @BuilderParam closeDialog: () => void;
   @State translateY: number = 0;
+  @State isPlaying: boolean = false;
   private startY: number = 0;
   private decibelService: DecibelService = new DecibelService();
+  private audioPlayerService: AudioPlayerService = new AudioPlayerService();
+
+  aboutToDisappear() {
+    // 停止音频播放
+    this.audioPlayerService.stopPlaying();
+  }
+
+  @Builder
+  AudioPlaybackBuilder(selectedRecord: DecibelRecord) {
+    if (selectedRecord!.audioData && selectedRecord!.audioData.length > 0) {
+      Column() {
+        Text('音频回放')
+          .fontSize(16)
+          .fontWeight(FontWeight.Medium)
+          .alignSelf(ItemAlign.Start)
+          .margin({ bottom: 12 })
+
+        Row() {
+          Button() {
+            Row() {
+              Image(this.isPlaying ? $r('app.media.ic_stop') : $r('app.media.ic_play'))
+                .width(20)
+                .height(20)
+                .fillColor('#666666')
+                .margin({ right: 8 })
+              Text(this.isPlaying ? '停止播放' : '播放录音')
+                .fontSize(14)
+                .fontColor('#666666')
+            }
+          }
+          .type(ButtonType.Capsule)
+          .backgroundColor('#F5F5F5')
+          .height(36)
+          .padding({ left: 16, right: 16 })
+          .onClick(async () => {
+            try {
+              if (this.isPlaying) {
+                await this.audioPlayerService.stopPlaying();
+                this.isPlaying = false;
+              } else {
+                this.isPlaying = true;
+                await this.audioPlayerService.playAudio(selectedRecord!.audioData!);
+                this.isPlaying = false;
+              }
+            } catch (error) {
+              console.error('音频播放失败:', error);
+              this.isPlaying = false;
+            }
+          })
+        }
+        .width('100%')
+        .justifyContent(FlexAlign.Center)
+      }
+      .width('100%')
+      .padding(16)
+      .backgroundColor(Color.White)
+      .borderRadius(12)
+      .margin({ bottom: 12 })
+    }
+  }
 
   build() {
     Column() {
@@ -305,6 +406,7 @@ export struct DetailDialog {
           Column() {
             BasicInfoBuilder(this.selectedRecord)
             StatisticsBuilder(this.selectedRecord, this.decibelService)
+            AudioPlaybackBuilder(this.selectedRecord)
             ChartBuilder(this.selectedRecord, this.decibelService)
           }
           .width('100%')
