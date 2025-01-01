@@ -329,7 +329,7 @@ export struct DetailDialog {
   }
 
   @Builder
-  AudioPlaybackBuilder(selectedRecord: DecibelRecord) {
+   AudioPlaybackBuilder(selectedRecord: DecibelRecord) {
     if (selectedRecord!.audioData && selectedRecord!.audioData.length > 0) {
       Column() {
         Text('音频回放')
@@ -359,12 +359,10 @@ export struct DetailDialog {
             try {
               if (this.isPlaying) {
                 await this.audioPlayerService.stopPlaying();
-                this.isPlaying = false;
               } else {
-                this.isPlaying = true;
                 await this.audioPlayerService.playAudio(selectedRecord!.audioData!);
-                this.isPlaying = false;
               }
+              this.isPlaying = this.audioPlayerService.isAudioPlaying();
             } catch (error) {
               console.error('音频播放失败:', error);
               this.isPlaying = false;

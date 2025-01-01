@@ -1,3 +1,5 @@
+import { SerializedAudioData } from '../services/AudioPlayerService';
+
 /**
  * 噪音检测历史记录
  */
@@ -10,7 +12,7 @@ export class DecibelRecord {
   duration: number;
   values: number[];
   location?: string;
-  audioData?: ArrayBuffer[];
+  audioData?: SerializedAudioData[];
   isFavorite: boolean;
 
   constructor(
@@ -20,10 +22,11 @@ export class DecibelRecord {
     duration: number,
     values: number[],
     location?: string,
-    audioData?: ArrayBuffer[]
+    audioData?: SerializedAudioData[]
   ) {
-    this.id = new Date().getTime().toString();
-    this.timestamp = new Date().getTime();
+    const now = new Date().getTime();
+    this.id = now.toString();
+    this.timestamp = now;
     this.minDecibel = minDecibel;
     this.maxDecibel = maxDecibel;
     this.avgDecibel = avgDecibel;

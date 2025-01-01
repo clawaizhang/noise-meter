@@ -11,6 +11,7 @@ import { DetailDialog } from '../../../library/ets/components/business/DetailDia
 import { noiseMeterNavStack } from '../../MainPageInfo';
 import { AudioRecordDisplay } from '../../../library/ets/components/business/AudioRecordDisplay';
 import { BannerCard } from '../../../library/ets/components/business/BannerCard';
+import { SerializedAudioData } from '../../../library/ets/services/AudioPlayerService';
 
 @Builder
 function buildDialog(params: DialogParams) {
@@ -136,6 +137,15 @@ export struct DecibelMeter {
         // 计算检测时长
         const duration = new Date().getTime() - this.startTime;
 
+        // 将音频数据转换为可序列化的格式
+        const serializedAudioData: SerializedAudioData[] | undefined = this.isRecordEnabled ? this.audioData.map(buffer => {
+          const view = new Uint8Array(buffer);
+          const serialized: SerializedAudioData = {
+            data: Array.from(view)
+          };
+          return serialized;
+        }) : undefined;
+
         // 创建并保存记录
         const record = new DecibelRecord(
           this.minDecibel,
@@ -144,7 +154,7 @@ export struct DecibelMeter {
           duration,
           [...this.values],
           locationInfo?.address,
-          this.isRecordEnabled ? [...this.audioData] : undefined// 根据录音开关状态决定是否保存音频数据
+          serializedAudioData
         );
         await this.recordService.saveRecord(record);
 
