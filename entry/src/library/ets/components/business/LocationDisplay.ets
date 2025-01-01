@@ -174,15 +174,15 @@ export struct LocationDisplay {
   LocationIcon(options: IconOptions) {
     Stack() {
       Circle()
-        .width(options?.size ?? 24)
-        .height(options?.size ?? 24)
+        .width(16)
+        .height(16)
         .stroke(options?.color ?? '#666666')
         .strokeWidth(2)
         .fill('none')
 
       Circle()
-        .width((options?.size ?? 24) * 0.4)
-        .height((options?.size ?? 24) * 0.4)
+        .width(6)
+        .height(6)
         .fill(options?.color ?? '#666666')
     }
   }
@@ -265,13 +265,45 @@ export struct LocationDisplay {
     Column() {
       Row() {
         Row() {
-          Column() {
-            this.LocationIcon({
-              size: 24,
-              color: this.style?.iconColor ?? '#666666'
+          if (this.isLocationEnabled) {
+            Button({ type: ButtonType.Circle, stateEffect: true }) {
+              Row() {
+                Image($r('app.media.ic_refresh'))
+                  .width(16)
+                  .height(16)
+                  .fillColor(this.style?.iconColor ?? '#666666')
+                  .rotate({
+                    angle: this.isRefreshing ? 360 : 0,
+                    centerX: '50%',
+                    centerY: '50%'
+                  })
+                  .animation({
+                    duration: this.isRefreshing ? 1000 : 0,
+                    iterations: this.isRefreshing ? -1 : 0,
+                    curve: Curve.Linear
+                  })
+              }
+            }
+            .width(24)
+            .height(24)
+            .backgroundColor(this.style?.buttonColor ?? '#F5F5F5')
+            .enabled(!this.isRefreshing)
+            .onClick(() => {
+              this.startSingleLocation();
             })
+            .margin({ right: 8 })
+          } else {
+            Column() {
+              this.LocationIcon({
+                size: 16,
+                color: this.style?.iconColor ?? '#666666'
+              })
+            }
+            .width(24)
+            .height(24)
+            .justifyContent(FlexAlign.Center)
+            .margin({ right: 8 })
           }
-          .margin({ right: 8 })
 
           Text('当前位置')
             .fontSize(16)
@@ -368,29 +400,6 @@ export struct LocationDisplay {
             .textAlign(TextAlign.Start)
             .layoutWeight(1)
             .textOverflow({ overflow: TextOverflow.None })
-
-          Button({ type: ButtonType.Normal, stateEffect: true }) {
-            this.RefreshButton()
-          }
-          .width(110)
-          .height(32)
-          .borderRadius(16)
-          .backgroundColor(this.isRefreshing ? '#0091FF' : '#0091FF')
-          .enabled(!this.isRefreshing)
-          .onClick(() => {
-            this.startSingleLocation();
-          })
-          .animation({
-            duration: 250,
-            curve: Curve.EaseInOut,
-            iterations: 1,
-            playMode: PlayMode.Normal
-          })
-          .scale({
-            x: this.isRefreshing ? 0.98 : 1,
-            y: this.isRefreshing ? 0.98 : 1
-          })
-          .margin({ left: 16 })
         }
         .width('100%')
         .alignItems(VerticalAlign.Center)
