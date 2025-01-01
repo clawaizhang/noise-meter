@@ -67,6 +67,7 @@ export struct DecibelHistory {
       message: '确定要删除这条记录吗？',
       autoCancel: true,
       alignment: DialogAlignment.Center,
+      offset: { dx: 0, dy: -20 },
       primaryButton: {
         value: '取消',
         fontColor: '#666666',
@@ -77,8 +78,8 @@ export struct DecibelHistory {
       },
       secondaryButton: {
         value: '删除',
-        fontColor: '#666666',
-        backgroundColor: '#EEEEEE',
+        fontColor: '#FFFFFF',
+        backgroundColor: '#666666',
         action: async () => {
           try {
             const recordToDelete = this.records.find(r => r.id === this.showingDeleteButtonId);
@@ -158,6 +159,7 @@ export struct DecibelHistory {
       title: '清空历史记录',
       message: '确定要清空历史记录吗？\n已收藏的记录将会保留',
       alignment: DialogAlignment.Center,
+      offset: { dx: 0, dy: -20 },
       primaryButton: {
         value: '取消',
         fontColor: '#666666',
@@ -168,8 +170,8 @@ export struct DecibelHistory {
       },
       secondaryButton: {
         value: '清空',
-        fontColor: '#666666',
-        backgroundColor: '#EEEEEE',
+        fontColor: '#FFFFFF',
+        backgroundColor: '#666666',
         action: async () => {
           try {
             // 保留收藏的记录
