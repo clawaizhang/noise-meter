@@ -291,7 +291,7 @@ export struct LocationDisplay {
             .onClick(() => {
               this.startSingleLocation();
             })
-            .margin({ right: 8 })
+            .margin({ right: 8, left: -4 })
           } else {
             Column() {
               this.LocationIcon({
@@ -302,7 +302,7 @@ export struct LocationDisplay {
             .width(24)
             .height(24)
             .justifyContent(FlexAlign.Center)
-            .margin({ right: 8 })
+            .margin({ right: 8, left: -4 })
           }
 
           Text('当前位置')
@@ -324,6 +324,7 @@ export struct LocationDisplay {
           .selectedColor('#0091FF')
           .switchPointColor('#FFFFFF')
           .enabled(!this.isRefreshing)
+          .margin({ right: -4 })
           .onChange(async (isOn: boolean) => {
             if (isOn) {
               // 先检查定位服务是否开启
@@ -391,7 +392,7 @@ export struct LocationDisplay {
           })
       }
       .width('100%')
-      .margin({ bottom: 12 })
+      .height(48)
 
       if (this.isLocationEnabled) {
         Row() {
@@ -404,6 +405,7 @@ export struct LocationDisplay {
         }
         .width('100%')
         .alignItems(VerticalAlign.Center)
+        .margin({ top: 4 })
       } else {
         Text('开启后可查看位置信息')
           .fontSize(14)
