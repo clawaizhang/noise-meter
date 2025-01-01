@@ -13,6 +13,10 @@ export struct AudioRecordDisplay {
           .fontWeight(FontWeight.Medium)
           .fontColor('#000000')
 
+        Text(this.isRecordEnabled ? ' 已开启' : ' 已关闭')
+          .fontSize(14)
+          .fontColor(this.isRecordEnabled ? '#0091FF' : '#666666')
+
         Blank()
 
         Toggle({ type: ToggleType.Switch, isOn: this.isRecordEnabled })
