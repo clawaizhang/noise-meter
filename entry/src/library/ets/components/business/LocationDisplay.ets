@@ -320,18 +320,18 @@ export struct LocationDisplay {
 
         Blank()
 
-        Toggle({ type: ToggleType.Switch, isOn: this.isLocationEnabled })
+        Toggle({ type: ToggleType.Switch, isOn: $$this.isLocationEnabled })
           .selectedColor('#0091FF')
           .switchPointColor('#FFFFFF')
           .enabled(!this.isRefreshing)
-          .margin({ right: -4 })
+          .margin({ right: -2 })
           .onChange(async (isOn: boolean) => {
             if (isOn) {
               // 先检查定位服务是否开启
               const isServiceEnabled = await this.locationService.checkLocationEnabled();
               if (!isServiceEnabled) {
                 // 显示开启定位服务对话框
-                this.isLocationEnabled = false;
+                this.isLocationEnabled = false;  // 确保开关保持关闭
                 await this.showLocationServiceDialog();
                 return;
               }
@@ -342,6 +342,7 @@ export struct LocationDisplay {
                 this.isLocationEnabled = true;
                 this.startSingleLocation();
               } else {
+                this.isLocationEnabled = false;  // 确保开关保持关闭
                 // 如果权限被拒绝，显示权限请求对话框
                 await promptAction.showDialog({
                   title: '需要位置权限',
@@ -357,6 +358,7 @@ export struct LocationDisplay {
                     }
                   ]
                 }).then(async (result) => {
+                  this.isLocationEnabled = false;  // 确保开关保持关闭
                   if (result.index === 1) {
                     try {
                       // 使用PermissionUtil拉起系统权限设置页面
@@ -366,20 +368,20 @@ export struct LocationDisplay {
                           this.isLocationEnabled = true;
                           this.startSingleLocation();
                         } else {
-                          this.isLocationEnabled = false;
+                          this.isLocationEnabled = false;  // 确保开关保持关闭
                           this.location = '缺少位置权限';
                           this.address = '请授予位置权限以使用定位功能';
                         }
                       });
                     } catch (error) {
                       console.error('跳转到权限设置页面失败:', error);
-                      this.isLocationEnabled = false;
+                      this.isLocationEnabled = false;  // 确保开关保持关闭
                       this.location = '缺少位置权限';
                       this.address = '请授予位置权限以使用定位功能';
                     }
                   } else {
                     // 用户点击取消
-                    this.isLocationEnabled = false;
+                    this.isLocationEnabled = false;  // 确保开关保持关闭
                     this.location = '缺少位置权限';
                     this.address = '请授予位置权限以使用定位功能';
                   }
