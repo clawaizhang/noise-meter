@@ -154,7 +154,7 @@ export struct DecibelHistory {
     .backgroundColor('#F5F5F5')
   }
 
-  async emptyAll() {
+  emptyAll = async () =>  {
     AlertDialog.show({
       title: '清空历史记录',
       message: '确定要清空历史记录吗？\n已收藏的记录将会保留',
@@ -176,8 +176,14 @@ export struct DecibelHistory {
           try {
             // 保留收藏的记录
             const favoriteRecords = this.records.filter(r => r.isFavorite);
+            // 先清空所有记录
+            await this.recordService.clearRecords();
+            // 如果有收藏的记录，重新保存
+            if (favoriteRecords.length > 0) {
+              await this.recordService.saveRecords(favoriteRecords);
+            }
+            // 更新UI
             this.records = favoriteRecords;
-            await this.recordService.saveRecords(this.records);
             // 显示清空成功提示
             this.promptAction.showToast({
               message: '已清空历史记录',
