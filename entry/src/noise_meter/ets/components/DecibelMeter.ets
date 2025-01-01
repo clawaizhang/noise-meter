@@ -26,6 +26,7 @@ export struct DecibelMeter {
   @State private avgDecibel: number = 0
   @State private isRecording: boolean = false
   @State private showStats: boolean = false
+  @State private recordingTime: number = 0
   @Consume(noiseMeterNavStack) navStack: NavPathStack
   private decibelService: DecibelService = new DecibelService()
   private audioService: AudioService = new AudioService(getContext() as common.UIAbilityContext)
@@ -73,6 +74,7 @@ export struct DecibelMeter {
       try {
         this.isRecording = true;
         this.startTime = new Date().getTime();
+        this.recordingTime = 0;
         this.values = [];
         this.dbCount = 0;
         this.dbSum = 0;
@@ -89,6 +91,8 @@ export struct DecibelMeter {
           this.currentDecibel = Math.round(db);
           this.values.push(this.currentDecibel);
           this.updateStatistics(this.currentDecibel);
+          // 更新计时器
+          this.recordingTime = Math.floor((new Date().getTime() - this.startTime) / 1000);
         });
       } catch (error) {
         // 如果启动失败（包括权限问题），重置状态
@@ -101,6 +105,7 @@ export struct DecibelMeter {
         this.dbSum = 0;
         this.values = [];
         this.startTime = 0;
+        this.recordingTime = 0;
       }
     }
   }
@@ -270,16 +275,40 @@ export struct DecibelMeter {
           }
           .margin({ top: 12 })
 
-          Text(this.decibelService.getDecibelLevel(this.currentDecibel))
-            .fontSize(16)
-            .fontColor('#666666')
-            .margin({ top: 12, bottom: 20 })
+          Stack() {
+            Row() {
+              if (this.isRecording) {
+                Text(new Date(this.startTime).toLocaleTimeString('zh-CN', {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  second: '2-digit',
+                  hour12: false
+                }))
+                  .fontSize(14)
+                  .fontColor('#666666')
+              }
+              Blank()
+              if (this.isRecording) {
+                Text(`${this.recordingTime}秒`)
+                  .fontSize(14)
+                  .fontColor('#666666')
+              }
+            }
+            .width('100%')
+
+            Text(this.decibelService.getDecibelLevel(this.currentDecibel))
+              .fontSize(16)
+              .fontColor('#666666')
+          }
+          .width('92%')
+          .height(20)
+          .margin({ top: 12, bottom: 20 })
 
           // 分割线
           Divider()
             .width('92%')
             .color('#E0E0E0')
-            .margin({ top: 12, bottom: 16 })
+            .margin({ top: 0, bottom: 16 })
 
           // 统计数据显示
           this.StatisticsRow()
