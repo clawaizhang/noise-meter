@@ -41,6 +41,7 @@ export struct DecibelMeter {
   private values: number[] = []
   private startTime: number = 0
   private audioData: ArrayBuffer[] = []
+  private releaseTimer: number = -1
 
   aboutToAppear() {
     // 如果提供了外部context，重新初始化AudioService
@@ -50,7 +51,14 @@ export struct DecibelMeter {
   }
 
   aboutToDisappear() {
-    // 停止音频采集
+    // 清除定时器
+    if (this.releaseTimer !== -1) {
+      clearTimeout(this.releaseTimer);
+      this.releaseTimer = -1;
+    }
+    // 停止所有音频相关操作
+    this.audioService.stopProcessing();
+    this.audioService.stopCapture();
     this.stopAudioCapture();
   }
 
@@ -73,47 +81,45 @@ export struct DecibelMeter {
   }
 
   private async startRecording() {
-    if (!this.isRecording) {
-      try {
-        this.isRecording = true;
-        this.startTime = new Date().getTime();
-        this.recordingTime = 0;
-        this.values = [];
-        this.dbCount = 0;
-        this.dbSum = 0;
-        this.audioData = []; // 每次开始检测时清空音频数据
+    try {
+      this.isRecording = true;
+      this.startTime = new Date().getTime();
+      this.recordingTime = 0;
+      this.values = [];
+      this.dbCount = 0;
+      this.dbSum = 0;
+      this.audioData = []; // 每次开始检测时清空音频数据
 
-        // 如果没有在采集音频，先启动采集
-        if (!this.audioService.isAudioCapturing()) {
-          await this.startAudioCapture();
-        }
-
-        // 开始处理音频数据
-        this.audioService.startProcessing((buffer: ArrayBuffer) => {
-          // 使用DecibelService计算分贝值
-          const db = this.decibelService.calculateDecibel(buffer, buffer.byteLength);
-          this.currentDecibel = Math.round(db);
-          this.values.push(this.currentDecibel);
-          this.updateStatistics(this.currentDecibel);
-          // 更新计时器
-          this.recordingTime = Math.floor((new Date().getTime() - this.startTime) / 1000);
-          // 始终记录音频数据
-          this.audioData.push(buffer);
-        });
-      } catch (error) {
-        // 如果启动失败（包括权限问题），重置状态
-        this.isRecording = false;
-        this.currentDecibel = 0;
-        this.minDecibel = 0;
-        this.maxDecibel = 0;
-        this.avgDecibel = 0;
-        this.dbCount = 0;
-        this.dbSum = 0;
-        this.values = [];
-        this.startTime = 0;
-        this.recordingTime = 0;
-        this.audioData = [];
+      // 如果没有在采集音频，先启动采集
+      if (!this.audioService.isAudioCapturing()) {
+        await this.startAudioCapture();
       }
+
+      // 开始处理音频数据
+      this.audioService.startProcessing((buffer: ArrayBuffer) => {
+        // 使用DecibelService计算分贝值
+        const db = this.decibelService.calculateDecibel(buffer, buffer.byteLength);
+        this.currentDecibel = Math.round(db);
+        this.values.push(this.currentDecibel);
+        this.updateStatistics(this.currentDecibel);
+        // 更新计时器
+        this.recordingTime = Math.floor((new Date().getTime() - this.startTime) / 1000);
+        // 始终记录音频数据
+        this.audioData.push(buffer);
+      });
+    } catch (error) {
+      // 如果启动失败（包括权限问题），重置状态
+      this.isRecording = false;
+      this.currentDecibel = 0;
+      this.minDecibel = 0;
+      this.maxDecibel = 0;
+      this.avgDecibel = 0;
+      this.dbCount = 0;
+      this.dbSum = 0;
+      this.values = [];
+      this.startTime = 0;
+      this.recordingTime = 0;
+      this.audioData = [];
     }
   }
 
@@ -143,6 +149,20 @@ export struct DecibelMeter {
 
         // 显示详情弹窗
         this.dialogService.showDetailDialog(this.getUIContext(), wrapBuilder(buildDialog), record);
+
+        // 清除之前的定时器
+        if (this.releaseTimer !== -1) {
+          clearTimeout(this.releaseTimer);
+        }
+        // 30秒后释放音频流
+        this.releaseTimer = setTimeout(async () => {
+          if (!this.isRecording) {  // 确保此时没有在录制
+            await this.audioService.stopProcessing();
+            await this.audioService.stopCapture();
+            await this.stopAudioCapture();
+          }
+          this.releaseTimer = -1;
+        }, 30000);  // 30秒 = 30000毫秒
 
       } catch (error) {
         console.error('保存记录失败:', error);
