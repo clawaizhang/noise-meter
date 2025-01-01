@@ -65,8 +65,8 @@ export struct AudioRecordDisplay {
     .margin({
       top: 16,
       bottom: 16,
-      left: 16,
-      right: 16
+      left: 8,
+      right: 8
     })
     .shadow({ radius: 1, color: '#1A000000', offsetY: 2 })
   }
