@@ -42,11 +42,15 @@ export struct AudioRecordDisplay {
           .fontSize(14)
           .fontColor('#666666')
           .margin({ left: 0, top: 4 })
+          .textAlign(TextAlign.Start)
+          .width('100%')
       } else {
         Text('开启后可记录检测过程中的音频')
           .fontSize(14)
           .fontColor('#999999')
           .margin({ left: 0, top: 4 })
+          .textAlign(TextAlign.Start)
+          .width('100%')
       }
     }
     .width('100%')
