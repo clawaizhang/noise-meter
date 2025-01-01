@@ -8,14 +8,22 @@ export struct AudioRecordDisplay {
   build() {
     Column() {
       Row() {
-        Text('录音')
-          .fontSize(16)
-          .fontWeight(FontWeight.Medium)
-          .fontColor('#000000')
+        Row() {
+          Image($r('app.media.ic_mic'))
+            .width(16)
+            .height(16)
+            .fillColor('#666666')
+            .margin({ right: 8 })
 
-        Text(this.isRecordEnabled ? ' 已开启' : ' 已关闭')
-          .fontSize(14)
-          .fontColor(this.isRecordEnabled ? '#0091FF' : '#666666')
+          Text('录音')
+            .fontSize(16)
+            .fontWeight(FontWeight.Medium)
+            .fontColor('#000000')
+
+          Text(this.isRecordEnabled ? ' 已开启' : ' 已关闭')
+            .fontSize(14)
+            .fontColor(this.isRecordEnabled ? '#0091FF' : '#666666')
+        }
 
         Blank()
 
