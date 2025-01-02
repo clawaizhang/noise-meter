@@ -276,6 +276,18 @@ function ChartBuilder(selectedRecord: DecibelRecord, decibelService: DecibelServ
   .borderRadius(12)
 }
 
+// 噪音级别分布数据接口
+interface NoiseSegment {
+  name: string;
+  value: number;
+  color: string;
+}
+
+interface NoiseDistribution {
+  segments: NoiseSegment[];
+  values: number[];
+}
+
 @Component
 export struct DetailDialog {
   @Prop selectedRecord: DecibelRecord | null;
@@ -287,6 +299,7 @@ export struct DetailDialog {
   private audioPlayerService!: AudioPlayerService;
   @Prop context: common.Context;
   @Prop fileService: FileService;
+  @State noiseDistribution: NoiseDistribution = { segments: [], values: [] };
 
   aboutToAppear() {
     // 初始化AudioPlayerService，使用传入的FileService
@@ -295,6 +308,48 @@ export struct DetailDialog {
     } else {
       console.error('Context or FileService is not available');
     }
+
+    // 计算噪音分布
+    if (this.selectedRecord && this.selectedRecord.values.length > 0) {
+      this.calculateNoiseDistribution();
+    }
+  }
+
+  // 计算噪音级别分布
+  private calculateNoiseDistribution() {
+    const values = this.selectedRecord!.values;
+    // 计算各个级别的数量
+    const levelCounts = new Map<string, number>();
+    values.forEach(value => {
+      const level = this.decibelService.getDecibelLevel(value);
+      levelCounts.set(level, (levelCounts.get(level) || 0) + 1);
+    });
+
+    // 定义级别顺序（从12点钟方向开始，顺时针排列）
+    const levelOrder = ['极度危险', '危险', '嘈杂', '正常', '安静'];
+
+    // 转换为饼图数据并按级别排序
+    const segments: NoiseSegment[] = [];
+    const total = values.length;
+
+    levelOrder.forEach(level => {
+      const count = levelCounts.get(level) || 0;
+      if (count > 0) {
+        // 找到该级别对应的一个分贝值用于获取颜色
+        const sampleValue = values.find(v => this.decibelService.getDecibelLevel(v) === level) || 0;
+        segments.push({
+          name: level,
+          value: Math.round((count / total) * 100),
+          color: this.decibelService.getDecibelColor(sampleValue)
+        });
+      }
+    });
+
+    // 更新状态
+    this.noiseDistribution = {
+      segments: segments,
+      values: segments.map(s => s.value)
+    };
   }
 
   aboutToDisappear() {
@@ -358,6 +413,87 @@ export struct DetailDialog {
     }
   }
 
+  @Builder
+  NoiseDistributionBuilder() {
+    Column() {
+      Text('噪音级别分布')
+        .fontSize(16)
+        .fontWeight(FontWeight.Medium)
+        .alignSelf(ItemAlign.Start)
+        .margin({ bottom: 12 })
+
+      if (!this.selectedRecord || this.selectedRecord.values.length === 0) {
+        Column() {
+          Image($r('app.media.ic_empty'))
+            .width(32)
+            .height(32)
+            .fillColor('#999999')
+            .margin({ bottom: 8 })
+          Text('暂无噪音级别分布数据')
+            .fontSize(14)
+            .fontColor('#999999')
+        }
+        .width('100%')
+        .justifyContent(FlexAlign.Center)
+        .margin({ top: 20, bottom: 20 })
+      } else {
+        Row() {
+          // 饼图
+          Stack() {
+            DataPanel({
+              values: this.noiseDistribution.values,
+              max: 100,
+              type: DataPanelType.Circle
+            })
+              .valueColors(this.noiseDistribution.segments.map(segment => segment.color))
+              .trackBackgroundColor('#08182431')
+              .width(160)
+              .height(160)
+          }
+          .width(160)
+          .height(160)
+          .margin({ right: 16 })
+
+          // 图例
+          Column() {
+            ForEach(this.noiseDistribution.segments, (segment: NoiseSegment) => {
+              Row() {
+                Row()
+                  .width(12)
+                  .height(12)
+                  .borderRadius(6)
+                  .backgroundColor(segment.color)
+                  .margin({ right: 8 })
+                Text(segment.name)
+                  .fontSize(14)
+                  .fontColor('#333333')
+                  .width(42)
+                  .margin({ right: 2 })
+                Text(`${segment.value}%`)
+                  .fontSize(14)
+                  .fontColor('#666666')
+                  .width(40)
+                  .textAlign(TextAlign.Start)
+              }
+              .margin({ bottom: 8 })
+              .alignItems(VerticalAlign.Center)
+              .justifyContent(FlexAlign.Start)
+            })
+          }
+          .margin({ left: 16 })
+          .layoutWeight(1)
+        }
+        .width('100%')
+        .padding({ left: 4, right: 4, top: 16, bottom: 16 })
+      }
+    }
+    .width('100%')
+    .padding({ left: 8, right: 16, top: 16, bottom: 16 })
+    .backgroundColor(Color.White)
+    .borderRadius(12)
+    .margin({ bottom: 12 })
+  }
+
   build() {
     Column() {
       // 顶部拖动条
@@ -382,6 +518,7 @@ export struct DetailDialog {
           Column() {
             BasicInfoBuilder(this.selectedRecord)
             StatisticsBuilder(this.selectedRecord, this.decibelService)
+            this.NoiseDistributionBuilder()
             this.AudioPlaybackBuilder(this.selectedRecord)
             ChartBuilder(this.selectedRecord, this.decibelService)
           }

@@ -73,9 +73,10 @@ export class DecibelService {
    * @returns string - 颜色值（十六进制）
    */
   getDecibelColor(value: number): string {
-    if (value < 60) return '#4CAF50';  // 安全
-    if (value < 90) return '#FFC107';  // 警告
-    if (value < 100) return '#FF9800'; // 危险
-    return '#F44336';                  // 极度危险
+    if (value < 30) return '#006400';  // 安静 - 深绿色
+    if (value < 60) return '#4CAF50';  // 正常 - 绿色
+    if (value < 90) return '#FFC107';  // 嘈杂 - 黄色
+    if (value < 100) return '#FF9800'; // 危险 - 橙色
+    return '#F44336';                  // 极度危险 - 红色
   }
 } 
