@@ -39,7 +39,7 @@ export struct AudioRecordDisplay {
       .alignItems(VerticalAlign.Center)
 
       if (this.isRecordEnabled) {
-        Text('本次检测期间的音频将被记录')
+        Text('记录检测过程中的音频')
           .fontSize(14)
           .fontColor('#666666')
           .margin({ left: 0, top: 2 })

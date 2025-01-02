@@ -9,7 +9,7 @@ import { FileService } from "../../services/FileService"
 function DialogTitleBuilder(selectedRecord: DecibelRecord, closeDialog: () => void) {
   Row() {
     Row() {
-      Text('检测详情')
+      Text('检测报告')
         .fontSize(18)
         .fontWeight(FontWeight.Medium)
       if (selectedRecord!.isFavorite) {

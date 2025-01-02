@@ -40,10 +40,10 @@ export struct LocationDisplay {
 
   async aboutToAppear() {
     await this.locationService.init(getContext(this));
-    // 不再在初始化时检查并设置定位服务状态
-    this.isLocationEnabled = false;
-    this.location = '开启定位服务可查看位置信息';
-    this.address = '';
+    // 默认开启定位
+    this.isLocationEnabled = true;
+    // 自动开始获取位置
+    this.startSingleLocation();
   }
 
   async startSingleLocation() {
@@ -73,14 +73,18 @@ export struct LocationDisplay {
       }
 
       this.isRefreshing = true;
+      // 重置显示状态
+      this.location = '正在获取位置...';
+      this.address = '正在获取位置信息...';
+      
       const locationInfo: LocationInfo = await this.locationService.requestSingleLocation();
       this.location = locationInfo.coordinates;
       this.address = locationInfo.address;
       this.isLocationEnabled = true;
     } catch (error) {
       console.error('Failed to request location:', error.message);
-      this.location = '定位异常';
-      this.address = error.message;
+      this.location = '未获取到位置信息';
+      this.address = '请稍后重试';
       this.isLocationEnabled = false;
     } finally {
       this.isRefreshing = false;

@@ -64,6 +64,12 @@ export class LocationService {
   public async requestSingleLocation(): Promise<LocationInfo> {
     return new Promise(async (resolve, reject) => {
       try {
+        // 重置缓存的位置信息
+        this.cachedLocation = {
+          coordinates: '正在获取位置...',
+          address: '正在获取位置信息...'
+        };
+
         // 设置定位请求参数
         const requestInfo: geoLocationManager.LocationRequest = {
           priority: geoLocationManager.LocationRequestPriority.ACCURACY,
@@ -98,7 +104,11 @@ export class LocationService {
 
         resolve(this.cachedLocation);
       } catch (error) {
-        reject(new Error(`Location failed: ${error.message}`));
+        this.cachedLocation = {
+          coordinates: '未获取到位置信息',
+          address: '请稍后重试'
+        };
+        reject(new Error('未获取到位置信息'));
       }
     });
   }

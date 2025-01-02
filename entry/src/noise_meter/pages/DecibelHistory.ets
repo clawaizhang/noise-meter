@@ -112,7 +112,7 @@ export struct DecibelHistory {
   @Builder
   HistoryTitle() {
     Stack() {
-      Text('历史记录')
+      Text('检测记录')
         .fontSize(18)
         .fontWeight(FontWeight.Medium)
         .width('100%')
@@ -145,8 +145,8 @@ export struct DecibelHistory {
 
   emptyAll = async () =>  {
     AlertDialog.show({
-      title: '清空历史记录',
-      message: '确定要清空历史记录吗？\n已收藏的记录将会保留',
+      title: '清空检测记录',
+      message: '确定要清空检测记录吗？\n已收藏的记录将会保留',
       alignment: DialogAlignment.Center,
       offset: { dx: 0, dy: -20 },
       primaryButton: {
@@ -175,7 +175,7 @@ export struct DecibelHistory {
             this.records = favoriteRecords;
             // 显示清空成功提示
             this.promptAction.showToast({
-              message: '已清空历史记录',
+              message: '已清空检测记录',
               duration: 2000,
               bottom: '50%'
             });
@@ -526,7 +526,7 @@ export struct DecibelHistory {
               .height(120)
               .fillColor('#CCCCCC')
               .margin({ bottom: 16 })
-            Text('暂无历史记录')
+            Text('暂无检测记录')
               .fontSize(16)
               .fontColor('#999999')
             Text('完成一次检测后即可查看记录')

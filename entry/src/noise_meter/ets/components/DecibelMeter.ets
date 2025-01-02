@@ -30,7 +30,7 @@ export struct DecibelMeter {
   @State private isRecording: boolean = false
   @State private showStats: boolean = false
   @State private recordingTime: number = 0
-  @State private isRecordEnabled: boolean = false
+  @State private isRecordEnabled: boolean = true
   @Consume(noiseMeterNavStack) navStack: NavPathStack
   private decibelService: DecibelService = new DecibelService()
   private audioService: AudioService = new AudioService(getContext() as common.UIAbilityContext)

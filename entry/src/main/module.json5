@@ -5,11 +5,8 @@
     "description": "$string:module_desc",
     "mainElement": "EntryAbility",
     "deviceTypes": [
-      "default",
       "phone",
       "tablet",
-      "tv",
-      "wearable",
       "car",
       "2in1"
     ],
