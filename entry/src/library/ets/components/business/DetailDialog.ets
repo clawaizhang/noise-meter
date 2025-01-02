@@ -96,7 +96,7 @@ function BasicInfoBuilder(selectedRecord: DecibelRecord) {
     }
   }
   .width('100%')
-  .padding(16)
+  .padding({ left: 16, right: 16, top: 12, bottom: 12 })
   .backgroundColor(Color.White)
   .borderRadius(12)
   .margin({ bottom: 12 })
@@ -110,7 +110,7 @@ function StatisticsBuilder(selectedRecord: DecibelRecord, decibelService: Decibe
       .fontSize(16)
       .fontWeight(FontWeight.Medium)
       .alignSelf(ItemAlign.Start)
-      .margin({ bottom: 12 })
+      .margin({ bottom: 8 })
 
     Row() {
       Column() {
@@ -206,10 +206,10 @@ function StatisticsBuilder(selectedRecord: DecibelRecord, decibelService: Decibe
     .width('100%')
   }
   .width('100%')
-  .padding(16)
+  .padding({ left: 16, right: 16, top: 12, bottom: 12 })
   .backgroundColor(Color.White)
   .borderRadius(12)
-  .margin({ bottom: 12 })
+  .margin({ bottom: 12, top: -24 })
 }
 
 // 噪音级别分布数据接口
@@ -302,7 +302,7 @@ export struct DetailDialog {
         .fontSize(16)
         .fontWeight(FontWeight.Medium)
         .alignSelf(ItemAlign.Start)
-        .margin({ bottom: 12 })
+        .margin({ bottom: 8 })
 
       if (!this.selectedRecord || this.selectedRecord.values.length === 0) {
         Column() {
@@ -334,7 +334,7 @@ export struct DetailDialog {
           }
           .width(160)
           .height(160)
-          .margin({ right: 16 })
+          .margin({ right: 16, top: -16 })
 
           // 图例
           Column() {
@@ -362,18 +362,16 @@ export struct DetailDialog {
               .justifyContent(FlexAlign.Start)
             })
           }
-          .margin({ left: 16 })
+          .margin({ left: 16, top: -16 })
           .layoutWeight(1)
         }
         .width('100%')
-        .padding({ left: 4, right: 4, top: 16, bottom: 16 })
+        .padding({ left: 8, right: 16, top: 12, bottom: 12 })
+        .backgroundColor(Color.White)
+        .borderRadius(12)
+        .margin({ bottom: 12 })
       }
     }
-    .width('100%')
-    .padding({ left: 8, right: 16, top: 16, bottom: 16 })
-    .backgroundColor(Color.White)
-    .borderRadius(12)
-    .margin({ bottom: 12 })
   }
 
   @Builder
@@ -472,9 +470,10 @@ export struct DetailDialog {
       }
     }
     .width('100%')
-    .padding(16)
+    .padding({ left: 16, right: 16, top: 12, bottom: 12 })
     .backgroundColor(Color.White)
     .borderRadius(12)
+    .margin({ bottom: 12, top: -32 })
   }
 
   build() {
@@ -500,9 +499,9 @@ export struct DetailDialog {
 
           Column() {
             BasicInfoBuilder(this.selectedRecord)
-            this.ChartBuilder(this.selectedRecord, this.decibelService)
             StatisticsBuilder(this.selectedRecord, this.decibelService)
             this.NoiseDistributionBuilder()
+            this.ChartBuilder(this.selectedRecord, this.decibelService)
           }
           .width('100%')
           .padding({ left: 16, right: 16, bottom: 16 })
