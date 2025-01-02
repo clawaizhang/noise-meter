@@ -212,70 +212,6 @@ function StatisticsBuilder(selectedRecord: DecibelRecord, decibelService: Decibe
   .margin({ bottom: 12 })
 }
 
-// 分贝值变化图表构建器
-@Builder
-function ChartBuilder(selectedRecord: DecibelRecord, decibelService: DecibelService) {
-  Column() {
-    Text('分贝值变化')
-      .fontSize(16)
-      .fontWeight(FontWeight.Medium)
-      .alignSelf(ItemAlign.Start)
-      .margin({ bottom: 12 })
-
-    if (selectedRecord!.values.length === 0) {
-      Column() {
-        Image($r('app.media.ic_empty'))
-          .width(32)
-          .height(32)
-          .fillColor('#999999')
-          .margin({ bottom: 8 })
-        Text('暂无分贝值变化数据')
-          .fontSize(14)
-          .fontColor('#999999')
-      }
-      .width('100%')
-      .justifyContent(FlexAlign.Center)
-      .margin({ top: 20, bottom: 20 })
-    } else {
-      Row() {
-        List({ space: 2, scroller: new Scroller() }) {
-          ForEach(selectedRecord!.values, (value: number, index: number) => {
-            ListItem() {
-              Column() {
-                Text(value.toString())
-                  .fontSize(10)
-                  .fontColor(decibelService.getDecibelColor(value))
-                  .margin({ bottom: 4 })
-                Column() {
-                  Column()
-                    .width(4)
-                    .height(value)
-                    .backgroundColor(decibelService.getDecibelColor(value))
-                }
-                .width(4)
-                .height(100)
-                .backgroundColor('#F5F5F5')
-                .alignItems(HorizontalAlign.Center)
-                .justifyContent(FlexAlign.End)
-              }
-            }
-          })
-        }
-        .listDirection(Axis.Horizontal)
-        .width('100%')
-        .height(140)
-        .edgeEffect(EdgeEffect.Spring)
-      }
-      .width('100%')
-      .height(140)
-    }
-  }
-  .width('100%')
-  .padding(16)
-  .backgroundColor(Color.White)
-  .borderRadius(12)
-}
-
 // 噪音级别分布数据接口
 interface NoiseSegment {
   name: string;
@@ -360,60 +296,6 @@ export struct DetailDialog {
   }
 
   @Builder
-  AudioPlaybackBuilder(selectedRecord: DecibelRecord) {
-    if (selectedRecord!.audioFilePath) {
-      Column() {
-        Text('音频回放')
-          .fontSize(16)
-          .fontWeight(FontWeight.Medium)
-          .alignSelf(ItemAlign.Start)
-          .margin({ bottom: 12 })
-
-        Row() {
-          Button() {
-            Row() {
-              Image(this.isPlaying ? $r('app.media.ic_stop') : $r('app.media.ic_play'))
-                .width(20)
-                .height(20)
-                .fillColor('#666666')
-                .margin({ right: 8 })
-              Text(this.isPlaying ? '停止播放' : '播放录音')
-                .fontSize(14)
-                .fontColor('#666666')
-            }
-          }
-          .type(ButtonType.Capsule)
-          .backgroundColor('#F5F5F5')
-          .height(36)
-          .padding({ left: 16, right: 16 })
-          .onClick(async () => {
-            try {
-              if (this.isPlaying) {
-                await this.audioPlayerService.stop();
-                this.isPlaying = false;
-              } else {
-                this.isPlaying = true;
-                await this.audioPlayerService.playAudioFile(selectedRecord!.audioFilePath!);
-                this.isPlaying = false;
-              }
-            } catch (error) {
-              console.error('音频播放失败:', error);
-              this.isPlaying = false;
-            }
-          })
-        }
-        .width('100%')
-        .justifyContent(FlexAlign.Center)
-      }
-      .width('100%')
-      .padding(16)
-      .backgroundColor(Color.White)
-      .borderRadius(12)
-      .margin({ bottom: 12 })
-    }
-  }
-
-  @Builder
   NoiseDistributionBuilder() {
     Column() {
       Text('噪音级别分布')
@@ -494,6 +376,107 @@ export struct DetailDialog {
     .margin({ bottom: 12 })
   }
 
+  @Builder
+  ChartBuilder(selectedRecord: DecibelRecord, decibelService: DecibelService) {
+    Column() {
+      Row() {
+        Text('分贝值变化')
+          .fontSize(16)
+          .fontWeight(FontWeight.Medium)
+        
+        if (selectedRecord!.audioFilePath) {
+          Blank()
+          Button() {
+            Row() {
+              Image(this.isPlaying ? $r('app.media.ic_stop') : $r('app.media.ic_play'))
+                .width(20)
+                .height(20)
+                .fillColor('#666666')
+                .margin({ right: 8 })
+              Text(this.isPlaying ? '停止播放' : '播放录音')
+                .fontSize(14)
+                .fontColor('#666666')
+            }
+          }
+          .type(ButtonType.Capsule)
+          .backgroundColor('#F5F5F5')
+          .height(36)
+          .padding({ left: 16, right: 16 })
+          .onClick(async () => {
+            try {
+              if (this.isPlaying) {
+                await this.audioPlayerService.stop();
+                this.isPlaying = false;
+              } else {
+                this.isPlaying = true;
+                await this.audioPlayerService.playAudioFile(selectedRecord!.audioFilePath!);
+                this.isPlaying = false;
+              }
+            } catch (error) {
+              console.error('音频播放失败:', error);
+              this.isPlaying = false;
+            }
+          })
+        }
+      }
+      .width('100%')
+      .margin({ bottom: 12 })
+      .alignItems(VerticalAlign.Center)
+
+      if (selectedRecord!.values.length === 0) {
+        Column() {
+          Image($r('app.media.ic_empty'))
+            .width(32)
+            .height(32)
+            .fillColor('#999999')
+            .margin({ bottom: 8 })
+          Text('暂无分贝值变化数据')
+            .fontSize(14)
+            .fontColor('#999999')
+        }
+        .width('100%')
+        .justifyContent(FlexAlign.Center)
+        .margin({ top: 20, bottom: 20 })
+      } else {
+        Row() {
+          List({ space: 2, scroller: new Scroller() }) {
+            ForEach(selectedRecord!.values, (value: number, index: number) => {
+              ListItem() {
+                Column() {
+                  Text(value.toString())
+                    .fontSize(10)
+                    .fontColor(decibelService.getDecibelColor(value))
+                    .margin({ bottom: 4 })
+                  Column() {
+                    Column()
+                      .width(4)
+                      .height(value)
+                      .backgroundColor(decibelService.getDecibelColor(value))
+                  }
+                  .width(4)
+                  .height(100)
+                  .backgroundColor('#F5F5F5')
+                  .alignItems(HorizontalAlign.Center)
+                  .justifyContent(FlexAlign.End)
+                }
+              }
+            })
+          }
+          .listDirection(Axis.Horizontal)
+          .width('100%')
+          .height(140)
+          .edgeEffect(EdgeEffect.Spring)
+        }
+        .width('100%')
+        .height(140)
+      }
+    }
+    .width('100%')
+    .padding(16)
+    .backgroundColor(Color.White)
+    .borderRadius(12)
+  }
+
   build() {
     Column() {
       // 顶部拖动条
@@ -517,10 +500,9 @@ export struct DetailDialog {
 
           Column() {
             BasicInfoBuilder(this.selectedRecord)
+            this.ChartBuilder(this.selectedRecord, this.decibelService)
             StatisticsBuilder(this.selectedRecord, this.decibelService)
             this.NoiseDistributionBuilder()
-            this.AudioPlaybackBuilder(this.selectedRecord)
-            ChartBuilder(this.selectedRecord, this.decibelService)
           }
           .width('100%')
           .padding({ left: 16, right: 16, bottom: 16 })
