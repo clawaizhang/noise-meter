@@ -85,40 +85,20 @@ export class DecibelRecordService {
   }
 
   /**
-   * 保存历史记录
+   * 保存记录
+   * @param record 要保存的记录
    */
   async saveRecord(record: DecibelRecord): Promise<void> {
     try {
-      // 如果有音频数据，先保存音频文件
-      if (record.audioData) {
-        try {
-          const fileName = `audio_${record.id}.wav`;
-          await this.fileService.saveFile(fileName, record.audioData);
-          record.audioFilePath = fileName;
-        } catch (error) {
-          console.error('保存音频文件失败:', error);
-          // 音频保存失败时，清空音频相关字段
-          record.audioFilePath = undefined;
-          record.audioData = undefined;
-        }
-      }
+      // 使用toRecord方法转换数据
+      const recordToSave = this.toRecord(record);
 
-      // 保存数据库记录
-      const rowId = await this.dbService.insert(TABLE_NAME, this.toRecord(record));
-      if (rowId < 0) {
-        // 如果数据库保存失败，删除已保存的音频文件
-        if (record.audioFilePath) {
-          try {
-            await this.fileService.deleteFile(record.audioFilePath);
-          } catch (error) {
-            console.error('删除音频文件失败:', error);
-          }
-        }
-        throw new Error('保存历史记录失败');
-      }
-    } catch (error) {
-      console.error('保存历史记录失败:', error);
-      throw new Error('保存历史记录失败');
+      // 保存到数据库
+      await this.dbService.insert(TABLE_NAME, recordToSave);
+    } catch (err) {
+      const error = new Error('保存记录失败：' + (err instanceof Error ? err.message : String(err)));
+      console.error(error.message);
+      throw error;
     }
   }
 

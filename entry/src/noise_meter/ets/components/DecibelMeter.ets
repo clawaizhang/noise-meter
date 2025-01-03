@@ -45,7 +45,6 @@ export struct DecibelMeter {
   private context?: common.UIAbilityContext
   private values: number[] = []
   private startTime: number = 0
-  private audioData: ArrayBuffer[] = []
   private releaseTimer: number = -1
 
   aboutToAppear() {
@@ -93,7 +92,6 @@ export struct DecibelMeter {
       this.values = [];
       this.dbCount = 0;
       this.dbSum = 0;
-      this.audioData = []; // 每次开始检测时清空音频数据
 
       // 如果没有在采集音频，先启动采集
       if (!this.audioService.isAudioCapturing()) {
@@ -109,8 +107,6 @@ export struct DecibelMeter {
         this.updateStatistics(this.currentDecibel);
         // 更新计时器
         this.recordingTime = Math.floor((new Date().getTime() - this.startTime) / 1000);
-        // 始终记录音频数据
-        this.audioData.push(buffer);
       });
     } catch (error) {
       // 如果启动失败（包括权限问题），重置状态
@@ -124,7 +120,6 @@ export struct DecibelMeter {
       this.values = [];
       this.startTime = 0;
       this.recordingTime = 0;
-      this.audioData = [];
     }
   }
 
@@ -140,20 +135,19 @@ export struct DecibelMeter {
         // 计算检测时长
         const duration = new Date().getTime() - this.startTime;
 
-        // 合并所有音频数据
+        // 获取WAV格式的音频数据
         let audioData: ArrayBuffer | undefined;
-        if (this.isRecordEnabled && this.audioData.length > 0) {
-          const totalLength = this.audioData.reduce((sum, buffer) => sum + buffer.byteLength, 0);
-          const mergedBuffer = new ArrayBuffer(totalLength);
-          const mergedView = new Uint8Array(mergedBuffer);
-          let offset = 0;
-
-          for (const buffer of this.audioData) {
-            const view = new Uint8Array(buffer);
-            mergedView.set(view, offset);
-            offset += buffer.byteLength;
+        let audioFilePath: string | undefined;
+        if (this.isRecordEnabled) {
+          try {
+            audioData = await this.audioService.stopCaptureAndGetWavData();
+            // 生成文件名并保存WAV文件
+            const fileName = `audio_${new Date().getTime()}.wav`;
+            await this.fileService.saveFile(fileName, audioData);
+            audioFilePath = fileName;
+          } catch (error) {
+            console.error('获取或保存WAV音频数据失败:', error);
           }
-          audioData = mergedBuffer;
         }
 
         // 创建并保存记录
@@ -164,8 +158,7 @@ export struct DecibelMeter {
           duration,
           [...this.values],
           locationInfo?.address,
-          undefined,
-          audioData
+          audioFilePath
         );
         await this.recordService.saveRecord(record);
 
@@ -192,7 +185,6 @@ export struct DecibelMeter {
           if (!this.isRecording) { // 确保此时没有在录制
             await this.audioService.stopProcessing();
             await this.audioService.stopCapture();
-            await this.stopAudioCapture();
           }
           this.releaseTimer = -1;
         }, 30000); // 30秒 = 30000毫秒

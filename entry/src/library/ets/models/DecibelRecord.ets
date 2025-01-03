@@ -1,5 +1,5 @@
 /**
- * 噪音检测历史记录
+ * 分贝记录模型
  */
 @ObservedV2
 export class DecibelRecord {
@@ -12,7 +12,6 @@ export class DecibelRecord {
   values: number[];
   location?: string;
   audioFilePath?: string;
-  audioData?: ArrayBuffer;
   @Trace isFavorite: boolean;
 
   constructor(
@@ -23,11 +22,10 @@ export class DecibelRecord {
     values: number[],
     location?: string,
     audioFilePath?: string,
-    audioData?: ArrayBuffer
+    isFavorite: boolean = false
   ) {
-    const now = new Date().getTime();
-    this.id = now.toString();
-    this.timestamp = now;
+    this.id = new Date().getTime().toString();
+    this.timestamp = new Date().getTime();
     this.minDecibel = minDecibel;
     this.maxDecibel = maxDecibel;
     this.avgDecibel = avgDecibel;
@@ -35,7 +33,6 @@ export class DecibelRecord {
     this.values = values;
     this.location = location;
     this.audioFilePath = audioFilePath;
-    this.audioData = audioData;
-    this.isFavorite = false;
+    this.isFavorite = isFavorite;
   }
 } 

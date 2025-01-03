@@ -2,6 +2,7 @@ import audio from '@ohos.multimedia.audio';
 import { PermissionUtil } from '@pura/harmony-utils';
 import common from '@ohos.app.ability.common';
 import promptAction from '@ohos.promptAction';
+import { WavFileGenerator } from '../utils/WavFileGenerator';
 
 /**
  * 音频服务类
@@ -47,6 +48,7 @@ export class AudioService {
   private context: common.UIAbilityContext;
   private lastProcessTime: number = 0;
   private readonly PROCESS_INTERVAL: number = 500; // 处理间隔，单位毫秒
+  private audioBuffers: ArrayBuffer[] = []; // 存储录音数据
 
   constructor(context: common.UIAbilityContext) {
     this.context = context;
@@ -107,6 +109,9 @@ export class AudioService {
     }
 
     try {
+      // 清空之前的录音数据
+      this.audioBuffers = [];
+
       // 创建音频捕获器
       this.audioCapturer = await audio.createAudioCapturer(this.audioCapturerOptions);
       console.info('音频捕获器创建成功');
@@ -115,6 +120,11 @@ export class AudioService {
       this.audioCapturer.on('readData', (buffer: ArrayBuffer) => {
         if (!this.isCapturing || this.isStoppingCapture) {
           return;
+        }
+        
+        // 存储录音数据
+        if (buffer && buffer.byteLength > 0) {
+          this.audioBuffers.push(buffer.slice(0));
         }
         
         if (this.isProcessing) {
@@ -137,6 +147,53 @@ export class AudioService {
       const error = new Error('启动音频采集失败：' + (err instanceof Error ? err.message : String(err)));
       console.error(error.message);
       throw error;
+    }
+  }
+
+  /**
+   * 停止音频采集并获取WAV格式的录音数据
+   * @returns Promise<ArrayBuffer> WAV格式的录音数据
+   */
+  async stopCaptureAndGetWavData(): Promise<ArrayBuffer> {
+    if (!this.isCapturing || !this.audioCapturer || this.isStoppingCapture) {
+      throw new Error('没有正在进行的录音');
+    }
+
+    try {
+      this.isStoppingCapture = true;
+      this.isCapturing = false;
+      this.isProcessing = false;
+      this.onAudioData = null;
+
+      // 移除readData事件监听
+      this.audioCapturer.off('readData');
+      
+      // 使用Promise.all并行执行停止和释放操作
+      await Promise.all([
+        this.audioCapturer.stop(),
+        this.audioCapturer.release()
+      ]);
+      
+      this.audioCapturer = null;
+
+      // 生成WAV文件数据
+      const wavData = WavFileGenerator.generateWavFile(
+        this.audioBuffers,
+        44100, // 采样率与audioCapturerOptions中的设置保持一致
+        1,     // 单声道
+        16     // 16位采样
+      );
+
+      // 清空缓存的音频数据
+      this.audioBuffers = [];
+
+      return wavData;
+    } catch (err) {
+      const error = new Error('停止音频采集失败：' + (err instanceof Error ? err.message : String(err)));
+      console.error(error.message);
+      throw error;
+    } finally {
+      this.isStoppingCapture = false;
     }
   }
 
@@ -165,6 +222,8 @@ export class AudioService {
       ]);
       
       this.audioCapturer = null;
+      // 清空缓存的音频数据
+      this.audioBuffers = [];
     } catch (err) {
       const error = new Error('停止音频采集失败：' + (err instanceof Error ? err.message : String(err)));
       console.error(error.message);
