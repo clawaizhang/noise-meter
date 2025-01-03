@@ -2,10 +2,6 @@ import { DecibelRecord } from '../../../library/ets/models/DecibelRecord';
 import common from '@ohos.app.ability.common';
 import { FileService } from '../../../library/ets/services/FileService';
 import { DaoMaster, DaoSession, BaseDao, Property, GlobalContext } from '@ohos/dataorm';
-import { DecibelRecordOpenHelper } from '../../../library/ets/services/DecibelRecordOpenHelper';
-import data_rdb from '@ohos.data.relationalStore';
-
-const DATABASE_NAME = 'decibel_records.db';
 
 /**
  * 噪音检测历史记录服务
@@ -15,7 +11,6 @@ export class DecibelRecordService {
   private fileService: FileService;
   private daoSession: DaoSession | null = null;
   private decibelRecordDao: BaseDao<DecibelRecord, string> | null = null;
-  private isInitialized: boolean = false;
 
   constructor(context: common.Context) {
     this.context = context;
@@ -26,32 +21,17 @@ export class DecibelRecordService {
    * 确保数据库已初始化
    */
   private async ensureInitialized(): Promise<void> {
-    if (!this.isInitialized) {
+    if (!this.daoSession) {
       try {
-        console.info('开始初始化数据库');
-        
-        // 创建OpenHelper
-        const helper = new DecibelRecordOpenHelper(this.context, DATABASE_NAME);
-        console.info('创建OpenHelper成功');
-
-        // 获取数据库实例
-        const db: data_rdb.RdbStore = await helper.getWritableDatabase();
-        console.info('获取数据库实例成功');
-
-        // 创建DaoSession
-        this.daoSession = new DaoMaster(db).newSession();
-        console.info('创建DaoSession成功');
-
-        // 获取DAO
-        if (this.daoSession) {
-          this.decibelRecordDao = this.daoSession.getBaseDao(DecibelRecord);
-          console.info('获取DAO成功');
-        } else {
-          throw new Error('DaoSession is null');
+        console.info('从全局上下文获取 DaoSession');
+        this.daoSession = GlobalContext.getContext().getValue('daoSession') as DaoSession;
+        if (!this.daoSession) {
+          throw new Error('DaoSession not found in GlobalContext');
         }
         
-        this.isInitialized = true;
-        console.info('数据库初始化成功');
+        // 获取DAO
+        this.decibelRecordDao = this.daoSession.getBaseDao(DecibelRecord);
+        console.info('获取DAO成功');
       } catch (error) {
         console.error('初始化数据库失败:', error);
         throw new Error('初始化数据库失败: ' + (error instanceof Error ? error.message : String(error)));
