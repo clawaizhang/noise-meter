@@ -1,7 +1,7 @@
 import { DecibelRecord } from '../../../library/ets/models/DecibelRecord';
 import common from '@ohos.app.ability.common';
 import { FileService } from '../../../library/ets/services/FileService';
-import relationalStore from '@ohos.data.relationalStore';
+import { relationalStore } from '@kit.ArkData';
 import hilog from '@ohos.hilog';
 
 const TAG = 'DecibelRecordService';
@@ -34,31 +34,17 @@ export class DecibelRecordService {
         hilog.info(DOMAIN, TAG, '开始初始化数据库');
         
         // 获取数据库实例
-        this.rdbStore = await relationalStore.getRdbStore(this.context, {
-          name: DecibelRecordService.STORE_CONFIG.name,
-          securityLevel: DecibelRecordService.STORE_CONFIG.securityLevel
+        this.rdbStore = await new Promise<relationalStore.RdbStore>((resolve, reject) => {
+          relationalStore.getRdbStore(this.context, DecibelRecordService.STORE_CONFIG, (err, store) => {
+            if (err) {
+              reject(new Error(`获取数据库实例失败: ${err.message}`));
+              return;
+            }
+            resolve(store);
+          });
         });
+        
         hilog.info(DOMAIN, TAG, '获取数据库实例成功');
-        
-        // 创建表
-        const sql = DecibelRecord.getCreateTableSql();
-        hilog.info(DOMAIN, TAG, '准备执行建表SQL: %{public}s', sql);
-        
-        // 检查表是否存在
-        const tableCheckSql = `SELECT name FROM sqlite_master WHERE type='table' AND name='${DecibelRecord.getTableName()}'`;
-        const resultSet = await this.rdbStore.querySql(tableCheckSql);
-        const tableExists = resultSet.rowCount > 0;
-        resultSet.close();
-        
-        if (!tableExists) {
-          hilog.info(DOMAIN, TAG, '表不存在，开始创建表');
-          await this.rdbStore.executeSql(sql, null);
-          hilog.info(DOMAIN, TAG, '表创建成功');
-        } else {
-          hilog.info(DOMAIN, TAG, '表已存在，跳过创建');
-        }
-        
-        hilog.info(DOMAIN, TAG, '数据库初始化成功');
       } catch (error) {
         hilog.error(DOMAIN, TAG, '初始化数据库失败: %{public}s', error instanceof Error ? error.message : String(error));
         if (error instanceof Error && error.stack) {
@@ -80,11 +66,30 @@ export class DecibelRecordService {
       }
 
       hilog.info(DOMAIN, TAG, '准备保存记录: %{public}s', JSON.stringify(record));
-      const valueBucket = record.toValuesBucket();
+      const valueBucket: relationalStore.ValuesBucket = {
+        id: record.id,
+        timestamp: record.timestamp,
+        minDecibel: record.minDecibel,
+        maxDecibel: record.maxDecibel,
+        avgDecibel: record.avgDecibel,
+        duration: record.duration,
+        decibelValues: JSON.stringify(record.values),
+        location: record.location ?? null,
+        audioFilePath: record.audioFilePath ?? null,
+        isFavorite: record.isFavorite ? 1 : 0
+      };
       hilog.info(DOMAIN, TAG, '转换为 ValuesBucket: %{public}s', JSON.stringify(valueBucket));
       
-      await this.rdbStore.insert(DecibelRecord.getTableName(), valueBucket);
-      hilog.info(DOMAIN, TAG, '记录保存成功');
+      await new Promise<void>((resolve, reject) => {
+        this.rdbStore!.insert('decibel_records', valueBucket, (err, rowId) => {
+          if (err) {
+            reject(new Error(`插入记录失败: ${err.message}`));
+            return;
+          }
+          hilog.info(DOMAIN, TAG, '记录保存成功，rowId: %{public}d', rowId);
+          resolve();
+        });
+      });
     } catch (error) {
       hilog.error(DOMAIN, TAG, '保存记录失败: %{public}s', error instanceof Error ? error.message : String(error));
       if (error instanceof Error && error.stack) {
@@ -104,8 +109,16 @@ export class DecibelRecordService {
         throw new Error('数据库未初始化');
       }
 
-      const sql = `SELECT * FROM ${DecibelRecord.getTableName()} ORDER BY timestamp DESC LIMIT 100`;
-      const resultSet = await this.rdbStore.querySql(sql);
+      const sql = 'SELECT * FROM decibel_records ORDER BY timestamp DESC LIMIT 100';
+      const resultSet = await new Promise<relationalStore.ResultSet>((resolve, reject) => {
+        this.rdbStore!.querySql(sql, [], (err, resultSet) => {
+          if (err) {
+            reject(new Error(`查询记录失败: ${err.message}`));
+            return;
+          }
+          resolve(resultSet);
+        });
+      });
       
       const records: DecibelRecord[] = [];
       while (resultSet.goToNextRow()) {
@@ -131,8 +144,16 @@ export class DecibelRecordService {
       }
 
       // 先获取所有非收藏的记录，用于删除音频文件
-      const sql = `SELECT * FROM ${DecibelRecord.getTableName()} WHERE isFavorite = 0`;
-      const resultSet = await this.rdbStore.querySql(sql);
+      const sql = 'SELECT * FROM decibel_records WHERE isFavorite = 0';
+      const resultSet = await new Promise<relationalStore.ResultSet>((resolve, reject) => {
+        this.rdbStore!.querySql(sql, [], (err, resultSet) => {
+          if (err) {
+            reject(new Error(`查询记录失败: ${err.message}`));
+            return;
+          }
+          resolve(resultSet);
+        });
+      });
       
       while (resultSet.goToNextRow()) {
         const record = DecibelRecord.fromResultSet(resultSet);
@@ -140,17 +161,25 @@ export class DecibelRecordService {
           try {
             await this.fileService.deleteFile(record.audioFilePath);
           } catch (error) {
-            console.error('删除音频文件失败:', error);
+            hilog.error(DOMAIN, TAG, '删除音频文件失败: %{public}s', error instanceof Error ? error.message : String(error));
           }
         }
       }
       resultSet.close();
 
       // 删除非收藏记录
-      const deleteSql = `DELETE FROM ${DecibelRecord.getTableName()} WHERE isFavorite = 0`;
-      await this.rdbStore.executeSql(deleteSql);
+      const deleteSql = 'DELETE FROM decibel_records WHERE isFavorite = 0';
+      await new Promise<void>((resolve, reject) => {
+        this.rdbStore!.executeSql(deleteSql, [], (err) => {
+          if (err) {
+            reject(new Error(`删除记录失败: ${err.message}`));
+            return;
+          }
+          resolve();
+        });
+      });
     } catch (error) {
-      console.error('清空非收藏记录失败:', error);
+      hilog.error(DOMAIN, TAG, '清空非收藏记录失败: %{public}s', error instanceof Error ? error.message : String(error));
       throw new Error('清空非收藏记录失败');
     }
   }
@@ -166,13 +195,55 @@ export class DecibelRecordService {
       }
 
       const valueBucket = record.toValuesBucket();
-      const predicates = new relationalStore.RdbPredicates(DecibelRecord.getTableName());
+      const predicates = new relationalStore.RdbPredicates('decibel_records');
       predicates.equalTo('id', record.id);
       
-      await this.rdbStore.update(valueBucket, predicates);
+      await new Promise<void>((resolve, reject) => {
+        this.rdbStore!.update(valueBucket, predicates, (err, rows) => {
+          if (err) {
+            reject(new Error(`更新记录失败: ${err.message}`));
+            return;
+          }
+          hilog.info(DOMAIN, TAG, '更新了 %{public}d 条记录', rows);
+          resolve();
+        });
+      });
     } catch (error) {
-      console.error('更新记录失败:', error);
+      hilog.error(DOMAIN, TAG, '更新记录失败: %{public}s', error instanceof Error ? error.message : String(error));
       throw new Error('更新记录失败');
+    }
+  }
+
+  /**
+   * 根据ID获取记录
+   */
+  async getRecordById(id: string): Promise<DecibelRecord | null> {
+    try {
+      await this.ensureInitialized();
+      if (!this.rdbStore) {
+        throw new Error('数据库未初始化');
+      }
+
+      const sql = 'SELECT * FROM decibel_records WHERE id = ?';
+      const resultSet = await new Promise<relationalStore.ResultSet>((resolve, reject) => {
+        this.rdbStore!.querySql(sql, [id], (err, resultSet) => {
+          if (err) {
+            reject(new Error(`查询记录失败: ${err.message}`));
+            return;
+          }
+          resolve(resultSet);
+        });
+      });
+      
+      let record: DecibelRecord | null = null;
+      if (resultSet.goToFirstRow()) {
+        record = DecibelRecord.fromResultSet(resultSet);
+      }
+      resultSet.close();
+      return record;
+    } catch (error) {
+      hilog.error(DOMAIN, TAG, '获取记录失败: %{public}s', error instanceof Error ? error.message : String(error));
+      throw new Error('获取记录失败');
     }
   }
 
@@ -197,44 +268,27 @@ export class DecibelRecordService {
         try {
           await this.fileService.deleteFile(record.audioFilePath);
         } catch (error) {
-          console.error('删除音频文件失败:', error);
+          hilog.error(DOMAIN, TAG, '删除音频文件失败: %{public}s', error instanceof Error ? error.message : String(error));
         }
       }
 
       // 删除数据库记录
-      const predicates = new relationalStore.RdbPredicates(DecibelRecord.getTableName());
+      const predicates = new relationalStore.RdbPredicates('decibel_records');
       predicates.equalTo('id', id);
-      await this.rdbStore.delete(predicates);
+      
+      await new Promise<void>((resolve, reject) => {
+        this.rdbStore!.delete(predicates, (err, rows) => {
+          if (err) {
+            reject(new Error(`删除记录失败: ${err.message}`));
+            return;
+          }
+          hilog.info(DOMAIN, TAG, '删除了 %{public}d 条记录', rows);
+          resolve();
+        });
+      });
     } catch (error) {
-      console.error('删除记录失败:', error);
+      hilog.error(DOMAIN, TAG, '删除记录失败: %{public}s', error instanceof Error ? error.message : String(error));
       throw new Error('删除记录失败');
-    }
-  }
-
-  /**
-   * 根据ID获取记录
-   */
-  async getRecordById(id: string): Promise<DecibelRecord | null> {
-    try {
-      await this.ensureInitialized();
-      if (!this.rdbStore) {
-        throw new Error('数据库未初始化');
-      }
-
-      const sql = `SELECT * FROM ${DecibelRecord.getTableName()} WHERE id = ?`;
-      const resultSet = await this.rdbStore.querySql(sql, [id]);
-      
-      if (resultSet.goToFirstRow()) {
-        const record = DecibelRecord.fromResultSet(resultSet);
-        resultSet.close();
-        return record;
-      }
-      
-      resultSet.close();
-      return null;
-    } catch (error) {
-      console.error('获取记录失败:', error);
-      throw new Error('获取记录失败');
     }
   }
 } 

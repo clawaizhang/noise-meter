@@ -52,7 +52,7 @@ export class DecibelRecord {
         maxDecibel REAL NOT NULL,
         avgDecibel REAL NOT NULL,
         duration INTEGER NOT NULL,
-        values TEXT NOT NULL,
+        decibelValues TEXT NOT NULL,
         location TEXT,
         audioFilePath TEXT,
         isFavorite INTEGER DEFAULT 0
@@ -66,7 +66,7 @@ export class DecibelRecord {
       resultSet.getDouble(resultSet.getColumnIndex('maxDecibel')),
       resultSet.getDouble(resultSet.getColumnIndex('avgDecibel')),
       resultSet.getLong(resultSet.getColumnIndex('duration')),
-      JSON.parse(resultSet.getString(resultSet.getColumnIndex('values'))),
+      JSON.parse(resultSet.getString(resultSet.getColumnIndex('decibelValues'))),
       resultSet.getString(resultSet.getColumnIndex('location')),
       resultSet.getString(resultSet.getColumnIndex('audioFilePath'))
     );
@@ -84,7 +84,7 @@ export class DecibelRecord {
       maxDecibel: this.maxDecibel,
       avgDecibel: this.avgDecibel,
       duration: this.duration,
-      values: JSON.stringify(this.values),
+      decibelValues: JSON.stringify(this.values),
       location: this.location ?? null,
       audioFilePath: this.audioFilePath ?? null,
       isFavorite: this.isFavorite ? 1 : 0
