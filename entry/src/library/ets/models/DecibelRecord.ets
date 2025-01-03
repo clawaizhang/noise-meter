@@ -1,47 +1,21 @@
-import { Id, NotNull, Entity, Columns, ColumnType, Index } from '@ohos/dataorm';
 import util from '@ohos.util';
+import relationalStore from '@ohos.data.relationalStore';
 
-@Entity('DECIBEL_RECORDS')
+/**
+ * 分贝记录实体类
+ */
 @ObservedV2
 export class DecibelRecord {
-  @Id()
-  @Columns({ columnName: 'ID', types: ColumnType.str })
   id: string;
-
-  @NotNull()
-  @Index()
-  @Columns({ columnName: 'TIMESTAMP', types: ColumnType.num })
   timestamp: number;
-
-  @NotNull()
-  @Columns({ columnName: 'MIN_DECIBEL', types: ColumnType.real })
   minDecibel: number;
-
-  @NotNull()
-  @Columns({ columnName: 'MAX_DECIBEL', types: ColumnType.real })
   maxDecibel: number;
-
-  @NotNull()
-  @Columns({ columnName: 'AVG_DECIBEL', types: ColumnType.real })
   avgDecibel: number;
-
-  @NotNull()
-  @Columns({ columnName: 'DURATION', types: ColumnType.num })
   duration: number;
-
-  @NotNull()
-  @Columns({ columnName: 'VALUES', types: ColumnType.str })
   values: number[];
-
-  @Columns({ columnName: 'LOCATION', types: ColumnType.str })
   location?: string;
-
-  @Columns({ columnName: 'AUDIO_FILE_PATH', types: ColumnType.str })
   audioFilePath?: string;
-
   @Trace
-  @NotNull()
-  @Columns({ columnName: 'IS_FAVORITE', types: ColumnType.num })
   isFavorite: boolean;
 
   constructor(
@@ -63,5 +37,58 @@ export class DecibelRecord {
     this.location = location;
     this.audioFilePath = audioFilePath;
     this.isFavorite = false;
+  }
+
+  static getTableName(): string {
+    return 'decibel_records';
+  }
+
+  static getCreateTableSql(): string {
+    return `
+      CREATE TABLE IF NOT EXISTS ${DecibelRecord.getTableName()} (
+        id TEXT PRIMARY KEY NOT NULL,
+        timestamp INTEGER NOT NULL,
+        minDecibel REAL NOT NULL,
+        maxDecibel REAL NOT NULL,
+        avgDecibel REAL NOT NULL,
+        duration INTEGER NOT NULL,
+        values TEXT NOT NULL,
+        location TEXT,
+        audioFilePath TEXT,
+        isFavorite INTEGER DEFAULT 0
+      )
+    `;
+  }
+
+  static fromResultSet(resultSet: relationalStore.ResultSet): DecibelRecord {
+    const record = new DecibelRecord(
+      resultSet.getDouble(resultSet.getColumnIndex('minDecibel')),
+      resultSet.getDouble(resultSet.getColumnIndex('maxDecibel')),
+      resultSet.getDouble(resultSet.getColumnIndex('avgDecibel')),
+      resultSet.getLong(resultSet.getColumnIndex('duration')),
+      JSON.parse(resultSet.getString(resultSet.getColumnIndex('values'))),
+      resultSet.getString(resultSet.getColumnIndex('location')),
+      resultSet.getString(resultSet.getColumnIndex('audioFilePath'))
+    );
+    record.id = resultSet.getString(resultSet.getColumnIndex('id'));
+    record.timestamp = resultSet.getLong(resultSet.getColumnIndex('timestamp'));
+    record.isFavorite = resultSet.getLong(resultSet.getColumnIndex('isFavorite')) === 1;
+    return record;
+  }
+
+  toValuesBucket(): relationalStore.ValuesBucket {
+    const valueBucket: relationalStore.ValuesBucket = {
+      id: this.id,
+      timestamp: this.timestamp,
+      minDecibel: this.minDecibel,
+      maxDecibel: this.maxDecibel,
+      avgDecibel: this.avgDecibel,
+      duration: this.duration,
+      values: JSON.stringify(this.values),
+      location: this.location ?? null,
+      audioFilePath: this.audioFilePath ?? null,
+      isFavorite: this.isFavorite ? 1 : 0
+    };
+    return valueBucket;
   }
 } 

@@ -1,7 +1,7 @@
 import { DecibelRecord } from '../../../library/ets/models/DecibelRecord';
 import common from '@ohos.app.ability.common';
 import { FileService } from '../../../library/ets/services/FileService';
-import { DaoMaster, DaoSession, BaseDao, Property, GlobalContext } from '@ohos/dataorm';
+import relationalStore from '@ohos.data.relationalStore';
 
 /**
  * 噪音检测历史记录服务
@@ -9,8 +9,11 @@ import { DaoMaster, DaoSession, BaseDao, Property, GlobalContext } from '@ohos/d
 export class DecibelRecordService {
   private context: common.Context;
   private fileService: FileService;
-  private daoSession: DaoSession | null = null;
-  private decibelRecordDao: BaseDao<DecibelRecord, string> | null = null;
+  private rdbStore: relationalStore.RdbStore | null = null;
+  private static readonly STORE_CONFIG: relationalStore.StoreConfig = {
+    name: 'decibel_records.db',
+    securityLevel: relationalStore.SecurityLevel.S1
+  };
 
   constructor(context: common.Context) {
     this.context = context;
@@ -21,17 +24,14 @@ export class DecibelRecordService {
    * 确保数据库已初始化
    */
   private async ensureInitialized(): Promise<void> {
-    if (!this.daoSession) {
+    if (!this.rdbStore) {
       try {
-        console.info('从全局上下文获取 DaoSession');
-        this.daoSession = GlobalContext.getContext().getValue('daoSession') as DaoSession;
-        if (!this.daoSession) {
-          throw new Error('DaoSession not found in GlobalContext');
-        }
+        // 获取数据库实例
+        this.rdbStore = await relationalStore.getRdbStore(this.context, DecibelRecordService.STORE_CONFIG);
         
-        // 获取DAO
-        this.decibelRecordDao = this.daoSession.getBaseDao(DecibelRecord);
-        console.info('获取DAO成功');
+        // 创建表
+        await this.rdbStore.executeSql(DecibelRecord.getCreateTableSql());
+        console.info('数据库初始化成功');
       } catch (error) {
         console.error('初始化数据库失败:', error);
         throw new Error('初始化数据库失败: ' + (error instanceof Error ? error.message : String(error)));
@@ -41,23 +41,19 @@ export class DecibelRecordService {
 
   /**
    * 保存记录
-   * @param record 要保存的记录
    */
   async saveRecord(record: DecibelRecord): Promise<void> {
     try {
-      // 确保数据库已初始化
       await this.ensureInitialized();
-
-      // 保存记录
-      if (this.decibelRecordDao) {
-        await this.decibelRecordDao.insert(record);
-      } else {
-        throw new Error('DecibelRecordDao is null');
+      if (!this.rdbStore) {
+        throw new Error('数据库未初始化');
       }
-    } catch (err) {
-      const error = new Error('保存记录失败：' + (err instanceof Error ? err.message : String(err)));
-      console.error(error.message);
-      throw error;
+
+      const valueBucket = record.toValuesBucket();
+      await this.rdbStore.insert(DecibelRecord.getTableName(), valueBucket);
+    } catch (error) {
+      console.error('保存记录失败:', error);
+      throw new Error('保存记录失败');
     }
   }
 
@@ -66,21 +62,20 @@ export class DecibelRecordService {
    */
   async getRecords(): Promise<DecibelRecord[]> {
     try {
-      // 确保数据库已初始化
       await this.ensureInitialized();
-
-      if (!this.decibelRecordDao) {
-        throw new Error('DecibelRecordDao is null');
+      if (!this.rdbStore) {
+        throw new Error('数据库未初始化');
       }
 
-      // 查询记录
-      const entityClass = GlobalContext.getContext().getValue(GlobalContext.KEY_CLS) as Record<string, Object>;
-      const properties = entityClass.DecibelRecord as Record<string, Property>;
-      const query = this.decibelRecordDao.queryBuilder()
-        .orderDesc(properties.timestamp)
-        .limit(100)
-        .buildCursor();
-      return await query.list();
+      const sql = `SELECT * FROM ${DecibelRecord.getTableName()} ORDER BY timestamp DESC LIMIT 100`;
+      const resultSet = await this.rdbStore.querySql(sql);
+      
+      const records: DecibelRecord[] = [];
+      while (resultSet.goToNextRow()) {
+        records.push(DecibelRecord.fromResultSet(resultSet));
+      }
+      resultSet.close();
+      return records;
     } catch (error) {
       console.error('获取历史记录失败:', error);
       throw new Error('获取历史记录失败');
@@ -92,23 +87,17 @@ export class DecibelRecordService {
    */
   async clearUnfavoriteRecords(): Promise<void> {
     try {
-      // 确保数据库已初始化
       await this.ensureInitialized();
-
-      if (!this.decibelRecordDao) {
-        throw new Error('DecibelRecordDao is null');
+      if (!this.rdbStore) {
+        throw new Error('数据库未初始化');
       }
 
       // 先获取所有非收藏的记录，用于删除音频文件
-      const entityClass = GlobalContext.getContext().getValue(GlobalContext.KEY_CLS) as Record<string, Object>;
-      const properties = entityClass.DecibelRecord as Record<string, Property>;
-      const query = this.decibelRecordDao.queryBuilder()
-        .where(properties.isFavorite.eq(0))
-        .buildCursor();
-      const records = await query.list();
-
-      // 删除所有相关的音频文件
-      for (const record of records) {
+      const sql = `SELECT * FROM ${DecibelRecord.getTableName()} WHERE isFavorite = 0`;
+      const resultSet = await this.rdbStore.querySql(sql);
+      
+      while (resultSet.goToNextRow()) {
+        const record = DecibelRecord.fromResultSet(resultSet);
         if (record.audioFilePath) {
           try {
             await this.fileService.deleteFile(record.audioFilePath);
@@ -117,12 +106,11 @@ export class DecibelRecordService {
           }
         }
       }
+      resultSet.close();
 
       // 删除非收藏记录
-      const deleteQuery = this.decibelRecordDao.queryBuilder()
-        .where(properties.isFavorite.eq(0))
-        .buildDelete();
-      await deleteQuery.executeDeleteWithoutDetachingEntities();
+      const deleteSql = `DELETE FROM ${DecibelRecord.getTableName()} WHERE isFavorite = 0`;
+      await this.rdbStore.executeSql(deleteSql);
     } catch (error) {
       console.error('清空非收藏记录失败:', error);
       throw new Error('清空非收藏记录失败');
@@ -134,15 +122,16 @@ export class DecibelRecordService {
    */
   async updateRecord(record: DecibelRecord): Promise<void> {
     try {
-      // 确保数据库已初始化
       await this.ensureInitialized();
-
-      if (!this.decibelRecordDao) {
-        throw new Error('DecibelRecordDao is null');
+      if (!this.rdbStore) {
+        throw new Error('数据库未初始化');
       }
 
-      // 更新记录
-      await this.decibelRecordDao.updateAsync(record);
+      const valueBucket = record.toValuesBucket();
+      const predicates = new relationalStore.RdbPredicates(DecibelRecord.getTableName());
+      predicates.equalTo('id', record.id);
+      
+      await this.rdbStore.update(valueBucket, predicates);
     } catch (error) {
       console.error('更新记录失败:', error);
       throw new Error('更新记录失败');
@@ -154,11 +143,9 @@ export class DecibelRecordService {
    */
   async deleteRecord(id: string): Promise<void> {
     try {
-      // 确保数据库已初始化
       await this.ensureInitialized();
-
-      if (!this.decibelRecordDao) {
-        throw new Error('DecibelRecordDao is null');
+      if (!this.rdbStore) {
+        throw new Error('数据库未初始化');
       }
 
       // 先获取记录信息
@@ -177,7 +164,9 @@ export class DecibelRecordService {
       }
 
       // 删除数据库记录
-      await this.decibelRecordDao.deleteByKeyAsync(id);
+      const predicates = new relationalStore.RdbPredicates(DecibelRecord.getTableName());
+      predicates.equalTo('id', id);
+      await this.rdbStore.delete(predicates);
     } catch (error) {
       console.error('删除记录失败:', error);
       throw new Error('删除记录失败');
@@ -189,15 +178,22 @@ export class DecibelRecordService {
    */
   async getRecordById(id: string): Promise<DecibelRecord | null> {
     try {
-      // 确保数据库已初始化
       await this.ensureInitialized();
-
-      if (!this.decibelRecordDao) {
-        throw new Error('DecibelRecordDao is null');
+      if (!this.rdbStore) {
+        throw new Error('数据库未初始化');
       }
 
-      // 查询记录
-      return await this.decibelRecordDao.load(id);
+      const sql = `SELECT * FROM ${DecibelRecord.getTableName()} WHERE id = ?`;
+      const resultSet = await this.rdbStore.querySql(sql, [id]);
+      
+      if (resultSet.goToFirstRow()) {
+        const record = DecibelRecord.fromResultSet(resultSet);
+        resultSet.close();
+        return record;
+      }
+      
+      resultSet.close();
+      return null;
     } catch (error) {
       console.error('获取记录失败:', error);
       throw new Error('获取记录失败');
