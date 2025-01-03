@@ -2,6 +2,10 @@ import common from '@ohos.app.ability.common';
 import { BusinessError } from '@ohos.base';
 import { FileService } from './FileService';
 import { CcPlayer, MediaSourceFactory, PlayerState } from '@seagazer/ccplayer';
+import hilog from '@ohos.hilog';
+
+const TAG = 'AudioPlayerService';
+const DOMAIN = 0x0000;
 
 /**
  * 音频播放服务
@@ -16,38 +20,66 @@ export class AudioPlayerService {
   constructor(context: common.Context, fileService: FileService) {
     this.context = context;
     this.fileService = fileService;
-    this.initPlayer();
+    try {
+      this.initPlayer();
+    } catch (error) {
+      hilog.error(DOMAIN, TAG, '初始化播放器失败: %{public}s', error instanceof Error ? error.message : String(error));
+    }
   }
 
   /**
    * 初始化播放器
    */
   private initPlayer(): void {
-    // 创建播放器实例
-    this.player = new CcPlayer(this.context);
-    // 设置循环播放为false
-    this.player.setLooper(false);
-    // 设置音量为1.0
-    this.player.setVolume(1.0);
-    // 设置播放完成监听
-    this.player.addOnCompletionListener(() => {
-      if (this.onStateChangeListener) {
-        this.onStateChangeListener(PlayerState.STATE_COMPLETED);
+    try {
+      hilog.info(DOMAIN, TAG, '开始初始化播放器');
+      // 创建播放器实例
+      this.player = new CcPlayer(this.context);
+      hilog.info(DOMAIN, TAG, '播放器实例创建成功');
+
+      if (!this.player) {
+        throw new Error('播放器创建失败');
       }
-    });
-    // 设置错误监听
-    this.player.addOnErrorListener((code: number, message: string) => {
-      console.error(`播放错误: [${code}] ${message}`);
-      if (this.onStateChangeListener) {
-        this.onStateChangeListener(PlayerState.STATE_ERROR);
+
+      // 设置循环播放为false
+      this.player.setLooper(false);
+      hilog.info(DOMAIN, TAG, '设置循环播放完成');
+
+      // 设置音量为1.0
+      this.player.setVolume(1.0);
+      hilog.info(DOMAIN, TAG, '设置音量完成');
+
+      // 设置播放完成监听
+      this.player.addOnCompletionListener(() => {
+        hilog.info(DOMAIN, TAG, '播放完成');
+        if (this.onStateChangeListener) {
+          this.onStateChangeListener(PlayerState.STATE_COMPLETED);
+        }
+      });
+
+      // 设置错误监听
+      this.player.addOnErrorListener((code: number, message: string) => {
+        hilog.error(DOMAIN, TAG, '播放错误: [%{public}d] %{public}s', code, message);
+        if (this.onStateChangeListener) {
+          this.onStateChangeListener(PlayerState.STATE_ERROR);
+        }
+      });
+
+      // 设置进度监听
+      this.player.addOnProgressChangedListener((duration: number) => {
+        if (this.onProgressListener) {
+          this.onProgressListener(duration);
+        }
+      });
+
+      hilog.info(DOMAIN, TAG, '播放器初始化完成');
+    } catch (error) {
+      hilog.error(DOMAIN, TAG, '初始化播放器失败: %{public}s', error instanceof Error ? error.message : String(error));
+      if (error instanceof Error && error.stack) {
+        hilog.error(DOMAIN, TAG, '错误详情: %{public}s', error.stack);
       }
-    });
-    // 设置进度监听
-    this.player.addOnProgressChangedListener((duration: number) => {
-      if (this.onProgressListener) {
-        this.onProgressListener(duration);
-      }
-    });
+      throw new Error(error);
+    }
   }
 
   /**
@@ -65,16 +97,19 @@ export class AudioPlayerService {
         await this.stop();
       }
 
+      hilog.info(DOMAIN, TAG, '准备播放音频文件: %{public}s', audioFilePath);
       // 创建媒体源
       const mediaSource = await MediaSourceFactory.createFile('audio', audioFilePath);
+      hilog.info(DOMAIN, TAG, '媒体源创建成功');
+
       // 设置媒体源并在准备就绪后开始播放
       this.player.setMediaSource(mediaSource, () => {
+        hilog.info(DOMAIN, TAG, '媒体源设置成功，开始播放');
         this.player?.start();
       });
     } catch (error) {
-      const businessError = error as BusinessError;
-      console.error(`播放音频失败: ${businessError.message}`);
-      throw new Error(`播放音频失败: ${businessError.message}`);
+      hilog.error(DOMAIN, TAG, '播放音频失败: %{public}s', error instanceof Error ? error.message : String(error));
+      throw new Error(`播放音频失败: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
@@ -85,10 +120,10 @@ export class AudioPlayerService {
     if (this.player && this.isPlaying()) {
       try {
         await this.player.pause();
+        hilog.info(DOMAIN, TAG, '暂停播放成功');
       } catch (error) {
-        const businessError = error as BusinessError;
-        console.error(`暂停播放失败: ${businessError.message}`);
-        throw new Error(`暂停播放失败: ${businessError.message}`);
+        hilog.error(DOMAIN, TAG, '暂停播放失败: %{public}s', error instanceof Error ? error.message : String(error));
+        throw new Error(`暂停播放失败: ${error instanceof Error ? error.message : String(error)}`);
       }
     }
   }
@@ -100,10 +135,10 @@ export class AudioPlayerService {
     if (this.player && !this.isPlaying()) {
       try {
         await this.player.start();
+        hilog.info(DOMAIN, TAG, '恢复播放成功');
       } catch (error) {
-        const businessError = error as BusinessError;
-        console.error(`恢复播放失败: ${businessError.message}`);
-        throw new Error(`恢复播放失败: ${businessError.message}`);
+        hilog.error(DOMAIN, TAG, '恢复播放失败: %{public}s', error instanceof Error ? error.message : String(error));
+        throw new Error(`恢复播放失败: ${error instanceof Error ? error.message : String(error)}`);
       }
     }
   }
@@ -115,10 +150,10 @@ export class AudioPlayerService {
     if (this.player) {
       try {
         await this.player.stop();
+        hilog.info(DOMAIN, TAG, '停止播放成功');
       } catch (error) {
-        const businessError = error as BusinessError;
-        console.error(`停止播放失败: ${businessError.message}`);
-        throw new Error(`停止播放失败: ${businessError.message}`);
+        hilog.error(DOMAIN, TAG, '停止播放失败: %{public}s', error instanceof Error ? error.message : String(error));
+        throw new Error(`停止播放失败: ${error instanceof Error ? error.message : String(error)}`);
       }
     }
   }
@@ -200,10 +235,10 @@ export class AudioPlayerService {
         await this.stop();
         await this.player.release();
         this.player = null;
+        hilog.info(DOMAIN, TAG, '播放器资源释放成功');
       } catch (error) {
-        const businessError = error as BusinessError;
-        console.error(`释放播放器失败: ${businessError.message}`);
-        throw new Error(`释放播放器失败: ${businessError.message}`);
+        hilog.error(DOMAIN, TAG, '释放播放器失败: %{public}s', error instanceof Error ? error.message : String(error));
+        throw new Error(`释放播放器失败: ${error instanceof Error ? error.message : String(error)}`);
       }
     }
   }

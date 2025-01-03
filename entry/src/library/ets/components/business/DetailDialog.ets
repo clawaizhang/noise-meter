@@ -3,6 +3,10 @@ import { DecibelService } from "../../../../noise_meter/ets/services/DecibelServ
 import { AudioPlayerService } from "../../services/AudioPlayerService"
 import common from '@ohos.app.ability.common'
 import { FileService } from "../../services/FileService"
+import hilog from '@ohos.hilog'
+
+const TAG = 'DetailDialog';
+const DOMAIN = 0x0000;
 
 // 标题栏构建器
 @Builder
@@ -129,10 +133,20 @@ export struct DetailDialog {
 
   aboutToAppear() {
     // 初始化AudioPlayerService，使用传入的FileService
-    if (this.context && this.fileService) {
+    if (!this.context) {
+      hilog.error(DOMAIN, TAG, 'Context is not available');
+      return;
+    }
+    if (!this.fileService) {
+      hilog.error(DOMAIN, TAG, 'FileService is not available');
+      return;
+    }
+
+    try {
       this.audioPlayerService = new AudioPlayerService(this.context, this.fileService);
-    } else {
-      console.error('Context or FileService is not available');
+      hilog.info(DOMAIN, TAG, 'AudioPlayerService 初始化成功');
+    } catch (error) {
+      hilog.error(DOMAIN, TAG, 'AudioPlayerService 初始化失败: %{public}s', error instanceof Error ? error.message : String(error));
     }
 
     // 计算噪音分布

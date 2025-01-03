@@ -2,6 +2,10 @@ import { DecibelRecord } from '../../../library/ets/models/DecibelRecord';
 import common from '@ohos.app.ability.common';
 import { FileService } from '../../../library/ets/services/FileService';
 import relationalStore from '@ohos.data.relationalStore';
+import hilog from '@ohos.hilog';
+
+const TAG = 'DecibelRecordService';
+const DOMAIN = 0x0000;
 
 /**
  * 噪音检测历史记录服务
@@ -12,7 +16,8 @@ export class DecibelRecordService {
   private rdbStore: relationalStore.RdbStore | null = null;
   private static readonly STORE_CONFIG: relationalStore.StoreConfig = {
     name: 'decibel_records.db',
-    securityLevel: relationalStore.SecurityLevel.S1
+    securityLevel: relationalStore.SecurityLevel.S1,
+    encrypt: false
   };
 
   constructor(context: common.Context) {
@@ -26,14 +31,39 @@ export class DecibelRecordService {
   private async ensureInitialized(): Promise<void> {
     if (!this.rdbStore) {
       try {
+        hilog.info(DOMAIN, TAG, '开始初始化数据库');
+        
         // 获取数据库实例
-        this.rdbStore = await relationalStore.getRdbStore(this.context, DecibelRecordService.STORE_CONFIG);
+        this.rdbStore = await relationalStore.getRdbStore(this.context, {
+          name: DecibelRecordService.STORE_CONFIG.name,
+          securityLevel: DecibelRecordService.STORE_CONFIG.securityLevel
+        });
+        hilog.info(DOMAIN, TAG, '获取数据库实例成功');
         
         // 创建表
-        await this.rdbStore.executeSql(DecibelRecord.getCreateTableSql());
-        console.info('数据库初始化成功');
+        const sql = DecibelRecord.getCreateTableSql();
+        hilog.info(DOMAIN, TAG, '准备执行建表SQL: %{public}s', sql);
+        
+        // 检查表是否存在
+        const tableCheckSql = `SELECT name FROM sqlite_master WHERE type='table' AND name='${DecibelRecord.getTableName()}'`;
+        const resultSet = await this.rdbStore.querySql(tableCheckSql);
+        const tableExists = resultSet.rowCount > 0;
+        resultSet.close();
+        
+        if (!tableExists) {
+          hilog.info(DOMAIN, TAG, '表不存在，开始创建表');
+          await this.rdbStore.executeSql(sql, null);
+          hilog.info(DOMAIN, TAG, '表创建成功');
+        } else {
+          hilog.info(DOMAIN, TAG, '表已存在，跳过创建');
+        }
+        
+        hilog.info(DOMAIN, TAG, '数据库初始化成功');
       } catch (error) {
-        console.error('初始化数据库失败:', error);
+        hilog.error(DOMAIN, TAG, '初始化数据库失败: %{public}s', error instanceof Error ? error.message : String(error));
+        if (error instanceof Error && error.stack) {
+          hilog.error(DOMAIN, TAG, '错误详情: %{public}s', error.stack);
+        }
         throw new Error('初始化数据库失败: ' + (error instanceof Error ? error.message : String(error)));
       }
     }
@@ -49,11 +79,18 @@ export class DecibelRecordService {
         throw new Error('数据库未初始化');
       }
 
+      hilog.info(DOMAIN, TAG, '准备保存记录: %{public}s', JSON.stringify(record));
       const valueBucket = record.toValuesBucket();
+      hilog.info(DOMAIN, TAG, '转换为 ValuesBucket: %{public}s', JSON.stringify(valueBucket));
+      
       await this.rdbStore.insert(DecibelRecord.getTableName(), valueBucket);
+      hilog.info(DOMAIN, TAG, '记录保存成功');
     } catch (error) {
-      console.error('保存记录失败:', error);
-      throw new Error('保存记录失败');
+      hilog.error(DOMAIN, TAG, '保存记录失败: %{public}s', error instanceof Error ? error.message : String(error));
+      if (error instanceof Error && error.stack) {
+        hilog.error(DOMAIN, TAG, '错误详情: %{public}s', error.stack);
+      }
+      throw new Error('保存记录失败: ' + (error instanceof Error ? error.message : String(error)));
     }
   }
 
@@ -75,9 +112,10 @@ export class DecibelRecordService {
         records.push(DecibelRecord.fromResultSet(resultSet));
       }
       resultSet.close();
+      hilog.info(DOMAIN, TAG, '获取到 %{public}d 条记录', records.length);
       return records;
     } catch (error) {
-      console.error('获取历史记录失败:', error);
+      hilog.error(DOMAIN, TAG, '获取历史记录失败: %{public}s', error instanceof Error ? error.message : String(error));
       throw new Error('获取历史记录失败');
     }
   }
