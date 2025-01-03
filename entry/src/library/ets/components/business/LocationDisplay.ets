@@ -4,23 +4,6 @@ import common from '@ohos.app.ability.common';
 import { PermissionUtil } from '@pura/harmony-utils';
 
 /**
- * 位置显示组件的样式配置
- */
-export interface LocationStyle {
-  /** 背景颜色 */
-  backgroundColor?: string;
-
-  /** 文字颜色 */
-  textColor?: string;
-
-  /** 按钮颜色 */
-  buttonColor?: string;
-
-  /** 图标颜色 */
-  iconColor?: string;
-}
-
-/**
  * 图标配置接口
  */
 interface IconOptions {
@@ -29,14 +12,13 @@ interface IconOptions {
   isRefreshing?: boolean;
 }
 
-@Component
+@ComponentV2
 export struct LocationDisplay {
-  @State location: string = '正在获取位置...';
-  @State address: string = '';
-  @State isRefreshing: boolean = false;
-  @State isLocationEnabled: boolean = false;
+  @Local location: string = '正在获取位置...';
+  @Local address: string = '';
+  @Local isRefreshing: boolean = false;
+  @Local isLocationEnabled: boolean = false;
   private locationService: LocationService = LocationService.getInstance();
-  @Prop style?: LocationStyle;
 
   async aboutToAppear() {
     await this.locationService.init(getContext(this));
@@ -76,7 +58,7 @@ export struct LocationDisplay {
       // 重置显示状态
       this.location = '正在获取位置...';
       this.address = '正在获取位置信息...';
-      
+
       const locationInfo: LocationInfo = await this.locationService.requestSingleLocation();
       this.location = locationInfo.coordinates;
       this.address = locationInfo.address;
@@ -255,7 +237,7 @@ export struct LocationDisplay {
       const lat = Number(coords[0]);
       const lng = Number(coords[1]);
       const formattedLocation = [lat, lng]
-        .map(num => !isNaN(num) ? num.toFixed(2) : '')
+        .map(num =>!isNaN(num) ? num.toFixed(2) : '')
         .filter(Boolean)
         .join(',');
       return formattedLocation;
@@ -275,7 +257,7 @@ export struct LocationDisplay {
                 Image($r('app.media.ic_refresh'))
                   .width(16)
                   .height(16)
-                  .fillColor(this.style?.iconColor ?? '#666666')
+                  .fillColor('#666666')
                   .rotate({
                     angle: this.isRefreshing ? 360 : 0,
                     centerX: '50%',
@@ -290,7 +272,7 @@ export struct LocationDisplay {
             }
             .width(20)
             .height(20)
-            .backgroundColor(this.style?.buttonColor ?? '#F5F5F5')
+            .backgroundColor('#F5F5F5')
             .enabled(!this.isRefreshing)
             .onClick(() => {
               this.startSingleLocation();
@@ -300,7 +282,7 @@ export struct LocationDisplay {
             Column() {
               this.LocationIcon({
                 size: 16,
-                color: this.style?.iconColor ?? '#666666'
+                color: '#666666'
               })
             }
             .width(24)
@@ -312,12 +294,12 @@ export struct LocationDisplay {
           Text('位置')
             .fontSize(16)
             .fontWeight(FontWeight.Medium)
-            .fontColor(this.style?.textColor ?? '#000000')
+            .fontColor('#000000')
 
           if (this.isLocationEnabled) {
             Text(this.formatLocation(this.location))
               .fontSize(14)
-              .fontColor(this.style?.textColor ?? '#666666')
+              .fontColor('#666666')
               .margin({ left: 8 })
           } else {
             Text('已关闭')
@@ -340,7 +322,7 @@ export struct LocationDisplay {
               const isServiceEnabled = await this.locationService.checkLocationEnabled();
               if (!isServiceEnabled) {
                 // 显示开启定位服务对话框
-                this.isLocationEnabled = false;  // 确保开关保持关闭
+                this.isLocationEnabled = false; // 确保开关保持关闭
                 await this.showLocationServiceDialog();
                 return;
               }
@@ -351,7 +333,7 @@ export struct LocationDisplay {
                 this.isLocationEnabled = true;
                 this.startSingleLocation();
               } else {
-                this.isLocationEnabled = false;  // 确保开关保持关闭
+                this.isLocationEnabled = false; // 确保开关保持关闭
                 // 如果权限被拒绝，显示权限请求对话框
                 await promptAction.showDialog({
                   title: '需要位置权限',
@@ -367,7 +349,7 @@ export struct LocationDisplay {
                     }
                   ]
                 }).then(async (result) => {
-                  this.isLocationEnabled = false;  // 确保开关保持关闭
+                  this.isLocationEnabled = false; // 确保开关保持关闭
                   if (result.index === 1) {
                     try {
                       // 使用PermissionUtil拉起系统权限设置页面
@@ -377,20 +359,20 @@ export struct LocationDisplay {
                           this.isLocationEnabled = true;
                           this.startSingleLocation();
                         } else {
-                          this.isLocationEnabled = false;  // 确保开关保持关闭
+                          this.isLocationEnabled = false; // 确保开关保持关闭
                           this.location = '缺少位置权限';
                           this.address = '请授予位置权限以使用定位功能';
                         }
                       });
                     } catch (error) {
                       console.error('跳转到权限设置页面失败:', error);
-                      this.isLocationEnabled = false;  // 确保开关保持关闭
+                      this.isLocationEnabled = false; // 确保开关保持关闭
                       this.location = '缺少位置权限';
                       this.address = '请授予位置权限以使用定位功能';
                     }
                   } else {
                     // 用户点击取消
-                    this.isLocationEnabled = false;  // 确保开关保持关闭
+                    this.isLocationEnabled = false; // 确保开关保持关闭
                     this.location = '缺少位置权限';
                     this.address = '请授予位置权限以使用定位功能';
                   }
@@ -410,7 +392,7 @@ export struct LocationDisplay {
         Row() {
           Text(this.address || '正在获取位置信息...')
             .fontSize(14)
-            .fontColor(this.style?.textColor ?? '#666666')
+            .fontColor('#666666')
             .textAlign(TextAlign.Start)
             .layoutWeight(1)
             .textOverflow({ overflow: TextOverflow.None })
@@ -429,6 +411,6 @@ export struct LocationDisplay {
     }
     .width('100%')
     .alignItems(HorizontalAlign.Start)
-    .backgroundColor(this.style?.backgroundColor ?? '#FFFFFF')
+    .backgroundColor('#FFFFFF')
   }
 } 

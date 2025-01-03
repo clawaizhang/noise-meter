@@ -1,6 +1,7 @@
 /**
  * 噪音检测历史记录
  */
+@ObservedV2
 export class DecibelRecord {
   id: string;
   timestamp: number;
@@ -11,7 +12,7 @@ export class DecibelRecord {
   values: number[];
   location?: string;
   audioFilePath?: string;
-  isFavorite: boolean;
+  @Trace isFavorite: boolean;
 
   constructor(
     minDecibel: number,

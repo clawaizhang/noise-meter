@@ -5,14 +5,16 @@ import common from '@ohos.app.ability.common';
 import { PromptAction } from '@ohos.arkui.UIContext';
 import { DecibelService } from '../ets/services/DecibelService';
 import { DecibelRecordService } from '../ets/services/DecibelRecordService';
-import { noiseMeterNavStack } from '../MainPageInfo';
+import { FileService } from '../../library/ets/services/FileService';
+import { noiseMeterNavStack } from '../ets/constant/ProviderConstant';
 
 @Builder
 function buildDialog(params: DialogParams) {
   DetailDialog({
     selectedRecord: params.selectedRecord,
     closeDialog: params.closeDialog,
-    context: params.context
+    context: params.context,
+    fileService: params.fileService
   })
 }
 
@@ -27,25 +29,29 @@ function DecibelHistoryBuilder() {
 }
 
 
-@Component
+@ComponentV2
 export struct DecibelHistory {
-  @Consume(noiseMeterNavStack) navStack: NavPathStack
-  @State records: DecibelRecord[] = [];
-  @State selectedRecord: DecibelRecord | null = null;
-  @State showingDeleteButtonId: string = ''; // 当前显示删除按钮的记录ID
-  @State currentSlidingId: string = ''; // 当前正在滑动的记录ID
-  @State currentSlideOffset: number = 0; // 当前滑动的偏移量
+  @Consumer(noiseMeterNavStack) navStack: NavPathStack = new NavPathStack()
+  @Local records: DecibelRecord[] = [];
+  @Local selectedRecord: DecibelRecord | null = null;
+  @Local showingDeleteButtonId: string = ''; // 当前显示删除按钮的记录ID
+  @Local currentSlidingId: string = ''; // 当前正在滑动的记录ID
+  @Local currentSlideOffset: number = 0; // 当前滑动的偏移量
   private startX: number = 0;
   private hasDeleteButtonOnStart: boolean = false; // 滑动开始时是否有删除按钮示
-  private recordService: DecibelRecordService = new DecibelRecordService(getContext(this) as common.UIAbilityContext);
+  private context: Context = getContext(this)
+  private recordService: DecibelRecordService = new DecibelRecordService(this.context);
   private decibelService: DecibelService = new DecibelService();
   private promptAction: PromptAction = this.getUIContext().getPromptAction();
   private dialogService: DialogService = new DialogService();
+  private fileService: FileService = new FileService(this.context)
 
   @Builder
   DetailDialogBuilder() {
     DetailDialog({
       selectedRecord: this.selectedRecord,
+      context: this.context,
+      fileService: this.fileService
     })
   }
 
@@ -129,6 +135,7 @@ export struct DecibelHistory {
         Row() {
         }
         .layoutWeight(1)
+
         Row() {
           this.EmptyButton()
         }
@@ -143,7 +150,7 @@ export struct DecibelHistory {
     .backgroundColor('#F5F5F5')
   }
 
-  emptyAll = async () =>  {
+  emptyAll = async () => {
     AlertDialog.show({
       title: '清空检测记录',
       message: '确定要清空检测记录吗？\n已收藏的记录将会保留',
@@ -388,7 +395,7 @@ export struct DecibelHistory {
                     bottom: '50%'
                   });
                   // 强制刷新界面
-                  this.records = [...this.records];
+                  // this.records = [...this.records];
                   this.currentSlideOffset = 0; // 点击后收起按钮
                   this.currentSlidingId = '';
                 }
@@ -434,7 +441,7 @@ export struct DecibelHistory {
               bottom: '50%'
             });
             // 强制刷新界面
-            this.records = [...this.records];
+            // this.records = [...this.records];
             this.currentSlideOffset = 0; // 点击后收起按钮
             this.currentSlidingId = '';
           })
@@ -511,7 +518,7 @@ export struct DecibelHistory {
                     .color('#F5F5F5')
                 }
               }
-            })
+            }, (record: DecibelRecord) => record.id)
           }
           .width('100%')
           .layoutWeight(1)

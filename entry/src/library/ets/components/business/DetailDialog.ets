@@ -114,18 +114,18 @@ interface NoiseDistribution {
   values: number[];
 }
 
-@Component
+@ComponentV2
 export struct DetailDialog {
-  @Prop selectedRecord: DecibelRecord | null;
+  @Param @Require selectedRecord: DecibelRecord | null;
+  @Param @Require context: common.Context;
+  @Param @Require  fileService: FileService | null;
   @BuilderParam closeDialog: () => void;
-  @State translateY: number = 0;
-  @State isPlaying: boolean = false;
+  @Local translateY: number = 0;
+  @Local isPlaying: boolean = false;
   private startY: number = 0;
   private decibelService: DecibelService = new DecibelService();
   private audioPlayerService!: AudioPlayerService;
-  @Prop context: common.Context;
-  @Prop fileService: FileService;
-  @State noiseDistribution: NoiseDistribution = { segments: [], values: [] };
+  @Local noiseDistribution: NoiseDistribution = { segments: [], values: [] };
 
   aboutToAppear() {
     // 初始化AudioPlayerService，使用传入的FileService

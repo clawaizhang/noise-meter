@@ -1,12 +1,10 @@
-import { common } from '@kit.AbilityKit';
-import { BannerCard } from '../../library/ets/components/business/BannerCard';
 import { DecibelMeter } from '../ets/components/DecibelMeter';
-import { getTitleName, noiseMeterNavStack } from '../MainPageInfo';
+import { noiseMeterNavStack } from '../ets/constant/ProviderConstant';
+import { getTitleName } from '../MainPageInfo';
 
-@Component
+@ComponentV2
 export struct NoiseMeter {
-  @State bgColor: string = '#F1F3F5'
-  @Provide(noiseMeterNavStack) navStack: NavPathStack = new NavPathStack()
+  @Provider(noiseMeterNavStack) navStack: NavPathStack = new NavPathStack()
 
   @Builder
   NoiseTitle() {
@@ -29,7 +27,7 @@ export struct NoiseMeter {
         Column()
           .width('100%')
           .height('100%')
-          .backgroundColor(this.bgColor)
+          .backgroundColor('#F5F5F5')
 
         Column() {
 

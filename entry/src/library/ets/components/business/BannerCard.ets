@@ -6,11 +6,11 @@ import abilityAccessCtrl, { Permissions } from '@ohos.abilityAccessCtrl';
 const TAG = '[BannerCard]';
 const DOMAIN = 0x0000;
 
-@Component
+@ComponentV2
 export struct BannerCard {
-  @State context: common.Context = getContext(this) as common.Context;
-  @State adId: string = '';
-  onItemClick?: () => void;
+  @Param context: common.Context = getContext(this) as common.Context;
+  @Param adId: string = '';
+  @Param @Require onItemClick?: () => void;
 
   async checkAndRequestPermissions(): Promise<void> {
     try {
@@ -97,7 +97,7 @@ export struct BannerCard {
           }
         }
       })
-      .height(57)
+        .height(57)
     }
     .width('100%')
     .height(57)

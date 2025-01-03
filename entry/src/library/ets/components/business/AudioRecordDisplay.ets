@@ -1,9 +1,10 @@
 import { AudioService } from '../../services/AudioService';
 import common from '@ohos.app.ability.common';
 
-@Component
+@ComponentV2
 export struct AudioRecordDisplay {
-  @Link isRecordEnabled: boolean
+  @Param isRecordEnabled: boolean = false;
+  @Event onRecordEnabledChange: (value: boolean) => void;
 
   build() {
     Column() {
@@ -18,7 +19,7 @@ export struct AudioRecordDisplay {
           Text('录音')
             .fontSize(16)
             .fontWeight(FontWeight.Medium)
-            .fontColor('#000000')
+            .fontColor($r('sys.color.black'))
 
           Text(this.isRecordEnabled ? ' 已开启' : ' 已关闭')
             .fontSize(14)
@@ -29,9 +30,9 @@ export struct AudioRecordDisplay {
 
         Toggle({ type: ToggleType.Switch, isOn: this.isRecordEnabled })
           .selectedColor('#0091FF')
-          .switchPointColor('#FFFFFF')
+          .switchPointColor($r('sys.color.comp_background_list_card'))
           .onChange((isOn: boolean) => {
-            this.isRecordEnabled = isOn;
+            this.onRecordEnabledChange(isOn);
           })
       }
       .width('100%')

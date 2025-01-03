@@ -8,30 +8,32 @@ import { DialogParams, DialogService } from '../../../library/ets/services/Dialo
 import router from '@ohos.router';
 import common from '@ohos.app.ability.common';
 import { DetailDialog } from '../../../library/ets/components/business/DetailDialog';
-import { noiseMeterNavStack } from '../../MainPageInfo';
 import { AudioRecordDisplay } from '../../../library/ets/components/business/AudioRecordDisplay';
 import { BannerCard } from '../../../library/ets/components/business/BannerCard';
 import { FileService } from '../../../library/ets/services/FileService';
+import { noiseMeterNavStack } from '../constant/ProviderConstant';
 
 @Builder
 function buildDialog(params: DialogParams) {
   DetailDialog({
     selectedRecord: params.selectedRecord,
-    closeDialog: params.closeDialog
+    closeDialog: params.closeDialog,
+    context: params.context,
+    fileService:params.fileService
   })
 }
 
-@Component
+@ComponentV2
 export struct DecibelMeter {
-  @State private currentDecibel: number = 0
-  @State private minDecibel: number = 0
-  @State private maxDecibel: number = 0
-  @State private avgDecibel: number = 0
-  @State private isRecording: boolean = false
-  @State private showStats: boolean = false
-  @State private recordingTime: number = 0
-  @State private isRecordEnabled: boolean = true
-  @Consume(noiseMeterNavStack) navStack: NavPathStack
+  @Local private currentDecibel: number = 0
+  @Local private minDecibel: number = 0
+  @Local private maxDecibel: number = 0
+  @Local private avgDecibel: number = 0
+  @Local private isRecording: boolean = false
+  @Local private showStats: boolean = false
+  @Local private recordingTime: number = 0
+  @Local private isRecordEnabled: boolean = true
+  @Consumer(noiseMeterNavStack) navStack: NavPathStack = new NavPathStack()
   private decibelService: DecibelService = new DecibelService()
   private audioService: AudioService = new AudioService(getContext() as common.UIAbilityContext)
   private locationService: LocationService = LocationService.getInstance()
@@ -139,7 +141,7 @@ export struct DecibelMeter {
         const duration = new Date().getTime() - this.startTime;
 
         let audioFilePath: string | undefined;
-        
+
         // 如果启用了录音且有音频数据
         if (this.isRecordEnabled && this.audioData.length > 0) {
           // 创建音频目录
@@ -155,7 +157,7 @@ export struct DecibelMeter {
           const mergedBuffer = new ArrayBuffer(totalLength);
           const mergedView = new Uint8Array(mergedBuffer);
           let offset = 0;
-          
+
           for (const buffer of this.audioData) {
             const view = new Uint8Array(buffer);
             mergedView.set(view, offset);
@@ -186,7 +188,7 @@ export struct DecibelMeter {
           console.error('Context is not available');
           return;
         }
-        
+
         this.dialogService.showDetailDialog(
           this.getUIContext(),
           wrapBuilder(buildDialog),
@@ -422,7 +424,10 @@ export struct DecibelMeter {
 
       // 录音显示
       AudioRecordDisplay({
-        isRecordEnabled: $isRecordEnabled
+        isRecordEnabled: this.isRecordEnabled,
+        onRecordEnabledChange: (isOn: boolean) => {
+          this.isRecordEnabled = isOn;
+        }
       })
 
       // 位置显示
@@ -466,7 +471,7 @@ export struct DecibelMeter {
   }
 
   @Builder
-  HistoryRecordButton(){
+  HistoryRecordButton() {
     // 历史记录按钮
     Button() {
       Image($r('app.media.ic_history'))
@@ -485,7 +490,7 @@ export struct DecibelMeter {
   }
 
   @Builder
-  StartStopButton(){
+  StartStopButton() {
     // 开始/停止按钮
     Button({
       type: ButtonType.Capsule,
