@@ -1,5 +1,5 @@
 import common from '@ohos.app.ability.common';
-import { OpenHelper, Database } from '@ohos/dataorm';
+import { OpenHelper, Database, DaoMaster } from '@ohos/dataorm';
 
 /**
  * 数据库帮助类
@@ -14,7 +14,7 @@ export class DecibelRecordOpenHelper extends OpenHelper {
    */
   public async onCreateDatabase(db: Database): Promise<void> {
     console.info('创建数据库');
-    await super.onCreateDatabase(db);
+    await DaoMaster.createAllTables(db, false);
   }
 
   /**
@@ -22,6 +22,8 @@ export class DecibelRecordOpenHelper extends OpenHelper {
    */
   async onUpgradeDatabase(db: Database, oldVersion: number, newVersion: number): Promise<void> {
     console.info('升级数据库');
+    await DaoMaster.dropAllTablesAsync(db, false);
+    await DaoMaster.createAllTables(db, false);
   }
 
   /**
@@ -29,5 +31,7 @@ export class DecibelRecordOpenHelper extends OpenHelper {
    */
   async onDowngradeDatabase(db: Database, oldVersion: number, newVersion: number): Promise<void> {
     console.info('降级数据库');
+    await DaoMaster.dropAllTablesAsync(db, false);
+    await DaoMaster.createAllTables(db, false);
   }
 } 
