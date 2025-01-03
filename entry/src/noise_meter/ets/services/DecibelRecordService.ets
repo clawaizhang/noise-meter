@@ -1,58 +1,95 @@
 import { DecibelRecord } from '../../../library/ets/models/DecibelRecord';
-import dataPreferences from '@ohos.data.preferences';
 import common from '@ohos.app.ability.common';
+import { RelationalStoreService } from '../../../library/ets/services/RelationalStoreService';
+import relationalStore from '@ohos.data.relationalStore';
 
-const STORE_NAME = 'decibel_records';
-const RECORDS_KEY = 'records';
+const DATABASE_NAME = 'decibel_records.db';
+const TABLE_NAME = 'decibel_records';
+
+// 建表SQL
+const CREATE_TABLE_SQL = `
+  CREATE TABLE IF NOT EXISTS ${TABLE_NAME} (
+    id TEXT PRIMARY KEY NOT NULL,
+    timestamp INTEGER NOT NULL,
+    min_decibel REAL NOT NULL,
+    max_decibel REAL NOT NULL,
+    avg_decibel REAL NOT NULL,
+    duration INTEGER NOT NULL,
+    values TEXT NOT NULL,
+    location TEXT,
+    audio_file_path TEXT,
+    is_favorite INTEGER DEFAULT 0
+  )
+`;
 
 /**
  * 噪音检测历史记录服务
  */
 export class DecibelRecordService {
   private context: common.Context;
-  private preferences?: dataPreferences.Preferences;
+  private dbService: RelationalStoreService;
 
   constructor(context: common.Context) {
     this.context = context;
+    this.dbService = new RelationalStoreService(context, DATABASE_NAME);
   }
 
   /**
-   * 初始化存储服务
+   * 初始化数据库
    */
-  private async ensurePreferences(): Promise<dataPreferences.Preferences> {
-    if (!this.preferences) {
-      try {
-        this.preferences = await dataPreferences.getPreferences(this.context, STORE_NAME);
-      } catch (error) {
-        console.error('初始化存储服务失败:', error);
-        throw new Error('初始化存储服务失败');
-      }
-    }
-    return this.preferences;
+  async init(): Promise<void> {
+    await this.dbService.execute(CREATE_TABLE_SQL);
+  }
+
+  /**
+   * 将DecibelRecord对象转换为数据库记录
+   */
+  private toRecord(record: DecibelRecord): relationalStore.ValuesBucket {
+    return {
+      id: record.id,
+      timestamp: record.timestamp,
+      min_decibel: record.minDecibel,
+      max_decibel: record.maxDecibel,
+      avg_decibel: record.avgDecibel,
+      duration: record.duration,
+      values: JSON.stringify(record.values),
+      location: record.location ?? null,
+      audio_file_path: record.audioFilePath ?? null,
+      is_favorite: record.isFavorite ? 1 : 0
+    };
+  }
+
+  /**
+   * 将数据库记录转换为DecibelRecord对象
+   */
+  private fromRecord(resultSet: relationalStore.ResultSet): DecibelRecord {
+    const record = new DecibelRecord(
+      resultSet.getDouble(resultSet.getColumnIndex('min_decibel')),
+      resultSet.getDouble(resultSet.getColumnIndex('max_decibel')),
+      resultSet.getDouble(resultSet.getColumnIndex('avg_decibel')),
+      resultSet.getLong(resultSet.getColumnIndex('duration')),
+      JSON.parse(resultSet.getString(resultSet.getColumnIndex('values'))),
+      resultSet.getString(resultSet.getColumnIndex('location')),
+      resultSet.getString(resultSet.getColumnIndex('audio_file_path'))
+    );
+    
+    // 设置其他属性
+    record.id = resultSet.getString(resultSet.getColumnIndex('id'));
+    record.timestamp = resultSet.getLong(resultSet.getColumnIndex('timestamp'));
+    record.isFavorite = resultSet.getLong(resultSet.getColumnIndex('is_favorite')) === 1;
+    
+    return record;
   }
 
   /**
    * 保存历史记录
    */
   async saveRecord(record: DecibelRecord): Promise<void> {
-    const preferences = await this.ensurePreferences();
-
     try {
-      // 获取现有记录
-      const recordsStr = await preferences.get(RECORDS_KEY, '[]') as string;
-      const records: DecibelRecord[] = JSON.parse(recordsStr);
-
-      // 添加新记录到开头
-      records.unshift(record);
-
-      // 只保留最近100条记录
-      if (records.length > 100) {
-        records.length = 100;
+      const rowId = await this.dbService.insert(TABLE_NAME, this.toRecord(record));
+      if (rowId < 0) {
+        throw new Error('保存历史记录失败');
       }
-
-      // 保存记录
-      await preferences.put(RECORDS_KEY, JSON.stringify(records));
-      await preferences.flush();
     } catch (error) {
       console.error('保存历史记录失败:', error);
       throw new Error('保存历史记录失败');
@@ -63,11 +100,8 @@ export class DecibelRecordService {
    * 保存记录列表
    */
   async saveRecords(records: DecibelRecord[]): Promise<void> {
-    const preferences = await this.ensurePreferences();
-
     try {
-      await preferences.put(RECORDS_KEY, JSON.stringify(records));
-      await preferences.flush();
+      await this.dbService.batchInsert(TABLE_NAME, records.map(record => this.toRecord(record)));
     } catch (error) {
       console.error('保存记录列表失败:', error);
       throw new Error('保存记录列表失败');
@@ -75,14 +109,21 @@ export class DecibelRecordService {
   }
 
   /**
-   * 获取所有历史记录
+   * 获取所有历史记录，按时间倒序排列
    */
   async getRecords(): Promise<DecibelRecord[]> {
-    const preferences = await this.ensurePreferences();
-
     try {
-      const recordsStr = await preferences.get(RECORDS_KEY, '[]') as string;
-      return JSON.parse(recordsStr);
+      const resultSet = await this.dbService.query(
+        `SELECT * FROM ${TABLE_NAME} ORDER BY timestamp DESC LIMIT 100`
+      );
+
+      const records: DecibelRecord[] = [];
+      while (resultSet.goToNextRow()) {
+        records.push(this.fromRecord(resultSet));
+      }
+      resultSet.close();
+      
+      return records;
     } catch (error) {
       console.error('获取历史记录失败:', error);
       throw new Error('获取历史记录失败');
@@ -93,14 +134,80 @@ export class DecibelRecordService {
    * 清空历史记录
    */
   async clearRecords(): Promise<void> {
-    const preferences = await this.ensurePreferences();
-
     try {
-      await preferences.put(RECORDS_KEY, '[]');
-      await preferences.flush();
+      const predicates = new relationalStore.RdbPredicates(TABLE_NAME);
+      const rowsAffected = await this.dbService.delete(TABLE_NAME, predicates);
+      if (rowsAffected < 0) {
+        throw new Error('清空历史记录失败');
+      }
     } catch (error) {
       console.error('清空历史记录失败:', error);
       throw new Error('清空历史记录失败');
+    }
+  }
+
+  /**
+   * 更新记录
+   */
+  async updateRecord(record: DecibelRecord): Promise<void> {
+    try {
+      const predicates = new relationalStore.RdbPredicates(TABLE_NAME);
+      predicates.equalTo('id', record.id);
+      
+      const rowsAffected = await this.dbService.update(
+        TABLE_NAME,
+        this.toRecord(record),
+        predicates
+      );
+
+      if (rowsAffected <= 0) {
+        throw new Error('更新记录失败');
+      }
+    } catch (error) {
+      console.error('更新记录失败:', error);
+      throw new Error('更新记录失败');
+    }
+  }
+
+  /**
+   * 删除记录
+   */
+  async deleteRecord(id: string): Promise<void> {
+    try {
+      const predicates = new relationalStore.RdbPredicates(TABLE_NAME);
+      predicates.equalTo('id', id);
+      
+      const rowsAffected = await this.dbService.delete(TABLE_NAME, predicates);
+      if (rowsAffected <= 0) {
+        throw new Error('删除记录失败');
+      }
+    } catch (error) {
+      console.error('删除记录失败:', error);
+      throw new Error('删除记录失败');
+    }
+  }
+
+  /**
+   * 根据ID获取记录
+   */
+  async getRecordById(id: string): Promise<DecibelRecord | null> {
+    try {
+      const resultSet = await this.dbService.query(
+        `SELECT * FROM ${TABLE_NAME} WHERE id = ?`,
+        [id]
+      );
+
+      if (!resultSet.goToFirstRow()) {
+        resultSet.close();
+        return null;
+      }
+
+      const record = this.fromRecord(resultSet);
+      resultSet.close();
+      return record;
+    } catch (error) {
+      console.error('获取记录失败:', error);
+      throw new Error('获取记录失败');
     }
   }
 } 

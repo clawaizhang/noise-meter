@@ -84,17 +84,17 @@ export struct DecibelHistory {
               if (index !== -1) {
                 this.records.splice(index, 1);
               }
-              // 更新存储
-              await this.recordService.saveRecords(this.records);
-              // 隐藏删除按钮
-              this.showingDeleteButtonId = '';
-              // 显示删除成功提示
-              this.promptAction.showToast({
-                message: '删除成功',
-                duration: 2000,
-                bottom: '50%'
-              });
+              // 从数据库中删除记录
+              await this.recordService.deleteRecord(recordToDelete.id);
             }
+            // 隐藏删除按钮
+            this.showingDeleteButtonId = '';
+            // 显示删除成功提示
+            this.promptAction.showToast({
+              message: '删除成功',
+              duration: 2000,
+              bottom: '50%'
+            });
           } catch (error) {
             console.error('删除记录失败:', error);
           }
@@ -135,7 +135,6 @@ export struct DecibelHistory {
         Row() {
         }
         .layoutWeight(1)
-
         Row() {
           this.EmptyButton()
         }
@@ -150,7 +149,7 @@ export struct DecibelHistory {
     .backgroundColor('#F5F5F5')
   }
 
-  emptyAll = async () => {
+  emptyAll = async () =>  {
     AlertDialog.show({
       title: '清空检测记录',
       message: '确定要清空检测记录吗？\n已收藏的记录将会保留',
@@ -395,7 +394,7 @@ export struct DecibelHistory {
                     bottom: '50%'
                   });
                   // 强制刷新界面
-                  // this.records = [...this.records];
+                  this.records = [...this.records];
                   this.currentSlideOffset = 0; // 点击后收起按钮
                   this.currentSlidingId = '';
                 }
@@ -441,7 +440,7 @@ export struct DecibelHistory {
               bottom: '50%'
             });
             // 强制刷新界面
-            // this.records = [...this.records];
+            this.records = [...this.records];
             this.currentSlideOffset = 0; // 点击后收起按钮
             this.currentSlidingId = '';
           })
@@ -518,7 +517,7 @@ export struct DecibelHistory {
                     .color('#F5F5F5')
                 }
               }
-            }, (record: DecibelRecord) => record.id)
+            })
           }
           .width('100%')
           .layoutWeight(1)
