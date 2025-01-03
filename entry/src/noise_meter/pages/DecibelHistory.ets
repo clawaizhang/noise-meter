@@ -169,16 +169,10 @@ export struct DecibelHistory {
         backgroundColor: '#666666',
         action: async () => {
           try {
-            // 保留收藏的记录
-            const favoriteRecords = this.records.filter(r => r.isFavorite);
-            // 先清空所有记录
-            await this.recordService.clearRecords();
-            // 如果有收藏的记录，重新保存
-            if (favoriteRecords.length > 0) {
-              await this.recordService.saveRecords(favoriteRecords);
-            }
-            // 更新UI
-            this.records = favoriteRecords;
+            // 清空非收藏记录
+            await this.recordService.clearUnfavoriteRecords();
+            // 重新加载记录列表
+            await this.loadRecords();
             // 显示清空成功提示
             this.promptAction.showToast({
               message: '已清空检测记录',
@@ -386,15 +380,13 @@ export struct DecibelHistory {
                 } else if (this.currentSlideOffset > 40) { // 右滑超过阈值时收藏/取消收藏
                   record.isFavorite = !record.isFavorite;
                   // 更新存储
-                  this.recordService.saveRecords(this.records);
+                  this.recordService.updateRecord(record);
                   // 显示操作提示
                   this.promptAction.showToast({
                     message: record.isFavorite ? '已添加到收藏' : '已取消收藏',
                     duration: 2000,
                     bottom: '50%'
                   });
-                  // 强制刷新界面
-                  this.records = [...this.records];
                   this.currentSlideOffset = 0; // 点击后收起按钮
                   this.currentSlidingId = '';
                 }
@@ -432,15 +424,13 @@ export struct DecibelHistory {
           })
           .onClick(() => {
             record.isFavorite = !record.isFavorite;
-            this.recordService.saveRecords(this.records);
+            this.recordService.updateRecord(record);
             // 显示操作提示
             this.promptAction.showToast({
               message: record.isFavorite ? '已添加到收藏' : '已取消收藏',
               duration: 2000,
               bottom: '50%'
             });
-            // 强制刷新界面
-            this.records = [...this.records];
             this.currentSlideOffset = 0; // 点击后收起按钮
             this.currentSlidingId = '';
           })

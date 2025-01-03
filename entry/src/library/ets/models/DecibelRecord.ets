@@ -12,6 +12,7 @@ export class DecibelRecord {
   values: number[];
   location?: string;
   audioFilePath?: string;
+  audioData?: ArrayBuffer;
   @Trace isFavorite: boolean;
 
   constructor(
@@ -21,7 +22,8 @@ export class DecibelRecord {
     duration: number,
     values: number[],
     location?: string,
-    audioFilePath?: string
+    audioFilePath?: string,
+    audioData?: ArrayBuffer
   ) {
     const now = new Date().getTime();
     this.id = now.toString();
@@ -33,6 +35,7 @@ export class DecibelRecord {
     this.values = values;
     this.location = location;
     this.audioFilePath = audioFilePath;
+    this.audioData = audioData;
     this.isFavorite = false;
   }
 } 

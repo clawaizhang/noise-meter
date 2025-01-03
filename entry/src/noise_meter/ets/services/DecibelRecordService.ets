@@ -2,6 +2,7 @@ import { DecibelRecord } from '../../../library/ets/models/DecibelRecord';
 import common from '@ohos.app.ability.common';
 import { RelationalStoreService } from '../../../library/ets/services/RelationalStoreService';
 import relationalStore from '@ohos.data.relationalStore';
+import { FileService } from '../../../library/ets/services/FileService';
 
 const DATABASE_NAME = 'decibel_records.db';
 const TABLE_NAME = 'decibel_records';
@@ -28,10 +29,12 @@ const CREATE_TABLE_SQL = `
 export class DecibelRecordService {
   private context: common.Context;
   private dbService: RelationalStoreService;
+  private fileService: FileService;
 
   constructor(context: common.Context) {
     this.context = context;
     this.dbService = new RelationalStoreService(context, DATABASE_NAME);
+    this.fileService = new FileService(context);
   }
 
   /**
@@ -86,25 +89,36 @@ export class DecibelRecordService {
    */
   async saveRecord(record: DecibelRecord): Promise<void> {
     try {
+      // 如果有音频数据，先保存音频文件
+      if (record.audioData) {
+        try {
+          const fileName = `audio_${record.id}.wav`;
+          await this.fileService.saveFile(fileName, record.audioData);
+          record.audioFilePath = fileName;
+        } catch (error) {
+          console.error('保存音频文件失败:', error);
+          // 音频保存失败时，清空音频相关字段
+          record.audioFilePath = undefined;
+          record.audioData = undefined;
+        }
+      }
+
+      // 保存数据库记录
       const rowId = await this.dbService.insert(TABLE_NAME, this.toRecord(record));
       if (rowId < 0) {
+        // 如果数据库保存失败，删除已保存的音频文件
+        if (record.audioFilePath) {
+          try {
+            await this.fileService.deleteFile(record.audioFilePath);
+          } catch (error) {
+            console.error('删除音频文件失败:', error);
+          }
+        }
         throw new Error('保存历史记录失败');
       }
     } catch (error) {
       console.error('保存历史记录失败:', error);
       throw new Error('保存历史记录失败');
-    }
-  }
-
-  /**
-   * 保存记录列表
-   */
-  async saveRecords(records: DecibelRecord[]): Promise<void> {
-    try {
-      await this.dbService.batchInsert(TABLE_NAME, records.map(record => this.toRecord(record)));
-    } catch (error) {
-      console.error('保存记录列表失败:', error);
-      throw new Error('保存记录列表失败');
     }
   }
 
@@ -131,18 +145,38 @@ export class DecibelRecordService {
   }
 
   /**
-   * 清空历史记录
+   * 清空非收藏记录
    */
-  async clearRecords(): Promise<void> {
+  async clearUnfavoriteRecords(): Promise<void> {
     try {
-      const predicates = new relationalStore.RdbPredicates(TABLE_NAME);
-      const rowsAffected = await this.dbService.delete(TABLE_NAME, predicates);
+      // 先获取所有非收藏的记录，用于删除音频文件
+      const resultSet = await this.dbService.query(
+        `SELECT audio_file_path FROM ${TABLE_NAME} WHERE is_favorite = 0`
+      );
+
+      // 删除所有相关的音频文件
+      while (resultSet.goToNextRow()) {
+        const audioFilePath = resultSet.getString(resultSet.getColumnIndex('audio_file_path'));
+        if (audioFilePath) {
+          try {
+            await this.fileService.deleteFile(audioFilePath);
+          } catch (error) {
+            console.error('删除音频文件失败:', error);
+          }
+        }
+      }
+      resultSet.close();
+
+      // 使用WHERE条件只删除非收藏记录
+      const predicatesForDelete = new relationalStore.RdbPredicates(TABLE_NAME);
+      predicatesForDelete.equalTo('is_favorite', 0);
+      const rowsAffected = await this.dbService.delete(TABLE_NAME, predicatesForDelete);
       if (rowsAffected < 0) {
-        throw new Error('清空历史记录失败');
+        throw new Error('清空非收藏记录失败');
       }
     } catch (error) {
-      console.error('清空历史记录失败:', error);
-      throw new Error('清空历史记录失败');
+      console.error('清空非收藏记录失败:', error);
+      throw new Error('清空非收藏记录失败');
     }
   }
 
@@ -174,6 +208,22 @@ export class DecibelRecordService {
    */
   async deleteRecord(id: string): Promise<void> {
     try {
+      // 先获取记录信息
+      const record = await this.getRecordById(id);
+      if (!record) {
+        throw new Error('记录不存在');
+      }
+
+      // 如果有音频文件，先删除音频文件
+      if (record.audioFilePath) {
+        try {
+          await this.fileService.deleteFile(record.audioFilePath);
+        } catch (error) {
+          console.error('删除音频文件失败:', error);
+        }
+      }
+
+      // 删除数据库记录
       const predicates = new relationalStore.RdbPredicates(TABLE_NAME);
       predicates.equalTo('id', id);
       

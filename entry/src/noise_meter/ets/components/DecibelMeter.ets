@@ -140,19 +140,9 @@ export struct DecibelMeter {
         // 计算检测时长
         const duration = new Date().getTime() - this.startTime;
 
-        let audioFilePath: string | undefined;
-
-        // 如果启用了录音且有音频数据
+        // 合并所有音频数据
+        let audioData: ArrayBuffer | undefined;
         if (this.isRecordEnabled && this.audioData.length > 0) {
-          // 创建音频目录
-          const audioDir = 'audio_records';
-          try {
-            await this.fileService.createDirectory(audioDir);
-          } catch (error) {
-            // 目录可能已存在，忽略错误
-          }
-
-          // 合并所有音频数据
           const totalLength = this.audioData.reduce((sum, buffer) => sum + buffer.byteLength, 0);
           const mergedBuffer = new ArrayBuffer(totalLength);
           const mergedView = new Uint8Array(mergedBuffer);
@@ -163,11 +153,7 @@ export struct DecibelMeter {
             mergedView.set(view, offset);
             offset += buffer.byteLength;
           }
-
-          // 生成文件名并保存
-          const timestamp = new Date().getTime();
-          audioFilePath = `${audioDir}/audio_${timestamp}.raw`;
-          await this.fileService.saveFile(audioFilePath, mergedBuffer);
+          audioData = mergedBuffer;
         }
 
         // 创建并保存记录
@@ -178,7 +164,8 @@ export struct DecibelMeter {
           duration,
           [...this.values],
           locationInfo?.address,
-          audioFilePath
+          undefined,
+          audioData
         );
         await this.recordService.saveRecord(record);
 
