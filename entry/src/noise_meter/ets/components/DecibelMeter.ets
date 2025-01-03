@@ -12,6 +12,7 @@ import { AudioRecordDisplay } from '../../../library/ets/components/business/Aud
 import { BannerCard } from '../../../library/ets/components/business/BannerCard';
 import { FileService } from '../../../library/ets/services/FileService';
 import { noiseMeterNavStack } from '../constant/ProviderConstant';
+import { promptAction } from '@kit.ArkUI';
 
 @Builder
 function buildDialog(params: DialogParams) {
@@ -126,30 +127,38 @@ export struct DecibelMeter {
   private async stopRecording() {
     if (this.isRecording) {
       this.isRecording = false;
-      // 只停止处理音频数据，不停止采集
-      this.audioService.stopProcessing();
+      console.info('停止录音 - 开始');
 
       try {
         // 获取缓存的位置信息
         const locationInfo = this.locationService.getCachedLocation();
+        console.info('位置信息:', locationInfo);
+        
         // 计算检测时长
         const duration = new Date().getTime() - this.startTime;
+        console.info('检测时长:', duration);
 
         // 获取WAV格式的音频数据
         let audioData: ArrayBuffer | undefined;
         let audioFilePath: string | undefined;
         if (this.isRecordEnabled) {
           try {
+            console.info('开始获取WAV音频数据');
             audioData = await this.audioService.stopCaptureAndGetWavData();
+            console.info('WAV音频数据大小:', audioData.byteLength);
+            
             // 生成文件名并保存WAV文件
             const fileName = `audio_${new Date().getTime()}.wav`;
+            console.info('准备保存音频文件:', fileName);
             await this.fileService.saveFile(fileName, audioData);
+            console.info('音频文件保存成功');
             audioFilePath = fileName;
           } catch (error) {
             console.error('获取或保存WAV音频数据失败:', error);
           }
         }
 
+        console.info('准备创建记录');
         // 创建并保存记录
         const record = new DecibelRecord(
           this.minDecibel,
@@ -160,7 +169,10 @@ export struct DecibelMeter {
           locationInfo?.address,
           audioFilePath
         );
+        console.info('记录创建成功:', record);
+        
         await this.recordService.saveRecord(record);
+        console.info('记录保存成功');
 
         // 显示详情弹窗
         const appContext = getContext(this) as common.Context;
@@ -169,12 +181,14 @@ export struct DecibelMeter {
           return;
         }
 
+        console.info('准备显示详情弹窗');
         this.dialogService.showDetailDialog(
           this.getUIContext(),
           wrapBuilder(buildDialog),
           record,
           appContext
         );
+        console.info('详情弹窗显示成功');
 
         // 清除之前的定时器
         if (this.releaseTimer !== -1) {
@@ -191,6 +205,11 @@ export struct DecibelMeter {
 
       } catch (error) {
         console.error('保存记录失败:', error);
+        // 显示错误提示
+        promptAction.showToast({
+          message: '保存记录失败：' + (error instanceof Error ? error.message : String(error)),
+          duration: 3000
+        });
       }
     }
   }

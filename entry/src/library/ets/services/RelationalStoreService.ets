@@ -9,6 +9,7 @@ export class RelationalStoreService {
   private context: common.Context;
   private store: relationalStore.RdbStore | null = null;
   private readonly databaseName: string;
+  private initSql: string = '';
 
   constructor(context: common.Context, databaseName: string) {
     this.context = context;
@@ -16,14 +17,23 @@ export class RelationalStoreService {
   }
 
   /**
+   * 设置初始化SQL
+   * @param sql 初始化SQL语句
+   */
+  setInitSql(sql: string): void {
+    this.initSql = sql;
+  }
+
+  /**
    * 获取数据库实例
    */
-  private async getStore(sqlCreateTable: string): Promise<relationalStore.RdbStore> {
+  private async getStore(): Promise<relationalStore.RdbStore> {
     if (this.store !== null) {
       return this.store;
     }
 
     try {
+      console.info('开始获取数据库实例:', this.databaseName);
       // 数据库配置
       const config: relationalStore.StoreConfig = {
         name: this.databaseName,
@@ -32,15 +42,20 @@ export class RelationalStoreService {
 
       // 获取数据库连接
       this.store = await relationalStore.getRdbStore(this.context, config);
+      console.info('数据库连接成功');
 
-      // 执行建表SQL
-      await this.store.executeSql(sqlCreateTable);
+      // 如果有初始化SQL，执行它
+      if (this.initSql) {
+        console.info('执行初始化SQL');
+        await this.store.executeSql(this.initSql);
+        console.info('初始化SQL执行成功');
+      }
 
       return this.store;
     } catch (error) {
       const businessError = error as BusinessError;
-      console.error(`获取数据库实例失败: ${businessError.message}`);
-      throw new Error('获取数据库实例失败');
+      console.error(`获取数据库实例失败: ${businessError.code} - ${businessError.message}`);
+      throw new Error(`获取数据库实例失败: ${businessError.message}`);
     }
   }
 
@@ -52,12 +67,15 @@ export class RelationalStoreService {
    */
   async query(sql: string, bindArgs: Array<relationalStore.ValueType> = []): Promise<relationalStore.ResultSet> {
     try {
-      const store = await this.getStore('');
-      return await store.querySql(sql, bindArgs);
+      console.info('执行查询:', sql, '参数:', bindArgs);
+      const store = await this.getStore();
+      const resultSet = await store.querySql(sql, bindArgs);
+      console.info('查询执行成功');
+      return resultSet;
     } catch (error) {
       const businessError = error as BusinessError;
-      console.error(`查询失败: ${businessError.message}`);
-      throw new Error('查询失败');
+      console.error(`查询失败: ${businessError.code} - ${businessError.message}, SQL: ${sql}, 参数:`, bindArgs);
+      throw new Error(`查询失败: ${businessError.message}`);
     }
   }
 
@@ -68,12 +86,14 @@ export class RelationalStoreService {
    */
   async execute(sql: string, bindArgs: Array<relationalStore.ValueType> = []): Promise<void> {
     try {
-      const store = await this.getStore('');
+      console.info('执行SQL:', sql, '参数:', bindArgs);
+      const store = await this.getStore();
       await store.executeSql(sql, bindArgs);
+      console.info('SQL执行成功');
     } catch (error) {
       const businessError = error as BusinessError;
-      console.error(`执行SQL失败: ${businessError.message}`);
-      throw new Error('执行SQL失败');
+      console.error(`执行SQL失败: ${businessError.code} - ${businessError.message}, SQL: ${sql}, 参数:`, bindArgs);
+      throw new Error(`执行SQL失败: ${businessError.message}`);
     }
   }
 
@@ -83,7 +103,7 @@ export class RelationalStoreService {
    */
   async batchExecute(sqls: string[]): Promise<void> {
     try {
-      const store = await this.getStore('');
+      const store = await this.getStore();
       await store.executeSql('BEGIN TRANSACTION');
       for (const sql of sqls) {
         await store.executeSql(sql);
@@ -92,7 +112,7 @@ export class RelationalStoreService {
     } catch (error) {
       const businessError = error as BusinessError;
       console.error(`批量执行SQL失败: ${businessError.message}`);
-      const store = await this.getStore('');
+      const store = await this.getStore();
       await store.executeSql('ROLLBACK TRANSACTION');
       throw new Error('批量执行SQL失败');
     }
@@ -105,7 +125,7 @@ export class RelationalStoreService {
    */
   async insert(tableName: string, values: relationalStore.ValuesBucket): Promise<number> {
     try {
-      const store = await this.getStore('');
+      const store = await this.getStore();
       const rowId = await store.insert(tableName, values);
       return rowId;
     } catch (error) {
@@ -122,7 +142,7 @@ export class RelationalStoreService {
    */
   async batchInsert(tableName: string, values: Array<relationalStore.ValuesBucket>): Promise<void> {
     try {
-      const store = await this.getStore('');
+      const store = await this.getStore();
       await store.executeSql('BEGIN TRANSACTION');
       for (const value of values) {
         const rowId = await store.insert(tableName, value);
@@ -134,7 +154,7 @@ export class RelationalStoreService {
     } catch (error) {
       const businessError = error as BusinessError;
       console.error(`批量插入数据失败: ${businessError.message}`);
-      const store = await this.getStore('');
+      const store = await this.getStore();
       await store.executeSql('ROLLBACK TRANSACTION');
       throw new Error('批量插入数据失败');
     }
@@ -152,7 +172,7 @@ export class RelationalStoreService {
     predicates: relationalStore.RdbPredicates
   ): Promise<number> {
     try {
-      const store = await this.getStore('');
+      const store = await this.getStore();
       return await store.update(values, predicates);
     } catch (error) {
       const businessError = error as BusinessError;
@@ -171,7 +191,7 @@ export class RelationalStoreService {
     predicates: relationalStore.RdbPredicates
   ): Promise<number> {
     try {
-      const store = await this.getStore('');
+      const store = await this.getStore();
       return await store.delete(predicates);
     } catch (error) {
       const businessError = error as BusinessError;
