@@ -284,15 +284,17 @@ export struct DetailDialog {
           Blank()
           Button() {
             Row() {
-              Image(this.isPlaying ? $r('app.media.ic_stop') : $r('app.media.ic_play'))
+              Image(this.isPlaying ? $r('app.media.ic_pause') : $r('app.media.ic_play'))
                 .width(20)
                 .height(20)
                 .fillColor('#666666')
                 .margin({ right: 8 })
-              Text(this.isPlaying ? '停止播放' : '播放录音')
+              Text(this.isPlaying ? '暂停播放' : '播放录音')
                 .fontSize(14)
                 .fontColor('#666666')
             }
+            .alignItems(VerticalAlign.Center)
+            .justifyContent(FlexAlign.Center)
           }
           .type(ButtonType.Capsule)
           .backgroundColor('#F5F5F5')
@@ -304,9 +306,8 @@ export struct DetailDialog {
                 await this.audioPlayerService.stop();
                 this.isPlaying = false;
               } else {
-                this.isPlaying = true;
                 await this.audioPlayerService.playAudioFile(selectedRecord!.audioFilePath!);
-                this.isPlaying = false;
+                this.isPlaying = true;
               }
             } catch (error) {
               console.error('音频播放失败:', error);
