@@ -326,13 +326,13 @@ export struct DecibelHistory {
       .backgroundColor(Color.White)
       .translate({
         x: this.showingDeleteButtonId === record.id ? -160 :
-          (record.id === this.currentSlidingId ? Math.min(0, Math.max(-160, this.currentSlideOffset)) : 0)
+          (record.id === this.currentSlidingId ? Math.min(80, Math.max(-160, this.currentSlideOffset)) : 0)
       })
       .scale({
-        x: record.id === this.currentSlidingId && this.currentSlideOffset > 40 ?
-          0.95 + (160 - this.currentSlideOffset) / 1600 : 1,
-        y: record.id === this.currentSlidingId && this.currentSlideOffset > 40 ?
-          0.95 + (160 - this.currentSlideOffset) / 1600 : 1
+        x: record.id === this.currentSlidingId && this.currentSlideOffset > 0 ?
+          0.98 + (80 - this.currentSlideOffset) / 800 : 1,
+        y: record.id === this.currentSlidingId && this.currentSlideOffset > 0 ?
+          0.98 + (80 - this.currentSlideOffset) / 800 : 1
       })
       .animation({
         duration: 300,
@@ -351,13 +351,13 @@ export struct DecibelHistory {
               const deltaX = event.offsetX - this.startX;
               if (this.hasDeleteButtonOnStart) {
                 // 如果开始时有按钮，则只处理右滑隐藏
-                this.currentSlideOffset = Math.max(-160, Math.min(0, -160 + deltaX));
-                if (deltaX > 80) { // 右滑一半距离时隐藏按钮
+                this.currentSlideOffset = Math.max(-160, Math.min(80, -160 + deltaX));
+                if (deltaX > 20) { // 降低右滑关闭阈值
                   this.showingDeleteButtonId = '';
                 }
               } else {
-                // 如果开始时没有按钮，则只处理左滑显示
-                this.currentSlideOffset = Math.min(0, deltaX);
+                // 允许左滑显示按钮和右滑回弹
+                this.currentSlideOffset = Math.max(-160, Math.min(80, deltaX));
                 if (deltaX < -80) { // 左滑超过一半距离时显示按钮
                   this.showingDeleteButtonId = record.id;
                 }
@@ -366,21 +366,25 @@ export struct DecibelHistory {
           })
           .onActionEnd(() => {
             if (this.currentSlidingId === record.id) {
-              if (this.hasDeleteButtonOnStart) {
-                // 如果开始时有按钮，则只处理隐藏按钮的操作
-                if (this.currentSlideOffset > -80) { // 右滑超过一半距离时隐藏
-                  this.showingDeleteButtonId = '';
+              // 无论如何都回到初始位置
+              animateTo({
+                duration: 300,
+                curve: Curve.EaseOut,
+              }, () => {
+                if (this.hasDeleteButtonOnStart) {
+                  // 如果开始时有按钮，则处理隐藏按钮的操作
+                  if (this.currentSlideOffset > -140) { // 降低右滑关闭阈值
+                    this.showingDeleteButtonId = '';
+                  }
+                } else {
+                  // 如果开始时没有按钮，处理显示按钮
+                  if (this.currentSlideOffset < -80) { // 左滑超过一半距离时显示按钮
+                    this.showingDeleteButtonId = record.id;
+                  }
                 }
                 this.currentSlideOffset = this.showingDeleteButtonId === record.id ? -160 : 0;
-              } else {
-                // 如果开始时没有按钮，则处理显示按钮的操作
-                if (this.currentSlideOffset < -80) { // 左滑超过一半距离时显示按钮
-                  this.showingDeleteButtonId = record.id;
-                  this.currentSlideOffset = -160;
-                }
-                this.currentSlideOffset = 0;
-              }
-              this.currentSlidingId = '';
+                this.currentSlidingId = '';
+              })
             }
           })
       )
