@@ -40,14 +40,14 @@ export struct AudioRecordDisplay {
       .alignItems(VerticalAlign.Center)
 
       if (this.isRecordEnabled) {
-        Text('检测结束后自动保存音频')
+        Text('检测结束后自动保存录音')
           .fontSize(14)
           .fontColor('#666666')
           .margin({ left: 4, top: 2 })
           .textAlign(TextAlign.Start)
           .width('100%')
       } else {
-        Text('开启后将自动保存检测音频')
+        Text('开启后将自动保存检测录音')
           .fontSize(14)
           .fontColor('#999999')
           .margin({ left: 4, top: 2 })
