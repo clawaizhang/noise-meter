@@ -353,12 +353,14 @@ export struct DecibelHistory {
                 // 如果开始时有按钮，则只处理右滑隐藏
                 this.currentSlideOffset = Math.max(-160, Math.min(80, -160 + deltaX));
                 if (deltaX > 20) { // 降低右滑关闭阈值
-                  this.showingDeleteButtonId = '';
+                  this.showingDeleteButtonId = ''; // 关闭所有按钮
                 }
               } else {
                 // 允许左滑显示按钮和右滑回弹
                 this.currentSlideOffset = Math.max(-160, Math.min(80, deltaX));
-                if (deltaX < -80) { // 左滑超过一半距离时显示按钮
+                if (deltaX > 20) { // 右滑时关闭所有按钮
+                  this.showingDeleteButtonId = '';
+                } else if (deltaX < -80) { // 左滑超过一半距离时显示按钮
                   this.showingDeleteButtonId = record.id;
                 }
               }
@@ -380,6 +382,8 @@ export struct DecibelHistory {
                   // 如果开始时没有按钮，处理显示按钮
                   if (this.currentSlideOffset < -80) { // 左滑超过一半距离时显示按钮
                     this.showingDeleteButtonId = record.id;
+                  } else if (this.currentSlideOffset > 20) { // 右滑时关闭所有按钮
+                    this.showingDeleteButtonId = '';
                   }
                 }
                 this.currentSlideOffset = this.showingDeleteButtonId === record.id ? -160 : 0;
