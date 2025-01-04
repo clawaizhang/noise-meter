@@ -12,7 +12,7 @@ export class DecibelRecord {
   maxDecibel: number;
   avgDecibel: number;
   duration: number;
-  values: number[];
+  decibelValues: number[];
   location?: string;
   audioFilePath?: string;
   @Trace
@@ -23,7 +23,7 @@ export class DecibelRecord {
     maxDecibel: number,
     avgDecibel: number,
     duration: number,
-    values: number[],
+    decibelValues: number[],
     location?: string,
     audioFilePath?: string
   ) {
@@ -33,7 +33,7 @@ export class DecibelRecord {
     this.maxDecibel = maxDecibel;
     this.avgDecibel = avgDecibel;
     this.duration = duration;
-    this.values = values;
+    this.decibelValues = decibelValues;
     this.location = location;
     this.audioFilePath = audioFilePath;
     this.isFavorite = false;
@@ -84,7 +84,7 @@ export class DecibelRecord {
       maxDecibel: this.maxDecibel,
       avgDecibel: this.avgDecibel,
       duration: this.duration,
-      decibelValues: JSON.stringify(this.values),
+      decibelValues: JSON.stringify(this.decibelValues),
       location: this.location ?? null,
       audioFilePath: this.audioFilePath ?? null,
       isFavorite: this.isFavorite ? 1 : 0

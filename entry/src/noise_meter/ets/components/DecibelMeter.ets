@@ -184,7 +184,7 @@ export struct DecibelMeter {
           this.currentRecord.maxDecibel = this.maxDecibel;
           this.currentRecord.avgDecibel = this.avgDecibel;
           this.currentRecord.duration = duration;
-          this.currentRecord.values = [...this.values];
+          this.currentRecord.decibelValues = [...this.values];
           this.currentRecord.location = locationInfo?.address;
           this.currentRecord.audioFilePath = this.currentAudioFilePath;
         }
@@ -431,7 +431,7 @@ export struct DecibelMeter {
             this.currentRecord.maxDecibel = this.maxDecibel;
             this.currentRecord.avgDecibel = this.avgDecibel;
             this.currentRecord.duration = this.startTime == 0 ? 0 : new Date().getTime() - this.startTime;
-            this.currentRecord.values = [...this.values];
+            this.currentRecord.decibelValues = [...this.values];
             this.currentRecord.location = this.locationService.getCachedLocation()?.address;
             this.currentRecord.audioFilePath = this.currentAudioFilePath;
           }

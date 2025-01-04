@@ -73,7 +73,7 @@ export class DecibelRecordService {
         maxDecibel: record.maxDecibel,
         avgDecibel: record.avgDecibel,
         duration: record.duration,
-        decibelValues: JSON.stringify(record.values),
+        decibelValues: JSON.stringify(record.decibelValues),
         location: record.location ?? null,
         audioFilePath: record.audioFilePath ?? null,
         isFavorite: record.isFavorite ? 1 : 0

@@ -156,14 +156,14 @@ export struct DetailDialog {
     }
 
     // 计算噪音分布
-    if (this.selectedRecord && this.selectedRecord.values.length > 0) {
+    if (this.selectedRecord && this.selectedRecord.decibelValues.length > 0) {
       this.calculateNoiseDistribution();
     }
   }
 
   // 计算噪音级别分布
   private calculateNoiseDistribution() {
-    const values = this.selectedRecord!.values;
+    const values = this.selectedRecord!.decibelValues;
     // 计算各个级别的数量
     const levelCounts = new Map<string, number>();
     values.forEach(value => {
@@ -217,7 +217,7 @@ export struct DetailDialog {
         .alignSelf(ItemAlign.Start)
         .margin({ bottom: 8 })
 
-      if (!this.selectedRecord || this.selectedRecord.values.length === 0) {
+      if (!this.selectedRecord || this.selectedRecord.decibelValues.length === 0) {
         Column() {
         }
         .width('100%')
@@ -357,7 +357,7 @@ export struct DetailDialog {
       .margin({ bottom: 12 })
       .alignItems(VerticalAlign.Center)
 
-      if (selectedRecord!.values.length === 0) {
+      if (selectedRecord!.decibelValues.length === 0) {
         Column() {
           Image($r('app.media.ic_empty'))
             .width(32)
@@ -374,7 +374,7 @@ export struct DetailDialog {
       } else {
         Row() {
           List({ space: 2, scroller: new Scroller() }) {
-            ForEach(selectedRecord!.values, (value: number, index: number) => {
+            ForEach(selectedRecord!.decibelValues, (value: number, index: number) => {
               ListItem() {
                 Column() {
                   Text(value.toString())
@@ -554,7 +554,7 @@ export struct DetailDialog {
                 .backgroundColor('#E0E0E0')
                 .margin({ top: 12, bottom: 16 })
 
-              if (!this.selectedRecord || this.selectedRecord.values.length === 0) {
+              if (!this.selectedRecord || this.selectedRecord.decibelValues.length === 0) {
                 Column() {
                 }
                 .width('100%')
