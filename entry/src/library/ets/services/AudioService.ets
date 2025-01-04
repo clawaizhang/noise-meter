@@ -9,25 +9,8 @@ import { WavFileGenerator } from '../utils/WavFileGenerator';
  * 提供音频采集功能
  */
 
-interface AudioStreamInfo {
-  samplingRate: audio.AudioSamplingRate;
-  channels: audio.AudioChannel;
-  sampleFormat: audio.AudioSampleFormat;
-  encodingType: audio.AudioEncodingType;
-}
-
-interface AudioCapturerInfo {
-  source: audio.SourceType;
-  capturerFlags: number;
-}
-
-interface AudioCapturerOptions {
-  streamInfo: AudioStreamInfo;
-  capturerInfo: AudioCapturerInfo;
-}
-
 export class AudioService {
-  private audioCapturerOptions: AudioCapturerOptions = {
+  private audioCapturerOptions: audio.AudioCapturerOptions = {
     streamInfo: {
       samplingRate: audio.AudioSamplingRate.SAMPLE_RATE_44100,
       channels: audio.AudioChannel.CHANNEL_1,
@@ -179,7 +162,7 @@ export class AudioService {
       // 生成WAV文件数据
       const wavData = WavFileGenerator.generateWavFile(
         this.audioBuffers,
-        44100, // 采样率与audioCapturerOptions中的设置保持一致
+        44100,  // 采样率改为44100Hz，与录音配置一致
         1,     // 单声道
         16     // 16位采样
       );
@@ -255,7 +238,7 @@ export class AudioService {
    * 获取音频配置
    * @returns AudioStreamInfo
    */
-  getAudioConfig(): AudioStreamInfo {
+  getAudioConfig(): audio.AudioStreamInfo {
     return this.audioCapturerOptions.streamInfo;
   }
 
