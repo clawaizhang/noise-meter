@@ -403,10 +403,9 @@ export struct DecibelHistory {
         Row() {
           // 收藏按钮
           Button() {
-            Image($r('app.media.ic_favorite'))
-              .width(24)
-              .height(24)
-              .fillColor(record.isFavorite ? '#FF4081' : Color.White)
+            Text(record.isFavorite ? '取消收藏' : '收藏')
+              .fontSize(14)
+              .fontColor(record.isFavorite ? '#FF4081' : Color.White)
           }
           .width(80)
           .height(96)
@@ -436,10 +435,9 @@ export struct DecibelHistory {
 
           // 删除按钮
           Button() {
-            Image($r('app.media.ic_delete'))
-              .width(24)
-              .height(24)
-              .fillColor(Color.White)
+            Text('删除')
+              .fontSize(14)
+              .fontColor(Color.White)
           }
           .width(80)
           .height(96)
