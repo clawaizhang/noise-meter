@@ -4,6 +4,7 @@ import { AudioPlayerService } from "../../services/AudioPlayerService"
 import common from '@ohos.app.ability.common'
 import { FileService } from "../../services/FileService"
 import hilog from '@ohos.hilog'
+import { PlayerState } from "@seagazer/ccplayer"
 
 const TAG = 'DetailDialog';
 const DOMAIN = 0x0000;
@@ -145,6 +146,12 @@ export struct DetailDialog {
 
     try {
       this.audioPlayerService = new AudioPlayerService(this.context, this.fileService);
+      // 设置播放状态监听
+      this.audioPlayerService.setOnStateChangeListener((state: PlayerState) => {
+        if (state === PlayerState.STATE_COMPLETED || state === PlayerState.STATE_ERROR) {
+          this.isPlaying = false;
+        }
+      });
       hilog.info(DOMAIN, TAG, 'AudioPlayerService 初始化成功');
     } catch (error) {
       hilog.error(DOMAIN, TAG, 'AudioPlayerService 初始化失败: %{public}s', error instanceof Error ? error.message : String(error));
@@ -303,15 +310,18 @@ export struct DetailDialog {
           .onClick(async () => {
             try {
               if (this.isPlaying) {
-                await this.audioPlayerService.stop();
+                // 如果正在播放,则暂停
+                await this.audioPlayerService.pause();
                 this.isPlaying = false;
               } else {
-                await this.audioPlayerService.playAudioFile(selectedRecord!.audioFilePath!);
-                this.isPlaying = true;
+                // 如果未播放,则开始播放
+                if (selectedRecord?.audioFilePath) {
+                  await this.audioPlayerService.playAudioFile(selectedRecord.audioFilePath);
+                  this.isPlaying = true;
+                }
               }
             } catch (error) {
-              console.error('音频播放失败:', error);
-              this.isPlaying = false;
+              hilog.error(DOMAIN, TAG, '播放音频失败: %{public}s', error instanceof Error ? error.message : String(error));
             }
           })
         }
