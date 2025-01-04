@@ -127,7 +127,6 @@ export struct DetailDialog {
   @Param @Require  fileService: FileService | null;
   @BuilderParam closeDialog: () => void;
   @Local translateY: number = 0;
-  @Local isPlaying: boolean = false;
   @Local playerState: PlayerState = PlayerState.STATE_NOT_INIT;
   private startY: number = 0;
   private decibelService: DecibelService = new DecibelService();
@@ -150,13 +149,6 @@ export struct DetailDialog {
       // 设置播放状态监听
       this.audioPlayerService.setOnStateChangeListener((state: PlayerState) => {
         this.playerState = state;
-        if (state === PlayerState.STATE_COMPLETED || state === PlayerState.STATE_ERROR) {
-          this.isPlaying = false;
-        } else if (state === PlayerState.STATE_STARTED) {
-          this.isPlaying = true;
-        } else if (state === PlayerState.STATE_PAUSED) {
-          this.isPlaying = false;
-        }
       });
       hilog.info(DOMAIN, TAG, 'AudioPlayerService 初始化成功');
     } catch (error) {
@@ -207,9 +199,12 @@ export struct DetailDialog {
   }
 
   aboutToDisappear() {
-    // 停止音频播放
-    if (this.isPlaying) {
-      this.audioPlayerService.stop();
+    // 释放播放器资源
+    try {
+      this.audioPlayerService.release();
+      hilog.info(DOMAIN, TAG, '组件销毁时释放播放器成功');
+    } catch (error) {
+      hilog.error(DOMAIN, TAG, '组件销毁时释放播放器失败: %{public}s', error instanceof Error ? error.message : String(error));
     }
   }
 
@@ -310,7 +305,6 @@ export struct DetailDialog {
               .onClick(async () => {
                 try {
                   await this.audioPlayerService.stop();
-                  this.isPlaying = false;
                 } catch (error) {
                   hilog.error(DOMAIN, TAG, '停止播放失败: %{public}s', error instanceof Error ? error.message : String(error));
                 }
@@ -319,12 +313,12 @@ export struct DetailDialog {
             
             Button() {
               Row() {
-                Image(this.isPlaying ? $r('app.media.ic_pause') : $r('app.media.ic_play'))
+                Image(this.playerState === PlayerState.STATE_STARTED ? $r('app.media.ic_pause') : $r('app.media.ic_play'))
                   .width(20)
                   .height(20)
                   .fillColor('#666666')
                   .margin({ right: 8 })
-                Text(this.isPlaying ? '暂停播放' : '播放录音')
+                Text(this.playerState === PlayerState.STATE_STARTED ? '暂停播放' : '播放录音')
                   .fontSize(14)
                   .fontColor('#666666')
               }
@@ -337,14 +331,12 @@ export struct DetailDialog {
             .padding({ left: 16, right: 16 })
             .onClick(async () => {
               try {
-                if (this.isPlaying) {
+                if (this.playerState === PlayerState.STATE_STARTED) {
                   // 如果正在播放,则暂停
                   await this.audioPlayerService.pause();
-                  this.isPlaying = false;
                 } else {
                   // 如果未播放,检查播放器状态
-                  const playerState = this.audioPlayerService.getPlayerState();
-                  if (playerState === PlayerState.STATE_PAUSED) {
+                  if (this.playerState === PlayerState.STATE_PAUSED) {
                     // 如果是暂停状态,则继续播放
                     await this.audioPlayerService.resume();
                   } else {
@@ -353,7 +345,6 @@ export struct DetailDialog {
                       await this.audioPlayerService.playAudioFile(this.selectedRecord.audioFilePath);
                     }
                   }
-                  this.isPlaying = true;
                 }
               } catch (error) {
                 hilog.error(DOMAIN, TAG, '播放音频失败: %{public}s', error instanceof Error ? error.message : String(error));
@@ -421,6 +412,17 @@ export struct DetailDialog {
     .margin({ bottom: 12, top: -32 })
   }
 
+  // 关闭弹框前先停止播放
+  private async handleClose() {
+    try {
+      await this.audioPlayerService.release();
+      hilog.info(DOMAIN, TAG, '关闭弹框时释放播放器成功');
+    } catch (error) {
+      hilog.error(DOMAIN, TAG, '关闭弹框时释放播放器失败: %{public}s', error instanceof Error ? error.message : String(error));
+    }
+    this.closeDialog();
+  }
+
   build() {
     Column() {
       // 顶部拖动条
@@ -439,7 +441,7 @@ export struct DetailDialog {
       Column() {
         if (this.selectedRecord) {
           DialogTitleBuilder(this.selectedRecord, () => {
-            this.closeDialog()
+            this.handleClose()
           })
 
           Column() {
@@ -640,7 +642,7 @@ export struct DetailDialog {
         .onActionEnd(() => {
           if (this.translateY > 100) {
             // 如果下滑超过阈值，关闭弹窗
-            this.closeDialog();
+            this.handleClose();
           } else {
             // 否则回弹
             animateTo({ duration: 300, curve: Curve.EaseOut }, () => {

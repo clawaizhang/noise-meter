@@ -244,9 +244,16 @@ export class AudioPlayerService {
   async release(): Promise<void> {
     if (this.player) {
       try {
-        await this.stop();
+        // 先停止播放
+        if (this.player.isPlaying() || this.getPlayerState() === PlayerState.STATE_PAUSED) {
+          await this.stop();
+        }
+        // 释放播放器资源
         await this.player.release();
         this.player = null;
+        if (this.onStateChangeListener) {
+          this.onStateChangeListener(PlayerState.STATE_NOT_INIT);
+        }
         hilog.info(DOMAIN, TAG, '播放器资源释放成功');
       } catch (error) {
         hilog.error(DOMAIN, TAG, '释放播放器失败: %{public}s', error instanceof Error ? error.message : String(error));
