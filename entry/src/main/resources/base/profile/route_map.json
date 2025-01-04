@@ -9,6 +9,11 @@
       "name": "DecibelHistory",
       "pageSourceFile": "src/noise_meter/pages/DecibelHistory.ets",
       "buildFunction": "DecibelHistoryBuilder"
+    },
+    {
+      "name": "NoiseInfoDialog",
+      "pageSourceFile": "src/library/ets/components/business/dialogs/NoiseInfoDialog.ets",
+      "buildFunction": "DecibelHistoryBuilder"
     },{
       "name": "FileVault",
       "pageSourceFile": "src/file_vault/pages/FileVault.ets",

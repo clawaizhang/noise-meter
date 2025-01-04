@@ -5,6 +5,8 @@ import common from '@ohos.app.ability.common'
 import { FileService } from "../../services/FileService"
 import hilog from '@ohos.hilog'
 import { PlayerState } from "@seagazer/ccplayer"
+import { NoiseInfoDialog } from "./dialogs/NoiseInfoDialog"
+import { noiseMeterNavStack } from "../../../../noise_meter/ets/constant/ProviderConstant"
 
 const TAG = 'DetailDialog';
 const DOMAIN = 0x0000;
@@ -126,6 +128,7 @@ export struct DetailDialog {
   @Param @Require context: common.Context;
   @Param @Require  fileService: FileService | null;
   @BuilderParam closeDialog: () => void;
+  @Consumer(noiseMeterNavStack) navStack: NavPathStack = new NavPathStack()
   @Local translateY: number = 0;
   @Local playerState: PlayerState = PlayerState.STATE_NOT_INIT;
   private startY: number = 0;
@@ -448,11 +451,22 @@ export struct DetailDialog {
             BasicInfoBuilder(this.selectedRecord)
             Column() {
               // 统计数据部分
-              Text('统计数据')
-                .fontSize(16)
-                .fontWeight(FontWeight.Medium)
-                .alignSelf(ItemAlign.Start)
-                .margin({ bottom: 8, top: -16 })
+              Row() {
+                Text('统计数据')
+                  .fontSize(16)
+                  .fontWeight(FontWeight.Medium)
+                
+                Image($r('app.media.ic_info'))
+                  .width(16)
+                  .height(16)
+                  .margin({ left: 4 })
+                  .onClick(() => {
+                    this.navStack.pushPathByName("NoiseInfoDialog", null, true);
+                  })
+              }
+              .width('100%')
+              .alignItems(VerticalAlign.Center)
+              .margin({ bottom: 8, top: -16 })
 
               // 分贝值分布描述
               Text(this.selectedRecord.getDecibelDistributionDescription())
