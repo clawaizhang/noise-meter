@@ -45,6 +45,7 @@ export struct DecibelHistory {
   private promptAction: PromptAction = this.getUIContext().getPromptAction();
   private dialogService: DialogService = new DialogService();
   private fileService: FileService = new FileService(this.context)
+  private pendingHideButtonId: string = ''; // 当前正在隐藏按钮的记录ID
 
   @Builder
   DetailDialogBuilder() {
@@ -353,13 +354,13 @@ export struct DecibelHistory {
                 // 如果开始时有按钮，则只处理右滑隐藏
                 this.currentSlideOffset = Math.max(-160, Math.min(80, -160 + deltaX));
                 if (deltaX > 20) { // 降低右滑关闭阈值
-                  this.showingDeleteButtonId = ''; // 关闭所有按钮
+                  this.pendingHideButtonId = record.id;
                 }
               } else {
                 // 允许左滑显示按钮和右滑回弹
                 this.currentSlideOffset = Math.max(-160, Math.min(80, deltaX));
                 if (deltaX > 20) { // 右滑时关闭所有按钮
-                  this.showingDeleteButtonId = '';
+                  this.pendingHideButtonId = record.id;
                 } else if (deltaX < -80) { // 左滑超过一半距离时显示按钮
                   this.showingDeleteButtonId = record.id;
                 }
@@ -377,13 +378,16 @@ export struct DecibelHistory {
                   // 如果开始时有按钮，则处理隐藏按钮的操作
                   if (this.currentSlideOffset > -140) { // 降低右滑关闭阈值
                     this.showingDeleteButtonId = '';
+                    this.pendingHideButtonId = '';
                   }
                 } else {
                   // 如果开始时没有按钮，处理显示按钮
                   if (this.currentSlideOffset < -80) { // 左滑超过一半距离时显示按钮
                     this.showingDeleteButtonId = record.id;
+                    this.pendingHideButtonId = '';
                   } else if (this.currentSlideOffset > 20) { // 右滑时关闭所有按钮
                     this.showingDeleteButtonId = '';
+                    this.pendingHideButtonId = '';
                   }
                 }
                 this.currentSlideOffset = this.showingDeleteButtonId === record.id ? -160 : 0;
@@ -393,7 +397,7 @@ export struct DecibelHistory {
           })
       )
 
-      if (this.showingDeleteButtonId === record.id || this.currentSlidingId === record.id) {
+      if (this.showingDeleteButtonId === record.id || this.currentSlidingId === record.id || this.pendingHideButtonId === record.id) {
         // 右侧按钮组
         Row() {
           // 收藏按钮
@@ -417,12 +421,15 @@ export struct DecibelHistory {
               bottom: '50%'
             });
             // 平滑关闭按钮，跟随历史记录一起滑动
+            this.currentSlidingId = record.id;
+            this.pendingHideButtonId = record.id;
             animateTo({
               duration: 300,
               curve: Curve.EaseOut,
             }, () => {
               this.currentSlideOffset = 0;
               this.showingDeleteButtonId = '';
+              this.pendingHideButtonId = '';
             })
           })
 
@@ -446,9 +453,13 @@ export struct DecibelHistory {
         .height(96)
         .position({ x: '100%', y: 0 })
         .translate({
-          x: this.showingDeleteButtonId === record.id ? -160 :
-          Math.max(-160, Math.min(0, this.currentSlideOffset + 160))
+          x: record.id === this.currentSlidingId ? 
+            this.currentSlideOffset : // 直接使用滑动偏移量，不需要加160
+            (this.showingDeleteButtonId === record.id ? -160 : 0)
         })
+        .opacity(record.id === this.currentSlidingId ? 
+          Math.min(1, Math.abs(this.currentSlideOffset) / 80) : // 根据滑动距离渐变显示
+          (this.showingDeleteButtonId === record.id ? 1 : 0))
         .animation({
           duration: 300,
           curve: Curve.EaseOut
