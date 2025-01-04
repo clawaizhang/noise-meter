@@ -20,7 +20,7 @@ function buildDialog(params: DialogParams) {
     selectedRecord: params.selectedRecord,
     closeDialog: params.closeDialog,
     context: params.context,
-    fileService:params.fileService
+    fileService: params.fileService
   })
 }
 
@@ -135,7 +135,7 @@ export struct DecibelMeter {
         // 获取缓存的位置信息
         const locationInfo = this.locationService.getCachedLocation();
         console.info('位置信息:', locationInfo);
-        
+
         // 计算检测时长
         const duration = new Date().getTime() - this.startTime;
         console.info('检测时长:', duration);
@@ -147,7 +147,7 @@ export struct DecibelMeter {
             console.info('开始获取WAV音频数据');
             audioData = await this.audioService.stopCaptureAndGetWavData();
             console.info('WAV音频数据大小:', audioData.byteLength);
-            
+
             // 创建音频文件目录
             const audioDir = 'audio';
             try {
@@ -155,7 +155,7 @@ export struct DecibelMeter {
             } catch (error) {
               // 目录可能已存在，忽略错误
             }
-            
+
             // 生成文件名并保存WAV文件
             const fileName = `audio_${new Date().getTime()}.wav`;
             const relativePath = `${audioDir}/${fileName}`;
@@ -189,7 +189,7 @@ export struct DecibelMeter {
           this.currentRecord.audioFilePath = this.currentAudioFilePath;
         }
         console.info('记录更新成功:', this.currentRecord);
-        
+
         await this.recordService.saveRecord(this.currentRecord);
         console.info('记录保存成功');
 
@@ -415,26 +415,15 @@ export struct DecibelMeter {
         .backgroundColor(Color.White)
         .borderRadius(24)
         .onClick(() => {
-          // 如果没有currentRecord则创建新的,否则更新现有的
-          if (!this.currentRecord) {
-            this.currentRecord = new DecibelRecord(
-              this.minDecibel,
-              this.maxDecibel,
-              this.avgDecibel,
-              this.startTime == 0 ? 0 : new Date().getTime() - this.startTime,
-              [...this.values],
-              this.locationService.getCachedLocation()?.address,
-              this.currentAudioFilePath
-            );
-          } else {
-            this.currentRecord.minDecibel = this.minDecibel;
-            this.currentRecord.maxDecibel = this.maxDecibel;
-            this.currentRecord.avgDecibel = this.avgDecibel;
-            this.currentRecord.duration = this.startTime == 0 ? 0 : new Date().getTime() - this.startTime;
-            this.currentRecord.decibelValues = [...this.values];
-            this.currentRecord.location = this.locationService.getCachedLocation()?.address;
-            this.currentRecord.audioFilePath = this.currentAudioFilePath;
-          }
+          this.currentRecord = new DecibelRecord(
+            this.minDecibel,
+            this.maxDecibel,
+            this.avgDecibel,
+            this.startTime == 0 ? 0 : new Date().getTime() - this.startTime,
+            [...this.values],
+            this.locationService.getCachedLocation()?.address,
+            this.currentAudioFilePath
+          );
           this.dialogService.showDetailDialog(
             this.getUIContext(),
             wrapBuilder(buildDialog),
