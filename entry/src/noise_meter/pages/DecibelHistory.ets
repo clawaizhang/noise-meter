@@ -37,6 +37,7 @@ export struct DecibelHistory {
   @Local showingDeleteButtonId: string = ''; // 当前显示删除按钮的记录ID
   @Local currentSlidingId: string = ''; // 当前正在滑动的记录ID
   @Local currentSlideOffset: number = 0; // 当前滑动的偏移量
+  @Local pendingDeleteId: string = ''; // 当前正在删除的记录ID
   private startX: number = 0;
   private hasDeleteButtonOnStart: boolean = false; // 滑动开始时是否有删除按钮示
   private context: Context = getContext(this)
@@ -356,12 +357,14 @@ export struct DecibelHistory {
                 this.currentSlideOffset = -160 + deltaX; // 直接使用偏移量
                 if (deltaX > 20) { // 降低右滑关闭阈值
                   this.pendingHideButtonId = record.id;
+                  this.pendingDeleteId = ''; // 重置删除确认状态
                 }
               } else {
                 // 允许左滑显示按钮和右滑回弹
                 this.currentSlideOffset = deltaX; // 直接使用偏移量
                 if (deltaX > 20) { // 右滑时关闭所有按钮
                   this.pendingHideButtonId = record.id;
+                  this.pendingDeleteId = ''; // 重置删除确认状态
                 } else if (deltaX < -80) { // 左滑超过一半距离时显示按钮
                   this.showingDeleteButtonId = record.id;
                 }
@@ -380,6 +383,7 @@ export struct DecibelHistory {
                   if (this.currentSlideOffset > -140) { // 降低右滑关闭阈值
                     this.showingDeleteButtonId = '';
                     this.pendingHideButtonId = '';
+                    this.pendingDeleteId = ''; // 重置删除确认状态
                   }
                 } else {
                   // 如果开始时没有按钮，处理显示按钮
@@ -389,6 +393,7 @@ export struct DecibelHistory {
                   } else if (this.currentSlideOffset > 20) { // 右滑时关闭所有按钮
                     this.showingDeleteButtonId = '';
                     this.pendingHideButtonId = '';
+                    this.pendingDeleteId = ''; // 重置删除确认状态
                   }
                 }
                 this.currentSlideOffset = this.showingDeleteButtonId === record.id ? -160 : 0;
@@ -401,69 +406,117 @@ export struct DecibelHistory {
       if (this.showingDeleteButtonId === record.id || this.currentSlidingId === record.id || this.pendingHideButtonId === record.id) {
         // 右侧按钮组
         Row() {
-          // 收藏按钮
-          Button() {
-            Text(record.isFavorite ? '取消收藏' : '收藏')
-              .fontSize(14)
-              .fontColor(record.isFavorite ? '#FF4081' : Color.White)
-          }
-          .width(80)
-          .height(96)
-          .type(ButtonType.Normal)
-          .backgroundColor(record.isFavorite ? '#FFE0EB' : '#FF4081')
-          .onClick(async () => {
-            record.isFavorite = !record.isFavorite;
-            await this.recordService.updateRecord(record);
-            // 显示操作提示
-            this.promptAction.showToast({
-              message: record.isFavorite ? '已添加到收藏' : '已取消收藏',
-              duration: 2000,
-              bottom: '50%'
-            });
-            // 平滑关闭按钮，跟随历史记录一起滑动
-            this.currentSlidingId = record.id;
-            this.pendingHideButtonId = record.id;
-            animateTo({
-              duration: 300,
-              curve: Curve.EaseOut,
-            }, () => {
-              this.currentSlideOffset = 0;
-              this.showingDeleteButtonId = '';
-              this.pendingHideButtonId = '';
+          if (record.id === this.pendingDeleteId) {
+            // 删除确认按钮
+            Button() {
+              Text('删除并清空检测报告')
+                .fontSize(14)
+                .fontColor(Color.White)
+                .textAlign(TextAlign.Center)
+                .width('100%')
+                .padding({ left: 8, right: 8 })
+            }
+            .width(160)
+            .height(96)
+            .type(ButtonType.Normal)
+            .backgroundColor('#FF3B30')
+            .onClick(() => {
+              this.deleteRecord(record);
             })
-          })
+          } else {
+            // 常规按钮组
+            Row() {
+              // 收藏按钮
+              Button() {
+                Text(record.isFavorite ? '取消收藏' : '收藏')
+                  .fontSize(14)
+                  .fontColor(record.isFavorite ? '#FF4081' : Color.White)
+              }
+              .width(80)
+              .height(96)
+              .type(ButtonType.Normal)
+              .backgroundColor(record.isFavorite ? '#FFE0EB' : '#FF4081')
+              .onClick(async () => {
+                record.isFavorite = !record.isFavorite;
+                await this.recordService.updateRecord(record);
+                // 显示操作提示
+                this.promptAction.showToast({
+                  message: record.isFavorite ? '已添加到收藏' : '已取消收藏',
+                  duration: 2000,
+                  bottom: '50%'
+                });
+                // 平滑关闭按钮，跟随历史记录一起滑动
+                this.currentSlidingId = record.id;
+                this.pendingHideButtonId = record.id;
+                animateTo({
+                  duration: 300,
+                  curve: Curve.EaseOut,
+                }, () => {
+                  this.currentSlideOffset = 0;
+                  this.showingDeleteButtonId = '';
+                  this.pendingHideButtonId = '';
+                })
+              })
 
-          // 删除按钮
-          Button() {
-            Text('删除')
-              .fontSize(14)
-              .fontColor(Color.White)
+              // 删除按钮
+              Button() {
+                Text('删除')
+                  .fontSize(14)
+                  .fontColor(Color.White)
+                  .textAlign(TextAlign.Center)
+                  .width('100%')
+                  .padding({ left: 8, right: 8 })
+              }
+              .width(80)
+              .height(96)
+              .type(ButtonType.Normal)
+              .backgroundColor('#666666')
+              .onClick(() => {
+                this.pendingDeleteId = record.id;
+                this.showingDeleteButtonId = '';
+                this.currentSlideOffset = -160;
+                this.currentSlidingId = record.id;
+              })
+            }
           }
-          .width(80)
-          .height(96)
-          .type(ButtonType.Normal)
-          .backgroundColor('#666666')
-          .onClick(() => {
-            // 显示删除确认对话框
-            this.showDeleteConfirmDialog();
-          })
         }
         .width(160)
         .height(96)
+        .justifyContent(FlexAlign.End)
         .position({ x: '100%', y: 0 })
         .translate({
           x: record.id === this.currentSlidingId ? 
             this.currentSlideOffset : // 直接使用滑动偏移量
             (this.showingDeleteButtonId === record.id ? -160 : 0)
         })
-        .opacity(record.id === this.currentSlidingId ? 
-          Math.min(1, Math.abs(this.currentSlideOffset) / 80) : // 根据滑动距离渐变显示
-          (this.showingDeleteButtonId === record.id ? 1 : 0))
         .animation({
           duration: 300,
           curve: Curve.EaseOut
         })
       }
+    }
+  }
+
+  private async deleteRecord(record: DecibelRecord) {
+    try {
+      // 从列表中除该记录
+      const index = this.records.findIndex(r => r.id === record.id);
+      if (index !== -1) {
+        this.records.splice(index, 1);
+      }
+      // 从数据库中删除记录
+      await this.recordService.deleteRecord(record.id);
+      // 隐藏删除按钮
+      this.showingDeleteButtonId = '';
+      this.pendingDeleteId = '';
+      // 显示删除成功提示
+      this.promptAction.showToast({
+        message: '删除成功',
+        duration: 2000,
+        bottom: '50%'
+      });
+    } catch (error) {
+      console.error('删除记录失败:', error);
     }
   }
 
