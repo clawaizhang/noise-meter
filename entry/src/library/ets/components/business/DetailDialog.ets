@@ -314,11 +314,18 @@ export struct DetailDialog {
                 await this.audioPlayerService.pause();
                 this.isPlaying = false;
               } else {
-                // 如果未播放,则开始播放
-                if (selectedRecord?.audioFilePath) {
-                  await this.audioPlayerService.playAudioFile(selectedRecord.audioFilePath);
-                  this.isPlaying = true;
+                // 如果未播放,检查播放器状态
+                const playerState = this.audioPlayerService.getPlayerState();
+                if (playerState === PlayerState.STATE_PAUSED) {
+                  // 如果是暂停状态,则继续播放
+                  await this.audioPlayerService.resume();
+                } else {
+                  // 其他状态(完成/错误/未初始化等),重新开始播放
+                  if (this.selectedRecord?.audioFilePath) {
+                    await this.audioPlayerService.playAudioFile(this.selectedRecord.audioFilePath);
+                  }
                 }
+                this.isPlaying = true;
               }
             } catch (error) {
               hilog.error(DOMAIN, TAG, '播放音频失败: %{public}s', error instanceof Error ? error.message : String(error));
