@@ -84,7 +84,7 @@ export class AudioPlayerService {
 
   /**
    * 播放音频文件
-   * @param audioFilePath - 音频文件的绝对路径
+   * @param audioFilePath - 音频文件路径
    */
   async playAudioFile(audioFilePath: string): Promise<void> {
     try {
@@ -98,7 +98,6 @@ export class AudioPlayerService {
       }
 
       hilog.info(DOMAIN, TAG, '准备播放音频文件: %{public}s', audioFilePath);
-      
       // 创建媒体源
       const mediaSource = await MediaSourceFactory.createFile('audio', audioFilePath);
       hilog.info(DOMAIN, TAG, '媒体源创建成功');
@@ -107,6 +106,9 @@ export class AudioPlayerService {
       this.player.setMediaSource(mediaSource, () => {
         hilog.info(DOMAIN, TAG, '媒体源设置成功，开始播放');
         this.player?.start();
+        if (this.onStateChangeListener) {
+          this.onStateChangeListener(PlayerState.STATE_STARTED);
+        }
       });
     } catch (error) {
       hilog.error(DOMAIN, TAG, '播放音频失败: %{public}s', error instanceof Error ? error.message : String(error));
@@ -121,6 +123,9 @@ export class AudioPlayerService {
     if (this.player && this.isPlaying()) {
       try {
         await this.player.pause();
+        if (this.onStateChangeListener) {
+          this.onStateChangeListener(PlayerState.STATE_PAUSED);
+        }
         hilog.info(DOMAIN, TAG, '暂停播放成功');
       } catch (error) {
         hilog.error(DOMAIN, TAG, '暂停播放失败: %{public}s', error instanceof Error ? error.message : String(error));
@@ -136,6 +141,9 @@ export class AudioPlayerService {
     if (this.player && !this.isPlaying()) {
       try {
         await this.player.start();
+        if (this.onStateChangeListener) {
+          this.onStateChangeListener(PlayerState.STATE_STARTED);
+        }
         hilog.info(DOMAIN, TAG, '恢复播放成功');
       } catch (error) {
         hilog.error(DOMAIN, TAG, '恢复播放失败: %{public}s', error instanceof Error ? error.message : String(error));
@@ -151,6 +159,9 @@ export class AudioPlayerService {
     if (this.player) {
       try {
         await this.player.stop();
+        if (this.onStateChangeListener) {
+          this.onStateChangeListener(PlayerState.STATE_STOPPED);
+        }
         hilog.info(DOMAIN, TAG, '停止播放成功');
       } catch (error) {
         hilog.error(DOMAIN, TAG, '停止播放失败: %{public}s', error instanceof Error ? error.message : String(error));

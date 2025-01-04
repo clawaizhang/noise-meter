@@ -128,6 +128,7 @@ export struct DetailDialog {
   @BuilderParam closeDialog: () => void;
   @Local translateY: number = 0;
   @Local isPlaying: boolean = false;
+  @Local playerState: PlayerState = PlayerState.STATE_NOT_INIT;
   private startY: number = 0;
   private decibelService: DecibelService = new DecibelService();
   private audioPlayerService!: AudioPlayerService;
@@ -148,7 +149,12 @@ export struct DetailDialog {
       this.audioPlayerService = new AudioPlayerService(this.context, this.fileService);
       // 设置播放状态监听
       this.audioPlayerService.setOnStateChangeListener((state: PlayerState) => {
+        this.playerState = state;
         if (state === PlayerState.STATE_COMPLETED || state === PlayerState.STATE_ERROR) {
+          this.isPlaying = false;
+        } else if (state === PlayerState.STATE_STARTED) {
+          this.isPlaying = true;
+        } else if (state === PlayerState.STATE_PAUSED) {
           this.isPlaying = false;
         }
       });
@@ -289,48 +295,71 @@ export struct DetailDialog {
 
         if (selectedRecord!.audioFilePath) {
           Blank()
-          Button() {
-            Row() {
-              Image(this.isPlaying ? $r('app.media.ic_pause') : $r('app.media.ic_play'))
-                .width(20)
-                .height(20)
-                .fillColor('#666666')
-                .margin({ right: 8 })
-              Text(this.isPlaying ? '暂停播放' : '播放录音')
-                .fontSize(14)
-                .fontColor('#666666')
-            }
-            .alignItems(VerticalAlign.Center)
-            .justifyContent(FlexAlign.Center)
-          }
-          .type(ButtonType.Capsule)
-          .backgroundColor('#F5F5F5')
-          .height(36)
-          .padding({ left: 16, right: 16 })
-          .onClick(async () => {
-            try {
-              if (this.isPlaying) {
-                // 如果正在播放,则暂停
-                await this.audioPlayerService.pause();
-                this.isPlaying = false;
-              } else {
-                // 如果未播放,检查播放器状态
-                const playerState = this.audioPlayerService.getPlayerState();
-                if (playerState === PlayerState.STATE_PAUSED) {
-                  // 如果是暂停状态,则继续播放
-                  await this.audioPlayerService.resume();
-                } else {
-                  // 其他状态(完成/错误/未初始化等),重新开始播放
-                  if (this.selectedRecord?.audioFilePath) {
-                    await this.audioPlayerService.playAudioFile(this.selectedRecord.audioFilePath);
-                  }
-                }
-                this.isPlaying = true;
+          Row() {
+            // 添加停止按钮
+            if (this.playerState === PlayerState.STATE_STARTED || this.playerState === PlayerState.STATE_PAUSED) {
+              Button() {
+                Image($r('app.media.ic_stop'))
+                  .width(20)
+                  .height(20)
+                  .fillColor('#666666')
               }
-            } catch (error) {
-              hilog.error(DOMAIN, TAG, '播放音频失败: %{public}s', error instanceof Error ? error.message : String(error));
+              .type(ButtonType.Normal)
+              .backgroundColor(Color.Transparent)
+              .margin({ right: 8 })
+              .onClick(async () => {
+                try {
+                  await this.audioPlayerService.stop();
+                  this.isPlaying = false;
+                } catch (error) {
+                  hilog.error(DOMAIN, TAG, '停止播放失败: %{public}s', error instanceof Error ? error.message : String(error));
+                }
+              })
             }
-          })
+            
+            Button() {
+              Row() {
+                Image(this.isPlaying ? $r('app.media.ic_pause') : $r('app.media.ic_play'))
+                  .width(20)
+                  .height(20)
+                  .fillColor('#666666')
+                  .margin({ right: 8 })
+                Text(this.isPlaying ? '暂停播放' : '播放录音')
+                  .fontSize(14)
+                  .fontColor('#666666')
+              }
+              .alignItems(VerticalAlign.Center)
+              .justifyContent(FlexAlign.Center)
+            }
+            .type(ButtonType.Capsule)
+            .backgroundColor('#F5F5F5')
+            .height(36)
+            .padding({ left: 16, right: 16 })
+            .onClick(async () => {
+              try {
+                if (this.isPlaying) {
+                  // 如果正在播放,则暂停
+                  await this.audioPlayerService.pause();
+                  this.isPlaying = false;
+                } else {
+                  // 如果未播放,检查播放器状态
+                  const playerState = this.audioPlayerService.getPlayerState();
+                  if (playerState === PlayerState.STATE_PAUSED) {
+                    // 如果是暂停状态,则继续播放
+                    await this.audioPlayerService.resume();
+                  } else {
+                    // 其他状态(完成/错误/未初始化等),重新开始播放
+                    if (this.selectedRecord?.audioFilePath) {
+                      await this.audioPlayerService.playAudioFile(this.selectedRecord.audioFilePath);
+                    }
+                  }
+                  this.isPlaying = true;
+                }
+              } catch (error) {
+                hilog.error(DOMAIN, TAG, '播放音频失败: %{public}s', error instanceof Error ? error.message : String(error));
+              }
+            })
+          }
         }
       }
       .width('100%')
