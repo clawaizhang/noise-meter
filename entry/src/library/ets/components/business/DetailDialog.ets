@@ -54,6 +54,7 @@ function BasicInfoBuilder(selectedRecord: DecibelRecord) {
       Text('检测时间')
         .fontSize(14)
         .fontColor('#666666')
+        .width('30%')
       Text(new Date(selectedRecord!.timestamp).toLocaleString('zh-CN', {
         year: 'numeric',
         month: '2-digit',
@@ -65,21 +66,22 @@ function BasicInfoBuilder(selectedRecord: DecibelRecord) {
       }))
         .fontSize(14)
         .fontColor('#333333')
+        .width('70%')
     }
     .width('100%')
-    .justifyContent(FlexAlign.SpaceBetween)
     .margin({ bottom: 8 })
 
     Row() {
       Text('检测时长')
         .fontSize(14)
         .fontColor('#666666')
+        .width('30%')
       Text(`${Math.round(selectedRecord!.duration / 1000)}秒`)
         .fontSize(14)
         .fontColor('#333333')
+        .width('70%')
     }
     .width('100%')
-    .justifyContent(FlexAlign.SpaceBetween)
     .margin({ bottom: 8 })
 
     if (selectedRecord!.location) {
@@ -87,15 +89,14 @@ function BasicInfoBuilder(selectedRecord: DecibelRecord) {
         Text('检测位置')
           .fontSize(14)
           .fontColor('#666666')
+          .width('30%')
         Text(selectedRecord!.location)
           .fontSize(14)
           .fontColor('#333333')
-          .textAlign(TextAlign.End)
-          .textOverflow({ overflow: TextOverflow.None })
           .width('70%')
+          .textOverflow({ overflow: TextOverflow.None })
       }
       .width('100%')
-      .justifyContent(FlexAlign.SpaceBetween)
       .margin({ bottom: 8 })
     }
   }
@@ -210,14 +211,6 @@ export struct DetailDialog {
 
       if (!this.selectedRecord || this.selectedRecord.values.length === 0) {
         Column() {
-          Image($r('app.media.ic_empty'))
-            .width(32)
-            .height(32)
-            .fillColor('#999999')
-            .margin({ bottom: 8 })
-          Text('暂无噪音级别分布数据')
-            .fontSize(14)
-            .fontColor('#999999')
         }
         .width('100%')
         .justifyContent(FlexAlign.Center)
@@ -514,18 +507,9 @@ export struct DetailDialog {
 
               if (!this.selectedRecord || this.selectedRecord.values.length === 0) {
                 Column() {
-                  Image($r('app.media.ic_empty'))
-                    .width(32)
-                    .height(32)
-                    .fillColor('#999999')
-                    .margin({ bottom: 8 })
-                  Text('暂无噪音级别分布数据')
-                    .fontSize(14)
-                    .fontColor('#999999')
                 }
                 .width('100%')
                 .justifyContent(FlexAlign.Center)
-                .margin({ top: 20, bottom: 20 })
               } else {
                 Row() {
                   // 饼图
