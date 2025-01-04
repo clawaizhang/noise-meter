@@ -84,7 +84,7 @@ export class AudioPlayerService {
 
   /**
    * 播放音频文件
-   * @param audioFilePath - 音频文件路径
+   * @param audioFilePath - 音频文件的绝对路径
    */
   async playAudioFile(audioFilePath: string): Promise<void> {
     try {
@@ -98,6 +98,7 @@ export class AudioPlayerService {
       }
 
       hilog.info(DOMAIN, TAG, '准备播放音频文件: %{public}s', audioFilePath);
+      
       // 创建媒体源
       const mediaSource = await MediaSourceFactory.createFile('audio', audioFilePath);
       hilog.info(DOMAIN, TAG, '媒体源创建成功');

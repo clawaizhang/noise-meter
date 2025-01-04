@@ -147,12 +147,20 @@ export struct DecibelMeter {
             audioData = await this.audioService.stopCaptureAndGetWavData();
             console.info('WAV音频数据大小:', audioData.byteLength);
             
+            // 创建音频文件目录
+            const audioDir = 'audio';
+            try {
+              await this.fileService.createDirectory(audioDir);
+            } catch (error) {
+              // 目录可能已存在，忽略错误
+            }
+            
             // 生成文件名并保存WAV文件
             const fileName = `audio_${new Date().getTime()}.wav`;
-            console.info('准备保存音频文件:', fileName);
-            await this.fileService.saveFile(fileName, audioData);
-            console.info('音频文件保存成功');
-            audioFilePath = fileName;
+            const relativePath = `${audioDir}/${fileName}`;
+            console.info('准备保存音频文件:', relativePath);
+            audioFilePath = await this.fileService.saveFile(relativePath, audioData);
+            console.info('音频文件保存成功:', audioFilePath);
           } catch (error) {
             console.error('获取或保存WAV音频数据失败:', error);
           }

@@ -21,12 +21,20 @@ export class FileService {
   }
 
   /**
+   * 获取应用文件存储的基础路径
+   * @returns string
+   */
+  getBasePath(): string {
+    return this.filesDir;
+  }
+
+  /**
    * 保存文件到应用内部存储
    * @param fileName - 文件名
    * @param content - 文件内容
-   * @returns Promise<void>
+   * @returns Promise<string> 返回保存文件的绝对路径
    */
-  async saveFile(fileName: string, content: string | ArrayBuffer): Promise<void> {
+  async saveFile(fileName: string, content: string | ArrayBuffer): Promise<string> {
     try {
       // 构建完整的文件路径
       const filePath = `${this.filesDir}/${fileName}`;
@@ -39,6 +47,8 @@ export class FileService {
       const file = await fs.open(filePath, fs.OpenMode.CREATE | fs.OpenMode.READ_WRITE);
       await fs.write(file.fd, fileContent);
       await fs.close(file.fd);
+
+      return filePath;  // 返回绝对路径
     } catch (error) {
       const businessError = error as BusinessError;
       console.error(`保存文件失败: ${businessError.message}`);
