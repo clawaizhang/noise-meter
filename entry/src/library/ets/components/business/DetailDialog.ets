@@ -454,6 +454,13 @@ export struct DetailDialog {
                 .alignSelf(ItemAlign.Start)
                 .margin({ bottom: 8, top: -16 })
 
+              // 分贝值分布描述
+              Text(this.selectedRecord.getDecibelDistributionDescription())
+                .fontSize(14)
+                .fontColor('#333333')
+                .lineHeight(20)
+                .margin({ top: 0, bottom: 16 })
+
               Row() {
                 Column() {
                   Text('最小值')
