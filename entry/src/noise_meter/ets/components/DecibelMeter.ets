@@ -47,6 +47,8 @@ export struct DecibelMeter {
   private values: number[] = []
   private startTime: number = 0
   private releaseTimer: number = -1
+  private currentAudioFilePath?: string
+  private currentRecord?: DecibelRecord
 
   aboutToAppear() {
     // 如果提供了外部context，重新初始化AudioService
@@ -140,7 +142,6 @@ export struct DecibelMeter {
 
         // 获取WAV格式的音频数据
         let audioData: ArrayBuffer | undefined;
-        let audioFilePath: string | undefined;
         if (this.isRecordEnabled) {
           try {
             console.info('开始获取WAV音频数据');
@@ -159,27 +160,37 @@ export struct DecibelMeter {
             const fileName = `audio_${new Date().getTime()}.wav`;
             const relativePath = `${audioDir}/${fileName}`;
             console.info('准备保存音频文件:', relativePath);
-            audioFilePath = await this.fileService.saveFile(relativePath, audioData);
-            console.info('音频文件保存成功:', audioFilePath);
+            this.currentAudioFilePath = await this.fileService.saveFile(relativePath, audioData);
+            console.info('音频文件保存成功:', this.currentAudioFilePath);
           } catch (error) {
             console.error('获取或保存WAV音频数据失败:', error);
           }
         }
 
         console.info('准备创建记录');
-        // 创建并保存记录
-        const record = new DecibelRecord(
-          this.minDecibel,
-          this.maxDecibel,
-          this.avgDecibel,
-          duration,
-          [...this.values],
-          locationInfo?.address,
-          audioFilePath
-        );
-        console.info('记录创建成功:', record);
+        // 如果没有currentRecord则创建新的,否则更新现有的
+        if (!this.currentRecord) {
+          this.currentRecord = new DecibelRecord(
+            this.minDecibel,
+            this.maxDecibel,
+            this.avgDecibel,
+            duration,
+            [...this.values],
+            locationInfo?.address,
+            this.currentAudioFilePath
+          );
+        } else {
+          this.currentRecord.minDecibel = this.minDecibel;
+          this.currentRecord.maxDecibel = this.maxDecibel;
+          this.currentRecord.avgDecibel = this.avgDecibel;
+          this.currentRecord.duration = duration;
+          this.currentRecord.values = [...this.values];
+          this.currentRecord.location = locationInfo?.address;
+          this.currentRecord.audioFilePath = this.currentAudioFilePath;
+        }
+        console.info('记录更新成功:', this.currentRecord);
         
-        await this.recordService.saveRecord(record);
+        await this.recordService.saveRecord(this.currentRecord);
         console.info('记录保存成功');
 
         // 显示详情弹窗
@@ -193,7 +204,7 @@ export struct DecibelMeter {
         this.dialogService.showDetailDialog(
           this.getUIContext(),
           wrapBuilder(buildDialog),
-          record,
+          this.currentRecord,
           appContext
         );
         console.info('详情弹窗显示成功');
@@ -404,18 +415,30 @@ export struct DecibelMeter {
         .backgroundColor(Color.White)
         .borderRadius(24)
         .onClick(() => {
-          const record = new DecibelRecord(
-            this.minDecibel,
-            this.maxDecibel,
-            this.avgDecibel,
-            this.startTime == 0 ? 0 : new Date().getTime() - this.startTime,
-            [...this.values],
-            this.locationService.getCachedLocation()?.address
-          );
+          // 如果没有currentRecord则创建新的,否则更新现有的
+          if (!this.currentRecord) {
+            this.currentRecord = new DecibelRecord(
+              this.minDecibel,
+              this.maxDecibel,
+              this.avgDecibel,
+              this.startTime == 0 ? 0 : new Date().getTime() - this.startTime,
+              [...this.values],
+              this.locationService.getCachedLocation()?.address,
+              this.currentAudioFilePath
+            );
+          } else {
+            this.currentRecord.minDecibel = this.minDecibel;
+            this.currentRecord.maxDecibel = this.maxDecibel;
+            this.currentRecord.avgDecibel = this.avgDecibel;
+            this.currentRecord.duration = this.startTime == 0 ? 0 : new Date().getTime() - this.startTime;
+            this.currentRecord.values = [...this.values];
+            this.currentRecord.location = this.locationService.getCachedLocation()?.address;
+            this.currentRecord.audioFilePath = this.currentAudioFilePath;
+          }
           this.dialogService.showDetailDialog(
             this.getUIContext(),
             wrapBuilder(buildDialog),
-            record,
+            this.currentRecord,
             getContext(this) as common.Context
           );
         })
