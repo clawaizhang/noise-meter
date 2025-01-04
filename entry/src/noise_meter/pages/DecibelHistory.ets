@@ -326,8 +326,9 @@ export struct DecibelHistory {
       }
       .backgroundColor(Color.White)
       .translate({
-        x: this.showingDeleteButtonId === record.id ? -160 :
-          (record.id === this.currentSlidingId ? Math.min(80, Math.max(-160, this.currentSlideOffset)) : 0)
+        x: record.id === this.currentSlidingId ? 
+          this.currentSlideOffset : // 直接使用滑动偏移量
+          (this.showingDeleteButtonId === record.id ? -160 : 0)
       })
       .scale({
         x: record.id === this.currentSlidingId && this.currentSlideOffset > 0 ?
@@ -352,13 +353,13 @@ export struct DecibelHistory {
               const deltaX = event.offsetX - this.startX;
               if (this.hasDeleteButtonOnStart) {
                 // 如果开始时有按钮，则只处理右滑隐藏
-                this.currentSlideOffset = Math.max(-160, Math.min(80, -160 + deltaX));
+                this.currentSlideOffset = -160 + deltaX; // 直接使用偏移量
                 if (deltaX > 20) { // 降低右滑关闭阈值
                   this.pendingHideButtonId = record.id;
                 }
               } else {
                 // 允许左滑显示按钮和右滑回弹
-                this.currentSlideOffset = Math.max(-160, Math.min(80, deltaX));
+                this.currentSlideOffset = deltaX; // 直接使用偏移量
                 if (deltaX > 20) { // 右滑时关闭所有按钮
                   this.pendingHideButtonId = record.id;
                 } else if (deltaX < -80) { // 左滑超过一半距离时显示按钮
@@ -454,7 +455,7 @@ export struct DecibelHistory {
         .position({ x: '100%', y: 0 })
         .translate({
           x: record.id === this.currentSlidingId ? 
-            this.currentSlideOffset : // 直接使用滑动偏移量，不需要加160
+            this.currentSlideOffset : // 直接使用滑动偏移量
             (this.showingDeleteButtonId === record.id ? -160 : 0)
         })
         .opacity(record.id === this.currentSlidingId ? 
