@@ -321,7 +321,9 @@ export struct DetailDialog {
                   .height(20)
                   .fillColor('#666666')
                   .margin({ right: 8 })
-                Text(this.playerState === PlayerState.STATE_STARTED ? '暂停播放' : '播放录音')
+                Text(this.playerState === PlayerState.STATE_STARTED ? '暂停播放' : (
+                  this.playerState === PlayerState.STATE_COMPLETED ? '重新播放' : '播放录音'
+                ))
                   .fontSize(14)
                   .fontColor('#666666')
               }
