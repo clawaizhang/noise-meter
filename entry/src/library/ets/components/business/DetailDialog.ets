@@ -1,12 +1,9 @@
 import { DecibelRecord } from "../../models/DecibelRecord"
 import { DecibelService } from "../../../../noise_meter/ets/services/DecibelService"
-import { AudioPlayerService } from "../../services/AudioPlayerService"
+import { AudioPlayerService, PlayerState } from "../../services/AudioPlayerService"
 import common from '@ohos.app.ability.common'
 import { FileService } from "../../services/FileService"
 import hilog from '@ohos.hilog'
-import { PlayerState } from "@seagazer/ccplayer"
-import { NoiseInfoDialog } from "./dialogs/NoiseInfoDialog"
-import { noiseMeterNavStack } from "../../../../noise_meter/ets/constant/ProviderConstant"
 
 const TAG = 'DetailDialog';
 const DOMAIN = 0x0000;
@@ -128,7 +125,6 @@ export struct DetailDialog {
   @Param @Require context: common.Context;
   @Param @Require  fileService: FileService | null;
   @BuilderParam closeDialog: () => void;
-  @Consumer(noiseMeterNavStack) navStack: NavPathStack = new NavPathStack()
   @Local translateY: number = 0;
   @Local playerState: PlayerState = PlayerState.STATE_NOT_INIT;
   private startY: number = 0;
@@ -202,12 +198,9 @@ export struct DetailDialog {
   }
 
   aboutToDisappear() {
-    // 释放播放器资源
-    try {
-      this.audioPlayerService.release();
-      hilog.info(DOMAIN, TAG, '组件销毁时释放播放器成功');
-    } catch (error) {
-      hilog.error(DOMAIN, TAG, '组件销毁时释放播放器失败: %{public}s', error instanceof Error ? error.message : String(error));
+    // 停止音频播放
+    if (this.playerState === PlayerState.STATE_PLAYING || this.playerState === PlayerState.STATE_PAUSED) {
+      this.audioPlayerService.stop();
     }
   }
 
@@ -295,7 +288,7 @@ export struct DetailDialog {
           Blank()
           Row() {
             // 添加停止按钮
-            if (this.playerState === PlayerState.STATE_STARTED || this.playerState === PlayerState.STATE_PAUSED) {
+            if (this.playerState === PlayerState.STATE_PLAYING || this.playerState === PlayerState.STATE_PAUSED) {
               Button() {
                 Image($r('app.media.ic_stop'))
                   .width(20)
@@ -316,14 +309,12 @@ export struct DetailDialog {
             
             Button() {
               Row() {
-                Image(this.playerState === PlayerState.STATE_STARTED ? $r('app.media.ic_pause') : $r('app.media.ic_play'))
+                Image(this.playerState === PlayerState.STATE_PLAYING ? $r('app.media.ic_pause') : $r('app.media.ic_play'))
                   .width(20)
                   .height(20)
                   .fillColor('#666666')
                   .margin({ right: 8 })
-                Text(this.playerState === PlayerState.STATE_STARTED ? '暂停播放' : (
-                  this.playerState === PlayerState.STATE_COMPLETED ? '重新播放' : '播放录音'
-                ))
+                Text(this.playerState === PlayerState.STATE_PLAYING ? '暂停播放' : '播放录音')
                   .fontSize(14)
                   .fontColor('#666666')
               }
@@ -336,7 +327,7 @@ export struct DetailDialog {
             .padding({ left: 16, right: 16 })
             .onClick(async () => {
               try {
-                if (this.playerState === PlayerState.STATE_STARTED) {
+                if (this.playerState === PlayerState.STATE_PLAYING) {
                   // 如果正在播放,则暂停
                   await this.audioPlayerService.pause();
                 } else {
@@ -417,17 +408,6 @@ export struct DetailDialog {
     .margin({ bottom: 12, top: -32 })
   }
 
-  // 关闭弹框前先停止播放
-  private async handleClose() {
-    try {
-      await this.audioPlayerService.release();
-      hilog.info(DOMAIN, TAG, '关闭弹框时释放播放器成功');
-    } catch (error) {
-      hilog.error(DOMAIN, TAG, '关闭弹框时释放播放器失败: %{public}s', error instanceof Error ? error.message : String(error));
-    }
-    this.closeDialog();
-  }
-
   build() {
     Column() {
       // 顶部拖动条
@@ -446,36 +426,18 @@ export struct DetailDialog {
       Column() {
         if (this.selectedRecord) {
           DialogTitleBuilder(this.selectedRecord, () => {
-            this.handleClose()
+            this.closeDialog()
           })
 
           Column() {
             BasicInfoBuilder(this.selectedRecord)
             Column() {
               // 统计数据部分
-              Row() {
-                Text('统计数据')
-                  .fontSize(16)
-                  .fontWeight(FontWeight.Medium)
-                
-                Image($r('app.media.ic_info'))
-                  .width(16)
-                  .height(16)
-                  .margin({ left: 4 })
-                  .onClick(() => {
-                    this.navStack.pushPathByName("NoiseInfoDialog", null, true);
-                  })
-              }
-              .width('100%')
-              .alignItems(VerticalAlign.Center)
-              .margin({ bottom: 8, top: -16 })
-
-              // 分贝值分布描述
-              Text(this.selectedRecord.getDecibelDistributionDescription())
-                .fontSize(14)
-                .fontColor('#333333')
-                .lineHeight(20)
-                .margin({ top: 0, bottom: 16 })
+              Text('统计数据')
+                .fontSize(16)
+                .fontWeight(FontWeight.Medium)
+                .alignSelf(ItemAlign.Start)
+                .margin({ bottom: 8, top: -16 })
 
               Row() {
                 Column() {
@@ -665,7 +627,7 @@ export struct DetailDialog {
         .onActionEnd(() => {
           if (this.translateY > 100) {
             // 如果下滑超过阈值，关闭弹窗
-            this.handleClose();
+            this.closeDialog();
           } else {
             // 否则回弹
             animateTo({ duration: 300, curve: Curve.EaseOut }, () => {
