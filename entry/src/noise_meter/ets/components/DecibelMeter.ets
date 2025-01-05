@@ -96,6 +96,17 @@ export struct DecibelMeter {
       this.dbCount = 0;
       this.dbSum = 0;
 
+      // 创建新的记录对象
+      this.currentRecord = new DecibelRecord(
+        0, // minDecibel
+        0, // maxDecibel
+        0, // avgDecibel
+        0, // duration
+        [], // decibelValues
+        this.locationService.getCachedLocation()?.address, // location
+        undefined // audioFilePath
+      );
+
       // 如果没有在采集音频，先启动采集
       if (!this.audioService.isAudioCapturing()) {
         await this.startAudioCapture();
@@ -168,18 +179,8 @@ export struct DecibelMeter {
         }
 
         console.info('准备创建记录');
-        // 如果没有currentRecord则创建新的,否则更新现有的
-        if (!this.currentRecord) {
-          this.currentRecord = new DecibelRecord(
-            this.minDecibel,
-            this.maxDecibel,
-            this.avgDecibel,
-            duration,
-            [...this.values],
-            locationInfo?.address,
-            this.currentAudioFilePath
-          );
-        } else {
+        // 更新记录对象
+        if (this.currentRecord) {
           this.currentRecord.minDecibel = this.minDecibel;
           this.currentRecord.maxDecibel = this.maxDecibel;
           this.currentRecord.avgDecibel = this.avgDecibel;
@@ -190,6 +191,9 @@ export struct DecibelMeter {
         }
         console.info('记录更新成功:', this.currentRecord);
 
+        if (!this.currentRecord) {
+          throw new Error('记录对象不存在');
+        }
         await this.recordService.saveRecord(this.currentRecord);
         console.info('记录保存成功');
 
@@ -204,7 +208,7 @@ export struct DecibelMeter {
         this.dialogService.showDetailDialog(
           this.getUIContext(),
           wrapBuilder(buildDialog),
-          this.currentRecord,
+          this.currentRecord || null,
           appContext
         );
         console.info('详情弹窗显示成功');
@@ -415,21 +419,14 @@ export struct DecibelMeter {
         .backgroundColor(Color.White)
         .borderRadius(24)
         .onClick(() => {
-          this.currentRecord = new DecibelRecord(
-            this.minDecibel,
-            this.maxDecibel,
-            this.avgDecibel,
-            this.startTime == 0 ? 0 : new Date().getTime() - this.startTime,
-            [...this.values],
-            this.locationService.getCachedLocation()?.address,
-            this.currentAudioFilePath
-          );
-          this.dialogService.showDetailDialog(
-            this.getUIContext(),
-            wrapBuilder(buildDialog),
-            this.currentRecord,
-            getContext(this) as common.Context
-          );
+          if (this.currentRecord) {
+            this.dialogService.showDetailDialog(
+              this.getUIContext(),
+              wrapBuilder(buildDialog),
+              this.currentRecord || null,
+              getContext(this) as common.Context
+            );
+          }
         })
 
         this.HistoryRecordButton()

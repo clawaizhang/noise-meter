@@ -109,7 +109,7 @@ export class DecibelRecordService {
         throw new Error('数据库未初始化');
       }
 
-      const sql = 'SELECT * FROM decibel_records ORDER BY timestamp DESC LIMIT 100';
+      const sql = 'SELECT * FROM decibel_records ORDER BY timestamp DESC';
       const resultSet = await new Promise<relationalStore.ResultSet>((resolve, reject) => {
         this.rdbStore!.querySql(sql, [], (err, resultSet) => {
           if (err) {
