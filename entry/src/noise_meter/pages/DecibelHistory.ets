@@ -559,7 +559,7 @@ export struct DecibelHistory {
         .backgroundColor('#F5F5F5')
         .justifyContent(FlexAlign.Center)
       } else {
-        List() {
+        List({ space: 0 }) {
           ForEach(this.records, (record: DecibelRecord) => {
             ListItem() {
               Column() {
@@ -578,6 +578,7 @@ export struct DecibelHistory {
         .scrollBar(BarState.Auto)
         .edgeEffect(EdgeEffect.Spring)
         .listDirection(Axis.Vertical)
+        .alignListItem(ListItemAlign.Start)
       }
     }
     .width('100%')
