@@ -133,15 +133,18 @@ export struct DetailDialog {
   @Local selectedRecord: DecibelRecord | null = null;
   @Local context: common.Context | null = null;
   @Local fileService: FileService | null = null;
-  @Local translateY: number = 0;
+  @Local translateY: number = 500;
   @Local playerState: PlayerState = PlayerState.STATE_NOT_INIT;
   private startY: number = 0;
   private decibelService: DecibelService = new DecibelService();
   private audioPlayerService!: AudioPlayerService;
   @Local noiseDistribution: NoiseDistribution = { segments: [], values: [] };
+  @Local private bgOpacity: number = 0;
 
   aboutToAppear() {
     try {
+      // 初始化时设置背景透明度为0
+      this.bgOpacity = 0;
       // 从导航参数获取数据
       const params = JSON.parse(JSON.stringify(this.navStack.getParamByName('DetailDialog'))) as DetailDialogParams[];
       
@@ -181,6 +184,12 @@ export struct DetailDialog {
       if (this.selectedRecord && this.selectedRecord.decibelValues.length > 0) {
         this.calculateNoiseDistribution();
       }
+
+      // 弹窗出现动画
+      animateTo({ duration: 300, curve: Curve.EaseOut }, () => {
+        this.translateY = 0;
+        this.bgOpacity = 0.2;
+      });
     } catch (error) {
       hilog.error(DOMAIN, TAG, '初始化失败: %{public}s', error instanceof Error ? error.message : String(error));
     }
@@ -651,16 +660,23 @@ export struct DetailDialog {
               // 只允许向下滑动
               if (deltaY > 0) {
                 this.translateY = deltaY;
+                // 根据滑动距离调整背景透明度
+                this.bgOpacity = Math.max(0, 0.2 * (1 - deltaY / 500));
               }
             })
             .onActionEnd(() => {
               if (this.translateY > 100) {
                 // 如果下滑超过阈值，关闭弹窗
-                this.navStack.pop();
+                animateTo({ duration: 300, curve: Curve.EaseOut }, () => {
+                  this.translateY = 500;
+                  this.bgOpacity = 0;
+                  this.navStack.pop();
+                });
               } else {
                 // 否则回弹
                 animateTo({ duration: 300, curve: Curve.EaseOut }, () => {
                   this.translateY = 0;
+                  this.bgOpacity = 0.2;
                 });
               }
             })
@@ -673,12 +689,23 @@ export struct DetailDialog {
       .height('100%')
       .width('100%')
     }
-    .backgroundColor('rgba(0,0,0,0.5)')
+    .backgroundColor(`rgba(0,0,0,${this.bgOpacity})`)
+    .animation({
+      duration: 300,
+      curve: Curve.EaseOut,
+      delay: 0,
+      iterations: 1,
+      playMode: PlayMode.Normal
+    })
     .hideTitleBar(true)
     .mode(NavDestinationMode.DIALOG)
     .ignoreLayoutSafeArea([LayoutSafeAreaType.SYSTEM], [LayoutSafeAreaEdge.TOP, LayoutSafeAreaEdge.BOTTOM])
     .onBackPressed(() => {
-      this.navStack.pop();
+      animateTo({ duration: 300, curve: Curve.EaseOut }, () => {
+        this.translateY = 500;
+        this.bgOpacity = 0;
+        this.navStack.pop();
+      });
       return true;
     })
   }
