@@ -133,7 +133,7 @@ export struct DetailDialog {
   @Local selectedRecord: DecibelRecord | null = null;
   @Local context: common.Context | null = null;
   @Local fileService: FileService | null = null;
-  @Local translateY: number = 500;
+  @Local translateY: number = 1000;
   @Local playerState: PlayerState = PlayerState.STATE_NOT_INIT;
   private startY: number = 0;
   private decibelService: DecibelService = new DecibelService();
@@ -186,9 +186,14 @@ export struct DetailDialog {
       }
 
       // 弹窗出现动画
-      animateTo({ duration: 300, curve: Curve.EaseOut }, () => {
+      animateTo({ duration: 800, curve: Curve.Smooth }, () => {
         this.translateY = 0;
-        this.bgOpacity = 0.2;
+        // 在弹窗动画的回调中，延迟执行蒙层动画
+        setTimeout(() => {
+          animateTo({ duration: 400, curve: Curve.EaseIn }, () => {
+            this.bgOpacity = 0.1;
+          });
+        }, 400);
       });
     } catch (error) {
       hilog.error(DOMAIN, TAG, '初始化失败: %{public}s', error instanceof Error ? error.message : String(error));
@@ -660,30 +665,29 @@ export struct DetailDialog {
               // 只允许向下滑动
               if (deltaY > 0) {
                 this.translateY = deltaY;
-                // 根据滑动距离调整背景透明度
-                this.bgOpacity = Math.max(0, 0.2 * (1 - deltaY / 500));
+                // 根据滑动距离调整背景透明度，在弹窗移动到一半时就完全消失
+                this.bgOpacity = Math.max(0, 0.1 * (1 - deltaY / 250));
               }
             })
             .onActionEnd(() => {
               if (this.translateY > 100) {
-                // 如果下滑超过阈值，关闭弹窗
-                animateTo({ duration: 300, curve: Curve.EaseOut }, () => {
-                  this.translateY = 500;
-                  this.bgOpacity = 0;
-                  this.navStack.pop();
+                // 如果下滑超过阈值，先执行pop()，再执行动画
+                this.navStack.pop();
+                animateTo({ duration: 1200, curve: Curve.EaseIn }, () => {
+                  this.translateY = 1000;
                 });
               } else {
                 // 否则回弹
-                animateTo({ duration: 300, curve: Curve.EaseOut }, () => {
+                animateTo({ duration: 800, curve: Curve.Smooth }, () => {
                   this.translateY = 0;
-                  this.bgOpacity = 0.2;
+                  this.bgOpacity = 0.1;
                 });
               }
             })
         )
         .animation({
-          duration: 300,
-          curve: Curve.EaseOut
+          duration: 800,
+          curve: Curve.Smooth
         })
       }
       .height('100%')
@@ -691,9 +695,8 @@ export struct DetailDialog {
     }
     .backgroundColor(`rgba(0,0,0,${this.bgOpacity})`)
     .animation({
-      duration: 300,
+      duration: 400,
       curve: Curve.EaseOut,
-      delay: 0,
       iterations: 1,
       playMode: PlayMode.Normal
     })
@@ -701,10 +704,14 @@ export struct DetailDialog {
     .mode(NavDestinationMode.DIALOG)
     .ignoreLayoutSafeArea([LayoutSafeAreaType.SYSTEM], [LayoutSafeAreaEdge.TOP, LayoutSafeAreaEdge.BOTTOM])
     .onBackPressed(() => {
-      animateTo({ duration: 300, curve: Curve.EaseOut }, () => {
-        this.translateY = 500;
+      // 先执行pop()，再执行动画
+      this.navStack.pop();
+      animateTo({ duration: 1200, curve: Curve.EaseIn }, () => {
+        this.translateY = 1000;
+      });
+      // 蒙层消失动画使用 EaseIn 曲线，与出现时相反
+      animateTo({ duration: 600, curve: Curve.EaseIn }, () => {
         this.bgOpacity = 0;
-        this.navStack.pop();
       });
       return true;
     })
