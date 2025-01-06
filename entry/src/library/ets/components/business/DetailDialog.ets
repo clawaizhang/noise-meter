@@ -143,22 +143,22 @@ export struct DetailDialog {
   aboutToAppear() {
     try {
       // 从导航参数获取数据
-      const params = JSON.parse(JSON.stringify(this.navStack.getParamByName('DetailDialog'))) as DetailDialogParams;
+      const params = JSON.parse(JSON.stringify(this.navStack.getParamByName('DetailDialog'))) as DetailDialogParams[];
       
       if (!params || typeof params !== 'object') {
         hilog.error(DOMAIN, TAG, '导航参数无效');
         return;
       }
-
+      const  param = params[0];
       // 类型检查
-      if (!params.selectedRecord || !params.context || !params.fileService) {
+      if (!param.selectedRecord || !param.context || !param.fileService) {
         hilog.error(DOMAIN, TAG, '导航参数缺少必要字段');
         return;
       }
 
-      this.selectedRecord = params.selectedRecord;
-      this.context = params.context;
-      this.fileService = params.fileService;
+      this.selectedRecord = param.selectedRecord;
+      this.context = param.context;
+      this.fileService = param.fileService;
 
       // 初始化AudioPlayerService
       if (!this.context) {
