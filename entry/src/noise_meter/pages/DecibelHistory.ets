@@ -5,6 +5,7 @@ import { DecibelService } from '../ets/services/DecibelService';
 import { DecibelRecordService } from '../ets/services/DecibelRecordService';
 import { FileService } from '../../library/ets/services/FileService';
 import { noiseMeterNavStack } from '../ets/constant/ProviderConstant';
+import { CustomTitleBar } from '../../library/ets/components/common/CustomTitleBar';
 
 @Builder
 function DecibelHistoryBuilder() {
@@ -514,56 +515,60 @@ export struct DecibelHistory {
   }
 
   build() {
-    NavDestination() {
-      Column() {
-        this.HistoryTitle()
-        // 历史记录列表或空状态提示
-        if (this.records.length > 0) {
-          List() {
-            ForEach(this.records, (record: DecibelRecord) => {
-              ListItem() {
-                Column() {
-                  this.RecordItem(record)
-                  Divider()
-                    .width('100%')
-                    .height(8)
-                    .color('#F5F5F5')
-                }
-              }
-            })
-          }
-          .width('100%')
-          .layoutWeight(1)
-          .backgroundColor('#F5F5F5')
-          .scrollBar(BarState.Auto)
-          .edgeEffect(EdgeEffect.Spring)
-          .listDirection(Axis.Vertical)
-        } else {
-          Column() {
-            Image($r('app.media.ic_empty'))
-              .width(120)
-              .height(120)
-              .fillColor('#CCCCCC')
-              .margin({ bottom: 16 })
-            Text('暂无检测记录')
-              .fontSize(16)
-              .fontColor('#999999')
-            Text('完成一次检测后即可查看记录')
-              .fontSize(14)
-              .fontColor('#999999')
-              .margin({ top: 8 })
-          }
-          .width('100%')
-          .layoutWeight(1)
-          .backgroundColor('#F5F5F5')
-          .justifyContent(FlexAlign.Center)
+    Column() {
+      // 使用自定义标题栏
+      CustomTitleBar({
+        title: '检测记录',
+        rightButton: {
+          text: '清空',
+          onClick: this.emptyAll
         }
+      })
+
+      // 内容区域
+      if (this.records.length === 0) {
+        Column() {
+          Image($r('app.media.ic_empty'))
+            .width(120)
+            .height(120)
+            .fillColor('#CCCCCC')
+            .margin({ bottom: 16 })
+          Text('暂无检测记录')
+            .fontSize(16)
+            .fontColor('#999999')
+          Text('完成一次检测后即可查看记录')
+            .fontSize(14)
+            .fontColor('#999999')
+            .margin({ top: 8 })
+        }
+        .width('100%')
+        .layoutWeight(1)
+        .backgroundColor('#F5F5F5')
+        .justifyContent(FlexAlign.Center)
+      } else {
+        List() {
+          ForEach(this.records, (record: DecibelRecord) => {
+            ListItem() {
+              Column() {
+                this.RecordItem(record)
+                Divider()
+                  .width('100%')
+                  .height(8)
+                  .color('#F5F5F5')
+              }
+            }
+          })
+        }
+        .width('100%')
+        .layoutWeight(1)
+        .backgroundColor('#F5F5F5')
+        .scrollBar(BarState.Auto)
+        .edgeEffect(EdgeEffect.Spring)
+        .listDirection(Axis.Vertical)
       }
-      .width('100%')
-      .height('100%')
-      .backgroundColor('#F5F5F5')
     }
-    .hideTitleBar(true)
+    .width('100%')
+    .height('100%')
     .backgroundColor('#F5F5F5')
   }
 } 

@@ -417,7 +417,7 @@ export struct DecibelMeter {
         // this.HistoryRecordButton()
       }
       .width('100%')
-      .margin({ top: 16, left: 8, right: 8 })
+      .margin({ left: 8, right: 8 })
       .backgroundColor(Color.White)
       .borderRadius(24)
       .shadow({ radius: 1, color: '#1A000000', offsetY: 2 })

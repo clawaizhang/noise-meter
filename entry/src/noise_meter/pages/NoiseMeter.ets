@@ -2,49 +2,29 @@ import { DecibelMeter } from '../ets/components/DecibelMeter';
 import { noiseMeterNavStack } from '../ets/constant/ProviderConstant';
 import { getTitleName } from '../MainPageInfo';
 import { DecibelHistory } from './DecibelHistory';
+import { CustomTitleBar } from '../../library/ets/components/common/CustomTitleBar';
 
 @ComponentV2
 export struct NoiseMeter {
   @Provider(noiseMeterNavStack) navStack: NavPathStack = new NavPathStack()
   @Local currentIndex: number = 0
 
-  @Builder
-  NoiseTitle() {
-    Stack() {
-      Text(getTitleName())
-        .fontSize(18)
-        .fontWeight(FontWeight.Medium)
-        .width('100%')
-        .textAlign(TextAlign.Center)
-    }
-    .width('100%')
-    .height(56)
-    .backgroundColor('#F5F5F5')
-  }
-
   build() {
     Navigation(this.navStack) {
       Tabs({ barPosition: BarPosition.End, index: this.currentIndex }) {
         TabContent() {
-          Stack({ alignContent: Alignment.Center }) {
-            // 背景
-            Column()
-              .width('100%')
-              .height('100%')
-              .backgroundColor('#F5F5F5')
+          Column() {
+            // 使用自定义标题栏
+            CustomTitleBar({ title: getTitleName() })
 
-            Column() {
-              // 噪音检测区域
-              DecibelMeter()
-                .width('92%')
-            }
-            .width('100%')
-            .height('100%')
-            .justifyContent(FlexAlign.Start)
-            .alignItems(HorizontalAlign.Center)
+            // 噪音检测区域
+            DecibelMeter()
+              .width('92%')
           }
           .width('100%')
           .height('100%')
+          .backgroundColor('#F5F5F5')
+          .alignItems(HorizontalAlign.Center)
         }
         .tabBar(this.TabBuilder('开始检测', $r('app.media.ic_mic'), 0))
 
@@ -61,8 +41,7 @@ export struct NoiseMeter {
       .barHeight(56)
       .barMode(BarMode.Fixed)
     }
-    .titleMode(NavigationTitleMode.Mini)
-    .title(this.NoiseTitle())
+    .hideTitleBar(true)
     .hideBackButton(true)
     .backgroundColor('#F5F5F5')
     .navBarPosition(NavBarPosition.Start)
