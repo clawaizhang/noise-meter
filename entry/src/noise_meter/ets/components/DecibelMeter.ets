@@ -81,6 +81,7 @@ export struct DecibelMeter {
       this.values = [];
       this.dbCount = 0;
       this.dbSum = 0;
+      this.currentAudioFilePath = undefined; // 重置音频路径
 
       // 创建新的记录对象
       this.currentRecord = new DecibelRecord(
