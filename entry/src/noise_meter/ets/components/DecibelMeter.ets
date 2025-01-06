@@ -453,17 +453,6 @@ export struct DecibelMeter {
 
       this.StartStopButton()
 
-      Row() {
-        BannerCard({
-          context: getContext(this) as common.Context,
-          adId: 'testw6vs28auh3',
-          onItemClick: () => {
-            console.info('广告被点击了');
-          }
-        })
-      }
-      .height(57)
-      .margin({ top: 12, bottom: 12 })
     }
     .width('100%')
     .padding({ top: 8, bottom: 16 })

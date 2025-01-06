@@ -1,5 +1,5 @@
 import { DecibelRecord } from '../../library/ets/models/DecibelRecord';
-import { DetailDialog, DetailDialogParams } from '../../library/ets/components/business/DetailDialog';
+import { DetailDialogParams } from '../../library/ets/components/business/DetailDialog';
 import { PromptAction } from '@ohos.arkui.UIContext';
 import { DecibelService } from '../ets/services/DecibelService';
 import { DecibelRecordService } from '../ets/services/DecibelRecordService';
@@ -15,6 +15,7 @@ function DecibelHistoryBuilder() {
 @ComponentV2
 export struct DecibelHistory {
   @Consumer(noiseMeterNavStack) navStack: NavPathStack = new NavPathStack()
+  @Param currentTabIndex: number = 0
   @Local records: DecibelRecord[] = [];
   @Local selectedRecord: DecibelRecord | null = null;
   @Local showingDeleteButtonId: string = ''; // 当前显示删除按钮的记录ID
@@ -29,6 +30,18 @@ export struct DecibelHistory {
   private promptAction: PromptAction = this.getUIContext().getPromptAction();
   private fileService: FileService = new FileService(this.context)
   private pendingHideButtonId: string = ''; // 当前正在隐藏按钮的记录ID
+
+  @Monitor('currentTabIndex')
+  onTabIndexChange(monitor: IMonitor) {
+    const currentValue = monitor.value<number>()?.now;
+    if (currentValue === 1) {
+      this.loadRecords();
+    }
+  }
+
+  onPageShow() {
+    this.loadRecords();
+  }
 
   // 显示删除确认对话框
   showDeleteConfirmDialog() {
