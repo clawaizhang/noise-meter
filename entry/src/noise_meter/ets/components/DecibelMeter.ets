@@ -4,25 +4,12 @@ import { LocationService } from '../../../library/ets/services/LocationService';
 import { DecibelRecord } from '../../../library/ets/models/DecibelRecord';
 import { DecibelRecordService } from '../services/DecibelRecordService';
 import { LocationDisplay } from '../../../library/ets/components/business/LocationDisplay'
-import { DialogParams, DialogService } from '../../../library/ets/services/DialogService';
-import router from '@ohos.router';
 import common from '@ohos.app.ability.common';
-import { DetailDialog } from '../../../library/ets/components/business/DetailDialog';
 import { AudioRecordDisplay } from '../../../library/ets/components/business/AudioRecordDisplay';
 import { BannerCard } from '../../../library/ets/components/business/BannerCard';
 import { FileService } from '../../../library/ets/services/FileService';
 import { noiseMeterNavStack } from '../constant/ProviderConstant';
 import { promptAction } from '@kit.ArkUI';
-
-@Builder
-function buildDialog(params: DialogParams) {
-  DetailDialog({
-    selectedRecord: params.selectedRecord,
-    closeDialog: params.closeDialog,
-    context: params.context,
-    fileService: params.fileService
-  })
-}
 
 @ComponentV2
 export struct DecibelMeter {
@@ -39,7 +26,6 @@ export struct DecibelMeter {
   private audioService: AudioService = new AudioService(getContext() as common.UIAbilityContext)
   private locationService: LocationService = LocationService.getInstance()
   private recordService: DecibelRecordService = new DecibelRecordService(getContext() as common.UIAbilityContext)
-  private dialogService: DialogService = new DialogService()
   private fileService: FileService = new FileService(getContext() as common.Context)
   private dbCount: number = 0
   private dbSum: number = 0
@@ -146,7 +132,7 @@ export struct DecibelMeter {
         // 获取缓存的位置信息
         const locationInfo = this.locationService.getCachedLocation();
         console.info('位置信息:', locationInfo);
-
+        
         // 计算检测时长
         const duration = new Date().getTime() - this.startTime;
         console.info('检测时长:', duration);
@@ -158,7 +144,7 @@ export struct DecibelMeter {
             console.info('开始获取WAV音频数据');
             audioData = await this.audioService.stopCaptureAndGetWavData();
             console.info('WAV音频数据大小:', audioData.byteLength);
-
+            
             // 创建音频文件目录
             const audioDir = 'audio';
             try {
@@ -166,7 +152,7 @@ export struct DecibelMeter {
             } catch (error) {
               // 目录可能已存在，忽略错误
             }
-
+            
             // 生成文件名并保存WAV文件
             const fileName = `audio_${new Date().getTime()}.wav`;
             const relativePath = `${audioDir}/${fileName}`;
@@ -205,12 +191,11 @@ export struct DecibelMeter {
         }
 
         console.info('准备显示详情弹窗');
-        this.dialogService.showDetailDialog(
-          this.getUIContext(),
-          wrapBuilder(buildDialog),
-          this.currentRecord || null,
-          appContext
-        );
+        this.navStack.pushDestinationByName('DetailDialog', {
+          selectedRecord: this.currentRecord,
+          context: getContext(this),
+          fileService: this.fileService
+        });
         console.info('详情弹窗显示成功');
 
         // 清除之前的定时器
@@ -420,12 +405,11 @@ export struct DecibelMeter {
         .borderRadius(24)
         .onClick(() => {
           if (this.currentRecord) {
-            this.dialogService.showDetailDialog(
-              this.getUIContext(),
-              wrapBuilder(buildDialog),
-              this.currentRecord || null,
-              getContext(this) as common.Context
-            );
+            this.navStack.pushDestinationByName('DetailDialog', {
+              selectedRecord: this.currentRecord,
+              context: getContext(this),
+              fileService: this.fileService
+            });
           }
         })
 

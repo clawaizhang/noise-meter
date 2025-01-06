@@ -4,9 +4,17 @@ import { AudioPlayerService, PlayerState } from "../../services/AudioPlayerServi
 import common from '@ohos.app.ability.common'
 import { FileService } from "../../services/FileService"
 import hilog from '@ohos.hilog'
+import { noiseMeterNavStack } from '../../../../noise_meter/ets/constant/ProviderConstant'
+import { JSON } from '@kit.ArkTS'
 
 const TAG = 'DetailDialog';
 const DOMAIN = 0x0000;
+
+export interface DetailDialogParams {
+  selectedRecord: DecibelRecord;
+  context: common.Context;
+  fileService: FileService;
+}
 
 // 标题栏构建器
 @Builder
@@ -121,10 +129,10 @@ interface NoiseDistribution {
 
 @ComponentV2
 export struct DetailDialog {
-  @Param @Require selectedRecord: DecibelRecord | null;
-  @Param @Require context: common.Context;
-  @Param @Require  fileService: FileService | null;
-  @BuilderParam closeDialog: () => void;
+  @Consumer(noiseMeterNavStack) navStack: NavPathStack = new NavPathStack();
+  @Local selectedRecord: DecibelRecord | null = null;
+  @Local context: common.Context | null = null;
+  @Local fileService: FileService | null = null;
   @Local translateY: number = 0;
   @Local playerState: PlayerState = PlayerState.STATE_NOT_INIT;
   private startY: number = 0;
@@ -133,30 +141,48 @@ export struct DetailDialog {
   @Local noiseDistribution: NoiseDistribution = { segments: [], values: [] };
 
   aboutToAppear() {
-    // 初始化AudioPlayerService，使用传入的FileService
-    if (!this.context) {
-      hilog.error(DOMAIN, TAG, 'Context is not available');
-      return;
-    }
-    if (!this.fileService) {
-      hilog.error(DOMAIN, TAG, 'FileService is not available');
-      return;
-    }
-
     try {
+      // 从导航参数获取数据
+      const params = JSON.parse(JSON.stringify(this.navStack.getParamByName('DetailDialog'))) as DetailDialogParams;
+      
+      if (!params || typeof params !== 'object') {
+        hilog.error(DOMAIN, TAG, '导航参数无效');
+        return;
+      }
+
+      // 类型检查
+      if (!params.selectedRecord || !params.context || !params.fileService) {
+        hilog.error(DOMAIN, TAG, '导航参数缺少必要字段');
+        return;
+      }
+
+      this.selectedRecord = params.selectedRecord;
+      this.context = params.context;
+      this.fileService = params.fileService;
+
+      // 初始化AudioPlayerService
+      if (!this.context) {
+        hilog.error(DOMAIN, TAG, 'Context is not available');
+        return;
+      }
+      if (!this.fileService) {
+        hilog.error(DOMAIN, TAG, 'FileService is not available');
+        return;
+      }
+
       this.audioPlayerService = new AudioPlayerService(this.context, this.fileService);
       // 设置播放状态监听
       this.audioPlayerService.setOnStateChangeListener((state: PlayerState) => {
         this.playerState = state;
       });
       hilog.info(DOMAIN, TAG, 'AudioPlayerService 初始化成功');
-    } catch (error) {
-      hilog.error(DOMAIN, TAG, 'AudioPlayerService 初始化失败: %{public}s', error instanceof Error ? error.message : String(error));
-    }
 
-    // 计算噪音分布
-    if (this.selectedRecord && this.selectedRecord.decibelValues.length > 0) {
-      this.calculateNoiseDistribution();
+      // 计算噪音分布
+      if (this.selectedRecord && this.selectedRecord.decibelValues.length > 0) {
+        this.calculateNoiseDistribution();
+      }
+    } catch (error) {
+      hilog.error(DOMAIN, TAG, '初始化失败: %{public}s', error instanceof Error ? error.message : String(error));
     }
   }
 
@@ -410,236 +436,253 @@ export struct DetailDialog {
   }
 
   build() {
-    Column() {
-      // 顶部拖动条
-      Row() {
-        Row()
-          .width(40)
-          .height(4)
-          .borderRadius(2)
-          .backgroundColor('#DDDDDD')
-      }
-      .width('100%')
-      .height(20)
-      .justifyContent(FlexAlign.Center)
-
-      // 内容区域
-      Column() {
-        if (this.selectedRecord) {
-          DialogTitleBuilder(this.selectedRecord, () => {
-            this.closeDialog()
-          })
-
-          Column() {
-            BasicInfoBuilder(this.selectedRecord)
-            Column() {
-              // 统计数据部分
-              Text('统计数据')
-                .fontSize(16)
-                .fontWeight(FontWeight.Medium)
-                .alignSelf(ItemAlign.Start)
-                .margin({ bottom: 8, top: -16 })
-
-              Row() {
-                Column() {
-                  Text('最小值')
-                    .fontSize(12)
-                    .fontColor('#666666')
-                    .margin({ bottom: 8 })
-                  Row() {
-                    Text(this.selectedRecord!.minDecibel.toString())
-                      .fontSize(24)
-                      .fontWeight(FontWeight.Bold)
-                      .fontColor(this.decibelService.getDecibelColor(this.selectedRecord!.minDecibel))
-                    Text(' 分贝')
-                      .fontSize(12)
-                      .fontColor('#666666')
-                      .margin({ left: 4 })
-                      .alignSelf(ItemAlign.End)
-                      .margin({ bottom: 4 })
-                  }
-                  Text(this.decibelService.getDecibelLevel(this.selectedRecord!.minDecibel))
-                    .fontSize(12)
-                    .fontColor(this.decibelService.getDecibelColor(this.selectedRecord!.minDecibel))
-                    .margin({ top: 8 })
-                }
-                .layoutWeight(1)
-                .alignItems(HorizontalAlign.Center)
-                .height(90)
-
-                Divider()
-                  .width(1)
-                  .height(60)
-                  .backgroundColor('#E0E0E0')
-                  .margin({ left: 12, right: 12 })
-
-                Column() {
-                  Text('平均值')
-                    .fontSize(12)
-                    .fontColor('#666666')
-                    .margin({ bottom: 8 })
-                  Row() {
-                    Text(this.selectedRecord!.avgDecibel.toString())
-                      .fontSize(24)
-                      .fontWeight(FontWeight.Bold)
-                      .fontColor(this.decibelService.getDecibelColor(this.selectedRecord!.avgDecibel))
-                    Text(' 分贝')
-                      .fontSize(12)
-                      .fontColor('#666666')
-                      .margin({ left: 4 })
-                      .alignSelf(ItemAlign.End)
-                      .margin({ bottom: 4 })
-                  }
-                  Text(this.decibelService.getDecibelLevel(this.selectedRecord!.avgDecibel))
-                    .fontSize(12)
-                    .fontColor(this.decibelService.getDecibelColor(this.selectedRecord!.avgDecibel))
-                    .margin({ top: 8 })
-                }
-                .layoutWeight(1)
-                .alignItems(HorizontalAlign.Center)
-                .height(90)
-
-                Divider()
-                  .width(1)
-                  .height(60)
-                  .backgroundColor('#E0E0E0')
-                  .margin({ left: 12, right: 12 })
-
-                Column() {
-                  Text('最大值')
-                    .fontSize(12)
-                    .fontColor('#666666')
-                    .margin({ bottom: 8 })
-                  Row() {
-                    Text(this.selectedRecord!.maxDecibel.toString())
-                      .fontSize(24)
-                      .fontWeight(FontWeight.Bold)
-                      .fontColor(this.decibelService.getDecibelColor(this.selectedRecord!.maxDecibel))
-                    Text(' 分贝')
-                      .fontSize(12)
-                      .fontColor('#666666')
-                      .margin({ left: 4 })
-                      .alignSelf(ItemAlign.End)
-                      .margin({ bottom: 4 })
-                  }
-                  Text(this.decibelService.getDecibelLevel(this.selectedRecord!.maxDecibel))
-                    .fontSize(12)
-                    .fontColor(this.decibelService.getDecibelColor(this.selectedRecord!.maxDecibel))
-                    .margin({ top: 8 })
-                }
-                .layoutWeight(1)
-                .alignItems(HorizontalAlign.Center)
-                .height(90)
-              }
-              .width('100%')
-
-              // 分割线
-              Divider()
-                .width('100%')
-                .height(1)
-                .backgroundColor('#E0E0E0')
-                .margin({ top: 12, bottom: 16 })
-
-              if (!this.selectedRecord || this.selectedRecord.decibelValues.length === 0) {
-                Column() {
-                }
-                .width('100%')
-                .justifyContent(FlexAlign.Center)
-              } else {
-                Row() {
-                  // 饼图
-                  Stack() {
-                    DataPanel({
-                      values: this.noiseDistribution.values,
-                      max: 100,
-                      type: DataPanelType.Circle
-                    })
-                      .valueColors(this.noiseDistribution.segments.map(segment => segment.color))
-                      .trackBackgroundColor('#08182431')
-                      .width(160)
-                      .height(160)
-                  }
-                  .width(160)
-                  .height(160)
-                  .margin({ right: 16, top: -16 })
-
-                  // 图例
-                  Column() {
-                    ForEach(this.noiseDistribution.segments, (segment: NoiseSegment) => {
-                      Row() {
-                        Row()
-                          .width(12)
-                          .height(12)
-                          .borderRadius(6)
-                          .backgroundColor(segment.color)
-                          .margin({ right: 8 })
-                        Text(segment.name)
-                          .fontSize(14)
-                          .fontColor('#333333')
-                          .width(42)
-                          .margin({ right: 2 })
-                        Text(`${segment.value}%`)
-                          .fontSize(14)
-                          .fontColor('#666666')
-                          .width(40)
-                          .textAlign(TextAlign.Start)
-                      }
-                      .margin({ bottom: 8 })
-                      .alignItems(VerticalAlign.Center)
-                      .justifyContent(FlexAlign.Start)
-                    })
-                  }
-                  .margin({ left: 16, top: -16 })
-                  .layoutWeight(1)
-                  .justifyContent(FlexAlign.End)
-                }
-                .width('100%')
-              }
-            }
-            .width('100%')
-            .padding({ left: 16, right: 16, top: 12, bottom: 12 })
-            .backgroundColor(Color.White)
-            .borderRadius(12)
-            .margin({ bottom: 12 })
-            this.ChartBuilder(this.selectedRecord, this.decibelService)
+    NavDestination() {
+      Stack({ alignContent: Alignment.Bottom }) {
+        Column() {
+          // 顶部拖动条
+          Row() {
+            Row()
+              .width(40)
+              .height(4)
+              .borderRadius(2)
+              .backgroundColor('#DDDDDD')
           }
           .width('100%')
-          .padding({ left: 16, right: 16, bottom: 16 })
+          .height(20)
+          .justifyContent(FlexAlign.Center)
+
+          // 内容区域
+          Column() {
+            if (this.selectedRecord) {
+              DialogTitleBuilder(this.selectedRecord, () => {
+                this.navStack.pop();
+              })
+
+              Column() {
+                BasicInfoBuilder(this.selectedRecord)
+                Column() {
+                  // 统计数据部分
+                  Text('统计数据')
+                    .fontSize(16)
+                    .fontWeight(FontWeight.Medium)
+                    .alignSelf(ItemAlign.Start)
+                    .margin({ bottom: 8, top: -16 })
+
+                  Row() {
+                    Column() {
+                      Text('最小值')
+                        .fontSize(12)
+                        .fontColor('#666666')
+                        .margin({ bottom: 8 })
+                      Row() {
+                        Text(this.selectedRecord!.minDecibel.toString())
+                          .fontSize(24)
+                          .fontWeight(FontWeight.Bold)
+                          .fontColor(this.decibelService.getDecibelColor(this.selectedRecord!.minDecibel))
+                        Text(' 分贝')
+                          .fontSize(12)
+                          .fontColor('#666666')
+                          .margin({ left: 4 })
+                          .alignSelf(ItemAlign.End)
+                          .margin({ bottom: 4 })
+                      }
+                      Text(this.decibelService.getDecibelLevel(this.selectedRecord!.minDecibel))
+                        .fontSize(12)
+                        .fontColor(this.decibelService.getDecibelColor(this.selectedRecord!.minDecibel))
+                        .margin({ top: 8 })
+                    }
+                    .layoutWeight(1)
+                    .alignItems(HorizontalAlign.Center)
+                    .height(90)
+
+                    Divider()
+                      .width(1)
+                      .height(60)
+                      .backgroundColor('#E0E0E0')
+                      .margin({ left: 12, right: 12 })
+
+                    Column() {
+                      Text('平均值')
+                        .fontSize(12)
+                        .fontColor('#666666')
+                        .margin({ bottom: 8 })
+                      Row() {
+                        Text(this.selectedRecord!.avgDecibel.toString())
+                          .fontSize(24)
+                          .fontWeight(FontWeight.Bold)
+                          .fontColor(this.decibelService.getDecibelColor(this.selectedRecord!.avgDecibel))
+                        Text(' 分贝')
+                          .fontSize(12)
+                          .fontColor('#666666')
+                          .margin({ left: 4 })
+                          .alignSelf(ItemAlign.End)
+                          .margin({ bottom: 4 })
+                      }
+                      Text(this.decibelService.getDecibelLevel(this.selectedRecord!.avgDecibel))
+                        .fontSize(12)
+                        .fontColor(this.decibelService.getDecibelColor(this.selectedRecord!.avgDecibel))
+                        .margin({ top: 8 })
+                    }
+                    .layoutWeight(1)
+                    .alignItems(HorizontalAlign.Center)
+                    .height(90)
+
+                    Divider()
+                      .width(1)
+                      .height(60)
+                      .backgroundColor('#E0E0E0')
+                      .margin({ left: 12, right: 12 })
+
+                    Column() {
+                      Text('最大值')
+                        .fontSize(12)
+                        .fontColor('#666666')
+                        .margin({ bottom: 8 })
+                      Row() {
+                        Text(this.selectedRecord!.maxDecibel.toString())
+                          .fontSize(24)
+                          .fontWeight(FontWeight.Bold)
+                          .fontColor(this.decibelService.getDecibelColor(this.selectedRecord!.maxDecibel))
+                        Text(' 分贝')
+                          .fontSize(12)
+                          .fontColor('#666666')
+                          .margin({ left: 4 })
+                          .alignSelf(ItemAlign.End)
+                          .margin({ bottom: 4 })
+                      }
+                      Text(this.decibelService.getDecibelLevel(this.selectedRecord!.maxDecibel))
+                        .fontSize(12)
+                        .fontColor(this.decibelService.getDecibelColor(this.selectedRecord!.maxDecibel))
+                        .margin({ top: 8 })
+                    }
+                    .layoutWeight(1)
+                    .alignItems(HorizontalAlign.Center)
+                    .height(90)
+                  }
+                  .width('100%')
+
+                  // 分割线
+                  Divider()
+                    .width('100%')
+                    .height(1)
+                    .backgroundColor('#E0E0E0')
+                    .margin({ top: 12, bottom: 16 })
+
+                  if (!this.selectedRecord || this.selectedRecord.decibelValues.length === 0) {
+                    Column() {
+                    }
+                    .width('100%')
+                    .justifyContent(FlexAlign.Center)
+                  } else {
+                    Row() {
+                      // 饼图
+                      Stack() {
+                        DataPanel({
+                          values: this.noiseDistribution.values,
+                          max: 100,
+                          type: DataPanelType.Circle
+                        })
+                          .valueColors(this.noiseDistribution.segments.map(segment => segment.color))
+                          .trackBackgroundColor('#08182431')
+                          .width(160)
+                          .height(160)
+                      }
+                      .width(160)
+                      .height(160)
+                      .margin({ right: 16, top: -16 })
+
+                      // 图例
+                      Column() {
+                        ForEach(this.noiseDistribution.segments, (segment: NoiseSegment) => {
+                          Row() {
+                            Row()
+                              .width(12)
+                              .height(12)
+                              .borderRadius(6)
+                              .backgroundColor(segment.color)
+                              .margin({ right: 8 })
+                            Text(segment.name)
+                              .fontSize(14)
+                              .fontColor('#333333')
+                              .width(42)
+                              .margin({ right: 2 })
+                            Text(`${segment.value}%`)
+                              .fontSize(14)
+                              .fontColor('#666666')
+                              .width(40)
+                              .textAlign(TextAlign.Start)
+                          }
+                          .margin({ bottom: 8 })
+                          .alignItems(VerticalAlign.Center)
+                          .justifyContent(FlexAlign.Start)
+                        })
+                      }
+                      .margin({ left: 16, top: -16 })
+                      .layoutWeight(1)
+                      .justifyContent(FlexAlign.End)
+                    }
+                    .width('100%')
+                  }
+                }
+                .width('100%')
+                .padding({ left: 16, right: 16, top: 12, bottom: 12 })
+                .backgroundColor(Color.White)
+                .borderRadius(12)
+                .margin({ bottom: 12 })
+                this.ChartBuilder(this.selectedRecord, this.decibelService)
+              }
+              .width('100%')
+              .padding({ left: 16, right: 16, bottom: 16 })
+            }
+          }
+          .width('100%')
         }
+        .width('100%')
+        .backgroundColor(Color.White)
+        .borderRadius({ topLeft: 16, topRight: 16 })
+        .translate({ y: this.translateY })
+        .gesture(
+          PanGesture({ direction: PanDirection.Vertical })
+            .onActionStart((event: GestureEvent) => {
+              this.startY = event.offsetY;
+            })
+            .onActionUpdate((event: GestureEvent) => {
+              const deltaY = event.offsetY - this.startY;
+              // 只允许向下滑动
+              if (deltaY > 0) {
+                this.translateY = deltaY;
+              }
+            })
+            .onActionEnd(() => {
+              if (this.translateY > 100) {
+                // 如果下滑超过阈值，关闭弹窗
+                this.navStack.pop();
+              } else {
+                // 否则回弹
+                animateTo({ duration: 300, curve: Curve.EaseOut }, () => {
+                  this.translateY = 0;
+                });
+              }
+            })
+        )
+        .animation({
+          duration: 300,
+          curve: Curve.EaseOut
+        })
       }
+      .height('100%')
       .width('100%')
     }
-    .width('100%')
-    .backgroundColor(Color.White)
-    .borderRadius({ topLeft: 16, topRight: 16 })
-    .translate({ y: this.translateY })
-    .gesture(
-      PanGesture({ direction: PanDirection.Vertical })
-        .onActionStart((event: GestureEvent) => {
-          this.startY = event.offsetY;
-        })
-        .onActionUpdate((event: GestureEvent) => {
-          const deltaY = event.offsetY - this.startY;
-          // 只允许向下滑动
-          if (deltaY > 0) {
-            this.translateY = deltaY;
-          }
-        })
-        .onActionEnd(() => {
-          if (this.translateY > 100) {
-            // 如果下滑超过阈值，关闭弹窗
-            this.closeDialog();
-          } else {
-            // 否则回弹
-            animateTo({ duration: 300, curve: Curve.EaseOut }, () => {
-              this.translateY = 0;
-            });
-          }
-        })
-    )
-    .animation({
-      duration: 300,
-      curve: Curve.EaseOut
+    .backgroundColor('rgba(0,0,0,0.5)')
+    .hideTitleBar(true)
+    .mode(NavDestinationMode.DIALOG)
+    .onBackPressed(() => {
+      this.navStack.pop();
+      return true;
     })
   }
+}
+
+@Builder export function DetailDialogBuilder() {
+  DetailDialog()
 } 

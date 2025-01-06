@@ -14,10 +14,16 @@
       "name": "NoiseInfoDialog",
       "pageSourceFile": "src/library/ets/components/business/dialogs/NoiseInfoDialog.ets",
       "buildFunction": "DecibelHistoryBuilder"
-    },{
+    },
+    {
       "name": "FileVault",
       "pageSourceFile": "src/file_vault/pages/FileVault.ets",
       "buildFunction": "FileVaultBuilder"
+    },
+    {
+      "name": "DetailDialog",
+      "pageSourceFile": "src/library/ets/components/business/DetailDialog.ets",
+      "buildFunction": "DetailDialogBuilder"
     }
   ]
 } 

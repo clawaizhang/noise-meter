@@ -1,7 +1,5 @@
 import { DecibelRecord } from '../../library/ets/models/DecibelRecord';
-import { DialogParams, DialogService } from '../../library/ets/services/DialogService';
-import { DetailDialog } from '../../library/ets/components/business/DetailDialog';
-import common from '@ohos.app.ability.common';
+import { DetailDialog, DetailDialogParams } from '../../library/ets/components/business/DetailDialog';
 import { PromptAction } from '@ohos.arkui.UIContext';
 import { DecibelService } from '../ets/services/DecibelService';
 import { DecibelRecordService } from '../ets/services/DecibelRecordService';
@@ -9,25 +7,9 @@ import { FileService } from '../../library/ets/services/FileService';
 import { noiseMeterNavStack } from '../ets/constant/ProviderConstant';
 
 @Builder
-function buildDialog(params: DialogParams) {
-  DetailDialog({
-    selectedRecord: params.selectedRecord,
-    closeDialog: params.closeDialog,
-    context: params.context,
-    fileService: params.fileService
-  })
-}
-
-export class DecibelHistoryController {
-  emptyAll = () => {
-  }
-}
-
-@Builder
 function DecibelHistoryBuilder() {
   DecibelHistory()
 }
-
 
 @ComponentV2
 export struct DecibelHistory {
@@ -44,18 +26,8 @@ export struct DecibelHistory {
   private recordService: DecibelRecordService = new DecibelRecordService(this.context);
   private decibelService: DecibelService = new DecibelService();
   private promptAction: PromptAction = this.getUIContext().getPromptAction();
-  private dialogService: DialogService = new DialogService();
   private fileService: FileService = new FileService(this.context)
   private pendingHideButtonId: string = ''; // 当前正在隐藏按钮的记录ID
-
-  @Builder
-  DetailDialogBuilder() {
-    DetailDialog({
-      selectedRecord: this.selectedRecord,
-      context: this.context,
-      fileService: this.fileService
-    })
-  }
 
   // 显示删除确认对话框
   showDeleteConfirmDialog() {
@@ -520,13 +492,25 @@ export struct DecibelHistory {
     }
   }
 
-  showDetailDialog() {
-    this.dialogService.showDetailDialog(
-      this.getUIContext(),
-      wrapBuilder(buildDialog),
-      this.selectedRecord,
-      getContext(this) as common.Context
-    );
+  async showDetailDialog() {
+    if (!this.selectedRecord) {
+      return;
+    }
+
+    try {
+      // 创建导航参数
+      const params: DetailDialogParams = {
+        selectedRecord: this.selectedRecord,
+        context: getContext(this),
+        fileService: this.fileService
+      };
+      // 使用 NavPathInfo 创建导航信息
+      const pathInfo = new NavPathInfo('DetailDialog', params);
+      // 使用 pushPath 进行导航
+      await this.navStack.pushPath(pathInfo);
+    } catch (error) {
+      console.error('导航到详情页失败:', error);
+    }
   }
 
   build() {
