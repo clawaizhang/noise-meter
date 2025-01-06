@@ -4,6 +4,7 @@ import { FileService } from './FileService';
 import media from '@ohos.multimedia.media';
 import audio from '@ohos.multimedia.audio';
 import hilog from '@ohos.hilog';
+import fs from '@ohos.file.fs';
 
 const TAG = 'AudioPlayerService';
 const DOMAIN = 0x0000;
@@ -36,6 +37,7 @@ export class AudioPlayerService {
   private onProgressListener?: (duration: number) => void;
   private onStateChangeListener?: (state: PlayerState) => void;
   private progressTimer: number | null = null;
+  private currentFile: fs.File | null = null;
 
   constructor(context: common.Context, fileService: FileService) {
     this.context = context;
@@ -83,17 +85,19 @@ export class AudioPlayerService {
       return;
     }
 
+    // seek操作结果回调函数
+    this.player.on('seekDone', (seekDoneTime: number) => {
+      hilog.info(DOMAIN, TAG, 'seek完成, 时间: %{public}d', seekDoneTime);
+    });
+
     // 错误监听
     this.player.on('error', (error: BusinessError) => {
       hilog.error(DOMAIN, TAG, '播放错误: [%{public}d] %{public}s', error.code, error.message);
       this.updateState(PlayerState.STATE_ERROR);
       this.stopProgressTimer();
-
-      // 尝试重置播放器
+      // 调用reset重置资源，触发idle状态
       if (this.player) {
-        this.player.reset().catch(e => {
-          hilog.error(DOMAIN, TAG, '重置播放器失败: %{public}s', e instanceof Error ? e.message : String(e));
-        });
+        this.player.reset();
       }
     });
 
@@ -101,56 +105,55 @@ export class AudioPlayerService {
     this.player.on('stateChange', async (state: string, reason: media.StateChangeReason) => {
       hilog.info(DOMAIN, TAG, '播放状态变化: %{public}s, 原因: %{public}s', state, reason);
       switch (state) {
-        case 'idle':
+        case 'idle': // 成功调用reset接口后触发该状态机上报
           this.updateState(PlayerState.STATE_IDLE);
           break;
 
-        case 'initialized':
+        case 'initialized': // avplayer 设置播放源后触发该状态上报
           this.updateState(PlayerState.STATE_INITIALIZED);
-          // 设置音频渲染信息
           if (this.player) {
             this.player.audioRendererInfo = {
               usage: audio.StreamUsage.STREAM_USAGE_MEDIA,
               rendererFlags: 0
             };
+            await this.player.prepare(); // 准备播放
           }
           break;
 
-        case 'prepared':
+        case 'prepared': // prepare调用成功后上报该状态机
           this.updateState(PlayerState.STATE_PREPARED);
-          // 准备完成后自动开始播放
           if (this.player) {
-            await this.player.play();
+            await this.player.play(); // 自动开始播放
           }
           break;
 
-        case 'playing':
+        case 'playing': // play成功调用后触发该状态机上报
           this.updateState(PlayerState.STATE_PLAYING);
           this.startProgressTimer();
           break;
 
-        case 'paused':
+        case 'paused': // pause成功调用后触发该状态机上报
           this.updateState(PlayerState.STATE_PAUSED);
           this.stopProgressTimer();
           break;
 
-        case 'stopped':
-          this.updateState(PlayerState.STATE_STOPPED);
-          this.stopProgressTimer();
-          break;
-
-        case 'completed':
+        case 'completed': // 播放结束后触发该状态机上报
           this.updateState(PlayerState.STATE_COMPLETED);
           this.stopProgressTimer();
+          if (this.player) {
+            await this.player.stop(); // 调用播放结束接口
+          }
           break;
 
-        case 'released':
+        case 'stopped': // stop接口成功调用后触发该状态机上报
+          this.updateState(PlayerState.STATE_STOPPED);
+          if (this.player) {
+            await this.player.reset(); // 调用reset接口初始化avplayer状态
+          }
+          break;
+
+        case 'released': // release接口成功调用后触发该状态机上报
           this.updateState(PlayerState.STATE_RELEASED);
-          break;
-
-        case 'error':
-          this.updateState(PlayerState.STATE_ERROR);
-          this.stopProgressTimer();
           break;
 
         default:
@@ -170,25 +173,31 @@ export class AudioPlayerService {
         throw new Error('播放器未初始化');
       }
 
-      // 如果正在播放，先停止
-      if (this.isPlaying()) {
-        await this.stop();
+      // 如果正在播放或已完成播放，先重置播放器
+      if (this.isPlaying() || this.currentState === PlayerState.STATE_COMPLETED) {
+        await this.player.reset();
+        this.updateState(PlayerState.STATE_IDLE);
       }
 
       hilog.info(DOMAIN, TAG, '准备播放音频文件: %{public}s', audioFilePath);
       
+      // 关闭之前的文件描述符
+      if (this.currentFile) {
+        try {
+          fs.closeSync(this.currentFile.fd);
+          this.currentFile = null;
+        } catch (e) {
+          hilog.error(DOMAIN, TAG, '关闭文件描述符失败: %{public}s', e instanceof Error ? e.message : String(e));
+        }
+      }
+      
+      // 打开文件获取文件描述符
+      this.currentFile = await fs.open(audioFilePath);
+      const fdPath = `fd://${this.currentFile.fd}`;
+      
       // 设置音频源
-      this.player.url = audioFilePath;
+      this.player.url = fdPath;
       this.updateState(PlayerState.STATE_PREPARING);
-      
-      // 设置音频渲染信息
-      this.player.audioRendererInfo = {
-        usage: audio.StreamUsage.STREAM_USAGE_MEDIA,
-        rendererFlags: 0
-      };
-      
-      // 准备播放器
-      await this.player.prepare();
       
       hilog.info(DOMAIN, TAG, '开始播放音频');
     } catch (error) {
@@ -223,6 +232,16 @@ export class AudioPlayerService {
         // 取消事件监听
         this.player.off('error');
         this.player.off('stateChange');
+        
+        // 关闭文件描述符
+        if (this.currentFile) {
+          try {
+            fs.closeSync(this.currentFile.fd);
+            this.currentFile = null;
+          } catch (e) {
+            hilog.error(DOMAIN, TAG, '关闭文件描述符失败: %{public}s', e instanceof Error ? e.message : String(e));
+          }
+        }
         
         // 释放播放器资源
         await this.player.release();
