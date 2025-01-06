@@ -413,7 +413,8 @@ export struct DecibelMeter {
           }
         })
 
-        this.HistoryRecordButton()
+        // 移除历史记录按钮调用
+        // this.HistoryRecordButton()
       }
       .width('100%')
       .margin({ top: 16, left: 8, right: 8 })
@@ -467,25 +468,6 @@ export struct DecibelMeter {
     .width('100%')
     .padding({ top: 8, bottom: 16 })
     .alignItems(HorizontalAlign.Center)
-  }
-
-  @Builder
-  HistoryRecordButton() {
-    // 历史记录按钮
-    Button() {
-      Image($r('app.media.ic_history'))
-        .width(24)
-        .height(24)
-        .fillColor('#2196F3')
-    }
-    .type(ButtonType.Circle)
-    .width(40)
-    .height(40)
-    .margin({ top: 16, right: 16 })
-    .backgroundColor('#F5F5F5')
-    .onClick(() => {
-      this.navStack.pushPathByName('DecibelHistory', null, true);
-    })
   }
 
   @Builder
