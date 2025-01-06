@@ -33,7 +33,6 @@ export struct DecibelMeter {
   private values: number[] = []
   private startTime: number = 0
   private releaseTimer: number = -1
-  private currentAudioFilePath?: string
   private currentRecord?: DecibelRecord
 
   aboutToAppear() {
@@ -81,7 +80,6 @@ export struct DecibelMeter {
       this.values = [];
       this.dbCount = 0;
       this.dbSum = 0;
-      this.currentAudioFilePath = undefined; // 重置音频路径
 
       // 创建新的记录对象
       this.currentRecord = new DecibelRecord(
@@ -140,6 +138,7 @@ export struct DecibelMeter {
 
         // 获取WAV格式的音频数据
         let audioData: ArrayBuffer | undefined;
+        let currentAudioFilePath = '';
         if (this.isRecordEnabled) {
           try {
             console.info('开始获取WAV音频数据');
@@ -158,11 +157,13 @@ export struct DecibelMeter {
             const fileName = `audio_${new Date().getTime()}.wav`;
             const relativePath = `${audioDir}/${fileName}`;
             console.info('准备保存音频文件:', relativePath);
-            this.currentAudioFilePath = await this.fileService.saveFile(relativePath, audioData);
-            console.info('音频文件保存成功:', this.currentAudioFilePath);
+            currentAudioFilePath = await this.fileService.saveFile(relativePath, audioData);
+            console.info('音频文件保存成功:', currentAudioFilePath);
           } catch (error) {
             console.error('获取或保存WAV音频数据失败:', error);
           }
+        } else {
+          await this.audioService.stopCapture();
         }
 
         console.info('准备创建记录');
@@ -174,7 +175,7 @@ export struct DecibelMeter {
           this.currentRecord.duration = duration;
           this.currentRecord.decibelValues = [...this.values];
           this.currentRecord.location = locationInfo?.address;
-          this.currentRecord.audioFilePath = this.currentAudioFilePath;
+          this.currentRecord.audioFilePath = currentAudioFilePath;
         }
         console.info('记录更新成功:', this.currentRecord);
 
