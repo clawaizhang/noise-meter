@@ -1,18 +1,24 @@
-import { relationalStore } from '@kit.ArkData';
 import hilog from '@ohos.hilog';
 import { MainPage } from 'entry/MainPageInfo';
+import { RelationalStoreService } from '../../../library/ets/services/RelationalStoreService';
+import { DatabaseConstants } from '../../../library/ets/constants/DatabaseConstants';
+import { TableCreateSql } from '../../../library/ets/constants/TableCreateSql';
+import { DatabaseUpgradeConfig } from '../../../library/ets/interfaces/DatabaseInterfaces';
 
 const TAG = 'Index';
 const DOMAIN = 0x0000;
+
 @Builder
 function IndexBuilder() {
   Index()
 }
+
 @Entry
 @Component
 struct Index {
   @State isInitialized: boolean = false;
   @State isLoading: boolean = true;
+  private relationalStoreService: RelationalStoreService = RelationalStoreService.getInstance();
 
   aboutToAppear() {
     this.initializeDatabase();
@@ -20,68 +26,19 @@ struct Index {
 
   private async initializeDatabase() {
     try {
-      hilog.info(DOMAIN, TAG, '开始初始化数据库');
-      
-      // 数据库配置
-      const STORE_CONFIG: relationalStore.StoreConfig = {
-        name: 'decibel_records.db',
-        securityLevel: relationalStore.SecurityLevel.S1,
-        encrypt: false
-      };
+      // 配置数据库版本升级
+      const upgradeConfigs: DatabaseUpgradeConfig[] = [
+        {
+          version: 1,
+          sqls: [TableCreateSql.DECIBEL_RECORDS]
+        }
+      ];
 
-      // 建表 SQL
-      const SQL_CREATE_TABLE = `
-        CREATE TABLE IF NOT EXISTS decibel_records (
-          id TEXT PRIMARY KEY NOT NULL,
-          timestamp INTEGER NOT NULL,
-          minDecibel REAL NOT NULL,
-          maxDecibel REAL NOT NULL,
-          avgDecibel REAL NOT NULL,
-          duration INTEGER NOT NULL,
-          decibelValues TEXT NOT NULL,
-          location TEXT,
-          audioFilePath TEXT,
-          isFavorite INTEGER DEFAULT 0
-        )
-      `;
-
-      // 获取数据库实例
-      const store = await new Promise<relationalStore.RdbStore>((resolve, reject) => {
-        relationalStore.getRdbStore(getContext(this), STORE_CONFIG, (err, store) => {
-          if (err) {
-            reject(new Error(`获取数据库实例失败: ${err.message}`));
-            return;
-          }
-          resolve(store);
-        });
-      });
-      hilog.info(DOMAIN, TAG, '获取数据库实例成功');
-
-      // 创建表
-      await new Promise<void>((resolve, reject) => {
-        store.executeSql(SQL_CREATE_TABLE, null, (err) => {
-          if (err) {
-            reject(new Error(`创建表失败: ${err.message}`));
-            return;
-          }
-          resolve();
-        });
-      });
-      hilog.info(DOMAIN, TAG, '创建表成功');
-
-      // 设置数据库版本
-      if (store.version === 0) {
-        store.version = 1;
-        hilog.info(DOMAIN, TAG, '设置数据库版本为 1');
-      }
-
-      this.isInitialized = true;
-      hilog.info(DOMAIN, TAG, '数据库初始化完成');
+      const result = await this.relationalStoreService.init(getContext(this), DatabaseConstants.NOISE_METER_DB, upgradeConfigs);
+      this.isInitialized = result;
     } catch (error) {
       hilog.error(DOMAIN, TAG, '初始化数据库失败: %{public}s', error instanceof Error ? error.message : String(error));
-      if (error instanceof Error && error.stack) {
-        hilog.error(DOMAIN, TAG, '错误详情: %{public}s', error.stack);
-      }
+      this.isInitialized = false;
     } finally {
       this.isLoading = false;
     }
@@ -105,10 +62,6 @@ struct Index {
       } else if (!this.isInitialized) {
         // 显示错误状态
         Column() {
-          // Image($r('app.media.ic_error'))
-          //   .width(64)
-          //   .height(64)
-          //   .fillColor('#999999')
           Text('初始化失败')
             .fontSize(16)
             .margin({ top: 12 })

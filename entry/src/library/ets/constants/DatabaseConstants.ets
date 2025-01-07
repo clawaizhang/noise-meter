@@ -1,0 +1,9 @@
+/**
+ * 数据库相关常量
+ */
+export class DatabaseConstants {
+  /**
+   * 噪音检测仪数据库
+   */
+  static readonly NOISE_METER_DB = 'noise_meter.db';
+} 

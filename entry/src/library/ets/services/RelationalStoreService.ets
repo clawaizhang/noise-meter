@@ -1,27 +1,111 @@
 import relationalStore from '@ohos.data.relationalStore';
 import common from '@ohos.app.ability.common';
 import { BusinessError } from '@ohos.base';
+import hilog from '@ohos.hilog';
+import { DatabaseUpgradeConfig } from '../interfaces/DatabaseInterfaces';
+
+const TAG = 'RelationalStoreService';
+const DOMAIN = 0x0000;
 
 /**
  * 关系型数据库服务
  */
 export class RelationalStoreService {
-  private context: common.Context;
+  private static instance: RelationalStoreService;
+  private context: common.Context | null = null;
   private store: relationalStore.RdbStore | null = null;
-  private readonly databaseName: string;
-  private initSql: string = '';
+  private databaseName: string = '';
+  private isInitialized: boolean = false;
 
-  constructor(context: common.Context, databaseName: string) {
-    this.context = context;
-    this.databaseName = databaseName;
+  private constructor() {}
+
+  /**
+   * 获取RelationalStoreService实例
+   */
+  public static getInstance(): RelationalStoreService {
+    if (!RelationalStoreService.instance) {
+      RelationalStoreService.instance = new RelationalStoreService();
+    }
+    return RelationalStoreService.instance;
   }
 
   /**
-   * 设置初始化SQL
-   * @param sql 初始化SQL语句
+   * 初始化数据库
+   * @param context 上下文
+   * @param databaseName 数据库名称
+   * @param upgradeConfigs 数据库版本升级配置数组,按版本号从小到大排序
    */
-  setInitSql(sql: string): void {
-    this.initSql = sql;
+  public async init(context: common.Context, databaseName: string, upgradeConfigs: DatabaseUpgradeConfig[]): Promise<boolean> {
+    if (this.isInitialized) {
+      return true;
+    }
+
+    try {
+      this.context = context;
+      this.databaseName = databaseName;
+      hilog.info(DOMAIN, TAG, '开始初始化数据库');
+      
+      // 数据库配置
+      const STORE_CONFIG: relationalStore.StoreConfig = {
+        name: databaseName,
+        securityLevel: relationalStore.SecurityLevel.S1,
+        encrypt: false
+      };
+
+      // 获取数据库实例
+      const store = await new Promise<relationalStore.RdbStore>((resolve, reject) => {
+        relationalStore.getRdbStore(this.context, STORE_CONFIG, (err, store) => {
+          if (err) {
+            reject(new Error(`获取数据库实例失败: ${err.message}`));
+            return;
+          }
+          resolve(store);
+        });
+      });
+      hilog.info(DOMAIN, TAG, '获取数据库实例成功');
+
+      // 获取当前数据库版本
+      const currentVersion = store.version;
+      hilog.info(DOMAIN, TAG, `当前数据库版本: ${currentVersion}`);
+
+      // 按版本号升序排序
+      upgradeConfigs.sort((a, b) => a.version - b.version);
+
+      // 执行版本升级
+      for (const config of upgradeConfigs) {
+        if (currentVersion < config.version) {
+          hilog.info(DOMAIN, TAG, `开始升级到版本 ${config.version}`);
+          
+          // 执行该版本的所有SQL
+          for (const sql of config.sqls) {
+            await new Promise<void>((resolve, reject) => {
+              store.executeSql(sql, null, (err) => {
+                if (err) {
+                  reject(new Error(`执行SQL失败: ${err.message}, SQL: ${sql}`));
+                  return;
+                }
+                resolve();
+              });
+            });
+          }
+          
+          // 更新版本号
+          store.version = config.version;
+          hilog.info(DOMAIN, TAG, `升级到版本 ${config.version} 成功`);
+        }
+      }
+
+      this.store = store;
+      this.isInitialized = true;
+      hilog.info(DOMAIN, TAG, '数据库初始化完成');
+      return true;
+    } catch (error) {
+      hilog.error(DOMAIN, TAG, '初始化数据库失败: %{public}s', error instanceof Error ? error.message : String(error));
+      if (error instanceof Error && error.stack) {
+        hilog.error(DOMAIN, TAG, '错误详情: %{public}s', error.stack);
+      }
+      return false;
+    }
   }
 
   /**
@@ -32,31 +116,7 @@ export class RelationalStoreService {
       return this.store;
     }
 
-    try {
-      console.info('开始获取数据库实例:', this.databaseName);
-      // 数据库配置
-      const config: relationalStore.StoreConfig = {
-        name: this.databaseName,
-        securityLevel: relationalStore.SecurityLevel.S1
-      };
-
-      // 获取数据库连接
-      this.store = await relationalStore.getRdbStore(this.context, config);
-      console.info('数据库连接成功');
-
-      // 如果有初始化SQL，执行它
-      if (this.initSql) {
-        console.info('执行初始化SQL');
-        await this.store.executeSql(this.initSql);
-        console.info('初始化SQL执行成功');
-      }
-
-      return this.store;
-    } catch (error) {
-      const businessError = error as BusinessError;
-      console.error(`获取数据库实例失败: ${businessError.code} - ${businessError.message}`);
-      throw new Error(`获取数据库实例失败: ${businessError.message}`);
-    }
+    throw new Error('数据库未初始化');
   }
 
   /**
