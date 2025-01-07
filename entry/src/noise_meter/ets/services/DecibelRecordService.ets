@@ -3,6 +3,7 @@ import common from '@ohos.app.ability.common';
 import { FileService } from '../../../library/ets/services/FileService';
 import { relationalStore } from '@kit.ArkData';
 import hilog from '@ohos.hilog';
+import { RelationalStoreService } from '../../../library/ets/services/RelationalStoreService';
 
 const TAG = 'DecibelRecordService';
 const DOMAIN = 0x0000;
@@ -13,46 +14,12 @@ const DOMAIN = 0x0000;
 export class DecibelRecordService {
   private context: common.Context;
   private fileService: FileService;
-  private rdbStore: relationalStore.RdbStore | null = null;
-  private static readonly STORE_CONFIG: relationalStore.StoreConfig = {
-    name: 'decibel_records.db',
-    securityLevel: relationalStore.SecurityLevel.S1,
-    encrypt: false
-  };
+  private relationalStoreService: RelationalStoreService;
 
   constructor(context: common.Context) {
     this.context = context;
     this.fileService = new FileService(context);
-  }
-
-  /**
-   * 确保数据库已初始化
-   */
-  private async ensureInitialized(): Promise<void> {
-    if (!this.rdbStore) {
-      try {
-        hilog.info(DOMAIN, TAG, '开始初始化数据库');
-        
-        // 获取数据库实例
-        this.rdbStore = await new Promise<relationalStore.RdbStore>((resolve, reject) => {
-          relationalStore.getRdbStore(this.context, DecibelRecordService.STORE_CONFIG, (err, store) => {
-            if (err) {
-              reject(new Error(`获取数据库实例失败: ${err.message}`));
-              return;
-            }
-            resolve(store);
-          });
-        });
-        
-        hilog.info(DOMAIN, TAG, '获取数据库实例成功');
-      } catch (error) {
-        hilog.error(DOMAIN, TAG, '初始化数据库失败: %{public}s', error instanceof Error ? error.message : String(error));
-        if (error instanceof Error && error.stack) {
-          hilog.error(DOMAIN, TAG, '错误详情: %{public}s', error.stack);
-        }
-        throw new Error('初始化数据库失败: ' + (error instanceof Error ? error.message : String(error)));
-      }
-    }
+    this.relationalStoreService = RelationalStoreService.getInstance();
   }
 
   /**
@@ -60,11 +27,6 @@ export class DecibelRecordService {
    */
   async saveRecord(record: DecibelRecord): Promise<void> {
     try {
-      await this.ensureInitialized();
-      if (!this.rdbStore) {
-        throw new Error('数据库未初始化');
-      }
-
       hilog.info(DOMAIN, TAG, '准备保存记录: %{public}s', JSON.stringify(record));
       const valueBucket: relationalStore.ValuesBucket = {
         id: record.id,
@@ -80,16 +42,8 @@ export class DecibelRecordService {
       };
       hilog.info(DOMAIN, TAG, '转换为 ValuesBucket: %{public}s', JSON.stringify(valueBucket));
       
-      await new Promise<void>((resolve, reject) => {
-        this.rdbStore!.insert('decibel_records', valueBucket, (err, rowId) => {
-          if (err) {
-            reject(new Error(`插入记录失败: ${err.message}`));
-            return;
-          }
-          hilog.info(DOMAIN, TAG, '记录保存成功，rowId: %{public}d', rowId);
-          resolve();
-        });
-      });
+      await this.relationalStoreService.insert('decibel_records', valueBucket);
+      hilog.info(DOMAIN, TAG, '记录保存成功');
     } catch (error) {
       hilog.error(DOMAIN, TAG, '保存记录失败: %{public}s', error instanceof Error ? error.message : String(error));
       if (error instanceof Error && error.stack) {
@@ -104,21 +58,8 @@ export class DecibelRecordService {
    */
   async getRecords(): Promise<DecibelRecord[]> {
     try {
-      await this.ensureInitialized();
-      if (!this.rdbStore) {
-        throw new Error('数据库未初始化');
-      }
-
       const sql = 'SELECT * FROM decibel_records ORDER BY timestamp DESC';
-      const resultSet = await new Promise<relationalStore.ResultSet>((resolve, reject) => {
-        this.rdbStore!.querySql(sql, [], (err, resultSet) => {
-          if (err) {
-            reject(new Error(`查询记录失败: ${err.message}`));
-            return;
-          }
-          resolve(resultSet);
-        });
-      });
+      const resultSet = await this.relationalStoreService.query(sql);
       
       const records: DecibelRecord[] = [];
       while (resultSet.goToNextRow()) {
@@ -138,22 +79,9 @@ export class DecibelRecordService {
    */
   async clearUnfavoriteRecords(): Promise<void> {
     try {
-      await this.ensureInitialized();
-      if (!this.rdbStore) {
-        throw new Error('数据库未初始化');
-      }
-
       // 先获取所有非收藏的记录，用于删除音频文件
       const sql = 'SELECT * FROM decibel_records WHERE isFavorite = 0';
-      const resultSet = await new Promise<relationalStore.ResultSet>((resolve, reject) => {
-        this.rdbStore!.querySql(sql, [], (err, resultSet) => {
-          if (err) {
-            reject(new Error(`查询记录失败: ${err.message}`));
-            return;
-          }
-          resolve(resultSet);
-        });
-      });
+      const resultSet = await this.relationalStoreService.query(sql);
       
       while (resultSet.goToNextRow()) {
         const record = DecibelRecord.fromResultSet(resultSet);
@@ -169,15 +97,7 @@ export class DecibelRecordService {
 
       // 删除非收藏记录
       const deleteSql = 'DELETE FROM decibel_records WHERE isFavorite = 0';
-      await new Promise<void>((resolve, reject) => {
-        this.rdbStore!.executeSql(deleteSql, [], (err) => {
-          if (err) {
-            reject(new Error(`删除记录失败: ${err.message}`));
-            return;
-          }
-          resolve();
-        });
-      });
+      await this.relationalStoreService.execute(deleteSql);
     } catch (error) {
       hilog.error(DOMAIN, TAG, '清空非收藏记录失败: %{public}s', error instanceof Error ? error.message : String(error));
       throw new Error('清空非收藏记录失败');
@@ -189,25 +109,12 @@ export class DecibelRecordService {
    */
   async updateRecord(record: DecibelRecord): Promise<void> {
     try {
-      await this.ensureInitialized();
-      if (!this.rdbStore) {
-        throw new Error('数据库未初始化');
-      }
-
       const valueBucket = record.toValuesBucket();
       const predicates = new relationalStore.RdbPredicates('decibel_records');
       predicates.equalTo('id', record.id);
       
-      await new Promise<void>((resolve, reject) => {
-        this.rdbStore!.update(valueBucket, predicates, (err, rows) => {
-          if (err) {
-            reject(new Error(`更新记录失败: ${err.message}`));
-            return;
-          }
-          hilog.info(DOMAIN, TAG, '更新了 %{public}d 条记录', rows);
-          resolve();
-        });
-      });
+      await this.relationalStoreService.update('decibel_records', valueBucket, predicates);
+      hilog.info(DOMAIN, TAG, '记录更新成功');
     } catch (error) {
       hilog.error(DOMAIN, TAG, '更新记录失败: %{public}s', error instanceof Error ? error.message : String(error));
       throw new Error('更新记录失败');
@@ -219,21 +126,8 @@ export class DecibelRecordService {
    */
   async getRecordById(id: string): Promise<DecibelRecord | null> {
     try {
-      await this.ensureInitialized();
-      if (!this.rdbStore) {
-        throw new Error('数据库未初始化');
-      }
-
       const sql = 'SELECT * FROM decibel_records WHERE id = ?';
-      const resultSet = await new Promise<relationalStore.ResultSet>((resolve, reject) => {
-        this.rdbStore!.querySql(sql, [id], (err, resultSet) => {
-          if (err) {
-            reject(new Error(`查询记录失败: ${err.message}`));
-            return;
-          }
-          resolve(resultSet);
-        });
-      });
+      const resultSet = await this.relationalStoreService.query(sql, [id]);
       
       let record: DecibelRecord | null = null;
       if (resultSet.goToFirstRow()) {
@@ -252,11 +146,6 @@ export class DecibelRecordService {
    */
   async deleteRecord(id: string): Promise<void> {
     try {
-      await this.ensureInitialized();
-      if (!this.rdbStore) {
-        throw new Error('数据库未初始化');
-      }
-
       // 先获取记录信息
       const record = await this.getRecordById(id);
       if (!record) {
@@ -276,16 +165,8 @@ export class DecibelRecordService {
       const predicates = new relationalStore.RdbPredicates('decibel_records');
       predicates.equalTo('id', id);
       
-      await new Promise<void>((resolve, reject) => {
-        this.rdbStore!.delete(predicates, (err, rows) => {
-          if (err) {
-            reject(new Error(`删除记录失败: ${err.message}`));
-            return;
-          }
-          hilog.info(DOMAIN, TAG, '删除了 %{public}d 条记录', rows);
-          resolve();
-        });
-      });
+      await this.relationalStoreService.delete('decibel_records', predicates);
+      hilog.info(DOMAIN, TAG, '记录删除成功');
     } catch (error) {
       hilog.error(DOMAIN, TAG, '删除记录失败: %{public}s', error instanceof Error ? error.message : String(error));
       throw new Error('删除记录失败');
