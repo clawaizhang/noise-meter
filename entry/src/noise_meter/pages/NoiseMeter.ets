@@ -3,11 +3,29 @@ import { noiseMeterNavStack } from '../ets/constant/ProviderConstant';
 import { getTitleName } from '../MainPageInfo';
 import { DecibelHistory } from './DecibelHistory';
 import { CustomTitleBar } from '../../library/ets/components/common/CustomTitleBar';
+import { Settings } from '../ets/components/Settings';
 
 @ComponentV2
 export struct NoiseMeter {
   @Provider(noiseMeterNavStack) navStack: NavPathStack = new NavPathStack()
   @Local currentIndex: number = 0
+
+  @Builder
+  TabBuilder(title: string, icon: Resource, index: number) {
+    Column() {
+      Image(icon)
+        .width(24)
+        .height(24)
+        .fillColor(this.currentIndex === index ? '#2196F3' : '#666666')
+      Text(title)
+        .fontSize(12)
+        .fontColor(this.currentIndex === index ? '#2196F3' : '#666666')
+        .margin({ top: 4 })
+    }
+    .width('100%')
+    .height('100%')
+    .justifyContent(FlexAlign.Center)
+  }
 
   build() {
     Navigation(this.navStack) {
@@ -32,6 +50,11 @@ export struct NoiseMeter {
           DecibelHistory({ currentTabIndex: this.currentIndex })
         }
         .tabBar(this.TabBuilder('检测记录', $r('app.media.ic_history'), 1))
+
+        TabContent() {
+          Settings()
+        }
+        .tabBar(this.TabBuilder('设置', $r('app.media.ic_settings'), 2))
       }
       .scrollable(false)
       .onChange((index: number) => {
@@ -48,22 +71,5 @@ export struct NoiseMeter {
     .backgroundColor('#F5F5F5')
     .navBarPosition(NavBarPosition.Start)
     .hideToolBar(true)
-  }
-
-  @Builder
-  TabBuilder(title: string, icon: Resource, index: number) {
-    Column() {
-      Image(icon)
-        .width(24)
-        .height(24)
-        .fillColor(this.currentIndex === index ? '#2196F3' : '#666666')
-      Text(title)
-        .fontSize(12)
-        .fontColor(this.currentIndex === index ? '#2196F3' : '#666666')
-        .margin({ top: 4 })
-    }
-    .width('100%')
-    .height('100%')
-    .justifyContent(FlexAlign.Center)
   }
 }
