@@ -138,4 +138,44 @@ export class PreferenceService {
     }
     this.preferences.off('change', callback);
   }
+
+  /**
+   * 设置字符串值
+   * @param key 键名
+   * @param value 值
+   */
+  public async putString(key: string, value: string): Promise<void> {
+    if (!this.preferences) {
+      throw new Error('首选项未初始化');
+    }
+
+    try {
+      this.preferences.putSync(key, value);
+      await new Promise<void>((resolve, reject) => {
+        this.preferences!.flush((err: BusinessError) => {
+          if (err) {
+            reject(new Error(`持久化字符串值失败: ${err.message}`));
+            return;
+          }
+          resolve();
+        });
+      });
+      hilog.info(DOMAIN, TAG, '字符串值已更新: %{public}s = %{public}s', key, value);
+    } catch (error) {
+      hilog.error(DOMAIN, TAG, '设置字符串值失败: %{public}s', error instanceof Error ? error.message : String(error));
+      throw new Error('设置字符串值失败');
+    }
+  }
+
+  /**
+   * 获取字符串值
+   * @param key 键名
+   * @param defaultValue 默认值
+   */
+  public getString(key: string, defaultValue: string = ''): string {
+    if (!this.preferences) {
+      throw new Error('首选项未初始化');
+    }
+    return this.preferences.getSync(key, defaultValue) as string;
+  }
 } 

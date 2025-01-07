@@ -11,4 +11,9 @@ export class PreferenceKeyConstants {
    * 录音开关状态键名
    */
   static readonly RECORD = 'record_enabled';
+
+  /**
+   * 分贝加权类型
+   */
+  static readonly WEIGHTING: string = 'weighting';
 } 

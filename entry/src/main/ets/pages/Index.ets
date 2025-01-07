@@ -7,6 +7,7 @@ import { DatabaseUpgradeConfig } from '../../../library/ets/interfaces/DatabaseI
 import { PreferenceService } from '../../../library/ets/services/PreferenceService';
 import { PreferenceStoreConstants } from '../../../library/ets/constants/PreferenceStoreConstants';
 import { PreferenceKeyConstants } from '../../../library/ets/constants/PreferenceKeyConstants';
+import { WeightingType } from '../../../library/ets/constants/WeightingConstants';
 
 const TAG = 'Index';
 const DOMAIN = 0x0000;
@@ -24,7 +25,7 @@ struct Index {
   private relationalStoreService: RelationalStoreService = RelationalStoreService.getInstance();
   private preferenceService: PreferenceService = PreferenceService.getInstance();
 
-  aboutToAppear() {
+  async aboutToAppear() {
     this.initialize();
   }
 
@@ -52,6 +53,11 @@ struct Index {
       const prefResult = await this.preferenceService.init(getContext(this), PreferenceStoreConstants.NOISE_METER, defaultValues);
       if (!prefResult) {
         throw new Error('首选项初始化失败');
+      }
+
+      // 初始化加权类型
+      if (!this.preferenceService.getString(PreferenceKeyConstants.WEIGHTING)) {
+        await this.preferenceService.putString(PreferenceKeyConstants.WEIGHTING, WeightingType.A);
       }
 
       this.isInitialized = true;
