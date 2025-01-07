@@ -406,7 +406,6 @@ export struct DecibelMeter {
 
           // 统计数据显示
           this.StatisticsRow()
-
         }
         .width('100%')
         .padding({
@@ -434,28 +433,13 @@ export struct DecibelMeter {
       .shadow({ radius: 1, color: '#1A000000', offsetY: 2 })
 
       // 位置显示
-      Column() {
+      Row() {
         LocationDisplay()
       }
-      .width('100%')
-      .padding({
-        left: 20,
-        right: 20,
-        top: 12,
-        bottom: 16
-      })
-      .borderRadius(20)
-      .backgroundColor(Color.White)
-      .margin({
-        top: 2,
-        bottom: 16,
-        left: 8,
-        right: 8
-      })
-      .shadow({ radius: 1, color: '#1A000000', offsetY: 2 })
+      .width('92%')
+      .margin({ top: 16, bottom: 16 })
 
       this.StartStopButton()
-
     }
     .width('100%')
     .padding({ top: 8, bottom: 16 })
