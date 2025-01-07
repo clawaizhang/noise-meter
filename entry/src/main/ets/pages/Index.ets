@@ -4,6 +4,9 @@ import { RelationalStoreService } from '../../../library/ets/services/Relational
 import { DatabaseConstants } from '../../../library/ets/constants/DatabaseConstants';
 import { TableCreateSql } from '../../../library/ets/constants/TableCreateSql';
 import { DatabaseUpgradeConfig } from '../../../library/ets/interfaces/DatabaseInterfaces';
+import { PreferenceService } from '../../../library/ets/services/PreferenceService';
+import { PreferenceStoreConstants } from '../../../library/ets/constants/PreferenceStoreConstants';
+import { PreferenceKeyConstants } from '../../../library/ets/constants/PreferenceKeyConstants';
 
 const TAG = 'Index';
 const DOMAIN = 0x0000;
@@ -19,14 +22,15 @@ struct Index {
   @State isInitialized: boolean = false;
   @State isLoading: boolean = true;
   private relationalStoreService: RelationalStoreService = RelationalStoreService.getInstance();
+  private preferenceService: PreferenceService = PreferenceService.getInstance();
 
   aboutToAppear() {
-    this.initializeDatabase();
+    this.initialize();
   }
 
-  private async initializeDatabase() {
+  private async initialize() {
     try {
-      // 配置数据库版本升级
+      // 初始化数据库
       const upgradeConfigs: DatabaseUpgradeConfig[] = [
         {
           version: 1,
@@ -34,10 +38,25 @@ struct Index {
         }
       ];
 
-      const result = await this.relationalStoreService.init(getContext(this), DatabaseConstants.NOISE_METER_DB, upgradeConfigs);
-      this.isInitialized = result;
+      const dbResult = await this.relationalStoreService.init(getContext(this), DatabaseConstants.NOISE_METER_DB, upgradeConfigs);
+      if (!dbResult) {
+        throw new Error('数据库初始化失败');
+      }
+
+      // 初始化首选项
+      const defaultValues = new Map<string, boolean>([
+        [PreferenceKeyConstants.LOCATION, true],
+        [PreferenceKeyConstants.RECORD, true]
+      ]);
+
+      const prefResult = await this.preferenceService.init(getContext(this), PreferenceStoreConstants.NOISE_METER, defaultValues);
+      if (!prefResult) {
+        throw new Error('首选项初始化失败');
+      }
+
+      this.isInitialized = true;
     } catch (error) {
-      hilog.error(DOMAIN, TAG, '初始化数据库失败: %{public}s', error instanceof Error ? error.message : String(error));
+      hilog.error(DOMAIN, TAG, '初始化失败: %{public}s', error instanceof Error ? error.message : String(error));
       this.isInitialized = false;
     } finally {
       this.isLoading = false;
@@ -69,7 +88,7 @@ struct Index {
             .margin({ top: 24 })
             .onClick(() => {
               this.isLoading = true;
-              this.initializeDatabase();
+              this.initialize();
             })
         }
         .width('100%')
