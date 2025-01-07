@@ -5,11 +5,12 @@ import { DecibelRecord } from '../../../library/ets/models/DecibelRecord';
 import { DecibelRecordService } from '../services/DecibelRecordService';
 import { LocationDisplay } from '../../../library/ets/components/business/LocationDisplay'
 import common from '@ohos.app.ability.common';
-import { AudioRecordDisplay } from '../../../library/ets/components/business/AudioRecordDisplay';
 import { BannerCard } from '../../../library/ets/components/business/BannerCard';
 import { FileService } from '../../../library/ets/services/FileService';
 import { noiseMeterNavStack } from '../constant/ProviderConstant';
 import { promptAction } from '@kit.ArkUI';
+import { PreferenceService } from '../../../library/ets/services/PreferenceService';
+import { PreferenceKeyConstants } from '../../../library/ets/constants/PreferenceKeyConstants';
 
 @ComponentV2
 export struct DecibelMeter {
@@ -20,13 +21,14 @@ export struct DecibelMeter {
   @Local private isRecording: boolean = false
   @Local private showStats: boolean = false
   @Local private recordingTime: number = 0
-  @Local private isRecordEnabled: boolean = true
+  @Local private isRecordEnabled: boolean = false
   @Consumer(noiseMeterNavStack) navStack: NavPathStack = new NavPathStack()
   private decibelService: DecibelService = new DecibelService()
   private audioService: AudioService = new AudioService(getContext() as common.UIAbilityContext)
   private locationService: LocationService = LocationService.getInstance()
   private recordService: DecibelRecordService = new DecibelRecordService(getContext() as common.UIAbilityContext)
   private fileService: FileService = new FileService(getContext() as common.Context)
+  private preferenceService: PreferenceService = PreferenceService.getInstance()
   private dbCount: number = 0
   private dbSum: number = 0
   private context?: common.UIAbilityContext
@@ -40,9 +42,19 @@ export struct DecibelMeter {
     if (this.context) {
       this.audioService = new AudioService(this.context);
     }
+    // 获取录音开关状态
+    this.isRecordEnabled = this.preferenceService.isEnabled(PreferenceKeyConstants.RECORD);
+    // 监听录音开关状态变化
+    this.preferenceService.subscribe((key: string) => {
+      if (key === PreferenceKeyConstants.RECORD) {
+        this.isRecordEnabled = this.preferenceService.isEnabled(PreferenceKeyConstants.RECORD);
+      }
+    });
   }
 
   aboutToDisappear() {
+    // 取消订阅状态变更
+    this.preferenceService.unsubscribe();
     // 清除定时器
     if (this.releaseTimer !== -1) {
       clearTimeout(this.releaseTimer);
@@ -414,23 +426,12 @@ export struct DecibelMeter {
             });
           }
         })
-
-        // 移除历史记录按钮调用
-        // this.HistoryRecordButton()
       }
       .width('100%')
       .margin({ left: 8, right: 8 })
       .backgroundColor(Color.White)
       .borderRadius(24)
       .shadow({ radius: 1, color: '#1A000000', offsetY: 2 })
-
-      // 录音显示
-      AudioRecordDisplay({
-        isRecordEnabled: this.isRecordEnabled,
-        onRecordEnabledChange: (isOn: boolean) => {
-          this.isRecordEnabled = isOn;
-        }
-      })
 
       // 位置显示
       Column() {
