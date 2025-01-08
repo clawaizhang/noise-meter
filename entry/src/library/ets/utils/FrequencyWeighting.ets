@@ -1,11 +1,12 @@
 import { WeightingType } from '../constants/WeightingConstants';
+import { FFTAnalyzer } from './FFTAnalyzer';
 
 /**
  * 频率计权工具类
  */
 export class FrequencyWeighting {
-  // FFT 分析的采样点数
-  private static readonly FFT_SIZE: number = 2048;
+  // FFT分析器实例
+  private static readonly fftAnalyzer: FFTAnalyzer = new FFTAnalyzer(2048);
   
   // 标准频率点(Hz)
   private static readonly STANDARD_FREQUENCIES: number[] = [
@@ -44,8 +45,30 @@ export class FrequencyWeighting {
       return FrequencyWeighting.calculateZWeightedDecibel(buffer, bytesRead);
     }
 
-    // A计权和C计权使用FFT分析
-    return FrequencyWeighting.calculateFrequencyWeightedDecibel(buffer, weightingType);
+    // 执行FFT分析
+    const spectrum = FrequencyWeighting.fftAnalyzer.transform(buffer);
+    
+    // 计算加权和
+    let weightedSum = 0;
+    const sampleRate = 44100; // 采样率
+    
+    // 对每个标准频率点应用计权
+    for (let i = 0; i < FrequencyWeighting.STANDARD_FREQUENCIES.length; i++) {
+      const frequency = FrequencyWeighting.STANDARD_FREQUENCIES[i];
+      const amplitude = FrequencyWeighting.fftAnalyzer.getAmplitudeAtFrequency(spectrum, frequency, sampleRate);
+      
+      // 根据计权类型选择修正值
+      const correction = weightingType === WeightingType.A ? 
+        FrequencyWeighting.A_WEIGHTING[i] : FrequencyWeighting.C_WEIGHTING[i];
+      
+      // 应用修正值并累加
+      const weightedAmplitude = amplitude * Math.pow(10, correction / 20);
+      weightedSum += weightedAmplitude * weightedAmplitude;
+    }
+    
+    // 计算最终的分贝值
+    const weightedRMS = Math.sqrt(weightedSum / FrequencyWeighting.STANDARD_FREQUENCIES.length);
+    return 20 * Math.log10(Math.max(weightedRMS, 1e-6)) + 90;
   }
 
   /**
@@ -71,104 +94,27 @@ export class FrequencyWeighting {
     const combined = Math.max(rms, maxAbs * 0.8);  // 增加峰值的权重
     
     // 计算分贝值
-    return 20 * Math.log10(Math.max(combined, 1) / FrequencyWeighting.REF_VALUE);
+    return 20 * Math.log10(Math.max(combined, 1) / FrequencyWeighting.REF_VALUE) + 90;
   }
-
+  
   /**
-   * 使用频率计权计算分贝值
+   * 获取频谱数据用于显示
    * @param buffer 音频数据
-   * @param weightingType 计权类型
-   * @returns 分贝值
-   */
-  private static calculateFrequencyWeightedDecibel(buffer: ArrayBuffer, weightingType: WeightingType): number {
-    // 将音频数据转换为浮点数组
-    const int16Array = new Int16Array(buffer);
-    const floatArray = new Float32Array(int16Array.length);
-    for (let i = 0; i < int16Array.length; i++) {
-      floatArray[i] = int16Array[i] / 32768.0;
-    }
-
-    // 执行FFT
-    const fftResult = FrequencyWeighting.performFFT(floatArray);
-    
-    // 获取频谱
-    const spectrum = FrequencyWeighting.getSpectrum(fftResult);
-    
-    // 应用频率计权
-    let weightedSum = 0;
-    for (let i = 0; i < FrequencyWeighting.STANDARD_FREQUENCIES.length; i++) {
-      const frequency = FrequencyWeighting.STANDARD_FREQUENCIES[i];
-      const amplitude = FrequencyWeighting.getAmplitudeAtFrequency(spectrum, frequency, 48000); // 假设采样率为48kHz
-      
-      // 根据计权类型选择修正值
-      let correction = 0;
-      switch (weightingType) {
-        case WeightingType.A:
-          correction = FrequencyWeighting.A_WEIGHTING[i];
-          break;
-        case WeightingType.C:
-          correction = FrequencyWeighting.C_WEIGHTING[i];
-          break;
-      }
-      
-      // 应用修正值并累加
-      const weightedAmplitude = amplitude * Math.pow(10, correction / 20);
-      weightedSum += weightedAmplitude * weightedAmplitude;
-    }
-    
-    // 计算最终的分贝值
-    const weightedRMS = Math.sqrt(weightedSum);
-    return 20 * Math.log10(Math.max(weightedRMS, 1e-6));
-  }
-
-  /**
-   * 执行FFT变换
-   * @param input 输入数据
-   * @returns FFT结果
-   */
-  private static performFFT(input: Float32Array): Float32Array {
-    // 这里使用简化的FFT实现
-    // 在实际应用中,建议使用成熟的FFT库
-    const fftSize = FrequencyWeighting.FFT_SIZE;
-    const output = new Float32Array(fftSize);
-    
-    // 复制输入数据并应用窗函数
-    for (let i = 0; i < fftSize && i < input.length; i++) {
-      // 使用汉宁窗
-      const window = 0.5 * (1 - Math.cos(2 * Math.PI * i / fftSize));
-      output[i] = input[i] * window;
-    }
-    
-    // TODO: 实现实际的FFT算法
-    // 当前返回模拟的频谱数据
-    return output;
-  }
-
-  /**
-   * 获取频谱数据
-   * @param fftResult FFT结果
    * @returns 频谱数据
    */
-  private static getSpectrum(fftResult: Float32Array): Float32Array {
-    const spectrum = new Float32Array(fftResult.length / 2);
-    for (let i = 0; i < spectrum.length; i++) {
-      const real = fftResult[2 * i];
-      const imag = fftResult[2 * i + 1];
-      spectrum[i] = Math.sqrt(real * real + imag * imag);
-    }
-    return spectrum;
+  public static getSpectrumData(buffer: ArrayBuffer): Float32Array {
+    return FrequencyWeighting.fftAnalyzer.transform(buffer);
   }
-
+  
   /**
-   * 获取指定频率的幅值
-   * @param spectrum 频谱数据
-   * @param frequency 目标频率
-   * @param sampleRate 采样率
-   * @returns 幅值
+   * 获取特定频段的能量
+   * @param buffer 音频数据
+   * @param startFreq 起始频率
+   * @param endFreq 结束频率
+   * @returns 频段能量
    */
-  private static getAmplitudeAtFrequency(spectrum: Float32Array, frequency: number, sampleRate: number): number {
-    const binSize = sampleRate / (2 * spectrum.length);
-    const binIndex = Math.round(frequency / binSize);
-    return binIndex < spectrum.length ? spectrum[binIndex] : 0;
+  public static getBandEnergy(buffer: ArrayBuffer, startFreq: number, endFreq: number): number {
+    const spectrum = FrequencyWeighting.fftAnalyzer.transform(buffer);
+    return FrequencyWeighting.fftAnalyzer.getFrequencyRangeEnergy(spectrum, startFreq, endFreq, 44100);
   }
 } 

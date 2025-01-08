@@ -11,6 +11,7 @@ import { noiseMeterNavStack } from '../constant/ProviderConstant';
 import { promptAction } from '@kit.ArkUI';
 import { PreferenceService } from '../../../library/ets/services/PreferenceService';
 import { PreferenceKeyConstants } from '../../../library/ets/constants/PreferenceKeyConstants';
+import { FrequencyWeighting } from '../../../library/ets/utils/FrequencyWeighting';
 
 @ComponentV2
 export struct DecibelMeter {
@@ -22,6 +23,7 @@ export struct DecibelMeter {
   @Local private showStats: boolean = false
   @Local private recordingTime: number = 0
   @Local private isRecordEnabled: boolean = false
+  @Local private spectrumData: Float32Array = new Float32Array(1024)
   @Consumer(noiseMeterNavStack) navStack: NavPathStack = new NavPathStack()
   private decibelService: DecibelService = new DecibelService()
   private audioService: AudioService = new AudioService(getContext() as common.UIAbilityContext)
@@ -50,6 +52,7 @@ export struct DecibelMeter {
         this.isRecordEnabled = this.preferenceService.isEnabled(PreferenceKeyConstants.RECORD);
       }
     });
+    this.startAnalyzing();
   }
 
   aboutToDisappear() {
@@ -349,6 +352,51 @@ export struct DecibelMeter {
     .margin({ top: 16 })
   }
 
+  @Builder
+  private SpectrumView() {
+    Row() {
+      ForEach(this.mapSpectrumToDisplay(this.spectrumData), (value: number, index: number) => {
+        Column() {
+          Column()
+            .width(3)
+            .height(value * 150)
+            .backgroundColor('#0A59F7')
+            .borderRadius(1.5)
+        }
+        .width(4)
+        .height(150)
+        .justifyContent(FlexAlign.End)
+      }, (item: number, index: number): string => `${index}`)
+    }
+    .width('100%')
+    .height(150)
+    .backgroundColor('#000000')
+    .padding(8)
+  }
+
+  /**
+   * 将频谱数据映射到显示点
+   * @param spectrum 频谱数据
+   * @returns 映射后的显示数据
+   */
+  private mapSpectrumToDisplay(spectrum: Float32Array): Array<number> {
+    const displayPoints: number = 64; // 显示点数
+    const result: Array<number> = new Array<number>(displayPoints);
+    const step: number = Math.floor(spectrum.length / displayPoints);
+    
+    for (let i = 0; i < displayPoints; i++) {
+      const start: number = i * step;
+      let sum: number = 0;
+      for (let j = 0; j < step; j++) {
+        sum += spectrum[start + j];
+      }
+      // 对数映射并归一化
+      result[i] = Math.min(1, Math.log10(1 + sum / step) * 2);
+    }
+    
+    return result;
+  }
+
   build() {
     Column() {
       // 分贝显示卡片
@@ -440,6 +488,9 @@ export struct DecibelMeter {
       .margin({ top: 16, bottom: 16 })
 
       this.StartStopButton()
+
+      // 频谱显示
+      this.SpectrumView()
     }
     .width('100%')
     .padding({ top: 8, bottom: 16 })
@@ -478,5 +529,15 @@ export struct DecibelMeter {
         this.startRecording()
       }
     })
+  }
+
+  private startAnalyzing() {
+    this.audioService.startProcessing((buffer: ArrayBuffer) => {
+      // 计算分贝值，添加缺少的bytesRead参数
+      this.currentDecibel = this.decibelService.calculateDecibel(buffer, buffer.byteLength);
+      
+      // 更新频谱数据
+      this.spectrumData = FrequencyWeighting.getSpectrumData(buffer);
+    });
   }
 } 
