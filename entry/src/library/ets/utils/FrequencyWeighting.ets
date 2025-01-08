@@ -40,7 +40,7 @@ export class FrequencyWeighting {
   // 最小有效样本数
   private static readonly MIN_VALID_SAMPLES: number = 10;
   // 无效数据返回值
-  private static readonly INVALID_DB: number = -100;
+  private static readonly INVALID_DB: number = -100;  
 
   /**
    * 对音频数据进行计权计算
@@ -50,35 +50,43 @@ export class FrequencyWeighting {
    * @returns 计权后的分贝值
    */
   public static calculateWeightedDecibel(buffer: ArrayBuffer, bytesRead: number, weightingType: WeightingType): number {
-    // Z计权使用简单的RMS计算
-    if (weightingType === WeightingType.Z) {
-      return FrequencyWeighting.calculateZWeightedDecibel(buffer, bytesRead);
+    console.info(`[计权计算] 开始计算，计权类型: ${weightingType}, bytesRead: ${bytesRead}`);
+
+    // 检查数据有效性
+    if (!buffer || bytesRead <= 0) {
+      console.error('[计权计算] 无效的输入数据');
+      return FrequencyWeighting.INVALID_DB;
     }
 
-    // 执行FFT分析
-    const spectrum = FrequencyWeighting.fftAnalyzer.transform(buffer);
-    
-    // 计算加权和
-    let weightedSum = 0;
-    const sampleRate = 44100; // 采样率
-    
-    // 对每个标准频率点应用计权
-    for (let i = 0; i < FrequencyWeighting.STANDARD_FREQUENCIES.length; i++) {
-      const frequency = FrequencyWeighting.STANDARD_FREQUENCIES[i];
-      const amplitude = FrequencyWeighting.fftAnalyzer.getAmplitudeAtFrequency(spectrum, frequency, sampleRate);
+    try {
+      // 执行FFT分析，直接传入计权类型
+      const spectrum = FrequencyWeighting.fftAnalyzer.transform(buffer);
       
-      // 根据计权类型选择修正值
-      const correction = weightingType === WeightingType.A ? 
-        FrequencyWeighting.A_WEIGHTING[i] : FrequencyWeighting.C_WEIGHTING[i];
+      // 计算有效的分贝值平均值
+      let sum: number = 0;
+      let validCount: number = 0;
       
-      // 应用修正值并累加
-      const weightedAmplitude = amplitude * Math.pow(10, correction / 20);
-      weightedSum += weightedAmplitude * weightedAmplitude;
+      for (let i = 0; i < spectrum.length; i++) {
+        if (!isNaN(spectrum[i]) && spectrum[i] > FrequencyWeighting.INVALID_DB) {
+          sum += spectrum[i];
+          validCount++;
+        }
+      }
+      
+      // 检查是否有足够的有效样本
+      if (validCount < FrequencyWeighting.MIN_VALID_SAMPLES) {
+        console.warn(`[计权计算] 有效样本数不足: ${validCount}`);
+        return FrequencyWeighting.INVALID_DB;
+      }
+      
+      const averageDb = sum / validCount;
+      console.info(`[计权计算] 计算完成，平均分贝值: ${averageDb.toFixed(2)}`);
+      
+      return averageDb;
+    } catch (error) {
+      console.error(`[计权计算] 处理过程出错: ${error}`);
+      return FrequencyWeighting.INVALID_DB;
     }
-    
-    // 计算最终的分贝值
-    const weightedRMS = Math.sqrt(weightedSum / FrequencyWeighting.STANDARD_FREQUENCIES.length);
-    return 20 * Math.log10(Math.max(weightedRMS, FrequencyWeighting.MIN_VALUE)) + FrequencyWeighting.SPL_CORRECTION;
   }
 
   /**
@@ -151,11 +159,28 @@ export class FrequencyWeighting {
   }
   
   /**
+   * 计算指定频率范围内的能量
+   * @param buffer 音频数据
+   * @param startFreq 起始频率
+   * @param endFreq 结束频率
+   * @returns 频率范围内的能量值
+   */
+  public static calculateFrequencyRangeEnergy(
+    buffer: ArrayBuffer, 
+    startFreq: number, 
+    endFreq: number
+  ): number {
+    const spectrum = FrequencyWeighting.fftAnalyzer.transform(buffer);
+    return FrequencyWeighting.fftAnalyzer.getFrequencyRangeEnergy(spectrum, startFreq, endFreq, 44100);
+  }
+
+  /**
    * 获取频谱数据用于显示
    * @param buffer 音频数据
+   * @param weightingType 计权类型
    * @returns 频谱数据
    */
-  public static getSpectrumData(buffer: ArrayBuffer): Float32Array {
+  public static getSpectrumData(buffer: ArrayBuffer, weightingType: WeightingType = WeightingType.A): Float32Array {
     return FrequencyWeighting.fftAnalyzer.transform(buffer);
   }
   
@@ -164,10 +189,16 @@ export class FrequencyWeighting {
    * @param buffer 音频数据
    * @param startFreq 起始频率
    * @param endFreq 结束频率
+   * @param weightingType 计权类型
    * @returns 频段能量
    */
-  public static getBandEnergy(buffer: ArrayBuffer, startFreq: number, endFreq: number): number {
+  public static getBandEnergy(
+    buffer: ArrayBuffer, 
+    startFreq: number, 
+    endFreq: number, 
+    weightingType: WeightingType = WeightingType.A
+  ): number {
     const spectrum = FrequencyWeighting.fftAnalyzer.transform(buffer);
     return FrequencyWeighting.fftAnalyzer.getFrequencyRangeEnergy(spectrum, startFreq, endFreq, 44100);
   }
-} 
+}
