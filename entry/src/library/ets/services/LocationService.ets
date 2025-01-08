@@ -78,4 +78,11 @@ export class LocationService {
   public stopLocation(): void {
     LocationUtil.offLocationChange(true);
   }
+
+  /**
+   * 清除位置缓存
+   */
+  public clearCache(): void {
+    this.cachedLocation = null;
+  }
 }

@@ -33,8 +33,9 @@ export struct LocationDisplay {
             // 开启时自动刷新位置
             this.startSingleLocation();
           } else {
-            // 关闭时清空位置信息
-            this.address = '请在设置中开启位置服务';
+            // 关闭时清空位置信息和缓存
+            this.address = '开启位置服务可记录噪音检测位置';
+            this.locationService.clearCache();
           }
         }
       }
