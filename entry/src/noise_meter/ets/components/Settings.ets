@@ -61,7 +61,7 @@ export struct Settings {
                   .fillColor('#666666')
                   .margin({ right: 8 })
 
-                Text('分贝加权')
+                Text('分贝计权')
                   .fontSize(16)
                   .fontWeight(FontWeight.Medium)
                   .fontColor('#000000')
@@ -70,12 +70,12 @@ export struct Settings {
               Blank()
 
               Select([
-                { value: 'A加权' },
-                { value: 'C加权' },
-                { value: 'Z加权' }
+                { value: 'A计权' },
+                { value: 'C计权' },
+                { value: 'Z计权' }
               ])
                 .selected(this.getWeightingIndex(this.selectedWeighting))
-                .value(this.selectedWeighting + '加权')
+                .value(this.selectedWeighting + '计权')
                 .font({ size: 16 })
                 .fontColor('#666666')
                 .selectedOptionFont({ size: 16 })

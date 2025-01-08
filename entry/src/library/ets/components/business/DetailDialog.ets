@@ -191,7 +191,7 @@ export struct DetailDialog {
         // 在弹窗动画的回调中，延迟执行蒙层动画
         setTimeout(() => {
           animateTo({ duration: 400, curve: Curve.EaseIn }, () => {
-            this.bgOpacity = 0.1;
+            this.bgOpacity = 0.3;
           });
         }, 400);
       });
@@ -666,7 +666,7 @@ export struct DetailDialog {
               if (deltaY > 0) {
                 this.translateY = deltaY;
                 // 根据滑动距离调整背景透明度，在弹窗移动到一半时就完全消失
-                this.bgOpacity = Math.max(0, 0.1 * (1 - deltaY / 250));
+                this.bgOpacity = Math.max(0, 0.3 * (1 - deltaY / 250));
               }
             })
             .onActionEnd(() => {
@@ -680,7 +680,7 @@ export struct DetailDialog {
                 // 否则回弹
                 animateTo({ duration: 800, curve: Curve.Smooth }, () => {
                   this.translateY = 0;
-                  this.bgOpacity = 0.1;
+                  this.bgOpacity = 0.3;
                 });
               }
             })

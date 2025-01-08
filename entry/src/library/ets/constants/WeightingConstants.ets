@@ -1,5 +1,5 @@
 /**
- * 分贝加权类型
+ * 分贝计权类型
  */
 export enum WeightingType {
   A = 'A',
@@ -8,8 +8,8 @@ export enum WeightingType {
 }
 
 /**
- * 获取分贝加权描述
- * @param type 加权类型
+ * 获取分贝计权描述
+ * @param type 计权类型
  */
 export function getWeightingDescription(type: WeightingType): string {
   switch (type) {

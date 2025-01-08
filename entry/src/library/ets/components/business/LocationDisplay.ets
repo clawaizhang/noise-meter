@@ -43,15 +43,15 @@ export struct LocationDisplay {
 
   private async showLocationServiceDialog(): Promise<boolean> {
     const result = await promptAction.showDialog({
-      title: '定位服务未开启',
-      message: '请在系统设置中开启定位服务，以便获取位置信息',
+      title: '开启定位服务',
+      message: '开启定位服务可以记录噪音检测的位置信息',
       buttons: [
         {
           text: '取消',
           color: '#666666'
         },
         {
-          text: '去设置',
+          text: '去开启',
           color: '#0091FF'
         }
       ]
@@ -74,12 +74,12 @@ export struct LocationDisplay {
         // 显示设置对话框
         const shouldOpenSettings = await this.showLocationServiceDialog();
         if (!shouldOpenSettings) {
-          this.address = '请开启系统定位服务';
+          this.address = '开启系统定位服务可获取位置信息';
           return;
         }
         // 用户同意去设置后，再次检查服务状态
         if (!this.locationService.checkLocationEnabled()) {
-          this.address = '请开启系统定位服务';
+          this.address = '开启系统定位服务可获取位置信息';
           return;
         }
       }
@@ -87,7 +87,7 @@ export struct LocationDisplay {
       // 检查定位权限
       const hasPermission = await this.locationService.requestLocationPermission();
       if (!hasPermission) {
-        this.address = '请授予位置权限';
+        this.address = '授予位置权限可获取位置信息';
         return;
       }
 
@@ -138,7 +138,7 @@ export struct LocationDisplay {
         .margin({ right: 8 })
       }
 
-      Text(this.isEnabled ? (this.address || '点击刷新按钮获取位置') : '请在设置中开启位置服务')
+      Text(this.isEnabled ? (this.address || '点击刷新按钮获取位置') : '开启位置服务可记录噪音检测位置')
         .fontSize(14)
         .fontColor('#666666')
         .textAlign(TextAlign.Center)
