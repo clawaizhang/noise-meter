@@ -8,6 +8,7 @@ export class DecibelService {
   private readonly REF_VALUE: number = 32767.0;
   private readonly SMOOTH_FACTOR: number = 0.1;
   private lastDecibel: number = 0;
+  private readonly preferenceService: PreferenceService = PreferenceService.getInstance();
 
   /**
    * 计算分贝值
@@ -16,23 +17,11 @@ export class DecibelService {
    * @returns 分贝值
    */
   public calculateDecibel(buffer: ArrayBuffer, bytesRead: number): number {
-    const int16Array = new Int16Array(buffer, 0, bytesRead / 2);
-    let sum = 0;
-    let maxAbs = 0;
+    // 获取当前的计权类型
+    const weightingType = this.preferenceService.getString(PreferenceKeyConstants.WEIGHTING, WeightingType.A) as WeightingType;
     
-    // 计算均方根值和最大绝对值
-    for (let i = 0; i < int16Array.length; i++) {
-      const value = Math.abs(int16Array[i]);
-      sum += value * value;
-      maxAbs = Math.max(maxAbs, value);
-    }
-
-    // 使用均方根值和最大值的组合
-    const rms = Math.sqrt(sum / int16Array.length);
-    const combined = Math.max(rms, maxAbs * 0.8);  // 增加峰值的权重
-    
-    // 计算分贝值，使用更合适的参考值
-    let decibel = 20 * Math.log10(Math.max(combined, 1) / this.REF_VALUE) + 94;
+    // 使用频率计权计算
+    let decibel = FrequencyWeighting.calculateWeightedDecibel(buffer, bytesRead, weightingType);
     
     // 应用平滑处理
     decibel = this.lastDecibel + this.SMOOTH_FACTOR * (decibel - this.lastDecibel);
