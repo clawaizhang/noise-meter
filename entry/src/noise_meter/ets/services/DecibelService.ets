@@ -1,12 +1,17 @@
+import { PreferenceService } from '../../../library/ets/services/PreferenceService';
+import { PreferenceKeyConstants } from '../../../library/ets/constants/PreferenceKeyConstants';
+import { WeightingType } from '../../../library/ets/constants/WeightingConstants';
+import { FrequencyWeighting } from '../../../library/ets/utils/FrequencyWeighting';
+
 /**
  * 分贝计算服务
  * 提供音频数据到分贝值的转换功能
  */
 export class DecibelService {
-  private readonly REF_VALUE: number = 32767.0;  // 16位音频的最大值
   private readonly MIN_DB: number = -90.0;       // 最小分贝值
   private readonly SMOOTH_FACTOR: number = 0.6;  // 平滑因子，增大以减少衰减
   private lastDecibel: number = 0;               // 上一次的分贝值
+  private preferenceService: PreferenceService = PreferenceService.getInstance();
 
   /**
    * 从音频数据计算分贝值
@@ -15,28 +20,16 @@ export class DecibelService {
    * @returns number - 分贝值
    */
   calculateDecibel(buffer: ArrayBuffer, bytesRead: number): number {
-    const int16Array = new Int16Array(buffer, 0, bytesRead / 2);
-    let sum = 0;
-    let maxAbs = 0;
-    
-    // 计算均方根值和最大绝对值
-    for (let i = 0; i < int16Array.length; i++) {
-      const value = Math.abs(int16Array[i]);
-      sum += value * value;
-      maxAbs = Math.max(maxAbs, value);
-    }
+    // 获取当前的计权类型
+    const weightingType = this.preferenceService.getString(PreferenceKeyConstants.WEIGHTING, WeightingType.A);
 
-    // 使用均方根值和最大值的组合
-    const rms = Math.sqrt(sum / int16Array.length);
-    const combined = Math.max(rms, maxAbs * 0.8);  // 增加峰值的权重
-    
-    // 计算分贝值
-    let decibel = 20 * Math.log10(Math.max(combined, 1) / this.REF_VALUE);
+    // 使用频率计权工具计算分贝值
+    let decibel = FrequencyWeighting.calculateWeightedDecibel(buffer, bytesRead, weightingType as WeightingType);
     
     // 限制最小值
     decibel = Math.max(this.MIN_DB, decibel);
     
-    // 应用平滑处理，但不让值持续衰减
+    // 应用平滑处理
     if (Math.abs(decibel - this.lastDecibel) > 10) {
       // 如果变化太大，快速响应
       this.lastDecibel = decibel;
@@ -49,7 +42,7 @@ export class DecibelService {
     // 归一化到0-120范围
     decibel = Math.max(0, Math.min(120, decibel + 90));
 
-    console.info(`原始分贝值: ${decibel}, RMS: ${rms}, 最大值: ${maxAbs}`);
+    console.info(`计权类型: ${weightingType}, 分贝值: ${decibel}`);
     
     return Math.round(decibel);
   }
