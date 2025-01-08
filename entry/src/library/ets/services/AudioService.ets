@@ -32,7 +32,7 @@ export class AudioService {
   private onAudioData: ((buffer: ArrayBuffer) => void) | null = null;
   private context: common.UIAbilityContext;
   private lastProcessTime: number = 0;
-  private readonly PROCESS_INTERVAL: number = 20; // 减少处理间隔到20毫秒
+  private readonly PROCESS_INTERVAL: number = 500; // 减少处理间隔到20毫秒
   private bufferSize: number = 2048; // 实际缓冲区大小，将在创建音频捕获器时更新
   private audioBuffers: ArrayBuffer[] = []; // 存储录音数据
 

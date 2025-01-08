@@ -166,6 +166,13 @@ export struct DecibelMeter {
           // 保存记录
           await this.recordService.saveRecord(this.currentRecord);
           console.info('记录保存成功');
+
+          // 显示详情对话框
+          this.navStack.pushDestinationByName('DetailDialog', {
+            selectedRecord: this.currentRecord,
+            context: getContext(this),
+            fileService: this.fileService
+          });
         }
 
         // 重置状态
@@ -489,7 +496,13 @@ export struct DecibelMeter {
   private startAnalyzing() {
     this.audioService.startProcessing((buffer: ArrayBuffer) => {
       // 计算分贝值
-      this.currentDecibel = this.decibelService.calculateDecibel(buffer, buffer.byteLength);
+      const db = this.decibelService.calculateDecibel(buffer, buffer.byteLength);
+      // 只有当有效的分贝值时才更新显示
+      if (db > 0) {
+        this.currentDecibel = Math.round(db);
+      } else {
+        this.currentDecibel = 0;
+      }
       
       // 更新频谱数据
       this.spectrumData = FrequencyWeighting.getSpectrumData(buffer);

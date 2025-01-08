@@ -6,8 +6,6 @@ import { FrequencyWeighting } from '../../../library/ets/utils/FrequencyWeightin
 @Observed
 export class DecibelService {
   private readonly REF_VALUE: number = 32767.0;
-  private readonly SMOOTH_FACTOR: number = 0.1;
-  private lastDecibel: number = 0;
   private readonly preferenceService: PreferenceService = PreferenceService.getInstance();
 
   /**
@@ -21,11 +19,7 @@ export class DecibelService {
     const weightingType = this.preferenceService.getString(PreferenceKeyConstants.WEIGHTING, WeightingType.A) as WeightingType;
     
     // 使用频率计权计算
-    let decibel = FrequencyWeighting.calculateWeightedDecibel(buffer, bytesRead, weightingType);
-    
-    // 应用平滑处理
-    decibel = this.lastDecibel + this.SMOOTH_FACTOR * (decibel - this.lastDecibel);
-    this.lastDecibel = decibel;
+    const decibel = FrequencyWeighting.calculateWeightedDecibel(buffer, bytesRead, weightingType);
     
     // 限制分贝值范围在合理区间内
     return Math.max(0, Math.min(130, decibel));
