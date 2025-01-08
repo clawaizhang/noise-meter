@@ -1,64 +1,141 @@
+
 /**
  * FFT分析器类
  * 提供FFT变换和频谱分析功能
  */
 export class FFTAnalyzer {
   private readonly size: number;
-  // 预计算的旋转因子
-  private readonly twiddles: Float32Array;
-  // 预计算的比特反转表
-  private readonly bitReverse: Uint32Array;
-  // 窗函数
   private readonly window: Float32Array;
+  private static sampleRate: number = 44100;
+  private readonly REF_VALUE: number = 32767.0;  // 16位音频的最大值
+  private lastMagnitude: Float32Array | null = null;
+  private readonly SMOOTH_FACTOR: number = 0.2;  // 平滑因子
 
   /**
-   * 构造函数
-   * @param size FFT大小，必须是2的幂
+   * 设置音频参数
+   * @param sampleRate 采样率
    */
+  public static setAudioParams(sampleRate: number): void {
+    FFTAnalyzer.sampleRate = sampleRate;
+  }
+
   constructor(size: number = 2048) {
     if (!this.isPowerOf2(size)) {
       throw new Error('FFT size must be power of 2');
     }
     this.size = size;
-    this.twiddles = new Float32Array(size * 2);
-    this.bitReverse = new Uint32Array(size);
     this.window = new Float32Array(size);
-    this.initialize();
+    this.initializeWindow();
   }
 
-  /**
-   * 检查是否为2的幂
-   */
   private isPowerOf2(value: number): boolean {
     return (value & (value - 1)) === 0 && value !== 0;
   }
 
   /**
-   * 初始化FFT计算所需的数据
+   * 初始化汉宁窗
    */
-  private initialize(): void {
-    // 初始化旋转因子
-    for (let i = 0; i < this.size; i++) {
-      const angle = -2 * Math.PI * i / this.size;
-      this.twiddles[i * 2] = Math.cos(angle);
-      this.twiddles[i * 2 + 1] = Math.sin(angle);
-    }
-
-    // 初始化比特反转表
-    const bits = Math.log2(this.size);
-    for (let i = 0; i < this.size; i++) {
-      this.bitReverse[i] = this.reverseBits(i, bits);
-    }
-
-    // 初始化汉宁窗
+  private initializeWindow(): void {
+    // 使用汉宁窗
     for (let i = 0; i < this.size; i++) {
       this.window[i] = 0.5 * (1 - Math.cos(2 * Math.PI * i / this.size));
     }
   }
 
   /**
-   * 比特反转
+   * 执行FFT变换
+   * @param input 输入数据
+   * @returns 频谱数据
    */
+  public transform(input: ArrayBuffer): Float32Array {
+    const samples = new Int16Array(input);
+    const real = new Float32Array(this.size);
+    const imag = new Float32Array(this.size);
+
+    // 应用窗函数并归一化
+    const scale = 1.0 / this.REF_VALUE;  // 归一化到[-1,1]
+    for (let i = 0; i < this.size && i < samples.length; i++) {
+      real[i] = samples[i] * scale * this.window[i];
+      imag[i] = 0;
+    }
+
+    // 执行FFT
+    this.fft(real, imag);
+
+    // 计算功率谱
+    const magnitude = new Float32Array(this.size / 2);
+    const normalizationFactor = 2.0 / this.size;  // 考虑FFT的能量缩放和单边谱
+
+    for (let i = 0; i < this.size / 2; i++) {
+      const re = real[i] * normalizationFactor;
+      const im = imag[i] * normalizationFactor;
+      const power = re * re + im * im;
+      
+      // 转换为分贝值
+      magnitude[i] = 10 * Math.log10(Math.max(power, 1e-12));
+    }
+
+    // 应用指数平均
+    if (this.lastMagnitude) {
+      for (let i = 0; i < magnitude.length; i++) {
+        magnitude[i] = this.lastMagnitude[i] + 
+          this.SMOOTH_FACTOR * (magnitude[i] - this.lastMagnitude[i]);
+      }
+    }
+    this.lastMagnitude = magnitude.slice();
+
+    return magnitude;
+  }
+
+  /**
+   * 基础的FFT实现
+   */
+  private fft(real: Float32Array, imag: Float32Array): void {
+    const n = real.length;
+
+    // 比特反转排序
+    for (let i = 0; i < n; i++) {
+      const j = this.reverseBits(i, Math.log2(n));
+      if (j > i) {
+        // 交换实部
+        const tempRe = real[i];
+        real[i] = real[j];
+        real[j] = tempRe;
+        // 交换虚部
+        const tempIm = imag[i];
+        imag[i] = imag[j];
+        imag[j] = tempIm;
+      }
+    }
+
+    // FFT计算
+    for (let size = 2; size <= n; size *= 2) {
+      const halfsize = size / 2;
+      const angle = -2 * Math.PI / size;
+
+      // 对每个蝶形单元
+      for (let i = 0; i < n; i += size) {
+        for (let j = 0; j < halfsize; j++) {
+          const k = i + j;
+          const l = k + halfsize;
+          
+          // 计算旋转因子
+          const cos = Math.cos(angle * j);
+          const sin = Math.sin(angle * j);
+          
+          // 蝶形运算
+          const tr = real[l] * cos - imag[l] * sin;
+          const ti = real[l] * sin + imag[l] * cos;
+          
+          real[l] = real[k] - tr;
+          imag[l] = imag[k] - ti;
+          real[k] = real[k] + tr;
+          imag[k] = imag[k] + ti;
+        }
+      }
+    }
+  }
+
   private reverseBits(x: number, bits: number): number {
     let result = 0;
     for (let i = 0; i < bits; i++) {
@@ -68,93 +145,15 @@ export class FFTAnalyzer {
     return result;
   }
 
-  /**
-   * 执行FFT变换
-   * @param input 输入数据
-   * @returns 频谱数据
-   */
-  public transform(input: ArrayBuffer): Float32Array {
-    // 将输入数据转换为Float32Array并应用窗函数
-    const samples = new Int16Array(input);
-    const real = new Float32Array(this.size);
-    const imag = new Float32Array(this.size);
-    const scale = 1.0 / 32768.0; // 将16位整数归一化到[-1,1]
-
-    // 应用窗函数并归一化
-    for (let i = 0; i < this.size && i < samples.length; i++) {
-      real[i] = samples[i] * scale * this.window[i];
-    }
-
-    // 使用预计算的比特反转表重排数据
-    for (let i = 0; i < this.size; i++) {
-      const j = this.bitReverse[i];
-      if (j > i) {
-        const tempRe = real[i];
-        real[i] = real[j];
-        real[j] = tempRe;
-      }
-    }
-
-    // 执行FFT
-    for (let stage = 1; stage <= Math.log2(this.size); stage++) {
-      const butterflySize = 1 << stage;
-      const halfSize = butterflySize >> 1;
-
-      for (let i = 0; i < this.size; i += butterflySize) {
-        for (let j = 0; j < halfSize; j++) {
-          const twiddle_re = this.twiddles[j * (this.size / butterflySize) * 2];
-          const twiddle_im = this.twiddles[j * (this.size / butterflySize) * 2 + 1];
-
-          const idx1 = i + j;
-          const idx2 = i + j + halfSize;
-
-          const re1 = real[idx1];
-          const im1 = imag[idx1];
-          const re2 = real[idx2];
-          const im2 = imag[idx2];
-
-          // 复数乘法
-          const tr = re2 * twiddle_re - im2 * twiddle_im;
-          const ti = re2 * twiddle_im + im2 * twiddle_re;
-
-          real[idx2] = re1 - tr;
-          imag[idx2] = im1 - ti;
-          real[idx1] = re1 + tr;
-          imag[idx1] = im1 + ti;
-        }
-      }
-    }
-
-    // 计算幅度谱
-    const magnitude = new Float32Array(this.size / 2);
-    for (let i = 0; i < this.size / 2; i++) {
-      magnitude[i] = Math.sqrt(real[i] * real[i] + imag[i] * imag[i]);
-    }
-
-    return magnitude;
-  }
-
-  /**
-   * 获取指定频率的幅值
-   * @param spectrum 频谱数据
-   * @param frequency 目标频率
-   * @param sampleRate 采样率
-   * @returns 幅值
-   */
   public getAmplitudeAtFrequency(spectrum: Float32Array, frequency: number, sampleRate: number): number {
     const binSize = sampleRate / (2 * spectrum.length);
     const binIndex = Math.round(frequency / binSize);
-    return binIndex < spectrum.length ? spectrum[binIndex] : 0;
+    if (binIndex >= spectrum.length) {
+      return 0;
+    }
+    return spectrum[binIndex];
   }
 
-  /**
-   * 获取指定频率范围的平均能量
-   * @param spectrum 频谱数据
-   * @param startFreq 起始频率
-   * @param endFreq 结束频率
-   * @param sampleRate 采样率
-   * @returns 平均能量
-   */
   public getFrequencyRangeEnergy(
     spectrum: Float32Array,
     startFreq: number,
@@ -164,12 +163,17 @@ export class FFTAnalyzer {
     const binSize = sampleRate / (2 * spectrum.length);
     const startBin = Math.floor(startFreq / binSize);
     const endBin = Math.ceil(endFreq / binSize);
-
-    let energy = 0;
+    
+    let totalEnergy = 0;
+    let count = 0;
+    
     for (let i = startBin; i <= endBin && i < spectrum.length; i++) {
-      energy += spectrum[i];
+      // 将分贝值转换回线性域进行平均
+      totalEnergy += Math.pow(10, spectrum[i] / 10);
+      count++;
     }
-
-    return energy / (endBin - startBin + 1);
+    
+    // 将平均能量转换回分贝域
+    return count > 0 ? 10 * Math.log10(totalEnergy / count) : -100;
   }
 }

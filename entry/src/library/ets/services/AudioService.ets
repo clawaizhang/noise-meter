@@ -30,7 +30,8 @@ export class AudioService {
   private onAudioData: ((buffer: ArrayBuffer) => void) | null = null;
   private context: common.UIAbilityContext;
   private lastProcessTime: number = 0;
-  private readonly PROCESS_INTERVAL: number = 500; // 处理间隔，单位毫秒
+  private readonly PROCESS_INTERVAL: number = 20; // 减少处理间隔到20毫秒
+  private bufferSize: number = 2048; // 实际缓冲区大小，将在创建音频捕获器时更新
   private audioBuffers: ArrayBuffer[] = []; // 存储录音数据
 
   constructor(context: common.UIAbilityContext) {
@@ -97,7 +98,11 @@ export class AudioService {
 
       // 创建音频捕获器
       this.audioCapturer = await audio.createAudioCapturer(this.audioCapturerOptions);
-      console.info('音频捕获器创建成功');
+      console.info('[音频采集] 音频捕获器创建成功');
+      
+      // 获取并保存实际的缓冲区大小
+      this.bufferSize = await this.audioCapturer.getBufferSize();
+      console.info(`[音频采集] 当前缓冲区大小: ${this.bufferSize}`);
 
       // 设置readData事件监听
       this.audioCapturer.on('readData', (buffer: ArrayBuffer) => {
@@ -105,19 +110,28 @@ export class AudioService {
           return;
         }
         
-        // 存储录音数据
+        // 只在需要保存WAV文件时才存储录音数据
         if (buffer && buffer.byteLength > 0) {
-          this.audioBuffers.push(buffer.slice(0));
-        }
-        
-        if (this.isProcessing) {
           const currentTime = Date.now();
-          if (currentTime - this.lastProcessTime >= this.PROCESS_INTERVAL) {
-            if (buffer && buffer.byteLength > 0 && this.onAudioData) {
+          // 处理实时音频数据
+          if (this.isProcessing && this.onAudioData && 
+              currentTime - this.lastProcessTime >= this.PROCESS_INTERVAL) {
+            // 检查buffer是否有效
+            if (buffer.byteLength === this.bufferSize) {
+              console.info(`[音频采集] 处理音频数据，buffer大小: ${buffer.byteLength}`);
+              const view = new Int16Array(buffer);
+              const maxValue = Math.max(...Array.from(view).map(Math.abs));
+              console.info(`[音频采集] 最大采样值: ${maxValue}`);
               this.onAudioData(buffer);
+              this.lastProcessTime = currentTime;
+            } else {
+              console.info(`[音频采集] buffer大小不匹配: ${buffer.byteLength}, 期望: ${this.bufferSize}`);
             }
-            this.lastProcessTime = currentTime;
           }
+          // 只有在需要保存WAV文件时才存储数据
+          this.audioBuffers.push(buffer.slice(0));
+        } else {
+          console.info('[音频采集] 收到空buffer或大小为0');
         }
       });
 

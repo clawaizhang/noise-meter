@@ -12,6 +12,7 @@ import { promptAction } from '@kit.ArkUI';
 import { PreferenceService } from '../../../library/ets/services/PreferenceService';
 import { PreferenceKeyConstants } from '../../../library/ets/constants/PreferenceKeyConstants';
 import { FrequencyWeighting } from '../../../library/ets/utils/FrequencyWeighting';
+import { BusinessError } from '@ohos.base';
 
 @ComponentV2
 export struct DecibelMeter {
@@ -47,12 +48,19 @@ export struct DecibelMeter {
     // 获取录音开关状态
     this.isRecordEnabled = this.preferenceService.isEnabled(PreferenceKeyConstants.RECORD);
     // 监听录音开关状态变化
-    this.preferenceService.subscribe((key: string) => {
+    this.preferenceService.subscribe((key: PreferenceKeyConstants): void => {
       if (key === PreferenceKeyConstants.RECORD) {
         this.isRecordEnabled = this.preferenceService.isEnabled(PreferenceKeyConstants.RECORD);
       }
     });
-    this.startAnalyzing();
+
+    // 启动音频采集
+    this.audioService.startCapture().then(() => {
+      console.info('[DecibelMeter] 音频采集启动成功');
+      this.startAnalyzing();
+    }).catch((error: BusinessError) => {
+      console.error('[DecibelMeter] 音频采集启动失败:', error);
+    });
   }
 
   aboutToDisappear() {
@@ -66,25 +74,6 @@ export struct DecibelMeter {
     // 停止所有音频相关操作
     this.audioService.stopProcessing();
     this.audioService.stopCapture();
-    this.stopAudioCapture();
-  }
-
-  private async startAudioCapture() {
-    try {
-      await this.audioService.startCapture();
-    } catch (error) {
-      console.error('启动音频采集失败:', error);
-      // 重置录音状态
-      this.isRecording = false;
-    }
-  }
-
-  private async stopAudioCapture() {
-    try {
-      await this.audioService.stopCapture();
-    } catch (error) {
-      console.error('停止音频采集失败:', error);
-    }
   }
 
   private async startRecording() {
@@ -106,11 +95,6 @@ export struct DecibelMeter {
         this.locationService.getCachedLocation()?.address, // location
         undefined // audioFilePath
       );
-
-      // 如果没有在采集音频，先启动采集
-      if (!this.audioService.isAudioCapturing()) {
-        await this.startAudioCapture();
-      }
 
       // 开始处理音频数据
       this.audioService.startProcessing((buffer: ArrayBuffer) => {
@@ -178,7 +162,7 @@ export struct DecibelMeter {
             console.error('获取或保存WAV音频数据失败:', error);
           }
         } else {
-          await this.audioService.stopCapture();
+          this.audioService.stopProcessing();
         }
 
         console.info('准备创建记录');
@@ -189,41 +173,29 @@ export struct DecibelMeter {
           this.currentRecord.avgDecibel = this.avgDecibel;
           this.currentRecord.duration = duration;
           this.currentRecord.decibelValues = [...this.values];
-          this.currentRecord.location = locationInfo?.address;
           this.currentRecord.audioFilePath = currentAudioFilePath;
-        }
-        console.info('记录更新成功:', this.currentRecord);
 
-        if (!this.currentRecord) {
-          throw new Error('记录对象不存在');
-        }
-        await this.recordService.saveRecord(this.currentRecord);
-        console.info('记录保存成功');
-
-        // 显示详情弹窗
-        const appContext = getContext(this) as common.Context;
-        if (!appContext) {
-          console.error('Context is not available');
-          return;
+          // 保存记录
+          await this.recordService.saveRecord(this.currentRecord);
+          console.info('记录保存成功');
         }
 
-        console.info('准备显示详情弹窗');
-        this.navStack.pushDestinationByName('DetailDialog', {
-          selectedRecord: this.currentRecord,
-          context: getContext(this),
-          fileService: this.fileService
-        });
-        console.info('详情弹窗显示成功');
+        // 重置状态
+        this.currentDecibel = 0;
+        this.minDecibel = 0;
+        this.maxDecibel = 0;
+        this.avgDecibel = 0;
+        this.dbCount = 0;
+        this.dbSum = 0;
+        this.values = [];
+        this.startTime = 0;
+        this.recordingTime = 0;
+        this.showStats = false;
 
-        // 清除之前的定时器
-        if (this.releaseTimer !== -1) {
-          clearTimeout(this.releaseTimer);
-        }
-        // 30秒后释放音频流
+        // 延迟30秒后停止音频采集
         this.releaseTimer = setTimeout(async () => {
           if (!this.isRecording) { // 确保此时没有在录制
-            await this.audioService.stopProcessing();
-            await this.audioService.stopCapture();
+            this.audioService.stopProcessing();
           }
           this.releaseTimer = -1;
         }, 30000); // 30秒 = 30000毫秒
@@ -533,7 +505,7 @@ export struct DecibelMeter {
 
   private startAnalyzing() {
     this.audioService.startProcessing((buffer: ArrayBuffer) => {
-      // 计算分贝值，添加缺少的bytesRead参数
+      // 计算分贝值
       this.currentDecibel = this.decibelService.calculateDecibel(buffer, buffer.byteLength);
       
       // 更新频谱数据

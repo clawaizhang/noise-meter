@@ -31,6 +31,16 @@ export class FrequencyWeighting {
 
   // 16位音频的最大值
   private static readonly REF_VALUE: number = 32767.0;
+  // 最小有效值
+  private static readonly MIN_VALUE: number = 1e-6;
+  // SPL参考值修正
+  private static readonly SPL_CORRECTION: number = 94;
+  // RMS最小阈值
+  private static readonly MIN_RMS_THRESHOLD: number = 1.0;
+  // 最小有效样本数
+  private static readonly MIN_VALID_SAMPLES: number = 10;
+  // 无效数据返回值
+  private static readonly INVALID_DB: number = -100;
 
   /**
    * 对音频数据进行计权计算
@@ -68,7 +78,7 @@ export class FrequencyWeighting {
     
     // 计算最终的分贝值
     const weightedRMS = Math.sqrt(weightedSum / FrequencyWeighting.STANDARD_FREQUENCIES.length);
-    return 20 * Math.log10(Math.max(weightedRMS, 1e-6)) + 90;
+    return 20 * Math.log10(Math.max(weightedRMS, FrequencyWeighting.MIN_VALUE)) + FrequencyWeighting.SPL_CORRECTION;
   }
 
   /**
@@ -78,23 +88,66 @@ export class FrequencyWeighting {
    * @returns 分贝值
    */
   private static calculateZWeightedDecibel(buffer: ArrayBuffer, bytesRead: number): number {
-    const int16Array = new Int16Array(buffer, 0, bytesRead / 2);
-    let sum = 0;
-    let maxAbs = 0;
+    console.info(`[Z计权] 开始计算，bytesRead: ${bytesRead}`);
     
-    // 计算均方根值和最大绝对值
+    // 检查数据有效性
+    if (!buffer || bytesRead <= 0) {
+      console.info('[Z计权] 无效的输入数据');
+      return 0;
+    }
+    
+    const int16Array = new Int16Array(buffer, 0, bytesRead / 2);
+    console.info(`[Z计权] 样本数量: ${int16Array.length}`);
+    
+    // 检查样本数量
+    if (int16Array.length < FrequencyWeighting.MIN_VALID_SAMPLES) {
+      console.info('[Z计权] 样本数量不足');
+      return 0;
+    }
+    
+    // 查看前几个样本值
+    const samplePreview = Array.from(int16Array.slice(0, 5));
+    console.info(`[Z计权] 样本预览: ${JSON.stringify(samplePreview)}`);
+    
+    let sumSquares = 0;
+    let maxSample = 0;
+    let validSamples = 0;
+    
+    // 计算有效样本的RMS值
     for (let i = 0; i < int16Array.length; i++) {
-      const value = Math.abs(int16Array[i]);
-      sum += value * value;
-      maxAbs = Math.max(maxAbs, value);
+      const sample = Math.abs(int16Array[i]);
+      if (sample > 0) {
+        sumSquares += sample * sample;
+        maxSample = Math.max(maxSample, sample);
+        validSamples++;
+      }
     }
 
-    // 使用均方根值和最大值的组合
-    const rms = Math.sqrt(sum / int16Array.length);
-    const combined = Math.max(rms, maxAbs * 0.8);  // 增加峰值的权重
+    console.info(`[Z计权] 最大样本值: ${maxSample}`);
+    console.info(`[Z计权] 平方和: ${sumSquares}`);
+    console.info(`[Z计权] 有效样本数: ${validSamples}`);
+
+    // 检查是否有足够的有效样本
+    if (validSamples < FrequencyWeighting.MIN_VALID_SAMPLES) {
+      console.info('[Z计权] 有效样本数不足');
+      return 0;
+    }
+    
+    // 计算RMS值
+    const rms = Math.sqrt(sumSquares / validSamples);
+    console.info(`[Z计权] RMS值: ${rms}`);
+    
+    // 如果RMS值过小，返回0
+    if (rms < FrequencyWeighting.MIN_RMS_THRESHOLD) {
+      console.info('[Z计权] RMS值过小');
+      return 0;
+    }
     
     // 计算分贝值
-    return 20 * Math.log10(Math.max(combined, 1) / FrequencyWeighting.REF_VALUE) + 90;
+    const decibelValue = 20 * Math.log10(rms / FrequencyWeighting.REF_VALUE) + FrequencyWeighting.SPL_CORRECTION;
+    console.info(`[Z计权] 计算的分贝值: ${decibelValue}`);
+    
+    return decibelValue;
   }
   
   /**
