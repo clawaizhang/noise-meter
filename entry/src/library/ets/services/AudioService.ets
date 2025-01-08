@@ -3,6 +3,7 @@ import { PermissionUtil } from '@pura/harmony-utils';
 import common from '@ohos.app.ability.common';
 import promptAction from '@ohos.promptAction';
 import { WavFileGenerator } from '../utils/WavFileGenerator';
+import { FileService } from '../services/FileService';
 
 /**
  * 音频服务类
@@ -26,6 +27,7 @@ export class AudioService {
   private audioCapturer: audio.AudioCapturer | null = null;
   private isCapturing: boolean = false;  // 是否正在采集音频
   private isProcessing: boolean = false; // 是否正在处理音频数据
+  private isRecording: boolean = false;  // 是否正在录音
   private isStoppingCapture: boolean = false;
   private onAudioData: ((buffer: ArrayBuffer) => void) | null = null;
   private context: common.UIAbilityContext;
@@ -78,6 +80,21 @@ export class AudioService {
   }
 
   /**
+   * 开始录音
+   */
+  startRecording(): void {
+    this.isRecording = true;
+    this.audioBuffers = []; // 清空之前的录音数据
+  }
+
+  /**
+   * 停止录音
+   */
+  stopRecording(): void {
+    this.isRecording = false;
+  }
+
+  /**
    * 开始音频采集
    * @returns Promise<void>
    */
@@ -95,6 +112,7 @@ export class AudioService {
     try {
       // 清空之前的录音数据
       this.audioBuffers = [];
+      this.isRecording = false;
 
       // 创建音频捕获器
       this.audioCapturer = await audio.createAudioCapturer(this.audioCapturerOptions);
@@ -110,7 +128,6 @@ export class AudioService {
           return;
         }
         
-        // 只在需要保存WAV文件时才存储录音数据
         if (buffer && buffer.byteLength > 0) {
           const currentTime = Date.now();
           // 处理实时音频数据
@@ -128,8 +145,10 @@ export class AudioService {
               console.info(`[音频采集] buffer大小不匹配: ${buffer.byteLength}, 期望: ${this.bufferSize}`);
             }
           }
-          // 只有在需要保存WAV文件时才存储数据
-          this.audioBuffers.push(buffer.slice(0));
+          // 只在录音时才存储数据
+          if (this.isRecording) {
+            this.audioBuffers.push(buffer.slice(0));
+          }
         } else {
           console.info('[音频采集] 收到空buffer或大小为0');
         }
@@ -268,5 +287,50 @@ export class AudioService {
    */
   isAudioProcessing(): boolean {
     return this.isProcessing;
+  }
+
+  /**
+   * 停止录音并获取WAV文件路径
+   * @param fileService 文件服务实例
+   * @returns Promise<string> 保存的WAV文件路径
+   */
+  async stopRecordingAndGetWavData(fileService: FileService): Promise<string> {
+    try {
+      // 停止录音
+      this.stopRecording();
+
+      console.info('开始生成WAV音频数据');
+      // 生成WAV文件数据
+      const audioData = WavFileGenerator.generateWavFile(
+        this.audioBuffers,
+        44100,  // 采样率
+        1,      // 单声道
+        16      // 16位采样
+      );
+      console.info('WAV音频数据大小:', audioData.byteLength);
+
+      // 创建音频文件目录
+      const audioDir = 'audio';
+      try {
+        await fileService.createDirectory(audioDir);
+      } catch (error) {
+        // 目录可能已存在，忽略错误
+      }
+
+      // 生成文件名并保存WAV文件
+      const fileName = `audio_${new Date().getTime()}.wav`;
+      const relativePath = `${audioDir}/${fileName}`;
+      console.info('准备保存音频文件:', relativePath);
+      const filePath = await fileService.saveFile(relativePath, audioData);
+      console.info('音频文件保存成功:', filePath);
+
+      // 清空录音缓存
+      this.audioBuffers = [];
+
+      return filePath;
+    } catch (error) {
+      console.error('停止录音并保存WAV文件失败:', error);
+      throw new Error('停止录音并保存WAV文件失败：' + (error instanceof Error ? error.message : String(error)));
+    }
   }
 } 

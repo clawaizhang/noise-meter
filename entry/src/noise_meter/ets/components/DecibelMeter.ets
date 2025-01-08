@@ -12,7 +12,7 @@ import { promptAction } from '@kit.ArkUI';
 import { PreferenceService } from '../../../library/ets/services/PreferenceService';
 import { PreferenceKeyConstants } from '../../../library/ets/constants/PreferenceKeyConstants';
 import { FrequencyWeighting } from '../../../library/ets/utils/FrequencyWeighting';
-import { BusinessError } from '@ohos.base';
+import type { BusinessError } from '@ohos.base';
 
 @ComponentV2
 export struct DecibelMeter {
@@ -96,7 +96,12 @@ export struct DecibelMeter {
         undefined // audioFilePath
       );
 
-      // 开始处理音频数据
+      // 如果启用了录音功能，开始录音
+      if (this.isRecordEnabled) {
+        this.audioService.startRecording();
+      }
+
+      // 开始处理音频数据，记录分贝值
       this.audioService.startProcessing((buffer: ArrayBuffer) => {
         // 使用DecibelService计算分贝值
         const db = this.decibelService.calculateDecibel(buffer, buffer.byteLength);
@@ -107,7 +112,7 @@ export struct DecibelMeter {
         this.recordingTime = Math.floor((new Date().getTime() - this.startTime) / 1000);
       });
     } catch (error) {
-      // 如果启动失败（包括权限问题），重置状态
+      // 如果启动失败，重置状态
       this.isRecording = false;
       this.currentDecibel = 0;
       this.minDecibel = 0;
@@ -124,7 +129,7 @@ export struct DecibelMeter {
   private async stopRecording() {
     if (this.isRecording) {
       this.isRecording = false;
-      console.info('停止录音 - 开始');
+      console.info('停止检测 - 开始');
 
       try {
         // 获取缓存的位置信息
@@ -135,34 +140,17 @@ export struct DecibelMeter {
         const duration = new Date().getTime() - this.startTime;
         console.info('检测时长:', duration);
 
-        // 获取WAV格式的音频数据
-        let audioData: ArrayBuffer | undefined;
+        // 停止处理音频数据
+        this.audioService.stopProcessing();
+
+        // 如果启用了录音功能，获取并保存音频文件
         let currentAudioFilePath = '';
         if (this.isRecordEnabled) {
           try {
-            console.info('开始获取WAV音频数据');
-            audioData = await this.audioService.stopCaptureAndGetWavData();
-            console.info('WAV音频数据大小:', audioData.byteLength);
-            
-            // 创建音频文件目录
-            const audioDir = 'audio';
-            try {
-              await this.fileService.createDirectory(audioDir);
-            } catch (error) {
-              // 目录可能已存在，忽略错误
-            }
-            
-            // 生成文件名并保存WAV文件
-            const fileName = `audio_${new Date().getTime()}.wav`;
-            const relativePath = `${audioDir}/${fileName}`;
-            console.info('准备保存音频文件:', relativePath);
-            currentAudioFilePath = await this.fileService.saveFile(relativePath, audioData);
-            console.info('音频文件保存成功:', currentAudioFilePath);
+            currentAudioFilePath = await this.audioService.stopRecordingAndGetWavData(this.fileService);
           } catch (error) {
             console.error('获取或保存WAV音频数据失败:', error);
           }
-        } else {
-          this.audioService.stopProcessing();
         }
 
         console.info('准备创建记录');
@@ -192,13 +180,8 @@ export struct DecibelMeter {
         this.recordingTime = 0;
         this.showStats = false;
 
-        // 延迟30秒后停止音频采集
-        this.releaseTimer = setTimeout(async () => {
-          if (!this.isRecording) { // 确保此时没有在录制
-            this.audioService.stopProcessing();
-          }
-          this.releaseTimer = -1;
-        }, 30000); // 30秒 = 30000毫秒
+        // 重新开始分析音频数据
+        this.startAnalyzing();
 
       } catch (error) {
         console.error('保存记录失败:', error);
