@@ -24,7 +24,9 @@ export struct DecibelMeter {
   @Local private showStats: boolean = false
   @Local private recordingTime: number = 0
   @Local private isRecordEnabled: boolean = false
-  @Local private spectrumData: Float32Array = new Float32Array(1024)
+  @Local private displayBars: Array<number> = new Array(64).fill(2)
+  @Local private debugText: string = ''
+  private spectrumData: Float32Array = new Float32Array(1024)
   @Consumer(noiseMeterNavStack) navStack: NavPathStack = new NavPathStack()
   private decibelService: DecibelService = new DecibelService()
   private audioService: AudioService = new AudioService(getContext() as common.UIAbilityContext)
@@ -321,24 +323,65 @@ export struct DecibelMeter {
 
   @Builder
   private SpectrumView() {
-    Row() {
-      ForEach(this.mapSpectrumToDisplay(this.spectrumData), (value: number, index: number) => {
-        Column() {
-          Column()
-            .width(3)
-            .height(value * 150)
-            .backgroundColor('#0A59F7')
-            .borderRadius(1.5)
-        }
-        .width(4)
-        .height(150)
-        .justifyContent(FlexAlign.End)
-      }, (item: number, index: number): string => `${index}`)
+    Column() {
+      // 频谱显示
+      Row() {
+        ForEach(this.displayBars, (height: number, index: number) => {
+          Column() {
+            Column()
+              .width(4)
+              .height(`${height}%`)
+              .backgroundColor('#2196F3')
+              .borderRadius(2)
+              .animation({
+                duration: 50,
+                curve: Curve.Linear
+              })
+          }
+          .width(6)
+          .height('100%')
+          .justifyContent(FlexAlign.End)
+        }, (item: number) => item.toString() + new Date().getTime())
+      }
+      .width('100%')
+      .height(120)
+      .backgroundColor('#000000')
+      .padding(8)
+      .borderRadius(12)
+      
+      // 调试信息显示
+      Text(this.debugText)
+        .fontSize(12)
+        .fontColor('#666666')
+        .backgroundColor('#F5F5F5')
+        .padding(8)
+        .margin({ top: 8 })
+        .borderRadius(8)
+        .textAlign(TextAlign.Start)
+        .width('100%')
+        .maxLines(5)
+      
+      // 频率刻度
+      Row() {
+        Text('20Hz')
+          .fontSize(12)
+          .fontColor('#999999')
+        Blank()
+        Text('200Hz')
+          .fontSize(12)
+          .fontColor('#999999')
+        Blank()
+        Text('2kHz')
+          .fontSize(12)
+          .fontColor('#999999')
+        Blank()
+        Text('20kHz')
+          .fontSize(12)
+          .fontColor('#999999')
+      }
+      .width('100%')
+      .padding(8)
     }
-    .width('100%')
-    .height(150)
-    .backgroundColor('#000000')
-    .padding(8)
   }
 
   /**
@@ -347,25 +390,110 @@ export struct DecibelMeter {
    * @returns 映射后的显示数据
    */
   private mapSpectrumToDisplay(spectrum: Float32Array): Array<number> {
-    const displayPoints: number = 64; // 显示点数
-    const result: Array<number> = new Array<number>(displayPoints);
-    const step: number = Math.floor(spectrum.length / displayPoints);
-    
-    for (let i = 0; i < displayPoints; i++) {
-      const start: number = i * step;
-      let sum: number = 0;
-      for (let j = 0; j < step; j++) {
-        sum += spectrum[start + j];
-      }
-      // 对数映射并归一化
-      result[i] = Math.min(1, Math.log10(1 + sum / step) * 2);
+    // 检查频谱数据是否有效
+    if (!spectrum || spectrum.length === 0) {
+      console.info('[频谱显示] 频谱数据无效');
+      return new Array(64).fill(0);
     }
+
+    console.info(`[频谱显示] 开始处理频谱数据，数据长度: ${spectrum.length}`);
+    console.info(`[频谱显示] 频谱数据样本: ${spectrum[0]}, ${spectrum[1]}, ${spectrum[2]}, ${spectrum[3]}, ${spectrum[4]}`);
+
+    const displayPoints: number = 64; // 显示点数
+    const sampleRate: number = 44100; // 采样率
+    const maxDisplayDb = 90;    // 最大显示分贝值
+    const minDisplayDb = 0;     // 最小显示分贝值
+    const displayRange = maxDisplayDb - minDisplayDb;
+    
+    // 计算频率范围
+    const minFreq = 20;    // 最小频率 20Hz
+    const maxFreq = 20000; // 最大频率 20kHz
+    
+    console.info(`[频谱显示] 显示参数: 点数=${displayPoints}, 最大分贝=${maxDisplayDb}, 最小分贝=${minDisplayDb}`);
+    console.info(`[频谱显示] 频率范围: ${minFreq}Hz - ${maxFreq}Hz`);
+    
+    // 找到实际的最大和最小值（排除无效值）
+    let actualMaxDb = -Infinity;
+    let actualMinDb = Infinity;
+    let validCount = 0;
+    let invalidCount = 0;
+    
+    for (let i = 0; i < spectrum.length; i++) {
+      const value = spectrum[i];
+      if (isFinite(value)) {
+        validCount++;
+        if (value > actualMaxDb) actualMaxDb = value;
+        if (value < actualMinDb) actualMinDb = value;
+      } else {
+        invalidCount++;
+      }
+    }
+    console.info(`[频谱显示] 数据统计: 有效值=${validCount}, 无效值=${invalidCount}`);
+    console.info(`[频谱显示] 实际数据范围: 最大值=${actualMaxDb.toFixed(2)}dB, 最小值=${actualMinDb.toFixed(2)}dB`);
+    
+    // 初始化结果数组
+    const result: Array<number> = new Array<number>(displayPoints);
+    
+    // 使用对数分布计算频率点
+    for (let i = 0; i < displayPoints; i++) {
+      // 使用对数分布计算当前频率点
+      const freq = minFreq * Math.pow(maxFreq / minFreq, i / (displayPoints - 1));
+      // 计算对应的FFT bin索引
+      const binIndex = Math.round(freq * spectrum.length / sampleRate);
+      
+      let sum = 0;
+      let count = 0;
+      // 获取邻近几个bin的平均值
+      const binWidth = 3; // 考虑邻近的bin数量
+      
+      for (let j = -binWidth; j <= binWidth; j++) {
+        const index = binIndex + j;
+        if (index >= 0 && index < spectrum.length) {
+          const value = spectrum[index];
+          if (isFinite(value)) {
+            sum += Math.max(0, value);
+            count++;
+          }
+        }
+      }
+      
+      if (count > 0) {
+        const avgDb = sum / count;
+        const normalizedValue = Math.min(1, Math.max(0, avgDb / maxDisplayDb));
+        result[i] = normalizedValue;
+        
+        if (i % 8 === 0) {
+          console.info(`[频谱显示] 点${i}: 频率=${freq.toFixed(1)}Hz, ` +
+            `bin=${binIndex}, 平均值=${avgDb.toFixed(2)}dB, 归一化值=${normalizedValue.toFixed(3)}`);
+        }
+      } else {
+        result[i] = 0;
+      }
+    }
+
+    // 添加平滑处理
+    console.info('[频谱显示] 开始平滑处理');
+    console.info(`[频谱显示] 平滑前样本: ${result[0].toFixed(3)}, ${result[1].toFixed(3)}, ${result[2].toFixed(3)}, ${result[3].toFixed(3)}, ${result[4].toFixed(3)}`);
+    
+    for (let i = 1; i < displayPoints - 1; i++) {
+      const oldValue = result[i];
+      result[i] = (result[i - 1] + result[i] * 2 + result[i + 1]) / 4;
+      
+      if (i % 8 === 0) {
+        console.info(`[频谱显示] 平滑处理点${i}: ${oldValue.toFixed(3)} -> ${result[i].toFixed(3)}`);
+      }
+    }
+    
+    console.info(`[频谱显示] 最终数据样本: ${result[0].toFixed(3)}, ${result[1].toFixed(3)}, ${result[2].toFixed(3)}, ${result[3].toFixed(3)}, ${result[4].toFixed(3)}`);
     
     return result;
   }
 
   build() {
     Column() {
+      // 频谱显示
+      this.SpectrumView()
+
       // 分贝显示卡片
       Stack({ alignContent: Alignment.TopEnd }) {
         Column() {
@@ -455,9 +583,6 @@ export struct DecibelMeter {
       .margin({ top: 16, bottom: 16 })
 
       this.StartStopButton()
-
-      // 频谱显示
-      this.SpectrumView()
     }
     .width('100%')
     .padding({ top: 8, bottom: 16 })
@@ -499,18 +624,78 @@ export struct DecibelMeter {
   }
 
   private startAnalyzing() {
+    console.info('[startAnalyzing] 开始音频分析');
     this.audioService.startProcessing((buffer: ArrayBuffer) => {
+      console.info('[startAnalyzing] 收到新的音频数据');
+      
       // 计算分贝值
       const db = this.decibelService.calculateDecibel(buffer, buffer.byteLength);
-      // 只有当有效的分贝值时才更新显示
+      console.info(`[startAnalyzing] 计算得到分贝值: ${db}`);
+      
       if (db > 0) {
         this.currentDecibel = Math.round(db);
+        console.info(`[startAnalyzing] 更新当前分贝值: ${this.currentDecibel}`);
       } else {
         this.currentDecibel = 0;
+        console.info('[startAnalyzing] 分贝值为0，重置显示');
       }
       
-      // 更新频谱数据
-      this.spectrumData = FrequencyWeighting.getSpectrumData(buffer);
+      // 获取频谱数据
+      const rawSpectrum = FrequencyWeighting.getSpectrumData(buffer);
+      console.info('[startAnalyzing] 获取到频谱数据');
+      
+      // 设置显示参数
+      const maxDisplayDb = 90;    // 最大显示分贝值
+      const minDisplayDb = 20;    // 最小显示分贝值
+      const displayRange = maxDisplayDb - minDisplayDb;
+      const maxHeight = 100;      // 最大高度百分比
+      const minHeight = 2;        // 最小高度百分比
+      const heightRange = maxHeight - minHeight;
+      
+      // 计算频谱高度
+      const newDisplayBars = new Array<number>(64);
+      let maxValue = -Infinity;
+      let maxIndex = -1;
+      
+      for (let i = 0; i < 64; i++) {
+        const value = rawSpectrum[i];
+        if (isFinite(value) && value > minDisplayDb) {
+          // 对数映射到0-1范围
+          const dbValue = Math.min(maxDisplayDb, Math.max(minDisplayDb, value));
+          const normalizedValue = (dbValue - minDisplayDb) / displayRange;
+          // 计算最终高度
+          newDisplayBars[i] = minHeight + heightRange * normalizedValue;
+          
+          // 记录最大值
+          if (value > maxValue) {
+            maxValue = value;
+            maxIndex = i;
+          }
+        } else {
+          newDisplayBars[i] = minHeight;
+        }
+      }
+      
+      console.info('[startAnalyzing] 计算完成新的频谱数据');
+      
+      // 更新显示数据 - 使用循环更新每个元素以触发UI更新
+      for (let i = 0; i < 64; i++) {
+        this.displayBars[i] = newDisplayBars[i];
+      }
+      console.info('[startAnalyzing] 更新频谱显示数据');
+      
+      // 计算最大值对应的频率
+      const maxFreq = (maxIndex * 44100 / 2048).toFixed(1);  // 采样率44.1kHz，FFT大小2048
+      
+      // 更新调试信息
+      const debugInfo = `当前分贝: ${this.currentDecibel}dB\n` +
+        `最大频率: ${maxFreq}Hz (${maxValue.toFixed(1)}dB)\n` +
+        `频谱范围: ${minDisplayDb}dB ~ ${maxDisplayDb}dB\n` +
+        `高度范围: ${minHeight}% ~ ${maxHeight}%`;
+      
+      console.info(`[startAnalyzing] 更新调试信息: ${debugInfo}`);
+      this.debugText = debugInfo;
     });
+    console.info('[startAnalyzing] 音频分析初始化完成');
   }
 } 

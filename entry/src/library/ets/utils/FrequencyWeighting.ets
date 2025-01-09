@@ -205,7 +205,28 @@ export class FrequencyWeighting {
    * @returns 频谱数据
    */
   public static getSpectrumData(buffer: ArrayBuffer, weightingType: WeightingType = WeightingType.A): Float32Array {
-    return FrequencyWeighting.fftAnalyzer.transform(buffer);
+    if (!FrequencyWeighting.fftAnalyzer) {
+      console.error('[频谱分析] FFT分析器未初始化');
+      return new Float32Array(1024);
+    }
+
+    try {
+      console.info(`[频谱分析] 开始处理音频数据，数据长度: ${buffer.byteLength}`);
+      
+      // 执行FFT变换并获取频谱数据
+      const spectrum = FrequencyWeighting.fftAnalyzer.transform(buffer);
+      console.info(`[频谱分析] FFT变换完成，频谱长度: ${spectrum.length}`);
+      console.info(`[频谱分析] 原始频谱样本: ${spectrum[0]}, ${spectrum[1]}, ${spectrum[2]}, ${spectrum[3]}, ${spectrum[4]}`);
+      
+      // 应用计权
+      const weightedSpectrum = FrequencyWeighting.fftAnalyzer.applyWeighting(spectrum, weightingType);
+      console.info(`[频谱分析] 计权后频谱样本: ${weightedSpectrum[0]}, ${weightedSpectrum[1]}, ${weightedSpectrum[2]}, ${weightedSpectrum[3]}, ${weightedSpectrum[4]}`);
+      
+      return weightedSpectrum;
+    } catch (error) {
+      console.error('[频谱分析] 处理失败:', error);
+      return new Float32Array(1024);
+    }
   }
   
   /**

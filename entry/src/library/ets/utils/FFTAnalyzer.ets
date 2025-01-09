@@ -595,7 +595,7 @@ export class FFTAnalyzer {
    * @param weightingType 计权类型
    * @returns 计权后的频谱
    */
-  private applyWeighting(spectrum: Float32Array, weightingType: WeightingType): Float32Array {
+  public applyWeighting(spectrum: Float32Array, weightingType: WeightingType): Float32Array {
     const weightedSpectrum = new Float32Array(spectrum.length);
     const freqResolution = this.getFrequencyResolution();
     
