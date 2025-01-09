@@ -76,22 +76,34 @@ export class RelationalStoreService {
         if (currentVersion < config.version) {
           hilog.info(DOMAIN, TAG, `开始升级到版本 ${config.version}`);
           
-          // 执行该版本的所有SQL
-          for (const sql of config.sqls) {
-            await new Promise<void>((resolve, reject) => {
-              store.executeSql(sql, null, (err) => {
-                if (err) {
-                  reject(new Error(`执行SQL失败: ${err.message}, SQL: ${sql}`));
-                  return;
-                }
-                resolve();
-              });
-            });
-          }
+          // 开始事务
+          store.beginTransaction();
           
-          // 更新版本号
-          store.version = config.version;
-          hilog.info(DOMAIN, TAG, `升级到版本 ${config.version} 成功`);
+          try {
+            // 执行该版本的所有SQL
+            for (const sql of config.sqls) {
+              await new Promise<void>((resolve, reject) => {
+                store.executeSql(sql, null, (err) => {
+                  if (err) {
+                    reject(new Error(`执行SQL失败: ${err.message}, SQL: ${sql}`));
+                    return;
+                  }
+                  resolve();
+                });
+              });
+            }
+            
+            // 更新版本号
+            store.version = config.version;
+            
+            // 提交事务
+            store.commit();
+            hilog.info(DOMAIN, TAG, `升级到版本 ${config.version} 成功`);
+          } catch (error) {
+            // 回滚事务
+            store.rollBack();
+            throw error instanceof Error ? error : new Error(String(error));
+          }
         }
       }
 
