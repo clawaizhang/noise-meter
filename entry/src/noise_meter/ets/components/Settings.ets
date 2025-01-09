@@ -4,6 +4,77 @@ import { CustomTitleBar } from '../../../library/ets/components/common/CustomTit
 import { WeightingType, getWeightingDescription } from '../../../library/ets/constants/WeightingConstants';
 import { AudioAnalysisMode, AudioPresets } from '../../../library/ets/common/AudioConfig';
 
+@Extend(Image) function itemIcon() {
+  .width(24)
+  .height(24)
+  .fillColor('#666666')
+  .margin({ right: 8 })
+}
+
+@Extend(Text) function itemTitle() {
+  .fontWeight(FontWeight.Medium)
+  .fontColor('#000000')
+  .fontSize(16)
+}
+
+@Extend(Text) function itemDescription() {
+  .fontColor('#666666')
+  .fontSize(14)
+  .textAlign(TextAlign.Start)
+  .margin({ left: 48 })
+}
+
+@Extend(Select) function selectStyle() {
+  .backgroundColor(Color.White)
+  .borderRadius(16)
+  .padding({ left: 12, right: 12 })
+  .font({ size: 16, weight: FontWeight.Normal, family: 'HarmonyHeiTi' })
+  .selectedOptionFont({ size: 16, weight: FontWeight.Normal, family: 'HarmonyHeiTi' })
+  .optionFont({ size: 16, weight: FontWeight.Normal, family: 'HarmonyHeiTi' })
+}
+
+@Extend(Column) function listItemStyle() {
+  .width('100%')
+  .padding({ left: 16, right: 16 })
+  .backgroundColor('#FFFFFF')
+}
+
+@Extend(Row) function listItemRow() {
+  .width('100%')
+  .height(56)
+  .alignItems(VerticalAlign.Center)
+}
+
+@Extend(Text) function detailText() {
+  .fontColor('#666666')
+  .fontSize(14)
+  .margin({ top: 4, left: 48 })
+}
+
+@Extend(Row) function dividerStyle() {
+  .width('100%')
+  .height(1)
+  .backgroundColor('#F5F5F5')
+}
+
+@Extend(ListItem) function descriptionContainer() {
+  .backgroundColor('#F5F5F5')
+  .padding({ top: 8, bottom: 12 })
+}
+
+@Extend(Text) function analysisDescription() {
+  .fontColor('#666666')
+  .fontSize(14)
+  .textAlign(TextAlign.Start)
+}
+
+@Extend(Text) function analysisDetail() {
+  .fontColor('#666666')
+  .fontSize(14)
+  .textAlign(TextAlign.Start)
+  .margin({ top: 8 })
+}
+
 @ComponentV2
 export struct Settings {
   private preferenceService: PreferenceService = PreferenceService.getInstance();
@@ -12,6 +83,7 @@ export struct Settings {
   @Local selectedWeighting: WeightingType = WeightingType.A;
   @Local selectedAnalysisMode: AudioAnalysisMode = AudioAnalysisMode.BALANCED;
 
+  // 工具方法
   private getWeightingIndex(type: WeightingType): number {
     switch (type) {
       case WeightingType.A:
@@ -38,281 +110,6 @@ export struct Settings {
     }
   }
 
-  aboutToAppear() {
-    // 获取初始状态
-    this.isLocationEnabled = this.preferenceService.isEnabled(PreferenceKeyConstants.LOCATION);
-    this.isRecordEnabled = this.preferenceService.isEnabled(PreferenceKeyConstants.RECORD);
-    this.selectedWeighting = (this.preferenceService.getString(PreferenceKeyConstants.WEIGHTING) || WeightingType.A) as WeightingType;
-    this.selectedAnalysisMode = (this.preferenceService.getString(PreferenceKeyConstants.ANALYSIS_MODE) || AudioAnalysisMode.BALANCED) as AudioAnalysisMode;
-  }
-
-  build() {
-    Column() {
-      // 标题栏
-      CustomTitleBar({ title: '设置' })
-
-      // 设置列表
-      List() {
-        // 加权设置
-        ListItem() {
-          Column() {
-            Row() {
-              Row() {
-                Image($r('app.media.ic_weighting'))
-                  .width(24)
-                  .height(24)
-                  .fillColor('#666666')
-                  .margin({ right: 8 })
-
-                Text('分贝计权')
-                  .fontSize(16)
-                  .fontWeight(FontWeight.Medium)
-                  .fontColor('#000000')
-              }
-
-              Blank()
-
-              Select([
-                { value: 'A计权' },
-                { value: 'C计权' },
-                { value: 'Z计权' }
-              ])
-                .selected(this.getWeightingIndex(this.selectedWeighting))
-                .value(this.selectedWeighting + '计权')
-                .font({ size: 16 })
-                .fontColor('#666666')
-                .selectedOptionFont({ size: 16 })
-                .optionFont({ size: 16 })
-                .onSelect(async (index: number, value: string) => {
-                  const weightingType = this.getWeightingType(index);
-                  await this.preferenceService.setString(PreferenceKeyConstants.WEIGHTING, weightingType);
-                  this.selectedWeighting = weightingType;
-                })
-                .padding({ left: 12, right: 12 })
-                .margin({ right: 4 })
-                .borderRadius(16)
-                .backgroundColor(Color.White)
-            }
-            .width('100%')
-            .height(56)
-            .alignItems(VerticalAlign.Center)
-          }
-          .width('100%')
-          .padding({ left: 16, right: 16 })
-          .backgroundColor('#FFFFFF')
-        }
-
-        ListItem() {
-          Text(getWeightingDescription(this.selectedWeighting))
-            .fontSize(14)
-            .fontColor('#666666')
-            .margin({ left: 48 })
-            .textAlign(TextAlign.Start)
-        }
-        .backgroundColor('#F5F5F5')
-        .padding({ top: 8, bottom: 12 })
-
-        // 分割线
-        ListItem() {
-          Row()
-            .width('100%')
-            .height(1)
-            .backgroundColor('#F5F5F5')
-        }
-
-        // 音频分析模式设置
-        ListItem() {
-          Column() {
-            Row() {
-              Row() {
-                Image($r('app.media.ic_audio_analysis'))
-                  .width(24)
-                  .height(24)
-                  .fillColor('#666666')
-                  .margin({ right: 8 })
-
-                Text('音频分析模式')
-                  .fontSize(16)
-                  .fontWeight(FontWeight.Medium)
-                  .fontColor('#000000')
-              }
-
-              Blank()
-
-              Select([
-                { value: '快速响应' },
-                { value: '平衡模式' },
-                { value: '精确分析' },
-                { value: '低频分析' }
-              ])
-                .selected(this.getAnalysisModeIndex(this.selectedAnalysisMode))
-                .value(this.getAnalysisModeDisplayName(this.selectedAnalysisMode))
-                .font({ size: 16 })
-                .fontColor('#666666')
-                .selectedOptionFont({ size: 16 })
-                .optionFont({ size: 16 })
-                .onSelect(async (index: number, value: string) => {
-                  const mode = this.getAnalysisModeFromIndex(index);
-                  await this.preferenceService.setString(PreferenceKeyConstants.ANALYSIS_MODE, mode);
-                  this.selectedAnalysisMode = mode;
-                })
-                .padding({ left: 12, right: 12 })
-                .margin({ right: 4 })
-                .borderRadius(16)
-                .backgroundColor(Color.White)
-            }
-            .width('100%')
-            .height(56)
-            .alignItems(VerticalAlign.Center)
-
-            // 显示当前模式的详细信息
-            Column() {
-              Text(`FFT大小: ${AudioPresets.getConfig(this.selectedAnalysisMode).fftSize}`)
-                .fontSize(14)
-                .fontColor('#666666')
-                .margin({ top: 4 })
-              Text(`处理间隔: ${AudioPresets.getConfig(this.selectedAnalysisMode).processInterval}ms`)
-                .fontSize(14)
-                .fontColor('#666666')
-                .margin({ top: 4 })
-              Text(`频率分辨率: ${(44100 / AudioPresets.getConfig(this.selectedAnalysisMode).fftSize).toFixed(1)}Hz`)
-                .fontSize(14)
-                .fontColor('#666666')
-                .margin({ top: 4 })
-              Text(`时间分辨率: ${(AudioPresets.getConfig(this.selectedAnalysisMode).fftSize / 44100 * 1000).toFixed(1)}ms`)
-                .fontSize(14)
-                .fontColor('#666666')
-                .margin({ top: 4 })
-            }
-            .width('100%')
-            .padding({ left: 48, right: 16, bottom: 12 })
-          }
-          .width('100%')
-          .padding({ left: 16, right: 16 })
-          .backgroundColor('#FFFFFF')
-        }
-
-        // 分割线
-        ListItem() {
-          Row()
-            .width('100%')
-            .height(1)
-            .backgroundColor('#F5F5F5')
-        }
-
-        // 位置开关
-        ListItem() {
-          Column() {
-            Row() {
-              Row() {
-                Image($r('app.media.ic_location'))
-                  .width(24)
-                  .height(24)
-                  .fillColor('#666666')
-                  .margin({ right: 8 })
-
-                Text('位置')
-                  .fontSize(16)
-                  .fontWeight(FontWeight.Medium)
-                  .fontColor('#000000')
-              }
-
-              Blank()
-
-              Toggle({ type: ToggleType.Switch, isOn: this.isLocationEnabled })
-                .selectedColor('#0091FF')
-                .switchPointColor('#FFFFFF')
-                .onChange(async (isOn: boolean) => {
-                  await this.preferenceService.setEnabled(PreferenceKeyConstants.LOCATION, isOn);
-                  this.isLocationEnabled = isOn;
-                })
-            }
-            .width('100%')
-            .height(56)
-            .alignItems(VerticalAlign.Center)
-          }
-          .width('100%')
-          .padding({ left: 16, right: 16 })
-          .backgroundColor('#FFFFFF')
-        }
-
-        ListItem() {
-          Text(this.isLocationEnabled ? '已开启,可以记录噪音检测时的位置信息' : '已关闭,不会记录位置信息')
-            .fontSize(14)
-            .fontColor('#666666')
-            .margin({ left: 48 })
-            .textAlign(TextAlign.Start)
-        }
-        .backgroundColor('#F5F5F5')
-        .padding({ top: 8, bottom: 12 })
-
-        // 分割线
-        ListItem() {
-          Row()
-            .width('100%')
-            .height(1)
-            .backgroundColor('#F5F5F5')
-        }
-
-        // 录音开关
-        ListItem() {
-          Column() {
-            Row() {
-              Row() {
-                Image($r('app.media.ic_mic'))
-                  .width(24)
-                  .height(24)
-                  .fillColor('#666666')
-                  .margin({ right: 8 })
-
-                Text('录音')
-                  .fontSize(16)
-                  .fontWeight(FontWeight.Medium)
-                  .fontColor('#000000')
-              }
-
-              Blank()
-
-              Toggle({ type: ToggleType.Switch, isOn: this.isRecordEnabled })
-                .selectedColor('#0091FF')
-                .switchPointColor('#FFFFFF')
-                .onChange(async (isOn: boolean) => {
-                  await this.preferenceService.setEnabled(PreferenceKeyConstants.RECORD, isOn);
-                  this.isRecordEnabled = isOn;
-                })
-            }
-            .width('100%')
-            .height(56)
-            .alignItems(VerticalAlign.Center)
-          }
-          .width('100%')
-          .padding({ left: 16, right: 16 })
-          .backgroundColor('#FFFFFF')
-        }
-
-        ListItem() {
-          Text(this.isRecordEnabled ? '已开启,可以录制噪音检测时的音频' : '已关闭,不会录制音频')
-            .fontSize(14)
-            .fontColor('#666666')
-            .margin({ left: 48 })
-            .textAlign(TextAlign.Start)
-        }
-        .backgroundColor('#F5F5F5')
-        .padding({ top: 8, bottom: 12 })
-      }
-      .width('100%')
-      .margin({ top: 12 })
-      .divider({
-        strokeWidth: 1,
-        color: '#E5E5E5'
-      })
-    }
-    .width('100%')
-    .height('100%')
-    .backgroundColor('#F5F5F5')
-  }
-
-  // 获取分析模式的索引
   private getAnalysisModeIndex(mode: AudioAnalysisMode): number {
     switch (mode) {
       case AudioAnalysisMode.FAST_RESPONSE:
@@ -328,7 +125,6 @@ export struct Settings {
     }
   }
 
-  // 从索引获取分析模式
   private getAnalysisModeFromIndex(index: number): AudioAnalysisMode {
     switch (index) {
       case 0:
@@ -344,7 +140,6 @@ export struct Settings {
     }
   }
 
-  // 获取分析模式的显示名称
   private getAnalysisModeDisplayName(mode: AudioAnalysisMode): string {
     switch (mode) {
       case AudioAnalysisMode.FAST_RESPONSE:
@@ -358,5 +153,212 @@ export struct Settings {
       default:
         return '平衡模式';
     }
+  }
+
+  private getAnalysisModeDescription(mode: AudioAnalysisMode): string {
+    switch (mode) {
+      case AudioAnalysisMode.FAST_RESPONSE:
+        return '适合测量突发性噪声，响应速度快';
+      case AudioAnalysisMode.BALANCED:
+        return '日常使用的推荐模式，兼顾速度和准确性';
+      case AudioAnalysisMode.PRECISE:
+        return '适合专业分析，提供更精确的频率数据';
+      case AudioAnalysisMode.LOW_FREQUENCY:
+        return '专注于低频噪音，如机械设备和交通噪音';
+      default:
+        return '日常使用的推荐模式，兼顾速度和准确性';
+    }
+  }
+
+  aboutToAppear() {
+    this.isLocationEnabled = this.preferenceService.isEnabled(PreferenceKeyConstants.LOCATION);
+    this.isRecordEnabled = this.preferenceService.isEnabled(PreferenceKeyConstants.RECORD);
+    this.selectedWeighting = (this.preferenceService.getString(PreferenceKeyConstants.WEIGHTING) || WeightingType.A) as WeightingType;
+    this.selectedAnalysisMode = (this.preferenceService.getString(PreferenceKeyConstants.ANALYSIS_MODE) || AudioAnalysisMode.BALANCED) as AudioAnalysisMode;
+  }
+
+  @Builder
+  private buildDivider() {
+    Row()
+      .dividerStyle()
+  }
+
+  @Builder
+  private buildDescription(text: ResourceStr | string) {
+    Text(text)
+      .itemDescription()
+  }
+
+  build() {
+    Column() {
+      CustomTitleBar({ title: '设置' })
+
+      List() {
+        // 音频分析模式设置
+        ListItem() {
+          Column() {
+            Row() {
+              Row() {
+                Image($r('app.media.ic_audio_analysis'))
+                  .itemIcon()
+
+                Text('音频分析模式')
+                  .itemTitle()
+              }
+
+              Blank()
+
+              Select([
+                { value: '快速响应' },
+                { value: '平衡模式' },
+                { value: '精确分析' },
+                { value: '低频分析' }
+              ])
+                .selected(this.getAnalysisModeIndex(this.selectedAnalysisMode))
+                .value(this.getAnalysisModeDisplayName(this.selectedAnalysisMode))
+                .selectStyle()
+                .onSelect(async (index: number) => {
+                  const mode = this.getAnalysisModeFromIndex(index);
+                  await this.preferenceService.setString(PreferenceKeyConstants.ANALYSIS_MODE, mode);
+                  this.selectedAnalysisMode = mode;
+                })
+            }
+            .listItemRow()
+          }
+          .listItemStyle()
+        }
+
+        ListItem() {
+          Column() {
+            Text(this.getAnalysisModeDescription(this.selectedAnalysisMode))
+              .analysisDescription()
+            Text(`FFT大小: ${AudioPresets.getConfig(this.selectedAnalysisMode).fftSize}`)
+              .analysisDetail()
+            Text(`处理间隔: ${AudioPresets.getConfig(this.selectedAnalysisMode).processInterval}ms`)
+              .analysisDetail()
+            Text(`频率分辨率: ${(44100 / AudioPresets.getConfig(this.selectedAnalysisMode).fftSize).toFixed(1)}Hz`)
+              .analysisDetail()
+            Text(`时间分辨率: ${(AudioPresets.getConfig(this.selectedAnalysisMode).fftSize / 44100 * 1000).toFixed(1)}ms`)
+              .analysisDetail()
+          }
+          .width('100%')
+          .alignItems(HorizontalAlign.Start)
+          .padding({ left: 48 })
+        }
+        .descriptionContainer()
+
+        // 分贝计权设置
+        ListItem() {
+          Column() {
+            Row() {
+              Row() {
+                Image($r('app.media.ic_weighting'))
+                  .itemIcon()
+
+                Text('频率加权')
+                  .itemTitle()
+              }
+
+              Blank()
+
+              Select([
+                { value: 'A计权' },
+                { value: 'C计权' },
+                { value: 'Z计权' }
+              ])
+                .selected(this.getWeightingIndex(this.selectedWeighting))
+                .value(this.selectedWeighting + '计权')
+                .selectStyle()
+                .onSelect(async (index: number) => {
+                  const weightingType = this.getWeightingType(index);
+                  await this.preferenceService.setString(PreferenceKeyConstants.WEIGHTING, weightingType);
+                  this.selectedWeighting = weightingType;
+                })
+            }
+            .listItemRow()
+          }
+          .listItemStyle()
+        }
+
+        ListItem() {
+          Text(getWeightingDescription(this.selectedWeighting))
+            .itemDescription()
+        }
+        .descriptionContainer()
+
+        // 位置开关
+        ListItem() {
+          Column() {
+            Row() {
+              Row() {
+                Image($r('app.media.ic_location'))
+                  .itemIcon()
+
+                Text('地理位置')
+                  .itemTitle()
+              }
+
+              Blank()
+
+              Toggle({ type: ToggleType.Switch, isOn: this.isLocationEnabled })
+                .selectedColor('#0091FF')
+                .switchPointColor('#FFFFFF')
+                .onChange(async (isOn: boolean) => {
+                  await this.preferenceService.setEnabled(PreferenceKeyConstants.LOCATION, isOn);
+                  this.isLocationEnabled = isOn;
+                })
+            }
+            .listItemRow()
+          }
+          .listItemStyle()
+        }
+
+        ListItem() {
+          Text(this.isLocationEnabled ? '记录测量地点的经纬度坐标' : '不会采集位置信息')
+            .itemDescription()
+        }
+        .descriptionContainer()
+
+        // 录音开关
+        ListItem() {
+          Column() {
+            Row() {
+              Row() {
+                Image($r('app.media.ic_mic'))
+                  .itemIcon()
+
+                Text('音频记录')
+                  .itemTitle()
+              }
+
+              Blank()
+
+              Toggle({ type: ToggleType.Switch, isOn: this.isRecordEnabled })
+                .selectedColor('#0091FF')
+                .switchPointColor('#FFFFFF')
+                .onChange(async (isOn: boolean) => {
+                  await this.preferenceService.setEnabled(PreferenceKeyConstants.RECORD, isOn);
+                  this.isRecordEnabled = isOn;
+                })
+            }
+            .listItemRow()
+          }
+          .listItemStyle()
+        }
+
+        ListItem() {
+          Text(this.isRecordEnabled ? '保存原始音频数据用于后期分析' : '仅记录分析结果')
+            .itemDescription()
+        }
+        .descriptionContainer()
+      }
+      .width('100%')
+      .layoutWeight(1)
+      .backgroundColor('#F5F5F5')
+      .margin({ top: 12 })
+    }
+    .width('100%')
+    .height('100%')
+    .backgroundColor('#F5F5F5')
   }
 }
