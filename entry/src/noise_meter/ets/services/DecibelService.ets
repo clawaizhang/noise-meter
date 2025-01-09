@@ -15,14 +15,19 @@ export class DecibelService {
    * @returns 分贝值
    */
   public calculateDecibel(buffer: ArrayBuffer, bytesRead: number): number {
+    console.debug('[DecibelService] 开始计算分贝值, 数据长度:', bytesRead);
     // 获取当前的计权类型
     const weightingType = this.preferenceService.getString(PreferenceKeyConstants.WEIGHTING, WeightingType.A) as WeightingType;
+    console.debug('[DecibelService] 当前计权类型:', weightingType);
     
     // 使用频率计权计算
     const decibel = FrequencyWeighting.calculateWeightedDecibel(buffer, bytesRead, weightingType);
+    console.debug('[DecibelService] 计算得到分贝值:', decibel);
     
     // 限制分贝值范围在合理区间内
-    return Math.max(0, Math.min(130, decibel));
+    const result = Math.max(0, Math.min(130, decibel));
+    console.debug('[DecibelService] 限制后的分贝值:', result);
+    return result;
   }
 
   /**

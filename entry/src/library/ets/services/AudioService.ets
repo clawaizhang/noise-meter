@@ -71,6 +71,9 @@ export class AudioService {
       this.currentConfig = AudioPresets.getConfig(AudioAnalysisMode.BALANCED);
     }
 
+    // 初始化频率计权分析器
+    FrequencyWeighting.initializeAnalyzer(savedMode as AudioAnalysisMode);
+
     // 添加配置变更监听
     this.preferenceService.addChangeListener(PREF_ANALYSIS_MODE, (key: string, value: PreferenceValue) => {
       if (key === PREF_ANALYSIS_MODE && typeof value === 'string') {
@@ -145,12 +148,15 @@ export class AudioService {
 
     try {
       // 检查权限
+      console.info('[音频采集] 开始检查麦克风权限');
       const hasPermission = await this.checkMicrophonePermission();
       if (!hasPermission) {
+        console.error('[音频采集] 没有麦克风权限');
         throw new Error('没有麦克风权限');
       }
 
       // 创建音频采集器
+      console.info('[音频采集] 开始创建音频采集器, 配置:', JSON.stringify(this.audioCapturerOptions));
       this.audioCapturer = await audio.createAudioCapturer(this.audioCapturerOptions);
       console.info('[音频采集] 音频采集器创建成功');
 
@@ -174,11 +180,14 @@ export class AudioService {
    * @private
    */
   private async startReading(): Promise<void> {
+    console.info('[音频采集] startReading 开始');
     if (!this.audioCapturer || !this.isCapturing) {
+      console.error('[音频采集] 音频采集器未初始化或未开始采集');
       throw new Error('音频采集器未初始化或未开始采集');
     }
 
     try {
+      console.info('[音频采集] 准备注册 readData 事件监听器');
       // 注册readData事件监听器
       this.audioCapturer.on('readData', (buffer: ArrayBuffer) => {
         if (this.isCapturing && !this.isStoppingCapture) {
@@ -193,6 +202,7 @@ export class AudioService {
       });
 
       // 启动音频数据读取
+      console.info('[音频采集] 准备启动音频采集器');
       await this.audioCapturer.start();
       console.info('[音频采集] 开始读取音频数据');
     } catch (err) {
@@ -432,6 +442,7 @@ export class AudioService {
         
         // 将数据复制到临时缓冲区
         if (!this.tempBuffer || this.tempBuffer.byteLength !== this.currentConfig.fftSize * 2) {
+          console.info(`[音频采集] 创建新的临时缓冲区, 大小: ${this.currentConfig.fftSize * 2}`);
           this.tempBuffer = new ArrayBuffer(this.currentConfig.fftSize * 2); // 16位采样，每个样本2字节
         }
         
@@ -443,15 +454,18 @@ export class AudioService {
           const overlapView = new Int16Array(this.overlapBuffer);
           tempView.set(overlapView);
           this.tempBufferOffset = overlapView.length;
+          console.debug('[音频采集] 处理重叠部分, 偏移量:', this.tempBufferOffset);
         } else {
           const overlapSize = Math.floor(this.currentConfig.fftSize * this.currentConfig.overlap);
           this.overlapBuffer = new ArrayBuffer(overlapSize * 2);
           this.tempBufferOffset = 0;
+          console.debug('[音频采集] 创建新的重叠缓冲区, 大小:', overlapSize * 2);
         }
         
         // 计算需要的新样本数
         const neededSamples = this.currentConfig.fftSize - this.tempBufferOffset;
         const samplesToAdd = Math.min(newData.length, neededSamples);
+        console.debug(`[音频采集] 需要的样本数: ${neededSamples}, 实际添加: ${samplesToAdd}`);
         
         // 复制新数据
         tempView.set(newData.subarray(0, samplesToAdd), this.tempBufferOffset);
@@ -468,6 +482,7 @@ export class AudioService {
           
           // 发送数据进行处理
           if (this.onAudioData) {
+            console.debug('[音频采集] 发送数据进行处理');
             this.onAudioData(this.tempBuffer);
           }
           
