@@ -2,7 +2,7 @@ import promptAction from '@ohos.promptAction';
 import { LocationService, LocationInfo } from '../../services/LocationService';
 import common from '@ohos.app.ability.common';
 import { PermissionUtil } from '@pura/harmony-utils';
-import { PreferenceService } from '../../services/PreferenceService';
+import { PreferenceService, PreferenceChangeListener, PreferenceValue } from '../../services/PreferenceService';
 import { PreferenceKeyConstants } from '../../constants/PreferenceKeyConstants';
 
 @ComponentV2
@@ -13,8 +13,11 @@ export struct LocationDisplay {
   @Local isRefreshing: boolean = false;
   private locationService: LocationService = LocationService.getInstance();
   private preferenceService: PreferenceService = PreferenceService.getInstance();
+  private locationListener?: PreferenceChangeListener;
 
   async aboutToAppear() {
+    this.preferenceService = PreferenceService.getInstance();
+    
     // 获取位置开关状态
     this.isEnabled = this.preferenceService.isEnabled(PreferenceKeyConstants.LOCATION);
     
@@ -22,9 +25,9 @@ export struct LocationDisplay {
     if (this.isEnabled) {
       this.startSingleLocation();
     }
-    
-    // 监听位置开关状态变化
-    this.preferenceService.subscribe((key: string) => {
+
+    // 使用新的监听方式
+    this.locationListener = (key: string, value: PreferenceValue): void => {
       if (key === PreferenceKeyConstants.LOCATION) {
         const newEnabled = this.preferenceService.isEnabled(PreferenceKeyConstants.LOCATION);
         if (newEnabled !== this.isEnabled) {
@@ -39,7 +42,9 @@ export struct LocationDisplay {
           }
         }
       }
-    });
+    };
+    
+    this.preferenceService.addChangeListener(PreferenceKeyConstants.LOCATION, this.locationListener);
   }
 
   private async showLocationServiceDialog(): Promise<boolean> {
@@ -104,8 +109,10 @@ export struct LocationDisplay {
   }
 
   aboutToDisappear() {
-    // 取消订阅状态变更
-    this.preferenceService.unsubscribe();
+    // 移除监听器
+    if (this.locationListener) {
+      this.preferenceService.removeChangeListener(PreferenceKeyConstants.LOCATION, this.locationListener);
+    }
   }
 
   build() {

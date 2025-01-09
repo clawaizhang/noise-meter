@@ -9,7 +9,7 @@ import { BannerCard } from '../../../library/ets/components/business/BannerCard'
 import { FileService } from '../../../library/ets/services/FileService';
 import { noiseMeterNavStack } from '../constant/ProviderConstant';
 import { promptAction } from '@kit.ArkUI';
-import { PreferenceService } from '../../../library/ets/services/PreferenceService';
+import { PreferenceService, PreferenceChangeListener, PreferenceValue } from '../../../library/ets/services/PreferenceService';
 import { PreferenceKeyConstants } from '../../../library/ets/constants/PreferenceKeyConstants';
 import { FrequencyWeighting } from '../../../library/ets/utils/FrequencyWeighting';
 import type { BusinessError } from '@ohos.base';
@@ -39,6 +39,7 @@ export struct DecibelMeter {
   private startTime: number = 0
   private releaseTimer: number = -1
   private currentRecord?: DecibelRecord
+  private recordListener?: PreferenceChangeListener
 
   aboutToAppear() {
     // 如果提供了外部context，重新初始化AudioService
@@ -47,12 +48,14 @@ export struct DecibelMeter {
     }
     // 获取录音开关状态
     this.isRecordEnabled = this.preferenceService.isEnabled(PreferenceKeyConstants.RECORD);
+
     // 监听录音开关状态变化
-    this.preferenceService.subscribe((key: PreferenceKeyConstants): void => {
+    this.recordListener = (key: string, value: PreferenceValue): void => {
       if (key === PreferenceKeyConstants.RECORD) {
-        this.isRecordEnabled = this.preferenceService.isEnabled(PreferenceKeyConstants.RECORD);
+        this.isRecordEnabled = value as boolean;
       }
-    });
+    };
+    this.preferenceService.addChangeListener(PreferenceKeyConstants.RECORD, this.recordListener);
 
     // 启动音频采集
     this.audioService.startCapture().then(() => {
@@ -64,8 +67,10 @@ export struct DecibelMeter {
   }
 
   aboutToDisappear() {
-    // 取消订阅状态变更
-    this.preferenceService.unsubscribe();
+    // 移除监听器
+    if (this.recordListener) {
+      this.preferenceService.removeChangeListener(PreferenceKeyConstants.RECORD, this.recordListener);
+    }
     // 清除定时器
     if (this.releaseTimer !== -1) {
       clearTimeout(this.releaseTimer);

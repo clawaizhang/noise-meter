@@ -40,10 +40,42 @@ export class PreferenceService {
    * @param listener 监听器
    */
   public addChangeListener(key: string, listener: PreferenceChangeListener): void {
+    if (!this.preferences) {
+      throw new Error('首选项未初始化');
+    }
     if (!this.listeners.has(key)) {
       this.listeners.set(key, new Set());
     }
     this.listeners.get(key)?.add(listener);
+
+    // 如果是第一个监听器，添加preferences的change监听
+    if (this.listeners.size === 1) {
+      this.preferences.on('change', (changedKey: string) => {
+        // 根据键名获取对应的默认值
+        let defaultValue: PreferenceValue = null;
+        if (this.preferences?.hasSync(changedKey)) {
+          const currentValue = this.preferences?.getSync(changedKey, null);
+          if (typeof currentValue === 'string') {
+            defaultValue = '';
+          } else if (typeof currentValue === 'number') {
+            defaultValue = 0;
+          } else if (typeof currentValue === 'boolean') {
+            defaultValue = false;
+          }
+        }
+        const value = this.preferences?.getSync(changedKey, defaultValue);
+        const keyListeners = this.listeners.get(changedKey);
+        if (keyListeners) {
+          keyListeners.forEach(listener => {
+            try {
+              listener(changedKey, value as PreferenceValue);
+            } catch (error) {
+              console.error(`[首选项] 监听器执行失败: ${error}`);
+            }
+          });
+        }
+      });
+    }
   }
 
   /**
@@ -59,23 +91,10 @@ export class PreferenceService {
         this.listeners.delete(key);
       }
     }
-  }
 
-  /**
-   * 通知监听器值变更
-   * @param key 键名
-   * @param value 新值
-   */
-  private notifyListeners(key: string, value: PreferenceValue): void {
-    const keyListeners = this.listeners.get(key);
-    if (keyListeners) {
-      keyListeners.forEach(listener => {
-        try {
-          listener(key, value);
-        } catch (error) {
-          console.error(`[首选项] 监听器执行失败: ${error}`);
-        }
-      });
+    // 如果没有监听器了，移除preferences的change监听
+    if (this.listeners.size === 0 && this.preferences) {
+      this.preferences.off('change');
     }
   }
 
@@ -170,28 +189,6 @@ export class PreferenceService {
   }
 
   /**
-   * 订阅状态变更
-   * @param callback 回调函数
-   */
-  public subscribe(callback: (key: string) => void): void {
-    if (!this.preferences) {
-      throw new Error('首选项未初始化');
-    }
-    this.preferences.on('change', callback);
-  }
-
-  /**
-   * 取消订阅状态变更
-   * @param callback 回调函数
-   */
-  public unsubscribe(callback?: (key: string) => void): void {
-    if (!this.preferences) {
-      throw new Error('首选项未初始化');
-    }
-    this.preferences.off('change', callback);
-  }
-
-  /**
    * 获取字符串值
    * @param key 键名
    * @param defaultValue 默认值
@@ -200,7 +197,7 @@ export class PreferenceService {
     if (!this.preferences) {
       throw new Error('首选项未初始化');
     }
-    const value = this.preferences.get(key, defaultValue);
+    const value = this.preferences.getSync(key, defaultValue);
     return typeof value === 'string' ? value : defaultValue;
   }
 
@@ -209,12 +206,20 @@ export class PreferenceService {
    * @param key 键名
    * @param value 值
    */
-  public setString(key: string, value: string): void {
+  public setString(key: string, value: string): Promise<void> {
     if (!this.preferences) {
       throw new Error('首选项未初始化');
     }
     this.preferences.put(key, value);
-    this.notifyListeners(key, value);
+    return new Promise<void>((resolve, reject) => {
+      this.preferences!.flush((err: BusinessError) => {
+        if (err) {
+          reject(new Error(`持久化字符串值失败: ${err.message}`));
+          return;
+        }
+        resolve();
+      });
+    });
   }
 
   /**
@@ -226,7 +231,7 @@ export class PreferenceService {
     if (!this.preferences) {
       throw new Error('首选项未初始化');
     }
-    const value = this.preferences.get(key, defaultValue);
+    const value = this.preferences.getSync(key, defaultValue);
     return typeof value === 'number' ? value : defaultValue;
   }
 
@@ -235,12 +240,20 @@ export class PreferenceService {
    * @param key 键名
    * @param value 值
    */
-  public setNumber(key: string, value: number): void {
+  public setNumber(key: string, value: number): Promise<void> {
     if (!this.preferences) {
       throw new Error('首选项未初始化');
     }
     this.preferences.put(key, value);
-    this.notifyListeners(key, value);
+    return new Promise<void>((resolve, reject) => {
+      this.preferences!.flush((err: BusinessError) => {
+        if (err) {
+          reject(new Error(`持久化数字值失败: ${err.message}`));
+          return;
+        }
+        resolve();
+      });
+    });
   }
 
   /**
@@ -252,7 +265,7 @@ export class PreferenceService {
     if (!this.preferences) {
       throw new Error('首选项未初始化');
     }
-    const value = this.preferences.get(key, defaultValue);
+    const value = this.preferences.getSync(key, defaultValue);
     return typeof value === 'boolean' ? value : defaultValue;
   }
 
@@ -261,11 +274,19 @@ export class PreferenceService {
    * @param key 键名
    * @param value 值
    */
-  public setBoolean(key: string, value: boolean): void {
+  public setBoolean(key: string, value: boolean): Promise<void> {
     if (!this.preferences) {
       throw new Error('首选项未初始化');
     }
     this.preferences.put(key, value);
-    this.notifyListeners(key, value);
+    return new Promise<void>((resolve, reject) => {
+      this.preferences!.flush((err: BusinessError) => {
+        if (err) {
+          reject(new Error(`持久化布尔值失败: ${err.message}`));
+          return;
+        }
+        resolve();
+      });
+    });
   }
 }
