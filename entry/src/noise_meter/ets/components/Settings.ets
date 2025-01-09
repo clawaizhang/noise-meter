@@ -2,6 +2,7 @@ import { PreferenceService } from '../../../library/ets/services/PreferenceServi
 import { PreferenceKeyConstants } from '../../../library/ets/constants/PreferenceKeyConstants';
 import { CustomTitleBar } from '../../../library/ets/components/common/CustomTitleBar';
 import { WeightingType, getWeightingDescription } from '../../../library/ets/constants/WeightingConstants';
+import { AudioAnalysisMode, AudioPresets } from '../../../library/ets/common/AudioConfig';
 
 @ComponentV2
 export struct Settings {
@@ -9,6 +10,7 @@ export struct Settings {
   @Local isLocationEnabled: boolean = false;
   @Local isRecordEnabled: boolean = false;
   @Local selectedWeighting: WeightingType = WeightingType.A;
+  @Local selectedAnalysisMode: AudioAnalysisMode = AudioAnalysisMode.BALANCED;
 
   private getWeightingIndex(type: WeightingType): number {
     switch (type) {
@@ -41,6 +43,7 @@ export struct Settings {
     this.isLocationEnabled = this.preferenceService.isEnabled(PreferenceKeyConstants.LOCATION);
     this.isRecordEnabled = this.preferenceService.isEnabled(PreferenceKeyConstants.RECORD);
     this.selectedWeighting = (this.preferenceService.getString(PreferenceKeyConstants.WEIGHTING) || WeightingType.A) as WeightingType;
+    this.selectedAnalysisMode = (this.preferenceService.getString(PreferenceKeyConstants.ANALYSIS_MODE) || AudioAnalysisMode.BALANCED) as AudioAnalysisMode;
   }
 
   build() {
@@ -82,7 +85,7 @@ export struct Settings {
                 .optionFont({ size: 16 })
                 .onSelect(async (index: number, value: string) => {
                   const weightingType = this.getWeightingType(index);
-                  await this.preferenceService.putString(PreferenceKeyConstants.WEIGHTING, weightingType);
+                  await this.preferenceService.setString(PreferenceKeyConstants.WEIGHTING, weightingType);
                   this.selectedWeighting = weightingType;
                 })
                 .padding({ left: 12, right: 12 })
@@ -108,6 +111,86 @@ export struct Settings {
         }
         .backgroundColor('#F5F5F5')
         .padding({ top: 8, bottom: 12 })
+
+        // 分割线
+        ListItem() {
+          Row()
+            .width('100%')
+            .height(1)
+            .backgroundColor('#F5F5F5')
+        }
+
+        // 音频分析模式设置
+        ListItem() {
+          Column() {
+            Row() {
+              Row() {
+                Image($r('app.media.ic_audio_analysis'))
+                  .width(24)
+                  .height(24)
+                  .fillColor('#666666')
+                  .margin({ right: 8 })
+
+                Text('音频分析模式')
+                  .fontSize(16)
+                  .fontWeight(FontWeight.Medium)
+                  .fontColor('#000000')
+              }
+
+              Blank()
+
+              Select([
+                { value: '快速响应' },
+                { value: '平衡模式' },
+                { value: '精确分析' },
+                { value: '低频分析' }
+              ])
+                .selected(this.getAnalysisModeIndex(this.selectedAnalysisMode))
+                .value(this.getAnalysisModeDisplayName(this.selectedAnalysisMode))
+                .font({ size: 16 })
+                .fontColor('#666666')
+                .selectedOptionFont({ size: 16 })
+                .optionFont({ size: 16 })
+                .onSelect(async (index: number, value: string) => {
+                  const mode = this.getAnalysisModeFromIndex(index);
+                  await this.preferenceService.setString(PreferenceKeyConstants.ANALYSIS_MODE, mode);
+                  this.selectedAnalysisMode = mode;
+                })
+                .padding({ left: 12, right: 12 })
+                .margin({ right: 4 })
+                .borderRadius(16)
+                .backgroundColor(Color.White)
+            }
+            .width('100%')
+            .height(56)
+            .alignItems(VerticalAlign.Center)
+
+            // 显示当前模式的详细信息
+            Column() {
+              Text(`FFT大小: ${AudioPresets.getConfig(this.selectedAnalysisMode).fftSize}`)
+                .fontSize(14)
+                .fontColor('#666666')
+                .margin({ top: 4 })
+              Text(`处理间隔: ${AudioPresets.getConfig(this.selectedAnalysisMode).processInterval}ms`)
+                .fontSize(14)
+                .fontColor('#666666')
+                .margin({ top: 4 })
+              Text(`频率分辨率: ${(44100 / AudioPresets.getConfig(this.selectedAnalysisMode).fftSize).toFixed(1)}Hz`)
+                .fontSize(14)
+                .fontColor('#666666')
+                .margin({ top: 4 })
+              Text(`时间分辨率: ${(AudioPresets.getConfig(this.selectedAnalysisMode).fftSize / 44100 * 1000).toFixed(1)}ms`)
+                .fontSize(14)
+                .fontColor('#666666')
+                .margin({ top: 4 })
+            }
+            .width('100%')
+            .padding({ left: 48, right: 16, bottom: 12 })
+          }
+          .width('100%')
+          .padding({ left: 16, right: 16 })
+          .backgroundColor('#FFFFFF')
+        }
 
         // 分割线
         ListItem() {
@@ -221,13 +304,59 @@ export struct Settings {
       .margin({ top: 12 })
       .divider({
         strokeWidth: 1,
-        color: '#F5F5F5',
-        startMargin: 16,
-        endMargin: 16
+        color: '#E5E5E5'
       })
     }
     .width('100%')
     .height('100%')
     .backgroundColor('#F5F5F5')
   }
-} 
+
+  // 获取分析模式的索引
+  private getAnalysisModeIndex(mode: AudioAnalysisMode): number {
+    switch (mode) {
+      case AudioAnalysisMode.FAST_RESPONSE:
+        return 0;
+      case AudioAnalysisMode.BALANCED:
+        return 1;
+      case AudioAnalysisMode.PRECISE:
+        return 2;
+      case AudioAnalysisMode.LOW_FREQUENCY:
+        return 3;
+      default:
+        return 1;
+    }
+  }
+
+  // 从索引获取分析模式
+  private getAnalysisModeFromIndex(index: number): AudioAnalysisMode {
+    switch (index) {
+      case 0:
+        return AudioAnalysisMode.FAST_RESPONSE;
+      case 1:
+        return AudioAnalysisMode.BALANCED;
+      case 2:
+        return AudioAnalysisMode.PRECISE;
+      case 3:
+        return AudioAnalysisMode.LOW_FREQUENCY;
+      default:
+        return AudioAnalysisMode.BALANCED;
+    }
+  }
+
+  // 获取分析模式的显示名称
+  private getAnalysisModeDisplayName(mode: AudioAnalysisMode): string {
+    switch (mode) {
+      case AudioAnalysisMode.FAST_RESPONSE:
+        return '快速响应';
+      case AudioAnalysisMode.BALANCED:
+        return '平衡模式';
+      case AudioAnalysisMode.PRECISE:
+        return '精确分析';
+      case AudioAnalysisMode.LOW_FREQUENCY:
+        return '低频分析';
+      default:
+        return '平衡模式';
+    }
+  }
+}

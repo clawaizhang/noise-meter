@@ -1,12 +1,13 @@
 import { WeightingType } from '../constants/WeightingConstants';
 import { FFTAnalyzer } from './FFTAnalyzer';
+import { AudioAnalysisMode, AudioPresets } from '../common/AudioConfig';
 
 /**
  * 频率计权工具类
  */
 export class FrequencyWeighting {
   // FFT分析器实例
-  private static readonly fftAnalyzer: FFTAnalyzer = new FFTAnalyzer(2048);
+  private static fftAnalyzer: FFTAnalyzer;
   
   // 标准频率点(Hz)
   private static readonly STANDARD_FREQUENCIES: number[] = [
@@ -43,6 +44,57 @@ export class FrequencyWeighting {
   private static readonly INVALID_DB: number = -100;  
 
   /**
+   * 初始化FFT分析器
+   * @param mode 分析模式
+   */
+  public static initializeAnalyzer(mode: AudioAnalysisMode = AudioAnalysisMode.BALANCED): void {
+    const config = AudioPresets.getConfig(mode);
+    FrequencyWeighting.fftAnalyzer = new FFTAnalyzer(
+      config.fftSize,
+      config.windowType,
+      config.smoothingFactor
+    );
+    
+    console.info(`[频率计权] 初始化FFT分析器: 大小=${config.fftSize}, ` +
+                `窗函数=${config.windowType}, 平滑因子=${config.smoothingFactor}`);
+  }
+
+  /**
+   * 更新分析模式
+   * @param mode 分析模式
+   */
+  public static updateAnalysisMode(mode: AudioAnalysisMode): void {
+    const config = AudioPresets.getConfig(mode);
+    FrequencyWeighting.fftAnalyzer = new FFTAnalyzer(
+      config.fftSize,
+      config.windowType,
+      config.smoothingFactor
+    );
+    console.info(`[频率计权] 切换到${mode}模式`);
+  }
+
+  /**
+   * 获取频率分辨率
+   */
+  public static getFrequencyResolution(): number {
+    return FrequencyWeighting.fftAnalyzer.getFrequencyResolution();
+  }
+
+  /**
+   * 获取时间分辨率（毫秒）
+   */
+  public static getTimeResolution(): number {
+    return FrequencyWeighting.fftAnalyzer.getTimeResolution();
+  }
+
+  /**
+   * 重置分析器状态
+   */
+  public static reset(): void {
+    FrequencyWeighting.fftAnalyzer.reset();
+  }
+
+  /**
    * 对音频数据进行计权计算
    * @param buffer 音频数据
    * @param bytesRead 读取的字节数
@@ -59,105 +111,77 @@ export class FrequencyWeighting {
     }
 
     try {
-      // 执行FFT分析，直接传入计权类型
-      const spectrum = FrequencyWeighting.fftAnalyzer.transform(buffer);
-      
-      // 计算有效的分贝值平均值
-      let sum: number = 0;
-      let validCount: number = 0;
-      
-      for (let i = 0; i < spectrum.length; i++) {
-        if (!isNaN(spectrum[i]) && spectrum[i] > FrequencyWeighting.INVALID_DB) {
-          sum += spectrum[i];
-          validCount++;
-        }
+      switch (weightingType) {
+        case WeightingType.A:
+          return FrequencyWeighting.calculateAWeightedDecibel(buffer, bytesRead);
+        case WeightingType.C:
+          return FrequencyWeighting.calculateCWeightedDecibel(buffer, bytesRead);
+        case WeightingType.Z:
+          return FrequencyWeighting.calculateZWeightedDecibel(buffer, bytesRead);
+        default:
+          console.error('[计权计算] 不支持的计权类型');
+          return FrequencyWeighting.INVALID_DB;
       }
-      
-      // 检查是否有足够的有效样本
-      if (validCount < FrequencyWeighting.MIN_VALID_SAMPLES) {
-        console.warn(`[计权计算] 有效样本数不足: ${validCount}`);
-        return FrequencyWeighting.INVALID_DB;
-      }
-      
-      const averageDb = sum / validCount;
-      console.info(`[计权计算] 计算完成，平均分贝值: ${averageDb.toFixed(2)}`);
-      
-      return averageDb;
     } catch (error) {
       console.error(`[计权计算] 处理过程出错: ${error}`);
       return FrequencyWeighting.INVALID_DB;
     }
   }
 
-  /**
-   * 计算Z计权(零频率计权)分贝值
-   * @param buffer 音频数据
-   * @param bytesRead 读取的字节数
-   * @returns 分贝值
-   */
+  private static calculateAWeightedDecibel(buffer: ArrayBuffer, bytesRead: number): number {
+    console.info(`[A计权] 开始计算，bytesRead: ${bytesRead}`);
+    
+    // 检查数据有效性
+    if (!buffer || bytesRead <= 0) {
+      console.error('[A计权] 无效的输入数据');
+      return FrequencyWeighting.INVALID_DB;
+    }
+
+    try {
+      // 执行FFT变换并应用A计权
+      return FrequencyWeighting.fftAnalyzer.processWithWeighting(buffer, WeightingType.A);
+    } catch (error) {
+      console.error(`[A计权] 计算失败: ${error}`);
+      return FrequencyWeighting.INVALID_DB;
+    }
+  }
+
+  private static calculateCWeightedDecibel(buffer: ArrayBuffer, bytesRead: number): number {
+    console.info(`[C计权] 开始计算，bytesRead: ${bytesRead}`);
+    
+    // 检查数据有效性
+    if (!buffer || bytesRead <= 0) {
+      console.error('[C计权] 无效的输入数据');
+      return FrequencyWeighting.INVALID_DB;
+    }
+
+    try {
+      // 执行FFT变换并应用C计权
+      return FrequencyWeighting.fftAnalyzer.processWithWeighting(buffer, WeightingType.C);
+    } catch (error) {
+      console.error(`[C计权] 计算失败: ${error}`);
+      return FrequencyWeighting.INVALID_DB;
+    }
+  }
+
   private static calculateZWeightedDecibel(buffer: ArrayBuffer, bytesRead: number): number {
     console.info(`[Z计权] 开始计算，bytesRead: ${bytesRead}`);
     
     // 检查数据有效性
     if (!buffer || bytesRead <= 0) {
-      console.info('[Z计权] 无效的输入数据');
-      return 0;
-    }
-    
-    const int16Array = new Int16Array(buffer, 0, bytesRead / 2);
-    console.info(`[Z计权] 样本数量: ${int16Array.length}`);
-    
-    // 检查样本数量
-    if (int16Array.length < FrequencyWeighting.MIN_VALID_SAMPLES) {
-      console.info('[Z计权] 样本数量不足');
-      return 0;
-    }
-    
-    // 查看前几个样本值
-    const samplePreview = Array.from(int16Array.slice(0, 5));
-    console.info(`[Z计权] 样本预览: ${JSON.stringify(samplePreview)}`);
-    
-    let sumSquares = 0;
-    let maxSample = 0;
-    let validSamples = 0;
-    
-    // 计算有效样本的RMS值
-    for (let i = 0; i < int16Array.length; i++) {
-      const sample = Math.abs(int16Array[i]);
-      if (sample > 0) {
-        sumSquares += sample * sample;
-        maxSample = Math.max(maxSample, sample);
-        validSamples++;
-      }
+      console.error('[Z计权] 无效的输入数据');
+      return FrequencyWeighting.INVALID_DB;
     }
 
-    console.info(`[Z计权] 最大样本值: ${maxSample}`);
-    console.info(`[Z计权] 平方和: ${sumSquares}`);
-    console.info(`[Z计权] 有效样本数: ${validSamples}`);
-
-    // 检查是否有足够的有效样本
-    if (validSamples < FrequencyWeighting.MIN_VALID_SAMPLES) {
-      console.info('[Z计权] 有效样本数不足');
-      return 0;
+    try {
+      // 执行FFT变换并应用Z计权（无计权）
+      return FrequencyWeighting.fftAnalyzer.processWithWeighting(buffer, WeightingType.Z);
+    } catch (error) {
+      console.error(`[Z计权] 计算失败: ${error}`);
+      return FrequencyWeighting.INVALID_DB;
     }
-    
-    // 计算RMS值
-    const rms = Math.sqrt(sumSquares / validSamples);
-    console.info(`[Z计权] RMS值: ${rms}`);
-    
-    // 如果RMS值过小，返回0
-    if (rms < FrequencyWeighting.MIN_RMS_THRESHOLD) {
-      console.info('[Z计权] RMS值过小');
-      return 0;
-    }
-    
-    // 计算分贝值
-    const decibelValue = 20 * Math.log10(rms / FrequencyWeighting.REF_VALUE) + FrequencyWeighting.SPL_CORRECTION;
-    console.info(`[Z计权] 计算的分贝值: ${decibelValue}`);
-    
-    return decibelValue;
   }
-  
+
   /**
    * 计算指定频率范围内的能量
    * @param buffer 音频数据

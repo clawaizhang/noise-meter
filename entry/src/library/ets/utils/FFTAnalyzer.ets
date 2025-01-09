@@ -1,6 +1,15 @@
 import { WeightingType } from '../constants/WeightingConstants';
 import { PreferenceService } from '../services/PreferenceService';
 import { PreferenceKeyConstants } from '../constants/PreferenceKeyConstants';
+import { WindowType } from '../common/AudioConfig';
+
+/**
+ * 复数类型接口
+ */
+interface ComplexNumber {
+  real: number;
+  imag: number;
+}
 
 /**
  * FFT分析器类
@@ -11,12 +20,6 @@ import { PreferenceKeyConstants } from '../constants/PreferenceKeyConstants';
 interface FrequencyRange {
   startFreq: number;
   endFreq: number;
-}
-
-// 定义复数运算接口
-interface Complex {
-  real: number;
-  imag: number;
 }
 
 // 信号统计信息接口
@@ -54,26 +57,29 @@ export class FFTAnalyzer {
   private readonly window: Float32Array;
   private static sampleRate: number = 44100;
   private readonly REF_VALUE: number = 32767.0;  // 16位音频的最大值
-  private readonly WINDOW_CORRECTION: number = 0.375;  // 汉宁窗的能量修正因子
-  private readonly MIN_DB: number = -60.0;  // 最小分贝值
+  private readonly MIN_DB: number = -120.0;      // 最小分贝值
   private readonly REF_POWER: number = 2e-5;  // 参考声压，20μPa
-  private readonly SMOOTH_FACTOR: number = 0.2;  // 平滑因子
+  private readonly smoothingFactor: number;  // 平滑因子
   private readonly DEBUG: boolean = true;  // 调试开关
+  private readonly windowType: WindowType;  // 窗函数类型
+  private readonly overlap: number;               // 重叠率
+  private readonly WINDOW_CORRECTION: number;     // 窗函数能量校正因子
 
   // 缓存数组
   private cachedSamples: Int16Array | null = null;
   private cachedReal: Float32Array | null = null;
   private cachedImag: Float32Array | null = null;
-  private cachedMagnitude: Float32Array | null = null;
-  private cachedCosSin: Map<number, ComplexRotation> = new Map();
-  private lastMagnitude: Float32Array | null = null;
+  private previousMagnitudes: Float32Array | null = null;
+  private cachedCosSin: ComplexNumber[] | null = null;
 
   /**
    * 构造函数
-   * @param size FFT大小（必须是2的幂）
-   * @throws Error 当size不是2的幂时抛出异常
+   * @param size FFT大小，必须是2的幂次方
+   * @param windowType 窗函数类型
+   * @param smoothingFactor 平滑因子
    */
-  constructor(size: number = 2048) {
+  constructor(size: number = 2048, windowType: WindowType = WindowType.HANNING, smoothingFactor: number = 0.2, overlap: number = 0.5) {
+    // 确保size是2的幂次方
     if (!this.isPowerOf2(size)) {
       throw new Error('FFT大小必须是2的幂');
     }
@@ -81,16 +87,74 @@ export class FFTAnalyzer {
       throw new Error('FFT大小必须大于0');
     }
     this.size = size;
-    this.window = new Float32Array(size);
+    this.windowType = windowType;
+    this.smoothingFactor = smoothingFactor;
+    this.overlap = overlap;
     
-    // 初始化汉宁窗
-    for (let i = 0; i < size; i++) {
-      this.window[i] = 0.5 * (1 - Math.cos(2 * Math.PI * i / (size - 1)));
+    // 初始化窗函数
+    this.window = new Float32Array(size);
+    switch (windowType) {
+      case WindowType.HANNING:
+        this.initHanningWindow();
+        this.WINDOW_CORRECTION = 0.375; // Hanning窗的能量校正因子
+        break;
+      case WindowType.BLACKMAN:
+        this.initBlackmanWindow();
+        this.WINDOW_CORRECTION = 0.42; // Blackman窗的能量校正因子
+        break;
+      default:
+        this.initHanningWindow();
+        this.WINDOW_CORRECTION = 0.375;
     }
   }
 
   private isPowerOf2(value: number): boolean {
     return (value & (value - 1)) === 0 && value !== 0;
+  }
+
+  /**
+   * 初始化Hanning窗函数
+   */
+  private initHanningWindow(): void {
+    const N = this.size - 1;
+    for (let i = 0; i < this.size; i++) {
+      this.window[i] = 0.5 * (1 - Math.cos(2 * Math.PI * i / N));
+    }
+  }
+
+  /**
+   * 初始化Blackman窗函数
+   */
+  private initBlackmanWindow(): void {
+    const a0 = 0.42;
+    const a1 = 0.5;
+    const a2 = 0.08;
+    const N = this.size - 1;
+    for (let i = 0; i < this.size; i++) {
+      this.window[i] = a0 - a1 * Math.cos(2 * Math.PI * i / N) + 
+                     a2 * Math.cos(4 * Math.PI * i / N);
+    }
+  }
+
+  /**
+   * 平滑频谱数据
+   * @param magnitudes 当前幅度谱
+   */
+  private smoothMagnitudes(magnitudes: Float32Array): Float32Array {
+    if (!this.previousMagnitudes) {
+      this.previousMagnitudes = magnitudes.slice();
+      return magnitudes;
+    }
+
+    // 使用指数平滑
+    for (let i = 0; i < magnitudes.length; i++) {
+      magnitudes[i] = this.smoothingFactor * magnitudes[i] + 
+                     (1 - this.smoothingFactor) * this.previousMagnitudes[i];
+    }
+
+    // 更新上一帧数据
+    this.previousMagnitudes.set(magnitudes);
+    return magnitudes;
   }
 
   /**
@@ -162,62 +226,72 @@ export class FFTAnalyzer {
     const imag = new Float32Array(this.size);
 
     // 应用窗函数并归一化
-    const scale = 1.0 / this.REF_VALUE;  // 仅对采样值归一化，不考虑FFT大小
+    const scale = 1.0 / this.REF_VALUE;
+    const actualSamples = Math.min(this.size, this.cachedSamples.length);
+    
     if (this.DEBUG) {
-      console.info(`归一化比例: ${scale}, 窗函数修正: ${this.WINDOW_CORRECTION}`);
+      console.info(`归一化比例: ${scale}, 窗函数修正: ${this.WINDOW_CORRECTION}, 实际样本数: ${actualSamples}`);
     }
 
     // 将输入数据复制到FFT缓冲区并应用窗函数
-    for (let i = 0; i < this.size && i < this.cachedSamples.length; i++) {
-      real[i] = this.cachedSamples[i] * scale * this.window[i];
+    for (let i = 0; i < actualSamples; i++) {
+      // 使用实际大小计算窗函数索引
+      const windowIndex = Math.floor(i * this.window.length / actualSamples);
+      real[i] = this.cachedSamples[i] * scale * this.window[windowIndex];
+      imag[i] = 0;
+    }
+
+    // 对未使用的部分填充0
+    for (let i = actualSamples; i < this.size; i++) {
+      real[i] = 0;
       imag[i] = 0;
     }
 
     // 执行FFT
     this.fft(real, imag);
 
-    // 重用magnitude数组
-    if (!this.cachedMagnitude || this.cachedMagnitude.length !== this.size / 2) {
-      this.cachedMagnitude = new Float32Array(this.size / 2);
-    }
-    const magnitude = this.cachedMagnitude;
-
-    // 计算功率谱
-    const binSize = FFTAnalyzer.sampleRate / this.size;
-    if (this.DEBUG) {
-      console.info(`FFT参数: 归一化因子=${2.0 / this.size}, 频率分辨率=${binSize}Hz`);
-    }
-
     // 计算频谱
-    for (let i = 0; i < this.size / 2; i++) {
-      const frequency = i * binSize;
-      magnitude[i] = this.calculateDecibels(real[i], imag[i], frequency, weightingType);
+    const spectrum = new Float32Array(this.size / 2);  // 只需要一半的频率点（奈奎斯特定理）
+    let maxDb = this.MIN_DB;
+    let minDb = Infinity;
+    let sumDb = 0;
+    let validCount = 0;
+    let peakFreq = 0;
+
+    // 计算频率分辨率
+    const freqResolution = FFTAnalyzer.sampleRate / actualSamples;  // 使用实际样本数计算分辨率
+    if (this.DEBUG) {
+      console.info(`FFT参数: 归一化因子=${1.0/this.size}, 频率分辨率=${freqResolution}Hz`);
     }
 
-    // 分析频谱
-    const spectrumStats = this.analyzeSpectrum(magnitude, binSize);
-    
+    // 计算频谱和统计信息
+    for (let i = 0; i < spectrum.length; i++) {
+      const frequency = i * freqResolution;
+      const db = this.calculateDecibels(real[i], imag[i], frequency, weightingType);
+      spectrum[i] = db;
+
+      if (db > this.MIN_DB) {
+        if (db > maxDb) {
+          maxDb = db;
+          peakFreq = frequency;
+        }
+        minDb = Math.min(minDb, db);
+        sumDb += db;
+        validCount++;
+      }
+    }
+
+    const avgDb = validCount > 0 ? sumDb / validCount : this.MIN_DB;
+    if (this.DEBUG) {
+      console.info(`频谱分析: 最大分贝=${maxDb.toFixed(2)}dB@${peakFreq.toFixed(1)}Hz, 最小分贝=${minDb.toFixed(2)}dB, 平均分贝=${avgDb.toFixed(2)}dB`);
+    }
+
     // 应用平滑
-    if (this.lastMagnitude) {
-      const smoothFactor = this.SMOOTH_FACTOR;
-      if (this.DEBUG) {
-        console.info(`应用平滑: 因子=${smoothFactor}`);
-      }
-      
-      const invSmoothFactor = 1.0 - smoothFactor;
-      for (let i = 0; i < magnitude.length; i++) {
-        magnitude[i] = magnitude[i] * smoothFactor + 
-                      this.lastMagnitude[i] * invSmoothFactor;
-      }
+    if (this.DEBUG) {
+      console.info(`应用平滑: 因子=${this.smoothingFactor}`);
     }
 
-    // 保存当前频谱用于下次平滑
-    if (!this.lastMagnitude || this.lastMagnitude.length !== magnitude.length) {
-      this.lastMagnitude = new Float32Array(magnitude.length);
-    }
-    this.lastMagnitude.set(magnitude);
-
-    return magnitude;
+    return this.smoothMagnitudes(spectrum);
   }
 
   /**
@@ -260,18 +334,22 @@ export class FFTAnalyzer {
           
           // 获取或计算旋转因子
           const key = angle * j;
-          let cosSin = this.cachedCosSin.get(key);
+          let cosSin = this.cachedCosSin?.[key];
           if (!cosSin) {
-            cosSin = {
+            const cosSinValue: ComplexNumber = {
               real: Math.cos(key),
               imag: Math.sin(key)
             };
-            this.cachedCosSin.set(key, cosSin);
+            if (!this.cachedCosSin) {
+              this.cachedCosSin = [];
+            }
+            this.cachedCosSin[key] = cosSinValue;
+            cosSin = cosSinValue;
           }
 
           // 蝶形运算
-          const tr = this.cachedReal![l] * cosSin.real - this.cachedImag![l] * cosSin.imag;
-          const ti = this.cachedReal![l] * cosSin.imag + this.cachedImag![l] * cosSin.real;
+          const tr = this.cachedImag![l] * cosSin.real - this.cachedReal![l] * cosSin.imag;
+          const ti = this.cachedReal![l] * cosSin.real + this.cachedImag![l] * cosSin.imag;
           
           // 更新结果
           this.cachedReal![l] = this.cachedReal![k] - tr;
@@ -446,5 +524,139 @@ export class FFTAnalyzer {
     
     // 将平均能量转换回分贝域
     return count > 0 ? 10 * Math.log10(totalEnergy / count) : -100;
+  }
+
+  /**
+   * 获取频率分辨率
+   */
+  public getFrequencyResolution(): number {
+    return FFTAnalyzer.sampleRate / this.size;
+  }
+
+  /**
+   * 获取时间分辨率（毫秒）
+   */
+  public getTimeResolution(): number {
+    return (this.size / FFTAnalyzer.sampleRate) * 1000;
+  }
+
+  /**
+   * 重置分析器状态
+   */
+  public reset(): void {
+    this.previousMagnitudes = null;
+    this.cachedSamples = null;
+  }
+
+  /**
+   * 使用指定计权类型处理音频数据
+   * @param buffer 音频数据
+   * @param weightingType 计权类型
+   * @returns 计权后的分贝值
+   */
+  public processWithWeighting(buffer: ArrayBuffer, weightingType: WeightingType): number {
+    try {
+      // 执行FFT变换
+      const spectrum = this.transform(buffer);
+      
+      // 应用计权
+      const weightedSpectrum = this.applyWeighting(spectrum, weightingType);
+      
+      // 计算有效的分贝值平均值
+      let sum: number = 0;
+      let validCount: number = 0;
+      
+      for (let i = 0; i < weightedSpectrum.length; i++) {
+        if (!isNaN(weightedSpectrum[i]) && weightedSpectrum[i] > this.MIN_DB) {
+          sum += weightedSpectrum[i];
+          validCount++;
+        }
+      }
+      
+      // 检查是否有足够的有效样本
+      if (validCount < 1) {
+        console.warn('[FFT分析] 有效样本数不足');
+        return this.MIN_DB;
+      }
+      
+      const averageDb = sum / validCount;
+      console.info(`[FFT分析] 计算完成，平均分贝值: ${averageDb.toFixed(2)}`);
+      
+      return averageDb;
+    } catch (error) {
+      console.error(`[FFT分析] 处理过程出错: ${error}`);
+      return this.MIN_DB;
+    }
+  }
+
+  /**
+   * 对频谱应用计权
+   * @param spectrum 频谱数据
+   * @param weightingType 计权类型
+   * @returns 计权后的频谱
+   */
+  private applyWeighting(spectrum: Float32Array, weightingType: WeightingType): Float32Array {
+    const weightedSpectrum = new Float32Array(spectrum.length);
+    const freqResolution = this.getFrequencyResolution();
+    
+    for (let i = 0; i < spectrum.length; i++) {
+      const frequency = i * freqResolution;
+      let weightingFactor = 0;
+      
+      switch (weightingType) {
+        case WeightingType.A:
+          weightingFactor = this.calculateAWeighting(frequency);
+          break;
+        case WeightingType.C:
+          weightingFactor = this.calculateCWeighting(frequency);
+          break;
+        case WeightingType.Z:
+          weightingFactor = 0; // Z计权不做修正
+          break;
+        default:
+          weightingFactor = 0;
+      }
+      
+      weightedSpectrum[i] = spectrum[i] + weightingFactor;
+    }
+    
+    return weightedSpectrum;
+  }
+
+  /**
+   * 计算A计权修正值
+   * @param frequency 频率
+   * @returns 修正值（dB）
+   */
+  private calculateAWeighting(frequency: number): number {
+    const f2 = frequency * frequency;
+    const f4 = f2 * f2;
+    
+    const c1 = 12194.0 * 12194.0;
+    const c2 = 20.6 * 20.6;
+    const c3 = 107.7 * 107.7;
+    const c4 = 737.9 * 737.9;
+    
+    const num = c1 * f4;
+    const den = ((f2 + c2) * Math.sqrt((f2 + c3) * (f2 + c4)) * (f2 + c1));
+    
+    return 2.0 + 20.0 * Math.log10(num / den);
+  }
+
+  /**
+   * 计算C计权修正值
+   * @param frequency 频率
+   * @returns 修正值（dB）
+   */
+  private calculateCWeighting(frequency: number): number {
+    const f2 = frequency * frequency;
+    
+    const c1 = 12194.0 * 12194.0;
+    const c2 = 20.6 * 20.6;
+    
+    const num = c1 * f2;
+    const den = (f2 + c2) * (f2 + c1);
+    
+    return 0.06 + 20.0 * Math.log10(num / den);
   }
 }

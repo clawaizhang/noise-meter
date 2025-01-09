@@ -57,7 +57,7 @@ struct Index {
 
       // 初始化加权类型
       if (!this.preferenceService.getString(PreferenceKeyConstants.WEIGHTING)) {
-        await this.preferenceService.putString(PreferenceKeyConstants.WEIGHTING, WeightingType.A);
+        this.preferenceService.setString(PreferenceKeyConstants.WEIGHTING, WeightingType.A);
       }
 
       this.isInitialized = true;

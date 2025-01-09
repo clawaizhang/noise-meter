@@ -3,12 +3,21 @@ import { PermissionUtil } from '@pura/harmony-utils';
 import common from '@ohos.app.ability.common';
 import promptAction from '@ohos.promptAction';
 import { WavFileGenerator } from '../utils/WavFileGenerator';
-import { FileService } from '../services/FileService';
+import { PreferenceService, PreferenceValue } from './PreferenceService';
+import { AudioAnalysisConfig, AudioAnalysisMode, AudioPresets, PREF_ANALYSIS_MODE } from '../common/AudioConfig';
+import { FileService } from './FileService';
+import { FrequencyWeighting } from '../utils/FrequencyWeighting';
 
 /**
  * 音频服务类
  * 提供音频采集功能
  */
+
+// 音频配置键名
+const PREF_TARGET_SAMPLES = 'audio_target_samples';
+const PREF_PROCESS_INTERVAL = 'audio_process_interval';
+const DEFAULT_TARGET_SAMPLES = 8192;
+const DEFAULT_PROCESS_INTERVAL = 50;
 
 export class AudioService {
   private audioCapturerOptions: audio.AudioCapturerOptions = {
@@ -24,20 +33,50 @@ export class AudioService {
     }
   };
 
+  // 音频采集器实例
   private audioCapturer: audio.AudioCapturer | null = null;
-  private isCapturing: boolean = false;  // 是否正在采集音频
-  private isProcessing: boolean = false; // 是否正在处理音频数据
-  private isRecording: boolean = false;  // 是否正在录音
+  
+  // 状态标志
+  private isCapturing: boolean = false;
   private isStoppingCapture: boolean = false;
-  private onAudioData: ((buffer: ArrayBuffer) => void) | null = null;
-  private context: common.UIAbilityContext;
+  private isProcessing: boolean = false;
+  private isRecording: boolean = false;
+  
+  // 缓冲区相关
+  private tempBuffer: ArrayBuffer | null = null;
+  private overlapBuffer: ArrayBuffer | null = null;
+  private tempBufferOffset: number = 0;
+  private audioBuffers: ArrayBuffer[] = [];
   private lastProcessTime: number = 0;
-  private readonly PROCESS_INTERVAL: number = 100; // 减少处理间隔到100毫秒
-  private bufferSize: number = 2048; // 实际缓冲区大小，将在创建音频捕获器时更新
-  private audioBuffers: ArrayBuffer[] = []; // 存储录音数据
+  
+  // 配置和回调
+  private currentConfig = AudioPresets.getConfig(AudioAnalysisMode.BALANCED);
+  private onAudioData: ((buffer: ArrayBuffer) => void) | null = null;
+
+  private context: common.UIAbilityContext;
+  private preferenceService: PreferenceService;
 
   constructor(context: common.UIAbilityContext) {
     this.context = context;
+    this.preferenceService = PreferenceService.getInstance();
+    
+    // 从首选项加载分析模式
+    const savedMode: string = this.preferenceService.getString(PREF_ANALYSIS_MODE, AudioAnalysisMode.BALANCED);
+    if (Object.values(AudioAnalysisMode).includes(savedMode as AudioAnalysisMode)) {
+      this.currentConfig = AudioPresets.getConfig(savedMode as AudioAnalysisMode);
+      console.info(`[音频采集] 加载配置: 模式=${savedMode}, FFT大小=${this.currentConfig.fftSize}, ` +
+                  `处理间隔=${this.currentConfig.processInterval}ms, 重叠率=${this.currentConfig.overlap}`);
+    } else {
+      console.error(`[音频采集] 无效的保存模式: ${savedMode}，使用默认模式`);
+      this.currentConfig = AudioPresets.getConfig(AudioAnalysisMode.BALANCED);
+    }
+
+    // 添加配置变更监听
+    this.preferenceService.addChangeListener(PREF_ANALYSIS_MODE, (key: string, value: PreferenceValue) => {
+      if (key === PREF_ANALYSIS_MODE && typeof value === 'string') {
+        void this.handleModeChange(value);
+      }
+    });
   }
 
   /**
@@ -98,154 +137,124 @@ export class AudioService {
    * 开始音频采集
    * @returns Promise<void>
    */
-  async startCapture(): Promise<void> {
-    if (this.isCapturing || this.isStoppingCapture) {
+  public async startCapture(): Promise<void> {
+    if (this.isCapturing) {
+      console.info('[音频采集] 音频采集已在进行中');
       return;
     }
 
-    // 检查麦克风权限
-    const hasPermission = await this.checkMicrophonePermission();
-    if (!hasPermission) {
-      throw new Error('没有麦克风权限');
+    try {
+      // 检查权限
+      const hasPermission = await this.checkMicrophonePermission();
+      if (!hasPermission) {
+        throw new Error('没有麦克风权限');
+      }
+
+      // 创建音频采集器
+      this.audioCapturer = await audio.createAudioCapturer(this.audioCapturerOptions);
+      console.info('[音频采集] 音频采集器创建成功');
+
+      // 设置状态
+      this.isCapturing = true;
+      this.isStoppingCapture = false;
+
+      // 开始读取音频数据
+      await this.startReading();
+      console.info('[音频采集] 音频采集已启动');
+    } catch (err) {
+      const errMsg = `启动音频采集失败: ${err instanceof Error ? err.message : String(err)}`;
+      console.error(`[音频采集] ${errMsg}`);
+      this.isCapturing = false;
+      throw new Error(errMsg);
+    }
+  }
+
+  /**
+   * 开始读取音频数据
+   * @private
+   */
+  private async startReading(): Promise<void> {
+    if (!this.audioCapturer || !this.isCapturing) {
+      throw new Error('音频采集器未初始化或未开始采集');
     }
 
     try {
-      // 清空之前的录音数据
-      this.audioBuffers = [];
-      this.isRecording = false;
-
-      // 创建音频捕获器
-      this.audioCapturer = await audio.createAudioCapturer(this.audioCapturerOptions);
-      console.info('[音频采集] 音频捕获器创建成功');
-      
-      // 获取并保存实际的缓冲区大小
-      this.bufferSize = await this.audioCapturer.getBufferSize();
-      console.info(`[音频采集] 当前缓冲区大小: ${this.bufferSize}`);
-
-      // 设置readData事件监听
+      // 注册readData事件监听器
       this.audioCapturer.on('readData', (buffer: ArrayBuffer) => {
-        if (!this.isCapturing || this.isStoppingCapture) {
-          return;
-        }
-        
-        if (buffer && buffer.byteLength > 0) {
-          const currentTime = Date.now();
-          // 处理实时音频数据
-          if (this.isProcessing && this.onAudioData && 
-              currentTime - this.lastProcessTime >= this.PROCESS_INTERVAL) {
-            // 检查buffer是否有效
-            if (buffer.byteLength === this.bufferSize) {
-              console.info(`[音频采集] 处理音频数据，buffer大小: ${buffer.byteLength}`);
-              const view = new Int16Array(buffer);
-              const maxValue = Math.max(...Array.from(view).map(Math.abs));
-              console.info(`[音频采集] 最大采样值: ${maxValue}`);
-              this.onAudioData(buffer);
-              this.lastProcessTime = currentTime;
-            } else {
-              console.info(`[音频采集] buffer大小不匹配: ${buffer.byteLength}, 期望: ${this.bufferSize}`);
-            }
-          }
-          // 只在录音时才存储数据
+        if (this.isCapturing && !this.isStoppingCapture) {
+          // 处理音频数据
+          this.processAudioData(buffer);
+          
+          // 如果正在录音，保存数据
           if (this.isRecording) {
-            this.audioBuffers.push(buffer.slice(0));
+            this.audioBuffers.push(buffer);
           }
-        } else {
-          console.info('[音频采集] 收到空buffer或大小为0');
         }
       });
 
-      // 启动音频捕获器
+      // 启动音频数据读取
       await this.audioCapturer.start();
-      console.info('音频捕获器启动成功');
-
-      this.isCapturing = true;
+      console.info('[音频采集] 开始读取音频数据');
     } catch (err) {
-      const error = new Error('启动音频采集失败：' + (err instanceof Error ? err.message : String(err)));
-      console.error(error.message);
-      throw error;
+      const errMsg = `启动音频数据读取失败: ${err instanceof Error ? err.message : String(err)}`;
+      console.error(`[音频采集] ${errMsg}`);
+      throw new Error(errMsg);
     }
   }
 
   /**
-   * 停止音频采集并获取WAV格式的录音数据
-   * @returns Promise<ArrayBuffer> WAV格式的录音数据
+   * 停止读取音频数据
+   * @private
    */
-  async stopCaptureAndGetWavData(): Promise<ArrayBuffer> {
-    if (!this.isCapturing || !this.audioCapturer || this.isStoppingCapture) {
-      throw new Error('没有正在进行的录音');
+  private async stopReading(): Promise<void> {
+    if (!this.audioCapturer) {
+      return;
     }
 
     try {
-      this.isStoppingCapture = true;
-      this.isCapturing = false;
-      this.isProcessing = false;
-      this.onAudioData = null;
-
-      // 移除readData事件监听
+      // 移除readData事件监听器
       this.audioCapturer.off('readData');
       
-      // 使用Promise.all并行执行停止和释放操作
-      await Promise.all([
-        this.audioCapturer.stop(),
-        this.audioCapturer.release()
-      ]);
-      
-      this.audioCapturer = null;
-
-      // 生成WAV文件数据
-      const wavData = WavFileGenerator.generateWavFile(
-        this.audioBuffers,
-        44100,  // 采样率改为44100Hz，与录音配置一致
-        1,     // 单声道
-        16     // 16位采样
-      );
-
-      // 清空缓存的音频数据
-      this.audioBuffers = [];
-
-      return wavData;
+      // 停止音频数据读取
+      await this.audioCapturer.stop();
+      console.info('[音频采集] 停止读取音频数据');
     } catch (err) {
-      const error = new Error('停止音频采集失败：' + (err instanceof Error ? err.message : String(err)));
-      console.error(error.message);
-      throw error;
-    } finally {
-      this.isStoppingCapture = false;
+      const errMsg = `停止音频数据读取失败: ${err instanceof Error ? err.message : String(err)}`;
+      console.error(`[音频采集] ${errMsg}`);
+      throw new Error(errMsg);
     }
   }
 
   /**
-   * 停止音频采集
-   * @returns Promise<void>
+   * 停止采集音频
    */
-  async stopCapture(): Promise<void> {
-    if (!this.isCapturing || !this.audioCapturer || this.isStoppingCapture) {
+  public async stopCapture(): Promise<void> {
+    if (!this.isCapturing) {
       return;
     }
 
     try {
       this.isStoppingCapture = true;
-      this.isCapturing = false;
-      this.isProcessing = false;
-      this.onAudioData = null;
+      
+      // 停止读取音频数据
+      await this.stopReading();
 
-      // 移除readData事件监听
-      this.audioCapturer.off('readData');
-      
-      // 使用Promise.all并行执行停止和释放操作
-      await Promise.all([
-        this.audioCapturer.stop(),
-        this.audioCapturer.release()
-      ]);
-      
-      this.audioCapturer = null;
-      // 清空缓存的音频数据
-      this.audioBuffers = [];
-    } catch (err) {
-      const error = new Error('停止音频采集失败：' + (err instanceof Error ? err.message : String(err)));
-      console.error(error.message);
-      throw error;
-    } finally {
+      // 释放音频采集器
+      if (this.audioCapturer) {
+        await this.audioCapturer.release();
+        this.audioCapturer = null;
+      }
+
+      // 重置状态
+      this.isCapturing = false;
       this.isStoppingCapture = false;
+      this.resetBuffers();
+
+      console.info('[音频采集] 音频采集已停止');
+    } catch (err) {
+      const errMsg = `停止音频采集失败: ${err instanceof Error ? err.message : String(err)}`;
+      console.error(`[音频采集] ${errMsg}`);
+      throw new Error(errMsg);
     }
   }
 
@@ -304,8 +313,8 @@ export class AudioService {
       const audioData = WavFileGenerator.generateWavFile(
         this.audioBuffers,
         44100,  // 采样率
-        1,      // 单声道
-        16      // 16位采样
+        1,     // 单声道
+        16     // 16位采样
       );
       console.info('WAV音频数据大小:', audioData.byteLength);
 
@@ -333,4 +342,179 @@ export class AudioService {
       throw new Error('停止录音并保存WAV文件失败：' + (error instanceof Error ? error.message : String(error)));
     }
   }
-} 
+
+  /**
+   * 处理音频分析模式变更
+   * @param value 新的模式值
+   */
+  private async handleModeChange(value: string): Promise<void> {
+    try {
+      // 验证并转换模式
+      if (!Object.values(AudioAnalysisMode).includes(value as AudioAnalysisMode)) {
+        throw new Error(`无效的音频分析模式: ${value}`);
+      }
+      const mode = value as AudioAnalysisMode;
+
+      // 记录当前状态
+      const wasCapturing = this.isCapturing;
+      
+      // 如果正在采集，先停止
+      if (wasCapturing) {
+        await this.stopCapture();
+      }
+      
+      // 更新配置
+      this.currentConfig = AudioPresets.getConfig(mode);
+      
+      // 更新分析器配置
+      FrequencyWeighting.updateAnalysisMode(mode);
+      
+      // 重置缓冲区
+      this.resetBuffers();
+      
+      // 如果之前在采集，重新开始采集
+      if (wasCapturing) {
+        await this.startCapture();
+      }
+      
+      console.info(`[音频采集] 模式已更新为: ${mode}`);
+    } catch (err) {
+      console.error(`[音频采集] 更新模式失败: ${err instanceof Error ? err.message : String(err)}`);
+      throw new Error(`更新音频分析模式失败: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  }
+
+  /**
+   * 销毁服务
+   */
+  public destroy(): void {
+    // 移除监听器
+    this.preferenceService.removeChangeListener(PREF_ANALYSIS_MODE, this.handleModeChange);
+    
+    // 停止采集
+    if (this.isCapturing) {
+      this.stopCapture();
+    }
+  }
+
+  /**
+   * 设置分析模式
+   * @param mode 分析模式
+   */
+  public async setAnalysisMode(mode: AudioAnalysisMode): Promise<void> {
+    // 保存到首选项
+    await this.preferenceService.setString(PREF_ANALYSIS_MODE, mode);
+    
+    // 更新配置
+    this.currentConfig = AudioPresets.getConfig(mode);
+    
+    // 重置缓冲区
+    this.resetBuffers();
+    
+    console.info(`[音频采集] 切换到${mode}模式`);
+  }
+
+  /**
+   * 处理音频数据
+   * @param buffer 音频数据缓冲区
+   */
+  private processAudioData(buffer: ArrayBuffer): void {
+    if (!this.isCapturing || this.isStoppingCapture || !buffer || buffer.byteLength === 0) {
+      return;
+    }
+
+    try {
+      const currentTime = Date.now();
+      
+      // 处理实时音频数据
+      if (this.isProcessing && 
+          currentTime - this.lastProcessTime >= this.currentConfig.processInterval) {
+        
+        // 将数据复制到临时缓冲区
+        if (!this.tempBuffer || this.tempBuffer.byteLength !== this.currentConfig.fftSize * 2) {
+          this.tempBuffer = new ArrayBuffer(this.currentConfig.fftSize * 2); // 16位采样，每个样本2字节
+        }
+        
+        const newData = new Int16Array(buffer);
+        const tempView = new Int16Array(this.tempBuffer);
+        
+        // 处理重叠部分
+        if (this.overlapBuffer) {
+          const overlapView = new Int16Array(this.overlapBuffer);
+          tempView.set(overlapView);
+          this.tempBufferOffset = overlapView.length;
+        } else {
+          const overlapSize = Math.floor(this.currentConfig.fftSize * this.currentConfig.overlap);
+          this.overlapBuffer = new ArrayBuffer(overlapSize * 2);
+          this.tempBufferOffset = 0;
+        }
+        
+        // 计算需要的新样本数
+        const neededSamples = this.currentConfig.fftSize - this.tempBufferOffset;
+        const samplesToAdd = Math.min(newData.length, neededSamples);
+        
+        // 复制新数据
+        tempView.set(newData.subarray(0, samplesToAdd), this.tempBufferOffset);
+        this.tempBufferOffset += samplesToAdd;
+        
+        // 如果积累了足够的样本，就处理并发送
+        if (this.tempBufferOffset >= this.currentConfig.fftSize) {
+          console.info(`[音频采集] 处理音频数据，样本数: ${this.currentConfig.fftSize}`);
+          
+          // 保存重叠部分
+          const overlapView = new Int16Array(this.overlapBuffer);
+          const overlapStart = this.currentConfig.fftSize - overlapView.length;
+          overlapView.set(tempView.subarray(overlapStart));
+          
+          // 发送数据进行处理
+          if (this.onAudioData) {
+            this.onAudioData(this.tempBuffer);
+          }
+          
+          this.lastProcessTime = currentTime;
+          this.tempBufferOffset = 0;
+        }
+      }
+      
+      // 存储录音数据
+      if (this.isRecording) {
+        this.audioBuffers.push(buffer.slice(0));
+      }
+    } catch (err) {
+      console.error(`[音频采集] 处理数据失败: ${err instanceof Error ? err.message : String(err)}`);
+      // 不抛出错误，继续处理下一帧
+    }
+  }
+
+  /**
+   * 重置缓冲区
+   */
+  private resetBuffers(): void {
+    this.tempBuffer = null;
+    this.overlapBuffer = null;
+    this.tempBufferOffset = 0;
+    this.lastProcessTime = 0;
+    this.audioBuffers = [];
+  }
+
+  /**
+   * 更新音频处理配置
+   * @param targetSamples 目标样本数
+   * @param processInterval 处理间隔（毫秒）
+   */
+  public async updateConfig(targetSamples: number, processInterval: number): Promise<void> {
+    // 验证参数
+    if (targetSamples < 1024 || targetSamples > 16384) {
+      throw new Error('目标样本数必须在1024到16384之间');
+    }
+    if (processInterval < 20 || processInterval > 200) {
+      throw new Error('处理间隔必须在20到200毫秒之间');
+    }
+
+    // 保存到首选项
+    await this.preferenceService.setNumber(PREF_TARGET_SAMPLES, targetSamples);
+    await this.preferenceService.setNumber(PREF_PROCESS_INTERVAL, processInterval);
+    
+    console.info(`[音频采集] 更新配置: 目标样本数=${targetSamples}, 处理间隔=${processInterval}ms`);
+  }
+}

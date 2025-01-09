@@ -5,15 +5,20 @@ export class PreferenceKeyConstants {
   /**
    * 位置开关状态键名
    */
-  static readonly LOCATION = 'location_enabled';
+  static readonly LOCATION: string = 'location_enabled';
 
   /**
    * 录音开关状态键名
    */
-  static readonly RECORD = 'record_enabled';
+  static readonly RECORD: string = 'record_enabled';
 
   /**
    * 分贝加权类型
    */
-  static readonly WEIGHTING: string = 'weighting';
+  static readonly WEIGHTING: string = 'weighting_type';
+
+  /**
+   * 音频分析模式
+   */
+  static readonly ANALYSIS_MODE: string = 'audio_analysis_mode';
 } 

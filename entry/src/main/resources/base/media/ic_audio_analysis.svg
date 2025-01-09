@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <!-- 音频波形图标 -->
+    <path d="M4 12h2v8H4zM8 8h2v16H8zM12 3h2v18h-2zM16 6h2v12h-2zM20 10h2v4h-2z" fill="currentColor"/>
+</svg>
