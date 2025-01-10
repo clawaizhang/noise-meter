@@ -14,6 +14,7 @@ import { PreferenceKeyConstants } from '../../../library/ets/constants/Preferenc
 import { FrequencyWeighting } from '../../../library/ets/utils/FrequencyWeighting';
 import type { BusinessError } from '@ohos.base';
 import systemIcon from '@ohos.multimedia.image';
+import display from '@ohos.display'; // 新增屏幕相关的import
 
 @ComponentV2
 export struct DecibelMeter {
@@ -47,33 +48,78 @@ export struct DecibelMeter {
   // Canvas相关属性
   @Local private canvasWidth: number = 0  // Canvas宽度
   @Local private canvasHeight: number = 0  // Canvas高度
+  private readonly TOTAL_BARS: number = 64  // 总柱子数量固定为64
   private barWidth: number = 0  // 频谱条宽度
   private barGap: number = 0  // 频谱条间距
   private canvasSettings: RenderingContextSettings = new RenderingContextSettings(true)  // Canvas设置
   private canvasContext: CanvasRenderingContext2D = new CanvasRenderingContext2D(this.canvasSettings)  // Canvas上下文
 
+  // 屏幕宽度
+  @Local private screenWidth: number = 0   // 屏幕宽度
+
+  // 计算柱子宽度和间距的方法
+  private calculateBarDimensions(): void {
+    // 如果Canvas宽度为0，使用屏幕宽度计算
+    if (this.canvasWidth === 0 && this.screenWidth > 0) {
+      // 考虑系统边距(左右各12px)和组件内部padding(左右各16px)
+      const systemMargin: number = 24;  // 左右各12px
+      const componentPadding: number = 32;  // 左右各16px
+      this.canvasWidth = this.screenWidth - systemMargin - componentPadding;
+    }
+
+    // Canvas内部padding
+    const padding: number = 12;
+    // 实际可用宽度
+    const availableWidth: number = this.canvasWidth - (padding * 2);
+    
+    // 计算单个柱子的总宽度（包含间距）
+    const totalBarWidth: number = availableWidth / this.TOTAL_BARS;
+    
+    // 柱子宽度占总宽度的80%，间距占20%
+    this.barWidth = Math.max(1, Math.floor(totalBarWidth * 0.8));
+    this.barGap = Math.max(1, Math.floor(totalBarWidth * 0.2));
+    
+    console.info(`[频谱图] 屏幕宽度: ${this.screenWidth}, Canvas宽度: ${this.canvasWidth}, 可用宽度: ${availableWidth}, 柱子宽度: ${this.barWidth}, 间距: ${this.barGap}`);
+  }
+
   // 绘制频谱的方法
   private drawSpectrum(): void {
     // 清空画布
-    this.canvasContext.clearRect(0, 0, this.canvasWidth, this.canvasHeight)
+    this.canvasContext.clearRect(0, 0, this.canvasWidth, this.canvasHeight);
     
-    const padding = 12;
+    const padding: number = 12;
+    const effectiveWidth: number = this.canvasWidth - (padding * 2);
+    const effectiveHeight: number = this.canvasHeight - (padding * 2);
+    
+    // 计算实际可用的绘制区域
+    console.info(`[频谱图] 绘制区域: 总宽度=${this.canvasWidth}, 有效宽度=${effectiveWidth}, 柱子数量=${this.TOTAL_BARS}`);
+    
     // 绘制频谱条
-    for (let i = 0; i < this.displayBars.length; i++) {
-      const height = (this.displayBars[i] / 100) * (this.canvasHeight - padding * 2);
-      const x = padding + i * (this.barWidth + this.barGap);
-      const y = this.canvasHeight - padding - height;
+    for (let i = 0; i < this.TOTAL_BARS; i++) {
+      const height: number = (this.displayBars[i] / 100) * effectiveHeight;
+      // 确保x位置精确计算，避免累积误差
+      const x: number = padding + (i * effectiveWidth / this.TOTAL_BARS);
+      const y: number = this.canvasHeight - padding - height;
+      
+      // 确保最小宽度为1像素
+      const actualBarWidth: number = Math.max(1, Math.floor(effectiveWidth / this.TOTAL_BARS * 0.8));
+      
+      // 输出一些柱子的位置信息，用于调试
+      if (i % 10 === 0) {
+        console.info(`[频谱图] 柱子${i}: x=${x.toFixed(1)}, y=${y.toFixed(1)}, width=${actualBarWidth}, height=${height.toFixed(1)}`);
+      }
       
       // 设置填充颜色
-      this.canvasContext.fillStyle = '#2196F3'
+      this.canvasContext.fillStyle = '#2196F3';
+      
       // 绘制圆角矩形
       this.drawRoundedRect(
         x,
         y,
-        this.barWidth,
+        actualBarWidth,
         height,
         1  // 圆角半径
-      )
+      );
     }
   }
 
@@ -85,18 +131,24 @@ export struct DecibelMeter {
     height: number,
     radius: number
   ): void {
-    this.canvasContext.beginPath()
-    this.canvasContext.moveTo(x + radius, y)
-    this.canvasContext.lineTo(x + width - radius, y)
-    this.canvasContext.quadraticCurveTo(x + width, y, x + width, y + radius)
-    this.canvasContext.lineTo(x + width, y + height - radius)
-    this.canvasContext.quadraticCurveTo(x + width, y + height, x + width - radius, y + height)
-    this.canvasContext.lineTo(x + radius, y + height)
-    this.canvasContext.quadraticCurveTo(x, y + height, x, y + height - radius)
-    this.canvasContext.lineTo(x, y + radius)
-    this.canvasContext.quadraticCurveTo(x, y, x + radius, y)
-    this.canvasContext.closePath()
-    this.canvasContext.fill()
+    // 确保所有参数都是有效的数字
+    if (!isFinite(x) || !isFinite(y) || !isFinite(width) || !isFinite(height)) {
+      console.error(`[频谱图] 无效的绘制参数: x=${x}, y=${y}, width=${width}, height=${height}`);
+      return;
+    }
+    
+    this.canvasContext.beginPath();
+    this.canvasContext.moveTo(x + radius, y);
+    this.canvasContext.lineTo(x + width - radius, y);
+    this.canvasContext.quadraticCurveTo(x + width, y, x + width, y + radius);
+    this.canvasContext.lineTo(x + width, y + height - radius);
+    this.canvasContext.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+    this.canvasContext.lineTo(x + radius, y + height);
+    this.canvasContext.quadraticCurveTo(x, y + height, x, y + height - radius);
+    this.canvasContext.lineTo(x, y + radius);
+    this.canvasContext.quadraticCurveTo(x, y, x + radius, y);
+    this.canvasContext.closePath();
+    this.canvasContext.fill();
   }
 
   @Builder
@@ -113,14 +165,27 @@ export struct DecibelMeter {
           this.canvasWidth = newArea.width as number;
           this.canvasHeight = newArea.height as number;
           
-          // 计算频谱条的尺寸
-          const padding = 12;
-          const totalWidth = this.canvasWidth - padding * 2;
-          const totalBars = 64;
+          // 如果Canvas宽度为0，使用屏幕宽度计算
+          if (this.canvasWidth === 0 && this.screenWidth > 0) {
+            // 考虑系统边距(左右各12px)和组件内部padding(左右各16px)
+            const systemMargin: number = 24;  // 左右各12px
+            const componentPadding: number = 32;  // 左右各16px
+            this.canvasWidth = this.screenWidth - systemMargin - componentPadding;
+          }
           
-          // 计算单个频谱条的宽度和间距
-          this.barWidth = Math.floor(totalWidth / totalBars * 0.8);  // 频谱条宽度占80%
-          this.barGap = Math.floor(totalWidth / totalBars * 0.2);    // 间距占20%
+          // Canvas内部padding
+          const padding: number = 12;
+          // 实际可用宽度
+          const availableWidth: number = this.canvasWidth - (padding * 2);
+          
+          // 计算单个柱子的总宽度（包含间距）
+          const totalBarWidth: number = availableWidth / this.TOTAL_BARS;
+          
+          // 柱子宽度占总宽度的80%，间距占20%
+          this.barWidth = Math.max(1, Math.floor(totalBarWidth * 0.8));
+          this.barGap = Math.max(1, Math.floor(totalBarWidth * 0.2));
+          
+          console.info(`[频谱图] 屏幕宽度: ${this.screenWidth}, Canvas宽度: ${this.canvasWidth}, 可用宽度: ${availableWidth}, 柱子宽度: ${this.barWidth}, 间距: ${this.barGap}`);
         })
         .onReady(() => {
           // 初始化完成后开始绘制
@@ -159,6 +224,19 @@ export struct DecibelMeter {
   }
 
   aboutToAppear() {
+    // 获取屏幕信息
+    try {
+      const displayInfo = display.getDefaultDisplaySync();
+      this.screenWidth = displayInfo.width;
+      console.info(`[频谱图] 获取屏幕宽度: ${this.screenWidth}`);
+      
+      // 初始计算柱子尺寸
+      this.calculateBarDimensions();
+    } catch (error) {
+      console.error('[频谱图] 获取屏幕信息失败:', error);
+    }
+
+    // 原有的初始化代码
     // 获取录音开关状态
     this.isRecordEnabled = this.preferenceService.isEnabled(PreferenceKeyConstants.RECORD);
 
@@ -222,71 +300,158 @@ export struct DecibelMeter {
         const rawSpectrum = FrequencyWeighting.getSpectrumData(buffer);
         
         // 设置显示参数
-        const maxDisplayDb = 90;    // 最大显示分贝值
-        const minDisplayDb = 20;    // 最小显示分贝值
-        const displayRange = maxDisplayDb - minDisplayDb;
-        const maxHeight = 100;      // 最大高度百分比
-        const minHeight = 2;        // 最小高度百分比
-        const heightRange = maxHeight - minHeight;
+        const maxDisplayDb: number = 130;    // 最大显示分贝值
+        const minDisplayDb: number = 0;      // 最小显示分贝值
+        const maxHeight: number = 100;       // 最大高度百分比
+        const minHeight: number = 2;         // 最小高度百分比
+        const heightRange: number = maxHeight - minHeight;
         
         // 定义频率点
-        const sampleRate = 44100;   // 采样率
-        const fftSize = this.audioService.getCurrentFFTSize();  // 通过公共方法获取 FFT 大小
-        const minFreq = 20;         // 最小频率 20Hz
-        const maxFreq = 20000;      // 最大频率 20kHz
+        const sampleRate: number = 44100;    // 采样率
+        const fftSize: number = this.audioService.getCurrentFFTSize();
+        const minFreq: number = 20;          // 最小频率 20Hz
+        const maxFreq: number = 20000;       // 最大频率 20kHz
         
         // 计算频谱高度
-        const newDisplayBars = new Array<number>(64);
-        let maxValue = -Infinity;
-        let maxIndex = -1;
-        let peakFreq = 0;
+        const newDisplayBars = new Array<number>(this.TOTAL_BARS);
+        let maxValue: number = -Infinity;    // 记录最大分贝值
+        let maxIndex: number = -1;
+        let peakFreq: number = 0;
+        let firstValidBar: number = -1;      // 记录第一个有效柱子的位置
+        let lastValidBar: number = -1;       // 记录最后一个有效柱子的位置
         
-        // 对每个频率点计算对应的能量
-        for (let i = 0; i < 64; i++) {
-          // 使用对数分布计算当前频率
-          const freq = minFreq * Math.pow(maxFreq / minFreq, i / 63);  // 20Hz到20kHz的对数分布
-          // 计算对应的FFT bin索引
-          const binIndex = Math.floor(freq * fftSize / sampleRate);
+        // 第一遍扫描：找出最大分贝值
+        let maxDb: number = -Infinity;
+        for (let i = 0; i < this.TOTAL_BARS; i++) {
+          const freq: number = minFreq * Math.pow(maxFreq / minFreq, i / (this.TOTAL_BARS - 1));
+          const lowerFreq: number = i === 0 ? minFreq : minFreq * Math.pow(maxFreq / minFreq, (i - 0.5) / (this.TOTAL_BARS - 1));
+          const upperFreq: number = i === this.TOTAL_BARS - 1 ? maxFreq : minFreq * Math.pow(maxFreq / minFreq, (i + 0.5) / (this.TOTAL_BARS - 1));
+          const lowerBin: number = Math.floor(lowerFreq * fftSize / sampleRate);
+          const upperBin: number = Math.min(Math.floor(upperFreq * fftSize / sampleRate), rawSpectrum.length - 1);
           
-          // 获取邻近bin的平均值
-          let sum = 0;
-          let count = 0;
-          const binWidth = 3;  // 考虑邻近的bin数量
+          let sum: number = 0;
+          let count: number = 0;
           
-          for (let j = -binWidth; j <= binWidth; j++) {
-            const index = Math.min(rawSpectrum.length - 1, Math.max(0, binIndex + j));
-            const value = rawSpectrum[index];
+          for (let bin = lowerBin; bin <= upperBin; bin++) {
+            const value: number = rawSpectrum[bin];
             if (isFinite(value)) {
               sum += value;
               count++;
-              // 记录最大值
+            }
+          }
+          
+          if (count > 0) {
+            const avgDb: number = sum / count;
+            if (avgDb > maxDb) {
+              maxDb = avgDb;
+            }
+          }
+        }
+        
+        // 根据最大分贝值确定显示策略
+        const highDbThreshold: number = 80;  // 高分贝阈值
+        const lowDbThreshold: number = 40;   // 低分贝阈值
+        let displayStrategy: number;         // 显示策略系数
+        
+        if (maxDb > highDbThreshold) {
+          // 有高分贝信号，使用线性映射
+          displayStrategy = 1.0;
+        } else if (maxDb < lowDbThreshold) {
+          // 整体是低分贝，使用较大的放大系数
+          displayStrategy = 0.3;
+        } else {
+          // 中等分贝，使用适中的放大系数
+          const ratio: number = (maxDb - lowDbThreshold) / (highDbThreshold - lowDbThreshold);
+          displayStrategy = 0.3 + ratio * 0.7; // 在0.3到1.0之间平滑过渡
+        }
+        
+        // 第二遍扫描：应用显示策略
+        for (let i = 0; i < this.TOTAL_BARS; i++) {
+          const freq: number = minFreq * Math.pow(maxFreq / minFreq, i / (this.TOTAL_BARS - 1));
+          const lowerFreq: number = i === 0 ? minFreq : minFreq * Math.pow(maxFreq / minFreq, (i - 0.5) / (this.TOTAL_BARS - 1));
+          const upperFreq: number = i === this.TOTAL_BARS - 1 ? maxFreq : minFreq * Math.pow(maxFreq / minFreq, (i + 0.5) / (this.TOTAL_BARS - 1));
+          const lowerBin: number = Math.floor(lowerFreq * fftSize / sampleRate);
+          const upperBin: number = Math.min(Math.floor(upperFreq * fftSize / sampleRate), rawSpectrum.length - 1);
+          
+          let sum: number = 0;
+          let count: number = 0;
+          
+          for (let bin = lowerBin; bin <= upperBin; bin++) {
+            const value: number = rawSpectrum[bin];
+            if (isFinite(value)) {
+              sum += value;
+              count++;
+              
               if (value > maxValue) {
                 maxValue = value;
-                maxIndex = index;
-                peakFreq = freq;
+                maxIndex = bin;
+                peakFreq = (bin * sampleRate / fftSize);
               }
             }
           }
           
-          // 计算平均值并映射到显示高度
           if (count > 0) {
-            const avgDb = sum / count;
+            const avgDb: number = sum / count;
+            
             if (avgDb > minDisplayDb) {
-              const dbValue = Math.min(maxDisplayDb, Math.max(minDisplayDb, avgDb));
-              const normalizedValue = (dbValue - minDisplayDb) / displayRange;
-              newDisplayBars[i] = minHeight + heightRange * normalizedValue;
+              const dbValue: number = Math.min(maxDisplayDb, Math.max(minDisplayDb, avgDb));
+              const normalizedValue: number = (dbValue - minDisplayDb) / (maxDisplayDb - minDisplayDb);
+              
+              // 根据显示策略调整显示高度
+              const heightValue: number = Math.pow(normalizedValue, displayStrategy);
+              newDisplayBars[i] = minHeight + heightRange * heightValue;
+              
+              // 记录有效值的位置
+              if (heightValue > 0.05) {
+                if (firstValidBar === -1) {
+                  firstValidBar = i;
+                }
+                lastValidBar = i;
+              }
             } else {
-              // 对于低于最小分贝值的频段，添加小的随机波动
-              newDisplayBars[i] = minHeight + Math.random() * 2;
+              newDisplayBars[i] = 0;
             }
           } else {
-            // 对于无效数据的频段，添加小的随机波动
-            newDisplayBars[i] = minHeight + Math.random() * 2;
+            newDisplayBars[i] = 0;
           }
         }
         
+        // 处理左右两侧的快速衰减
+        const minWaveHeight: number = 5; // 最小波动高度
+        
+        // 处理左侧衰减
+        if (firstValidBar > 0) {
+          const startHeight: number = newDisplayBars[firstValidBar];
+          const emptyBars: number = firstValidBar;
+          const decayFactor: number = Math.pow(minWaveHeight / startHeight, 1 / emptyBars);
+          
+          for (let i = firstValidBar - 1; i >= 0; i--) {
+            const decay: number = Math.pow(decayFactor, firstValidBar - i);
+            const baseHeight: number = startHeight * decay;
+            newDisplayBars[i] = Math.max(minWaveHeight, baseHeight);
+          }
+        }
+        
+        // 处理右侧衰减
+        if (lastValidBar < this.TOTAL_BARS - 1) {
+          const startHeight: number = newDisplayBars[lastValidBar];
+          const emptyBars: number = this.TOTAL_BARS - lastValidBar - 1;
+          const decayFactor: number = Math.pow(minWaveHeight / startHeight, 1 / emptyBars);
+          
+          for (let i = lastValidBar + 1; i < this.TOTAL_BARS; i++) {
+            const decay: number = Math.pow(decayFactor, i - lastValidBar);
+            const baseHeight: number = startHeight * decay;
+            newDisplayBars[i] = Math.max(minWaveHeight, baseHeight);
+          }
+        }
+        
+        // 确保所有值都在有效范围内
+        for (let i = 0; i < this.TOTAL_BARS; i++) {
+          newDisplayBars[i] = Math.max(minHeight, Math.min(maxHeight, newDisplayBars[i]));
+        }
+        
         // 更新显示数据
-        for (let i = 0; i < 64; i++) {
+        for (let i = 0; i < this.TOTAL_BARS; i++) {
           this.displayBars[i] = newDisplayBars[i];
         }
         
