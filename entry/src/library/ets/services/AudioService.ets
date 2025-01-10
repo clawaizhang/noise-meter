@@ -357,41 +357,42 @@ export class AudioService {
    * 处理音频分析模式变更
    * @param value 新的模式值
    */
-  private async handleModeChange(value: string): Promise<void> {
-    try {
-      // 验证并转换模式
-      if (!Object.values(AudioAnalysisMode).includes(value as AudioAnalysisMode)) {
-        throw new Error(`无效的音频分析模式: ${value}`);
-      }
-      const mode = value as AudioAnalysisMode;
+  private handleModeChange(value: string): void {
+    void Promise.resolve().then(async () => {
+      try {
+        // 验证并转换模式
+        if (!Object.values(AudioAnalysisMode).includes(value as AudioAnalysisMode)) {
+          throw new Error(`无效的音频分析模式: ${value}`);
+        }
+        const mode = value as AudioAnalysisMode;
 
-      // 记录当前状态
-      const wasCapturing = this.isCapturing;
-      
-      // 如果正在采集，先停止
-      if (wasCapturing) {
-        await this.stopCapture();
+        // 记录当前状态
+        const wasCapturing = this.isCapturing;
+        
+        // 如果正在采集，先停止
+        if (wasCapturing) {
+          await this.stopCapture();
+        }
+        
+        // 更新配置
+        this.currentConfig = AudioPresets.getConfig(mode);
+        
+        // 更新分析器配置
+        FrequencyWeighting.updateAnalysisMode(mode);
+        
+        // 重置缓冲区
+        this.resetBuffers();
+        
+        // 如果之前在采集，重新开始采集
+        if (wasCapturing) {
+          await this.startCapture();
+        }
+        
+        console.info(`[音频采集] 模式已更新为: ${mode}`);
+      } catch (err) {
+        console.error(`[音频采集] 更新模式失败: ${err instanceof Error ? err.message : String(err)}`);
       }
-      
-      // 更新配置
-      this.currentConfig = AudioPresets.getConfig(mode);
-      
-      // 更新分析器配置
-      FrequencyWeighting.updateAnalysisMode(mode);
-      
-      // 重置缓冲区
-      this.resetBuffers();
-      
-      // 如果之前在采集，重新开始采集
-      if (wasCapturing) {
-        await this.startCapture();
-      }
-      
-      console.info(`[音频采集] 模式已更新为: ${mode}`);
-    } catch (err) {
-      console.error(`[音频采集] 更新模式失败: ${err instanceof Error ? err.message : String(err)}`);
-      throw new Error(`更新音频分析模式失败: ${err instanceof Error ? err.message : String(err)}`);
-    }
+    });
   }
 
   /**
@@ -466,7 +467,7 @@ export class AudioService {
         const neededSamples = this.currentConfig.fftSize - this.tempBufferOffset;
         const samplesToAdd = Math.min(newData.length, neededSamples);
         console.debug(`[音频采集] 需要的样本数: ${neededSamples}, 实际添加: ${samplesToAdd}`);
-        
+
         // 复制新数据
         tempView.set(newData.subarray(0, samplesToAdd), this.tempBufferOffset);
         this.tempBufferOffset += samplesToAdd;
@@ -531,5 +532,13 @@ export class AudioService {
     await this.preferenceService.setNumber(PREF_PROCESS_INTERVAL, processInterval);
     
     console.info(`[音频采集] 更新配置: 目标样本数=${targetSamples}, 处理间隔=${processInterval}ms`);
+  }
+
+  /**
+   * 获取当前FFT大小
+   * @returns FFT大小
+   */
+  public getCurrentFFTSize(): number {
+    return this.currentConfig.fftSize;
   }
 }

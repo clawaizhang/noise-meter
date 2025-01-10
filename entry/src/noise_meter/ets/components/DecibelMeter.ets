@@ -377,111 +377,6 @@ export struct DecibelMeter {
     }
   }
 
-  /**
-   * 将频谱数据映射到显示点
-   * @param spectrum 频谱数据
-   * @returns 映射后的显示数据
-   */
-  private mapSpectrumToDisplay(spectrum: Float32Array): Array<number> {
-    // 检查频谱数据是否有效
-    if (!spectrum || spectrum.length === 0) {
-      console.info('[频谱显示] 频谱数据无效');
-      return new Array(64).fill(0);
-    }
-
-    console.info(`[频谱显示] 开始处理频谱数据，数据长度: ${spectrum.length}`);
-    console.info(`[频谱显示] 频谱数据样本: ${spectrum[0]}, ${spectrum[1]}, ${spectrum[2]}, ${spectrum[3]}, ${spectrum[4]}`);
-
-    const displayPoints: number = 64; // 显示点数
-    const sampleRate: number = 44100; // 采样率
-    const maxDisplayDb = 90;    // 最大显示分贝值
-    const minDisplayDb = 0;     // 最小显示分贝值
-    const displayRange = maxDisplayDb - minDisplayDb;
-    
-    // 计算频率范围
-    const minFreq = 20;    // 最小频率 20Hz
-    const maxFreq = 20000; // 最大频率 20kHz
-    
-    console.info(`[频谱显示] 显示参数: 点数=${displayPoints}, 最大分贝=${maxDisplayDb}, 最小分贝=${minDisplayDb}`);
-    console.info(`[频谱显示] 频率范围: ${minFreq}Hz - ${maxFreq}Hz`);
-    
-    // 找到实际的最大和最小值（排除无效值）
-    let actualMaxDb = -Infinity;
-    let actualMinDb = Infinity;
-    let validCount = 0;
-    let invalidCount = 0;
-    
-    for (let i = 0; i < spectrum.length; i++) {
-      const value = spectrum[i];
-      if (isFinite(value)) {
-        validCount++;
-        if (value > actualMaxDb) actualMaxDb = value;
-        if (value < actualMinDb) actualMinDb = value;
-      } else {
-        invalidCount++;
-      }
-    }
-    console.info(`[频谱显示] 数据统计: 有效值=${validCount}, 无效值=${invalidCount}`);
-    console.info(`[频谱显示] 实际数据范围: 最大值=${actualMaxDb.toFixed(2)}dB, 最小值=${actualMinDb.toFixed(2)}dB`);
-    
-    // 初始化结果数组
-    const result: Array<number> = new Array<number>(displayPoints);
-    
-    // 使用对数分布计算频率点
-    for (let i = 0; i < displayPoints; i++) {
-      // 使用对数分布计算当前频率点
-      const freq = minFreq * Math.pow(maxFreq / minFreq, i / (displayPoints - 1));
-      // 计算对应的FFT bin索引
-      const binIndex = Math.round(freq * spectrum.length / sampleRate);
-      
-      let sum = 0;
-      let count = 0;
-      // 获取邻近几个bin的平均值
-      const binWidth = 3; // 考虑邻近的bin数量
-      
-      for (let j = -binWidth; j <= binWidth; j++) {
-        const index = binIndex + j;
-        if (index >= 0 && index < spectrum.length) {
-          const value = spectrum[index];
-          if (isFinite(value)) {
-            sum += Math.max(0, value);
-            count++;
-          }
-        }
-      }
-      
-      if (count > 0) {
-        const avgDb = sum / count;
-        const normalizedValue = Math.min(1, Math.max(0, avgDb / maxDisplayDb));
-        result[i] = normalizedValue;
-        
-        if (i % 8 === 0) {
-          console.info(`[频谱显示] 点${i}: 频率=${freq.toFixed(1)}Hz, ` +
-            `bin=${binIndex}, 平均值=${avgDb.toFixed(2)}dB, 归一化值=${normalizedValue.toFixed(3)}`);
-        }
-      } else {
-        result[i] = 0;
-      }
-    }
-
-    // 添加平滑处理
-    console.info('[频谱显示] 开始平滑处理');
-    console.info(`[频谱显示] 平滑前样本: ${result[0].toFixed(3)}, ${result[1].toFixed(3)}, ${result[2].toFixed(3)}, ${result[3].toFixed(3)}, ${result[4].toFixed(3)}`);
-    
-    for (let i = 1; i < displayPoints - 1; i++) {
-      const oldValue = result[i];
-      result[i] = (result[i - 1] + result[i] * 2 + result[i + 1]) / 4;
-      
-      if (i % 8 === 0) {
-        console.info(`[频谱显示] 平滑处理点${i}: ${oldValue.toFixed(3)} -> ${result[i].toFixed(3)}`);
-      }
-    }
-    
-    console.info(`[频谱显示] 最终数据样本: ${result[0].toFixed(3)}, ${result[1].toFixed(3)}, ${result[2].toFixed(3)}, ${result[3].toFixed(3)}, ${result[4].toFixed(3)}`);
-    
-    return result;
-  }
-
   build() {
     Column() {
       // 频谱显示
@@ -641,7 +536,7 @@ export struct DecibelMeter {
       
       // 定义频率点
       const sampleRate = 44100;   // 采样率
-      const fftSize = 2048;       // FFT大小
+      const fftSize = this.audioService.getCurrentFFTSize();  // 通过公共方法获取 FFT 大小
       const minFreq = 20;         // 最小频率 20Hz
       const maxFreq = 20000;      // 最大频率 20kHz
       
