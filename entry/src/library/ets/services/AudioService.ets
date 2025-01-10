@@ -22,7 +22,7 @@ const DEFAULT_PROCESS_INTERVAL = 50;
 /**
  * 音频服务状态
  */
-enum AudioServiceState {
+export enum AudioServiceState {
   IDLE = 'IDLE',                     // 空闲状态
   STARTING = 'STARTING',             // 正在启动
   CAPTURING = 'CAPTURING',           // 采集中
@@ -31,6 +31,21 @@ enum AudioServiceState {
 }
 
 export class AudioService {
+  private static instance: AudioService | null = null;
+
+  /**
+   * 获取 AudioService 实例
+   */
+  public static getInstance(context?: common.UIAbilityContext): AudioService {
+    if (!AudioService.instance) {
+      if (!context) {
+        throw new Error('首次获取 AudioService 实例时必须提供 context');
+      }
+      AudioService.instance = new AudioService(context);
+    }
+    return AudioService.instance;
+  }
+
   private audioCapturerOptions: audio.AudioCapturerOptions = {
     streamInfo: {
       samplingRate: audio.AudioSamplingRate.SAMPLE_RATE_44100,
@@ -49,6 +64,7 @@ export class AudioService {
   
   // 回调函数引用
   private readDataCallback: ((buffer: ArrayBuffer) => void) | null = null;
+  private stateChangeCallback: ((info: audio.AudioCapturerChangeInfo) => void) | null = null;
   
   // 状态标志
   private state: AudioServiceState = AudioServiceState.IDLE;
@@ -68,6 +84,9 @@ export class AudioService {
 
   private context: common.UIAbilityContext;
   private preferenceService: PreferenceService;
+
+  // 状态变更回调类型
+  private stateChangeCallbacks: ((state: AudioServiceState) => void)[] = [];
 
   constructor(context: common.UIAbilityContext) {
     this.context = context;
@@ -222,11 +241,18 @@ export class AudioService {
         }
       };
 
+      // 注册音频采集器变更监听器
+      const stateChangeCallback = (info: audio.AudioCapturerChangeInfo) => {
+        console.info(`[音频采集] 音频采集器状态变更: ${JSON.stringify(info)}`);
+      };
+
       // 使用具名函数以便后续移除监听器
       this.audioCapturer.on('readData', readDataCallback);
+      this.audioCapturer.on('audioCapturerChange', stateChangeCallback);
       
       // 保存回调引用
       this.readDataCallback = readDataCallback;
+      this.stateChangeCallback = stateChangeCallback;
 
       // 启动音频数据读取
       console.info('[音频采集] 准备启动音频采集器');
@@ -249,23 +275,21 @@ export class AudioService {
     }
 
     try {
-      // 先停止音频数据读取
-      await this.audioCapturer.stop();
-      console.info('[音频采集] 停止读取音频数据');
-      
-      // 移除readData事件监听器
+      // 移除事件监听器
       if (this.readDataCallback) {
-        try {
-          this.audioCapturer.off('readData', this.readDataCallback);
-        } catch (err) {
-          console.warn('[音频采集] 移除readData监听器时出错:', err);
-        }
+        this.audioCapturer.off('readData', this.readDataCallback);
         this.readDataCallback = null;
       }
+      if (this.stateChangeCallback) {
+        this.audioCapturer.off('audioCapturerChange', this.stateChangeCallback);
+        this.stateChangeCallback = null;
+      }
+
+      // 停止音频采集器
+      await this.audioCapturer.stop();
+      console.info('[音频采集] 停止读取音频数据');
     } catch (err) {
-      const errMsg = `停止音频数据读取失败: ${err instanceof Error ? err.message : String(err)}`;
-      console.error(`[音频采集] ${errMsg}`);
-      throw new Error(errMsg);
+      console.error('[音频采集] 停止音频数据读取时出错:', err);
     }
   }
 
@@ -606,5 +630,31 @@ export class AudioService {
     const oldState = this.state;
     this.state = newState;
     console.info(`[音频采集] 状态变更: ${oldState} -> ${newState}`);
+    
+    // 通知所有监听器
+    this.stateChangeCallbacks.forEach(callback => {
+      try {
+        callback(newState);
+      } catch (err) {
+        console.error('[音频采集] 状态变更回调执行失败:', err);
+      }
+    });
+  }
+
+  /**
+   * 添加状态变更监听
+   */
+  public addStateChangeListener(callback: (state: AudioServiceState) => void): void {
+    this.stateChangeCallbacks.push(callback);
+  }
+
+  /**
+   * 移除状态变更监听
+   */
+  public removeStateChangeListener(callback: (state: AudioServiceState) => void): void {
+    const index = this.stateChangeCallbacks.indexOf(callback);
+    if (index > -1) {
+      this.stateChangeCallbacks.splice(index, 1);
+    }
   }
 }

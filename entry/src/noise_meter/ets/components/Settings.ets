@@ -3,6 +3,7 @@ import { PreferenceKeyConstants } from '../../../library/ets/constants/Preferenc
 import { CustomTitleBar } from '../../../library/ets/components/common/CustomTitleBar';
 import { WeightingType, getWeightingDescription } from '../../../library/ets/constants/WeightingConstants';
 import { AudioAnalysisMode, AudioPresets } from '../../../library/ets/common/AudioConfig';
+import { AudioService, AudioServiceState } from '../../../library/ets/services/AudioService';
 
 @Extend(Image) function itemIcon() {
   .width(24)
@@ -78,10 +79,21 @@ import { AudioAnalysisMode, AudioPresets } from '../../../library/ets/common/Aud
 @ComponentV2
 export struct Settings {
   private preferenceService: PreferenceService = PreferenceService.getInstance();
+  private audioService: AudioService = AudioService.getInstance();
   @Local isLocationEnabled: boolean = false;
   @Local isRecordEnabled: boolean = false;
   @Local selectedWeighting: WeightingType = WeightingType.A;
   @Local selectedAnalysisMode: AudioAnalysisMode = AudioAnalysisMode.BALANCED;
+  @Local isAnalysisModeChanging: boolean = false;
+
+  // 状态变更回调
+  private onStateChange = (state: AudioServiceState) => {
+    if (state === AudioServiceState.SWITCHING_MODE) {
+      this.isAnalysisModeChanging = true;
+    } else if (state === AudioServiceState.CAPTURING || state === AudioServiceState.IDLE) {
+      this.isAnalysisModeChanging = false;
+    }
+  }
 
   // 工具方法
   private getWeightingIndex(type: WeightingType): number {
@@ -175,6 +187,14 @@ export struct Settings {
     this.isRecordEnabled = this.preferenceService.isEnabled(PreferenceKeyConstants.RECORD);
     this.selectedWeighting = (this.preferenceService.getString(PreferenceKeyConstants.WEIGHTING) || WeightingType.A) as WeightingType;
     this.selectedAnalysisMode = (this.preferenceService.getString(PreferenceKeyConstants.ANALYSIS_MODE) || AudioAnalysisMode.BALANCED) as AudioAnalysisMode;
+    
+    // 注册状态变更监听
+    this.audioService.addStateChangeListener(this.onStateChange);
+  }
+
+  aboutToDisappear() {
+    // 移除状态变更监听
+    this.audioService.removeStateChangeListener(this.onStateChange);
   }
 
   @Builder
@@ -208,20 +228,31 @@ export struct Settings {
 
               Blank()
 
-              Select([
-                { value: '快速响应' },
-                { value: '平衡模式' },
-                { value: '精确分析' },
-                { value: '低频分析' }
-              ])
-                .selected(this.getAnalysisModeIndex(this.selectedAnalysisMode))
-                .value(this.getAnalysisModeDisplayName(this.selectedAnalysisMode))
-                .selectStyle()
-                .onSelect((index: number) => {
-                  const mode = this.getAnalysisModeFromIndex(index);
-                  void this.preferenceService.setString(PreferenceKeyConstants.ANALYSIS_MODE, mode);
-                  this.selectedAnalysisMode = mode;
-                })
+              Row() {
+                Select([
+                  { value: '快速响应' },
+                  { value: '平衡模式' },
+                  { value: '精确分析' },
+                  { value: '低频分析' }
+                ])
+                  .selected(this.getAnalysisModeIndex(this.selectedAnalysisMode))
+                  .value(this.getAnalysisModeDisplayName(this.selectedAnalysisMode))
+                  .selectStyle()
+                  .enabled(!this.isAnalysisModeChanging)
+                  .onSelect((index: number) => {
+                    const mode = this.getAnalysisModeFromIndex(index);
+                    this.isAnalysisModeChanging = true;
+                    void this.preferenceService.setString(PreferenceKeyConstants.ANALYSIS_MODE, mode);
+                    this.selectedAnalysisMode = mode;
+                  })
+
+                if (this.isAnalysisModeChanging) {
+                  LoadingProgress()
+                    .width(24)
+                    .height(24)
+                    .margin({ left: 8 })
+                }
+              }
             }
             .listItemRow()
           }

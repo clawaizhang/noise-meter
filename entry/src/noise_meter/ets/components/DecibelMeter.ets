@@ -29,7 +29,7 @@ export struct DecibelMeter {
   private spectrumData: Float32Array = new Float32Array(1024)
   @Consumer(noiseMeterNavStack) navStack: NavPathStack = new NavPathStack()
   private decibelService: DecibelService = new DecibelService()
-  private audioService: AudioService = new AudioService(getContext() as common.UIAbilityContext)
+  private audioService: AudioService = AudioService.getInstance(getContext() as common.UIAbilityContext)
   private locationService: LocationService = LocationService.getInstance()
   private recordService: DecibelRecordService = new DecibelRecordService(getContext() as common.UIAbilityContext)
   private fileService: FileService = new FileService(getContext() as common.Context)
@@ -44,10 +44,6 @@ export struct DecibelMeter {
   private recordListener?: PreferenceChangeListener
 
   aboutToAppear() {
-    // 如果提供了外部context，重新初始化AudioService
-    if (this.context) {
-      this.audioService = new AudioService(this.context);
-    }
     // 获取录音开关状态
     this.isRecordEnabled = this.preferenceService.isEnabled(PreferenceKeyConstants.RECORD);
 
