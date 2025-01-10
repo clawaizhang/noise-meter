@@ -236,88 +236,6 @@ export struct DecibelMeter {
   }
 
   @Builder
-  StatisticsRow() {
-    Row() {
-      Column() {
-        Text('最小值')
-          .fontSize(14)
-          .fontColor('#666666')
-          .margin({ bottom: 8 })
-        Row() {
-          Text(this.minDecibel.toString())
-            .fontSize(24)
-            .fontWeight(FontWeight.Bold)
-            .fontColor(this.decibelService.getDecibelColor(this.minDecibel))
-          Text(' 分贝')
-            .fontSize(12)
-            .fontColor('#666666')
-            .margin({ left: 4 })
-            .alignSelf(ItemAlign.End)
-            .margin({ bottom: 4 })
-        }
-      }
-      .layoutWeight(1)
-      .alignItems(HorizontalAlign.Center)
-
-      Divider()
-        .width(1)
-        .height(44)
-        .backgroundColor('#E0E0E0')
-        .margin({ left: 12, right: 12 })
-
-      Column() {
-        Text('平均值')
-          .fontSize(14)
-          .fontColor('#666666')
-          .margin({ bottom: 8 })
-        Row() {
-          Text(this.avgDecibel.toString())
-            .fontSize(24)
-            .fontWeight(FontWeight.Bold)
-            .fontColor(this.decibelService.getDecibelColor(this.avgDecibel))
-          Text(' 分贝')
-            .fontSize(12)
-            .fontColor('#666666')
-            .margin({ left: 4 })
-            .alignSelf(ItemAlign.End)
-            .margin({ bottom: 4 })
-        }
-      }
-      .layoutWeight(1)
-      .alignItems(HorizontalAlign.Center)
-
-      Divider()
-        .width(1)
-        .height(44)
-        .backgroundColor('#E0E0E0')
-        .margin({ left: 12, right: 12 })
-
-      Column() {
-        Text('最大值')
-          .fontSize(14)
-          .fontColor('#666666')
-          .margin({ bottom: 8 })
-        Row() {
-          Text(this.maxDecibel.toString())
-            .fontSize(24)
-            .fontWeight(FontWeight.Bold)
-            .fontColor(this.decibelService.getDecibelColor(this.maxDecibel))
-          Text(' 分贝')
-            .fontSize(12)
-            .fontColor('#666666')
-            .margin({ left: 4 })
-            .alignSelf(ItemAlign.End)
-            .margin({ bottom: 4 })
-        }
-      }
-      .layoutWeight(1)
-      .alignItems(HorizontalAlign.Center)
-    }
-    .width('100%')
-    .margin({ top: 16 })
-  }
-
-  @Builder
   private SpectrumView() {
     Column() {
       // 频谱显示
@@ -383,63 +301,76 @@ export struct DecibelMeter {
         Column() {
           // 分贝值显示
           Row() {
-            Text(this.currentDecibel.toString())
-              .fontSize(72)
-              .fontWeight(FontWeight.Bold)
-              .fontColor(this.decibelService.getDecibelColor(this.currentDecibel))
-            Text(' 分贝')
-              .fontSize(20)
-              .fontColor('#666666')
-              .margin({ left: 8 })
-              .alignSelf(ItemAlign.End)
-              .margin({ bottom: 20 })
-          }
-          .margin({ top: 12 })
-
-          Stack() {
-            Row() {
-              if (this.isRecording) {
-                Text(new Date(this.startTime).toLocaleTimeString('zh-CN', {
-                  hour: '2-digit',
-                  minute: '2-digit',
-                  second: '2-digit',
-                  hour12: false
-                }))
-                  .fontSize(14)
-                  .fontColor('#666666')
-              }
-              Blank()
-              if (this.isRecording) {
-                Text(`${this.recordingTime}秒`)
-                  .fontSize(14)
-                  .fontColor('#666666')
-              }
+            Column() {
+              Text('最小')
+                .fontSize(12)
+                .fontColor('#999999')
+                .margin({ bottom: 4 })
+              Text(this.minDecibel === 0 ? '-' : this.minDecibel.toString())
+                .fontSize(32)
+                .fontWeight(FontWeight.Medium)
+                .fontColor(this.decibelService.getDecibelColor(this.minDecibel))
             }
-            .width('100%')
+            .alignItems(HorizontalAlign.Center)
+            .margin({ right: 32 })
 
-            Text(this.decibelService.getDecibelLevel(this.currentDecibel))
-              .fontSize(16)
-              .fontColor(this.decibelService.getDecibelColor(this.currentDecibel))
+            Column() {
+              Text(this.currentDecibel === 0 ? '-' : this.currentDecibel.toString())
+                .fontSize(80)
+                .fontWeight(FontWeight.Bold)
+                .fontColor(this.decibelService.getDecibelColor(this.currentDecibel))
+              Row() {
+                if (this.isRecording) {
+                  Text(new Date(this.startTime).toLocaleTimeString('zh-CN', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit',
+                    hour12: false
+                  }))
+                    .fontSize(14)
+                    .fontColor('#666666')
+                  Text(' | ')
+                    .fontSize(14)
+                    .fontColor('#666666')
+                  Text(`${this.recordingTime}秒`)
+                    .fontSize(14)
+                    .fontColor('#666666')
+                  Text(' | ')
+                    .fontSize(14)
+                    .fontColor('#666666')
+                }
+                Text(this.decibelService.getDecibelLevel(this.currentDecibel))
+                  .fontSize(14)
+                  .fontColor(this.decibelService.getDecibelColor(this.currentDecibel))
+              }
+              .margin({ top: 4 })
+            }
+            .alignItems(HorizontalAlign.Center)
+
+            Column() {
+              Text('最大')
+                .fontSize(12)
+                .fontColor('#999999')
+                .margin({ bottom: 4 })
+              Text(this.maxDecibel === 0 ? '-' : this.maxDecibel.toString())
+                .fontSize(32)
+                .fontWeight(FontWeight.Medium)
+                .fontColor(this.decibelService.getDecibelColor(this.maxDecibel))
+            }
+            .alignItems(HorizontalAlign.Center)
+            .margin({ left: 32 })
           }
-          .width('92%')
-          .height(20)
-          .margin({ top: 12, bottom: 20 })
-
-          // 分割线
-          Divider()
-            .width('92%')
-            .color('#E0E0E0')
-            .margin({ top: 0, bottom: 16 })
-
-          // 统计数据显示
-          this.StatisticsRow()
+          .width('100%')
+          .justifyContent(FlexAlign.Center)
+          .alignItems(VerticalAlign.Center)
+          .margin({ top: 20, bottom: 20 })
         }
         .width('100%')
         .padding({
-          top: 28,
-          bottom: 28,
-          left: 24,
-          right: 24
+          top: 20,
+          bottom: 20,
+          left: 16,
+          right: 16
         })
         .backgroundColor(Color.White)
         .borderRadius(24)
@@ -457,7 +388,7 @@ export struct DecibelMeter {
       .margin({ left: 8, right: 8 })
       .backgroundColor(Color.White)
       .borderRadius(24)
-      .shadow({ radius: 1, color: '#1A000000', offsetY: 2 })
+      .shadow({ radius: 2, color: '#1A000000', offsetY: 2 })
 
       // 位置显示
       Row() {
