@@ -71,7 +71,6 @@ export class AudioService {
   
   // 缓冲区相关
   private tempBuffer: ArrayBuffer | null = null;
-  private overlapBuffer: ArrayBuffer | null = null;
   private tempBufferOffset: number = 0;
   private audioBuffers: ArrayBuffer[] = [];
   private lastProcessTime: number = 0;
@@ -512,29 +511,6 @@ export class AudioService {
         const newData = new Int16Array(buffer);
         const tempView = new Int16Array(this.tempBuffer);
         
-        // 处理重叠部分
-        if (this.overlapBuffer) {
-          const overlapView = new Int16Array(this.overlapBuffer);
-          if (this.tempBufferOffset === 0) {  // 只在开始时设置重叠部分
-            tempView.set(overlapView);
-            this.tempBufferOffset = overlapView.length;
-            console.debug(`[音频采集] 设置重叠部分, 偏移量: ${this.tempBufferOffset}, ` +
-                       `重叠大小: ${overlapView.length}`);
-          }
-        } else {
-          const overlapSize = Math.floor(this.currentConfig.fftSize * this.currentConfig.overlap);
-          this.overlapBuffer = new ArrayBuffer(overlapSize * 2);
-          if (this.tempBufferOffset === 0) {
-            console.debug(`[音频采集] 创建新的重叠缓冲区, 大小: ${overlapSize * 2}字节, ` +
-                       `重叠比例: ${this.currentConfig.overlap}`);
-          }
-        }
-        
-        // 添加调试日志，显示处理前的状态
-        console.debug(`[音频处理] 处理前状态: 累积样本=${this.tempBufferOffset}, ` +
-                    `缓冲区大小=${this.tempBuffer.byteLength}, ` +
-                    `新数据大小=${newData.length}`);
-        
         // 计算新样本的添加
         const availableSpace = this.currentConfig.fftSize - this.tempBufferOffset;
         const samplesToAdd = Math.min(newData.length, availableSpace);
@@ -557,11 +533,6 @@ export class AudioService {
         if (this.tempBufferOffset === this.currentConfig.fftSize) {
           console.info(`[音频处理] 样本数已达到FFT大小(${this.currentConfig.fftSize})，开始处理`);
           
-          // 保存重叠部分
-          const overlapView = new Int16Array(this.overlapBuffer);
-          const overlapStart = this.currentConfig.fftSize - overlapView.length;
-          overlapView.set(tempView.subarray(overlapStart));
-          
           // 发送数据进行处理
           if (this.onAudioData) {
             console.info(`[音频采集] 发送数据进行处理，数据大小: ${this.tempBuffer.byteLength}字节`);
@@ -569,7 +540,8 @@ export class AudioService {
           }
           
           this.lastProcessTime = currentTime;
-          this.tempBufferOffset = 0; // 重置为0，下次会从重叠部分开始
+          this.tempBufferOffset = 0;  // 重置缓冲区偏移量
+          this.tempBuffer = new ArrayBuffer(this.currentConfig.fftSize * 2);  // 创建新的缓冲区
         }
       }
       
@@ -592,10 +564,6 @@ export class AudioService {
     // 创建新的临时缓冲区
     this.tempBuffer = new ArrayBuffer(this.currentConfig.fftSize * 2);
     console.info(`[音频采集] 创建新的临时缓冲区: 大小=${this.tempBuffer.byteLength}字节`);
-    
-    // 创建新的重叠缓冲区
-    const overlapSize = Math.floor(this.currentConfig.fftSize * this.currentConfig.overlap);
-    this.overlapBuffer = new ArrayBuffer(overlapSize * 2);
     
     this.tempBufferOffset = 0;
     this.lastProcessTime = 0;
