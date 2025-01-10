@@ -48,6 +48,7 @@ export class FrequencyWeighting {
    * @param mode 分析模式
    */
   public static initializeAnalyzer(mode: AudioAnalysisMode = AudioAnalysisMode.BALANCED): void {
+    console.info(`[频率计权] 初始化分析器: 模式=${mode}`);
     const config = AudioPresets.getConfig(mode);
     FrequencyWeighting.fftAnalyzer = new FFTAnalyzer(
       config.fftSize,
@@ -55,8 +56,9 @@ export class FrequencyWeighting {
       config.smoothingFactor
     );
     
-    console.info(`[频率计权] 初始化FFT分析器: 大小=${config.fftSize}, ` +
-                `窗函数=${config.windowType}, 平滑因子=${config.smoothingFactor}`);
+    console.info(`[频率计权] 分析器配置: FFT大小=${config.fftSize}, ` +
+                `窗函数=${config.windowType}, ` +
+                `平滑因子=${config.smoothingFactor}`);
   }
 
   /**
@@ -102,7 +104,9 @@ export class FrequencyWeighting {
    * @returns 计权后的分贝值
    */
   public static calculateWeightedDecibel(buffer: ArrayBuffer, bytesRead: number, weightingType: WeightingType): number {
-    console.info(`[计权计算] 开始计算，计权类型: ${weightingType}, bytesRead: ${bytesRead}`);
+    console.info(`[计权计算] 开始计算: 计权类型=${weightingType}, ` +
+                `数据大小=${buffer.byteLength}字节, ` +
+                `读取字节数=${bytesRead}`);
 
     // 检查数据有效性
     if (!buffer || bytesRead <= 0) {
@@ -111,13 +115,20 @@ export class FrequencyWeighting {
     }
 
     try {
+      let result: number;
       switch (weightingType) {
         case WeightingType.A:
-          return FrequencyWeighting.calculateAWeightedDecibel(buffer, bytesRead);
+          result = FrequencyWeighting.calculateAWeightedDecibel(buffer, bytesRead);
+          console.info(`[计权计算] A计权结果: ${result.toFixed(2)}dB`);
+          return result;
         case WeightingType.C:
-          return FrequencyWeighting.calculateCWeightedDecibel(buffer, bytesRead);
+          result = FrequencyWeighting.calculateCWeightedDecibel(buffer, bytesRead);
+          console.info(`[计权计算] C计权结果: ${result.toFixed(2)}dB`);
+          return result;
         case WeightingType.Z:
-          return FrequencyWeighting.calculateZWeightedDecibel(buffer, bytesRead);
+          result = FrequencyWeighting.calculateZWeightedDecibel(buffer, bytesRead);
+          console.info(`[计权计算] Z计权结果: ${result.toFixed(2)}dB`);
+          return result;
         default:
           console.error('[计权计算] 不支持的计权类型');
           return FrequencyWeighting.INVALID_DB;
@@ -129,7 +140,8 @@ export class FrequencyWeighting {
   }
 
   private static calculateAWeightedDecibel(buffer: ArrayBuffer, bytesRead: number): number {
-    console.info(`[A计权] 开始计算，bytesRead: ${bytesRead}`);
+    console.info(`[A计权] 开始计算: 数据大小=${buffer.byteLength}字节, ` +
+                `读取字节数=${bytesRead}`);
     
     // 检查数据有效性
     if (!buffer || bytesRead <= 0) {
@@ -147,7 +159,8 @@ export class FrequencyWeighting {
   }
 
   private static calculateCWeightedDecibel(buffer: ArrayBuffer, bytesRead: number): number {
-    console.info(`[C计权] 开始计算，bytesRead: ${bytesRead}`);
+    console.info(`[C计权] 开始计算: 数据大小=${buffer.byteLength}字节, ` +
+                `读取字节数=${bytesRead}`);
     
     // 检查数据有效性
     if (!buffer || bytesRead <= 0) {
@@ -165,7 +178,8 @@ export class FrequencyWeighting {
   }
 
   private static calculateZWeightedDecibel(buffer: ArrayBuffer, bytesRead: number): number {
-    console.info(`[Z计权] 开始计算，bytesRead: ${bytesRead}`);
+    console.info(`[Z计权] 开始计算: 数据大小=${buffer.byteLength}字节, ` +
+                `读取字节数=${bytesRead}`);
     
     // 检查数据有效性
     if (!buffer || bytesRead <= 0) {
@@ -211,11 +225,11 @@ export class FrequencyWeighting {
     }
 
     try {
-      console.info(`[频谱分析] 开始处理音频数据，数据长度: ${buffer.byteLength}`);
+      console.info(`[频谱分析] 开始处理音频数据: 数据大小=${buffer.byteLength}字节`);
       
       // 执行FFT变换并获取频谱数据
       const spectrum = FrequencyWeighting.fftAnalyzer.transform(buffer);
-      console.info(`[频谱分析] FFT变换完成，频谱长度: ${spectrum.length}`);
+      console.info(`[频谱分析] FFT变换完成: 频谱长度=${spectrum.length}`);
       console.info(`[频谱分析] 原始频谱样本: ${spectrum[0]}, ${spectrum[1]}, ${spectrum[2]}, ${spectrum[3]}, ${spectrum[4]}`);
       
       // 应用计权

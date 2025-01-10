@@ -78,18 +78,31 @@ export class AudioPresets {
    * @returns 对应的配置
    */
   public static getConfig(mode: AudioAnalysisMode): AudioAnalysisConfig {
+    console.info(`[音频配置] 获取${mode}模式配置`);
+    let config: AudioAnalysisConfig;
+    
     switch (mode) {
       case AudioAnalysisMode.FAST_RESPONSE:
-        return AudioPresets.FAST_RESPONSE;
+        config = AudioPresets.FAST_RESPONSE;
+        break;
       case AudioAnalysisMode.BALANCED:
-        return AudioPresets.BALANCED;
+        config = AudioPresets.BALANCED;
+        break;
       case AudioAnalysisMode.PRECISE:
-        return AudioPresets.PRECISE;
+        config = AudioPresets.PRECISE;
+        break;
       case AudioAnalysisMode.LOW_FREQUENCY:
-        return AudioPresets.LOW_FREQUENCY;
+        config = AudioPresets.LOW_FREQUENCY;
+        break;
       default:
-        return AudioPresets.BALANCED;
+        config = AudioPresets.BALANCED;
     }
+    
+    console.info(`[音频配置] 配置详情: FFT大小=${config.fftSize}, ` +
+                `处理间隔=${config.processInterval}ms, ` +
+                `重叠率=${config.overlap}, ` +
+                `缓冲区大小=${config.bufferSize}字节`);
+    return config;
   }
 }
 
