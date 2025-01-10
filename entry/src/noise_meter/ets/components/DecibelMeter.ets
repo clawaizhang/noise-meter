@@ -28,6 +28,7 @@ export struct DecibelMeter {
   @Local private isRecordEnabled: boolean = false
   @Local private displayBars: Array<number> = new Array(64).fill(2)
   @Local private debugText: string = ''
+  @Local private peakFreq: number = 0  // 添加峰值频率变量
   private spectrumData: Float32Array = new Float32Array(1024)
   @Consumer(noiseMeterNavStack) navStack: NavPathStack = new NavPathStack()
   private decibelService: DecibelService = new DecibelService()
@@ -120,6 +121,18 @@ export struct DecibelMeter {
         height,
         1  // 圆角半径
       );
+
+      // 如果是最高柱子,在其顶部显示频率值
+      if (this.displayBars[i] === Math.max(...this.displayBars)) {
+        this.canvasContext.fillStyle = '#FFFFFF';
+        this.canvasContext.textAlign = 'center';
+        this.canvasContext.font = '32px Arial';
+        this.canvasContext.fillText(
+          `${Math.round(this.peakFreq)}Hz`,
+          x + actualBarWidth/2,
+          y - 10
+        );
+      }
     }
   }
 
@@ -316,7 +329,7 @@ export struct DecibelMeter {
         const newDisplayBars = new Array<number>(this.TOTAL_BARS);
         let maxValue: number = -Infinity;    // 记录最大分贝值
         let maxIndex: number = -1;
-        let peakFreq: number = 0;
+        this.peakFreq = 0;
         let firstValidBar: number = -1;      // 记录第一个有效柱子的位置
         let lastValidBar: number = -1;       // 记录最后一个有效柱子的位置
         
@@ -381,11 +394,10 @@ export struct DecibelMeter {
             if (isFinite(value)) {
               sum += value;
               count++;
-              
               if (value > maxValue) {
                 maxValue = value;
                 maxIndex = bin;
-                peakFreq = (bin * sampleRate / fftSize);
+                this.peakFreq = (bin * sampleRate / fftSize);
               }
             }
           }
@@ -457,7 +469,7 @@ export struct DecibelMeter {
         
         // 更新调试信息
         const debugInfo = `当前分贝: ${this.currentDecibel}dB\n` +
-          `最大频率: ${peakFreq.toFixed(1)}Hz (${maxValue.toFixed(1)}dB)\n` +
+          `最大频率: ${this.peakFreq.toFixed(1)}Hz (${maxValue.toFixed(1)}dB)\n` +
           `频谱范围: ${minDisplayDb}dB ~ ${maxDisplayDb}dB\n` +
           `高度范围: ${minHeight}% ~ ${maxHeight}%\n` +
           `FFT大小: ${fftSize}, 频谱长度: ${rawSpectrum.length}`;
