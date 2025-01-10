@@ -110,13 +110,100 @@ export struct DecibelMeter {
         this.audioService.startRecording();
       }
 
-      // 开始处理音频数据，记录分贝值
+      // 开始处理音频数据
       this.audioService.startProcessing((buffer: ArrayBuffer) => {
-        // 使用DecibelService计算分贝值
+        // 计算分贝值
         const db = this.decibelService.calculateDecibel(buffer, buffer.byteLength);
-        this.currentDecibel = Math.round(db);
-        this.values.push(this.currentDecibel);
-        this.updateStatistics(this.currentDecibel);
+        
+        if (db > 0) {
+          this.currentDecibel = Math.round(db);
+          this.values.push(this.currentDecibel);
+          this.updateStatistics(this.currentDecibel);
+        } else {
+          this.currentDecibel = 0;
+        }
+        
+        // 获取频谱数据
+        const rawSpectrum = FrequencyWeighting.getSpectrumData(buffer);
+        
+        // 设置显示参数
+        const maxDisplayDb = 90;    // 最大显示分贝值
+        const minDisplayDb = 20;    // 最小显示分贝值
+        const displayRange = maxDisplayDb - minDisplayDb;
+        const maxHeight = 100;      // 最大高度百分比
+        const minHeight = 2;        // 最小高度百分比
+        const heightRange = maxHeight - minHeight;
+        
+        // 定义频率点
+        const sampleRate = 44100;   // 采样率
+        const fftSize = this.audioService.getCurrentFFTSize();  // 通过公共方法获取 FFT 大小
+        const minFreq = 20;         // 最小频率 20Hz
+        const maxFreq = 20000;      // 最大频率 20kHz
+        
+        // 计算频谱高度
+        const newDisplayBars = new Array<number>(64);
+        let maxValue = -Infinity;
+        let maxIndex = -1;
+        let peakFreq = 0;
+        
+        // 对每个频率点计算对应的能量
+        for (let i = 0; i < 64; i++) {
+          // 使用对数分布计算当前频率
+          const freq = minFreq * Math.pow(maxFreq / minFreq, i / 63);  // 20Hz到20kHz的对数分布
+          // 计算对应的FFT bin索引
+          const binIndex = Math.floor(freq * fftSize / sampleRate);
+          
+          // 获取邻近bin的平均值
+          let sum = 0;
+          let count = 0;
+          const binWidth = 3;  // 考虑邻近的bin数量
+          
+          for (let j = -binWidth; j <= binWidth; j++) {
+            const index = Math.min(rawSpectrum.length - 1, Math.max(0, binIndex + j));
+            const value = rawSpectrum[index];
+            if (isFinite(value)) {
+              sum += value;
+              count++;
+              // 记录最大值
+              if (value > maxValue) {
+                maxValue = value;
+                maxIndex = index;
+                peakFreq = freq;
+              }
+            }
+          }
+          
+          // 计算平均值并映射到显示高度
+          if (count > 0) {
+            const avgDb = sum / count;
+            if (avgDb > minDisplayDb) {
+              const dbValue = Math.min(maxDisplayDb, Math.max(minDisplayDb, avgDb));
+              const normalizedValue = (dbValue - minDisplayDb) / displayRange;
+              newDisplayBars[i] = minHeight + heightRange * normalizedValue;
+            } else {
+              // 对于低于最小分贝值的频段，添加小的随机波动
+              newDisplayBars[i] = minHeight + Math.random() * 2;
+            }
+          } else {
+            // 对于无效数据的频段，添加小的随机波动
+            newDisplayBars[i] = minHeight + Math.random() * 2;
+          }
+        }
+        
+        // 更新显示数据
+        for (let i = 0; i < 64; i++) {
+          this.displayBars[i] = newDisplayBars[i];
+        }
+        
+        // 更新调试信息
+        const debugInfo = `当前分贝: ${this.currentDecibel}dB\n` +
+          `最大频率: ${peakFreq.toFixed(1)}Hz (${maxValue.toFixed(1)}dB)\n` +
+          `频谱范围: ${minDisplayDb}dB ~ ${maxDisplayDb}dB\n` +
+          `高度范围: ${minHeight}% ~ ${maxHeight}%\n` +
+          `FFT大小: ${fftSize}, 频谱长度: ${rawSpectrum.length}`;
+        
+        this.debugText = debugInfo;
+
         // 更新计时器
         this.recordingTime = Math.floor((new Date().getTime() - this.startTime) / 1000);
       });
@@ -441,100 +528,5 @@ export struct DecibelMeter {
     .onClick(() => {
       this.stopRecording();
     })
-  }
-
-  private startAnalyzing() {
-    console.info('[startAnalyzing] 开始音频分析');
-    this.audioService.startProcessing((buffer: ArrayBuffer) => {
-      // 计算分贝值
-      const db = this.decibelService.calculateDecibel(buffer, buffer.byteLength);
-      
-      if (db > 0) {
-        this.currentDecibel = Math.round(db);
-      } else {
-        this.currentDecibel = 0;
-      }
-      
-      // 获取频谱数据
-      const rawSpectrum = FrequencyWeighting.getSpectrumData(buffer);
-      
-      // 设置显示参数
-      const maxDisplayDb = 90;    // 最大显示分贝值
-      const minDisplayDb = 20;    // 最小显示分贝值
-      const displayRange = maxDisplayDb - minDisplayDb;
-      const maxHeight = 100;      // 最大高度百分比
-      const minHeight = 2;        // 最小高度百分比
-      const heightRange = maxHeight - minHeight;
-      
-      // 定义频率点
-      const sampleRate = 44100;   // 采样率
-      const fftSize = this.audioService.getCurrentFFTSize();  // 通过公共方法获取 FFT 大小
-      const minFreq = 20;         // 最小频率 20Hz
-      const maxFreq = 20000;      // 最大频率 20kHz
-      
-      // 计算频谱高度
-      const newDisplayBars = new Array<number>(64);
-      let maxValue = -Infinity;
-      let maxIndex = -1;
-      let peakFreq = 0;
-      
-      // 对每个频率点计算对应的能量
-      for (let i = 0; i < 64; i++) {
-        // 使用对数分布计算当前频率
-        const freq = minFreq * Math.pow(maxFreq / minFreq, i / 63);  // 20Hz到20kHz的对数分布
-        // 计算对应的FFT bin索引
-        const binIndex = Math.floor(freq * fftSize / sampleRate);
-        
-        // 获取邻近bin的平均值
-        let sum = 0;
-        let count = 0;
-        const binWidth = 3;  // 考虑邻近的bin数量
-        
-        for (let j = -binWidth; j <= binWidth; j++) {
-          const index = Math.min(rawSpectrum.length - 1, Math.max(0, binIndex + j));
-          const value = rawSpectrum[index];
-          if (isFinite(value)) {
-            sum += value;
-            count++;
-            // 记录最大值
-            if (value > maxValue) {
-              maxValue = value;
-              maxIndex = index;
-              peakFreq = freq;
-            }
-          }
-        }
-        
-        // 计算平均值并映射到显示高度
-        if (count > 0) {
-          const avgDb = sum / count;
-          if (avgDb > minDisplayDb) {
-            const dbValue = Math.min(maxDisplayDb, Math.max(minDisplayDb, avgDb));
-            const normalizedValue = (dbValue - minDisplayDb) / displayRange;
-            newDisplayBars[i] = minHeight + heightRange * normalizedValue;
-          } else {
-            // 对于低于最小分贝值的频段，添加小的随机波动
-            newDisplayBars[i] = minHeight + Math.random() * 2;
-          }
-        } else {
-          // 对于无效数据的频段，添加小的随机波动
-          newDisplayBars[i] = minHeight + Math.random() * 2;
-        }
-      }
-      
-      // 更新显示数据
-      for (let i = 0; i < 64; i++) {
-        this.displayBars[i] = newDisplayBars[i];
-      }
-      
-      // 更新调试信息
-      const debugInfo = `当前分贝: ${this.currentDecibel}dB\n` +
-        `最大频率: ${peakFreq.toFixed(1)}Hz (${maxValue.toFixed(1)}dB)\n` +
-        `频谱范围: ${minDisplayDb}dB ~ ${maxDisplayDb}dB\n` +
-        `高度范围: ${minHeight}% ~ ${maxHeight}%\n` +
-        `FFT大小: ${fftSize}, 频谱长度: ${rawSpectrum.length}`;
-      
-      this.debugText = debugInfo;
-    });
   }
 } 
