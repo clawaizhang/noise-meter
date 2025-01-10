@@ -4,7 +4,7 @@ import common from '@ohos.app.ability.common';
 import promptAction from '@ohos.promptAction';
 import { WavFileGenerator } from '../utils/WavFileGenerator';
 import { PreferenceService, PreferenceValue } from './PreferenceService';
-import { AudioAnalysisConfig, AudioAnalysisMode, AudioPresets, PREF_ANALYSIS_MODE } from '../common/AudioConfig';
+import { AudioAnalysisMode, AudioPresets, PREF_ANALYSIS_MODE } from '../common/AudioConfig';
 import { FileService } from './FileService';
 import { FrequencyWeighting } from '../utils/FrequencyWeighting';
 
@@ -16,8 +16,6 @@ import { FrequencyWeighting } from '../utils/FrequencyWeighting';
 // 音频配置键名
 const PREF_TARGET_SAMPLES = 'audio_target_samples';
 const PREF_PROCESS_INTERVAL = 'audio_process_interval';
-const DEFAULT_TARGET_SAMPLES = 8192;
-const DEFAULT_PROCESS_INTERVAL = 50;
 
 /**
  * 音频服务状态
@@ -427,31 +425,11 @@ export class AudioService {
   private handleModeChange(value: string): void {
     void Promise.resolve().then(async () => {
       try {
-        // 如果不是空闲或采集状态，不允许切换模式
-        if (this.state !== AudioServiceState.IDLE && 
-            this.state !== AudioServiceState.CAPTURING) {
-          console.info(`[音频采集] 当前状态 ${this.state} 不允许切换模式`);
-          return;
-        }
-
         // 验证并转换模式
         if (!Object.values(AudioAnalysisMode).includes(value as AudioAnalysisMode)) {
           throw new Error(`无效的音频分析模式: ${value}`);
         }
         const mode = value as AudioAnalysisMode;
-
-        // 记录当前状态
-        const wasCapturing = this.state === AudioServiceState.CAPTURING;
-        
-        if (wasCapturing) {
-          this.setState(AudioServiceState.SWITCHING_MODE);
-          
-          // 先停止处理
-          this.stopProcessing();
-          
-          // 停止采集
-          await this.stopCapture();
-        }
         
         // 更新配置
         this.currentConfig = AudioPresets.getConfig(mode);
@@ -462,16 +440,9 @@ export class AudioService {
         // 重置缓冲区
         this.resetBuffers();
         
-        // 如果之前在采集，重新开始采集
-        if (wasCapturing) {
-          await this.startCapture();
-        }
-        
         console.info(`[音频采集] 模式已更新为: ${mode}`);
       } catch (err) {
         console.error(`[音频采集] 更新模式失败: ${err instanceof Error ? err.message : String(err)}`);
-        // 确保状态重置
-        this.setState(AudioServiceState.IDLE);
       }
     });
   }
@@ -587,8 +558,13 @@ export class AudioService {
    * 重置缓冲区
    */
   private resetBuffers(): void {
-    this.tempBuffer = null;
-    this.overlapBuffer = null;
+    // 创建新的临时缓冲区
+    this.tempBuffer = new ArrayBuffer(this.currentConfig.fftSize * 2);
+    
+    // 创建新的重叠缓冲区
+    const overlapSize = Math.floor(this.currentConfig.fftSize * this.currentConfig.overlap);
+    this.overlapBuffer = new ArrayBuffer(overlapSize * 2);
+    
     this.tempBufferOffset = 0;
     this.lastProcessTime = 0;
     this.audioBuffers = [];

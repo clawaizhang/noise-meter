@@ -84,16 +84,6 @@ export struct Settings {
   @Local isRecordEnabled: boolean = false;
   @Local selectedWeighting: WeightingType = WeightingType.A;
   @Local selectedAnalysisMode: AudioAnalysisMode = AudioAnalysisMode.BALANCED;
-  @Local isAnalysisModeChanging: boolean = false;
-
-  // 状态变更回调
-  private onStateChange = (state: AudioServiceState) => {
-    if (state === AudioServiceState.SWITCHING_MODE) {
-      this.isAnalysisModeChanging = true;
-    } else if (state === AudioServiceState.CAPTURING || state === AudioServiceState.IDLE) {
-      this.isAnalysisModeChanging = false;
-    }
-  }
 
   // 工具方法
   private getWeightingIndex(type: WeightingType): number {
@@ -187,26 +177,6 @@ export struct Settings {
     this.isRecordEnabled = this.preferenceService.isEnabled(PreferenceKeyConstants.RECORD);
     this.selectedWeighting = (this.preferenceService.getString(PreferenceKeyConstants.WEIGHTING) || WeightingType.A) as WeightingType;
     this.selectedAnalysisMode = (this.preferenceService.getString(PreferenceKeyConstants.ANALYSIS_MODE) || AudioAnalysisMode.BALANCED) as AudioAnalysisMode;
-    
-    // 注册状态变更监听
-    this.audioService.addStateChangeListener(this.onStateChange);
-  }
-
-  aboutToDisappear() {
-    // 移除状态变更监听
-    this.audioService.removeStateChangeListener(this.onStateChange);
-  }
-
-  @Builder
-  private buildDivider() {
-    Row()
-      .dividerStyle()
-  }
-
-  @Builder
-  private buildDescription(text: ResourceStr | string) {
-    Text(text)
-      .itemDescription()
   }
 
   build() {
@@ -228,31 +198,20 @@ export struct Settings {
 
               Blank()
 
-              Row() {
-                Select([
-                  { value: '快速响应' },
-                  { value: '平衡模式' },
-                  { value: '精确分析' },
-                  { value: '低频分析' }
-                ])
-                  .selected(this.getAnalysisModeIndex(this.selectedAnalysisMode))
-                  .value(this.getAnalysisModeDisplayName(this.selectedAnalysisMode))
-                  .selectStyle()
-                  .enabled(!this.isAnalysisModeChanging)
-                  .onSelect((index: number) => {
-                    const mode = this.getAnalysisModeFromIndex(index);
-                    this.isAnalysisModeChanging = true;
-                    void this.preferenceService.setString(PreferenceKeyConstants.ANALYSIS_MODE, mode);
-                    this.selectedAnalysisMode = mode;
-                  })
-
-                if (this.isAnalysisModeChanging) {
-                  LoadingProgress()
-                    .width(24)
-                    .height(24)
-                    .margin({ left: 8 })
-                }
-              }
+              Select([
+                { value: '快速响应' },
+                { value: '平衡模式' },
+                { value: '精确分析' },
+                { value: '低频分析' }
+              ])
+                .selected(this.getAnalysisModeIndex(this.selectedAnalysisMode))
+                .value(this.getAnalysisModeDisplayName(this.selectedAnalysisMode))
+                .selectStyle()
+                .onSelect((index: number) => {
+                  const mode = this.getAnalysisModeFromIndex(index);
+                  void this.preferenceService.setString(PreferenceKeyConstants.ANALYSIS_MODE, mode);
+                  this.selectedAnalysisMode = mode;
+                })
             }
             .listItemRow()
           }
