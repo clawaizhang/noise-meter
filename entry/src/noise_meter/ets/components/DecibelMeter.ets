@@ -44,6 +44,120 @@ export struct DecibelMeter {
   private currentRecord?: DecibelRecord
   private recordListener?: PreferenceChangeListener
 
+  // Canvas相关属性
+  @Local private canvasWidth: number = 0  // Canvas宽度
+  @Local private canvasHeight: number = 0  // Canvas高度
+  private barWidth: number = 0  // 频谱条宽度
+  private barGap: number = 0  // 频谱条间距
+  private canvasSettings: RenderingContextSettings = new RenderingContextSettings(true)  // Canvas设置
+  private canvasContext: CanvasRenderingContext2D = new CanvasRenderingContext2D(this.canvasSettings)  // Canvas上下文
+
+  // 绘制频谱的方法
+  private drawSpectrum(): void {
+    // 清空画布
+    this.canvasContext.clearRect(0, 0, this.canvasWidth, this.canvasHeight)
+    
+    const padding = 12;
+    // 绘制频谱条
+    for (let i = 0; i < this.displayBars.length; i++) {
+      const height = (this.displayBars[i] / 100) * (this.canvasHeight - padding * 2);
+      const x = padding + i * (this.barWidth + this.barGap);
+      const y = this.canvasHeight - padding - height;
+      
+      // 设置填充颜色
+      this.canvasContext.fillStyle = '#2196F3'
+      // 绘制圆角矩形
+      this.drawRoundedRect(
+        x,
+        y,
+        this.barWidth,
+        height,
+        1  // 圆角半径
+      )
+    }
+  }
+
+  // 绘制圆角矩形的辅助方法
+  private drawRoundedRect(
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+    radius: number
+  ): void {
+    this.canvasContext.beginPath()
+    this.canvasContext.moveTo(x + radius, y)
+    this.canvasContext.lineTo(x + width - radius, y)
+    this.canvasContext.quadraticCurveTo(x + width, y, x + width, y + radius)
+    this.canvasContext.lineTo(x + width, y + height - radius)
+    this.canvasContext.quadraticCurveTo(x + width, y + height, x + width - radius, y + height)
+    this.canvasContext.lineTo(x + radius, y + height)
+    this.canvasContext.quadraticCurveTo(x, y + height, x, y + height - radius)
+    this.canvasContext.lineTo(x, y + radius)
+    this.canvasContext.quadraticCurveTo(x, y, x + radius, y)
+    this.canvasContext.closePath()
+    this.canvasContext.fill()
+  }
+
+  @Builder
+  private SpectrumView() {
+    Column() {
+      // Canvas频谱显示
+      Canvas(this.canvasContext)
+        .width('100%')
+        .height(120)
+        .backgroundColor('#000000')
+        .borderRadius(12)
+        .onAreaChange((oldArea: Area, newArea: Area) => {
+          // 更新Canvas尺寸
+          this.canvasWidth = newArea.width as number;
+          this.canvasHeight = newArea.height as number;
+          
+          // 计算频谱条的尺寸
+          const padding = 12;
+          const totalWidth = this.canvasWidth - padding * 2;
+          const totalBars = 64;
+          
+          // 计算单个频谱条的宽度和间距
+          this.barWidth = Math.floor(totalWidth / totalBars * 0.8);  // 频谱条宽度占80%
+          this.barGap = Math.floor(totalWidth / totalBars * 0.2);    // 间距占20%
+        })
+        .onReady(() => {
+          // 初始化完成后开始绘制
+          this.drawSpectrum()
+        })
+      
+      // 频率刻度
+      Row() {
+        ForEach([0, 62, 125, 250, 500, 1000, 2000, 4000, 8000, 16000], (freq: number) => {
+          Text(freq === 0 ? '0' : freq >= 1000 ? `${freq/1000}k` : freq.toString())
+            .fontSize(10)
+            .fontColor('#999999')
+            .textAlign(TextAlign.Center)
+            .width('10%')
+        })
+      }
+      .width('100%')
+      .padding({ left: 12, right: 12, top: 4 })
+    }
+  }
+
+  aboutToDisappear() {
+    // 原有的清理代码
+    if (this.recordListener) {
+      this.preferenceService.removeChangeListener(PreferenceKeyConstants.RECORD, this.recordListener);
+    }
+    if (this.isRecording) {
+      this.stopRecording();
+    }
+    if (this.releaseTimer !== -1) {
+      clearTimeout(this.releaseTimer);
+      this.releaseTimer = -1;
+    }
+    this.audioService.stopProcessing();
+    this.audioService.stopCapture();
+  }
+
   aboutToAppear() {
     // 获取录音开关状态
     this.isRecordEnabled = this.preferenceService.isEnabled(PreferenceKeyConstants.RECORD);
@@ -64,25 +178,6 @@ export struct DecibelMeter {
     }).catch((error: BusinessError) => {
       console.error('[DecibelMeter] 音频采集启动失败:', error);
     });
-  }
-
-  aboutToDisappear() {
-    // 移除监听器
-    if (this.recordListener) {
-      this.preferenceService.removeChangeListener(PreferenceKeyConstants.RECORD, this.recordListener);
-    }
-    // 如果正在检测，先停止检测
-    if (this.isRecording) {
-      this.stopRecording();
-    }
-    // 清除定时器
-    if (this.releaseTimer !== -1) {
-      clearTimeout(this.releaseTimer);
-      this.releaseTimer = -1;
-    }
-    // 停止所有音频相关操作
-    this.audioService.stopProcessing();
-    this.audioService.stopCapture();
   }
 
   private async startRecording() {
@@ -206,6 +301,9 @@ export struct DecibelMeter {
 
         // 更新计时器
         this.recordingTime = Math.floor((new Date().getTime() - this.startTime) / 1000);
+        
+        // 重新绘制频谱
+        this.drawSpectrum()
       });
     } catch (error) {
       // 如果启动失败，重置状态
@@ -331,62 +429,6 @@ export struct DecibelMeter {
       this.dbSum += value;
       this.dbCount++;
       this.avgDecibel = Math.round(this.dbSum / this.dbCount);
-    }
-  }
-
-  @Builder
-  private SpectrumView() {
-    Column() {
-      // 频谱显示
-      Row() {
-        ForEach(this.displayBars, (height: number, index: number) => {
-          Column() {
-            Column()
-              .width('100%')
-              .height(`${height}%`)
-              .backgroundColor('#2196F3')
-              .borderRadius(1)
-              .animation({
-                duration: 50,
-                curve: Curve.Linear
-              })
-          }
-          .width('1.2%')  // 64个频谱条，每个占总宽度的1.2%
-          .height('100%')
-          .justifyContent(FlexAlign.End)
-        }, (item: number) => item.toString() + new Date().getTime())
-      }
-      .width('100%')
-      .height(120)
-      .backgroundColor('#000000')
-      .padding({ left: 12, right: 12, top: 8, bottom: 8 })
-      .borderRadius(12)
-      .justifyContent(FlexAlign.SpaceBetween)
-      
-      // 频率刻度
-      Row() {
-        ForEach([0, 62, 125, 250, 500, 1000, 2000, 4000, 8000, 16000], (freq: number) => {
-          Text(freq === 0 ? '0' : freq >= 1000 ? `${freq/1000}k` : freq.toString())
-            .fontSize(10)
-            .fontColor('#999999')
-            .textAlign(TextAlign.Center)
-            .width('10%')
-        })
-      }
-      .width('100%')
-      .padding({ left: 12, right: 12, top: 4 })
-      
-      // 调试信息显示
-      Text(this.debugText)
-        .fontSize(12)
-        .fontColor('#666666')
-        .backgroundColor('#F5F5F5')
-        .padding(8)
-        .margin({ top: 8 })
-        .borderRadius(8)
-        .textAlign(TextAlign.Start)
-        .width('100%')
-        .maxLines(5)
     }
   }
 
@@ -546,4 +588,4 @@ export struct DecibelMeter {
       this.stopRecording();
     })
   }
-} 
+}
