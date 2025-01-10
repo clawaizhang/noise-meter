@@ -390,6 +390,23 @@ export struct DecibelMeter {
     }
   }
 
+  private formatDuration(seconds: number): string {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const remainingSeconds = seconds % 60;
+    
+    let result = '';
+    if (hours > 0) {
+      result += `${hours}时`;
+    }
+    if (minutes > 0 || hours > 0) {
+      result += `${minutes}分`;
+    }
+    result += `${remainingSeconds}秒`;
+    
+    return result;
+  }
+
   build() {
     Column() {
       // 频谱显示
@@ -431,7 +448,7 @@ export struct DecibelMeter {
                   Text(' | ')
                     .fontSize(14)
                     .fontColor('#666666')
-                  Text(`${this.recordingTime}秒`)
+                  Text(this.formatDuration(this.recordingTime))
                     .fontSize(14)
                     .fontColor('#666666')
                   Text(' | ')
