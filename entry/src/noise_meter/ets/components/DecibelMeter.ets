@@ -13,6 +13,7 @@ import { PreferenceService, PreferenceChangeListener, PreferenceValue } from '..
 import { PreferenceKeyConstants } from '../../../library/ets/constants/PreferenceKeyConstants';
 import { FrequencyWeighting } from '../../../library/ets/utils/FrequencyWeighting';
 import type { BusinessError } from '@ohos.base';
+import systemIcon from '@ohos.multimedia.image';
 
 @ComponentV2
 export struct DecibelMeter {
@@ -58,7 +59,8 @@ export struct DecibelMeter {
     // 启动音频采集
     this.audioService.startCapture().then(() => {
       console.info('[DecibelMeter] 音频采集启动成功');
-      this.startAnalyzing();
+      // 直接开始检测
+      this.startRecording();
     }).catch((error: BusinessError) => {
       console.error('[DecibelMeter] 音频采集启动失败:', error);
     });
@@ -68,6 +70,10 @@ export struct DecibelMeter {
     // 移除监听器
     if (this.recordListener) {
       this.preferenceService.removeChangeListener(PreferenceKeyConstants.RECORD, this.recordListener);
+    }
+    // 如果正在检测，先停止检测
+    if (this.isRecording) {
+      this.stopRecording();
     }
     // 清除定时器
     if (this.releaseTimer !== -1) {
@@ -190,8 +196,10 @@ export struct DecibelMeter {
         this.recordingTime = 0;
         this.showStats = false;
 
-        // 重新开始分析音频数据
-        this.startAnalyzing();
+        // 自动开始新的检测
+        setTimeout(() => {
+          this.startRecording();
+        }, 500); // 延迟500ms后开始新的检测
 
       } catch (error) {
         console.error('保存记录失败:', error);
@@ -200,6 +208,10 @@ export struct DecibelMeter {
           message: '保存记录失败：' + (error instanceof Error ? error.message : String(error)),
           duration: 3000
         });
+        // 即使保存失败也开始新的检测
+        setTimeout(() => {
+          this.startRecording();
+        }, 500);
       }
     }
   }
@@ -406,20 +418,17 @@ export struct DecibelMeter {
 
   @Builder
   StartStopButton() {
-    // 开始/停止按钮
     Button({
       type: ButtonType.Capsule,
       stateEffect: true
     }) {
       Row() {
-        if (this.isRecording) {
-          Image($r('app.media.ic_stop'))
-            .width(24)
-            .height(24)
-            .margin({ right: 8 })
-            .fillColor(Color.White)
-        }
-        Text(this.isRecording ? '停止检测' : '开始检测')
+        Image($r('app.media.ic_save'))
+          .width(24)
+          .height(24)
+          .margin({ right: 8 })
+          .fillColor(Color.White)
+        Text('保存记录')
           .fontSize(18)
           .fontWeight(FontWeight.Medium)
           .fontColor(Color.White)
@@ -428,13 +437,9 @@ export struct DecibelMeter {
     .width('100%')
     .height(56)
     .margin({ top: 0, left: 16, right: 16 })
-    .backgroundColor(this.isRecording ? '#666666' : '#2196F3')
+    .backgroundColor('#2196F3')
     .onClick(() => {
-      if (this.isRecording) {
-        this.stopRecording()
-      } else {
-        this.startRecording()
-      }
+      this.stopRecording();
     })
   }
 
