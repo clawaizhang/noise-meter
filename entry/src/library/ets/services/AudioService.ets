@@ -19,6 +19,17 @@ const PREF_PROCESS_INTERVAL = 'audio_process_interval';
 const DEFAULT_TARGET_SAMPLES = 8192;
 const DEFAULT_PROCESS_INTERVAL = 50;
 
+/**
+ * 音频服务状态
+ */
+enum AudioServiceState {
+  IDLE = 'IDLE',                     // 空闲状态
+  STARTING = 'STARTING',             // 正在启动
+  CAPTURING = 'CAPTURING',           // 采集中
+  STOPPING = 'STOPPING',             // 正在停止
+  SWITCHING_MODE = 'SWITCHING_MODE'  // 切换模式中
+}
+
 export class AudioService {
   private audioCapturerOptions: audio.AudioCapturerOptions = {
     streamInfo: {
@@ -36,9 +47,11 @@ export class AudioService {
   // 音频采集器实例
   private audioCapturer: audio.AudioCapturer | null = null;
   
+  // 回调函数引用
+  private readDataCallback: ((buffer: ArrayBuffer) => void) | null = null;
+  
   // 状态标志
-  private isCapturing: boolean = false;
-  private isStoppingCapture: boolean = false;
+  private state: AudioServiceState = AudioServiceState.IDLE;
   private isProcessing: boolean = false;
   private isRecording: boolean = false;
   
@@ -141,12 +154,14 @@ export class AudioService {
    * @returns Promise<void>
    */
   public async startCapture(): Promise<void> {
-    if (this.isCapturing) {
-      console.info('[音频采集] 音频采集已在进行中');
+    if (this.state !== AudioServiceState.IDLE) {
+      console.info(`[音频采集] 当前状态 ${this.state} 不允许启动采集`);
       return;
     }
 
     try {
+      this.setState(AudioServiceState.STARTING);
+
       // 检查权限
       console.info('[音频采集] 开始检查麦克风权限');
       const hasPermission = await this.checkMicrophonePermission();
@@ -156,21 +171,19 @@ export class AudioService {
       }
 
       // 创建音频采集器
-      console.info('[音频采集] 开始创建音频采集器, 配置:', JSON.stringify(this.audioCapturerOptions));
+      console.info('[音频采集] 开始创建音频采集器');
       this.audioCapturer = await audio.createAudioCapturer(this.audioCapturerOptions);
       console.info('[音频采集] 音频采集器创建成功');
 
-      // 设置状态
-      this.isCapturing = true;
-      this.isStoppingCapture = false;
-
       // 开始读取音频数据
       await this.startReading();
+      
+      this.setState(AudioServiceState.CAPTURING);
       console.info('[音频采集] 音频采集已启动');
     } catch (err) {
       const errMsg = `启动音频采集失败: ${err instanceof Error ? err.message : String(err)}`;
       console.error(`[音频采集] ${errMsg}`);
-      this.isCapturing = false;
+      this.setState(AudioServiceState.IDLE);
       throw new Error(errMsg);
     }
   }
@@ -181,25 +194,39 @@ export class AudioService {
    */
   private async startReading(): Promise<void> {
     console.info('[音频采集] startReading 开始');
-    if (!this.audioCapturer || !this.isCapturing) {
-      console.error('[音频采集] 音频采集器未初始化或未开始采集');
-      throw new Error('音频采集器未初始化或未开始采集');
+    if (!this.audioCapturer || this.state !== AudioServiceState.STARTING) {
+      console.error('[音频采集] 音频采集器未初始化或状态错误');
+      throw new Error('音频采集器未初始化或状态错误');
     }
 
     try {
       console.info('[音频采集] 准备注册 readData 事件监听器');
       // 注册readData事件监听器
-      this.audioCapturer.on('readData', (buffer: ArrayBuffer) => {
-        if (this.isCapturing && !this.isStoppingCapture) {
-          // 处理音频数据
-          this.processAudioData(buffer);
-          
-          // 如果正在录音，保存数据
-          if (this.isRecording) {
-            this.audioBuffers.push(buffer);
+      const readDataCallback = (buffer: ArrayBuffer) => {
+        try {
+          if (this.state !== AudioServiceState.CAPTURING) {
+            return;
           }
+          
+          // 处理音频数据
+          if (buffer && buffer.byteLength > 0) {
+            this.processAudioData(buffer);
+            
+            // 如果正在录音，保存数据
+            if (this.isRecording) {
+              this.audioBuffers.push(buffer.slice(0));  // 创建副本以避免引用问题
+            }
+          }
+        } catch (err) {
+          console.error('[音频采集] 处理音频数据时出错:', err);
         }
-      });
+      };
+
+      // 使用具名函数以便后续移除监听器
+      this.audioCapturer.on('readData', readDataCallback);
+      
+      // 保存回调引用
+      this.readDataCallback = readDataCallback;
 
       // 启动音频数据读取
       console.info('[音频采集] 准备启动音频采集器');
@@ -222,12 +249,19 @@ export class AudioService {
     }
 
     try {
-      // 移除readData事件监听器
-      this.audioCapturer.off('readData');
-      
-      // 停止音频数据读取
+      // 先停止音频数据读取
       await this.audioCapturer.stop();
       console.info('[音频采集] 停止读取音频数据');
+      
+      // 移除readData事件监听器
+      if (this.readDataCallback) {
+        try {
+          this.audioCapturer.off('readData', this.readDataCallback);
+        } catch (err) {
+          console.warn('[音频采集] 移除readData监听器时出错:', err);
+        }
+        this.readDataCallback = null;
+      }
     } catch (err) {
       const errMsg = `停止音频数据读取失败: ${err instanceof Error ? err.message : String(err)}`;
       console.error(`[音频采集] ${errMsg}`);
@@ -239,31 +273,41 @@ export class AudioService {
    * 停止采集音频
    */
   public async stopCapture(): Promise<void> {
-    if (!this.isCapturing) {
+    if (this.state !== AudioServiceState.CAPTURING && 
+        this.state !== AudioServiceState.SWITCHING_MODE) {
+      console.info(`[音频采集] 当前状态 ${this.state} 不需要停止采集`);
       return;
     }
 
     try {
-      this.isStoppingCapture = true;
+      this.setState(AudioServiceState.STOPPING);
+      
+      // 停止处理
+      this.stopProcessing();
       
       // 停止读取音频数据
       await this.stopReading();
 
       // 释放音频采集器
       if (this.audioCapturer) {
-        await this.audioCapturer.release();
+        try {
+          await this.audioCapturer.release();
+        } catch (err) {
+          console.warn('[音频采集] 释放音频采集器时出错:', err);
+        }
         this.audioCapturer = null;
       }
 
-      // 重置状态
-      this.isCapturing = false;
-      this.isStoppingCapture = false;
+      // 重置缓冲区
       this.resetBuffers();
-
+      
+      this.setState(AudioServiceState.IDLE);
       console.info('[音频采集] 音频采集已停止');
     } catch (err) {
       const errMsg = `停止音频采集失败: ${err instanceof Error ? err.message : String(err)}`;
       console.error(`[音频采集] ${errMsg}`);
+      // 即使出错也要重置状态
+      this.setState(AudioServiceState.IDLE);
       throw new Error(errMsg);
     }
   }
@@ -298,7 +342,7 @@ export class AudioService {
    * 是否正在采集音频
    */
   isAudioCapturing(): boolean {
-    return this.isCapturing;
+    return this.state === AudioServiceState.CAPTURING;
   }
 
   /**
@@ -355,11 +399,17 @@ export class AudioService {
 
   /**
    * 处理音频分析模式变更
-   * @param value 新的模式值
    */
   private handleModeChange(value: string): void {
     void Promise.resolve().then(async () => {
       try {
+        // 如果不是空闲或采集状态，不允许切换模式
+        if (this.state !== AudioServiceState.IDLE && 
+            this.state !== AudioServiceState.CAPTURING) {
+          console.info(`[音频采集] 当前状态 ${this.state} 不允许切换模式`);
+          return;
+        }
+
         // 验证并转换模式
         if (!Object.values(AudioAnalysisMode).includes(value as AudioAnalysisMode)) {
           throw new Error(`无效的音频分析模式: ${value}`);
@@ -367,10 +417,15 @@ export class AudioService {
         const mode = value as AudioAnalysisMode;
 
         // 记录当前状态
-        const wasCapturing = this.isCapturing;
+        const wasCapturing = this.state === AudioServiceState.CAPTURING;
         
-        // 如果正在采集，先停止
         if (wasCapturing) {
+          this.setState(AudioServiceState.SWITCHING_MODE);
+          
+          // 先停止处理
+          this.stopProcessing();
+          
+          // 停止采集
           await this.stopCapture();
         }
         
@@ -391,6 +446,8 @@ export class AudioService {
         console.info(`[音频采集] 模式已更新为: ${mode}`);
       } catch (err) {
         console.error(`[音频采集] 更新模式失败: ${err instanceof Error ? err.message : String(err)}`);
+        // 确保状态重置
+        this.setState(AudioServiceState.IDLE);
       }
     });
   }
@@ -403,7 +460,7 @@ export class AudioService {
     this.preferenceService.removeChangeListener(PREF_ANALYSIS_MODE, this.handleModeChange);
     
     // 停止采集
-    if (this.isCapturing) {
+    if (this.state === AudioServiceState.CAPTURING) {
       this.stopCapture();
     }
   }
@@ -430,7 +487,7 @@ export class AudioService {
    * @param buffer 音频数据缓冲区
    */
   private processAudioData(buffer: ArrayBuffer): void {
-    if (!this.isCapturing || this.isStoppingCapture || !buffer || buffer.byteLength === 0) {
+    if (this.state !== AudioServiceState.CAPTURING) {
       return;
     }
 
@@ -540,5 +597,14 @@ export class AudioService {
    */
   public getCurrentFFTSize(): number {
     return this.currentConfig.fftSize;
+  }
+
+  /**
+   * 设置服务状态
+   */
+  private setState(newState: AudioServiceState): void {
+    const oldState = this.state;
+    this.state = newState;
+    console.info(`[音频采集] 状态变更: ${oldState} -> ${newState}`);
   }
 }

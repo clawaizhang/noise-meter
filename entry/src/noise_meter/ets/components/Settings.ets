@@ -217,9 +217,9 @@ export struct Settings {
                 .selected(this.getAnalysisModeIndex(this.selectedAnalysisMode))
                 .value(this.getAnalysisModeDisplayName(this.selectedAnalysisMode))
                 .selectStyle()
-                .onSelect(async (index: number) => {
+                .onSelect((index: number) => {
                   const mode = this.getAnalysisModeFromIndex(index);
-                  await this.preferenceService.setString(PreferenceKeyConstants.ANALYSIS_MODE, mode);
+                  void this.preferenceService.setString(PreferenceKeyConstants.ANALYSIS_MODE, mode);
                   this.selectedAnalysisMode = mode;
                 })
             }
@@ -269,9 +269,9 @@ export struct Settings {
                 .selected(this.getWeightingIndex(this.selectedWeighting))
                 .value(this.selectedWeighting + '计权')
                 .selectStyle()
-                .onSelect(async (index: number) => {
+                .onSelect((index: number) => {
                   const weightingType = this.getWeightingType(index);
-                  await this.preferenceService.setString(PreferenceKeyConstants.WEIGHTING, weightingType);
+                  void this.preferenceService.setString(PreferenceKeyConstants.WEIGHTING, weightingType);
                   this.selectedWeighting = weightingType;
                 })
             }
@@ -303,8 +303,8 @@ export struct Settings {
               Toggle({ type: ToggleType.Switch, isOn: this.isLocationEnabled })
                 .selectedColor('#0091FF')
                 .switchPointColor('#FFFFFF')
-                .onChange(async (isOn: boolean) => {
-                  await this.preferenceService.setEnabled(PreferenceKeyConstants.LOCATION, isOn);
+                .onChange((isOn: boolean) => {
+                  void this.preferenceService.setEnabled(PreferenceKeyConstants.LOCATION, isOn);
                   this.isLocationEnabled = isOn;
                 })
             }
@@ -336,8 +336,8 @@ export struct Settings {
               Toggle({ type: ToggleType.Switch, isOn: this.isRecordEnabled })
                 .selectedColor('#0091FF')
                 .switchPointColor('#FFFFFF')
-                .onChange(async (isOn: boolean) => {
-                  await this.preferenceService.setEnabled(PreferenceKeyConstants.RECORD, isOn);
+                .onChange((isOn: boolean) => {
+                  void this.preferenceService.setEnabled(PreferenceKeyConstants.RECORD, isOn);
                   this.isRecordEnabled = isOn;
                 })
             }
