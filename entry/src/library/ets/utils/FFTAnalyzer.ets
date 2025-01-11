@@ -659,4 +659,36 @@ export class FFTAnalyzer {
     
     return 0.06 + 20.0 * Math.log10(num / den);
   }
+
+  /**
+   * 计算 FFT 频率 bin 的中心频率
+   * @param index FFT bin 索引
+   * @param sampleRate 采样率
+   * @param fftSize FFT 大小
+   * @returns 该 bin 的中心频率
+   */
+  public static calculateCenterFrequency(index: number, sampleRate: number, fftSize: number): number {
+    // 标准计算方法：每个 bin 的中心频率
+    const centerFreq = (index * sampleRate) / (2 * fftSize);
+    
+    // 对数映射（可选）
+    const logCenterFreq = Math.pow(2, Math.log2(centerFreq));
+    
+    console.info(`[FFT_TRACE] 频率 Bin 索引: ${index}, 中心频率: ${centerFreq.toFixed(2)}Hz, 对数映射频率: ${logCenterFreq.toFixed(2)}Hz`);
+    
+    return centerFreq;
+  }
+
+  /**
+   * 打印完整的频率 bin 映射信息
+   * @param sampleRate 采样率
+   * @param fftSize FFT 大小
+   */
+  public static printFrequencyBinMapping(sampleRate: number, fftSize: number): void {
+    console.info(`[FFT_TRACE] 频率映射信息 - 采样率: ${sampleRate}Hz, FFT大小: ${fftSize}`);
+    
+    for (let i = 0; i < fftSize / 2; i += 50) {  // 每 50 个 bin 打印一次
+      FFTAnalyzer.calculateCenterFrequency(i, sampleRate, fftSize);
+    }
+  }
 }
