@@ -807,20 +807,25 @@ export struct DecibelMeter {
       }) {
         Row() {
           Image($r('app.media.ic_reset'))
-            .width(24)
-            .height(24)
-            .margin({ right: 8 })
+            .width(16)
+            .height(16)
+            .margin({ right: 4 })
             .fillColor(Color.White)
           Text('重置')
-            .fontSize(18)
+            .fontSize(13)
             .fontWeight(FontWeight.Medium)
             .fontColor(Color.White)
         }
       }
-      .width('40%')
-      .height(56)
+      .width('30%')  // 进一步减小宽度
+      .height(42)  // 略微降低高度
       .margin({ top: 0, left: 16, right: 8 })
-      .backgroundColor('#9E9E9E')  // 灰色按钮
+      .backgroundColor('#4A90E2')  // 柔和的灰蓝色
+      .shadow({
+        radius: 4,
+        color: '#1A4A90E2',  // 轻微阴影
+        offsetY: 2
+      })
       .onClick(() => {
         // 重置音频数据和统计信息
         this.audioService.resetData();
@@ -833,20 +838,25 @@ export struct DecibelMeter {
       }) {
         Row() {
           Image($r('app.media.ic_save'))
-            .width(24)
-            .height(24)
-            .margin({ right: 8 })
+            .width(16)
+            .height(16)
+            .margin({ right: 4 })
             .fillColor(Color.White)
           Text('保存')
-            .fontSize(18)
+            .fontSize(13)
             .fontWeight(FontWeight.Medium)
             .fontColor(Color.White)
         }
       }
-      .width('40%')
-      .height(56)
+      .width('30%')  // 进一步减小宽度
+      .height(42)  // 略微降低高度
       .margin({ top: 0, left: 8, right: 16 })
-      .backgroundColor('#2196F3')
+      .backgroundColor('#1A5A9E')  // 深蓝色
+      .shadow({
+        radius: 4,
+        color: '#1A1A5A9E',  // 轻微阴影
+        offsetY: 2
+      })
       .onClick(() => {
         this.stopRecording();
       })
