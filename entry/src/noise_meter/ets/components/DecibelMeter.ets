@@ -600,7 +600,7 @@ export struct DecibelMeter {
         // 绘制主频谱折线
         this.canvasContext.beginPath();
         this.canvasContext.strokeStyle = '#2196F3'; // 主曲线用蓝色
-        this.canvasContext.lineWidth = 1;
+        this.canvasContext.lineWidth = 0.5;
 
         // 遍历所有FFT点之前，先打印长度信息
         console.info(`[SPECTRUM_TRACE] rawSpectrum长度: ${rawSpectrum ? rawSpectrum.length : '未定义'}`);
@@ -614,6 +614,9 @@ export struct DecibelMeter {
 
         // 标记是否找到第一个有效点
         let isFirstValidPoint = true;
+        // 记录上一个绘制点的坐标
+        let lastX: number | null = null;
+        let lastY: number | null = null;
 
         for (let i = 0; i < this.currentFftSize; i++) {
           const centerFreq: number = FFTAnalyzer.calculateCenterFrequency(i, this.SAMPLE_RATE, this.currentFftSize);
@@ -631,31 +634,38 @@ export struct DecibelMeter {
           const logMin: number = Math.log10(16);
           const logMax: number = Math.log10(16000);
           
-          // X坐标详细计算日志
-          console.info(`[X_COORD_TRACE] 频率=${centerFreq.toFixed(2)}Hz`);
-          console.info(`[X_COORD_TRACE] 对数频率: 当前=${logFreq.toFixed(4)}, 最小=${logMin.toFixed(4)}, 最大=${logMax.toFixed(4)}`);
-          console.info(`[X_COORD_TRACE] 对数频率归一化: ${((logFreq - logMin) / (logMax - logMin)).toFixed(4)}`);
-          
           const x: number = this.PADDING_LEFT +
             ((logFreq - logMin) / (logMax - logMin)) * (this.canvasWidth - this.PADDING_LEFT - this.PADDING_RIGHT);
-          
-          console.info(`[X_COORD_TRACE] X坐标计算: 
-            - 起始点(PADDING_LEFT)=${this.PADDING_LEFT}
-            - 可用宽度=${this.canvasWidth - this.PADDING_LEFT - this.PADDING_RIGHT}
-            - 最终X坐标=${x.toFixed(2)}`);
 
           const value: number = Math.max(this.MIN_DB, Math.min(this.MAX_DB, rawSpectrum[i]));
           const normalizedValue: number = (value - this.MIN_DB) / (this.MAX_DB - this.MIN_DB);
           const height: number = (this.canvasHeight - this.PADDING_TOP - this.PADDING_BOTTOM) * normalizedValue;
           const y: number = this.canvasHeight - this.PADDING_BOTTOM - height;
 
-          // 只在找到第一个有效点时使用moveTo
-          if (isFirstValidPoint) {
-            this.canvasContext.moveTo(x, y);
-            isFirstValidPoint = false;
-            console.info(`[CANVAS_TRACE] 第一个有效点: 频率=${centerFreq.toFixed(2)}Hz, X=${x.toFixed(2)}, Y=${y.toFixed(2)}`);
+          // 转换为整数坐标
+          const intX = Math.round(x);
+          const intY = Math.round(y);
+          console.info(`[CANVAS_TRACE] X, Y: 频率=${centerFreq.toFixed(2)}Hz, X=${intX}, Y=${intY}`);
+
+          // 检查是否为重复点
+          const isDuplicatePoint = lastX !== null && lastY !== null && 
+            intX === lastX && intY === lastY;
+
+          // 只在找到第一个有效点或非重复点时绘制
+          if (isFirstValidPoint || !isDuplicatePoint) {
+            if (isFirstValidPoint) {
+              this.canvasContext.moveTo(x, y);
+              isFirstValidPoint = false;
+              console.info(`[CANVAS_TRACE] 第一个有效点: 频率=${centerFreq.toFixed(2)}Hz, X=${x.toFixed(2)}, Y=${y.toFixed(2)}`);
+            } else {
+              this.canvasContext.lineTo(x, y);
+            }
+            
+            // 更新最后一个绘制点的坐标
+            lastX = intX;
+            lastY = intY;
           } else {
-            this.canvasContext.lineTo(x, y);
+            console.info(`[CANVAS_TRACE] 跳过重复点: 频率=${centerFreq.toFixed(2)}Hz, X=${x.toFixed(2)}, Y=${y.toFixed(2)}`);
           }
         }
         this.canvasContext.stroke();
