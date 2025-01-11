@@ -98,35 +98,47 @@ export struct DecibelMeter {
     // 绘制频谱条
     for (let i = 0; i < this.TOTAL_BARS; i++) {
       const height: number = (this.displayBars[i] / 100) * effectiveHeight;
-      // 确保x位置精确计算，避免累积误差
       const x: number = padding + (i * effectiveWidth / this.TOTAL_BARS);
       const y: number = this.canvasHeight - padding - height;
-      
-      // 确保最小宽度为1像素
       const actualBarWidth: number = Math.max(1, Math.floor(effectiveWidth / this.TOTAL_BARS * 0.8));
+      const lineHeight: number = 2;  // 设置横线高度为4像素
       
-      // 输出一些柱子的位置信息，用于调试
-      if (i % 10 === 0) {
-        console.info(`[频谱图] 柱子${i}: x=${x.toFixed(1)}, y=${y.toFixed(1)}, width=${actualBarWidth}, height=${height.toFixed(1)}`);
-      }
-      
-      // 设置填充颜色
-      this.canvasContext.fillStyle = '#2196F3';
-      
-      // 绘制圆角矩形
-      this.drawRoundedRect(
+      // 创建横条的渐变色
+      const gradient = this.canvasContext.createLinearGradient(
         x,
         y,
-        actualBarWidth,
-        height,
-        1  // 圆角半径
+        x + actualBarWidth,
+        y
       );
-
-      // 如果是最高柱子,在其顶部显示频率值
-      if (this.displayBars[i] === Math.max(...this.displayBars)) {
-        this.canvasContext.fillStyle = '#FFFFFF';
+      
+      // 判断是否是峰值频率对应的点
+      const isPeakFreq = this.displayBars[i] === Math.max(...this.displayBars);
+      
+      if (isPeakFreq) {
+        // 峰值频率点使用橙色渐变
+        gradient.addColorStop(0, '#FFA50000');
+        gradient.addColorStop(0.2, '#FFA500');
+        gradient.addColorStop(0.8, '#FFA500');
+        gradient.addColorStop(1, '#FFA50000');
+      } else {
+        // 普通频率点使用蓝色渐变
+        gradient.addColorStop(0, '#2196F300');
+        gradient.addColorStop(0.2, '#2196F3');
+        gradient.addColorStop(0.8, '#2196F3');
+        gradient.addColorStop(1, '#2196F300');
+      }
+      
+      // 设置渐变填充
+      this.canvasContext.fillStyle = gradient;
+      
+      // 绘制横线（高度为4像素，居中显示）
+      this.canvasContext.fillRect(x, y - lineHeight/2, actualBarWidth, lineHeight);
+      
+      // 如果是峰值频率点，显示频率值
+      if (isPeakFreq) {
+        this.canvasContext.fillStyle = '#FFA500';  // 改用橙色显示文字
         this.canvasContext.textAlign = 'center';
-        this.canvasContext.font = '32px Arial';
+        this.canvasContext.font = 'bold 32px Arial';  // 添加bold使字体加粗
         this.canvasContext.fillText(
           `${Math.round(this.peakFreq)}Hz`,
           x + actualBarWidth/2,
