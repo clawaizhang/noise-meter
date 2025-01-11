@@ -242,6 +242,10 @@ export class FrequencyWeighting {
       return new Float32Array(1024);
     }
   }
+
+  public static calculateAverageDb(weightedSpectrum: Float32Array): number {
+    return FrequencyWeighting.fftAnalyzer.calculateAverageDb(weightedSpectrum);
+  }
   
   /**
    * 获取特定频段的能量

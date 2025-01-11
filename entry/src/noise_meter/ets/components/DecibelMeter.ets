@@ -122,23 +122,23 @@ export struct DecibelMeter {
   // 绘制频谱的方法
   private drawSpectrum(buffer: ArrayBuffer): void {
     if (this.canvasContext) {
-      console.info(`[FREQ_TRACE][Spectrum] 开始绘制，Canvas尺寸: ${this.canvasWidth}x${this.canvasHeight}`);
+      // console.info(`[FREQ_TRACE][Spectrum] 开始绘制，Canvas尺寸: ${this.canvasWidth}x${this.canvasHeight}`);
       // 清除画布
       this.canvasContext.clearRect(0, 0, this.canvasWidth, this.canvasHeight);
 
       // 计算实际可用的绘制区域
-      const effectiveWidth: number = this.canvasWidth - this.PADDING_LEFT - this.PADDING_RIGHT;
+      // const effectiveWidth: number = this.canvasWidth - this.PADDING_LEFT - this.PADDING_RIGHT;
       const effectiveHeight: number = this.canvasHeight - this.PADDING_TOP - this.PADDING_BOTTOM;
-      console.info(`[FREQ_TRACE][Canvas] 实际可绘制区域: ${effectiveWidth}x${effectiveHeight}, 内边距: 上${this.PADDING_TOP} 下${this.PADDING_BOTTOM} 左${this.PADDING_LEFT} 右${this.PADDING_RIGHT}`);
-      console.info(`[FREQ_TRACE][Grid] 分贝范围: ${this.MIN_DB} ~ ${this.MAX_DB}`);
-      console.info(`[FREQ_TRACE][Grid] 网格步进: ${this.DB_STEP}`);
-      console.info(`[FREQ_TRACE][Grid] Canvas高度: ${this.canvasHeight}`);
-      console.info(`[FREQ_TRACE][Grid] PADDING_TOP: ${this.PADDING_TOP}, PADDING_BOTTOM: ${this.PADDING_BOTTOM}`);
-      console.info(`[FREQ_TRACE][Grid] 有效高度: ${effectiveHeight}`);
+      // console.info(`[FREQ_TRACE][Canvas] 实际可绘制区域: ${effectiveWidth}x${effectiveHeight}, 内边距: 上${this.PADDING_TOP} 下${this.PADDING_BOTTOM} 左${this.PADDING_LEFT} 右${this.PADDING_RIGHT}`);
+      // console.info(`[FREQ_TRACE][Grid] 分贝范围: ${this.MIN_DB} ~ ${this.MAX_DB}`);
+      // console.info(`[FREQ_TRACE][Grid] 网格步进: ${this.DB_STEP}`);
+      // console.info(`[FREQ_TRACE][Grid] Canvas高度: ${this.canvasHeight}`);
+      // console.info(`[FREQ_TRACE][Grid] PADDING_TOP: ${this.PADDING_TOP}, PADDING_BOTTOM: ${this.PADDING_BOTTOM}`);
+      // console.info(`[FREQ_TRACE][Grid] 有效高度: ${effectiveHeight}`);
 
       // 分贝网格点生成
       const dbSteps: number[] = [-20, 0, 20, 40, 60, 80, 100, 120];
-      console.info(`[FREQ_TRACE][Grid] 分贝网格点: ${dbSteps.join(', ')}`);
+      // console.info(`[FREQ_TRACE][Grid] 分贝网格点: ${dbSteps.join(', ')}`);
 
       // 频率步进点生成
       const frequencySteps: number[] = [16, 31.5, 63, 125, 250, 500, 1000, 2000, 4000, 8000, 16000];
@@ -147,7 +147,7 @@ export struct DecibelMeter {
 
       // 仅在第一次绘制时记录频率步进点
       if (this.isFirstFrequencyRun) {
-        console.info(`[FREQ_TRACE][Frequency] 频率步进点: ${frequencySteps.join(', ')}`);
+        // console.info(`[FREQ_TRACE][Frequency] 频率步进点: ${frequencySteps.join(', ')}`);
         this.isFirstFrequencyRun = false;
       }
 
@@ -159,7 +159,7 @@ export struct DecibelMeter {
         const logFreq: number = Math.log10(freq);
         const normalizedLogFreq: number = (logFreq - Math.log10(MIN_FREQ)) / (Math.log10(MAX_FREQ) - Math.log10(MIN_FREQ));
         
-        console.info(`[FREQ_TRACE][Frequency] 频率: ${freq}Hz, 原始对数映射: ${logFreq}, 归一化对数映射: ${normalizedLogFreq.toFixed(4)}`);
+        // console.info(`[FREQ_TRACE][Frequency] 频率: ${freq}Hz, 原始对数映射: ${logFreq}, 归一化对数映射: ${normalizedLogFreq.toFixed(4)}`);
       }
 
       // 绘制分贝刻度
@@ -208,12 +208,12 @@ export struct DecibelMeter {
           );
         }
 
-        console.info(`[FREQ_TRACE][Grid] 分贝: ${db}, Y坐标: ${y}`);
+        // console.info(`[FREQ_TRACE][Grid] 分贝: ${db}, Y坐标: ${y}`);
       }
 
       // 频率网格点生成（1/3八度间隔）
-      const frequencySteps1: number[] = [16, 31.5, 63, 125, 250, 500, 1000, 2000, 4000, 8000, 16000];
-      console.info(`[FREQ_TRACE][Freq] 频率网格点: ${frequencySteps1.join(', ')}`);
+      // const frequencySteps1: number[] = [16, 31.5, 63, 125, 250, 500, 1000, 2000, 4000, 8000, 16000];
+      // console.info(`[FREQ_TRACE][Freq] 频率网格点: ${frequencySteps1.join(', ')}`);
 
       // 绘制频率刻度
       this.canvasContext.textAlign = 'left';  // 改为左对齐
@@ -273,22 +273,22 @@ export struct DecibelMeter {
           hundredDbY - 5  // 略微高于横线
         );
 
-        console.info(`[FREQ_TRACE][Freq] 频率: ${freq}, X坐标: ${x}`);
+        // console.info(`[FREQ_TRACE][Freq] 频率: ${freq}, X坐标: ${x}`);
       }
 
       // 使用 FFTAnalyzer 的频率映射工具方法
-      FFTAnalyzer.printFrequencyBinMapping(this.SAMPLE_RATE, this.currentFftSize);
+      // FFTAnalyzer.printFrequencyBinMapping(this.SAMPLE_RATE, this.currentFftSize);
 
-      for (let i = 0; i < this.currentFftSize / 2; i++) {
-        // 使用标准频率计算方法
-        const centerFreq: number = FFTAnalyzer.calculateCenterFrequency(i, this.SAMPLE_RATE, this.currentFftSize);
-        
-        // 计算x坐标
-        const normalizedIndex: number = i / (this.currentFftSize / 2);
-        const x: number = this.canvasWidth * normalizedIndex;
-        
-        console.info(`[FREQ_TRACE][FrequencyBin] 频率映射 - 索引: ${i}, 中心频率: ${centerFreq.toFixed(2)}Hz, X坐标: ${x.toFixed(2)}`);
-      }
+      // for (let i = 0; i < this.currentFftSize / 2; i++) {
+      //   // 使用标准频率计算方法
+      //   const centerFreq: number = FFTAnalyzer.calculateCenterFrequency(i, this.SAMPLE_RATE, this.currentFftSize);
+      //
+      //   // 计算x坐标
+      //   const normalizedIndex: number = i / (this.currentFftSize / 2);
+      //   const x: number = this.canvasWidth * normalizedIndex;
+      //
+      //   console.info(`[FREQ_TRACE][FrequencyBin] 频率映射 - 索引: ${i}, 中心频率: ${centerFreq.toFixed(2)}Hz, X坐标: ${x.toFixed(2)}`);
+      // }
 
       // 获取频谱数据并记录范围
       const rawSpectrum: Float32Array = FrequencyWeighting.getSpectrumData(buffer);
@@ -300,13 +300,13 @@ export struct DecibelMeter {
           maxSpectrum = Math.max(maxSpectrum, value);
         }
       }
-      console.info(`[FREQ_TRACE][Spectrum] 原始频谱数据范围: ${minSpectrum.toFixed(2)}dB ~ ${maxSpectrum.toFixed(2)}dB`);
+      // console.info(`[FREQ_TRACE][Spectrum] 原始频谱数据范围: ${minSpectrum.toFixed(2)}dB ~ ${maxSpectrum.toFixed(2)}dB`);
 
       // 添加详细的频谱数据调试日志
-      const MIN_DB_THRESHOLD: number = -120.0; // 定义一个明确的最小分贝阈值
-      console.info(`频谱数据调试: 长度=${rawSpectrum.length}, 非零值数量=${rawSpectrum.filter(v => v > MIN_DB_THRESHOLD).length}`);
-      console.info(`前10个频谱值: ${rawSpectrum.slice(0, 10).map(v => v).join(', ')}`);
-      console.info(`最后10个频谱值: ${rawSpectrum.slice(-10).map(v => v).join(', ')}`);
+      // const MIN_DB_THRESHOLD: number = -120.0; // 定义一个明确的最小分贝阈值
+      // console.info(`频谱数据调试: 长度=${rawSpectrum.length}, 非零值数量=${rawSpectrum.filter(v => v > MIN_DB_THRESHOLD).length}`);
+      // console.info(`前10个频谱值: ${rawSpectrum.slice(0, 10).map(v => v).join(', ')}`);
+      // console.info(`最后10个频谱值: ${rawSpectrum.slice(-10).map(v => v).join(', ')}`);
 
       // 预计算频率相关的常量
       const octaveRatio: number = Math.pow(2, 1 / 3); // 每1/3个八度的比例
@@ -316,14 +316,14 @@ export struct DecibelMeter {
       this.peakFreq = 0;
 
       // 记录一些关键频点的计算结果
-      const debugFreqs: number[] = [16, 1000, 16000]; // 记录这些特定频率点的计算结果
-      for (const freq of debugFreqs) {
-        const logFreq: number = Math.log10(freq);
-        const logMin: number = Math.log10(16);
-        const logMax: number = Math.log10(16000);
-        const x: number = this.PADDING_LEFT + ((logFreq - logMin) / (logMax - logMin)) * effectiveWidth;
-        console.info(`[FREQ_TRACE][Coordinates] 频率${freq}Hz -> x坐标: ${x.toFixed(2)}`);
-      }
+      // const debugFreqs: number[] = [16, 1000, 16000]; // 记录这些特定频率点的计算结果
+      // for (const freq of debugFreqs) {
+      //   const logFreq: number = Math.log10(freq);
+      //   const logMin: number = Math.log10(16);
+      //   const logMax: number = Math.log10(16000);
+      //   const x: number = this.PADDING_LEFT + ((logFreq - logMin) / (logMax - logMin)) * effectiveWidth;
+      //   console.info(`[FREQ_TRACE][Coordinates] 频率${freq}Hz -> x坐标: ${x.toFixed(2)}`);
+      // }
 
       // 按照八度分频计算每个频点
       let pointsAboveZero: number = 0;
@@ -340,15 +340,12 @@ export struct DecibelMeter {
         const lowerBin: number = Math.max(1, Math.floor(lowerFreq * this.currentFftSize / this.SAMPLE_RATE));
         const upperBin: number = Math.min(Math.floor(upperFreq * this.currentFftSize / this.SAMPLE_RATE), rawSpectrum.length - 1);
 
-        let sum: number = 0;
-        let count: number = 0;
-
+        let binSpectrum = new Float32Array();
         // 计算频段内的平均能量
         for (let bin = lowerBin; bin <= upperBin; bin++) {
           const value: number = rawSpectrum[bin];
           if (isFinite(value)) {
-            sum += value;
-            count++;
+            binSpectrum.fill(value);
             if (value > maxValue) {
               maxValue = value;
               maxIndex = bin;
@@ -358,8 +355,8 @@ export struct DecibelMeter {
         }
 
         // 计算高度
-        if (count > 0) {
-          const avgDb: number = sum / count;
+        if (binSpectrum.length > 0) {
+          const avgDb: number = FrequencyWeighting.calculateAverageDb(binSpectrum);
           const normalizedValue: number = (avgDb - this.MIN_DB) / (this.MAX_DB - this.MIN_DB);
           newDisplayPoints[i] = effectiveHeight * Math.max(0, Math.min(1, normalizedValue));
         } else {
@@ -371,20 +368,20 @@ export struct DecibelMeter {
         }
         totalPoints++;
 
-        if (i % (this.currentFftSize / 8) === 0) { // 每1/8的点记录一次
-          console.info(`[FREQ_TRACE][Points] 索引${i}: 高度=${newDisplayPoints[i].toFixed(2)}, ` +
-            `对应频率=${(i * this.SAMPLE_RATE / this.currentFftSize).toFixed(2)}Hz`);
-        }
+        // if (i % (this.currentFftSize / 8) === 0) { // 每1/8的点记录一次
+        //   console.info(`[FREQ_TRACE][Points] 索引${i}: 高度=${newDisplayPoints[i].toFixed(2)}, ` +
+        //     `对应频率=${(i * this.SAMPLE_RATE / this.currentFftSize).toFixed(2)}Hz`);
+        // }
       }
-      console.info(`[FREQ_TRACE][Statistics] 总点数: ${totalPoints}, 高度大于0的点数: ${pointsAboveZero}`);
+      // console.info(`[FREQ_TRACE][Statistics] 总点数: ${totalPoints}, 高度大于0的点数: ${pointsAboveZero}`);
 
-      // 打印详细的频谱数据调试信息
-      console.info(`[FREQ_TRACE][SpectrumDebug] 
-        频谱数据长度: ${newDisplayPoints.length}
-        原始数据: ${newDisplayPoints.join(', ')}
-        最大值索引: ${maxIndex}
-        最大值: ${maxValue}
-        最大值对应的频率: ${this.peakFreq}Hz`);
+      // // 打印详细的频谱数据调试信息
+      // console.info(`[FREQ_TRACE][SpectrumDebug]
+      //   频谱数据长度: ${newDisplayPoints.length}
+      //   原始数据: ${newDisplayPoints.join(', ')}
+      //   最大值索引: ${maxIndex}
+      //   最大值: ${maxValue}
+      //   最大值对应的频率: ${this.peakFreq}Hz`);
 
       // 显示峰值频率
       if (this.peakFreq > 0) {
@@ -411,13 +408,40 @@ export struct DecibelMeter {
       // 绘制主频谱折线
       this.canvasContext.beginPath();
       this.canvasContext.strokeStyle = '#2196F3'; // 主曲线用蓝色
-      this.canvasContext.lineWidth = 2;
+      this.canvasContext.lineWidth = 0.5;
 
-      for (let i = 0; i < this.currentFftSize / 2; i++) {
+      // // 遍历所有FFT点之前，先打印长度信息
+      // console.info(`[SPECTRUM_TRACE] rawSpectrum长度: ${rawSpectrum ? rawSpectrum.length : '未定义'}`);
+      // console.info(`[SPECTRUM_TRACE] currentFftSize: ${this.currentFftSize}`);
+      // console.info(`[SPECTRUM_TRACE] 理论频谱长度: ${this.currentFftSize / 2}`);
+      //
+      // // 遍历所有FFT点
+      // console.info(`[CANVAS_TRACE] Canvas实际尺寸: 宽度=${this.canvasWidth}, 高度=${this.canvasHeight}`);
+      // console.info(`[CANVAS_TRACE] 绘图区域边距: 左=${this.PADDING_LEFT}, 右=${this.PADDING_RIGHT}, 上=${this.PADDING_TOP}, 下=${this.PADDING_BOTTOM}`);
+      // console.info(`[CANVAS_TRACE] 可绘制宽度: ${this.canvasWidth - this.PADDING_LEFT - this.PADDING_RIGHT}`);
+
+      // 标记是否找到第一个有效点
+      let isFirstValidPoint = true;
+      // 记录上一个绘制点的坐标
+      let lastX: number | null = null;
+      let lastY: number | null = null;
+
+      for (let i = 0; i < this.currentFftSize; i++) {
         const centerFreq: number = FFTAnalyzer.calculateCenterFrequency(i, this.SAMPLE_RATE, this.currentFftSize);
+        if (centerFreq < 16 || centerFreq > 16000) {
+          continue;
+        } // 只显示16Hz-16kHz的范围
+
+        // 安全检查：确保rawSpectrum存在且有效
+        if (!rawSpectrum || i >= rawSpectrum.length) {
+          // console.error(`[CANVAS_TRACE] 警告：rawSpectrum[${i}]越界或未定义`);
+          continue;
+        }
+
         const logFreq: number = Math.log10(centerFreq);
         const logMin: number = Math.log10(16);
         const logMax: number = Math.log10(16000);
+
         const x: number = this.PADDING_LEFT +
           ((logFreq - logMin) / (logMax - logMin)) * (this.canvasWidth - this.PADDING_LEFT - this.PADDING_RIGHT);
 
@@ -426,44 +450,34 @@ export struct DecibelMeter {
         const height: number = (this.canvasHeight - this.PADDING_TOP - this.PADDING_BOTTOM) * normalizedValue;
         const y: number = this.canvasHeight - this.PADDING_BOTTOM - height;
 
-        // 添加坐标和频率的详细日志
-        console.info(`[CANVAS_TRACE] 频率=${centerFreq.toFixed(2)}Hz, 索引=${i}, X坐标=${x.toFixed(2)}, Y坐标=${y.toFixed(2)}, 原始分贝=${rawSpectrum[i].toFixed(2)}, 归一化值=${normalizedValue.toFixed(4)}`);
+        // 转换为整数坐标
+        const intX = Math.round(x);
+        const intY = Math.round(y);
+        // console.info(`[CANVAS_TRACE] X, Y: 频率=${centerFreq.toFixed(2)}Hz, X=${intX}, Y=${intY}`);
 
-        // 检查边界频率的映射情况
-        if (centerFreq === 16 || centerFreq === 16000) {
-          console.info(`[CANVAS_TRACE][边界频率] 频率=${centerFreq}Hz, X坐标=${x.toFixed(2)}, Y坐标=${y.toFixed(2)}`);
-        }
+        // 检查是否为重复点
+        const isDuplicatePoint = lastX !== null && lastY !== null &&
+          intX === lastX && intY === lastY;
 
-        if (i === 0 || centerFreq === 16) {
-          this.canvasContext.moveTo(x, y);
-        } else {
-          this.canvasContext.lineTo(x, y);
+        // 只在找到第一个有效点或非重复点时绘制
+        if (isFirstValidPoint || !isDuplicatePoint) {
+          if (isFirstValidPoint) {
+            this.canvasContext.moveTo(x, y);
+            isFirstValidPoint = false;
+            // console.info(`[CANVAS_TRACE] 第一个有效点: 频率=${centerFreq.toFixed(2)}Hz, X=${x.toFixed(2)}, Y=${y.toFixed(2)}`);
+          } else {
+            this.canvasContext.lineTo(x, y);
+          }
+
+          // 更新最后一个绘制点的坐标
+          lastX = intX;
+          lastY = intY;
         }
+          // else {
+        //   // console.info(`[CANVAS_TRACE] 跳过重复点: 频率=${centerFreq.toFixed(2)}Hz, X=${x.toFixed(2)}, Y=${y.toFixed(2)}`);
+        // }
       }
       this.canvasContext.stroke();
-
-      // 频率点处理：使用对数映射计算中心频率
-      const FREQ_MIN: number = 16; // 最小频率
-      const FREQ_MAX: number = 22050; // 最大频率（采样率的一半）
-      const LOG_FREQ_RANGE: number = Math.log2(FREQ_MAX / FREQ_MIN);
-      
-      console.info(`[FREQ_TRACE][FrequencyMapping] 频率范围: ${FREQ_MIN}Hz - ${FREQ_MAX}Hz`);
-      console.info(`[FREQ_TRACE][FrequencyMapping] 对数频率范围: ${LOG_FREQ_RANGE.toFixed(2)}`);
-
-      for (let i = 0; i < this.currentFftSize / 2; i++) {
-        // 使用标准频率计算方法
-        const centerFreq: number = FFTAnalyzer.calculateCenterFrequency(i, this.SAMPLE_RATE, this.currentFftSize);
-        
-        // 计算x坐标
-        const x: number = this.canvasWidth * i / (this.currentFftSize / 2);
-        
-        console.info(`[FREQ_TRACE][FrequencyBin] 频率映射 - 索引: ${i}, 中心频率: ${centerFreq.toFixed(2)}Hz, X坐标: ${x.toFixed(2)}`);
-
-        // 每隔一定间隔记录详细日志
-        if (i % 50 === 0) {
-          console.info(`[FREQ_TRACE][FrequencyBin] 详细频率处理 - 索引: ${i}, 对数映射频率: ${centerFreq.toFixed(2)}Hz`);
-        }
-      }
 
       // 更新调试信息
       const debugInfo: string = `[FREQ_TRACE][Debug] 当前分贝: ${this.currentDecibel}dB\n` +
@@ -593,92 +607,9 @@ export struct DecibelMeter {
         this.values.push(this.currentDecibel);
         this.updateStatistics(this.currentDecibel);
 
-        // 获取频谱数据
-        const rawSpectrum: Float32Array = FrequencyWeighting.getSpectrumData(buffer);
 
         this.drawSpectrum(buffer);
-        // 绘制主频谱折线
-        this.canvasContext.beginPath();
-        this.canvasContext.strokeStyle = '#2196F3'; // 主曲线用蓝色
-        this.canvasContext.lineWidth = 0.5;
 
-        // 遍历所有FFT点之前，先打印长度信息
-        console.info(`[SPECTRUM_TRACE] rawSpectrum长度: ${rawSpectrum ? rawSpectrum.length : '未定义'}`);
-        console.info(`[SPECTRUM_TRACE] currentFftSize: ${this.currentFftSize}`);
-        console.info(`[SPECTRUM_TRACE] 理论频谱长度: ${this.currentFftSize / 2}`);
-
-        // 遍历所有FFT点
-        console.info(`[CANVAS_TRACE] Canvas实际尺寸: 宽度=${this.canvasWidth}, 高度=${this.canvasHeight}`);
-        console.info(`[CANVAS_TRACE] 绘图区域边距: 左=${this.PADDING_LEFT}, 右=${this.PADDING_RIGHT}, 上=${this.PADDING_TOP}, 下=${this.PADDING_BOTTOM}`);
-        console.info(`[CANVAS_TRACE] 可绘制宽度: ${this.canvasWidth - this.PADDING_LEFT - this.PADDING_RIGHT}`);
-
-        // 标记是否找到第一个有效点
-        let isFirstValidPoint = true;
-        // 记录上一个绘制点的坐标
-        let lastX: number | null = null;
-        let lastY: number | null = null;
-
-        for (let i = 0; i < this.currentFftSize; i++) {
-          const centerFreq: number = FFTAnalyzer.calculateCenterFrequency(i, this.SAMPLE_RATE, this.currentFftSize);
-          if (centerFreq < 16 || centerFreq > 16000) {
-            continue;
-          } // 只显示16Hz-16kHz的范围
-
-          // 安全检查：确保rawSpectrum存在且有效
-          if (!rawSpectrum || i >= rawSpectrum.length) {
-            console.error(`[CANVAS_TRACE] 警告：rawSpectrum[${i}]越界或未定义`);
-            continue;
-          }
-
-          const logFreq: number = Math.log10(centerFreq);
-          const logMin: number = Math.log10(16);
-          const logMax: number = Math.log10(16000);
-          
-          const x: number = this.PADDING_LEFT +
-            ((logFreq - logMin) / (logMax - logMin)) * (this.canvasWidth - this.PADDING_LEFT - this.PADDING_RIGHT);
-
-          const value: number = Math.max(this.MIN_DB, Math.min(this.MAX_DB, rawSpectrum[i]));
-          const normalizedValue: number = (value - this.MIN_DB) / (this.MAX_DB - this.MIN_DB);
-          const height: number = (this.canvasHeight - this.PADDING_TOP - this.PADDING_BOTTOM) * normalizedValue;
-          const y: number = this.canvasHeight - this.PADDING_BOTTOM - height;
-
-          // 转换为整数坐标
-          const intX = Math.round(x);
-          const intY = Math.round(y);
-          console.info(`[CANVAS_TRACE] X, Y: 频率=${centerFreq.toFixed(2)}Hz, X=${intX}, Y=${intY}`);
-
-          // 检查是否为重复点
-          const isDuplicatePoint = lastX !== null && lastY !== null && 
-            intX === lastX && intY === lastY;
-
-          // 只在找到第一个有效点或非重复点时绘制
-          if (isFirstValidPoint || !isDuplicatePoint) {
-            if (isFirstValidPoint) {
-              this.canvasContext.moveTo(x, y);
-              isFirstValidPoint = false;
-              console.info(`[CANVAS_TRACE] 第一个有效点: 频率=${centerFreq.toFixed(2)}Hz, X=${x.toFixed(2)}, Y=${y.toFixed(2)}`);
-            } else {
-              this.canvasContext.lineTo(x, y);
-            }
-            
-            // 更新最后一个绘制点的坐标
-            lastX = intX;
-            lastY = intY;
-          } else {
-            console.info(`[CANVAS_TRACE] 跳过重复点: 频率=${centerFreq.toFixed(2)}Hz, X=${x.toFixed(2)}, Y=${y.toFixed(2)}`);
-          }
-        }
-        this.canvasContext.stroke();
-
-        // 更新调试信息
-        const debugInfo: string = `[FREQ_TRACE][Debug] 当前分贝: ${this.currentDecibel}dB\n` +
-          `频谱范围: ${this.MIN_DB}dB ~ ${this.MAX_DB}dB\n` +
-          `高度范围: ${this.PADDING_TOP}px ~ ${this.canvasHeight - this.PADDING_BOTTOM}px`;
-
-        this.debugText = debugInfo;
-
-        // 更新计时器
-        this.recordingTime = Math.floor((new Date().getTime() - this.startTime) / 1000);
       });
     } catch (error) {
       // 如果启动失败，重置状态

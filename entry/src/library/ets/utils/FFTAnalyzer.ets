@@ -562,31 +562,35 @@ export class FFTAnalyzer {
       // 应用计权
       const weightedSpectrum = this.applyWeighting(spectrum, weightingType);
       
-      // 计算有效的分贝值平均值
-      let sum: number = 0;
-      let validCount: number = 0;
-      
-      for (let i = 0; i < weightedSpectrum.length; i++) {
-        if (!isNaN(weightedSpectrum[i]) && weightedSpectrum[i] > this.MIN_DB) {
-          sum += weightedSpectrum[i];
-          validCount++;
-        }
-      }
-      
-      // 检查是否有足够的有效样本
-      if (validCount < 1) {
-        console.warn('[FFT分析] 有效样本数不足');
-        return this.MIN_DB;
-      }
-      
-      const averageDb = sum / validCount;
-      console.info(`[FFT分析] 计算完成，平均分贝值: ${averageDb.toFixed(2)}`);
-      
-      return averageDb;
+      return this.calculateAverageDb(weightedSpectrum);
     } catch (error) {
       console.error(`[FFT分析] 处理过程出错: ${error}`);
       return this.MIN_DB;
     }
+  }
+
+  public calculateAverageDb(weightedSpectrum: Float32Array): number {
+    // 计算有效的分贝值平均值
+    let sum: number = 0;
+    let validCount: number = 0;
+
+    for (let i = 0; i < weightedSpectrum.length; i++) {
+      if (!isNaN(weightedSpectrum[i]) && weightedSpectrum[i] > this.MIN_DB) {
+        sum += weightedSpectrum[i];
+        validCount++;
+      }
+    }
+
+    // 检查是否有足够的有效样本
+    if (validCount < 1) {
+      console.warn('[FFT分析] 有效样本数不足');
+      return this.MIN_DB;
+    }
+
+    const averageDb = sum / validCount;
+    console.info(`[FFT分析] 计算完成，平均分贝值: ${averageDb.toFixed(2)}`);
+
+    return averageDb;
   }
 
   /**
