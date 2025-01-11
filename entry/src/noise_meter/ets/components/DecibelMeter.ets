@@ -549,16 +549,21 @@ export struct DecibelMeter {
     } catch (error) {
       // 如果启动失败，重置状态
       this.isRecording = false;
-      this.currentDecibel = 0;
-      this.minDecibel = 0;
-      this.maxDecibel = 0;
-      this.avgDecibel = 0;
-      this.dbCount = 0;
-      this.dbSum = 0;
-      this.values = [];
-      this.startTime = 0;
-      this.recordingTime = 0;
+      this.resetData();
     }
+  }
+
+  private resetData(){
+    // 重置状态
+    this.currentDecibel = 0;
+    this.minDecibel = 0;
+    this.maxDecibel = 0;
+    this.avgDecibel = 0;
+    this.dbCount = 0;
+    this.dbSum = 0;
+    this.values = [];
+    this.startTime = new Date().getTime();
+    this.recordingTime = 0;
   }
 
   private async stopRecording() {
@@ -611,16 +616,7 @@ export struct DecibelMeter {
         }
 
         // 重置状态
-        this.currentDecibel = 0;
-        this.minDecibel = 0;
-        this.maxDecibel = 0;
-        this.avgDecibel = 0;
-        this.dbCount = 0;
-        this.dbSum = 0;
-        this.values = [];
-        this.startTime = 0;
-        this.recordingTime = 0;
-        this.showStats = false;
+        this.resetData();
 
         // 自动开始新的检测
         setTimeout(() => {
@@ -802,31 +798,61 @@ export struct DecibelMeter {
     .padding({ top: 8, bottom: 16 })
     .alignItems(HorizontalAlign.Center)
   }
-
   @Builder
   StartStopButton() {
-    Button({
-      type: ButtonType.Capsule,
-      stateEffect: true
-    }) {
-      Row() {
-        Image($r('app.media.ic_save'))
-          .width(24)
-          .height(24)
-          .margin({ right: 8 })
-          .fillColor(Color.White)
-        Text('保存记录')
-          .fontSize(18)
-          .fontWeight(FontWeight.Medium)
-          .fontColor(Color.White)
+    Row() {
+      Button({
+        type: ButtonType.Capsule,
+        stateEffect: true
+      }) {
+        Row() {
+          Image($r('app.media.ic_reset'))
+            .width(24)
+            .height(24)
+            .margin({ right: 8 })
+            .fillColor(Color.White)
+          Text('重置')
+            .fontSize(18)
+            .fontWeight(FontWeight.Medium)
+            .fontColor(Color.White)
+        }
       }
+      .width('40%')
+      .height(56)
+      .margin({ top: 0, left: 16, right: 8 })
+      .backgroundColor('#9E9E9E')  // 灰色按钮
+      .onClick(() => {
+        // 重置音频数据和统计信息
+        this.audioService.resetData();
+        this.resetData();
+      })
+
+      Button({
+        type: ButtonType.Capsule,
+        stateEffect: true
+      }) {
+        Row() {
+          Image($r('app.media.ic_save'))
+            .width(24)
+            .height(24)
+            .margin({ right: 8 })
+            .fillColor(Color.White)
+          Text('保存')
+            .fontSize(18)
+            .fontWeight(FontWeight.Medium)
+            .fontColor(Color.White)
+        }
+      }
+      .width('40%')
+      .height(56)
+      .margin({ top: 0, left: 8, right: 16 })
+      .backgroundColor('#2196F3')
+      .onClick(() => {
+        this.stopRecording();
+      })
     }
     .width('100%')
-    .height(56)
-    .margin({ top: 0, left: 16, right: 16 })
-    .backgroundColor('#2196F3')
-    .onClick(() => {
-      this.stopRecording();
-    })
+    .justifyContent(FlexAlign.SpaceBetween)
   }
+
 }

@@ -481,6 +481,20 @@ export class AudioService {
   }
 
   /**
+   * 重置音频相关数据
+   * 清空缓存、重置状态
+   */
+  public resetData(): void {
+    try {
+      // 重置缓冲区
+      this.resetBuffers();
+      console.info('[音频采集] 音频数据已重置');
+    } catch (error) {
+      console.error('[音频采集] 重置音频数据失败', error);
+    }
+  }
+
+  /**
    * 处理音频数据
    * @param buffer 音频数据缓冲区
    */
