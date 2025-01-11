@@ -304,7 +304,7 @@ export struct Settings {
         }
 
         ListItem() {
-          Text(this.isLocationEnabled ? '记录测量地点的经纬度坐标' : '不会采集位置信息')
+          Text(this.isLocationEnabled ? '记录测量地点的经纬度坐标' : '不会采集地理位置信息')
             .itemDescription()
         }
         .descriptionContainer()
@@ -337,7 +337,7 @@ export struct Settings {
         }
 
         ListItem() {
-          Text(this.isRecordEnabled ? '保存原始音频数据用于后期分析' : '仅记录分析结果')
+          Text(this.isRecordEnabled ? '保存原始音频数据用于后期分析' : '不会保存音频数据')
             .itemDescription()
         }
         .descriptionContainer()
