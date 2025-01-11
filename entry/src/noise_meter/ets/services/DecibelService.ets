@@ -14,14 +14,10 @@ export class DecibelService {
    * @param bytesRead 读取的字节数
    * @returns 分贝值
    */
-  public calculateDecibel(buffer: ArrayBuffer, bytesRead: number): number {
+  public calculateDecibel(buffer: ArrayBuffer, bytesRead: number, weightingType: WeightingType,highFreq:number): number {
     console.debug('[DecibelService] 开始计算分贝值, 数据长度:', bytesRead);
-    // 获取当前的计权类型
-    const weightingType = this.preferenceService.getString(PreferenceKeyConstants.WEIGHTING, WeightingType.A) as WeightingType;
-    console.debug('[DecibelService] 当前计权类型:', weightingType);
-    
     // 使用频率计权计算
-    const decibel = FrequencyWeighting.calculateWeightedDecibel(buffer, bytesRead, weightingType);
+    const decibel = FrequencyWeighting.calculateWeightedDecibel(buffer, bytesRead, weightingType,highFreq);
     console.debug('[DecibelService] 计算得到分贝值:', decibel);
     
     // 限制分贝值范围在合理区间内

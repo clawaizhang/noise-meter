@@ -103,7 +103,8 @@ export class FrequencyWeighting {
    * @param weightingType 计权类型
    * @returns 计权后的分贝值
    */
-  public static calculateWeightedDecibel(buffer: ArrayBuffer, bytesRead: number, weightingType: WeightingType): number {
+  public static calculateWeightedDecibel(buffer: ArrayBuffer, bytesRead: number, weightingType: WeightingType,
+    highFreq: number): number {
     console.info(`[计权计算] 开始计算: 计权类型=${weightingType}, ` +
                 `数据大小=${buffer.byteLength}字节, ` +
                 `读取字节数=${bytesRead}`);
@@ -118,15 +119,15 @@ export class FrequencyWeighting {
       let result: number;
       switch (weightingType) {
         case WeightingType.A:
-          result = FrequencyWeighting.calculateAWeightedDecibel(buffer, bytesRead);
+          result = FrequencyWeighting.calculateAWeightedDecibel(buffer, bytesRead,highFreq);
           console.info(`[计权计算] A计权结果: ${result.toFixed(2)}dB`);
           return result;
         case WeightingType.C:
-          result = FrequencyWeighting.calculateCWeightedDecibel(buffer, bytesRead);
+          result = FrequencyWeighting.calculateCWeightedDecibel(buffer, bytesRead,highFreq);
           console.info(`[计权计算] C计权结果: ${result.toFixed(2)}dB`);
           return result;
         case WeightingType.Z:
-          result = FrequencyWeighting.calculateZWeightedDecibel(buffer, bytesRead);
+          result = FrequencyWeighting.calculateZWeightedDecibel(buffer, bytesRead,highFreq);
           console.info(`[计权计算] Z计权结果: ${result.toFixed(2)}dB`);
           return result;
         default:
@@ -139,7 +140,7 @@ export class FrequencyWeighting {
     }
   }
 
-  private static calculateAWeightedDecibel(buffer: ArrayBuffer, bytesRead: number): number {
+  private static calculateAWeightedDecibel(buffer: ArrayBuffer, bytesRead: number,highFreq:number): number {
     console.info(`[A计权] 开始计算: 数据大小=${buffer.byteLength}字节, ` +
                 `读取字节数=${bytesRead}`);
     
@@ -151,14 +152,14 @@ export class FrequencyWeighting {
 
     try {
       // 执行FFT变换并应用A计权
-      return FrequencyWeighting.fftAnalyzer.processWithWeighting(buffer, WeightingType.A);
+      return FrequencyWeighting.fftAnalyzer.processWithWeighting(buffer, WeightingType.A,highFreq);
     } catch (error) {
       console.error(`[A计权] 计算失败: ${error}`);
       return FrequencyWeighting.INVALID_DB;
     }
   }
 
-  private static calculateCWeightedDecibel(buffer: ArrayBuffer, bytesRead: number): number {
+  private static calculateCWeightedDecibel(buffer: ArrayBuffer, bytesRead: number,highFreq:number): number {
     console.info(`[C计权] 开始计算: 数据大小=${buffer.byteLength}字节, ` +
                 `读取字节数=${bytesRead}`);
     
@@ -170,14 +171,14 @@ export class FrequencyWeighting {
 
     try {
       // 执行FFT变换并应用C计权
-      return FrequencyWeighting.fftAnalyzer.processWithWeighting(buffer, WeightingType.C);
+      return FrequencyWeighting.fftAnalyzer.processWithWeighting(buffer, WeightingType.C,highFreq);
     } catch (error) {
       console.error(`[C计权] 计算失败: ${error}`);
       return FrequencyWeighting.INVALID_DB;
     }
   }
 
-  private static calculateZWeightedDecibel(buffer: ArrayBuffer, bytesRead: number): number {
+  private static calculateZWeightedDecibel(buffer: ArrayBuffer, bytesRead: number,highFreq:number): number {
     console.info(`[Z计权] 开始计算: 数据大小=${buffer.byteLength}字节, ` +
                 `读取字节数=${bytesRead}`);
     
@@ -189,7 +190,7 @@ export class FrequencyWeighting {
 
     try {
       // 执行FFT变换并应用Z计权（无计权）
-      return FrequencyWeighting.fftAnalyzer.processWithWeighting(buffer, WeightingType.Z);
+      return FrequencyWeighting.fftAnalyzer.processWithWeighting(buffer, WeightingType.Z,highFreq);
     } catch (error) {
       console.error(`[Z计权] 计算失败: ${error}`);
       return FrequencyWeighting.INVALID_DB;

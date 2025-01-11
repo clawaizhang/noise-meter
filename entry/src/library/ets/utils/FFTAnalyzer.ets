@@ -56,14 +56,15 @@ export class FFTAnalyzer {
   private readonly size: number;
   private readonly window: Float32Array;
   private static sampleRate: number = 44100;
-  private readonly REF_VALUE: number = 32767.0;  // 16位音频的最大值
-  private readonly MIN_DB: number = -120.0;      // 最小分贝值
-  private readonly REF_POWER: number = 2e-5;  // 参考声压，20μPa
-  private readonly smoothingFactor: number;  // 平滑因子
-  private readonly DEBUG: boolean = true;  // 调试开关
-  private readonly windowType: WindowType;  // 窗函数类型
-  private readonly overlap: number;               // 重叠率
-  private readonly WINDOW_CORRECTION: number;     // 窗函数能量校正因子
+  private readonly REF_VALUE: number = 32767.0; // 16位音频的最大值
+  private readonly MIN_DB: number = -120.0; // 最小分贝值
+  private readonly SAMPLE_RATE: number = 44100 // 采样率
+  private readonly REF_POWER: number = 2e-5; // 参考声压，20μPa
+  private readonly smoothingFactor: number; // 平滑因子
+  private readonly DEBUG: boolean = true; // 调试开关
+  private readonly windowType: WindowType; // 窗函数类型
+  private readonly overlap: number; // 重叠率
+  private readonly WINDOW_CORRECTION: number; // 窗函数能量校正因子
 
   // 缓存数组
   private cachedSamples: Int16Array | null = null;
@@ -78,7 +79,8 @@ export class FFTAnalyzer {
    * @param windowType 窗函数类型
    * @param smoothingFactor 平滑因子
    */
-  constructor(size: number = 2048, windowType: WindowType = WindowType.HANNING, smoothingFactor: number = 0.2, overlap: number = 0.5) {
+  constructor(size: number = 2048, windowType: WindowType = WindowType.HANNING, smoothingFactor: number = 0.2,
+    overlap: number = 0.5) {
     // 确保size是2的幂次方
     if (!this.isPowerOf2(size)) {
       throw new Error('FFT大小必须是2的幂');
@@ -90,7 +92,7 @@ export class FFTAnalyzer {
     this.windowType = windowType;
     this.smoothingFactor = smoothingFactor;
     this.overlap = overlap;
-    
+
     // 初始化窗函数
     this.window = new Float32Array(size);
     switch (windowType) {
@@ -131,8 +133,8 @@ export class FFTAnalyzer {
     const a2 = 0.08;
     const N = this.size - 1;
     for (let i = 0; i < this.size; i++) {
-      this.window[i] = a0 - a1 * Math.cos(2 * Math.PI * i / N) + 
-                     a2 * Math.cos(4 * Math.PI * i / N);
+      this.window[i] = a0 - a1 * Math.cos(2 * Math.PI * i / N) +
+        a2 * Math.cos(4 * Math.PI * i / N);
     }
   }
 
@@ -148,8 +150,8 @@ export class FFTAnalyzer {
 
     // 使用指数平滑
     for (let i = 0; i < magnitudes.length; i++) {
-      magnitudes[i] = this.smoothingFactor * magnitudes[i] + 
-                     (1 - this.smoothingFactor) * this.previousMagnitudes[i];
+      magnitudes[i] = this.smoothingFactor * magnitudes[i] +
+        (1 - this.smoothingFactor) * this.previousMagnitudes[i];
     }
 
     // 更新上一帧数据
@@ -166,22 +168,27 @@ export class FFTAnalyzer {
     let maxAmp = -Infinity;
     let minAmp = Infinity;
     let sumSquares = 0;
-    
+
     for (let i = 0; i < samples.length; i++) {
       const value = samples[i];
       maxAmp = Math.max(maxAmp, value);
       minAmp = Math.min(minAmp, value);
       sumSquares += value * value;
     }
-    
+
     const rms = Math.sqrt(sumSquares / samples.length);
     const isValid = rms > 1.0; // RMS值需要大于1以确保信号有效
-    
+
     if (this.DEBUG) {
       console.info(`信号统计: 最大值=${maxAmp}, 最小值=${minAmp}, RMS=${rms}, 有效=${isValid}`);
     }
-    
-    return { maxAmp, minAmp, rms, isValid };
+
+    return {
+      maxAmp,
+      minAmp,
+      rms,
+      isValid
+    };
   }
 
   /**
@@ -201,7 +208,8 @@ export class FFTAnalyzer {
 
     // 从PreferenceService单例获取当前计权类型
     const preferenceService = PreferenceService.getInstance();
-    const weightingType = preferenceService.getString(PreferenceKeyConstants.WEIGHTING, WeightingType.A) as WeightingType;
+    const weightingType =
+      preferenceService.getString(PreferenceKeyConstants.WEIGHTING, WeightingType.A) as WeightingType;
     if (this.DEBUG) {
       console.info(`当前计权类型: ${weightingType}`);
     }
@@ -228,7 +236,7 @@ export class FFTAnalyzer {
     // 应用窗函数并归一化
     const scale = 1.0 / this.REF_VALUE;
     const actualSamples = Math.min(this.size, this.cachedSamples.length);
-    
+
     if (this.DEBUG) {
       console.info(`归一化比例: ${scale}, 窗函数修正: ${this.WINDOW_CORRECTION}, 实际样本数: ${actualSamples}`);
     }
@@ -251,7 +259,7 @@ export class FFTAnalyzer {
     this.fft(real, imag);
 
     // 计算频谱
-    const spectrum = new Float32Array(this.size / 2);  // 只需要一半的频率点（奈奎斯特定理）
+    const spectrum = new Float32Array(this.size / 2); // 只需要一半的频率点（奈奎斯特定理）
     let maxDb = this.MIN_DB;
     let minDb = Infinity;
     let sumDb = 0;
@@ -259,9 +267,9 @@ export class FFTAnalyzer {
     let peakFreq = 0;
 
     // 计算频率分辨率
-    const freqResolution = FFTAnalyzer.sampleRate / actualSamples;  // 使用实际样本数计算分辨率
+    const freqResolution = FFTAnalyzer.sampleRate / actualSamples; // 使用实际样本数计算分辨率
     if (this.DEBUG) {
-      console.info(`FFT参数: 归一化因子=${1.0/this.size}, 频率分辨率=${freqResolution}Hz`);
+      console.info(`FFT参数: 归一化因子=${1.0 / this.size}, 频率分辨率=${freqResolution}Hz`);
     }
 
     // 计算频谱和统计信息
@@ -331,7 +339,7 @@ export class FFTAnalyzer {
         for (let j = 0; j < halfSize; j++) {
           const k = i + j;
           const l = k + halfSize;
-          
+
           // 获取或计算旋转因子
           const key = angle * j;
           let cosSin = this.cachedCosSin?.[key];
@@ -350,7 +358,7 @@ export class FFTAnalyzer {
           // 蝶形运算
           const tr = this.cachedImag![l] * cosSin.real - this.cachedReal![l] * cosSin.imag;
           const ti = this.cachedReal![l] * cosSin.real + this.cachedImag![l] * cosSin.imag;
-          
+
           // 更新结果
           this.cachedReal![l] = this.cachedReal![k] - tr;
           this.cachedImag![l] = this.cachedImag![k] - ti;
@@ -405,7 +413,8 @@ export class FFTAnalyzer {
       const f2 = frequency * frequency;
       const f4 = f2 * f2;
       const numerator = 12200.0 * 12200.0 * f4;
-      const denominator = (f2 + 20.6 * 20.6) * Math.sqrt((f2 + 107.7 * 107.7) * (f2 + 737.9 * 737.9)) * (f2 + 12200.0 * 12200.0);
+      const denominator =
+        (f2 + 20.6 * 20.6) * Math.sqrt((f2 + 107.7 * 107.7) * (f2 + 737.9 * 737.9)) * (f2 + 12200.0 * 12200.0);
       return Math.sqrt(numerator / denominator);
     }
 
@@ -417,7 +426,7 @@ export class FFTAnalyzer {
       return Math.sqrt(numerator / denominator);
     }
 
-    return 1.0;  // 默认不进行计权
+    return 1.0; // 默认不进行计权
   }
 
   /**
@@ -431,18 +440,18 @@ export class FFTAnalyzer {
   private calculateDecibels(re: number, im: number, frequency: number, weightingType: WeightingType): number {
     // 计算功率谱密度（考虑窗函数能量损失）
     const power = (re * re + im * im) / this.WINDOW_CORRECTION;
-    
+
     // 应用频率计权（使用标准IEC 61672-1的计权公式）
     const weighting = this.getWeighting(frequency, weightingType);
     const weightedPower = power * weighting * weighting;
-    
+
     // 计算分贝值（相对于参考声压）
     if (weightedPower <= 0) {
       return this.MIN_DB;
     }
-    
+
     // 转换为声压级SPL（使用20μPa作为参考值）
-    return 10.0 * Math.log10(weightedPower) + 93.98;  // 20*log10(1/20e-6) ≈ 93.98
+    return 10.0 * Math.log10(weightedPower) + 93.98; // 20*log10(1/20e-6) ≈ 93.98
   }
 
   /**
@@ -456,7 +465,7 @@ export class FFTAnalyzer {
     let minDb = Infinity;
     let sumDb = 0;
     let peakFreq = 0;
-    
+
     // 直接处理所有样本
     for (let i = 0; i < spectrum.length; i++) {
       const db = spectrum[i];
@@ -474,15 +483,15 @@ export class FFTAnalyzer {
 
     if (this.DEBUG) {
       console.info(`频谱分析: 最大分贝=${maxDb.toFixed(2)}dB@${peakFreq.toFixed(1)}Hz, ` +
-                  `最小分贝=${minDb.toFixed(2)}dB, 平均分贝=${avgDb.toFixed(2)}dB`);
+        `最小分贝=${minDb.toFixed(2)}dB, 平均分贝=${avgDb.toFixed(2)}dB`);
     }
-    
+
     return {
       maxDb: maxDb,
       minDb: minDb,
       avgDb: avgDb,
       peakFreq: peakFreq,
-      validSamples: spectrum.length,  // 所有样本都是有效的
+      validSamples: spectrum.length, // 所有样本都是有效的
       totalSamples: spectrum.length
     };
   }
@@ -512,16 +521,16 @@ export class FFTAnalyzer {
     const binSize = sampleRate / (2 * spectrum.length);
     const startBin = Math.floor(startFreq / binSize);
     const endBin = Math.ceil(endFreq / binSize);
-    
+
     let totalEnergy = 0;
     let count = 0;
-    
+
     for (let i = startBin; i <= endBin && i < spectrum.length; i++) {
       // 将分贝值转换回线性域进行平均
       totalEnergy += Math.pow(10, spectrum[i] / 10);
       count++;
     }
-    
+
     // 将平均能量转换回分贝域
     return count > 0 ? 10 * Math.log10(totalEnergy / count) : -100;
   }
@@ -552,17 +561,31 @@ export class FFTAnalyzer {
    * 使用指定计权类型处理音频数据
    * @param buffer 音频数据
    * @param weightingType 计权类型
+   * @param highFreq 频率上限
    * @returns 计权后的分贝值
    */
-  public processWithWeighting(buffer: ArrayBuffer, weightingType: WeightingType): number {
+  public processWithWeighting(buffer: ArrayBuffer, weightingType: WeightingType, highFreq: number): number {
     try {
       // 执行FFT变换
       const spectrum = this.transform(buffer);
-      
+
       // 应用计权
       const weightedSpectrum = this.applyWeighting(spectrum, weightingType);
-      
-      return this.calculateAverageDb(weightedSpectrum);
+
+      // 过滤高频
+      const filteredSpectrum = new Float32Array(weightedSpectrum.length);
+      for (let i = 0; i < weightedSpectrum.length; i++) {
+        // 计算当前bin对应的频率
+        const freq = i * this.SAMPLE_RATE / (weightedSpectrum.length * 2);
+        // 只保留低于highFreq的频率成分
+        if (freq <= highFreq) {
+          filteredSpectrum[i] = weightedSpectrum[i];
+        } else {
+          filteredSpectrum[i] = 0;
+        }
+      }
+
+      return this.calculateAverageDb(filteredSpectrum);
     } catch (error) {
       console.error(`[FFT分析] 处理过程出错: ${error}`);
       return this.MIN_DB;
@@ -602,11 +625,11 @@ export class FFTAnalyzer {
   public applyWeighting(spectrum: Float32Array, weightingType: WeightingType): Float32Array {
     const weightedSpectrum = new Float32Array(spectrum.length);
     const freqResolution = this.getFrequencyResolution();
-    
+
     for (let i = 0; i < spectrum.length; i++) {
       const frequency = i * freqResolution;
       let weightingFactor = 0;
-      
+
       switch (weightingType) {
         case WeightingType.A:
           weightingFactor = this.calculateAWeighting(frequency);
@@ -620,10 +643,10 @@ export class FFTAnalyzer {
         default:
           weightingFactor = 0;
       }
-      
+
       weightedSpectrum[i] = spectrum[i] + weightingFactor;
     }
-    
+
     return weightedSpectrum;
   }
 
@@ -635,15 +658,15 @@ export class FFTAnalyzer {
   private calculateAWeighting(frequency: number): number {
     const f2 = frequency * frequency;
     const f4 = f2 * f2;
-    
+
     const c1 = 12194.0 * 12194.0;
     const c2 = 20.6 * 20.6;
     const c3 = 107.7 * 107.7;
     const c4 = 737.9 * 737.9;
-    
+
     const num = c1 * f4;
     const den = ((f2 + c2) * Math.sqrt((f2 + c3) * (f2 + c4)) * (f2 + c1));
-    
+
     return 2.0 + 20.0 * Math.log10(num / den);
   }
 
@@ -654,13 +677,13 @@ export class FFTAnalyzer {
    */
   private calculateCWeighting(frequency: number): number {
     const f2 = frequency * frequency;
-    
+
     const c1 = 12194.0 * 12194.0;
     const c2 = 20.6 * 20.6;
-    
+
     const num = c1 * f2;
     const den = (f2 + c2) * (f2 + c1);
-    
+
     return 0.06 + 20.0 * Math.log10(num / den);
   }
 
@@ -674,12 +697,12 @@ export class FFTAnalyzer {
   public static calculateCenterFrequency(index: number, sampleRate: number, fftSize: number): number {
     // 标准计算方法：每个 bin 的中心频率
     const centerFreq = (index * sampleRate) / (2 * fftSize);
-    
+
     // 对数映射（可选）
     const logCenterFreq = Math.pow(2, Math.log2(centerFreq));
-    
+
     console.info(`[FFT_TRACE] 频率 Bin 索引: ${index}, 中心频率: ${centerFreq.toFixed(2)}Hz, 对数映射频率: ${logCenterFreq.toFixed(2)}Hz`);
-    
+
     return centerFreq;
   }
 
@@ -690,8 +713,8 @@ export class FFTAnalyzer {
    */
   public static printFrequencyBinMapping(sampleRate: number, fftSize: number): void {
     console.info(`[FFT_TRACE] 频率映射信息 - 采样率: ${sampleRate}Hz, FFT大小: ${fftSize}`);
-    
-    for (let i = 0; i < fftSize / 2; i += 50) {  // 每 50 个 bin 打印一次
+
+    for (let i = 0; i < fftSize / 2; i += 50) { // 每 50 个 bin 打印一次
       FFTAnalyzer.calculateCenterFrequency(i, sampleRate, fftSize);
     }
   }

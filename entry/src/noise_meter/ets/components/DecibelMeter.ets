@@ -21,6 +21,7 @@ import systemIcon from '@ohos.multimedia.image';
 import display from '@ohos.display';
 import { AudioAnalysisMode, AudioPresets, PREF_ANALYSIS_MODE } from '../../../library/ets/common/AudioConfig';
 import { FFTAnalyzer } from '../../../library/ets/utils/FFTAnalyzer'; // 导入 FFTAnalyzer
+import { WeightingType } from '../../../library/ets/constants/WeightingConstants';
 
 @ComponentV2
 export struct DecibelMeter {
@@ -61,6 +62,7 @@ export struct DecibelMeter {
   private readonly SAMPLE_RATE: number = 44100 // 采样率
   private MIN_DB: number = -20
   private MAX_DB: number = 120
+  @Local private weightingType: WeightingType = WeightingType.A // 当前FFT大小
   @Local private currentMode: AudioAnalysisMode = AudioAnalysisMode.BALANCED // 当前FFT大小
   @Local private currentFftSize: number = 2048 // 当前FFT大小
   private readonly PADDING_TOP: number = 20 // 顶部内边距减小到20px
@@ -457,6 +459,14 @@ export struct DecibelMeter {
 
   async aboutToAppear() {
     try {
+      // 获取当前的计权类型
+      this.weightingType = this.preferenceService.getString(PreferenceKeyConstants.WEIGHTING, WeightingType.A) as WeightingType;
+      console.debug('[DecibelService] 当前计权类型:', this.weightingType);
+      this.preferenceService.addChangeListener(PreferenceKeyConstants.WEIGHTING, (key: string, value: PreferenceValue) => {
+        if (key === PreferenceKeyConstants.WEIGHTING && typeof value === 'string') {
+          this.weightingType = value as WeightingType;
+        }
+      })
       //获取fftSize
       // 获取当前分析模式和FFT大小
       this.currentMode = this.preferenceService.getString(PREF_ANALYSIS_MODE, 'default') as AudioAnalysisMode;
@@ -525,7 +535,9 @@ export struct DecibelMeter {
       // 开始处理音频数据
       this.audioService.startProcessing((buffer: ArrayBuffer) => {
         // 计算分贝值
-        const db: number = this.decibelService.calculateDecibel(buffer, buffer.byteLength);
+        let highFreq:number = this.currentMode === AudioAnalysisMode.LOW_FREQUENCY ? 250 : 16000;
+        const db: number =
+          this.decibelService.calculateDecibel(buffer, buffer.byteLength, this.weightingType, highFreq);
 
         this.currentDecibel = Math.round(db);
         this.values.push(this.currentDecibel);
