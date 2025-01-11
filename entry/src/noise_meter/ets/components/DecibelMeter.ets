@@ -296,8 +296,10 @@ export struct DecibelMeter {
       let maxSpectrum: number = -Infinity;
       for (const value of rawSpectrum) {
         if (isFinite(value)) {
-          minSpectrum = Math.min(minSpectrum, value);
-          maxSpectrum = Math.max(maxSpectrum, value);
+          // 使用绝对值来比较
+          const absValue = Math.abs(value);
+          minSpectrum = Math.min(minSpectrum, absValue);
+          maxSpectrum = Math.max(maxSpectrum, absValue);
         }
       }
       // console.info(`[FREQ_TRACE][Spectrum] 原始频谱数据范围: ${minSpectrum.toFixed(2)}dB ~ ${maxSpectrum.toFixed(2)}dB`);
@@ -345,9 +347,11 @@ export struct DecibelMeter {
         for (let bin = lowerBin; bin <= upperBin; bin++) {
           const value: number = rawSpectrum[bin];
           if (isFinite(value)) {
-            binSpectrum.fill(value);
-            if (value > maxValue) {
-              maxValue = value;
+            // 使用绝对值来比较和存储
+            const absValue = Math.abs(value);
+            binSpectrum.fill(absValue);
+            if (absValue > maxValue) {
+              maxValue = absValue;
               maxIndex = bin;
               this.peakFreq = (bin * this.SAMPLE_RATE / this.currentFftSize);
             }
@@ -382,28 +386,6 @@ export struct DecibelMeter {
       //   最大值索引: ${maxIndex}
       //   最大值: ${maxValue}
       //   最大值对应的频率: ${this.peakFreq}Hz`);
-
-      // 显示峰值频率
-      if (this.peakFreq > 0) {
-        const logPeakFreq: number = Math.log10(this.peakFreq);
-        const logMin: number = Math.log10(16);
-        const logMax: number = Math.log10(16000);
-        const effectiveWidth: number = this.canvasWidth - this.PADDING_LEFT - this.PADDING_RIGHT;
-        const peakX: number = this.PADDING_LEFT + ((logPeakFreq - logMin) / (logMax - logMin)) * effectiveWidth;
-
-        // 计算Y坐标的替代方案
-        const peakFreqY: number = this.canvasHeight - this.PADDING_BOTTOM - 
-          (maxValue / (this.MAX_DB - this.MIN_DB)) * (this.canvasHeight - this.PADDING_TOP - this.PADDING_BOTTOM);
-
-        this.canvasContext.fillStyle = '#FF8C00'; // 峰值标签使用深橙色
-        this.canvasContext.textAlign = 'center';
-        this.canvasContext.font = `bold ${this.FONT_SIZE}px sans-serif`; // 使用统一的字体大小
-        this.canvasContext.fillText(
-          `${Math.round(this.peakFreq)}Hz`,
-          peakX,
-          peakFreqY - 10 // 稍微抬高标签位置
-        );
-      }
 
       // 绘制主频谱折线
       this.canvasContext.beginPath();
@@ -477,6 +459,29 @@ export struct DecibelMeter {
         //   // console.info(`[CANVAS_TRACE] 跳过重复点: 频率=${centerFreq.toFixed(2)}Hz, X=${x.toFixed(2)}, Y=${y.toFixed(2)}`);
         // }
       }
+
+      // 显示峰值频率
+      if (this.peakFreq > 0) {
+        const logPeakFreq: number = Math.log10(this.peakFreq);
+        const logMin: number = Math.log10(16);
+        const logMax: number = Math.log10(16000);
+        const effectiveWidth: number = this.canvasWidth - this.PADDING_LEFT - this.PADDING_RIGHT;
+        const peakX: number = this.PADDING_LEFT + ((logPeakFreq - logMin) / (logMax - logMin)) * effectiveWidth;
+
+        // 计算Y坐标的替代方案
+        const peakFreqY: number = this.canvasHeight - this.PADDING_BOTTOM -
+          (maxValue / (this.MAX_DB - this.MIN_DB)) * (this.canvasHeight - this.PADDING_TOP - this.PADDING_BOTTOM);
+
+        this.canvasContext.fillStyle = '#fffdfdfd'; // 峰值标签使用白色
+        this.canvasContext.textAlign = 'center';
+        this.canvasContext.font = `bold ${this.FONT_SIZE}px sans-serif`; // 使用统一的字体大小
+        this.canvasContext.fillText(
+          `${Math.round(this.peakFreq)}Hz`,
+          peakX,
+          peakFreqY - 30 // 稍微抬高标签位置
+        );
+      }
+
       this.canvasContext.stroke();
 
       // 更新调试信息
@@ -606,7 +611,6 @@ export struct DecibelMeter {
         this.currentDecibel = Math.round(db);
         this.values.push(this.currentDecibel);
         this.updateStatistics(this.currentDecibel);
-
 
         this.drawSpectrum(buffer);
 
