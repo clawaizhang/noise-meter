@@ -325,11 +325,10 @@ export struct DecibelMeter {
         const rawSpectrum = FrequencyWeighting.getSpectrumData(buffer);
         
         // 设置显示参数
-        const maxDisplayDb: number = 130;    // 最大显示分贝值
-        const minDisplayDb: number = 0;      // 最小显示分贝值
-        const maxHeight: number = 100;       // 最大高度百分比
-        const minHeight: number = 2;         // 最小高度百分比
-        const heightRange: number = maxHeight - minHeight;
+        const maxDisplayDb: number = 150;    // 最大显示分贝值150dB
+        const minDisplayDb: number = -120;   // 最小显示分贝值-120dB
+        const maxHeight: number = 100;       // 最大显示高度（相对于Canvas高度的百分比）
+        const minHeight: number = 0;         // 最小高度设为0，无信号时不显示
         
         // 定义频率点
         const sampleRate: number = 44100;    // 采样率
@@ -337,53 +336,35 @@ export struct DecibelMeter {
         const minFreq: number = 20;          // 最小频率 20Hz
         const maxFreq: number = 20000;       // 最大频率 20kHz
         
+        // 预计算频率相关的常量
+        const freqRatio: number = maxFreq / minFreq;  // 最大最小频率比
+        const barsRatio: number = 1 / (this.TOTAL_BARS - 1);  // 频率点间隔比例
+        
         // 计算频谱高度
         const newDisplayBars = new Array<number>(this.TOTAL_BARS);
         let maxValue: number = -Infinity;    // 记录最大分贝值
         let maxIndex: number = -1;
         this.peakFreq = 0;
-        let firstValidBar: number = -1;      // 记录第一个有效柱子的位置
-        let lastValidBar: number = -1;       // 记录最后一个有效柱子的位置
         
-        // 第一遍扫描：找出最大分贝值
-        let maxDb: number = -Infinity;
+        // 直接计算每个频率点的能量值
         for (let i = 0; i < this.TOTAL_BARS; i++) {
-          const freq: number = minFreq * Math.pow(maxFreq / minFreq, i / (this.TOTAL_BARS - 1));
-          const lowerFreq: number = i === 0 ? minFreq : minFreq * Math.pow(maxFreq / minFreq, (i - 0.5) / (this.TOTAL_BARS - 1));
-          const upperFreq: number = i === this.TOTAL_BARS - 1 ? maxFreq : minFreq * Math.pow(maxFreq / minFreq, (i + 0.5) / (this.TOTAL_BARS - 1));
+          // 计算中心频率
+          const centerFreq: number = minFreq * Math.pow(freqRatio, i * barsRatio);
+          
+          // 计算频带边界
+          const lowerFreq: number = i === 0 ? minFreq : 
+            minFreq * Math.pow(freqRatio, (i - 0.5) * barsRatio);
+          const upperFreq: number = i === this.TOTAL_BARS - 1 ? maxFreq : 
+            minFreq * Math.pow(freqRatio, (i + 0.5) * barsRatio);
+          
+          // 计算FFT bin范围
           const lowerBin: number = Math.floor(lowerFreq * fftSize / sampleRate);
           const upperBin: number = Math.min(Math.floor(upperFreq * fftSize / sampleRate), rawSpectrum.length - 1);
           
           let sum: number = 0;
           let count: number = 0;
           
-          for (let bin = lowerBin; bin <= upperBin; bin++) {
-            const value: number = rawSpectrum[bin];
-            if (isFinite(value)) {
-              sum += value;
-              count++;
-            }
-          }
-          
-          if (count > 0) {
-            const avgDb: number = sum / count;
-            if (avgDb > maxDb) {
-              maxDb = avgDb;
-            }
-          }
-        }
-        
-        // 第二遍扫描：直接使用实际值，不做补偿
-        for (let i = 0; i < this.TOTAL_BARS; i++) {
-          const freq: number = minFreq * Math.pow(maxFreq / minFreq, i / (this.TOTAL_BARS - 1));
-          const lowerFreq: number = i === 0 ? minFreq : minFreq * Math.pow(maxFreq / minFreq, (i - 0.5) / (this.TOTAL_BARS - 1));
-          const upperFreq: number = i === this.TOTAL_BARS - 1 ? maxFreq : minFreq * Math.pow(maxFreq / minFreq, (i + 0.5) / (this.TOTAL_BARS - 1));
-          const lowerBin: number = Math.floor(lowerFreq * fftSize / sampleRate);
-          const upperBin: number = Math.min(Math.floor(upperFreq * fftSize / sampleRate), rawSpectrum.length - 1);
-          
-          let sum: number = 0;
-          let count: number = 0;
-          
+          // 计算频段内的平均能量
           for (let bin = lowerBin; bin <= upperBin; bin++) {
             const value: number = rawSpectrum[bin];
             if (isFinite(value)) {
@@ -397,19 +378,20 @@ export struct DecibelMeter {
             }
           }
           
+          // 直接使用实际值，不做任何补偿
           if (count > 0) {
             const avgDb: number = sum / count;
-            // 直接使用归一化的值，不做补偿
+            // 线性映射到显示高度
             const normalizedValue: number = (avgDb - minDisplayDb) / (maxDisplayDb - minDisplayDb);
-            newDisplayBars[i] = minHeight + heightRange * normalizedValue;
+            newDisplayBars[i] = maxHeight * Math.max(0, Math.min(1, normalizedValue));
           } else {
-            newDisplayBars[i] = minHeight;
+            newDisplayBars[i] = 0;  // 无信号时不显示
           }
         }
         
-        // 直接更新显示数据，不做平滑处理
+        // 直接更新显示数据
         for (let i = 0; i < this.TOTAL_BARS; i++) {
-          this.displayBars[i] = Math.max(minHeight, Math.min(maxHeight, newDisplayBars[i]));
+          this.displayBars[i] = newDisplayBars[i];
         }
         
         // 更新调试信息
