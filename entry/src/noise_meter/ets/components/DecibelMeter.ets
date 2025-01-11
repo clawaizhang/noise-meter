@@ -15,6 +15,7 @@ import { FrequencyWeighting } from '../../../library/ets/utils/FrequencyWeightin
 import type { BusinessError } from '@ohos.base';
 import systemIcon from '@ohos.multimedia.image';
 import display from '@ohos.display'; // 新增屏幕相关的import
+import { AudioAnalysisMode, AudioPresets, PREF_ANALYSIS_MODE } from '../../../library/ets/common/AudioConfig';
 
 @ComponentV2
 export struct DecibelMeter {
@@ -26,7 +27,9 @@ export struct DecibelMeter {
   @Local private showStats: boolean = false
   @Local private recordingTime: number = 0
   @Local private isRecordEnabled: boolean = false
-  @Local private displayBars: Array<number> = new Array(64).fill(2)
+  @Local private displayPoints: Array<number> = []  // 动态数组，大小将根据FFT size调整
+  @Local private peakPoints: Array<number> = []     // 动态数组，大小将根据FFT size调整
+  @Local private peakHoldTime: Array<number> = []   // 动态数组，大小将根据FFT size调整
   @Local private debugText: string = ''
   @Local private peakFreq: number = 0  // 添加峰值频率变量
   private spectrumData: Float32Array = new Float32Array(1024)
@@ -47,133 +50,172 @@ export struct DecibelMeter {
   private recordListener?: PreferenceChangeListener
 
   // Canvas相关属性
-  @Local private canvasWidth: number = 0  // Canvas宽度
+  @Local private canvasWidth: number = 0   // Canvas宽度
   @Local private canvasHeight: number = 0  // Canvas高度
-  private readonly TOTAL_BARS: number = 64  // 总柱子数量固定为64
-  private barWidth: number = 0  // 频谱条宽度
-  private barGap: number = 0  // 频谱条间距
+  private readonly ASPECT_RATIO: number = 1.5  // 宽高比改为3:2
+  private readonly SIDE_MARGIN: number = 16    // 左右边距各16像素
+  private readonly MIN_FREQ: number = 0      // 最小频率改为0Hz
+  private readonly MAX_FREQ: number = 22050  // 最大频率改为采样率的一半
+  private readonly SAMPLE_RATE: number = 44100  // 采样率
+  private readonly MIN_DB: number = -90      // 最小分贝值
+  private readonly MAX_DB: number = 120      // 最大分贝值
+  private readonly DB_STEP: number = 30      // 分贝刻度步进
+  @Local private currentFftSize: number = 2048  // 当前FFT大小
+  private readonly PADDING_TOP: number = 8     // 顶部内边距8px
+  private readonly PADDING_BOTTOM: number = 40  // 底部内边距40px，给频率标签留出空间
+  private readonly PADDING_LEFT: number = 32    // 左侧内边距32px，给分贝值留出空间
+  private readonly PADDING_RIGHT: number = 16    // 右侧内边距16px
+  private readonly FONT_SIZE: number = 32      // 字体大小32px
+  private readonly PEAK_HOLD_TIME: number = 30    // 峰值保持时间（帧数）
+  private readonly PEAK_DROP_SPEED: number = 2    // 峰值下降速度（像素/帧）
   private canvasSettings: RenderingContextSettings = new RenderingContextSettings(true)  // Canvas设置
   private canvasContext: CanvasRenderingContext2D = new CanvasRenderingContext2D(this.canvasSettings)  // Canvas上下文
 
   // 屏幕宽度
   @Local private screenWidth: number = 0   // 屏幕宽度
 
-  // 计算柱子宽度和间距的方法
-  private calculateBarDimensions(): void {
-    // 如果Canvas宽度为0，使用屏幕宽度计算
-    if (this.canvasWidth === 0 && this.screenWidth > 0) {
-      // 考虑系统边距(左右各12px)和组件内部padding(左右各16px)
-      const systemMargin: number = 24;  // 左右各12px
-      const componentPadding: number = 32;  // 左右各16px
-      this.canvasWidth = this.screenWidth - systemMargin - componentPadding;
+  // 计算Canvas尺寸
+  private async calculateCanvasDimensions(): Promise<void> {
+    try {
+      // 获取屏幕信息
+      const displayInfo = display.getDefaultDisplaySync();
+      
+      // 获取实际可用区域
+      const availableArea = await display.getDefaultDisplaySync().getAvailableArea();
+      
+      // 输出详细的显示设备信息
+      console.info(`[显示设备信息] 
+        物理分辨率: ${displayInfo.width}x${displayInfo.height}
+        密度DPI: ${displayInfo.densityDPI}
+        密度像素比: ${displayInfo.densityPixels}
+        缩放密度: ${displayInfo.scaledDensity}
+        X方向DPI: ${displayInfo.xDPI}
+        Y方向DPI: ${displayInfo.yDPI}
+        可用区域: left=${availableArea.left}, top=${availableArea.top}, width=${availableArea.width}, height=${availableArea.height}
+      `);
+      
+      // 计算实际可用显示区域（逻辑像素）
+      const realWidth = Math.round(availableArea.width / displayInfo.densityPixels);
+      const realHeight = Math.round(availableArea.height / displayInfo.densityPixels);
+      console.info(`[显示设备信息] 实际可用显示区域(逻辑像素): ${realWidth}x${realHeight}`);
+      
+      // 计算Canvas宽度（实际宽度减去左右边距）
+      this.canvasWidth = realWidth - (this.SIDE_MARGIN * 2);
+      console.info(`[显示设备信息] Canvas宽度(减去边距): ${this.canvasWidth}`);
+      
+      // 根据宽高比计算高度
+      this.canvasHeight = Math.round(this.canvasWidth / this.ASPECT_RATIO);
+      console.info(`[显示设备信息] Canvas高度(宽高比${this.ASPECT_RATIO}): ${this.canvasHeight}`);
+      
+      console.info(`[显示设备信息] 最终Canvas尺寸(逻辑像素): ${this.canvasWidth}x${this.canvasHeight}`);
+      
+    } catch (error) {
+      console.error('[显示设备信息] 计算Canvas尺寸失败:', error);
     }
-
-    // Canvas内部padding
-    const padding: number = 12;
-    // 实际可用宽度
-    const availableWidth: number = this.canvasWidth - (padding * 2);
-    
-    // 计算单个柱子的总宽度（包含间距）
-    const totalBarWidth: number = availableWidth / this.TOTAL_BARS;
-    
-    // 柱子宽度占总宽度的80%，间距占20%
-    this.barWidth = Math.max(1, Math.floor(totalBarWidth * 0.8));
-    this.barGap = Math.max(1, Math.floor(totalBarWidth * 0.2));
-    
-    console.info(`[频谱图] 屏幕宽度: ${this.screenWidth}, Canvas宽度: ${this.canvasWidth}, 可用宽度: ${availableWidth}, 柱子宽度: ${this.barWidth}, 间距: ${this.barGap}`);
   }
 
   // 绘制频谱的方法
-  private drawSpectrum(): void {
-    // 清空画布
-    this.canvasContext.clearRect(0, 0, this.canvasWidth, this.canvasHeight);
-    
-    const padding: number = 12;
-    const effectiveWidth: number = this.canvasWidth - (padding * 2);
-    const effectiveHeight: number = this.canvasHeight - (padding * 2);
-    
-    // 计算实际可用的绘制区域
-    console.info(`[频谱图] 绘制区域: 总宽度=${this.canvasWidth}, 有效宽度=${effectiveWidth}, 柱子数量=${this.TOTAL_BARS}`);
-    
-    // 绘制频谱条
-    for (let i = 0; i < this.TOTAL_BARS; i++) {
-      const height: number = (this.displayBars[i] / 100) * effectiveHeight;
-      const x: number = padding + (i * effectiveWidth / this.TOTAL_BARS);
-      const y: number = this.canvasHeight - padding - height;
-      const actualBarWidth: number = Math.max(1, Math.floor(effectiveWidth / this.TOTAL_BARS * 0.8));
-      const lineHeight: number = 2;  // 设置横线高度为4像素
+  private drawSpectrum(buffer: ArrayBuffer): void {
+    if (this.canvasContext) {
+      console.info(`[频谱图绘制] 开始绘制，Canvas尺寸: ${this.canvasWidth}x${this.canvasHeight}`);
       
-      // 创建横条的渐变色
-      const gradient = this.canvasContext.createLinearGradient(
-        x,
-        y,
-        x + actualBarWidth,
-        y
-      );
+      // 清除画布
+      this.canvasContext.clearRect(0, 0, this.canvasWidth, this.canvasHeight);
       
-      // 判断是否是峰值频率对应的点
-      const isPeakFreq = this.displayBars[i] === Math.max(...this.displayBars);
-      
-      if (isPeakFreq) {
-        // 峰值频率点使用橙色渐变
-        gradient.addColorStop(0, '#FFA50000');
-        gradient.addColorStop(0.2, '#FFA500');
-        gradient.addColorStop(0.8, '#FFA500');
-        gradient.addColorStop(1, '#FFA50000');
-      } else {
-        // 普通频率点使用蓝色渐变
-        gradient.addColorStop(0, '#2196F300');
-        gradient.addColorStop(0.2, '#2196F3');
-        gradient.addColorStop(0.8, '#2196F3');
-        gradient.addColorStop(1, '#2196F300');
-      }
-      
-      // 设置渐变填充
-      this.canvasContext.fillStyle = gradient;
-      
-      // 绘制横线（高度为4像素，居中显示）
-      this.canvasContext.fillRect(x, y - lineHeight/2, actualBarWidth, lineHeight);
-      
-      // 如果是峰值频率点，显示频率值
-      if (isPeakFreq) {
-        this.canvasContext.fillStyle = '#FFA500';  // 改用橙色显示文字
-        this.canvasContext.textAlign = 'center';
-        this.canvasContext.font = 'bold 32px Arial';  // 添加bold使字体加粗
-        this.canvasContext.fillText(
-          `${Math.round(this.peakFreq)}Hz`,
-          x + actualBarWidth/2,
-          y - 10
-        );
-      }
-    }
-  }
+      // 计算实际可用的绘制区域
+      const effectiveWidth = this.canvasWidth - this.PADDING_LEFT - this.PADDING_RIGHT;
+      const effectiveHeight = this.canvasHeight - this.PADDING_TOP - this.PADDING_BOTTOM;
+      console.info(`[频谱图绘制] 实际可绘制区域: ${effectiveWidth}x${effectiveHeight}`);
 
-  // 绘制圆角矩形的辅助方法
-  private drawRoundedRect(
-    x: number,
-    y: number,
-    width: number,
-    height: number,
-    radius: number
-  ): void {
-    // 确保所有参数都是有效的数字
-    if (!isFinite(x) || !isFinite(y) || !isFinite(width) || !isFinite(height)) {
-      console.error(`[频谱图] 无效的绘制参数: x=${x}, y=${y}, width=${width}, height=${height}`);
-      return;
+      // 绘制分贝刻度
+      this.canvasContext.strokeStyle = '#666666';
+      this.canvasContext.fillStyle = '#FFFFFF';
+      this.canvasContext.textAlign = 'right';
+      this.canvasContext.font = `${this.FONT_SIZE}px sans-serif`;  // 使用32px字体
+
+      // 计算分贝刻度
+      for (let db = this.MIN_DB; db <= this.MAX_DB; db += this.DB_STEP) {
+        const y = this.canvasHeight - this.PADDING_BOTTOM - 
+          ((db - this.MIN_DB) * effectiveHeight / (this.MAX_DB - this.MIN_DB));
+          
+        // 绘制刻度文本
+        this.canvasContext.fillStyle = '#FFFFFF';
+        this.canvasContext.fillText(`${db}`, this.PADDING_LEFT - 8, y + this.FONT_SIZE/3);  // 调整文本位置
+        
+        // 绘制水平网格线
+        this.canvasContext.beginPath();
+        this.canvasContext.strokeStyle = '#333333';
+        this.canvasContext.moveTo(this.PADDING_LEFT, y);
+        this.canvasContext.lineTo(this.canvasWidth - this.PADDING_RIGHT, y);
+        this.canvasContext.stroke();
+      }
+
+      // 绘制频率刻度（X轴）
+      this.canvasContext.textAlign = 'center';
+      this.canvasContext.font = `${this.FONT_SIZE}px sans-serif`;  // 使用32px字体
+      const freqLabels = [16, 31.5, 63, 125, 250, 500, 1000, 2000, 4000, 8000, 16000];
+      
+      for (const freq of freqLabels) {
+        // 使用对数刻度计算X坐标
+        const logFreq = Math.log10(freq);
+        const logMin = Math.log10(16);
+        const logMax = Math.log10(16000);
+        const x = this.PADDING_LEFT + ((logFreq - logMin) / (logMax - logMin)) * effectiveWidth;
+        
+        // 绘制频率文本
+        this.canvasContext.fillStyle = '#FFFFFF';
+        const label = freq >= 1000 ? `${freq/1000}k` : freq.toString();
+        this.canvasContext.fillText(label, x, this.canvasHeight - 8);  // 调整文本位置，距离底部8px
+        
+        // 绘制垂直网格线
+        this.canvasContext.beginPath();
+        this.canvasContext.strokeStyle = '#333333';
+        this.canvasContext.moveTo(x, this.PADDING_TOP);
+        this.canvasContext.lineTo(x, this.canvasHeight - this.PADDING_BOTTOM);
+        this.canvasContext.stroke();
+      }
+
+      // 获取频谱数据
+      const rawSpectrum = FrequencyWeighting.getSpectrumData(buffer);
+      
+      // 绘制主频谱折线
+      this.canvasContext.beginPath();
+      this.canvasContext.strokeStyle = '#2196F3';  // 主曲线用蓝色
+      this.canvasContext.lineWidth = 2;
+      
+      // 遍历所有FFT点，使用对数频率刻度
+      for (let i = 0; i < this.currentFftSize; i++) {
+        const freq = (i * this.SAMPLE_RATE) / (2 * this.currentFftSize);
+        if (freq < 16 || freq > 16000) continue;  // 只显示16Hz-16kHz的范围
+        
+        const logFreq = Math.log10(freq);
+        const logMin = Math.log10(16);
+        const logMax = Math.log10(16000);
+        const x = this.PADDING_LEFT + ((logFreq - logMin) / (logMax - logMin)) * (this.canvasWidth - this.PADDING_LEFT - this.PADDING_RIGHT);
+        
+        const value = Math.max(this.MIN_DB, Math.min(this.MAX_DB, rawSpectrum[i]));
+        const normalizedValue = (value - this.MIN_DB) / (this.MAX_DB - this.MIN_DB);
+        const height = effectiveHeight * normalizedValue;
+        const y = this.canvasHeight - this.PADDING_BOTTOM - height;
+        
+        if (i === 0 || freq === 16) {
+          this.canvasContext.moveTo(x, y);
+        } else {
+          this.canvasContext.lineTo(x, y);
+        }
+      }
+      this.canvasContext.stroke();
+
+      // 更新调试信息
+      const debugInfo = `当前分贝: ${this.currentDecibel}dB\n` +
+        `频谱范围: ${this.MIN_DB}dB ~ ${this.MAX_DB}dB\n` +
+        `高度范围: ${this.PADDING_TOP}px ~ ${this.canvasHeight - this.PADDING_BOTTOM}px`;
+        
+      this.debugText = debugInfo;
+
+      // 更新计时器
+      this.recordingTime = Math.floor((new Date().getTime() - this.startTime) / 1000);
     }
-    
-    this.canvasContext.beginPath();
-    this.canvasContext.moveTo(x + radius, y);
-    this.canvasContext.lineTo(x + width - radius, y);
-    this.canvasContext.quadraticCurveTo(x + width, y, x + width, y + radius);
-    this.canvasContext.lineTo(x + width, y + height - radius);
-    this.canvasContext.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
-    this.canvasContext.lineTo(x + radius, y + height);
-    this.canvasContext.quadraticCurveTo(x, y + height, x, y + height - radius);
-    this.canvasContext.lineTo(x, y + radius);
-    this.canvasContext.quadraticCurveTo(x, y, x + radius, y);
-    this.canvasContext.closePath();
-    this.canvasContext.fill();
   }
 
   @Builder
@@ -181,50 +223,31 @@ export struct DecibelMeter {
     Column() {
       // Canvas频谱显示
       Canvas(this.canvasContext)
-        .width('100%')
-        .height(120)
+        .width(this.canvasWidth)
+        .height(this.canvasHeight)
         .backgroundColor('#000000')
         .borderRadius(12)
         .onAreaChange((oldArea: Area, newArea: Area) => {
-          // 更新Canvas尺寸
+          console.info(`[频谱图尺寸] Canvas区域变化: 旧尺寸=${oldArea.width}x${oldArea.height}, 新尺寸=${newArea.width}x${newArea.height}`);
           this.canvasWidth = newArea.width as number;
           this.canvasHeight = newArea.height as number;
-          
-          // 如果Canvas宽度为0，使用屏幕宽度计算
-          if (this.canvasWidth === 0 && this.screenWidth > 0) {
-            // 考虑系统边距(左右各12px)和组件内部padding(左右各16px)
-            const systemMargin: number = 24;  // 左右各12px
-            const componentPadding: number = 32;  // 左右各16px
-            this.canvasWidth = this.screenWidth - systemMargin - componentPadding;
-          }
-          
-          // Canvas内部padding
-          const padding: number = 12;
-          // 实际可用宽度
-          const availableWidth: number = this.canvasWidth - (padding * 2);
-          
-          // 计算单个柱子的总宽度（包含间距）
-          const totalBarWidth: number = availableWidth / this.TOTAL_BARS;
-          
-          // 柱子宽度占总宽度的80%，间距占20%
-          this.barWidth = Math.max(1, Math.floor(totalBarWidth * 0.8));
-          this.barGap = Math.max(1, Math.floor(totalBarWidth * 0.2));
-          
-          console.info(`[频谱图] 屏幕宽度: ${this.screenWidth}, Canvas宽度: ${this.canvasWidth}, 可用宽度: ${availableWidth}, 柱子宽度: ${this.barWidth}, 间距: ${this.barGap}`);
+          console.info(`[频谱图尺寸] 更新后的Canvas尺寸: ${this.canvasWidth}x${this.canvasHeight}, 宽高比: ${(this.canvasWidth/this.canvasHeight).toFixed(2)}`);
         })
         .onReady(() => {
           // 初始化完成后开始绘制
-          this.drawSpectrum()
+          // 创建一个空的 ArrayBuffer 用于初始化显示
+          const emptyBuffer = new ArrayBuffer(this.currentFftSize * 2);  // 每个点用2字节表示
+          this.drawSpectrum(emptyBuffer)
         })
       
-      // 频率刻度
+      // 频率刻度（按八度分频）
       Row() {
-        ForEach([0, 62, 125, 250, 500, 1000, 2000, 4000, 8000, 16000], (freq: number) => {
-          Text(freq === 0 ? '0' : freq >= 1000 ? `${freq/1000}k` : freq.toString())
+        ForEach([16, 31.5, 63, 125, 250, 500, 1000, 2000, 4000, 8000, 16000], (freq: number) => {
+          Text(freq >= 1000 ? `${freq/1000}k` : freq.toString())
             .fontSize(10)
             .fontColor('#999999')
             .textAlign(TextAlign.Center)
-            .width('10%')
+            .width('9.09%')  // 11个刻度，每个占 100/11 的宽度
         })
       }
       .width('100%')
@@ -248,17 +271,13 @@ export struct DecibelMeter {
     this.audioService.stopCapture();
   }
 
-  aboutToAppear() {
-    // 获取屏幕信息
+  async aboutToAppear() {
     try {
-      const displayInfo = display.getDefaultDisplaySync();
-      this.screenWidth = displayInfo.width;
-      console.info(`[频谱图] 获取屏幕宽度: ${this.screenWidth}`);
-      
-      // 初始计算柱子尺寸
-      this.calculateBarDimensions();
+      // 获取屏幕信息并初始化Canvas尺寸
+      await this.calculateCanvasDimensions();
+      console.info(`[显示设备信息] aboutToAppear - 初始化后的Canvas尺寸: ${this.canvasWidth}x${this.canvasHeight}`);
     } catch (error) {
-      console.error('[频谱图] 获取屏幕信息失败:', error);
+      console.error('[显示设备信息] 初始化失败:', error);
     }
 
     // 原有的初始化代码
@@ -313,101 +332,50 @@ export struct DecibelMeter {
         // 计算分贝值
         const db = this.decibelService.calculateDecibel(buffer, buffer.byteLength);
         
-        if (db > 0) {
-          this.currentDecibel = Math.round(db);
-          this.values.push(this.currentDecibel);
-          this.updateStatistics(this.currentDecibel);
-        } else {
-          this.currentDecibel = 0;
-        }
-        
+        this.currentDecibel = Math.round(db);
+        this.values.push(this.currentDecibel);
+        this.updateStatistics(this.currentDecibel);
+
         // 获取频谱数据
         const rawSpectrum = FrequencyWeighting.getSpectrumData(buffer);
         
-        // 设置显示参数
-        const maxDisplayDb: number = 150;    // 最大显示分贝值150dB
-        const minDisplayDb: number = -120;   // 最小显示分贝值-120dB
-        const maxHeight: number = 100;       // 最大显示高度（相对于Canvas高度的百分比）
-        const minHeight: number = 0;         // 最小高度设为0，无信号时不显示
+        // 绘制主频谱折线
+        this.canvasContext.beginPath();
+        this.canvasContext.strokeStyle = '#2196F3';  // 主曲线用蓝色
+        this.canvasContext.lineWidth = 2;
         
-        // 定义频率点
-        const sampleRate: number = 44100;    // 采样率
-        const fftSize: number = this.audioService.getCurrentFFTSize();
-        const minFreq: number = 20;          // 最小频率 20Hz
-        const maxFreq: number = 20000;       // 最大频率 20kHz
-        
-        // 预计算频率相关的常量
-        const freqRatio: number = maxFreq / minFreq;  // 最大最小频率比
-        const barsRatio: number = 1 / (this.TOTAL_BARS - 1);  // 频率点间隔比例
-        
-        // 计算频谱高度
-        const newDisplayBars = new Array<number>(this.TOTAL_BARS);
-        let maxValue: number = -Infinity;    // 记录最大分贝值
-        let maxIndex: number = -1;
-        this.peakFreq = 0;
-        
-        // 直接计算每个频率点的能量值
-        for (let i = 0; i < this.TOTAL_BARS; i++) {
-          // 计算中心频率
-          const centerFreq: number = minFreq * Math.pow(freqRatio, i * barsRatio);
+        // 遍历所有FFT点
+        for (let i = 0; i < this.currentFftSize; i++) {
+          const freq = (i * this.SAMPLE_RATE) / (2 * this.currentFftSize);
+          if (freq < 16 || freq > 16000) continue;  // 只显示16Hz-16kHz的范围
           
-          // 计算频带边界
-          const lowerFreq: number = i === 0 ? minFreq : 
-            minFreq * Math.pow(freqRatio, (i - 0.5) * barsRatio);
-          const upperFreq: number = i === this.TOTAL_BARS - 1 ? maxFreq : 
-            minFreq * Math.pow(freqRatio, (i + 0.5) * barsRatio);
+          const logFreq = Math.log10(freq);
+          const logMin = Math.log10(16);
+          const logMax = Math.log10(16000);
+          const x = this.PADDING_LEFT + ((logFreq - logMin) / (logMax - logMin)) * (this.canvasWidth - this.PADDING_LEFT - this.PADDING_RIGHT);
           
-          // 计算FFT bin范围
-          const lowerBin: number = Math.floor(lowerFreq * fftSize / sampleRate);
-          const upperBin: number = Math.min(Math.floor(upperFreq * fftSize / sampleRate), rawSpectrum.length - 1);
+          const value = Math.max(this.MIN_DB, Math.min(this.MAX_DB, rawSpectrum[i]));
+          const normalizedValue = (value - this.MIN_DB) / (this.MAX_DB - this.MIN_DB);
+          const height = (this.canvasHeight - this.PADDING_TOP - this.PADDING_BOTTOM) * normalizedValue;
+          const y = this.canvasHeight - this.PADDING_BOTTOM - height;
           
-          let sum: number = 0;
-          let count: number = 0;
-          
-          // 计算频段内的平均能量
-          for (let bin = lowerBin; bin <= upperBin; bin++) {
-            const value: number = rawSpectrum[bin];
-            if (isFinite(value)) {
-              sum += value;
-              count++;
-              if (value > maxValue) {
-                maxValue = value;
-                maxIndex = bin;
-                this.peakFreq = (bin * sampleRate / fftSize);
-              }
-            }
-          }
-          
-          // 直接使用实际值，不做任何补偿
-          if (count > 0) {
-            const avgDb: number = sum / count;
-            // 线性映射到显示高度
-            const normalizedValue: number = (avgDb - minDisplayDb) / (maxDisplayDb - minDisplayDb);
-            newDisplayBars[i] = maxHeight * Math.max(0, Math.min(1, normalizedValue));
+          if (i === 0 || freq === 16) {
+            this.canvasContext.moveTo(x, y);
           } else {
-            newDisplayBars[i] = 0;  // 无信号时不显示
+            this.canvasContext.lineTo(x, y);
           }
         }
-        
-        // 直接更新显示数据
-        for (let i = 0; i < this.TOTAL_BARS; i++) {
-          this.displayBars[i] = newDisplayBars[i];
-        }
-        
+        this.canvasContext.stroke();
+
         // 更新调试信息
         const debugInfo = `当前分贝: ${this.currentDecibel}dB\n` +
-          `最大频率: ${this.peakFreq.toFixed(1)}Hz (${maxValue.toFixed(1)}dB)\n` +
-          `频谱范围: ${minDisplayDb}dB ~ ${maxDisplayDb}dB\n` +
-          `高度范围: ${minHeight}% ~ ${maxHeight}%\n` +
-          `FFT大小: ${fftSize}, 频谱长度: ${rawSpectrum.length}`;
+          `频谱范围: ${this.MIN_DB}dB ~ ${this.MAX_DB}dB\n` +
+          `高度范围: ${this.PADDING_TOP}px ~ ${this.canvasHeight - this.PADDING_BOTTOM}px`;
         
         this.debugText = debugInfo;
 
         // 更新计时器
         this.recordingTime = Math.floor((new Date().getTime() - this.startTime) / 1000);
-        
-        // 重新绘制频谱
-        this.drawSpectrum()
       });
     } catch (error) {
       // 如果启动失败，重置状态
