@@ -784,9 +784,9 @@ export struct DecibelMeter {
         })
       }
       .width('100%')
-      .margin({ left: 8, right: 8 })
+      .margin({ left: 8, right: 8, top: 24 })
       .backgroundColor(Color.White)
-      .borderRadius(24)
+      .borderRadius(12)
       .shadow({ radius: 2, color: '#1A000000', offsetY: 2 })
 
       // 位置显示
