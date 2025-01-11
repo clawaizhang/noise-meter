@@ -199,9 +199,9 @@ export struct DecibelMeter {
       const logMin: number = Math.log10(16);
       const logMax: number = Math.log10(frequencyHigh);
 
-      // 计算100分贝对应的Y坐标
-      const hundredDbNormalizedValue: number = (100 - this.MIN_DB) / (this.MAX_DB - this.MIN_DB);
-      const hundredDbY: number = this.canvasHeight * (1 - hundredDbNormalizedValue);
+      // 计算0分贝对应的Y坐标
+      const zeroDbNormalizedValue: number = (0 - this.MIN_DB) / (this.MAX_DB - this.MIN_DB);
+      const zeroDbY: number = this.canvasHeight * (1 - zeroDbNormalizedValue);
 
       for (let i = 0; i < frequencySteps.length; i++) {
         const freq: number = frequencySteps[i];
@@ -221,7 +221,7 @@ export struct DecibelMeter {
             this.canvasContext.fillText(
               `${freq}`, 
               x, 
-              hundredDbY - 5
+              zeroDbY - 5  // 使用0分贝线的位置
             );
           }
           continue;
@@ -235,7 +235,7 @@ export struct DecibelMeter {
         this.canvasContext.lineTo(x, this.canvasHeight);
         this.canvasContext.stroke();
 
-        // 绘制频率文本（在100分贝线的上方，左对齐）
+        // 绘制频率文本（在0分贝线的上方，左对齐）
         const label: string = freq >= 1000 ? 
           (freq === 1000 ? '1k' : `${freq/1000}k`) : 
           freq.toString();
@@ -245,7 +245,7 @@ export struct DecibelMeter {
         this.canvasContext.fillText(
           label, 
           x,  // 使用x坐标作为左对齐起点
-          hundredDbY - 5  // 略微高于横线
+          zeroDbY - 5  // 使用0分贝线的位置，略微上移5像素
         );
       }
 
