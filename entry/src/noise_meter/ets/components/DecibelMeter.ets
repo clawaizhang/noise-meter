@@ -373,24 +373,7 @@ export struct DecibelMeter {
           }
         }
         
-        // 根据最大分贝值确定显示策略
-        const highDbThreshold: number = 80;  // 高分贝阈值
-        const lowDbThreshold: number = 40;   // 低分贝阈值
-        let displayStrategy: number;         // 显示策略系数
-        
-        if (maxDb > highDbThreshold) {
-          // 有高分贝信号，使用线性映射
-          displayStrategy = 1.0;
-        } else if (maxDb < lowDbThreshold) {
-          // 整体是低分贝，使用较大的放大系数
-          displayStrategy = 0.3;
-        } else {
-          // 中等分贝，使用适中的放大系数
-          const ratio: number = (maxDb - lowDbThreshold) / (highDbThreshold - lowDbThreshold);
-          displayStrategy = 0.3 + ratio * 0.7; // 在0.3到1.0之间平滑过渡
-        }
-        
-        // 第二遍扫描：应用显示策略
+        // 第二遍扫描：直接使用实际值，不做补偿
         for (let i = 0; i < this.TOTAL_BARS; i++) {
           const freq: number = minFreq * Math.pow(maxFreq / minFreq, i / (this.TOTAL_BARS - 1));
           const lowerFreq: number = i === 0 ? minFreq : minFreq * Math.pow(maxFreq / minFreq, (i - 0.5) / (this.TOTAL_BARS - 1));
@@ -416,67 +399,17 @@ export struct DecibelMeter {
           
           if (count > 0) {
             const avgDb: number = sum / count;
-            
-            if (avgDb > minDisplayDb) {
-              const dbValue: number = Math.min(maxDisplayDb, Math.max(minDisplayDb, avgDb));
-              const normalizedValue: number = (dbValue - minDisplayDb) / (maxDisplayDb - minDisplayDb);
-              
-              // 根据显示策略调整显示高度
-              const heightValue: number = Math.pow(normalizedValue, displayStrategy);
-              newDisplayBars[i] = minHeight + heightRange * heightValue;
-              
-              // 记录有效值的位置
-              if (heightValue > 0.05) {
-                if (firstValidBar === -1) {
-                  firstValidBar = i;
-                }
-                lastValidBar = i;
-              }
-            } else {
-              newDisplayBars[i] = 0;
-            }
+            // 直接使用归一化的值，不做补偿
+            const normalizedValue: number = (avgDb - minDisplayDb) / (maxDisplayDb - minDisplayDb);
+            newDisplayBars[i] = minHeight + heightRange * normalizedValue;
           } else {
-            newDisplayBars[i] = 0;
+            newDisplayBars[i] = minHeight;
           }
         }
         
-        // 处理左右两侧的快速衰减
-        const minWaveHeight: number = 5; // 最小波动高度
-        
-        // 处理左侧衰减
-        if (firstValidBar > 0) {
-          const startHeight: number = newDisplayBars[firstValidBar];
-          const emptyBars: number = firstValidBar;
-          const decayFactor: number = Math.pow(minWaveHeight / startHeight, 1 / emptyBars);
-          
-          for (let i = firstValidBar - 1; i >= 0; i--) {
-            const decay: number = Math.pow(decayFactor, firstValidBar - i);
-            const baseHeight: number = startHeight * decay;
-            newDisplayBars[i] = Math.max(minWaveHeight, baseHeight);
-          }
-        }
-        
-        // 处理右侧衰减
-        if (lastValidBar < this.TOTAL_BARS - 1) {
-          const startHeight: number = newDisplayBars[lastValidBar];
-          const emptyBars: number = this.TOTAL_BARS - lastValidBar - 1;
-          const decayFactor: number = Math.pow(minWaveHeight / startHeight, 1 / emptyBars);
-          
-          for (let i = lastValidBar + 1; i < this.TOTAL_BARS; i++) {
-            const decay: number = Math.pow(decayFactor, i - lastValidBar);
-            const baseHeight: number = startHeight * decay;
-            newDisplayBars[i] = Math.max(minWaveHeight, baseHeight);
-          }
-        }
-        
-        // 确保所有值都在有效范围内
+        // 直接更新显示数据，不做平滑处理
         for (let i = 0; i < this.TOTAL_BARS; i++) {
-          newDisplayBars[i] = Math.max(minHeight, Math.min(maxHeight, newDisplayBars[i]));
-        }
-        
-        // 更新显示数据
-        for (let i = 0; i < this.TOTAL_BARS; i++) {
-          this.displayBars[i] = newDisplayBars[i];
+          this.displayBars[i] = Math.max(minHeight, Math.min(maxHeight, newDisplayBars[i]));
         }
         
         // 更新调试信息
