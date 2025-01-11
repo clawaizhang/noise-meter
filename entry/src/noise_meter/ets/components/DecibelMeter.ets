@@ -432,7 +432,15 @@ export struct DecibelMeter {
         const height: number = (this.canvasHeight - this.PADDING_TOP - this.PADDING_BOTTOM) * normalizedValue;
         const y: number = this.canvasHeight - this.PADDING_BOTTOM - height;
 
-        if (i === 0) {
+        // 添加坐标和频率的详细日志
+        console.info(`[CANVAS_TRACE] 频率=${centerFreq.toFixed(2)}Hz, 索引=${i}, X坐标=${x.toFixed(2)}, Y坐标=${y.toFixed(2)}, 原始分贝=${rawSpectrum[i].toFixed(2)}, 归一化值=${normalizedValue.toFixed(4)}`);
+
+        // 检查边界频率的映射情况
+        if (centerFreq === 16 || centerFreq === 16000) {
+          console.info(`[CANVAS_TRACE][边界频率] 频率=${centerFreq}Hz, X坐标=${x.toFixed(2)}, Y坐标=${y.toFixed(2)}`);
+        }
+
+        if (i === 0 || centerFreq === 16) {
           this.canvasContext.moveTo(x, y);
         } else {
           this.canvasContext.lineTo(x, y);
@@ -588,14 +596,28 @@ export struct DecibelMeter {
         // 绘制主频谱折线
         this.canvasContext.beginPath();
         this.canvasContext.strokeStyle = '#2196F3'; // 主曲线用蓝色
-        this.canvasContext.lineWidth = 2;
+        this.canvasContext.lineWidth = 1;
 
         // 遍历所有FFT点
+        console.info(`[CANVAS_TRACE] Canvas实际尺寸: 宽度=${this.canvasWidth}, 高度=${this.canvasHeight}`);
+        console.info(`[CANVAS_TRACE] 绘图区域: 左边距=${this.PADDING_LEFT}, 右边距=${this.PADDING_RIGHT}, 上边距=${this.PADDING_TOP}, 下边距=${this.PADDING_BOTTOM}`);
+        console.info(`[CANVAS_TRACE] 分贝范围: ${this.MIN_DB}dB ~ ${this.MAX_DB}dB`);
+        console.info(`[CANVAS_TRACE] rawSpectrum长度: ${rawSpectrum ? rawSpectrum.length : '未定义'}`);
+
+        // 标记是否找到第一个有效点
+        let isFirstValidPoint = true;
+
         for (let i = 0; i < this.currentFftSize; i++) {
           const centerFreq: number = FFTAnalyzer.calculateCenterFrequency(i, this.SAMPLE_RATE, this.currentFftSize);
           if (centerFreq < 16 || centerFreq > 16000) {
             continue;
           } // 只显示16Hz-16kHz的范围
+
+          // 安全检查：确保rawSpectrum存在且有效
+          if (!rawSpectrum || i >= rawSpectrum.length) {
+            console.error(`[CANVAS_TRACE] 警告：rawSpectrum[${i}]越界或未定义`);
+            continue;
+          }
 
           const logFreq: number = Math.log10(centerFreq);
           const logMin: number = Math.log10(16);
@@ -608,8 +630,19 @@ export struct DecibelMeter {
           const height: number = (this.canvasHeight - this.PADDING_TOP - this.PADDING_BOTTOM) * normalizedValue;
           const y: number = this.canvasHeight - this.PADDING_BOTTOM - height;
 
-          if (i === 0 || centerFreq === 16) {
+          // 添加坐标和频率的详细日志
+          console.info(`[CANVAS_TRACE] 频率=${centerFreq.toFixed(2)}Hz, 索引=${i}, X坐标=${x.toFixed(2)}, Y坐标=${y.toFixed(2)}, 原始分贝=${rawSpectrum[i].toFixed(2)}, 归一化值=${normalizedValue.toFixed(4)}`);
+
+          // 检查边界频率的映射情况
+          if (centerFreq === 16 || centerFreq === 16000) {
+            console.info(`[CANVAS_TRACE][边界频率] 频率=${centerFreq}Hz, X坐标=${x.toFixed(2)}, Y坐标=${y.toFixed(2)}`);
+          }
+
+          // 只在找到第一个有效点时使用moveTo
+          if (isFirstValidPoint) {
             this.canvasContext.moveTo(x, y);
+            isFirstValidPoint = false;
+            console.info(`[CANVAS_TRACE] 第一个有效点: 频率=${centerFreq.toFixed(2)}Hz, X=${x.toFixed(2)}, Y=${y.toFixed(2)}`);
           } else {
             this.canvasContext.lineTo(x, y);
           }
@@ -644,7 +677,7 @@ export struct DecibelMeter {
   private async stopRecording() {
     if (this.isRecording) {
       this.isRecording = false;
-      console.info('[FREQ_TRACE][Recording] 停止检测 - 开始');
+      console.info("[FREQ_TRACE][Recording] 停止检测 - 开始");
 
       try {
         // 获取缓存的位置信息
