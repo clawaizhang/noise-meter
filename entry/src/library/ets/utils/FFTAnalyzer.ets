@@ -197,7 +197,7 @@ export class FFTAnalyzer {
    * @returns 频谱数据
    * @throws Error 当输入数据无效时抛出异常
    */
-  public transform(input: ArrayBuffer): Float32Array {
+  public transform(input: ArrayBuffer, weightingType: WeightingType = WeightingType.A): Float32Array {
     if (this.DEBUG) {
       console.info(`开始FFT变换: 输入大小=${input.byteLength}字节`);
     }
@@ -206,10 +206,6 @@ export class FFTAnalyzer {
       throw new Error('输入数据不能为空');
     }
 
-    // 从PreferenceService单例获取当前计权类型
-    const preferenceService = PreferenceService.getInstance();
-    const weightingType =
-      preferenceService.getString(PreferenceKeyConstants.WEIGHTING, WeightingType.A) as WeightingType;
     if (this.DEBUG) {
       console.info(`当前计权类型: ${weightingType}`);
     }
@@ -260,11 +256,6 @@ export class FFTAnalyzer {
 
     // 计算频谱
     const spectrum = new Float32Array(this.size / 2); // 只需要一半的频率点（奈奎斯特定理）
-    let maxDb = this.MIN_DB;
-    let minDb = Infinity;
-    let sumDb = 0;
-    let validCount = 0;
-    let peakFreq = 0;
 
     // 计算频率分辨率
     const freqResolution = FFTAnalyzer.sampleRate / actualSamples; // 使用实际样本数计算分辨率
@@ -272,31 +263,11 @@ export class FFTAnalyzer {
       console.info(`FFT参数: 归一化因子=${1.0 / this.size}, 频率分辨率=${freqResolution}Hz`);
     }
 
-    // 计算频谱和统计信息
+    // 计算频谱
     for (let i = 0; i < spectrum.length; i++) {
       const frequency = i * freqResolution;
       const db = this.calculateDecibels(real[i], imag[i], frequency, weightingType);
       spectrum[i] = db;
-
-      if (db > this.MIN_DB) {
-        if (db > maxDb) {
-          maxDb = db;
-          peakFreq = frequency;
-        }
-        minDb = Math.min(minDb, db);
-        sumDb += db;
-        validCount++;
-      }
-    }
-
-    const avgDb = validCount > 0 ? sumDb / validCount : this.MIN_DB;
-    if (this.DEBUG) {
-      console.info(`频谱分析: 最大分贝=${maxDb.toFixed(2)}dB@${peakFreq.toFixed(1)}Hz, 最小分贝=${minDb.toFixed(2)}dB, 平均分贝=${avgDb.toFixed(2)}dB`);
-    }
-
-    // 应用平滑
-    if (this.DEBUG) {
-      console.info(`应用平滑: 因子=${this.smoothingFactor}`);
     }
 
     return this.smoothMagnitudes(spectrum);
@@ -557,41 +528,6 @@ export class FFTAnalyzer {
     this.cachedSamples = null;
   }
 
-  /**
-   * 使用指定计权类型处理音频数据
-   * @param buffer 音频数据
-   * @param weightingType 计权类型
-   * @param highFreq 频率上限
-   * @returns 计权后的分贝值
-   */
-  public processWithWeighting(buffer: ArrayBuffer, weightingType: WeightingType, highFreq: number): number {
-    try {
-      // 执行FFT变换
-      const spectrum = this.transform(buffer);
-
-      // 应用计权
-      const weightedSpectrum = this.applyWeighting(spectrum, weightingType);
-
-      // 过滤高频
-      const filteredSpectrum = new Float32Array(weightedSpectrum.length);
-      for (let i = 0; i < weightedSpectrum.length; i++) {
-        // 计算当前bin对应的频率
-        const freq = i * this.SAMPLE_RATE / (weightedSpectrum.length * 2);
-        // 只保留低于highFreq的频率成分
-        if (freq <= highFreq) {
-          filteredSpectrum[i] = weightedSpectrum[i];
-        } else {
-          filteredSpectrum[i] = 0;
-        }
-      }
-
-      return this.calculateAverageDb(filteredSpectrum);
-    } catch (error) {
-      console.error(`[FFT分析] 处理过程出错: ${error}`);
-      return this.MIN_DB;
-    }
-  }
-
   public calculateAverageDb(weightedSpectrum: Float32Array): number {
     // 计算有效的分贝值平均值
     let sum: number = 0;
@@ -700,22 +636,6 @@ export class FFTAnalyzer {
 
     // 对数映射（可选）
     const logCenterFreq = Math.pow(2, Math.log2(centerFreq));
-
-    console.info(`[FFT_TRACE] 频率 Bin 索引: ${index}, 中心频率: ${centerFreq.toFixed(2)}Hz, 对数映射频率: ${logCenterFreq.toFixed(2)}Hz`);
-
     return centerFreq;
-  }
-
-  /**
-   * 打印完整的频率 bin 映射信息
-   * @param sampleRate 采样率
-   * @param fftSize FFT 大小
-   */
-  public static printFrequencyBinMapping(sampleRate: number, fftSize: number): void {
-    console.info(`[FFT_TRACE] 频率映射信息 - 采样率: ${sampleRate}Hz, FFT大小: ${fftSize}`);
-
-    for (let i = 0; i < fftSize / 2; i += 50) { // 每 50 个 bin 打印一次
-      FFTAnalyzer.calculateCenterFrequency(i, sampleRate, fftSize);
-    }
   }
 }

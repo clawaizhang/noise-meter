@@ -97,123 +97,6 @@ export class FrequencyWeighting {
   }
 
   /**
-   * 对音频数据进行计权计算
-   * @param buffer 音频数据
-   * @param bytesRead 读取的字节数
-   * @param weightingType 计权类型
-   * @returns 计权后的分贝值
-   */
-  public static calculateWeightedDecibel(buffer: ArrayBuffer, bytesRead: number, weightingType: WeightingType,
-    highFreq: number): number {
-    console.info(`[计权计算] 开始计算: 计权类型=${weightingType}, ` +
-                `数据大小=${buffer.byteLength}字节, ` +
-                `读取字节数=${bytesRead}`);
-
-    // 检查数据有效性
-    if (!buffer || bytesRead <= 0) {
-      console.error('[计权计算] 无效的输入数据');
-      return FrequencyWeighting.INVALID_DB;
-    }
-
-    try {
-      let result: number;
-      switch (weightingType) {
-        case WeightingType.A:
-          result = FrequencyWeighting.calculateAWeightedDecibel(buffer, bytesRead,highFreq);
-          console.info(`[计权计算] A计权结果: ${result.toFixed(2)}dB`);
-          return result;
-        case WeightingType.C:
-          result = FrequencyWeighting.calculateCWeightedDecibel(buffer, bytesRead,highFreq);
-          console.info(`[计权计算] C计权结果: ${result.toFixed(2)}dB`);
-          return result;
-        case WeightingType.Z:
-          result = FrequencyWeighting.calculateZWeightedDecibel(buffer, bytesRead,highFreq);
-          console.info(`[计权计算] Z计权结果: ${result.toFixed(2)}dB`);
-          return result;
-        default:
-          console.error('[计权计算] 不支持的计权类型');
-          return FrequencyWeighting.INVALID_DB;
-      }
-    } catch (error) {
-      console.error(`[计权计算] 处理过程出错: ${error}`);
-      return FrequencyWeighting.INVALID_DB;
-    }
-  }
-
-  private static calculateAWeightedDecibel(buffer: ArrayBuffer, bytesRead: number,highFreq:number): number {
-    console.info(`[A计权] 开始计算: 数据大小=${buffer.byteLength}字节, ` +
-                `读取字节数=${bytesRead}`);
-    
-    // 检查数据有效性
-    if (!buffer || bytesRead <= 0) {
-      console.error('[A计权] 无效的输入数据');
-      return FrequencyWeighting.INVALID_DB;
-    }
-
-    try {
-      // 执行FFT变换并应用A计权
-      return FrequencyWeighting.fftAnalyzer.processWithWeighting(buffer, WeightingType.A,highFreq);
-    } catch (error) {
-      console.error(`[A计权] 计算失败: ${error}`);
-      return FrequencyWeighting.INVALID_DB;
-    }
-  }
-
-  private static calculateCWeightedDecibel(buffer: ArrayBuffer, bytesRead: number,highFreq:number): number {
-    console.info(`[C计权] 开始计算: 数据大小=${buffer.byteLength}字节, ` +
-                `读取字节数=${bytesRead}`);
-    
-    // 检查数据有效性
-    if (!buffer || bytesRead <= 0) {
-      console.error('[C计权] 无效的输入数据');
-      return FrequencyWeighting.INVALID_DB;
-    }
-
-    try {
-      // 执行FFT变换并应用C计权
-      return FrequencyWeighting.fftAnalyzer.processWithWeighting(buffer, WeightingType.C,highFreq);
-    } catch (error) {
-      console.error(`[C计权] 计算失败: ${error}`);
-      return FrequencyWeighting.INVALID_DB;
-    }
-  }
-
-  private static calculateZWeightedDecibel(buffer: ArrayBuffer, bytesRead: number,highFreq:number): number {
-    console.info(`[Z计权] 开始计算: 数据大小=${buffer.byteLength}字节, ` +
-                `读取字节数=${bytesRead}`);
-    
-    // 检查数据有效性
-    if (!buffer || bytesRead <= 0) {
-      console.error('[Z计权] 无效的输入数据');
-      return FrequencyWeighting.INVALID_DB;
-    }
-
-    try {
-      // 执行FFT变换并应用Z计权（无计权）
-      return FrequencyWeighting.fftAnalyzer.processWithWeighting(buffer, WeightingType.Z,highFreq);
-    } catch (error) {
-      console.error(`[Z计权] 计算失败: ${error}`);
-      return FrequencyWeighting.INVALID_DB;
-    }
-  }
-
-  /**
-   * 计算指定频率范围内的能量
-   * @param buffer 音频数据
-   * @param startFreq 起始频率
-   * @param endFreq 结束频率
-   * @returns 频率范围内的能量值
-   */
-  public static calculateFrequencyRangeEnergy(
-    buffer: ArrayBuffer, 
-    startFreq: number, 
-    endFreq: number
-  ): number {
-    const spectrum = FrequencyWeighting.fftAnalyzer.transform(buffer);
-    return FrequencyWeighting.fftAnalyzer.getFrequencyRangeEnergy(spectrum, startFreq, endFreq, 44100);
-  }
-
-  /**
    * 获取频谱数据用于显示
    * @param buffer 音频数据
    * @param weightingType 计权类型
@@ -227,16 +110,16 @@ export class FrequencyWeighting {
 
     try {
       console.info(`[频谱分析] 开始处理音频数据: 数据大小=${buffer.byteLength}字节`);
-      
+
       // 执行FFT变换并获取频谱数据
-      const spectrum = FrequencyWeighting.fftAnalyzer.transform(buffer);
+      const spectrum = FrequencyWeighting.fftAnalyzer.transform(buffer,weightingType);
       console.info(`[频谱分析] FFT变换完成: 频谱长度=${spectrum.length}`);
       console.info(`[频谱分析] 原始频谱样本: ${spectrum[0]}, ${spectrum[1]}, ${spectrum[2]}, ${spectrum[3]}, ${spectrum[4]}`);
-      
+
       // 应用计权
       const weightedSpectrum = FrequencyWeighting.fftAnalyzer.applyWeighting(spectrum, weightingType);
       console.info(`[频谱分析] 计权后频谱样本: ${weightedSpectrum[0]}, ${weightedSpectrum[1]}, ${weightedSpectrum[2]}, ${weightedSpectrum[3]}, ${weightedSpectrum[4]}`);
-      
+
       return weightedSpectrum;
     } catch (error) {
       console.error('[频谱分析] 处理失败:', error);
@@ -246,23 +129,5 @@ export class FrequencyWeighting {
 
   public static calculateAverageDb(weightedSpectrum: Float32Array): number {
     return FrequencyWeighting.fftAnalyzer.calculateAverageDb(weightedSpectrum);
-  }
-  
-  /**
-   * 获取特定频段的能量
-   * @param buffer 音频数据
-   * @param startFreq 起始频率
-   * @param endFreq 结束频率
-   * @param weightingType 计权类型
-   * @returns 频段能量
-   */
-  public static getBandEnergy(
-    buffer: ArrayBuffer, 
-    startFreq: number, 
-    endFreq: number, 
-    weightingType: WeightingType = WeightingType.A
-  ): number {
-    const spectrum = FrequencyWeighting.fftAnalyzer.transform(buffer);
-    return FrequencyWeighting.fftAnalyzer.getFrequencyRangeEnergy(spectrum, startFreq, endFreq, 44100);
   }
 }

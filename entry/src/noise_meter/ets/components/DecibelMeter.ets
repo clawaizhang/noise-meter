@@ -22,6 +22,43 @@ import display from '@ohos.display';
 import { AudioAnalysisMode, AudioPresets, PREF_ANALYSIS_MODE } from '../../../library/ets/common/AudioConfig';
 import { FFTAnalyzer } from '../../../library/ets/utils/FFTAnalyzer'; // 导入 FFTAnalyzer
 import { WeightingType } from '../../../library/ets/constants/WeightingConstants';
+import { taskpool } from '@kit.ArkTS';
+
+@Concurrent
+function concurrentCalculateSpectrum(savedMode: string, buffer: ArrayBuffer, weightingType: WeightingType,
+  SAMPLE_RATE: number,
+  highFreq: number): Float32Array {
+  console.info(`[频谱分析] 开始处理音频数据: 数据大小=${buffer.byteLength}字节`);
+  // 初始化权分析器
+  const config = AudioPresets.getConfig(savedMode as AudioAnalysisMode);
+  let fftAnalyzer = new FFTAnalyzer(
+    config.fftSize,
+    config.windowType,
+    config.smoothingFactor
+  );
+
+  // 执行FFT变换并获取频谱数据
+  const spectrum = fftAnalyzer.transform(buffer, weightingType);
+  console.info(`[频谱分析] FFT变换完成: 频谱长度=${spectrum.length}`);
+  console.info(`[频谱分析] 原始频谱样本: ${spectrum[0]}, ${spectrum[1]}, ${spectrum[2]}, ${spectrum[3]}, ${spectrum[4]}`);
+
+  // 应用计权
+  const weightedSpectrum = fftAnalyzer.applyWeighting(spectrum, weightingType);
+  console.info(`[频谱分析] 计权后频谱样本: ${weightedSpectrum[0]}, ${weightedSpectrum[1]}, ${weightedSpectrum[2]}, ${weightedSpectrum[3]}, ${weightedSpectrum[4]}`);
+
+  const filteredSpectrum = new Float32Array(weightedSpectrum.length);
+  for (let i = 0; i < weightedSpectrum.length; i++) {
+    // 计算当前bin对应的频率
+    const freq = i * SAMPLE_RATE / (weightedSpectrum.length * 2);
+    // 只保留低于highFreq的频率成分
+    if (freq <= highFreq) {
+      filteredSpectrum[i] = weightedSpectrum[i];
+    } else {
+      filteredSpectrum[i] = 0;
+    }
+  }
+  return filteredSpectrum;
+}
 
 @ComponentV2
 export struct DecibelMeter {
@@ -38,6 +75,7 @@ export struct DecibelMeter {
   @Local private peakHoldTime: Array<number> = [] // 动态数组，大小将根据FFT size调整
   @Local private debugText: string = ''
   @Local private peakFreq: number = 0 // 添加峰值频率变量
+  @Local private savedMode: string = AudioAnalysisMode.BALANCED;
   private spectrumData: Float32Array = new Float32Array(1024)
   @Consumer(noiseMeterNavStack) navStack: NavPathStack = new NavPathStack()
   private decibelService: DecibelService = new DecibelService()
@@ -116,7 +154,7 @@ export struct DecibelMeter {
   }
 
   // 绘制频谱的方法
-  private drawSpectrum(buffer: ArrayBuffer): void {
+  private drawSpectrum(rawSpectrum: Float32Array): void {
     if (this.canvasContext) {
       // 清除画布
       let isLowFreqMode = this.currentMode === AudioAnalysisMode.LOW_FREQUENCY;
@@ -133,7 +171,7 @@ export struct DecibelMeter {
 
 
       // 频率步进点生成
-      const frequencySteps: number[] = isLowFreqMode ? 
+      const frequencySteps: number[] = isLowFreqMode ?
         [16, 31.5, 63, 125, 250] : // 低频模式的频率步进
         [16, 31.5, 63, 125, 250, 500, 1000, 2000, 4000, 8000, 16000];
       const frequencyHigh: number = isLowFreqMode ? 250 : 16000;
@@ -164,9 +202,9 @@ export struct DecibelMeter {
             this.canvasContext.font = `${this.FONT_SIZE}px sans-serif`;
             this.canvasContext.textAlign = 'right';
             this.canvasContext.fillText(
-              `${db}`, 
-              this.PADDING_LEFT - 5, 
-              y + this.FONT_SIZE/3
+              `${db}`,
+              this.PADDING_LEFT - 5,
+              y + this.FONT_SIZE / 3
             );
           }
           continue;
@@ -184,16 +222,16 @@ export struct DecibelMeter {
           this.canvasContext.font = `${this.FONT_SIZE}px sans-serif`;
           this.canvasContext.textAlign = 'right';
           this.canvasContext.fillText(
-            `${db}`, 
-            this.PADDING_LEFT - 5, 
-            y + this.FONT_SIZE/3
+            `${db}`,
+            this.PADDING_LEFT - 5,
+            y + this.FONT_SIZE / 3
           );
         }
 
       }
 
       // 绘制频率刻度
-      this.canvasContext.textAlign = 'left';  // 改为左对齐
+      this.canvasContext.textAlign = 'left'; // 改为左对齐
       this.canvasContext.font = `${this.FONT_SIZE}px sans-serif`;
       this.canvasContext.fillStyle = '#AAAAAA'; // 频率标签颜色
 
@@ -209,7 +247,7 @@ export struct DecibelMeter {
         const freq: number = frequencySteps[i];
         // 对数坐标映射
         const logFreq: number = Math.log10(freq);
-        
+
         // 计算X坐标，确保从画布左侧到右侧
         const x: number = ((logFreq - logMin) / (logMax - logMin)) * this.canvasWidth;
 
@@ -221,8 +259,8 @@ export struct DecibelMeter {
             this.canvasContext.font = `${this.FONT_SIZE}px sans-serif`;
             this.canvasContext.textAlign = 'left';
             this.canvasContext.fillText(
-              `${freq}`, 
-              x, 
+              `${freq}`,
+              x,
               zeroDbY - 5  // 使用0分贝线的位置
             );
           }
@@ -238,21 +276,20 @@ export struct DecibelMeter {
         this.canvasContext.stroke();
 
         // 绘制频率文本（在0分贝线的上方，左对齐）
-        const label: string = freq >= 1000 ? 
-          (freq === 1000 ? '1k' : `${freq/1000}k`) : 
-          freq.toString();
+        const label: string = freq >= 1000 ?
+          (freq === 1000 ? '1k' : `${freq / 1000}k`) :
+        freq.toString();
         this.canvasContext.fillStyle = '#AAAAAA'; // 频率标签颜色
         this.canvasContext.font = `${this.FONT_SIZE}px sans-serif`;
         this.canvasContext.textAlign = 'left';
         this.canvasContext.fillText(
-          label, 
-          x,  // 使用x坐标作为左对齐起点
+          label,
+          x, // 使用x坐标作为左对齐起点
           zeroDbY - 5  // 使用0分贝线的位置，略微上移5像素
         );
       }
 
       // 获取频谱数据并记录范围
-      const rawSpectrum: Float32Array = FrequencyWeighting.getSpectrumData(buffer);
       let minSpectrum: number = Infinity;
       let maxSpectrum: number = -Infinity;
       for (const value of rawSpectrum) {
@@ -289,7 +326,8 @@ export struct DecibelMeter {
 
         // 将频率转换为FFT bin索引
         const lowerBin: number = Math.max(1, Math.floor(lowerFreq * this.currentFftSize / this.SAMPLE_RATE));
-        const upperBin: number = Math.min(Math.floor(upperFreq * this.currentFftSize / this.SAMPLE_RATE), rawSpectrum.length - 1);
+        const upperBin: number =
+          Math.min(Math.floor(upperFreq * this.currentFftSize / this.SAMPLE_RATE), rawSpectrum.length - 1);
 
         let binSpectrum = new Float32Array();
         // 计算频段内的平均能量
@@ -434,9 +472,9 @@ export struct DecibelMeter {
         })
         .onReady(() => {
           // 初始化完成后开始绘制
-          // 创建一个空的 ArrayBuffer 用于初始化显示
-          const emptyBuffer: ArrayBuffer = new ArrayBuffer(this.currentFftSize * 2); // 每个点用2字节表示
-          this.drawSpectrum(emptyBuffer)
+          // 创建一个空的 Float32Array 用于初始化显示
+          const emptySpectrum: Float32Array = new Float32Array(this.currentFftSize * 2); // 每个点用2字节表示
+          this.drawSpectrum(emptySpectrum)
         })
     }
   }
@@ -459,14 +497,25 @@ export struct DecibelMeter {
 
   async aboutToAppear() {
     try {
-      // 获取当前的计权类型
-      this.weightingType = this.preferenceService.getString(PreferenceKeyConstants.WEIGHTING, WeightingType.A) as WeightingType;
-      console.debug('[DecibelService] 当前计权类型:', this.weightingType);
-      this.preferenceService.addChangeListener(PreferenceKeyConstants.WEIGHTING, (key: string, value: PreferenceValue) => {
-        if (key === PreferenceKeyConstants.WEIGHTING && typeof value === 'string') {
-          this.weightingType = value as WeightingType;
+      // 从首选项加载分析模式
+      this.savedMode = this.preferenceService.getString(PREF_ANALYSIS_MODE, AudioAnalysisMode.BALANCED);
+
+      // 添加配置变更监听
+      this.preferenceService.addChangeListener(PREF_ANALYSIS_MODE, (key: string, value: PreferenceValue) => {
+        if (key === PREF_ANALYSIS_MODE && typeof value === 'string') {
+          this.savedMode as AudioAnalysisMode
         }
-      })
+      });
+      // 获取当前的计权类型
+      this.weightingType =
+        this.preferenceService.getString(PreferenceKeyConstants.WEIGHTING, WeightingType.A) as WeightingType;
+      console.debug('[DecibelService] 当前计权类型:', this.weightingType);
+      this.preferenceService.addChangeListener(PreferenceKeyConstants.WEIGHTING,
+        (key: string, value: PreferenceValue) => {
+          if (key === PreferenceKeyConstants.WEIGHTING && typeof value === 'string') {
+            this.weightingType = value as WeightingType;
+          }
+        })
       //获取fftSize
       // 获取当前分析模式和FFT大小
       this.currentMode = this.preferenceService.getString(PREF_ANALYSIS_MODE, 'default') as AudioAnalysisMode;
@@ -535,15 +584,20 @@ export struct DecibelMeter {
       // 开始处理音频数据
       this.audioService.startProcessing((buffer: ArrayBuffer) => {
         // 计算分贝值
-        let highFreq:number = this.currentMode === AudioAnalysisMode.LOW_FREQUENCY ? 250 : 16000;
-        const db: number =
-          this.decibelService.calculateDecibel(buffer, buffer.byteLength, this.weightingType, highFreq);
+        let highFreq: number = this.currentMode === AudioAnalysisMode.LOW_FREQUENCY ? 250 : 16000;
 
-        this.currentDecibel = Math.round(db);
-        this.values.push(this.currentDecibel);
-        this.updateStatistics(this.currentDecibel);
+        taskpool.execute<[string, ArrayBuffer, WeightingType, number, number], Float32Array>(concurrentCalculateSpectrum,
+          this.savedMode,
+          buffer, this.weightingType, this.SAMPLE_RATE, highFreq).then((spectrum: Float32Array) => {
+          const db: number = FrequencyWeighting.calculateAverageDb(spectrum);
 
-        this.drawSpectrum(buffer);
+          this.currentDecibel = Math.round(db);
+          this.values.push(this.currentDecibel);
+          this.updateStatistics(this.currentDecibel);
+
+          this.drawSpectrum(spectrum);
+        })
+
 
       });
     } catch (error) {
@@ -553,7 +607,7 @@ export struct DecibelMeter {
     }
   }
 
-  private resetData(){
+  private resetData() {
     // 重置状态
     this.currentDecibel = 0;
     this.minDecibel = 0;
@@ -798,6 +852,7 @@ export struct DecibelMeter {
     .padding({ top: 8, bottom: 16 })
     .alignItems(HorizontalAlign.Center)
   }
+
   @Builder
   StartStopButton() {
     Row() {
@@ -817,13 +872,13 @@ export struct DecibelMeter {
             .fontColor(Color.White)
         }
       }
-      .width('30%')  // 进一步减小宽度
-      .height(42)  // 略微降低高度
+      .width('30%') // 进一步减小宽度
+      .height(42) // 略微降低高度
       .margin({ top: 0, left: 16, right: 8 })
-      .backgroundColor('#4A90E2')  // 柔和的灰蓝色
+      .backgroundColor('#4A90E2') // 柔和的灰蓝色
       .shadow({
         radius: 4,
-        color: '#1A4A90E2',  // 轻微阴影
+        color: '#1A4A90E2', // 轻微阴影
         offsetY: 2
       })
       .onClick(() => {
@@ -848,13 +903,13 @@ export struct DecibelMeter {
             .fontColor(Color.White)
         }
       }
-      .width('30%')  // 进一步减小宽度
-      .height(42)  // 略微降低高度
+      .width('30%') // 进一步减小宽度
+      .height(42) // 略微降低高度
       .margin({ top: 0, left: 8, right: 16 })
-      .backgroundColor('#1A5A9E')  // 深蓝色
+      .backgroundColor('#1A5A9E') // 深蓝色
       .shadow({
         radius: 4,
-        color: '#1A1A5A9E',  // 轻微阴影
+        color: '#1A1A5A9E', // 轻微阴影
         offsetY: 2
       })
       .onClick(() => {
@@ -864,5 +919,4 @@ export struct DecibelMeter {
     .width('100%')
     .justifyContent(FlexAlign.SpaceBetween)
   }
-
 }

@@ -1,30 +1,8 @@
-import { PreferenceService } from '../../../library/ets/services/PreferenceService';
-import { PreferenceKeyConstants } from '../../../library/ets/constants/PreferenceKeyConstants';
 import { WeightingType } from '../../../library/ets/constants/WeightingConstants';
 import { FrequencyWeighting } from '../../../library/ets/utils/FrequencyWeighting';
 
 @Observed
 export class DecibelService {
-  private readonly REF_VALUE: number = 32767.0;
-  private readonly preferenceService: PreferenceService = PreferenceService.getInstance();
-
-  /**
-   * 计算分贝值
-   * @param buffer 音频数据
-   * @param bytesRead 读取的字节数
-   * @returns 分贝值
-   */
-  public calculateDecibel(buffer: ArrayBuffer, bytesRead: number, weightingType: WeightingType,highFreq:number): number {
-    console.debug('[DecibelService] 开始计算分贝值, 数据长度:', bytesRead);
-    // 使用频率计权计算
-    const decibel = FrequencyWeighting.calculateWeightedDecibel(buffer, bytesRead, weightingType,highFreq);
-    console.debug('[DecibelService] 计算得到分贝值:', decibel);
-    
-    // 限制分贝值范围在合理区间内
-    const result = Math.max(0, Math.min(130, decibel));
-    console.debug('[DecibelService] 限制后的分贝值:', result);
-    return result;
-  }
 
   /**
    * 获取分贝级别描述
