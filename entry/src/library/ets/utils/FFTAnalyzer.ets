@@ -65,6 +65,8 @@ export class FFTAnalyzer {
   private readonly windowType: WindowType; // 窗函数类型
   private readonly overlap: number; // 重叠率
   private readonly WINDOW_CORRECTION: number; // 窗函数能量校正因子
+  private readonly MIC_SENSITIVITY: number = -26; // 典型的手机麦克风灵敏度（dBV/Pa）
+  private readonly SYSTEM_GAIN: number = 0; // 系统增益校正（dB）
 
   // 缓存数组
   private cachedSamples: Int16Array | null = null;
@@ -98,15 +100,15 @@ export class FFTAnalyzer {
     switch (windowType) {
       case WindowType.HANNING:
         this.initHanningWindow();
-        this.WINDOW_CORRECTION = 0.375; // Hanning窗的能量校正因子 (3/8)
+        this.WINDOW_CORRECTION = 2.67; // Hanning窗的能量校正因子 (8/3)
         break;
       case WindowType.BLACKMAN:
         this.initBlackmanWindow();
-        this.WINDOW_CORRECTION = 0.42; // Blackman窗的能量校正因子
+        this.WINDOW_CORRECTION = 2.38; // Blackman窗的能量校正因子
         break;
       default:
         this.initHanningWindow();
-        this.WINDOW_CORRECTION = 0.375;
+        this.WINDOW_CORRECTION = 2.67;
     }
   }
 
@@ -421,8 +423,8 @@ export class FFTAnalyzer {
       return this.MIN_DB;
     }
 
-    // 转换为声压级SPL
-    return 10.0 * Math.log10(weightedPower) + 93.98;
+    // 转换为声压级SPL，加入麦克风灵敏度和系统增益校正
+    return 10.0 * Math.log10(weightedPower) + 93.98 - this.MIC_SENSITIVITY + this.SYSTEM_GAIN;
   }
 
   /**
