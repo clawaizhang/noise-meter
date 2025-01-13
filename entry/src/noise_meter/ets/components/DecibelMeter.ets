@@ -96,18 +96,14 @@ export struct DecibelMeter {
   @Local private canvasWidth: number = 0 // Canvas宽度
   @Local private canvasHeight: number = 0 // Canvas高度
   private readonly ASPECT_RATIO: number = 1.5 // 宽高比改为3:2
-  private readonly SIDE_MARGIN: number = 16 // 左右边距各16像素
+  private readonly SIDE_MARGIN: number = 16 // 左右边距各16vp
   private readonly SAMPLE_RATE: number = 44100 // 采样率
   private MIN_DB: number = -20
   private MAX_DB: number = 120
   @Local private weightingType: WeightingType = WeightingType.A // 当前FFT大小
   @Local private currentMode: AudioAnalysisMode = AudioAnalysisMode.BALANCED // 当前FFT大小
   @Local private currentFftSize: number = 2048 // 当前FFT大小
-  private readonly PADDING_TOP: number = 20 // 顶部内边距减小到20px
-  private readonly PADDING_BOTTOM: number = 20 // 底部内边距减小到20px
-  private readonly PADDING_LEFT: number = 32 // 左侧内边距32px，给分贝值留出空间
-  private readonly PADDING_RIGHT: number = 16 // 右侧内边距16px
-  private readonly FONT_SIZE: number = 32 // 字体大小32px
+  private readonly FONT_SIZE: number = 10 // 字体大小10vp
   private canvasSettings: RenderingContextSettings = new RenderingContextSettings(true) // Canvas设置
   private canvasContext: CanvasRenderingContext2D = new CanvasRenderingContext2D(this.canvasSettings) // Canvas上下文
   // 屏幕宽度
@@ -122,31 +118,21 @@ export struct DecibelMeter {
       // 获取实际可用区域
       const availableArea = await display.getDefaultDisplaySync().getAvailableArea();
 
-      // 输出详细的显示设备信息
+      // 先把可用区域的像素转换为vp
+      const availableWidthVp = px2vp(availableArea.width);
+      const availableHeightVp = px2vp(availableArea.height);
+
+      // 然后用vp单位进行计算
+      this.canvasWidth = availableWidthVp - (this.SIDE_MARGIN * 2);
+      this.canvasHeight = this.canvasWidth / this.ASPECT_RATIO;
+
       console.info(`[FREQ_TRACE][显示设备信息]
         物理分辨率: ${displayInfo.width}x${displayInfo.height}
         密度DPI: ${displayInfo.densityDPI}
-        密度像素比: ${displayInfo.densityPixels}
-        缩放密度: ${displayInfo.scaledDensity}
-        X方向DPI: ${displayInfo.xDPI}
-        Y方向DPI: ${displayInfo.yDPI}
-        可用区域: left=${availableArea.left}, top=${availableArea.top}, width=${availableArea.width}, height=${availableArea.height}
+        可用区域(px): ${availableArea.width}x${availableArea.height}
+        可用区域(vp): ${availableWidthVp}x${availableHeightVp}
+        Canvas尺寸(vp): ${this.canvasWidth}x${this.canvasHeight}
       `);
-
-      // 计算实际可用显示区域（逻辑像素）
-      const realWidth = Math.round(availableArea.width / displayInfo.densityPixels);
-      const realHeight = Math.round(availableArea.height / displayInfo.densityPixels);
-      console.info(`[FREQ_TRACE][显示设备信息] 实际可用显示区域(逻辑像素): ${realWidth}x${realHeight}`);
-
-      // 计算Canvas宽度（实际宽度减去左右边距）
-      this.canvasWidth = realWidth - (this.SIDE_MARGIN * 2);
-      console.info(`[FREQ_TRACE][显示设备信息] Canvas宽度(减去边距): ${this.canvasWidth}`);
-
-      // 根据宽高比计算高度
-      this.canvasHeight = Math.round(this.canvasWidth / this.ASPECT_RATIO);
-      console.info(`[FREQ_TRACE][显示设备信息] Canvas高度(宽高比${this.ASPECT_RATIO}): ${this.canvasHeight}`);
-
-      console.info(`[FREQ_TRACE][显示设备信息] 最终Canvas尺寸(逻辑像素): ${this.canvasWidth}x${this.canvasHeight}`);
 
     } catch (error) {
       console.error('[FREQ_TRACE][显示设备信息] 计算Canvas尺寸失败:', error);
@@ -160,21 +146,18 @@ export struct DecibelMeter {
       let isLowFreqMode = this.currentMode === AudioAnalysisMode.LOW_FREQUENCY;
       this.canvasContext.clearRect(0, 0, this.canvasWidth, this.canvasHeight);
 
-      // 计算实际可用的绘制区域
-      const effectiveHeight: number = this.canvasHeight - this.PADDING_TOP - this.PADDING_BOTTOM;
-
       // 分贝网格点生成
       const dbSteps: number[] =
-        isLowFreqMode ? [-80, -60, -40, -20, 0, 20, 40, 60, 80] : [-20, 0, 20, 40, 60, 80, 100, 120];
-      this.MIN_DB = isLowFreqMode ? -80 : -20;
-      this.MAX_DB = isLowFreqMode ? 80 : 120;
+        isLowFreqMode ? [-60, -40, -20, 0, 20, 40, 60, 80, 100] : [-20, 0, 20, 40, 60, 80, 100, 120, 140];
+      this.MIN_DB = isLowFreqMode ? -60 : -20;
+      this.MAX_DB = isLowFreqMode ? 100 : 140;
 
 
       // 频率步进点生成
       const frequencySteps: number[] = isLowFreqMode ?
-        [16, 31.5, 63, 125, 250] : // 低频模式的频率步进
+        [16, 31.5, 63, 125, 250, 500] : // 低频模式的频率步进
         [16, 31.5, 63, 125, 250, 500, 1000, 2000, 4000, 8000, 16000];
-      const frequencyHigh: number = isLowFreqMode ? 250 : 16000;
+      const frequencyHigh: number = isLowFreqMode ? 500 : 16000;
 
       // 仅在第一次绘制时记录频率步进点
       if (this.isFirstFrequencyRun) {
@@ -183,14 +166,14 @@ export struct DecibelMeter {
       }
 
       // 绘制分贝刻度
-      this.canvasContext.strokeStyle = '#333333'; // 调整网格线颜色为更细的灰色
-      this.canvasContext.lineWidth = 0.5; // 减细网格线
-      this.canvasContext.textAlign = 'right'; // 右对齐
-      this.canvasContext.font = `${this.FONT_SIZE}px sans-serif`;
-      this.canvasContext.fillStyle = '#AAAAAA'; // 频率标签颜色
+      this.canvasContext.strokeStyle = '#333333';
+      this.canvasContext.lineWidth = 0.5;
+      this.canvasContext.textAlign = 'right';
+      this.canvasContext.font = `${vp2px(this.FONT_SIZE)}px sans-serif`; // 字体大小需要转换为px
+      this.canvasContext.fillStyle = '#AAAAAA';
 
       for (const db of dbSteps) {
-        // 重新计算Y坐标，确保-20到120分贝均匀分布并填满画布高度
+        // 重新计算Y坐标，确保分贝均匀分布并填满画布高度
         const normalizedValue: number = (db - this.MIN_DB) / (this.MAX_DB - this.MIN_DB);
         const y: number = this.canvasHeight * (1 - normalizedValue);
 
@@ -198,13 +181,13 @@ export struct DecibelMeter {
         if (db === this.MIN_DB || db === this.MAX_DB) {
           // 但是仍然绘制最顶部的标签
           if (db === this.MAX_DB) {
-            this.canvasContext.fillStyle = '#AAAAAA'; // 频率标签颜色
-            this.canvasContext.font = `${this.FONT_SIZE}px sans-serif`;
+            this.canvasContext.fillStyle = '#AAAAAA';
+            this.canvasContext.font = `${vp2px(this.FONT_SIZE)}px sans-serif`;
             this.canvasContext.textAlign = 'right';
             this.canvasContext.fillText(
               `${db}`,
-              this.PADDING_LEFT - 5,
-              y + this.FONT_SIZE / 3
+              30,
+              y + 10
             );
           }
           continue;
@@ -218,22 +201,22 @@ export struct DecibelMeter {
 
         // 只为特定分贝值显示标签
         if (dbSteps.includes(db)) {
-          this.canvasContext.fillStyle = '#AAAAAA'; // 频率标签颜色
-          this.canvasContext.font = `${this.FONT_SIZE}px sans-serif`;
+          this.canvasContext.fillStyle = '#AAAAAA';
+          this.canvasContext.font = `${vp2px(this.FONT_SIZE)}px sans-serif`;
           this.canvasContext.textAlign = 'right';
           this.canvasContext.fillText(
             `${db}`,
-            this.PADDING_LEFT - 5,
-            y + this.FONT_SIZE / 3
+            30,
+            y + 10
           );
         }
 
       }
 
       // 绘制频率刻度
-      this.canvasContext.textAlign = 'left'; // 改为左对齐
-      this.canvasContext.font = `${this.FONT_SIZE}px sans-serif`;
-      this.canvasContext.fillStyle = '#AAAAAA'; // 频率标签颜色
+      this.canvasContext.textAlign = 'left';
+      this.canvasContext.font = `${vp2px(this.FONT_SIZE)}px sans-serif`;
+      this.canvasContext.fillStyle = '#AAAAAA';
 
       // 计算对数坐标映射的常量
       const logMin: number = Math.log10(16);
@@ -255,13 +238,13 @@ export struct DecibelMeter {
         if (i === 0 || i === frequencySteps.length - 1) {
           // 绘制第一个频率标签
           if (i === 0) {
-            this.canvasContext.fillStyle = '#AAAAAA'; // 频率标签颜色
-            this.canvasContext.font = `${this.FONT_SIZE}px sans-serif`;
+            this.canvasContext.fillStyle = '#AAAAAA';
+            this.canvasContext.font = `${vp2px(this.FONT_SIZE)}px sans-serif`;
             this.canvasContext.textAlign = 'left';
             this.canvasContext.fillText(
               `${freq}`,
-              x,
-              zeroDbY - 5  // 使用0分贝线的位置
+              x + 2,
+              zeroDbY - 2  // 使用0分贝线的位置
             );
           }
           continue;
@@ -269,7 +252,7 @@ export struct DecibelMeter {
 
         // 绘制垂直网格线
         this.canvasContext.beginPath();
-        this.canvasContext.strokeStyle = '#333333'; // 细灰色网格线
+        this.canvasContext.strokeStyle = '#333333';
         this.canvasContext.lineWidth = 0.5;
         this.canvasContext.moveTo(x, 0);
         this.canvasContext.lineTo(x, this.canvasHeight);
@@ -279,13 +262,13 @@ export struct DecibelMeter {
         const label: string = freq >= 1000 ?
           (freq === 1000 ? '1k' : `${freq / 1000}k`) :
         freq.toString();
-        this.canvasContext.fillStyle = '#AAAAAA'; // 频率标签颜色
-        this.canvasContext.font = `${this.FONT_SIZE}px sans-serif`;
+        this.canvasContext.fillStyle = '#AAAAAA';
+        this.canvasContext.font = `${vp2px(this.FONT_SIZE)}px sans-serif`;
         this.canvasContext.textAlign = 'left';
         this.canvasContext.fillText(
           label,
-          x, // 使用x坐标作为左对齐起点
-          zeroDbY - 5  // 使用0分贝线的位置，略微上移5像素
+          x + 2, // 使用x坐标作为左对齐起点
+          zeroDbY - 2  // 使用0分贝线的位置，略微上移5像素
         );
       }
 
@@ -349,7 +332,7 @@ export struct DecibelMeter {
         if (binSpectrum.length > 0) {
           const avgDb: number = FrequencyWeighting.calculateAverageDb(binSpectrum);
           const normalizedValue: number = (avgDb - this.MIN_DB) / (this.MAX_DB - this.MIN_DB);
-          newDisplayPoints[i] = effectiveHeight * Math.max(0, Math.min(1, normalizedValue));
+          newDisplayPoints[i] = this.canvasHeight * Math.max(0, Math.min(1, normalizedValue));
         } else {
           newDisplayPoints[i] = 0;
         }
@@ -387,13 +370,13 @@ export struct DecibelMeter {
         const logMin: number = Math.log10(16);
         const logMax: number = Math.log10(frequencyHigh);
 
-        const x: number = this.PADDING_LEFT +
-          ((logFreq - logMin) / (logMax - logMin)) * (this.canvasWidth - this.PADDING_LEFT - this.PADDING_RIGHT);
+        const x: number =
+          ((logFreq - logMin) / (logMax - logMin)) * this.canvasWidth;
 
         const value: number = Math.max(this.MIN_DB, Math.min(this.MAX_DB, rawSpectrum[i]));
         const normalizedValue: number = (value - this.MIN_DB) / (this.MAX_DB - this.MIN_DB);
-        const height: number = (this.canvasHeight - this.PADDING_TOP - this.PADDING_BOTTOM) * normalizedValue;
-        const y: number = this.canvasHeight - this.PADDING_BOTTOM - height;
+        const height: number = this.canvasHeight * normalizedValue;
+        const y: number = this.canvasHeight - height;
 
         // 转换为整数坐标
         const intX = Math.round(x);
@@ -426,16 +409,15 @@ export struct DecibelMeter {
         const logPeakFreq: number = Math.log10(this.peakFreq);
         const logMin: number = Math.log10(16);
         const logMax: number = Math.log10(frequencyHigh);
-        const effectiveWidth: number = this.canvasWidth - this.PADDING_LEFT - this.PADDING_RIGHT;
-        const peakX: number = this.PADDING_LEFT + ((logPeakFreq - logMin) / (logMax - logMin)) * effectiveWidth;
+        const peakX: number = ((logPeakFreq - logMin) / (logMax - logMin)) * this.canvasWidth;
 
         // 计算Y坐标的替代方案
-        const peakFreqY: number = this.canvasHeight - this.PADDING_BOTTOM -
-          (maxValue / (this.MAX_DB - this.MIN_DB)) * (this.canvasHeight - this.PADDING_TOP - this.PADDING_BOTTOM);
+        const peakFreqY: number = this.canvasHeight -
+          (maxValue / (this.MAX_DB - this.MIN_DB)) * this.canvasHeight;
 
         this.canvasContext.fillStyle = '#fffdfdfd'; // 峰值标签使用白色
         this.canvasContext.textAlign = 'center';
-        this.canvasContext.font = `bold ${this.FONT_SIZE}px sans-serif`; // 使用统一的字体大小
+        this.canvasContext.font = `bold ${vp2px(this.FONT_SIZE)}px sans-serif`;
         this.canvasContext.fillText(
           `${Math.round(this.peakFreq)}Hz`,
           peakX,
@@ -446,7 +428,7 @@ export struct DecibelMeter {
       // 更新调试信息
       const debugInfo: string = `[FREQ_TRACE][Debug] 当前分贝: ${this.currentDecibel}dB\n` +
         `频谱范围: ${this.MIN_DB}dB ~ ${this.MAX_DB}dB\n` +
-        `高度范围: ${this.PADDING_TOP}px ~ ${this.canvasHeight - this.PADDING_BOTTOM}px`;
+        `高度范围: 0vp ~ ${this.canvasHeight}vp`;
 
       this.debugText = debugInfo;
 
@@ -585,7 +567,7 @@ export struct DecibelMeter {
       // 开始处理音频数据
       this.audioService.startProcessing((buffer: ArrayBuffer) => {
         // 计算分贝值
-        let highFreq: number = this.currentMode === AudioAnalysisMode.LOW_FREQUENCY ? 250 : 16000;
+        let highFreq: number = this.currentMode === AudioAnalysisMode.LOW_FREQUENCY ? 500 : 16000;
 
         taskpool.execute<[string, ArrayBuffer, WeightingType, number, number], Float32Array>(concurrentCalculateSpectrum,
           this.savedMode,
