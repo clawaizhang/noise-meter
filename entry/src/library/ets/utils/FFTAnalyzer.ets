@@ -98,7 +98,7 @@ export class FFTAnalyzer {
     switch (windowType) {
       case WindowType.HANNING:
         this.initHanningWindow();
-        this.WINDOW_CORRECTION = 0.375; // Hanning窗的能量校正因子
+        this.WINDOW_CORRECTION = 0.375; // Hanning窗的能量校正因子 (3/8)
         break;
       case WindowType.BLACKMAN:
         this.initBlackmanWindow();
@@ -409,10 +409,10 @@ export class FFTAnalyzer {
    * @returns 分贝值
    */
   private calculateDecibels(re: number, im: number, frequency: number, weightingType: WeightingType): number {
-    // 计算功率谱密度（考虑窗函数能量损失）
-    const power = (re * re + im * im) / this.WINDOW_CORRECTION;
+    // 计算功率谱密度（考虑窗函数能量损失和FFT大小归一化）
+    const power = (re * re + im * im) / (this.size * this.WINDOW_CORRECTION);
 
-    // 应用频率计权（使用标准IEC 61672-1的计权公式）
+    // 应用频率计权
     const weighting = this.getWeighting(frequency, weightingType);
     const weightedPower = power * weighting * weighting;
 
@@ -421,8 +421,8 @@ export class FFTAnalyzer {
       return this.MIN_DB;
     }
 
-    // 转换为声压级SPL（使用20μPa作为参考值）
-    return 10.0 * Math.log10(weightedPower) + 93.98; // 20*log10(1/20e-6) ≈ 93.98
+    // 转换为声压级SPL
+    return 10.0 * Math.log10(weightedPower) + 93.98;
   }
 
   /**

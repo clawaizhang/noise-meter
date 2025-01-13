@@ -48,14 +48,7 @@ function concurrentCalculateSpectrum(savedMode: string, buffer: ArrayBuffer, wei
 
   const filteredSpectrum = new Float32Array(weightedSpectrum.length);
   for (let i = 0; i < weightedSpectrum.length; i++) {
-    // 计算当前bin对应的频率
-    const freq = i * SAMPLE_RATE / (weightedSpectrum.length * 2);
-    // 只保留低于highFreq的频率成分
-    if (freq <= highFreq) {
-      filteredSpectrum[i] = weightedSpectrum[i];
-    } else {
-      filteredSpectrum[i] = 0;
-    }
+    filteredSpectrum[i] = weightedSpectrum[i];
   }
   return filteredSpectrum;
 }
@@ -232,7 +225,8 @@ export struct DecibelMeter {
         const logFreq: number = Math.log10(freq);
 
         // 计算X坐标，确保从画布左侧到右侧
-        const x: number = ((logFreq - logMin) / (logMax - logMin)) * this.canvasWidth;
+        const x: number =
+          ((logFreq - logMin) / (logMax - logMin)) * this.canvasWidth;
 
         // 跳过最左侧和最右侧的垂直网格线
         if (i === 0 || i === frequencySteps.length - 1) {
@@ -331,10 +325,11 @@ export struct DecibelMeter {
         // 计算高度
         if (binSpectrum.length > 0) {
           const avgDb: number = FrequencyWeighting.calculateAverageDb(binSpectrum);
-          const normalizedValue: number = (avgDb - this.MIN_DB) / (this.MAX_DB - this.MIN_DB);
-          newDisplayPoints[i] = this.canvasHeight * Math.max(0, Math.min(1, normalizedValue));
+          // 直接将分贝值映射到画布高度，考虑负值情况
+          const y = this.canvasHeight - ((avgDb - this.MIN_DB) / (this.MAX_DB - this.MIN_DB)) * this.canvasHeight;
+          newDisplayPoints[i] = Math.max(0, Math.min(this.canvasHeight, y));
         } else {
-          newDisplayPoints[i] = 0;
+          newDisplayPoints[i] = this.canvasHeight; // 无声时显示在底部
         }
 
         if (newDisplayPoints[i] > 0) {
@@ -357,9 +352,9 @@ export struct DecibelMeter {
 
       for (let i = 0; i < this.currentFftSize; i++) {
         const centerFreq: number = FFTAnalyzer.calculateCenterFrequency(i, this.SAMPLE_RATE, this.currentFftSize);
-        if (centerFreq < 16 || centerFreq > frequencyHigh) {
+        if (centerFreq < 16) {
           continue;
-        } // 只显示16Hz-16kHz的范围
+        } // 只显示16Hz以上的范围
 
         // 安全检查：确保rawSpectrum存在且有效
         if (!rawSpectrum || i >= rawSpectrum.length) {
