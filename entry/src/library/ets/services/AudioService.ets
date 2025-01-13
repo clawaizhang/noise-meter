@@ -226,16 +226,15 @@ export class AudioService {
           if (this.state !== AudioServiceState.CAPTURING) {
             return;
           }
-          
+          // 如果正在录音，保存数据
+          if (this.isRecording) {
+            this.audioBuffers.push(buffer.slice(0));  // 创建副本以避免引用问题
+          }
+
           // 处理音频数据
           if (buffer && buffer.byteLength > 0) {
             console.info(`[音频采集] 收到音频数据: 大小=${buffer.byteLength}字节, 样本数=${buffer.byteLength/2}`);
             this.processAudioData(buffer);
-            
-            // 如果正在录音，保存数据
-            if (this.isRecording) {
-              this.audioBuffers.push(buffer.slice(0));  // 创建副本以避免引用问题
-            }
           }
         } catch (err) {
           console.error('[音频采集] 处理音频数据时出错:', err);
@@ -559,10 +558,6 @@ export class AudioService {
         }
       }
       
-      // 存储录音数据
-      if (this.isRecording) {
-        this.audioBuffers.push(buffer.slice(0));
-      }
     } catch (err) {
       console.error(`[音频采集] 处理数据失败: ${err instanceof Error ? err.message : String(err)}`);
       // 不抛出错误，继续处理下一帧
