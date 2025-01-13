@@ -362,7 +362,7 @@ export struct DecibelMeter {
       }
 
       // 绘制主频谱折线
-      this.canvasContext.beginPath();
+      const spectrumPath = new Path2D(); // 创建新的Path2D对象
       this.canvasContext.strokeStyle = '#2196F3'; // 主曲线用蓝色
       this.canvasContext.lineWidth = 0.5;
 
@@ -406,10 +406,10 @@ export struct DecibelMeter {
         // 只在找到第一个有效点或非重复点时绘制
         if (isFirstValidPoint || !isDuplicatePoint) {
           if (isFirstValidPoint) {
-            this.canvasContext.moveTo(x, y);
+            spectrumPath.moveTo(x, y); // 使用Path2D的moveTo
             isFirstValidPoint = false;
           } else {
-            this.canvasContext.lineTo(x, y);
+            spectrumPath.lineTo(x, y); // 使用Path2D的lineTo
           }
 
           // 更新最后一个绘制点的坐标
@@ -417,6 +417,9 @@ export struct DecibelMeter {
           lastY = intY;
         }
       }
+
+      // 一次性绘制整个路径
+      this.canvasContext.stroke(spectrumPath);
 
       // 显示峰值频率
       if (this.peakFreq > 0) {
@@ -439,8 +442,6 @@ export struct DecibelMeter {
           peakFreqY - 30 // 稍微抬高标签位置
         );
       }
-
-      this.canvasContext.stroke();
 
       // 更新调试信息
       const debugInfo: string = `[FREQ_TRACE][Debug] 当前分贝: ${this.currentDecibel}dB\n` +
