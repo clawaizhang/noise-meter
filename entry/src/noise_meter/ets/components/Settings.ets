@@ -84,6 +84,8 @@ export struct Settings {
   @Local isRecordEnabled: boolean = false;
   @Local selectedWeighting: WeightingType = WeightingType.A;
   @Local selectedAnalysisMode: AudioAnalysisMode = AudioAnalysisMode.BALANCED;
+  @Local analysisModeDescription: string = '';
+  @Local analysisModeDetails: string[] = [];
 
   // 工具方法
   private getWeightingIndex(type: WeightingType): number {
@@ -177,6 +179,18 @@ export struct Settings {
     this.isRecordEnabled = this.preferenceService.isEnabled(PreferenceKeyConstants.RECORD);
     this.selectedWeighting = (this.preferenceService.getString(PreferenceKeyConstants.WEIGHTING) || WeightingType.A) as WeightingType;
     this.selectedAnalysisMode = (this.preferenceService.getString(PreferenceKeyConstants.ANALYSIS_MODE) || AudioAnalysisMode.BALANCED) as AudioAnalysisMode;
+    this.updateAnalysisModeCache();
+  }
+
+  private updateAnalysisModeCache() {
+    this.analysisModeDescription = this.getAnalysisModeDescription(this.selectedAnalysisMode);
+    const config = AudioPresets.getConfig(this.selectedAnalysisMode);
+    this.analysisModeDetails = [
+      `FFT大小: ${config.fftSize}`,
+      `处理间隔: ${config.processInterval}ms`,
+      `频率分辨率: ${(44100 / config.fftSize).toFixed(1)}Hz`,
+      `时间分辨率: ${(config.fftSize / 44100 * 1000).toFixed(1)}ms`
+    ];
   }
 
   build() {
@@ -211,6 +225,7 @@ export struct Settings {
                   const mode = this.getAnalysisModeFromIndex(index);
                   void this.preferenceService.setString(PreferenceKeyConstants.ANALYSIS_MODE, mode);
                   this.selectedAnalysisMode = mode;
+                  this.updateAnalysisModeCache();
                 })
             }
             .listItemRow()
@@ -220,16 +235,12 @@ export struct Settings {
 
         ListItem() {
           Column() {
-            Text(this.getAnalysisModeDescription(this.selectedAnalysisMode))
+            Text(this.analysisModeDescription)
               .analysisDescription()
-            Text(`FFT大小: ${AudioPresets.getConfig(this.selectedAnalysisMode).fftSize}`)
-              .analysisDetail()
-            Text(`处理间隔: ${AudioPresets.getConfig(this.selectedAnalysisMode).processInterval}ms`)
-              .analysisDetail()
-            Text(`频率分辨率: ${(44100 / AudioPresets.getConfig(this.selectedAnalysisMode).fftSize).toFixed(1)}Hz`)
-              .analysisDetail()
-            Text(`时间分辨率: ${(AudioPresets.getConfig(this.selectedAnalysisMode).fftSize / 44100 * 1000).toFixed(1)}ms`)
-              .analysisDetail()
+            ForEach(this.analysisModeDetails, (detail: string) => {
+              Text(detail)
+                .analysisDetail()
+            })
           }
           .width('100%')
           .alignItems(HorizontalAlign.Start)

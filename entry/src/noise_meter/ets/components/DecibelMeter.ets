@@ -5,7 +5,6 @@ import { DecibelRecord } from '../../../library/ets/models/DecibelRecord';
 import { DecibelRecordService } from '../services/DecibelRecordService';
 import { LocationDisplay } from '../../../library/ets/components/business/LocationDisplay'
 import common from '@ohos.app.ability.common';
-import { BannerCard } from '../../../library/ets/components/business/BannerCard';
 import { FileService } from '../../../library/ets/services/FileService';
 import { noiseMeterNavStack } from '../constant/ProviderConstant';
 import { promptAction } from '@kit.ArkUI';
@@ -15,24 +14,23 @@ import {
   PreferenceValue
 } from '../../../library/ets/services/PreferenceService';
 import { PreferenceKeyConstants } from '../../../library/ets/constants/PreferenceKeyConstants';
-import { FrequencyWeighting } from '../../../library/ets/utils/FrequencyWeighting';
 import type { BusinessError } from '@ohos.base';
-import systemIcon from '@ohos.multimedia.image';
 import display from '@ohos.display';
 import { AudioAnalysisMode, AudioPresets, PREF_ANALYSIS_MODE } from '../../../library/ets/common/AudioConfig';
 import { FFTAnalyzer } from '../../../library/ets/utils/FFTAnalyzer'; // 导入 FFTAnalyzer
 import { WeightingType } from '../../../library/ets/constants/WeightingConstants';
-import { taskpool } from '@kit.ArkTS';
 
 @Concurrent
-function concurrentCalculateSpectrum(savedMode: string, buffer: ArrayBuffer, weightingType: WeightingType): Float32Array {
+function concurrentCalculateSpectrum(savedMode: string, buffer: ArrayBuffer,
+  weightingType: WeightingType): Float32Array {
   console.info(`[频谱分析] 开始处理音频数据: 数据大小=${buffer.byteLength}字节`);
   // 初始化权分析器
   const config = AudioPresets.getConfig(savedMode as AudioAnalysisMode);
   let fftAnalyzer = new FFTAnalyzer(
     config.fftSize,
     config.windowType,
-    config.smoothingFactor
+    config.smoothingFactor,
+    config.overlap
   );
 
   // 执行FFT变换并获取频谱数据
@@ -61,13 +59,13 @@ export struct DecibelMeter {
   @Local private showStats: boolean = false
   @Local private recordingTime: number = 0
   @Local private isRecordEnabled: boolean = false
-  @Local private displayPoints: Array<number> = [] // 动态数组，大小将根据FFT size调整
-  @Local private peakPoints: Array<number> = [] // 动态数组，大小将根据FFT size调整
-  @Local private peakHoldTime: Array<number> = [] // 动态数组，大小将根据FFT size调整
   @Local private debugText: string = ''
   @Local private peakFreq: number = 0 // 添加峰值频率变量
-  @Local private savedMode: string = AudioAnalysisMode.BALANCED;
-  private spectrumData: Float32Array = new Float32Array(1024)
+  @Local private canvasWidth: number = 0 // Canvas宽度
+  @Local private canvasHeight: number = 0 // Canvas高度
+  @Local private weightingType: WeightingType = WeightingType.A // 当前FFT大小
+  @Local private currentMode: AudioAnalysisMode = AudioAnalysisMode.BALANCED // 当前FFT大小
+  @Local private currentFftSize: number = 2048 // 当前FFT大小
   @Consumer(noiseMeterNavStack) navStack: NavPathStack = new NavPathStack()
   private decibelService: DecibelService = new DecibelService()
   private audioService: AudioService = AudioService.getInstance(getContext() as common.UIAbilityContext)
@@ -77,23 +75,19 @@ export struct DecibelMeter {
   private preferenceService: PreferenceService = PreferenceService.getInstance()
   private dbCount: number = 0
   private dbSum: number = 0
-  private context?: common.UIAbilityContext
   private values: number[] = []
   private startTime: number = 0
   private releaseTimer: number = -1
   private currentRecord?: DecibelRecord
   private recordListener?: PreferenceChangeListener
   // Canvas相关属性
-  @Local private canvasWidth: number = 0 // Canvas宽度
-  @Local private canvasHeight: number = 0 // Canvas高度
+
   private readonly ASPECT_RATIO: number = 1.5 // 宽高比改为3:2
   private readonly SIDE_MARGIN: number = 16 // 左右边距各16vp
   private readonly SAMPLE_RATE: number = 44100 // 采样率
   private MIN_DB: number = -20
   private MAX_DB: number = 120
-  @Local private weightingType: WeightingType = WeightingType.A // 当前FFT大小
-  @Local private currentMode: AudioAnalysisMode = AudioAnalysisMode.BALANCED // 当前FFT大小
-  @Local private currentFftSize: number = 2048 // 当前FFT大小
+
   private readonly FONT_SIZE: number = 10 // 字体大小10vp
   private canvasSettings: RenderingContextSettings = new RenderingContextSettings(true) // Canvas设置
   private canvasContext: CanvasRenderingContext2D = new CanvasRenderingContext2D(this.canvasSettings) // Canvas上下文
@@ -132,9 +126,11 @@ export struct DecibelMeter {
 
   // 绘制频谱的方法
   private drawSpectrum(rawSpectrum: Float32Array): void {
+    console.info(`[频谱绘制] 开始绘制频谱，数据长度=${rawSpectrum.length}`);
     if (this.canvasContext) {
       // 清除画布
       let isLowFreqMode = this.currentMode === AudioAnalysisMode.LOW_FREQUENCY;
+      console.info(`[频谱绘制] 当前模式=${isLowFreqMode ? '低频' : '全频'}`);
       this.canvasContext.clearRect(0, 0, this.canvasWidth, this.canvasHeight);
 
       // 分贝网格点生成
@@ -143,16 +139,15 @@ export struct DecibelMeter {
       this.MIN_DB = isLowFreqMode ? -60 : -20;
       this.MAX_DB = isLowFreqMode ? 100 : 140;
 
-
       // 频率步进点生成
       const frequencySteps: number[] = isLowFreqMode ?
         [16, 31.5, 63, 125, 250, 500] : // 低频模式的频率步进
         [16, 31.5, 63, 125, 250, 500, 1000, 2000, 4000, 8000, 16000];
       const frequencyHigh: number = isLowFreqMode ? 500 : 16000;
+      console.info(`[频谱绘制] 频率步进点=${frequencySteps.join(', ')}`);
 
       // 仅在第一次绘制时记录频率步进点
       if (this.isFirstFrequencyRun) {
-        // console.info(`[FREQ_TRACE][Frequency] 频率步进点: ${frequencySteps.join(', ')}`);
         this.isFirstFrequencyRun = false;
       }
 
@@ -201,7 +196,6 @@ export struct DecibelMeter {
             y + 10
           );
         }
-
       }
 
       // 绘制频率刻度
@@ -212,6 +206,7 @@ export struct DecibelMeter {
       // 计算对数坐标映射的常量
       const logMin: number = Math.log10(16);
       const logMax: number = Math.log10(frequencyHigh);
+      console.info(`[频谱绘制] 对数范围: min=${logMin.toFixed(2)}, max=${logMax.toFixed(2)}`);
 
       // 计算0分贝对应的Y坐标
       const zeroDbNormalizedValue: number = (0 - this.MIN_DB) / (this.MAX_DB - this.MIN_DB);
@@ -225,6 +220,7 @@ export struct DecibelMeter {
         // 计算X坐标，确保从画布左侧到右侧
         const x: number =
           ((logFreq - logMin) / (logMax - logMin)) * this.canvasWidth;
+        console.info(`[频谱绘制] 频率=${freq}Hz, x坐标=${x.toFixed(2)}`);
 
         // 跳过最左侧和最右侧的垂直网格线
         if (i === 0 || i === frequencySteps.length - 1) {
@@ -288,7 +284,8 @@ export struct DecibelMeter {
       let totalPoints: number = 0;
       for (let i = 0; i < this.currentFftSize / 2; i++) {
         // 使用标准频率计算方法
-        const centerFreq: number = FFTAnalyzer.calculateCenterFrequency(i, this.SAMPLE_RATE, this.currentFftSize);
+        const centerFreq: number =
+          FFTAnalyzer.calculateCenterFrequency(i, this.SAMPLE_RATE, this.currentFftSize);
 
         // 过滤超过频率范围的值
         if (centerFreq > frequencyHigh) {
@@ -322,7 +319,8 @@ export struct DecibelMeter {
 
         // 计算高度
         if (binSpectrum.length > 0) {
-          const avgDb: number = FrequencyWeighting.calculateAverageDb(binSpectrum);
+          const config = AudioPresets.getConfig(this.currentMode as AudioAnalysisMode);
+          const avgDb: number = new FFTAnalyzer(config.fftSize,config.windowType,config.smoothingFactor,config.overlap).calculateAverageDb(binSpectrum);
           // 直接将分贝值映射到画布高度，考虑负值情况
           const y = this.canvasHeight - ((avgDb - this.MIN_DB) / (this.MAX_DB - this.MIN_DB)) * this.canvasHeight;
           newDisplayPoints[i] = Math.max(0, Math.min(this.canvasHeight, y));
@@ -473,15 +471,6 @@ export struct DecibelMeter {
 
   async aboutToAppear() {
     try {
-      // 从首选项加载分析模式
-      this.savedMode = this.preferenceService.getString(PREF_ANALYSIS_MODE, AudioAnalysisMode.BALANCED);
-
-      // 添加配置变更监听
-      this.preferenceService.addChangeListener(PREF_ANALYSIS_MODE, (key: string, value: PreferenceValue) => {
-        if (key === PREF_ANALYSIS_MODE && typeof value === 'string') {
-          this.savedMode as AudioAnalysisMode
-        }
-      });
       // 获取当前的计权类型
       this.weightingType =
         this.preferenceService.getString(PreferenceKeyConstants.WEIGHTING, WeightingType.A) as WeightingType;
@@ -559,17 +548,17 @@ export struct DecibelMeter {
 
       // 开始处理音频数据
       this.audioService.startProcessing((buffer: ArrayBuffer) => {
-        taskpool.execute<[string, ArrayBuffer, WeightingType], Float32Array>(concurrentCalculateSpectrum,
-          this.savedMode,
-          buffer, this.weightingType).then((spectrum: Float32Array) => {
-          const db: number = FrequencyWeighting.calculateAverageDb(spectrum);
+        let spectrum = concurrentCalculateSpectrum(
+          this.currentMode,
+          buffer, this.weightingType);
+        const config = AudioPresets.getConfig(this.currentMode as AudioAnalysisMode);
+        const db: number = new FFTAnalyzer(config.fftSize,config.windowType,config.smoothingFactor,config.overlap).calculateAverageDb(spectrum);
 
-          this.currentDecibel = Math.round(db);
-          this.values.push(this.currentDecibel);
-          this.updateStatistics(this.currentDecibel);
+        this.currentDecibel = Math.round(db);
+        this.values.push(this.currentDecibel);
+        this.updateStatistics(this.currentDecibel);
 
-          this.drawSpectrum(spectrum);
-        })
+        this.drawSpectrum(spectrum);
 
 
       });

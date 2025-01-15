@@ -6,7 +6,6 @@ import { WavFileGenerator } from '../utils/WavFileGenerator';
 import { PreferenceService, PreferenceValue } from './PreferenceService';
 import { AudioAnalysisMode, AudioPresets, PREF_ANALYSIS_MODE } from '../common/AudioConfig';
 import { FileService } from './FileService';
-import { FrequencyWeighting } from '../utils/FrequencyWeighting';
 
 /**
  * 音频服务类
@@ -91,17 +90,9 @@ export class AudioService {
     
     // 从首选项加载分析模式
     const savedMode: string = this.preferenceService.getString(PREF_ANALYSIS_MODE, AudioAnalysisMode.BALANCED);
-    if (Object.values(AudioAnalysisMode).includes(savedMode as AudioAnalysisMode)) {
-      this.currentConfig = AudioPresets.getConfig(savedMode as AudioAnalysisMode);
-      console.info(`[音频采集] 加载配置: 模式=${savedMode}, FFT大小=${this.currentConfig.fftSize}, ` +
-                  `处理间隔=${this.currentConfig.processInterval}ms, 重叠率=${this.currentConfig.overlap}`);
-    } else {
-      console.error(`[音频采集] 无效的保存模式: ${savedMode}，使用默认模式`);
-      this.currentConfig = AudioPresets.getConfig(AudioAnalysisMode.BALANCED);
-    }
-
-    // 初始化频率计权分析器
-    FrequencyWeighting.initializeAnalyzer(savedMode as AudioAnalysisMode);
+    this.currentConfig = AudioPresets.getConfig(savedMode as AudioAnalysisMode);
+    console.info(`[音频采集] 加载配置: 模式=${savedMode}, FFT大小=${this.currentConfig.fftSize}, ` +
+                `处理间隔=${this.currentConfig.processInterval}ms, 重叠率=${this.currentConfig.overlap}`);
 
     // 添加配置变更监听
     this.preferenceService.addChangeListener(PREF_ANALYSIS_MODE, (key: string, value: PreferenceValue) => {
@@ -435,9 +426,6 @@ export class AudioService {
         
         // 更新配置
         this.currentConfig = AudioPresets.getConfig(mode);
-        
-        // 更新分析器配置
-        FrequencyWeighting.updateAnalysisMode(mode);
         
         // 重置缓冲区
         this.resetBuffers();

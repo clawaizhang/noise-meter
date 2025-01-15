@@ -1,5 +1,3 @@
-import { WeightingType } from '../../../library/ets/constants/WeightingConstants';
-import { FrequencyWeighting } from '../../../library/ets/utils/FrequencyWeighting';
 
 @Observed
 export class DecibelService {
