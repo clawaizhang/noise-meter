@@ -487,9 +487,9 @@ ChartBuilder(selectedRecord: DecibelRecord, decibelService: DecibelService) {
             }
 
             // 统一主要网格线样式
-            this.canvasContext.strokeStyle = '#D0D0D0'; // 加深主要网格线颜色
+            this.canvasContext.strokeStyle = '#E0E0E0'; // 加深主要网格线颜色
             this.canvasContext.lineWidth = 1; // 保持线宽一致
-            
+
             // 绘制Y轴单位
             this.canvasContext.fillStyle = '#666666';
             this.canvasContext.textAlign = 'right';
