@@ -25,9 +25,7 @@ import { WeightingType } from '../../../library/ets/constants/WeightingConstants
 import { taskpool } from '@kit.ArkTS';
 
 @Concurrent
-function concurrentCalculateSpectrum(savedMode: string, buffer: ArrayBuffer, weightingType: WeightingType,
-  SAMPLE_RATE: number,
-  highFreq: number): Float32Array {
+function concurrentCalculateSpectrum(savedMode: string, buffer: ArrayBuffer, weightingType: WeightingType): Float32Array {
   console.info(`[频谱分析] 开始处理音频数据: 数据大小=${buffer.byteLength}字节`);
   // 初始化权分析器
   const config = AudioPresets.getConfig(savedMode as AudioAnalysisMode);
@@ -561,12 +559,9 @@ export struct DecibelMeter {
 
       // 开始处理音频数据
       this.audioService.startProcessing((buffer: ArrayBuffer) => {
-        // 计算分贝值
-        let highFreq: number = this.currentMode === AudioAnalysisMode.LOW_FREQUENCY ? 500 : 16000;
-
-        taskpool.execute<[string, ArrayBuffer, WeightingType, number, number], Float32Array>(concurrentCalculateSpectrum,
+        taskpool.execute<[string, ArrayBuffer, WeightingType], Float32Array>(concurrentCalculateSpectrum,
           this.savedMode,
-          buffer, this.weightingType, this.SAMPLE_RATE, highFreq).then((spectrum: Float32Array) => {
+          buffer, this.weightingType).then((spectrum: Float32Array) => {
           const db: number = FrequencyWeighting.calculateAverageDb(spectrum);
 
           this.currentDecibel = Math.round(db);

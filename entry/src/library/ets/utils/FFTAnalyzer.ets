@@ -2,6 +2,7 @@ import { WeightingType } from '../constants/WeightingConstants';
 import { PreferenceService } from '../services/PreferenceService';
 import { PreferenceKeyConstants } from '../constants/PreferenceKeyConstants';
 import { WindowType } from '../common/AudioConfig';
+import { audio } from '@kit.AudioKit';
 
 /**
  * 复数类型接口

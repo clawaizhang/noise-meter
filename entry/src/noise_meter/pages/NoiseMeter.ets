@@ -44,7 +44,7 @@ export struct NoiseMeter {
           .backgroundColor('#F5F5F5')
           .alignItems(HorizontalAlign.Center)
         }
-        .tabBar(this.TabBuilder('开始检测', $r('app.media.ic_mic'), 0))
+        .tabBar(this.TabBuilder('噪音检测仪', $r('app.media.ic_meter'), 0))
 
         TabContent() {
           DecibelHistory({ currentTabIndex: this.currentIndex })
