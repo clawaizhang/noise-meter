@@ -3,7 +3,7 @@ import { PreferenceKeyConstants } from '../../../library/ets/constants/Preferenc
 import { CustomTitleBar } from '../../../library/ets/components/common/CustomTitleBar';
 import { WeightingType, getWeightingDescription } from '../../../library/ets/constants/WeightingConstants';
 import { AudioAnalysisMode, AudioPresets } from '../../../library/ets/common/AudioConfig';
-import { AudioService, AudioServiceState } from '../../../library/ets/services/AudioService';
+import { AudioService } from '../../../library/ets/services/AudioService';
 
 @Extend(Image)
 function itemIcon() {
@@ -99,6 +99,7 @@ export struct Settings {
   @Local analysisModeDetails: string[] = [];
   @Local isModeChangeEnabled: boolean = true;
   @Local remainingTime: number = 0;
+  @Local calibrationValue: number = 0;
   private readonly COOLDOWN_DURATION: number = 3000; // 3秒冷却时间
 
   // 工具方法
@@ -195,6 +196,7 @@ export struct Settings {
       (this.preferenceService.getString(PreferenceKeyConstants.WEIGHTING) || WeightingType.A) as WeightingType;
     this.selectedAnalysisMode = (this.preferenceService.getString(PreferenceKeyConstants.ANALYSIS_MODE) ||
     AudioAnalysisMode.BALANCED) as AudioAnalysisMode;
+    this.calibrationValue = this.preferenceService.getNumber(PreferenceKeyConstants.CALIBRATION) || 0;
     this.updateAnalysisModeCache();
   }
 
@@ -326,6 +328,55 @@ export struct Settings {
 
         ListItem() {
           Text(getWeightingDescription(this.selectedWeighting))
+            .itemDescription()
+        }
+        .descriptionContainer()
+
+        // 分贝校准设置
+        ListItem() {
+          Column() {
+            Row() {
+              Row() {
+                Image($r('app.media.ic_calibration'))
+                  .itemIcon()
+
+                Text('分贝校准')
+                  .itemTitle()
+              }
+
+              Blank()
+
+              Text(`${this.calibrationValue}dB`)
+                .fontSize(14)
+                .fontColor('#666666')
+                .margin({ right: 8 })
+            }
+            .listItemRow()
+
+Slider({
+  value: this.calibrationValue,
+  min: -30,
+  max: 30,
+  style: SliderStyle.InSet
+})
+  .blockColor('#0091FF')
+  .trackColor('#F0F0F0')
+  .selectedColor('#0091FF')
+  .showTips(true)
+  .onChange((value: number) => {
+    this.calibrationValue = value;
+    void this.preferenceService.setNumber(PreferenceKeyConstants.CALIBRATION, value);
+  })
+  .margin({ top: 12, bottom: 12 })
+  .height(24)
+  .trackThickness(24)
+  .blockSize({width: 24, height: 24})
+          }
+          .listItemStyle()
+        }
+
+        ListItem() {
+          Text('调整当前分贝计的校准值，范围从-30dB到+30dB')
             .itemDescription()
         }
         .descriptionContainer()

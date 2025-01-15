@@ -21,4 +21,9 @@ export class PreferenceKeyConstants {
    * 音频分析模式
    */
   static readonly ANALYSIS_MODE: string = 'audio_analysis_mode';
-} 
+
+  /**
+   * 分贝校准值
+   */
+  static readonly CALIBRATION: string = 'calibration_value';
+}
