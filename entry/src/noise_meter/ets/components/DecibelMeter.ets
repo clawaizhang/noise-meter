@@ -22,7 +22,7 @@ import { WeightingType } from '../../../library/ets/constants/WeightingConstants
 
 @Concurrent
 function concurrentCalculateSpectrum(savedMode: string, buffer: ArrayBuffer,
-  weightingType: WeightingType): Float32Array {
+  weightingType: WeightingType,calibrationGain:number): Float32Array {
   console.info(`[频谱分析] 开始处理音频数据: 数据大小=${buffer.byteLength}字节`);
   // 初始化权分析器
   const config = AudioPresets.getConfig(savedMode as AudioAnalysisMode);
@@ -34,6 +34,7 @@ function concurrentCalculateSpectrum(savedMode: string, buffer: ArrayBuffer,
   );
 
   // 执行FFT变换并获取频谱数据
+  fftAnalyzer.setSystemGain(calibrationGain);
   const spectrum = fftAnalyzer.transform(buffer, weightingType);
   console.info(`[频谱分析] FFT变换完成: 频谱长度=${spectrum.length}`);
   console.info(`[频谱分析] 原始频谱样本: ${spectrum[0]}, ${spectrum[1]}, ${spectrum[2]}, ${spectrum[3]}, ${spectrum[4]}`);
@@ -63,6 +64,7 @@ export struct DecibelMeter {
   @Local private peakFreq: number = 0 // 添加峰值频率变量
   @Local private canvasWidth: number = 0 // Canvas宽度
   @Local private canvasHeight: number = 0 // Canvas高度
+  @Local private calibrationGain: number = 0 // gain
   @Local private weightingType: WeightingType = WeightingType.A // 当前FFT大小
   @Local private currentMode: AudioAnalysisMode = AudioAnalysisMode.BALANCED // 当前FFT大小
   @Local private currentFftSize: number = 2048 // 当前FFT大小
@@ -458,9 +460,6 @@ export struct DecibelMeter {
     if (this.recordListener) {
       this.preferenceService.removeChangeListener(PreferenceKeyConstants.RECORD, this.recordListener);
     }
-    if (this.isRecording) {
-      this.stopRecording();
-    }
     if (this.releaseTimer !== -1) {
       clearTimeout(this.releaseTimer);
       this.releaseTimer = -1;
@@ -471,6 +470,15 @@ export struct DecibelMeter {
 
   async aboutToAppear() {
     try {
+      // 获取当前的增益
+      this.calibrationGain =
+        this.preferenceService.getNumber(PreferenceKeyConstants.CALIBRATION,0);
+      this.preferenceService.addChangeListener(PreferenceKeyConstants.CALIBRATION,
+        (key: string, value: PreferenceValue) => {
+          if (key === PreferenceKeyConstants.CALIBRATION && typeof value === 'number') {
+            this.calibrationGain = value ;
+          }
+        })
       // 获取当前的计权类型
       this.weightingType =
         this.preferenceService.getString(PreferenceKeyConstants.WEIGHTING, WeightingType.A) as WeightingType;
@@ -550,7 +558,7 @@ export struct DecibelMeter {
       this.audioService.startProcessing((buffer: ArrayBuffer) => {
         let spectrum = concurrentCalculateSpectrum(
           this.currentMode,
-          buffer, this.weightingType);
+          buffer, this.weightingType,this.calibrationGain);
         const config = AudioPresets.getConfig(this.currentMode as AudioAnalysisMode);
         const db: number = new FFTAnalyzer(config.fftSize,config.windowType,config.smoothingFactor,config.overlap).calculateAverageDb(spectrum);
 

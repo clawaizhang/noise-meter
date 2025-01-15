@@ -67,7 +67,18 @@ export class FFTAnalyzer {
   private readonly overlap: number; // 重叠率
   private readonly WINDOW_CORRECTION: number; // 窗函数能量校正因子
   private readonly MIC_SENSITIVITY: number = -26; // 典型的手机麦克风灵敏度（dBV/Pa）
-  private readonly SYSTEM_GAIN: number = 0; // 系统增益校正（dB）
+  private systemGain: number = 0; // 系统增益校正（dB）
+
+  /**
+   * 设置系统增益
+   * @param gain 增益值（dB）
+   */
+  public setSystemGain(gain: number): void {
+    this.systemGain = gain;
+    if (this.DEBUG) {
+      console.info(`系统增益已更新为: ${gain}dB`);
+    }
+  }
 
   // 缓存数组
   private cachedSamples: Int16Array | null = null;
@@ -425,7 +436,7 @@ export class FFTAnalyzer {
     }
 
     // 转换为声压级SPL，加入麦克风灵敏度和系统增益校正
-    return 10.0 * Math.log10(weightedPower) + 93.98 - this.MIC_SENSITIVITY + this.SYSTEM_GAIN;
+    return 10.0 * Math.log10(weightedPower) + 93.98 - this.MIC_SENSITIVITY + this.systemGain;
   }
 
   /**
