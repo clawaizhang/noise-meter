@@ -5,27 +5,31 @@ import { WeightingType, getWeightingDescription } from '../../../library/ets/con
 import { AudioAnalysisMode, AudioPresets } from '../../../library/ets/common/AudioConfig';
 import { AudioService, AudioServiceState } from '../../../library/ets/services/AudioService';
 
-@Extend(Image) function itemIcon() {
+@Extend(Image)
+function itemIcon() {
   .width(24)
   .height(24)
   .fillColor('#666666')
   .margin({ right: 8 })
 }
 
-@Extend(Text) function itemTitle() {
+@Extend(Text)
+function itemTitle() {
   .fontWeight(FontWeight.Medium)
   .fontColor('#000000')
   .fontSize(16)
 }
 
-@Extend(Text) function itemDescription() {
+@Extend(Text)
+function itemDescription() {
   .fontColor('#666666')
   .fontSize(14)
   .textAlign(TextAlign.Start)
   .margin({ left: 48 })
 }
 
-@Extend(Select) function selectStyle() {
+@Extend(Select)
+function selectStyle() {
   .backgroundColor(Color.White)
   .borderRadius(16)
   .padding({ left: 12, right: 12 })
@@ -34,42 +38,49 @@ import { AudioService, AudioServiceState } from '../../../library/ets/services/A
   .optionFont({ size: 16, weight: FontWeight.Normal, family: 'HarmonyHeiTi' })
 }
 
-@Extend(Column) function listItemStyle() {
+@Extend(Column)
+function listItemStyle() {
   .width('100%')
   .padding({ left: 16, right: 16 })
   .backgroundColor('#FFFFFF')
 }
 
-@Extend(Row) function listItemRow() {
+@Extend(Row)
+function listItemRow() {
   .width('100%')
   .height(56)
   .alignItems(VerticalAlign.Center)
 }
 
-@Extend(Text) function detailText() {
+@Extend(Text)
+function detailText() {
   .fontColor('#666666')
   .fontSize(14)
   .margin({ top: 4, left: 48 })
 }
 
-@Extend(Row) function dividerStyle() {
+@Extend(Row)
+function dividerStyle() {
   .width('100%')
   .height(1)
   .backgroundColor('#F5F5F5')
 }
 
-@Extend(ListItem) function descriptionContainer() {
+@Extend(ListItem)
+function descriptionContainer() {
   .backgroundColor('#F5F5F5')
   .padding({ top: 8, bottom: 12 })
 }
 
-@Extend(Text) function analysisDescription() {
+@Extend(Text)
+function analysisDescription() {
   .fontColor('#666666')
   .fontSize(14)
   .textAlign(TextAlign.Start)
 }
 
-@Extend(Text) function analysisDetail() {
+@Extend(Text)
+function analysisDetail() {
   .fontColor('#666666')
   .fontSize(14)
   .textAlign(TextAlign.Start)
@@ -86,6 +97,9 @@ export struct Settings {
   @Local selectedAnalysisMode: AudioAnalysisMode = AudioAnalysisMode.BALANCED;
   @Local analysisModeDescription: string = '';
   @Local analysisModeDetails: string[] = [];
+  @Local isModeChangeEnabled: boolean = true;
+  @Local remainingTime: number = 0;
+  private readonly COOLDOWN_DURATION: number = 3000; // 3秒冷却时间
 
   // 工具方法
   private getWeightingIndex(type: WeightingType): number {
@@ -177,8 +191,10 @@ export struct Settings {
   aboutToAppear() {
     this.isLocationEnabled = this.preferenceService.isEnabled(PreferenceKeyConstants.LOCATION);
     this.isRecordEnabled = this.preferenceService.isEnabled(PreferenceKeyConstants.RECORD);
-    this.selectedWeighting = (this.preferenceService.getString(PreferenceKeyConstants.WEIGHTING) || WeightingType.A) as WeightingType;
-    this.selectedAnalysisMode = (this.preferenceService.getString(PreferenceKeyConstants.ANALYSIS_MODE) || AudioAnalysisMode.BALANCED) as AudioAnalysisMode;
+    this.selectedWeighting =
+      (this.preferenceService.getString(PreferenceKeyConstants.WEIGHTING) || WeightingType.A) as WeightingType;
+    this.selectedAnalysisMode = (this.preferenceService.getString(PreferenceKeyConstants.ANALYSIS_MODE) ||
+    AudioAnalysisMode.BALANCED) as AudioAnalysisMode;
     this.updateAnalysisModeCache();
   }
 
@@ -212,21 +228,48 @@ export struct Settings {
 
               Blank()
 
-              Select([
-                { value: '快速响应' },
-                { value: '平衡模式' },
-                { value: '精确分析' },
-                { value: '低频分析' }
-              ])
-                .selected(this.getAnalysisModeIndex(this.selectedAnalysisMode))
-                .value(this.getAnalysisModeDisplayName(this.selectedAnalysisMode))
-                .selectStyle()
-                .onSelect((index: number) => {
-                  const mode = this.getAnalysisModeFromIndex(index);
-                  void this.preferenceService.setString(PreferenceKeyConstants.ANALYSIS_MODE, mode);
-                  this.selectedAnalysisMode = mode;
-                  this.updateAnalysisModeCache();
-                })
+              Row() {
+                Text(this.remainingTime > 0 ? `${Math.ceil(this.remainingTime / 1000)}秒` : '')
+                  .fontSize(14)
+                  .fontColor('#CCCCCC')
+                  .margin({ right: -2 })
+
+                Select([
+                  { value: '快速响应' },
+                  { value: '平衡模式' },
+                  { value: '精确分析' },
+                  { value: '低频分析' }
+                ])
+                  .selected(this.getAnalysisModeIndex(this.selectedAnalysisMode))
+                  .value(this.getAnalysisModeDisplayName(this.selectedAnalysisMode))
+                  .selectStyle()
+
+                  .onSelect((index: number) => {
+                    if (!this.isModeChangeEnabled) {
+                      return;
+                    }
+
+                    // 禁用切换
+                    this.isModeChangeEnabled = false;
+
+                    const mode = this.getAnalysisModeFromIndex(index);
+                    void this.preferenceService.setString(PreferenceKeyConstants.ANALYSIS_MODE, mode);
+                    this.selectedAnalysisMode = mode;
+                    this.updateAnalysisModeCache();
+
+                    // 启动冷却计时器
+                    this.remainingTime = this.COOLDOWN_DURATION;
+                    const interval = setInterval(() => {
+                      this.remainingTime -= 1000;
+                      if (this.remainingTime <= 0) {
+                        clearInterval(interval);
+                        this.isModeChangeEnabled = true;
+                        this.remainingTime = 0;
+                      }
+                    }, 1000);
+                  })
+                  .enabled(this.isModeChangeEnabled)
+              }
             }
             .listItemRow()
           }
