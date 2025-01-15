@@ -332,7 +332,7 @@ export struct Settings {
         }
         .descriptionContainer()
 
-        // 分贝校准设置
+        // 声级校准设置
         ListItem() {
           Column() {
             Row() {
@@ -340,7 +340,7 @@ export struct Settings {
                 Image($r('app.media.ic_calibration'))
                   .itemIcon()
 
-                Text('分贝校准')
+                Text('声级校准')
                   .itemTitle()
               }
 
@@ -376,7 +376,7 @@ Slider({
         }
 
         ListItem() {
-          Text('调整当前分贝计的校准值，范围从-30dB到+30dB')
+          Text('校准声级计，范围从-30dB到+30dB')
             .itemDescription()
         }
         .descriptionContainer()

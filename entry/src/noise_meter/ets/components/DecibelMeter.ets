@@ -476,7 +476,7 @@ export struct DecibelMeter {
       this.preferenceService.addChangeListener(PreferenceKeyConstants.CALIBRATION,
         (key: string, value: PreferenceValue) => {
           if (key === PreferenceKeyConstants.CALIBRATION && typeof value === 'number') {
-            this.calibrationGain = value ;
+            this.calibrationGain = value;
           }
         })
       // 获取当前的计权类型
@@ -802,6 +802,9 @@ export struct DecibelMeter {
             });
           }
         })
+
+        // 新增的校准指示器
+        this.CalibrationIndicator()
       }
       .width('100%')
       .margin({ left: 8, right: 8, top: 24 })
@@ -821,6 +824,25 @@ export struct DecibelMeter {
     .width('100%')
     .padding({ top: 8, bottom: 16 })
     .alignItems(HorizontalAlign.Center)
+  }
+
+  @Builder
+  private CalibrationIndicator() {
+    Row() {
+      Text('声级校准:')
+        .fontSize(10)
+        .fontColor(Color.Gray)
+      
+      Text(`${this.calibrationGain} dB`)
+        .fontSize(10)
+        .fontColor(Color.Gray)
+        .margin({ left: 5 })
+    }
+    .position({
+      x: '72%',   // 调整到右侧
+      y: '2%'    // 调整到顶部
+    })
+    .opacity(0.7)
   }
 
   @Builder
