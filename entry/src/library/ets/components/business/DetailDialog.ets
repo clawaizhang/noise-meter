@@ -466,69 +466,92 @@ ChartBuilder(selectedRecord: DecibelRecord, decibelService: DecibelService) {
             this.canvasContext.lineWidth = 1;
 
             // 计算Y轴刻度
-            const yRange = Math.ceil(maxValue) - Math.floor(minValue);
-            let yStep = Math.max(5, Math.round(yRange / 5));
-            if (yStep % 5 !== 0) {
-              yStep = Math.ceil(yStep / 5) * 5;
-            }
+            const yRange = maxValue - minValue;
+            // 确保分贝值在网格范围内
+            const yMin = Math.floor(minValue);
+            const yMax = Math.ceil(maxValue);
+            const yRangeAdjusted = yMax - yMin;
+            const targetYGridCount = 6; // 保持6-8根网格线
+            const yStep = Math.ceil(yRangeAdjusted / targetYGridCount);
 
-            // 计算第一个和最后一个刻度
-            const firstTick = Math.floor(minValue / yStep) * yStep;
-            const lastTick = Math.ceil(maxValue / yStep) * yStep;
-
-            // 绘制Y轴单位
-            this.canvasContext.fillStyle = '#666666';
-            this.canvasContext.textAlign = 'right';
-            this.canvasContext.fillText('分贝', margin.left - vp2px(2), margin.top - vp2px(10));
-
-            // 绘制Y轴刻度
-            for (let i = firstTick; i <= lastTick; i += yStep) {
-              const y = margin.top + chartHeight - ((i - minValue) / (maxValue - minValue)) * chartHeight;
-              this.canvasContext.fillText(`${i}`, margin.left - vp2px(2), y);
-            }
-
-            // 计算X轴刻度
-            const totalSeconds = Math.ceil(duration / 1000);
-            const xStep = chartWidth / totalSeconds;
-
-            // 绘制X轴单位
-            this.canvasContext.textAlign = 'center';
-            this.canvasContext.fillText('秒', margin.left + chartWidth / 2, margin.top + chartHeight + vp2px(12));
-
-            // 绘制X轴刻度
-            for (let i = 0; i <= totalSeconds; i++) {
-              const x = margin.left + i * xStep;
-              if (i % Math.ceil(totalSeconds / 10) === 0 || i === totalSeconds) {
-                this.canvasContext.fillText(`${i}`, x, margin.top + chartHeight + vp2px(2));
-              }
-            }
-
-            // 绘制网格线
-            const yGridStep = (lastTick - firstTick) / yStep;
-            for (let i = 0; i <= yGridStep; i++) {
-              const y = margin.top + chartHeight - (i / yGridStep) * chartHeight;
+            // 绘制更细的辅助线
+            this.canvasContext.strokeStyle = '#E8E8E8'; // 加深辅助线颜色
+            this.canvasContext.lineWidth = 0.5; // 更细的线宽
+            const ySubStep = yStep / 2; // 在主要网格线之间添加辅助线
+            for (let i = yMin; i <= yMax; i += ySubStep) {
+              const y = margin.top + chartHeight - ((i - yMin) / yRangeAdjusted) * chartHeight;
               this.canvasContext.beginPath();
               this.canvasContext.moveTo(margin.left, y);
               this.canvasContext.lineTo(margin.left + chartWidth, y);
               this.canvasContext.stroke();
             }
 
-            for (let i = 0; i <= totalSeconds; i++) {
+            // 统一主要网格线样式
+            this.canvasContext.strokeStyle = '#D0D0D0'; // 加深主要网格线颜色
+            this.canvasContext.lineWidth = 1; // 保持线宽一致
+            
+            // 绘制Y轴单位
+            this.canvasContext.fillStyle = '#666666';
+            this.canvasContext.textAlign = 'right';
+            this.canvasContext.fillText('分贝', margin.left - vp2px(2), margin.top - vp2px(10));
+
+            // 绘制Y轴刻度
+            for (let i = yMin; i <= yMax; i += yStep) {
+              const y = margin.top + chartHeight - ((i - yMin) / yRangeAdjusted) * chartHeight;
+              this.canvasContext.fillText(`${i}`, margin.left - vp2px(2), y);
+            }
+
+            // 计算X轴刻度
+            const totalSeconds = Math.ceil(duration / 1000);
+            const targetXGridCount = 7; // 显示6-8个网格
+            const xInterval = Math.ceil(totalSeconds / targetXGridCount);
+            const xStep = chartWidth / (targetXGridCount - 1);
+
+            // 绘制X轴单位
+            this.canvasContext.textAlign = 'center';
+            this.canvasContext.fillText('秒', margin.left + chartWidth / 2, margin.top + chartHeight + vp2px(12));
+
+            // 绘制X轴刻度
+            for (let i = 0; i < targetXGridCount; i++) {
               const x = margin.left + i * xStep;
+              const seconds = i * xInterval;
+              this.canvasContext.fillText(`${seconds}`, x, margin.top + chartHeight + vp2px(2));
+              
+              // 绘制X轴主要网格线
               this.canvasContext.beginPath();
               this.canvasContext.moveTo(x, margin.top);
               this.canvasContext.lineTo(x, margin.top + chartHeight);
               this.canvasContext.stroke();
             }
 
+            // 绘制Y轴主要网格线
+            for (let i = yMin; i <= yMax; i += yStep) {
+              const y = margin.top + chartHeight - ((i - yMin) / yRangeAdjusted) * chartHeight;
+              this.canvasContext.beginPath();
+              this.canvasContext.moveTo(margin.left, y);
+              this.canvasContext.lineTo(margin.left + chartWidth, y);
+              this.canvasContext.stroke();
+            }
+
+            // 绘制X轴辅助线
+            this.canvasContext.strokeStyle = '#F0F0F0';
+            this.canvasContext.lineWidth = 0.5;
+            const xSubStep = xStep / 2;
+            for (let i = 0; i < targetXGridCount * 2; i++) {
+              const x = margin.left + i * xSubStep;
+              this.canvasContext.beginPath();
+              this.canvasContext.moveTo(x, margin.top);
+              this.canvasContext.lineTo(x, margin.top + chartHeight);
+              this.canvasContext.stroke();
+            }
+
+            // 恢复主要网格线样式
+            this.canvasContext.strokeStyle = '#E0E0E0';
+            this.canvasContext.lineWidth = 1;
+
             // 绘制数据点
             const xScale = chartWidth / (values.length - 1);
             const yScale = chartHeight / (maxValue - minValue);
-
-            // 绘制连线
-            this.canvasContext.beginPath();
-            this.canvasContext.strokeStyle = '#0091FF';
-            this.canvasContext.lineWidth = 2;
 
             values.forEach((value, index) => {
               const x = margin.left + index * xScale;
@@ -537,7 +560,7 @@ ChartBuilder(selectedRecord: DecibelRecord, decibelService: DecibelService) {
               // 绘制点
               this.canvasContext.fillStyle = decibelService.getDecibelColor(value);
               this.canvasContext.beginPath();
-              this.canvasContext.arc(x, y, 2, 0, Math.PI * 2);
+              this.canvasContext.arc(x, y, 1.5, 0, Math.PI * 2);
               this.canvasContext.fill();
 
               // 绘制连线
@@ -834,4 +857,4 @@ ChartBuilder(selectedRecord: DecibelRecord, decibelService: DecibelService) {
 
 @Builder export function DetailDialogBuilder() {
   DetailDialog()
-} 
+}
