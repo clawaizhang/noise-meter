@@ -344,7 +344,7 @@ export struct DetailDialog {
 ChartBuilder(selectedRecord: DecibelRecord, decibelService: DecibelService) {
   Column() {
     Row() {
-      Text('分贝值变化')
+      Text('声级-时间散点图')
         .fontSize(16)
         .fontWeight(FontWeight.Medium)
 
