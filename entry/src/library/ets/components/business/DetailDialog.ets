@@ -6,6 +6,7 @@ import { FileService } from "../../services/FileService"
 import hilog from '@ohos.hilog'
 import { noiseMeterNavStack } from '../../../../noise_meter/ets/constant/ProviderConstant'
 import { JSON } from '@kit.ArkTS'
+import { display } from "@kit.ArkUI"
 
 const TAG = 'DetailDialog';
 const DOMAIN = 0x0000;
@@ -115,6 +116,14 @@ function BasicInfoBuilder(selectedRecord: DecibelRecord) {
   .margin({ bottom: 12 })
 }
 
+// 定义边距接口
+interface Margin {
+  top: number;
+  right: number;
+  bottom: number;
+  left: number;
+}
+
 // 噪音级别分布数据接口
 interface NoiseSegment {
   name: string;
@@ -140,8 +149,12 @@ export struct DetailDialog {
   private audioPlayerService!: AudioPlayerService;
   @Local noiseDistribution: NoiseDistribution = { segments: [], values: [] };
   @Local private bgOpacity: number = 0;
+  private canvasSettings: RenderingContextSettings = new RenderingContextSettings(true) // Canvas设置
+  private canvasContext: CanvasRenderingContext2D = new CanvasRenderingContext2D(this.canvasSettings) // Canvas上下文
+  private canvasWidth = 320;
+  private canvasHeight = 160;
 
-  aboutToAppear() {
+  async aboutToAppear() {
     try {
       // 初始化时设置背景透明度为0
       this.bgOpacity = 0;
@@ -158,6 +171,17 @@ export struct DetailDialog {
         hilog.error(DOMAIN, TAG, '导航参数缺少必要字段');
         return;
       }
+
+      // 获取实际可用区域
+      const availableArea = await display.getDefaultDisplaySync().getAvailableArea();
+
+      // 先把可用区域的像素转换为vp
+      const availableWidthVp = px2vp(availableArea.width);
+      const availableHeightVp = px2vp(availableArea.height);
+
+      // 然后用vp单位进行计算
+      this.canvasWidth = availableWidthVp - 32;
+      this.canvasHeight = this.canvasWidth / 1.5;
 
       this.selectedRecord = param.selectedRecord;
       this.context = param.context;
@@ -316,138 +340,228 @@ export struct DetailDialog {
     }
   }
 
-  @Builder
-  ChartBuilder(selectedRecord: DecibelRecord, decibelService: DecibelService) {
-    Column() {
-      Row() {
-        Text('分贝值变化')
-          .fontSize(16)
-          .fontWeight(FontWeight.Medium)
+@Builder
+ChartBuilder(selectedRecord: DecibelRecord, decibelService: DecibelService) {
+  Column() {
+    Row() {
+      Text('分贝值变化')
+        .fontSize(16)
+        .fontWeight(FontWeight.Medium)
 
-        if (selectedRecord!.audioFilePath) {
-          Blank()
-          Row() {
-            // 添加停止按钮
-            if (this.playerState === PlayerState.STATE_PLAYING || this.playerState === PlayerState.STATE_PAUSED) {
-              Button() {
-                Image($r('app.media.ic_stop'))
-                  .width(20)
-                  .height(20)
-                  .fillColor('#666666')
-              }
-              .type(ButtonType.Normal)
-              .backgroundColor(Color.Transparent)
-              .margin({ right: 8 })
-              .onClick(async () => {
-                try {
-                  await this.audioPlayerService.stop();
-                } catch (error) {
-                  hilog.error(DOMAIN, TAG, '停止播放失败: %{public}s', error instanceof Error ? error.message : String(error));
-                }
-              })
-            }
-            
+      if (selectedRecord!.audioFilePath) {
+        Blank()
+        Row() {
+          // 添加停止按钮
+          if (this.playerState === PlayerState.STATE_PLAYING || this.playerState === PlayerState.STATE_PAUSED) {
             Button() {
-              Row() {
-                Image(this.playerState === PlayerState.STATE_PLAYING ? $r('app.media.ic_pause') : $r('app.media.ic_play'))
-                  .width(20)
-                  .height(20)
-                  .fillColor('#666666')
-                  .margin({ right: 8 })
-                Text(this.playerState === PlayerState.STATE_PLAYING ? '暂停播放' : 
-                     this.playerState === PlayerState.STATE_PAUSED ? '继续播放' : '播放录音')
-                  .fontSize(14)
-                  .fontColor('#666666')
-              }
-              .alignItems(VerticalAlign.Center)
-              .justifyContent(FlexAlign.Center)
+              Image($r('app.media.ic_stop'))
+                .width(20)
+                .height(20)
+                .fillColor('#666666')
             }
-            .type(ButtonType.Capsule)
-            .backgroundColor('#F5F5F5')
-            .height(36)
-            .padding({ left: 16, right: 16 })
+            .type(ButtonType.Normal)
+            .backgroundColor(Color.Transparent)
+            .margin({ right: 8 })
             .onClick(async () => {
               try {
-                if (this.playerState === PlayerState.STATE_PLAYING) {
-                  // 如果正在播放,则暂停
-                  await this.audioPlayerService.pause();
-                } else {
-                  // 如果未播放,检查播放器状态
-                  if (this.playerState === PlayerState.STATE_PAUSED) {
-                    // 如果是暂停状态,则继续播放
-                    await this.audioPlayerService.resume();
-                  } else {
-                    // 其他状态(完成/错误/未初始化等),重新开始播放
-                    if (this.selectedRecord?.audioFilePath) {
-                      await this.audioPlayerService.playAudioFile(this.selectedRecord.audioFilePath);
-                    }
-                  }
-                }
+                await this.audioPlayerService.stop();
               } catch (error) {
-                hilog.error(DOMAIN, TAG, '播放音频失败: %{public}s', error instanceof Error ? error.message : String(error));
+                hilog.error(DOMAIN, TAG, '停止播放失败: %{public}s', error instanceof Error ? error.message : String(error));
               }
             })
           }
-        }
-      }
-      .width('100%')
-      .margin({ bottom: 12 })
-      .alignItems(VerticalAlign.Center)
-
-      if (selectedRecord!.decibelValues.length === 0) {
-        Column() {
-          Image($r('app.media.ic_empty'))
-            .width(32)
-            .height(32)
-            .fillColor('#999999')
-            .margin({ bottom: 8 })
-          Text('暂无分贝值变化数据')
-            .fontSize(14)
-            .fontColor('#999999')
-        }
-        .width('100%')
-        .justifyContent(FlexAlign.Center)
-        .margin({ top: 20, bottom: 20 })
-      } else {
-        Row() {
-          List({ space: 2, scroller: new Scroller() }) {
-            ForEach(selectedRecord!.decibelValues, (value: number, index: number) => {
-              ListItem() {
-                Column() {
-                  Text(value.toString())
-                    .fontSize(10)
-                    .fontColor(decibelService.getDecibelColor(value))
-                    .margin({ bottom: 4 })
-                  Column() {
-                    Column()
-                      .width(4)
-                      .height(value)
-                      .backgroundColor(decibelService.getDecibelColor(value))
+          
+          Button() {
+            Row() {
+              Image(this.playerState === PlayerState.STATE_PLAYING ? $r('app.media.ic_pause') : $r('app.media.ic_play'))
+                .width(20)
+                .height(20)
+                .fillColor('#666666')
+                .margin({ right: 8 })
+              Text(this.playerState === PlayerState.STATE_PLAYING ? '暂停播放' : 
+                   this.playerState === PlayerState.STATE_PAUSED ? '继续播放' : '播放录音')
+                .fontSize(14)
+                .fontColor('#666666')
+            }
+            .alignItems(VerticalAlign.Center)
+            .justifyContent(FlexAlign.Center)
+          }
+          .type(ButtonType.Capsule)
+          .backgroundColor('#F5F5F5')
+          .height(36)
+          .padding({ left: 16, right: 16 })
+          .onClick(async () => {
+            try {
+              if (this.playerState === PlayerState.STATE_PLAYING) {
+                await this.audioPlayerService.pause();
+              } else {
+                if (this.playerState === PlayerState.STATE_PAUSED) {
+                  await this.audioPlayerService.resume();
+                } else {
+                  if (this.selectedRecord?.audioFilePath) {
+                    await this.audioPlayerService.playAudioFile(this.selectedRecord.audioFilePath);
                   }
-                  .width(4)
-                  .height(100)
-                  .backgroundColor('#F5F5F5')
-                  .alignItems(HorizontalAlign.Center)
-                  .justifyContent(FlexAlign.End)
                 }
               }
-            })
-          }
-          .listDirection(Axis.Horizontal)
-          .width('100%')
-          .height(140)
-          .edgeEffect(EdgeEffect.Spring)
+            } catch (error) {
+              hilog.error(DOMAIN, TAG, '播放音频失败: %{public}s', error instanceof Error ? error.message : String(error));
+            }
+          })
         }
-        .width('100%')
-        .height(140)
       }
     }
     .width('100%')
-    .padding({ left: 16, right: 16, top: 12, bottom: 12 })
-    .backgroundColor(Color.White)
-    .borderRadius(12)
-    .margin({ bottom: 12, top: -32 })
+    .margin({ bottom: 12 })
+    .alignItems(VerticalAlign.Center)
+
+    if (selectedRecord!.decibelValues.length === 0) {
+      Column() {
+        Image($r('app.media.ic_empty'))
+          .width(32)
+          .height(32)
+          .fillColor('#999999')
+          .margin({ bottom: 8 })
+        Text('暂无分贝值变化数据')
+          .fontSize(14)
+          .fontColor('#999999')
+      }
+      .width('100%')
+      .justifyContent(FlexAlign.Center)
+      .margin({ top: 20, bottom: 20 })
+    } else {
+      Column() {
+        // Canvas 容器
+        Canvas(this.canvasContext)
+          .width(this.canvasWidth)
+          .height(this.canvasHeight)
+          .onReady(() => {
+            const values = selectedRecord.decibelValues;
+            const duration = selectedRecord.duration;
+            const maxValue = Math.max(...values);
+            const minValue = Math.min(...values);
+
+            // 设置边距
+            const margin: Margin = {
+              top: vp2px(2),
+              right: vp2px(2),
+              bottom: vp2px(4),
+              left: vp2px(6)
+            };
+            const chartWidth = this.canvasContext.width - margin.left - margin.right;
+            const chartHeight = this.canvasContext.height - margin.top - margin.bottom;
+
+            // 清空画布
+            this.canvasContext.clearRect(0, 0, this.canvasContext.width, this.canvasContext.height);
+
+            // 绘制背景
+            this.canvasContext.fillStyle = '#F5F5F5';
+            this.canvasContext.fillRect(margin.left, margin.top, chartWidth, chartHeight);
+
+            // 设置字体样式
+            this.canvasContext.font = `${vp2px(12)}px sans-serif`;
+            this.canvasContext.textBaseline = 'middle';
+
+            // 绘制网格线
+            this.canvasContext.strokeStyle = '#E0E0E0';
+            this.canvasContext.lineWidth = 1;
+
+            // 计算Y轴刻度
+            const yRange = Math.ceil(maxValue) - Math.floor(minValue);
+            let yStep = Math.max(5, Math.round(yRange / 5));
+            if (yStep % 5 !== 0) {
+              yStep = Math.ceil(yStep / 5) * 5;
+            }
+
+            // 计算第一个和最后一个刻度
+            const firstTick = Math.floor(minValue / yStep) * yStep;
+            const lastTick = Math.ceil(maxValue / yStep) * yStep;
+
+            // 绘制Y轴单位
+            this.canvasContext.fillStyle = '#666666';
+            this.canvasContext.textAlign = 'right';
+            this.canvasContext.fillText('分贝', margin.left - vp2px(2), margin.top - vp2px(10));
+
+            // 绘制Y轴刻度
+            for (let i = firstTick; i <= lastTick; i += yStep) {
+              const y = margin.top + chartHeight - ((i - minValue) / (maxValue - minValue)) * chartHeight;
+              this.canvasContext.fillText(`${i}`, margin.left - vp2px(2), y);
+            }
+
+            // 计算X轴刻度
+            const totalSeconds = Math.ceil(duration / 1000);
+            const xStep = chartWidth / totalSeconds;
+
+            // 绘制X轴单位
+            this.canvasContext.textAlign = 'center';
+            this.canvasContext.fillText('秒', margin.left + chartWidth / 2, margin.top + chartHeight + vp2px(12));
+
+            // 绘制X轴刻度
+            for (let i = 0; i <= totalSeconds; i++) {
+              const x = margin.left + i * xStep;
+              if (i % Math.ceil(totalSeconds / 10) === 0 || i === totalSeconds) {
+                this.canvasContext.fillText(`${i}`, x, margin.top + chartHeight + vp2px(2));
+              }
+            }
+
+            // 绘制网格线
+            const yGridStep = (lastTick - firstTick) / yStep;
+            for (let i = 0; i <= yGridStep; i++) {
+              const y = margin.top + chartHeight - (i / yGridStep) * chartHeight;
+              this.canvasContext.beginPath();
+              this.canvasContext.moveTo(margin.left, y);
+              this.canvasContext.lineTo(margin.left + chartWidth, y);
+              this.canvasContext.stroke();
+            }
+
+            for (let i = 0; i <= totalSeconds; i++) {
+              const x = margin.left + i * xStep;
+              this.canvasContext.beginPath();
+              this.canvasContext.moveTo(x, margin.top);
+              this.canvasContext.lineTo(x, margin.top + chartHeight);
+              this.canvasContext.stroke();
+            }
+
+            // 绘制数据点
+            const xScale = chartWidth / (values.length - 1);
+            const yScale = chartHeight / (maxValue - minValue);
+
+            // 绘制连线
+            this.canvasContext.beginPath();
+            this.canvasContext.strokeStyle = '#0091FF';
+            this.canvasContext.lineWidth = 2;
+
+            values.forEach((value, index) => {
+              const x = margin.left + index * xScale;
+              const y = margin.top + chartHeight - (value - minValue) * yScale;
+
+              // 绘制点
+              this.canvasContext.fillStyle = decibelService.getDecibelColor(value);
+              this.canvasContext.beginPath();
+              this.canvasContext.arc(x, y, 2, 0, Math.PI * 2);
+              this.canvasContext.fill();
+
+              // 绘制连线
+              if (index > 0) {
+                this.canvasContext.lineTo(x, y);
+              } else {
+                this.canvasContext.moveTo(x, y);
+              }
+            });
+
+            this.canvasContext.stroke();
+          })
+      }
+      .width('100%')
+      .height(200)
+      .padding({ bottom: 12 })
+    }
   }
+  .width('100%')
+  .padding({ left: 16, right: 16, top: 12, bottom: 12 })
+  .backgroundColor(Color.White)
+  .borderRadius(12)
+  .margin({ bottom: 12, top: -32 })
+}
 
   build() {
     NavDestination() {
