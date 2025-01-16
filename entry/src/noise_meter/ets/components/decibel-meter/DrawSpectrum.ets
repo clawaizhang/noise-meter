@@ -1,12 +1,10 @@
-export function getDbSteps(isLowFreqMode: boolean): number[] {
-  return isLowFreqMode ? [-60, -40, -20, 0, 20, 40, 60, 80, 100] : [-20, 0, 20, 40, 60, 80, 100, 120, 140];
+export function getDbSteps(): number[] {
+  return [-20, 0, 20, 40, 60, 80, 100, 120, 140];
 }
 
-export function getFrequencySteps(isLowFreqMode: boolean): number[] {
-  // 频率步进点生成
-  return isLowFreqMode ?
-    [16, 31.5, 63, 125, 250, 500] : // 低频模式的频率步进
-    [16, 31.5, 63, 125, 250, 500, 1000, 2000, 4000, 8000, 16000];
+export function getFrequencySteps(): number[] {
+  // 标准频率步进
+  return [16, 31.5, 63, 125, 250, 500, 1000, 2000, 4000, 8000, 16000];
 }
 
 // 绘制频谱的方法

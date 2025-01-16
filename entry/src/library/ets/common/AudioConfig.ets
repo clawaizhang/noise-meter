@@ -1,11 +1,10 @@
 /**
- * 音频分析模式
+ * 音频分析模式（符合GB/T 3785.1-2010标准）
  */
 export enum AudioAnalysisMode {
-  FAST_RESPONSE = 'FAST_RESPONSE',    // 快速响应模式
-  BALANCED = 'BALANCED',              // 平衡模式
-  PRECISE = 'PRECISE',                // 精确分析模式
-  LOW_FREQUENCY = 'LOW_FREQUENCY'     // 低频分析模式
+  FAST_RESPONSE = 'FAST_RESPONSE',    // 快速响应模式（F）
+  SLOW_RESPONSE = 'SLOW_RESPONSE',    // 慢速响应模式（S）
+  IMPULSE_RESPONSE = 'IMPULSE_RESPONSE' // 脉冲响应模式（I）
 }
 
 /**
@@ -21,7 +20,7 @@ export enum WindowType {
  */
 export interface AudioAnalysisConfig {
   fftSize: number;          // FFT大小（必须是2的幂次方）
-  processInterval: number;  // 处理间隔（毫秒）
+  updateInterval: number;   // 更新间隔（毫秒）
   smoothingFactor: number; // 平滑因子
   windowType: WindowType;  // 窗函数类型
   overlap: number;         // 重叠比例 (0-1)
@@ -32,44 +31,34 @@ export interface AudioAnalysisConfig {
  * 预设配置
  */
 export class AudioPresets {
-  // 快速响应模式配置
+  // 快速响应模式配置（F）
   public static readonly FAST_RESPONSE: AudioAnalysisConfig = {
-    fftSize: 1024,
-    processInterval: 25,
-    smoothingFactor: 0.3,
+    fftSize: 512,          // 较小FFT size，提高时间分辨率
+    updateInterval: 125,   // 125ms符合快速响应时间常数
+    smoothingFactor: 0.125,
     windowType: WindowType.HANNING,
     overlap: 0.5,
-    bufferSize: 1024 * 2  // fftSize * 2（16位采样）
+    bufferSize: 512 * 2
   };
 
-  // 平衡模式配置
-  public static readonly BALANCED: AudioAnalysisConfig = {
-    fftSize: 2048,
-    processInterval: 45,
-    smoothingFactor: 0.2,
+  // 慢速响应模式配置（S）
+  public static readonly SLOW_RESPONSE: AudioAnalysisConfig = {
+    fftSize: 1024,         // 中等FFT size，平衡时间和频率分辨率
+    updateInterval: 1000,  // 1000ms符合慢速响应时间常数
+    smoothingFactor: 0.0625,
     windowType: WindowType.HANNING,
     overlap: 0.5,
-    bufferSize: 2048 * 2  // fftSize * 2（16位采样）
+    bufferSize: 1024 * 2
   };
 
-  // 精确分析模式配置
-  public static readonly PRECISE: AudioAnalysisConfig = {
-    fftSize: 4096,
-    processInterval: 85,
-    smoothingFactor: 0.1,
+  // 脉冲响应模式配置（I）
+  public static readonly IMPULSE_RESPONSE: AudioAnalysisConfig = {
+    fftSize: 2048,         // 较大FFT size，提高频率分辨率
+    updateInterval: 35,    // 35ms符合脉冲响应时间常数
+    smoothingFactor: 0.25,
     windowType: WindowType.BLACKMAN,
     overlap: 0.75,
-    bufferSize: 4096 * 2  // fftSize * 2（16位采样）
-  };
-
-  // 低频分析模式配置
-  public static readonly LOW_FREQUENCY: AudioAnalysisConfig = {
-    fftSize: 8192,
-    processInterval: 165,
-    smoothingFactor: 0.05,
-    windowType: WindowType.BLACKMAN,
-    overlap: 0.875,
-    bufferSize: 8192 * 2  // fftSize * 2（16位采样）
+    bufferSize: 2048 * 2
   };
 
   /**
@@ -85,21 +74,18 @@ export class AudioPresets {
       case AudioAnalysisMode.FAST_RESPONSE:
         config = AudioPresets.FAST_RESPONSE;
         break;
-      case AudioAnalysisMode.BALANCED:
-        config = AudioPresets.BALANCED;
+      case AudioAnalysisMode.SLOW_RESPONSE:
+        config = AudioPresets.SLOW_RESPONSE;
         break;
-      case AudioAnalysisMode.PRECISE:
-        config = AudioPresets.PRECISE;
-        break;
-      case AudioAnalysisMode.LOW_FREQUENCY:
-        config = AudioPresets.LOW_FREQUENCY;
+      case AudioAnalysisMode.IMPULSE_RESPONSE:
+        config = AudioPresets.IMPULSE_RESPONSE;
         break;
       default:
-        config = AudioPresets.BALANCED;
+        config = AudioPresets.FAST_RESPONSE;
     }
     
     console.info(`[音频配置] 配置详情: FFT大小=${config.fftSize}, ` +
-                `处理间隔=${config.processInterval}ms, ` +
+                `更新间隔=${config.updateInterval}ms, ` +
                 `重叠率=${config.overlap}, ` +
                 `缓冲区大小=${config.bufferSize}字节`);
     return config;

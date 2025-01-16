@@ -75,7 +75,7 @@ export class AudioService {
   private lastProcessTime: number = 0;
   
   // 配置和回调
-  private currentConfig = AudioPresets.getConfig(AudioAnalysisMode.BALANCED);
+  private currentConfig = AudioPresets.getConfig(AudioAnalysisMode.SLOW_RESPONSE);
   private onAudioData: ((buffer: ArrayBuffer) => void) | null = null;
 
   private context: common.UIAbilityContext;
@@ -89,10 +89,10 @@ export class AudioService {
     this.preferenceService = PreferenceService.getInstance();
     
     // 从首选项加载分析模式
-    const savedMode: string = this.preferenceService.getString(PREF_ANALYSIS_MODE, AudioAnalysisMode.BALANCED);
+    const savedMode: string = this.preferenceService.getString(PREF_ANALYSIS_MODE, AudioAnalysisMode.SLOW_RESPONSE);
     this.currentConfig = AudioPresets.getConfig(savedMode as AudioAnalysisMode);
     console.info(`[音频采集] 加载配置: 模式=${savedMode}, FFT大小=${this.currentConfig.fftSize}, ` +
-                `处理间隔=${this.currentConfig.processInterval}ms, 重叠率=${this.currentConfig.overlap}`);
+                `处理间隔=${this.currentConfig.updateInterval}ms, 重叠率=${this.currentConfig.overlap}`);
 
     // 添加配置变更监听
     this.preferenceService.addChangeListener(PREF_ANALYSIS_MODE, (key: string, value: PreferenceValue) => {
@@ -495,7 +495,7 @@ export class AudioService {
       
       // 如果正在处理并且满足处理间隔
       if (this.isProcessing && 
-          currentTime - this.lastProcessTime >= this.currentConfig.processInterval) {
+          currentTime - this.lastProcessTime >= this.currentConfig.updateInterval) {
         
         console.info(`[音频处理] 开始处理数据: 当前时间=${currentTime}, ` +
                     `上次处理时间=${this.lastProcessTime}, ` +

@@ -40,7 +40,7 @@ export struct DecibelMeter {
   @Local private canvasHeight: number = 0 // Canvas高度
   @Local private calibrationGain: number = 0 // gain
   @Local private weightingType: WeightingType = WeightingType.A // 当前FFT大小
-  @Local private currentMode: AudioAnalysisMode = AudioAnalysisMode.BALANCED // 当前FFT大小
+  @Local private currentMode: AudioAnalysisMode = AudioAnalysisMode.SLOW_RESPONSE // 当前FFT大小
   @Local private currentFftSize: number = 2048 // 当前FFT大小
   @Consumer(noiseMeterNavStack) navStack: NavPathStack = new NavPathStack()
   private decibelService: DecibelService = new DecibelService()
@@ -232,11 +232,9 @@ export struct DecibelMeter {
   }
 
   private drawSpectrumLocal(spectrum: Float32Array) {
-    let isLowFreqMode = this.currentMode === AudioAnalysisMode.LOW_FREQUENCY;
-    console.info(`[频谱绘制] 当前模式=${isLowFreqMode ? '低频' : '全频'}`);
     // 分贝网格点生成
-    const dbSteps: number[] = getDbSteps(isLowFreqMode);
-    const frequencySteps: number[] = getFrequencySteps(isLowFreqMode);
+    const dbSteps: number[] = getDbSteps();
+    const frequencySteps: number[] = getFrequencySteps();
     drawSpectrum(this.canvasContext, this.canvasWidth, this.canvasHeight, spectrum, dbSteps, frequencySteps,
       this.currentFftSize, this.sampleRate);
     // 更新计时器（毫秒级）

@@ -94,7 +94,7 @@ export struct Settings {
   @Local isLocationEnabled: boolean = false;
   @Local isRecordEnabled: boolean = false;
   @Local selectedWeighting: WeightingType = WeightingType.A;
-  @Local selectedAnalysisMode: AudioAnalysisMode = AudioAnalysisMode.BALANCED;
+  @Local selectedAnalysisMode: AudioAnalysisMode = AudioAnalysisMode.SLOW_RESPONSE;
   @Local analysisModeDescription: string = '';
   @Local analysisModeDetails: string[] = [];
   @Local isModeChangeEnabled: boolean = true;
@@ -133,14 +133,12 @@ export struct Settings {
     switch (mode) {
       case AudioAnalysisMode.FAST_RESPONSE:
         return 0;
-      case AudioAnalysisMode.BALANCED:
+      case AudioAnalysisMode.SLOW_RESPONSE:
         return 1;
-      case AudioAnalysisMode.PRECISE:
+      case AudioAnalysisMode.IMPULSE_RESPONSE:
         return 2;
-      case AudioAnalysisMode.LOW_FREQUENCY:
-        return 3;
       default:
-        return 1;
+        return 0;
     }
   }
 
@@ -149,43 +147,37 @@ export struct Settings {
       case 0:
         return AudioAnalysisMode.FAST_RESPONSE;
       case 1:
-        return AudioAnalysisMode.BALANCED;
+        return AudioAnalysisMode.SLOW_RESPONSE;
       case 2:
-        return AudioAnalysisMode.PRECISE;
-      case 3:
-        return AudioAnalysisMode.LOW_FREQUENCY;
+        return AudioAnalysisMode.IMPULSE_RESPONSE;
       default:
-        return AudioAnalysisMode.BALANCED;
+        return AudioAnalysisMode.FAST_RESPONSE;
     }
   }
 
   private getAnalysisModeDisplayName(mode: AudioAnalysisMode): string {
     switch (mode) {
       case AudioAnalysisMode.FAST_RESPONSE:
-        return '快速响应';
-      case AudioAnalysisMode.BALANCED:
-        return '平衡模式';
-      case AudioAnalysisMode.PRECISE:
-        return '精确分析';
-      case AudioAnalysisMode.LOW_FREQUENCY:
-        return '低频分析';
+        return '快速响应(F)';
+      case AudioAnalysisMode.SLOW_RESPONSE:
+        return '慢速响应(S)';
+      case AudioAnalysisMode.IMPULSE_RESPONSE:
+        return '脉冲响应(I)';
       default:
-        return '平衡模式';
+        return '快速响应(F)';
     }
   }
 
   private getAnalysisModeDescription(mode: AudioAnalysisMode): string {
     switch (mode) {
       case AudioAnalysisMode.FAST_RESPONSE:
-        return '适合测量突发性噪声，响应速度快';
-      case AudioAnalysisMode.BALANCED:
-        return '日常使用的推荐模式，兼顾速度和准确性';
-      case AudioAnalysisMode.PRECISE:
-        return '适合专业分析，提供更精确的频率数据';
-      case AudioAnalysisMode.LOW_FREQUENCY:
-        return '专注于低频噪音，如机械设备和交通噪音';
+        return '时间常数125ms，适合测量快速变化的噪声';
+      case AudioAnalysisMode.SLOW_RESPONSE:
+        return '时间常数1000ms，适合测量稳态噪声';
+      case AudioAnalysisMode.IMPULSE_RESPONSE:
+        return '时间常数35ms，适合测量脉冲噪声';
       default:
-        return '日常使用的推荐模式，兼顾速度和准确性';
+        return '时间常数125ms，适合测量快速变化的噪声';
     }
   }
 
@@ -195,7 +187,7 @@ export struct Settings {
     this.selectedWeighting =
       (this.preferenceService.getString(PreferenceKeyConstants.WEIGHTING) || WeightingType.A) as WeightingType;
     this.selectedAnalysisMode = (this.preferenceService.getString(PreferenceKeyConstants.ANALYSIS_MODE) ||
-    AudioAnalysisMode.BALANCED) as AudioAnalysisMode;
+    AudioAnalysisMode.SLOW_RESPONSE) as AudioAnalysisMode;
     this.calibrationValue = this.preferenceService.getNumber(PreferenceKeyConstants.CALIBRATION) || 0;
     this.updateAnalysisModeCache();
   }
@@ -205,9 +197,9 @@ export struct Settings {
     const config = AudioPresets.getConfig(this.selectedAnalysisMode);
     this.analysisModeDetails = [
       `FFT大小: ${config.fftSize}`,
-      `处理间隔: ${config.processInterval}ms`,
       `频率分辨率: ${(44100 / config.fftSize).toFixed(1)}Hz`,
-      `时间分辨率: ${(config.fftSize / 44100 * 1000).toFixed(1)}ms`
+      `时间分辨率: ${(config.fftSize / 44100 * 1000).toFixed(1)}ms`,
+      `更新间隔: ${config.updateInterval}ms`
     ];
   }
 
@@ -237,10 +229,9 @@ export struct Settings {
                   .margin({ right: -2 })
 
                 Select([
-                  { value: '快速响应' },
-                  { value: '平衡模式' },
-                  { value: '精确分析' },
-                  { value: '低频分析' }
+                  { value: '快速响应(F)' },
+                  { value: '慢速响应(S)' },
+                  { value: '脉冲响应(I)' }
                 ])
                   .selected(this.getAnalysisModeIndex(this.selectedAnalysisMode))
                   .value(this.getAnalysisModeDisplayName(this.selectedAnalysisMode))
