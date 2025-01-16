@@ -21,7 +21,7 @@ import { FFTAnalyzer } from '../../../../library/ets/utils/FFTAnalyzer'; // 导�
 import { WeightingType } from '../../../../library/ets/constants/WeightingConstants';
 import { taskpool } from '@kit.ArkTS';
 import { concurrentCalculateSpectrum } from '../../concurrent/ConcurrentFftAnalyzer';
-import { secondsToHoursMinutesSeconds } from '../../util/TimeUtils';
+import { secondsToHoursMinutesSeconds, secondsToHoursMinutesSecondsWithDecimal } from '../../util/TimeUtils';
 import { DecibelMeterResetSaveButton } from './ResetSaveButtonBuilder';
 import { CalibrationIndicator } from './CalibrationIndicator';
 import { drawSpectrum, getDbSteps, getFrequencySteps } from './DrawSpectrum';
@@ -239,8 +239,8 @@ export struct DecibelMeter {
     const frequencySteps: number[] = getFrequencySteps(isLowFreqMode);
     drawSpectrum(this.canvasContext, this.canvasWidth, this.canvasHeight, spectrum, dbSteps, frequencySteps,
       this.currentFftSize, this.sampleRate);
-    // 更新计时器
-    this.recordingTime = Math.floor((new Date().getTime() - this.startTime) / 1000);
+    // 更新计时器（毫秒级）
+    this.recordingTime = new Date().getTime() - this.startTime;
   }
 
   private resetData() {
@@ -400,7 +400,7 @@ export struct DecibelMeter {
                   Text(' | ')
                     .fontSize(14)
                     .fontColor('#666666')
-                  Text(secondsToHoursMinutesSeconds(this.recordingTime))
+                  Text(secondsToHoursMinutesSecondsWithDecimal(this.recordingTime))
                     .fontSize(14)
                     .fontColor('#666666')
                   Text(' | ')
