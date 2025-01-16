@@ -2,9 +2,9 @@
  * 音频分析模式（符合GB/T 3785.1-2010标准）
  */
 export enum AudioAnalysisMode {
-  FAST_RESPONSE = 'FAST_RESPONSE',    // 快速响应模式（F）
-  SLOW_RESPONSE = 'SLOW_RESPONSE',    // 慢速响应模式（S）
-  IMPULSE_RESPONSE = 'IMPULSE_RESPONSE' // 脉冲响应模式（I）
+  FAST_TIME_WEIGHTING = 'FAST_TIME_WEIGHTING',    // 快速时间计权（F）
+  SLOW_TIME_WEIGHTING = 'SLOW_TIME_WEIGHTING',    // 慢速时间计权（S）
+  IMPULSE_TIME_WEIGHTING = 'IMPULSE_TIME_WEIGHTING' // 脉冲时间计权（I）
 }
 
 /**
@@ -31,8 +31,8 @@ export interface AudioAnalysisConfig {
  * 预设配置
  */
 export class AudioPresets {
-  // 快速响应模式配置（F）
-  public static readonly FAST_RESPONSE: AudioAnalysisConfig = {
+  // 快速时间计权模式配置（F）
+  public static readonly FAST_TIME_WEIGHTING: AudioAnalysisConfig = {
     fftSize: 512,          // 较小FFT size，提高时间分辨率
     updateInterval: 125,   // 125ms符合快速响应时间常数
     smoothingFactor: 0.125,
@@ -41,8 +41,8 @@ export class AudioPresets {
     bufferSize: 512 * 2
   };
 
-  // 慢速响应模式配置（S）
-  public static readonly SLOW_RESPONSE: AudioAnalysisConfig = {
+  // 慢速时间计权模式配置（S）
+  public static readonly SLOW_TIME_WEIGHTING: AudioAnalysisConfig = {
     fftSize: 1024,         // 中等FFT size，平衡时间和频率分辨率
     updateInterval: 1000,  // 1000ms符合慢速响应时间常数
     smoothingFactor: 0.0625,
@@ -51,8 +51,8 @@ export class AudioPresets {
     bufferSize: 1024 * 2
   };
 
-  // 脉冲响应模式配置（I）
-  public static readonly IMPULSE_RESPONSE: AudioAnalysisConfig = {
+  // 脉冲时间计权模式配置（I）
+  public static readonly IMPULSE_TIME_WEIGHTING: AudioAnalysisConfig = {
     fftSize: 2048,         // 较大FFT size，提高频率分辨率
     updateInterval: 35,    // 35ms符合脉冲响应时间常数
     smoothingFactor: 0.25,
@@ -71,17 +71,17 @@ export class AudioPresets {
     let config: AudioAnalysisConfig;
     
     switch (mode) {
-      case AudioAnalysisMode.FAST_RESPONSE:
-        config = AudioPresets.FAST_RESPONSE;
+      case AudioAnalysisMode.FAST_TIME_WEIGHTING:
+        config = AudioPresets.FAST_TIME_WEIGHTING;
         break;
-      case AudioAnalysisMode.SLOW_RESPONSE:
-        config = AudioPresets.SLOW_RESPONSE;
+      case AudioAnalysisMode.SLOW_TIME_WEIGHTING:
+        config = AudioPresets.SLOW_TIME_WEIGHTING;
         break;
-      case AudioAnalysisMode.IMPULSE_RESPONSE:
-        config = AudioPresets.IMPULSE_RESPONSE;
+      case AudioAnalysisMode.IMPULSE_TIME_WEIGHTING:
+        config = AudioPresets.IMPULSE_TIME_WEIGHTING;
         break;
       default:
-        config = AudioPresets.FAST_RESPONSE;
+        config = AudioPresets.FAST_TIME_WEIGHTING;
     }
     
     console.info(`[音频配置] 配置详情: FFT大小=${config.fftSize}, ` +

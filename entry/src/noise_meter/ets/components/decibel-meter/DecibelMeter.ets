@@ -40,7 +40,7 @@ export struct DecibelMeter {
   @Local private canvasHeight: number = 0 // Canvas高度
   @Local private calibrationGain: number = 0 // gain
   @Local private weightingType: WeightingType = WeightingType.A // 当前FFT大小
-  @Local private currentMode: AudioAnalysisMode = AudioAnalysisMode.SLOW_RESPONSE // 当前FFT大小
+  @Local private currentMode: AudioAnalysisMode = AudioAnalysisMode.SLOW_TIME_WEIGHTING // 当前FFT大小
   @Local private currentFftSize: number = 2048 // 当前FFT大小
   @Consumer(noiseMeterNavStack) navStack: NavPathStack = new NavPathStack()
   private decibelService: DecibelService = new DecibelService()

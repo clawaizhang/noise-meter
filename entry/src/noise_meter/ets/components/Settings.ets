@@ -94,7 +94,7 @@ export struct Settings {
   @Local isLocationEnabled: boolean = false;
   @Local isRecordEnabled: boolean = false;
   @Local selectedWeighting: WeightingType = WeightingType.A;
-  @Local selectedAnalysisMode: AudioAnalysisMode = AudioAnalysisMode.SLOW_RESPONSE;
+  @Local selectedAnalysisMode: AudioAnalysisMode = AudioAnalysisMode.SLOW_TIME_WEIGHTING;
   @Local analysisModeDescription: string = '';
   @Local analysisModeDetails: string[] = [];
   @Local isModeChangeEnabled: boolean = true;
@@ -131,11 +131,11 @@ export struct Settings {
 
   private getAnalysisModeIndex(mode: AudioAnalysisMode): number {
     switch (mode) {
-      case AudioAnalysisMode.FAST_RESPONSE:
+      case AudioAnalysisMode.FAST_TIME_WEIGHTING:
         return 0;
-      case AudioAnalysisMode.SLOW_RESPONSE:
+      case AudioAnalysisMode.SLOW_TIME_WEIGHTING:
         return 1;
-      case AudioAnalysisMode.IMPULSE_RESPONSE:
+      case AudioAnalysisMode.IMPULSE_TIME_WEIGHTING:
         return 2;
       default:
         return 0;
@@ -145,36 +145,36 @@ export struct Settings {
   private getAnalysisModeFromIndex(index: number): AudioAnalysisMode {
     switch (index) {
       case 0:
-        return AudioAnalysisMode.FAST_RESPONSE;
+        return AudioAnalysisMode.FAST_TIME_WEIGHTING;
       case 1:
-        return AudioAnalysisMode.SLOW_RESPONSE;
+        return AudioAnalysisMode.SLOW_TIME_WEIGHTING;
       case 2:
-        return AudioAnalysisMode.IMPULSE_RESPONSE;
+        return AudioAnalysisMode.IMPULSE_TIME_WEIGHTING;
       default:
-        return AudioAnalysisMode.FAST_RESPONSE;
+        return AudioAnalysisMode.FAST_TIME_WEIGHTING;
     }
   }
 
   private getAnalysisModeDisplayName(mode: AudioAnalysisMode): string {
     switch (mode) {
-      case AudioAnalysisMode.FAST_RESPONSE:
-        return '快速响应(F)';
-      case AudioAnalysisMode.SLOW_RESPONSE:
-        return '慢速响应(S)';
-      case AudioAnalysisMode.IMPULSE_RESPONSE:
-        return '脉冲响应(I)';
+      case AudioAnalysisMode.FAST_TIME_WEIGHTING:
+        return '快速(F)';
+      case AudioAnalysisMode.SLOW_TIME_WEIGHTING:
+        return '慢速(S)';
+      case AudioAnalysisMode.IMPULSE_TIME_WEIGHTING:
+        return '脉冲(I)';
       default:
-        return '快速响应(F)';
+        return '快速(F)';
     }
   }
 
   private getAnalysisModeDescription(mode: AudioAnalysisMode): string {
     switch (mode) {
-      case AudioAnalysisMode.FAST_RESPONSE:
+      case AudioAnalysisMode.FAST_TIME_WEIGHTING:
         return '时间常数125ms，适合测量快速变化的噪声';
-      case AudioAnalysisMode.SLOW_RESPONSE:
+      case AudioAnalysisMode.SLOW_TIME_WEIGHTING:
         return '时间常数1000ms，适合测量稳态噪声';
-      case AudioAnalysisMode.IMPULSE_RESPONSE:
+      case AudioAnalysisMode.IMPULSE_TIME_WEIGHTING:
         return '时间常数35ms，适合测量脉冲噪声';
       default:
         return '时间常数125ms，适合测量快速变化的噪声';
@@ -187,7 +187,7 @@ export struct Settings {
     this.selectedWeighting =
       (this.preferenceService.getString(PreferenceKeyConstants.WEIGHTING) || WeightingType.A) as WeightingType;
     this.selectedAnalysisMode = (this.preferenceService.getString(PreferenceKeyConstants.ANALYSIS_MODE) ||
-    AudioAnalysisMode.SLOW_RESPONSE) as AudioAnalysisMode;
+    AudioAnalysisMode.SLOW_TIME_WEIGHTING) as AudioAnalysisMode;
     this.calibrationValue = this.preferenceService.getNumber(PreferenceKeyConstants.CALIBRATION) || 0;
     this.updateAnalysisModeCache();
   }
@@ -213,10 +213,10 @@ export struct Settings {
           Column() {
             Row() {
               Row() {
-                Image($r('app.media.ic_audio_analysis'))
+                Image($r('app.media.ic_time_weighting'))
                   .itemIcon()
 
-                Text('音频分析模式')
+                Text('时间计权模式')
                   .itemTitle()
               }
 
@@ -229,9 +229,9 @@ export struct Settings {
                   .margin({ right: -2 })
 
                 Select([
-                  { value: '快速响应(F)' },
-                  { value: '慢速响应(S)' },
-                  { value: '脉冲响应(I)' }
+                  { value: '快速(F)' },
+                  { value: '慢速(S)' },
+                  { value: '脉冲(I)' }
                 ])
                   .selected(this.getAnalysisModeIndex(this.selectedAnalysisMode))
                   .value(this.getAnalysisModeDisplayName(this.selectedAnalysisMode))
