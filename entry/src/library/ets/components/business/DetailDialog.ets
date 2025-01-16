@@ -85,7 +85,7 @@ function BasicInfoBuilder(selectedRecord: DecibelRecord) {
         .fontSize(14)
         .fontColor('#666666')
         .width('30%')
-      Text(`${Math.round(selectedRecord!.duration / 1000)}秒`)
+      Text(`${(selectedRecord!.duration / 1000).toFixed(1)}秒`)
         .fontSize(14)
         .fontColor('#333333')
         .width('70%')
