@@ -1,4 +1,4 @@
-import { DecibelMeter } from '../ets/components/DecibelMeter';
+import { DecibelMeter } from '../ets/components/decibel-meter/DecibelMeter';
 import { noiseMeterNavStack } from '../ets/constant/ProviderConstant';
 import { getTitleName } from '../MainPageInfo';
 import { DecibelHistory } from './DecibelHistory';
