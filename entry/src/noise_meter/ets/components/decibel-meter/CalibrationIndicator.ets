@@ -1,12 +1,16 @@
 
+interface CalibrationConfig {
+  gain: number;
+}
+
 @Builder
-export function  CalibrationIndicator(calibrationGain:number) {
+export function CalibrationIndicator(config: CalibrationConfig) {
   Row() {
     Text('声级校准:')
       .fontSize(12)
       .fontColor(Color.Gray)
 
-    Text(`${calibrationGain} dB`)
+    Text(`${config.gain} dB`)
       .fontSize(12)
       .fontColor(Color.Gray)
       .margin({ left: 5 })
