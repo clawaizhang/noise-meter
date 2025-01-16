@@ -1,0 +1,14 @@
+<svg width="24px" height="24px" viewBox="0 0 24 24" version="1.1" xmlns="http://www.w3.org/2000/svg">
+  <g stroke="none" fill="none">
+    <!-- 频率加权图标 -->
+    <g transform="translate(12, 12)" stroke="currentColor" stroke-width="1.5">
+      <!-- 频率曲线 -->
+      <path d="M-9,0 Q-6,3 -3,0 T3,0 T9,0" fill="none"/>
+      <!-- 刻度线 -->
+      <line x1="-9" y1="0" x2="-9" y2="2" stroke-linecap="round"/>
+      <line x1="-3" y1="0" x2="-3" y2="2" stroke-linecap="round"/>
+      <line x1="3" y1="0" x2="3" y2="2" stroke-linecap="round"/>
+      <line x1="9" y1="0" x2="9" y2="2" stroke-linecap="round"/>
+    </g>
+  </g>
+</svg>

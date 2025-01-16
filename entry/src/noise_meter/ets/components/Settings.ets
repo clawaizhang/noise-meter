@@ -9,7 +9,6 @@ import { AudioService } from '../../../library/ets/services/AudioService';
 function itemIcon() {
   .width(24)
   .height(24)
-  .fillColor('#666666')
   .margin({ right: 8 })
 }
 
@@ -90,11 +89,10 @@ function analysisDetail() {
 @ComponentV2
 export struct Settings {
   private preferenceService: PreferenceService = PreferenceService.getInstance();
-  private audioService: AudioService = AudioService.getInstance();
   @Local isLocationEnabled: boolean = false;
   @Local isRecordEnabled: boolean = false;
   @Local selectedWeighting: WeightingType = WeightingType.A;
-  @Local selectedAnalysisMode: AudioAnalysisMode = AudioAnalysisMode.SLOW_TIME_WEIGHTING;
+  @Local selectedAnalysisMode: AudioAnalysisMode = AudioAnalysisMode.FAST_TIME_WEIGHTING;
   @Local analysisModeDescription: string = '';
   @Local analysisModeDetails: string[] = [];
   @Local isModeChangeEnabled: boolean = true;
@@ -187,7 +185,7 @@ export struct Settings {
     this.selectedWeighting =
       (this.preferenceService.getString(PreferenceKeyConstants.WEIGHTING) || WeightingType.A) as WeightingType;
     this.selectedAnalysisMode = (this.preferenceService.getString(PreferenceKeyConstants.ANALYSIS_MODE) ||
-    AudioAnalysisMode.SLOW_TIME_WEIGHTING) as AudioAnalysisMode;
+    AudioAnalysisMode.FAST_TIME_WEIGHTING) as AudioAnalysisMode;
     this.calibrationValue = this.preferenceService.getNumber(PreferenceKeyConstants.CALIBRATION) || 0;
     this.updateAnalysisModeCache();
   }
@@ -289,7 +287,7 @@ export struct Settings {
           Column() {
             Row() {
               Row() {
-                Image($r('app.media.ic_weighting'))
+                Image($r('app.media.ic_frequency_weighting'))
                   .itemIcon()
 
                 Text('频率加权')

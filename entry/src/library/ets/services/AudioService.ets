@@ -75,7 +75,7 @@ export class AudioService {
   private lastProcessTime: number = 0;
   
   // 配置和回调
-  private currentConfig = AudioPresets.getConfig(AudioAnalysisMode.SLOW_TIME_WEIGHTING);
+  private currentConfig = AudioPresets.getConfig(AudioAnalysisMode.FAST_TIME_WEIGHTING);
   private onAudioData: ((buffer: ArrayBuffer) => void) | null = null;
 
   private context: common.UIAbilityContext;
@@ -89,7 +89,7 @@ export class AudioService {
     this.preferenceService = PreferenceService.getInstance();
     
     // 从首选项加载分析模式
-    const savedMode: string = this.preferenceService.getString(PREF_ANALYSIS_MODE, AudioAnalysisMode.SLOW_TIME_WEIGHTING);
+    const savedMode: string = this.preferenceService.getString(PREF_ANALYSIS_MODE, AudioAnalysisMode.FAST_TIME_WEIGHTING);
     this.currentConfig = AudioPresets.getConfig(savedMode as AudioAnalysisMode);
     console.info(`[音频采集] 加载配置: 模式=${savedMode}, FFT大小=${this.currentConfig.fftSize}, ` +
                 `处理间隔=${this.currentConfig.updateInterval}ms, 重叠率=${this.currentConfig.overlap}`);

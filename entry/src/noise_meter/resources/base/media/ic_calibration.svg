@@ -1,13 +1,22 @@
-<svg width="24" height="24" viewBox="0 0 24 24" fill="transparent" xmlns="http://www.w3.org/2000/svg">
-  <!-- 仪表盘 -->
-  <circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="2"/>
-  <!-- 刻度线 -->
-  <line x1="12" y1="4" x2="12" y2="6" stroke="currentColor" stroke-width="2"/>
-  <line x1="12" y1="18" x2="12" y2="20" stroke="currentColor" stroke-width="2"/>
-  <line x1="4" y1="12" x2="6" y2="12" stroke="currentColor" stroke-width="2"/>
-  <line x1="18" y1="12" x2="20" y2="12" stroke="currentColor" stroke-width="2"/>
-  <!-- 指针 -->
-  <line x1="12" y1="12" x2="16" y2="8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-  <!-- 校准点 -->
-  <circle cx="12" cy="12" r="2" fill="currentColor"/>
+<svg width="24px" height="24px" viewBox="0 0 24 24" version="1.1" xmlns="http://www.w3.org/2000/svg">
+  <g stroke="none" fill="none">
+    <!-- 仪表盘 -->
+    <g transform="translate(12, 12)" stroke="currentColor" stroke-width="1.5">
+      <!-- 仪表盘轮廓 -->
+      <circle cx="0" cy="0" r="9"/>
+      <!-- 刻度线 -->
+      <line x1="0" y1="-9" x2="0" y2="-7" stroke-linecap="round"/>
+      <line x1="6.364" y1="-6.364" x2="5.657" y2="-5.657" stroke-linecap="round"/>
+      <line x1="9" y1="0" x2="7" y2="0" stroke-linecap="round"/>
+      <line x1="6.364" y1="6.364" x2="5.657" y2="5.657" stroke-linecap="round"/>
+      <line x1="0" y1="9" x2="0" y2="7" stroke-linecap="round"/>
+      <line x1="-6.364" y1="6.364" x2="-5.657" y2="5.657" stroke-linecap="round"/>
+      <line x1="-9" y1="0" x2="-7" y2="0" stroke-linecap="round"/>
+      <line x1="-6.364" y1="-6.364" x2="-5.657" y2="-5.657" stroke-linecap="round"/>
+      <!-- 指针 -->
+      <line x1="0" y1="0" x2="0" y2="-6" stroke-linecap="round"/>
+      <!-- 校准点 -->
+      <circle cx="0" cy="0" r="2" fill="currentColor"/>
+    </g>
+  </g>
 </svg>
