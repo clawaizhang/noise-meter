@@ -471,46 +471,35 @@ ChartBuilder(selectedRecord: DecibelRecord, decibelService: DecibelService) {
             const range = yMax - yMin;
             
             // 计算最佳步长
-            const possibleSteps = [5, 10, 15, 20];
-            let bestStep = possibleSteps[0];
+            let bestStep = 5; // 默认步长为5
             let bestGridCount = Math.ceil(range / bestStep);
             
-            // 找到网格数在5-7之间的最佳步长
-            for (const step of possibleSteps) {
-              const gridCount = Math.ceil(range / step);
-              if (gridCount >= 5 && gridCount <= 7) {
-                bestStep = step;
-                bestGridCount = gridCount;
-                break;
-              }
+            // 调整步长使刻度数在5-7之间
+            while (bestGridCount < 5) {
+              bestStep /= 2;
+              bestGridCount = Math.ceil(range / bestStep);
             }
-            
-            // 如果找不到合适的步长，选择网格数最接近7的步长
-            if (bestGridCount < 5 || bestGridCount > 7) {
-              bestStep = possibleSteps.reduce((prev, curr) => {
-                const prevCount = Math.ceil(range / prev);
-                const currCount = Math.ceil(range / curr);
-                return Math.abs(currCount - 7) < Math.abs(prevCount - 7) ? curr : prev;
-              });
+            while (bestGridCount > 7) {
+              bestStep *= 2;
               bestGridCount = Math.ceil(range / bestStep);
             }
             
             // 计算刻度列表
             const ticks: number[] = [];
             
-            // 第一个刻度是最小值
-            ticks.push(yMin);
+            // 计算第一个刻度，确保以0或5结尾
+            let firstTick = Math.floor(yMin / 5) * 5;
+            if (firstTick < yMin) {
+              firstTick += 5;
+            }
+            ticks.push(firstTick);
             
             // 计算后续刻度
-            let current = yMin;
-            for (let i = 1; i <= bestGridCount; i++) {
-              // 计算理论值
-              const value = yMin + (i * bestStep);
-              
+            let current = firstTick;
+            while (current < yMax) {
+              current += bestStep;
               // 确保刻度值以0或5结尾
-              const roundedValue = Math.round(value / 5) * 5;
-              
-              // 确保不超过最大值
+              const roundedValue = Math.round(current / 5) * 5;
               if (roundedValue <= yMax) {
                 ticks.push(roundedValue);
               } else {
@@ -532,12 +521,6 @@ ChartBuilder(selectedRecord: DecibelRecord, decibelService: DecibelService) {
               ticks.length = 7;
               ticks[6] = yMax;
             }
-
-            // 绘制Y轴刻度
-            ticks.forEach(tick => {
-              const y = margin.top + chartHeight - ((tick - yMin) / (yMax - yMin)) * chartHeight;
-              this.canvasContext.fillText(`${tick}`, margin.left - vp2px(2), y);
-            });
 
             // 绘制更细的辅助线
             this.canvasContext.strokeStyle = '#E8E8E8'; // 加深辅助线颜色
@@ -566,11 +549,38 @@ ChartBuilder(selectedRecord: DecibelRecord, decibelService: DecibelService) {
               this.canvasContext.fillText(`${i}`, margin.left - vp2px(2), y);
             }
 
-            // 计算X轴刻度
-            const totalSeconds = Math.ceil(duration / 1000);
+            // 重新设计X轴刻度计算逻辑
+            const totalSeconds = duration / 1000;
             const targetXGridCount = 7; // 显示6-8个网格
-            const xInterval = Math.ceil(totalSeconds / targetXGridCount);
-            const xStep = chartWidth / (targetXGridCount - 1);
+            const extendedSeconds = Math.max(totalSeconds * 1.1, 0.1); // 增加10%时间跨度，最小0.1秒
+
+            // 计算最佳步长
+            let xInterval: number;
+            if (totalSeconds >= 3) {
+              // 长时间：使用整数刻度
+              xInterval = Math.ceil(extendedSeconds / targetXGridCount);
+              // 确保步长是合理的整数
+              const possibleSteps = [1, 2, 5, 10, 15, 20, 30, 60];
+              xInterval = possibleSteps.find(step => step >= xInterval) || xInterval;
+            } else {
+              // 短时间：使用小数刻度
+              xInterval = extendedSeconds / targetXGridCount;
+              // 确保步长是0.1的倍数
+              xInterval = Math.round(xInterval * 10) / 10; // 使用round而不是ceil
+              xInterval = Math.max(xInterval, 0.1); // 最小0.1秒
+            }
+
+            // 确保最后一个刻度 >= 总时间
+            let actualGridCount = Math.ceil(extendedSeconds / xInterval);
+            if ((actualGridCount - 1) * xInterval < totalSeconds) {
+              actualGridCount = Math.ceil(totalSeconds / xInterval) + 1;
+            }
+            const xStep = chartWidth / (actualGridCount - 1);
+
+            // 格式化时间显示，保留1位小数
+            const formatTime = (seconds: number) => {
+              return seconds % 1 === 0 ? `${seconds}` : `${seconds.toFixed(1)}`;
+            };
 
             // 绘制X轴单位
             this.canvasContext.textAlign = 'center';
@@ -580,7 +590,7 @@ ChartBuilder(selectedRecord: DecibelRecord, decibelService: DecibelService) {
             for (let i = 0; i < targetXGridCount; i++) {
               const x = margin.left + i * xStep;
               const seconds = i * xInterval;
-              this.canvasContext.fillText(`${seconds}`, x, margin.top + chartHeight + vp2px(2));
+              this.canvasContext.fillText(formatTime(seconds), x, margin.top + chartHeight + vp2px(2));
               
               // 绘制X轴主要网格线
               this.canvasContext.beginPath();
@@ -615,11 +625,21 @@ ChartBuilder(selectedRecord: DecibelRecord, decibelService: DecibelService) {
             this.canvasContext.lineWidth = 1;
 
             // 绘制数据点
-            const xScale = chartWidth / (values.length - 1);
+            // 计算x轴比例，考虑边距
+            const xScale = (chartWidth - margin.left - margin.right) / totalSeconds;
             const yScale = chartHeight / (maxValue - minValue);
 
+            // 计算每个点的时间间隔
+            const timeInterval = totalSeconds / (values.length - 1);
+
             values.forEach((value, index) => {
-              const x = margin.left + index * xScale;
+              // 计算当前点的时间位置
+              const currentTime = index * timeInterval;
+              // 计算x坐标，确保在图表区域内
+              const x = Math.min(
+                margin.left + currentTime * xScale,
+                margin.left + chartWidth - margin.right
+              );
               const y = margin.top + chartHeight - (value - minValue) * yScale;
 
               // 绘制点
