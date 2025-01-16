@@ -466,20 +466,85 @@ ChartBuilder(selectedRecord: DecibelRecord, decibelService: DecibelService) {
             this.canvasContext.lineWidth = 1;
 
             // 计算Y轴刻度
-            const yRange = maxValue - minValue;
-            // 确保分贝值在网格范围内
             const yMin = Math.floor(minValue);
             const yMax = Math.ceil(maxValue);
-            const yRangeAdjusted = yMax - yMin;
-            const targetYGridCount = 6; // 保持6-8根网格线
-            const yStep = Math.ceil(yRangeAdjusted / targetYGridCount);
+            const range = yMax - yMin;
+            
+            // 计算最佳步长
+            const possibleSteps = [5, 10, 15, 20];
+            let bestStep = possibleSteps[0];
+            let bestGridCount = Math.ceil(range / bestStep);
+            
+            // 找到网格数在5-7之间的最佳步长
+            for (const step of possibleSteps) {
+              const gridCount = Math.ceil(range / step);
+              if (gridCount >= 5 && gridCount <= 7) {
+                bestStep = step;
+                bestGridCount = gridCount;
+                break;
+              }
+            }
+            
+            // 如果找不到合适的步长，选择网格数最接近7的步长
+            if (bestGridCount < 5 || bestGridCount > 7) {
+              bestStep = possibleSteps.reduce((prev, curr) => {
+                const prevCount = Math.ceil(range / prev);
+                const currCount = Math.ceil(range / curr);
+                return Math.abs(currCount - 7) < Math.abs(prevCount - 7) ? curr : prev;
+              });
+              bestGridCount = Math.ceil(range / bestStep);
+            }
+            
+            // 计算刻度列表
+            const ticks: number[] = [];
+            
+            // 第一个刻度是最小值
+            ticks.push(yMin);
+            
+            // 计算后续刻度
+            let current = yMin;
+            for (let i = 1; i <= bestGridCount; i++) {
+              // 计算理论值
+              const value = yMin + (i * bestStep);
+              
+              // 确保刻度值以0或5结尾
+              const roundedValue = Math.round(value / 5) * 5;
+              
+              // 确保不超过最大值
+              if (roundedValue <= yMax) {
+                ticks.push(roundedValue);
+              } else {
+                ticks.push(yMax);
+                break;
+              }
+            }
+            
+            // 确保刻度数在5-7之间
+            if (ticks.length < 5) {
+              // 补充刻度
+              const lastTick = ticks[ticks.length - 1];
+              while (ticks.length < 5) {
+                const newTick = lastTick + bestStep;
+                ticks.push(Math.min(newTick, yMax));
+              }
+            } else if (ticks.length > 7) {
+              // 截断刻度
+              ticks.length = 7;
+              ticks[6] = yMax;
+            }
+
+            // 绘制Y轴刻度
+            ticks.forEach(tick => {
+              const y = margin.top + chartHeight - ((tick - yMin) / (yMax - yMin)) * chartHeight;
+              this.canvasContext.fillText(`${tick}`, margin.left - vp2px(2), y);
+            });
 
             // 绘制更细的辅助线
             this.canvasContext.strokeStyle = '#E8E8E8'; // 加深辅助线颜色
             this.canvasContext.lineWidth = 0.5; // 更细的线宽
-            const ySubStep = yStep / 2; // 在主要网格线之间添加辅助线
+            const ySubStep = bestStep / 2; // 在主要网格线之间添加辅助线
             for (let i = yMin; i <= yMax; i += ySubStep) {
-              const y = margin.top + chartHeight - ((i - yMin) / yRangeAdjusted) * chartHeight;
+              const y = margin.top + chartHeight - ((i - yMin) / (yMax - yMin)) * chartHeight;
               this.canvasContext.beginPath();
               this.canvasContext.moveTo(margin.left, y);
               this.canvasContext.lineTo(margin.left + chartWidth, y);
@@ -496,8 +561,8 @@ ChartBuilder(selectedRecord: DecibelRecord, decibelService: DecibelService) {
             this.canvasContext.fillText('分贝', margin.left - vp2px(2), margin.top - vp2px(10));
 
             // 绘制Y轴刻度
-            for (let i = yMin; i <= yMax; i += yStep) {
-              const y = margin.top + chartHeight - ((i - yMin) / yRangeAdjusted) * chartHeight;
+            for (let i = yMin; i <= yMax; i += bestStep) {
+              const y = margin.top + chartHeight - ((i - yMin) / (yMax - yMin)) * chartHeight;
               this.canvasContext.fillText(`${i}`, margin.left - vp2px(2), y);
             }
 
@@ -525,8 +590,8 @@ ChartBuilder(selectedRecord: DecibelRecord, decibelService: DecibelService) {
             }
 
             // 绘制Y轴主要网格线
-            for (let i = yMin; i <= yMax; i += yStep) {
-              const y = margin.top + chartHeight - ((i - yMin) / yRangeAdjusted) * chartHeight;
+            for (let i = yMin; i <= yMax; i += bestStep) {
+              const y = margin.top + chartHeight - ((i - yMin) / (yMax - yMin)) * chartHeight;
               this.canvasContext.beginPath();
               this.canvasContext.moveTo(margin.left, y);
               this.canvasContext.lineTo(margin.left + chartWidth, y);
