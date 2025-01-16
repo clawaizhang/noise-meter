@@ -15,5 +15,6 @@ export function  CalibrationIndicator(calibrationGain:number) {
     x: '70%', // 调整到右侧
     y: '2%'    // 调整到顶部
   })
+  .margin({ right: 8 })
   .opacity(0.7)
 }

@@ -84,24 +84,30 @@ export struct DecibelMeter {
   private SpectrumView() {
     Column() {
       // Canvas频谱显示
-      Canvas(this.canvasContext)
-        .width(this.canvasWidth)
-        .height(this.canvasHeight)
-        .backgroundColor('#000000')
-        .borderRadius(12)
-        .onAreaChange((oldArea: Area, newArea: Area) => {
-          console.info(`[FREQ_TRACE][Canvas] Canvas区域变化: 旧尺寸=${oldArea.width}x${oldArea.height}, 新尺寸=${newArea.width}x${newArea.height}`);
-          this.canvasWidth = newArea.width as number;
-          this.canvasHeight = newArea.height as number;
-          console.info(`[FREQ_TRACE][Canvas] 更新后的Canvas尺寸: ${this.canvasWidth}x${this.canvasHeight}, 宽高比: ${(this.canvasWidth /
-          this.canvasHeight).toFixed(2)}`);
-        })
-        .onReady(() => {
-          // 初始化完成后开始绘制
-          // 创建一个空的 Float32Array 用于初始化显示
-          const emptySpectrum: Float32Array = new Float32Array(this.currentFftSize * 2); // 每个点用2字节表示
-          this.drawSpectrumLocal(emptySpectrum);
-        })
+      Stack({ alignContent: Alignment.TopEnd }) {
+        Canvas(this.canvasContext)
+          .width(this.canvasWidth)
+          .height(this.canvasHeight)
+          .backgroundColor('#000000')
+          .borderRadius(12)
+          .onAreaChange((oldArea: Area, newArea: Area) => {
+            console.info(`[FREQ_TRACE][Canvas] Canvas区域变化: 旧尺寸=${oldArea.width}x${oldArea.height}, 新尺寸=${newArea.width}x${newArea.height}`);
+            this.canvasWidth = newArea.width as number;
+            this.canvasHeight = newArea.height as number;
+            console.info(`[FREQ_TRACE][Canvas] 更新后的Canvas尺寸: ${this.canvasWidth}x${this.canvasHeight}, 宽高比: ${(this.canvasWidth /
+            this.canvasHeight).toFixed(2)}`);
+          })
+          .onReady(() => {
+            // 初始化完成后开始绘制
+            // 创建一个空的 Float32Array 用于初始化显示
+            const emptySpectrum: Float32Array = new Float32Array(this.currentFftSize * 2); // 每个点用2字节表示
+            this.drawSpectrumLocal(emptySpectrum);
+          })
+        
+        // 将校准指示器移动到Canvas右上角
+        CalibrationIndicator(this.calibrationGain)
+
+      }
     }
   }
 
@@ -446,8 +452,6 @@ export struct DecibelMeter {
           }
         })
 
-        // 新增的校准指示器
-        CalibrationIndicator(this.calibrationGain)
       }
       .width('100%')
       .margin({ left: 8, right: 8, top: 24 })
