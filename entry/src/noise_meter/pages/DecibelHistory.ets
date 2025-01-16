@@ -7,6 +7,50 @@ import { FileService } from '../../library/ets/services/FileService';
 import { noiseMeterNavStack } from '../ets/constant/ProviderConstant';
 import { CustomTitleBar } from '../../library/ets/components/common/CustomTitleBar';
 
+class DecibelRecordDataSource implements IDataSource {
+  private records: DecibelRecord[];
+  private listeners: DataChangeListener[] = [];
+
+  constructor(records: DecibelRecord[]) {
+    this.records = records;
+  }
+
+  totalCount(): number {
+    return this.records.length;
+  }
+
+  getData(index: number): DecibelRecord {
+    return this.records[index];
+  }
+
+  registerDataChangeListener(listener: DataChangeListener): void {
+    this.listeners.push(listener);
+  }
+
+  unregisterDataChangeListener(listener: DataChangeListener): void {
+    const index = this.listeners.indexOf(listener);
+    if (index >= 0) {
+      this.listeners.splice(index, 1);
+    }
+  }
+
+  notifyDataReload(): void {
+    this.listeners.forEach(listener => listener.onDataReloaded());
+  }
+
+  notifyDataAdd(index: number): void {
+    this.listeners.forEach(listener => listener.onDataAdd(index));
+  }
+
+  notifyDataChange(index: number): void {
+    this.listeners.forEach(listener => listener.onDataChange(index));
+  }
+
+  notifyDataDelete(index: number): void {
+    this.listeners.forEach(listener => listener.onDataDelete(index));
+  }
+}
+
 @Builder
 function DecibelHistoryBuilder() {
   DecibelHistory()
@@ -560,7 +604,7 @@ export struct DecibelHistory {
         .justifyContent(FlexAlign.Center)
       } else {
         List({ space: 0 }) {
-          ForEach(this.records, (record: DecibelRecord) => {
+          LazyForEach(new DecibelRecordDataSource(this.records), (record: DecibelRecord) => {
             ListItem() {
               Column() {
                 this.RecordItem(record)
@@ -570,7 +614,7 @@ export struct DecibelHistory {
                   .color('#F5F5F5')
               }
             }
-          })
+          }, (record: DecibelRecord) => record.id)
         }
         .width('100%')
         .layoutWeight(1)
