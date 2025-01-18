@@ -452,16 +452,6 @@ export struct DecibelMeter {
         })
         .backgroundColor(Color.White)
         .borderRadius(24)
-        .onClick(() => {
-          if (this.currentRecord) {
-            this.navStack.pushDestinationByName('DetailDialog', {
-              selectedRecord: this.currentRecord,
-              context: getContext(this),
-              fileService: this.fileService
-            });
-          }
-        })
-
       }
       .width('100%')
       .margin({ left: 8, right: 8, top: 24 })
