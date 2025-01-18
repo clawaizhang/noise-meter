@@ -37,23 +37,31 @@ export struct NoiseMeter {
             // 使用自定义标题栏
             CustomTitleBar({
               title: getTitleName(),
-              buttons: [{
-                icon: $r('app.media.ic_share'),
-                onClick: () => {
-                  const context = getContext(this) as common.UIAbilityContext;
-                  const uiContext = this.getUIContext();
-                  const now = new Date();
-                  const timestamp = now.toISOString().replace(/[:.]/g, '-').slice(0, 19);
-                  ScreenshotUtils.captureAndShare(
-                    context,
-                    uiContext,
-                    'decibelMeterRoot',
-                    `noise_meter_screenshot_${timestamp}.jpg`,
-                    '噪音检测仪截图',
-                    '当前噪音检测结果截图'
-                  );
+              buttons: [
+                {
+                  icon: $r('app.media.ic_info'),
+                  onClick: () => {
+
+                  }
+                },
+                {
+                  icon: $r('app.media.ic_share'),
+                  onClick: () => {
+                    const context = getContext(this) as common.UIAbilityContext;
+                    const uiContext = this.getUIContext();
+                    const now = new Date();
+                    const timestamp = now.toISOString().replace(/[:.]/g, '-').slice(0, 19);
+                    ScreenshotUtils.captureAndShare(
+                      context,
+                      uiContext,
+                      'decibelMeterRoot',
+                      `noise_meter_screenshot_${timestamp}.jpg`,
+                      '噪音检测仪截图',
+                      '当前噪音检测结果截图'
+                    );
+                  }
                 }
-              }]
+              ]
             })
 
             // 噪音检测区域
