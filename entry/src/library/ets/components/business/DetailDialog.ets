@@ -1,18 +1,14 @@
 import { DecibelRecord } from "../../models/DecibelRecord"
-import { DecibelService } from "../../../../noise_meter/ets/services/DecibelService"
-import { AudioPlayerService, PlayerState } from "../../services/AudioPlayerService"
 import common from '@ohos.app.ability.common'
 import { FileService } from "../../services/FileService"
 import hilog from '@ohos.hilog'
 import { noiseMeterNavStack } from '../../../../noise_meter/ets/constant/ProviderConstant'
 import { JSON } from '@kit.ArkTS'
-import { display } from "@kit.ArkUI"
 import { ScreenshotUtils } from "../../utils/ScreenshotUtils"
 import { DialogTitleBuilder } from "./DialogTitle"
 import { BasicInfoBuilder } from "./BasicInfo"
 import { Statistics } from "./Statistics"
 import { NoiseChart } from "./NoiseChart"
-import { AudioPlayer } from "./AudioPlayer"
 
 const TAG = 'DetailDialog';
 const DOMAIN = 0x0000;
@@ -31,8 +27,6 @@ export struct DetailDialog {
   @Local fileService: FileService | null = null;
   @Local translateY: number = 1000;
   private startY: number = 0;
-  private decibelService: DecibelService = new DecibelService();
-  private audioPlayerService!: AudioPlayerService;
   @Local private bgOpacity: number = 0;
 
   async aboutToAppear() {
@@ -51,7 +45,6 @@ export struct DetailDialog {
         return;
       }
 
-      const availableArea = await display.getDefaultDisplaySync().getAvailableArea();
       this.selectedRecord = param.selectedRecord;
       this.context = param.context;
       this.fileService = param.fileService;

@@ -18,6 +18,44 @@ export struct Statistics {
   private decibelService: DecibelService = new DecibelService();
   @Local noiseDistribution: NoiseDistribution = { segments: [], values: [] };
 
+  aboutToAppear() {
+    if (this.selectedRecord) {
+      this.calculateNoiseDistribution();
+    }
+  }
+
+  private calculateNoiseDistribution() {
+    if (!this.selectedRecord || !this.selectedRecord.decibelValues.length) return;
+
+    const values = this.selectedRecord.decibelValues;
+    const levelCounts = new Map<string, number>();
+    values.forEach(value => {
+      const level = this.decibelService.getDecibelLevel(value);
+      levelCounts.set(level, (levelCounts.get(level) || 0) + 1);
+    });
+
+    const levelOrder = ['非常安静', '安静', '一般', '吵闹', '非常吵闹', '难以忍受'];
+    const segments: NoiseSegment[] = [];
+    const total = values.length;
+
+    levelOrder.forEach(level => {
+      const count = levelCounts.get(level) || 0;
+      if (count > 0) {
+        const sampleValue = values.find(v => this.decibelService.getDecibelLevel(v) === level) || 0;
+        segments.push({
+          name: level,
+          value: parseFloat(((count / total) * 100).toFixed(1)),
+          color: this.decibelService.getDecibelColor(sampleValue)
+        });
+      }
+    });
+
+    this.noiseDistribution = {
+      segments: segments,
+      values: segments.map(s => s.value)
+    };
+  }
+
   build() {
     Column() {
       Text('统计数据')
@@ -129,55 +167,34 @@ export struct Statistics {
         .margin({ top: 12, bottom: 16 })
 
       if (this.selectedRecord && this.selectedRecord.decibelValues.length > 0) {
-        Row() {
-          Column() {
-            ForEach(this.noiseDistribution.segments, (segment: NoiseSegment) => {
-              Row() {
-                Row()
-                  .width(`${segment.value}%`)
-                  .height(8)
-                  .backgroundColor(segment.color)
-                  .borderRadius(4)
-              }
-              .width('100%')
-              .margin({ bottom: 8 })
-            })
-          }
-          .width(160)
-          .height(160)
-          .justifyContent(FlexAlign.SpaceBetween)
-          .margin({ right: 16, top: -16 })
-
-          Column() {
-            ForEach(this.noiseDistribution.segments, (segment: NoiseSegment) => {
-              Row() {
-                Row()
-                  .width(12)
-                  .height(12)
-                  .borderRadius(6)
-                  .backgroundColor(segment.color)
-                  .margin({ right: 8 })
-                Text(segment.name)
-                  .fontSize(14)
-                  .fontColor('#333333')
-                  .width(42)
-                  .margin({ right: 2 })
-                Text(`${segment.value}%`)
-                  .fontSize(14)
-                  .fontColor('#666666')
-                  .width(40)
-                  .textAlign(TextAlign.Start)
-              }
-              .margin({ bottom: 8 })
-              .alignItems(VerticalAlign.Center)
-              .justifyContent(FlexAlign.Start)
-            })
-          }
-          .margin({ left: 16, top: -16 })
-          .layoutWeight(1)
-          .justifyContent(FlexAlign.End)
+        Column() {
+          ForEach(this.noiseDistribution.segments, (segment: NoiseSegment) => {
+            Row() {
+              Text(segment.name)
+                .fontSize(12)
+                .fontColor('#333333')
+                .width(60)
+                .margin({ right: 8 })
+              
+              Row()
+                .width(`${segment.value}%`)
+                .height(12)
+                .backgroundColor(segment.color)
+                .borderRadius(6)
+                .margin({ right: 8 })
+              
+              Text(`${segment.value}%`)
+                .fontSize(12)
+                .fontColor('#666666')
+            }
+            .width('100%')
+            .margin({ bottom: 8 })
+            .alignItems(VerticalAlign.Center)
+          })
         }
         .width('100%')
+        .height(200)  // 添加明确的高度
+        .padding({ left: 16, right: 16 })
       }
     }
     .width('100%')
