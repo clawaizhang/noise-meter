@@ -37,7 +37,7 @@ export struct NoiseMeter {
             // 使用自定义标题栏
             CustomTitleBar({
               title: getTitleName(),
-              rightButton: {
+              buttons: [{
                 icon: $r('app.media.ic_share'),
                 onClick: () => {
                   const context = getContext(this) as common.UIAbilityContext;
@@ -53,7 +53,7 @@ export struct NoiseMeter {
                     '当前噪音检测结果截图'
                   );
                 }
-              }
+              }]
             })
 
             // 噪音检测区域

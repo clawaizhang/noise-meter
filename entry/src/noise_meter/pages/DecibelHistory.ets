@@ -167,6 +167,7 @@ export struct DecibelHistory {
         Row() {
         }
         .layoutWeight(1)
+
         Row() {
           this.EmptyButton()
         }
@@ -181,7 +182,7 @@ export struct DecibelHistory {
     .backgroundColor('#F5F5F5')
   }
 
-  emptyAll = async () =>  {
+  emptyAll = async () => {
     AlertDialog.show({
       title: '清空检测记录',
       message: '确定要清空检测记录吗？\n已收藏的记录将会保留',
@@ -357,8 +358,8 @@ export struct DecibelHistory {
       }
       .backgroundColor(Color.White)
       .translate({
-        x: record.id === this.currentSlidingId ? 
-          this.currentSlideOffset : // 直接使用滑动偏移量
+        x: record.id === this.currentSlidingId ?
+        this.currentSlideOffset : // 直接使用滑动偏移量
           (this.showingDeleteButtonId === record.id ? -160 : 0)
       })
       .scale({
@@ -433,7 +434,8 @@ export struct DecibelHistory {
           })
       )
 
-      if (this.showingDeleteButtonId === record.id || this.currentSlidingId === record.id || this.pendingHideButtonId === record.id) {
+      if (this.showingDeleteButtonId === record.id || this.currentSlidingId === record.id ||
+        this.pendingHideButtonId === record.id) {
         // 右侧按钮组
         Row() {
           if (record.id === this.pendingDeleteId) {
@@ -515,8 +517,8 @@ export struct DecibelHistory {
         .justifyContent(FlexAlign.End)
         .position({ x: '100%', y: 0 })
         .translate({
-          x: record.id === this.currentSlidingId ? 
-            this.currentSlideOffset : // 直接使用滑动偏移量
+          x: record.id === this.currentSlidingId ?
+          this.currentSlideOffset : // 直接使用滑动偏移量
             (this.showingDeleteButtonId === record.id ? -160 : 0)
         })
         .animation({
@@ -576,10 +578,10 @@ export struct DecibelHistory {
       // 使用自定义标题栏
       CustomTitleBar({
         title: '检测记录',
-        rightButton: {
+        buttons: [{
           text: '清空',
           onClick: this.emptyAll
-        }
+        }]
       })
 
       // 内容区域
