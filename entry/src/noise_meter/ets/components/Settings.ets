@@ -98,7 +98,7 @@ export struct Settings {
   @Local isModeChangeEnabled: boolean = true;
   @Local remainingTime: number = 0;
   @Local calibrationValue: number = 0;
-  private readonly COOLDOWN_DURATION: number = 3000; // 3秒冷却时间
+  private readonly COOLDOWN_DURATION: number = 1000; // 3秒冷却时间
 
   // 工具方法
   private getWeightingIndex(type: WeightingType): number {
@@ -221,7 +221,7 @@ export struct Settings {
               Blank()
 
               Row() {
-                Text(this.remainingTime > 0 ? `${Math.ceil(this.remainingTime / 1000)}秒` : '')
+                Text(this.remainingTime > 0 ? `${(this.remainingTime / 1000).toFixed(1)}秒` : '')
                   .fontSize(14)
                   .fontColor('#CCCCCC')
                   .margin({ right: -2 })
@@ -251,13 +251,13 @@ export struct Settings {
                     // 启动冷却计时器
                     this.remainingTime = this.COOLDOWN_DURATION;
                     const interval = setInterval(() => {
-                      this.remainingTime -= 1000;
+                      this.remainingTime -= 100;
                       if (this.remainingTime <= 0) {
                         clearInterval(interval);
                         this.isModeChangeEnabled = true;
                         this.remainingTime = 0;
                       }
-                    }, 1000);
+                    }, 100);
                   })
                   .enabled(this.isModeChangeEnabled)
               }

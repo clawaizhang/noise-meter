@@ -33,32 +33,32 @@ export interface AudioAnalysisConfig {
 export class AudioPresets {
   // 快速时间计权模式配置（F）
   public static readonly FAST_TIME_WEIGHTING: AudioAnalysisConfig = {
-    fftSize: 512,          // 较小FFT size，提高时间分辨率
+    fftSize: 1024,          // 较小FFT size，提高时间分辨率
     updateInterval: 125,   // 125ms符合快速响应时间常数
     smoothingFactor: 0.125,
-    windowType: WindowType.HANNING,
-    overlap: 0.5,
-    bufferSize: 512 * 2
-  };
-
-  // 慢速时间计权模式配置（S）
-  public static readonly SLOW_TIME_WEIGHTING: AudioAnalysisConfig = {
-    fftSize: 1024,         // 中等FFT size，平衡时间和频率分辨率
-    updateInterval: 1000,  // 1000ms符合慢速响应时间常数
-    smoothingFactor: 0.0625,
     windowType: WindowType.HANNING,
     overlap: 0.5,
     bufferSize: 1024 * 2
   };
 
+  // 慢速时间计权模式配置（S）
+  public static readonly SLOW_TIME_WEIGHTING: AudioAnalysisConfig = {
+    fftSize: 2048,         // 中等FFT size，平衡时间和频率分辨率
+    updateInterval: 1000,  // 1000ms符合慢速响应时间常数
+    smoothingFactor: 0.0625,
+    windowType: WindowType.HANNING,
+    overlap: 0.5,
+    bufferSize: 2048 * 2
+  };
+
   // 脉冲时间计权模式配置（I）
   public static readonly IMPULSE_TIME_WEIGHTING: AudioAnalysisConfig = {
-    fftSize: 2048,         // 较大FFT size，提高频率分辨率
+    fftSize: 4096,         // 较大FFT size，提高频率分辨率
     updateInterval: 35,    // 35ms符合脉冲响应时间常数
     smoothingFactor: 0.25,
     windowType: WindowType.BLACKMAN,
     overlap: 0.75,
-    bufferSize: 2048 * 2
+    bufferSize: 4096 * 2
   };
 
   /**
