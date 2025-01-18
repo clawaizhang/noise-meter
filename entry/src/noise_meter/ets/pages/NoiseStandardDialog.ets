@@ -17,6 +17,13 @@ export struct NoiseStandardDialog {
   @Builder
   StandardCardBuilder() {
     Column() {
+      Text('噪音参考标准')
+        .fontSize(20)
+        .fontWeight(FontWeight.Bold)
+        .margin({ bottom: 16 })
+        .width('100%')
+        .textAlign(TextAlign.Center)
+        
       ForEach(NoiseStandards, (standard: NoiseStandard, index: number) => {
         NoiseStandardCardBuilder(standard, getContext(this) as common.UIAbilityContext)
       }
