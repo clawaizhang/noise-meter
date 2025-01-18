@@ -4,61 +4,13 @@ import { getTitleName } from '../MainPageInfo';
 import { DecibelHistory } from './DecibelHistory';
 import { CustomTitleBar } from '../../library/ets/components/common/CustomTitleBar';
 import { Settings } from '../ets/components/Settings';
-import { systemShare } from '@kit.ShareKit';
-import { uniformTypeDescriptor as utd } from '@kit.ArkData';
 import { common } from '@kit.AbilityKit';
-import { fileUri } from '@kit.CoreFileKit';
-import { image } from '@kit.ImageKit';
-import { fileIo } from '@kit.CoreFileKit';
+import { ScreenshotUtils } from '../../library/ets/utils/ScreenshotUtils';
 
 @ComponentV2
 export struct NoiseMeter {
   @Provider(noiseMeterNavStack) navStack: NavPathStack = new NavPathStack()
   @Local currentIndex: number = 0
-
-  private async handleScreenshotAndShare(): Promise<void> {
-    try {
-      const context = getContext(this) as common.UIAbilityContext;
-      const filePath = context.tempDir + '/noise_meter_screenshot.jpg';
-
-      // 获取截图
-      const pixmap = await this.getUIContext().getComponentSnapshot().get("decibelMeterRoot", {
-        scale: 2,
-        waitUntilRenderFinished: true
-      });
-
-      // 编码图片
-      const imagePacker = image.createImagePacker();
-      const packOptions: image.PackingOption = {
-        format: "image/jpeg",
-        quality: 100
-      };
-      const data = await imagePacker.packToData(pixmap, packOptions);
-
-      // 保存文件
-      const file = await fileIo.open(filePath, fileIo.OpenMode.CREATE | fileIo.OpenMode.READ_WRITE);
-      await fileIo.write(file.fd, data);
-
-      // 设置分享数据
-      const utdTypeId = utd.getUniformDataTypeByFilenameExtension('.jpg', utd.UniformDataType.IMAGE);
-      const shareData = new systemShare.SharedData({
-        utd: utdTypeId,
-        uri: fileUri.getUriFromPath(filePath),
-        title: '噪音检测仪截图',
-        description: '当前噪音检测结果截图',
-      });
-
-      // 分享
-      const controller = new systemShare.ShareController(shareData);
-      await controller.show(context, {
-        selectionMode: systemShare.SelectionMode.SINGLE,
-        previewMode: systemShare.SharePreviewMode.DETAIL,
-      });
-      console.info('分享成功');
-    } catch (error) {
-      console.error(`分享失败: code=${error.code}, message=${error.message}`);
-    }
-  }
 
   @Builder
   TabBuilder(title: string, icon: Resource, index: number) {
@@ -88,7 +40,16 @@ export struct NoiseMeter {
               rightButton: {
                 icon: $r('app.media.ic_share'),
                 onClick: () => {
-                  this.handleScreenshotAndShare();
+                  const context = getContext(this) as common.UIAbilityContext;
+                  const uiContext = this.getUIContext();
+                  ScreenshotUtils.captureAndShare(
+                    context,
+                    uiContext,
+                    'decibelMeterRoot',
+                    'noise_meter_screenshot.jpg',
+                    '噪音检测仪截图',
+                    '当前噪音检测结果截图'
+                  );
                 }
               }
             })
