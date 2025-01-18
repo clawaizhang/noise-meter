@@ -396,7 +396,7 @@ export struct DecibelMeter {
                 .fontColor(this.decibelService.getDecibelColor(this.minDecibel))
             }
             .alignItems(HorizontalAlign.Center)
-            .margin({ right: 32 })
+            .margin({ right: 16 })
 
             Column() {
               Text(this.currentDecibel === 0 ? '-' : this.currentDecibel.toString())
@@ -442,7 +442,7 @@ export struct DecibelMeter {
                 .fontColor(this.decibelService.getDecibelColor(this.maxDecibel))
             }
             .alignItems(HorizontalAlign.Center)
-            .margin({ left: 32 })
+            .margin({ left: 16 })
           }
           .width('100%')
           .justifyContent(FlexAlign.Center)

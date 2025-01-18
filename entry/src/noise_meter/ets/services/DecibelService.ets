@@ -1,4 +1,3 @@
-
 @Observed
 export class DecibelService {
 
@@ -8,11 +7,12 @@ export class DecibelService {
    * @returns string - 级别描述
    */
   getDecibelLevel(value: number): string {
-    if (value < 30) return '安静';
-    if (value < 60) return '正常';
-    if (value < 90) return '嘈杂';
-    if (value < 100) return '危险';
-    return '极度危险';
+    if (value < 20) return '非常安静';
+    if (value < 40) return '安静';
+    if (value < 60) return '一般';
+    if (value < 80) return '吵闹';
+    if (value < 100) return '非常吵闹';
+    return '难以忍受';
   }
 
   /**
@@ -21,10 +21,11 @@ export class DecibelService {
    * @returns string - 颜色值（十六进制）
    */
   getDecibelColor(value: number): string {
-    if (value < 30) return '#3EA665';  // 安静 - 更亮的绿色
-    if (value < 60) return '#4CAF50';  // 正常 - 绿色
-    if (value < 90) return '#FFC107';  // 嘈杂 - 黄色
-    if (value < 100) return '#FF9800'; // 危险 - 橙色
-    return '#F44336';                  // 极度危险 - 红色
+    if (value < 20) return '#3EA665';  // 非常安静 - 绿色
+    if (value < 40) return '#4CAF50';  // 安静 - 浅绿色
+    if (value < 60) return '#FFC107';  // 一般 - 黄色
+    if (value < 80) return '#FF9800';  // 吵闹 - 橙色
+    if (value < 100) return '#F44336'; // 非常吵闹 - 红色
+    return '#8B0000';                 // 难以忍受 - 深红色
   }
-} 
+}

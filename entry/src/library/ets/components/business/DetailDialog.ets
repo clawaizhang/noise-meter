@@ -257,7 +257,7 @@ export struct DetailDialog {
     });
 
     // 定义级别顺序（从12点钟方向开始，顺时针排列）
-    const levelOrder = ['极度危险', '危险', '嘈杂', '正常', '安静'];
+    const levelOrder = ['难以忍受', '非常吵闹', '吵闹', '一般', '安静', '非常安静'];
 
     // 转换为饼图数据并按级别排序
     const segments: NoiseSegment[] = [];
@@ -308,20 +308,16 @@ export struct DetailDialog {
       } else {
         Row() {
           // 饼图
-          Stack() {
-            DataPanel({
-              values: this.noiseDistribution.values,
-              max: 100,
-              type: DataPanelType.Circle
-            })
-              .valueColors(this.noiseDistribution.segments.map(segment => segment.color))
-              .trackBackgroundColor('#08182431')
-              .width(160)
-              .height(160)
-          }
-          .width(160)
-          .height(160)
-          .margin({ right: 16, top: -16 })
+          DataPanel({
+            values: this.noiseDistribution.values,
+            max: 100,
+            type: DataPanelType.Circle
+          })
+            .valueColors(this.noiseDistribution.segments.map(segment => segment.color))
+            .trackBackgroundColor('#08182431')
+            .width(120)
+            .height(120)
+            .margin({ top: -16 })
 
           // 图例
           Column() {
@@ -336,7 +332,7 @@ export struct DetailDialog {
                 Text(segment.name)
                   .fontSize(14)
                   .fontColor('#333333')
-                  .width(42)
+                  .width(64)
                   .margin({ right: 2 })
                 Text(`${segment.value}%`)
                   .fontSize(14)
@@ -349,7 +345,7 @@ export struct DetailDialog {
               .justifyContent(FlexAlign.Start)
             })
           }
-          .margin({ left: 16, top: -16 })
+          .margin({ top: -16 })
           .layoutWeight(1)
           .justifyContent(FlexAlign.End)
         }
@@ -662,6 +658,9 @@ export struct DetailDialog {
               // 计算每个点的时间间隔
               const timeInterval = totalSeconds / (values.length - 1);
 
+              // 定义颜色缓存
+              const colorCache = new Map<number, string>();
+
               values.forEach((value, index) => {
                 // 计算当前点的时间位置
                 const currentTime = index * timeInterval;
@@ -672,8 +671,15 @@ export struct DetailDialog {
                 );
                 const y = margin.top + chartHeight - (value - minValue) * yScale;
 
+                // 获取颜色，使用缓存提高性能
+                let color = colorCache.get(value);
+                if (!color) {
+                  color = decibelService.getDecibelColor(value);
+                  colorCache.set(value, color);
+                }
+
                 // 绘制点
-                this.canvasContext.fillStyle = decibelService.getDecibelColor(value);
+                this.canvasContext.fillStyle = color;
                 this.canvasContext.beginPath();
                 this.canvasContext.arc(x, y, 1.5, 0, Math.PI * 2);
                 this.canvasContext.fill();
