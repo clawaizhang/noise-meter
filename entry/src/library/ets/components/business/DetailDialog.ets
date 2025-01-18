@@ -270,7 +270,7 @@ export struct DetailDialog {
         const sampleValue = values.find(v => this.decibelService.getDecibelLevel(v) === level) || 0;
         segments.push({
           name: level,
-          value: Math.round((count / total) * 100),
+          value: parseFloat(((count / total) * 100).toFixed(1)),
           color: this.decibelService.getDecibelColor(sampleValue)
         });
       }
@@ -332,7 +332,7 @@ export struct DetailDialog {
                 Text(segment.name)
                   .fontSize(14)
                   .fontColor('#333333')
-                  .width(64)
+                  .width(80)
                   .margin({ right: 2 })
                 Text(`${segment.value}%`)
                   .fontSize(14)
