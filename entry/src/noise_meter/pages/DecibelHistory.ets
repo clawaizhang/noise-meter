@@ -617,6 +617,23 @@ export struct DecibelHistory {
               }
             }
           }, (record: DecibelRecord) => record.id)
+
+          // 总记录数显示
+          ListItem() {
+            Column() {
+              Text(`共 ${this.records.length} 条记录`)
+                .fontSize(14)
+                .fontColor('#666666')
+                .textAlign(TextAlign.Center)
+                .width('100%')
+                .padding(16)
+              
+              Divider()
+                .width('100%')
+                .height(8)
+                .color('#F5F5F5')
+            }
+          }
         }
         .width('100%')
         .layoutWeight(1)
