@@ -1,4 +1,4 @@
-import prompt from '@ohos.prompt';
+import promptAction from '@ohos.promptAction';
 
 @ComponentV2
 export struct ResetSaveButton {
@@ -35,8 +35,8 @@ export struct ResetSaveButton {
         offsetY: 2
       })
       .onClick(async () => {
-        const confirmed = await prompt.showDialog({
-          title: '确认重置',
+        const confirmed = await promptAction.showDialog({
+          title: '重置数据',
           message: '确定要重置当前数据吗？此操作不可恢复。',
           buttons: [
             {
@@ -44,8 +44,8 @@ export struct ResetSaveButton {
               color: '#666666'
             },
             {
-              text: '确定',
-              color: '#4A90E2'
+              text: '重置',
+              color: '#FF4444'
             }
           ]
         });
@@ -93,8 +93,24 @@ export struct ResetSaveButton {
         color: '#1A1A5A9E', // 轻微阴影
         offsetY: 2
       })
-      .onClick(() => {
-        this.onSave();
+      .onClick(async () => {
+        const confirmed = await promptAction.showDialog({
+          title: '保存数据',
+          message: '确定要保存当前数据吗？',
+          buttons: [
+            {
+              text: '取消',
+              color: '#666666'
+            },
+            {
+              text: '保存',
+              color: '#4A90E2'
+            }
+          ]
+        });
+        if (confirmed.index === 1) {
+          this.onSave();
+        }
       })
     }
     .width('100%')
