@@ -68,32 +68,53 @@ export struct Statistics {
     // 根据占比生成描述
     let description = '';
 
+    // 噪音组合
+    const combination = this.analyzeNoiseCombination(levels);
+    if (combination) {
+      description += '🔊 ' + combination + '，';
+    }
+
     if (levels['难以忍受'] > 10) {
       const areaType = this.getAreaTypeForHighNoise();
-      description += `⚠️ 存在危险噪音，超过${areaType}标准，建议立即采取保护措施。\n`;
+      description += `⚠️ 存在危险噪音，超过${areaType}标准，建议立即采取保护措施，`;
     }
 
     if (levels['非常吵闹'] > 20) {
-      description += '🔊 噪音水平较高，接近工业区标准，可能影响听力健康。\n';
+      description += '🔊 接近工业区标准，可能影响听力健康，';
     }
 
     if (levels['吵闹'] > 30) {
-      description += '🔉 环境较为吵闹，接近商业区标准，可能影响专注力。\n';
+      description += '🔉 接近商业区标准，可能影响专注力，';
     }
 
     if (levels['一般'] > 40) {
-      description += '🗣️ 环境噪音处于正常水平，符合居民区标准。\n';
+      description += '🗣️ 符合居民区标准，';
     }
 
     if (levels['安静'] > 50) {
-      description += '🤫 环境较为安静，达到疗养区标准，适合办公学习。\n';
+      description += '🤫 达到疗养区标准，适合办公学习，';
     }
 
     if (levels['非常安静'] > 60) {
-      description += '🌙 环境非常安静，优于疗养区标准，适合休息。\n';
+      description += '🌙 环境非常安静，优于疗养区标准，适合休息，';
     }
 
-    return description.trim();
+    // 追加新的分析结果
+    description = description.trim();
+    
+    // 噪音对人体影响
+    const healthImpact = this.analyzeHealthImpact(levels);
+    if (healthImpact) {
+      description += healthImpact + '，';
+    }
+
+    // 建议
+    const recommendations = this.generateRecommendations(levels);
+    if (recommendations) {
+      description += '📝 建议：' + recommendations;
+    }
+
+    return description + "。";
   }
 
   private getAreaTypeForHighNoise(): string {
@@ -101,6 +122,88 @@ export struct Statistics {
     // 这里需要根据实际数据实现具体逻辑
     // 暂时返回默认值'4a类（交通干线两侧区域）'
     return '4a类（交通干线两侧区域）';
+  }
+
+  // 新增方法：分析主要噪音组合
+  private analyzeNoiseCombination(levels: Record<string, number>): string {
+    const sortedLevels = Object.entries(levels)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 3); // 取占比最高的3个级别
+    
+    // 根据组合生成描述
+    if (sortedLevels[0][1] > 50) {
+      return `环境${sortedLevels[0][0]}，占比${sortedLevels[0][1]}%`;
+    } else {
+      return `环境${sortedLevels.map(l => `${l[0]}(${l[1]}%)`).join('，')}`;
+    }
+  }
+
+  // 新增方法：分析噪音持续时间
+  private analyzeDuration(record: DecibelRecord): string {
+    const duration = record.duration; // 假设record中有duration字段
+    if (duration > 3600) {
+      return '长时间暴露在高噪音环境中';
+    } else if (duration > 1800) {
+      return '中等时长暴露在噪音环境中';
+    } else {
+      return '短时间暴露在噪音环境中';
+    }
+  }
+
+  // 新增方法：分析噪音对人体的影响
+  private analyzeHealthImpact(levels: Record<string, number>): string {
+    const impacts:string[] = [];
+    
+    if (levels['难以忍受'] > 10) {
+      impacts.push('可能导致永久性听力损伤');
+      impacts.push('增加心血管疾病风险');
+    }
+    
+    if (levels['非常吵闹'] > 20) {
+      impacts.push('可能导致暂时性听力下降');
+      impacts.push('可能引起头痛和疲劳');
+    }
+    
+    if (levels['吵闹'] > 30) {
+      impacts.push('可能影响睡眠质量');
+      impacts.push('可能导致注意力不集中');
+    }
+    
+    if (levels['一般'] > 40) {
+      impacts.push('可能影响工作效率');
+    }
+    
+    if (levels['安静'] > 50) {
+      impacts.push('有利于放松和集中注意力');
+    }
+    
+    if (levels['非常安静'] > 60) {
+      impacts.push('有利于深度睡眠和恢复');
+    }
+    
+    return impacts.length > 0 ? ` ${impacts.join('，')}` : '';
+  }
+
+  // 新增方法：生成建议
+  private generateRecommendations(levels: Record<string, number>): string {
+    const recommendations:string[] = [];
+    
+    // 根据噪音组合生成建议
+    if (levels['难以忍受'] + levels['非常吵闹'] > 30) {
+      recommendations.push('使用降噪耳机或耳塞');
+      recommendations.push('考虑安装隔音窗户');
+    }
+    
+    if (levels['吵闹'] > 40) {
+      recommendations.push('在重要时段关闭窗户');
+      recommendations.push('考虑使用厚重的窗帘');
+    }
+    
+    if (levels['一般'] > 60) {
+      recommendations.push('在安静时段进行重要工作');
+    }
+    
+    return recommendations.join('，');
   }
 
   build() {
