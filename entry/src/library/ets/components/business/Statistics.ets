@@ -56,6 +56,53 @@ export struct Statistics {
     };
   }
 
+  private getOverallNoiseDescription(): string {
+    if (!this.noiseDistribution.segments.length) return '';
+
+    // 获取各个噪音级别的占比
+    const levels = this.noiseDistribution.segments.reduce((acc, curr) => {
+      acc[curr.name] = curr.value;
+      return acc;
+    }, {} as Record<string, number>);
+
+    // 根据占比生成描述
+    let description = '';
+
+    if (levels['难以忍受'] > 10) {
+      const areaType = this.getAreaTypeForHighNoise();
+      description += `⚠️ 存在危险噪音，超过${areaType}标准，建议立即采取保护措施。\n`;
+    }
+
+    if (levels['非常吵闹'] > 20) {
+      description += '🔊 噪音水平较高，接近工业区标准，可能影响听力健康。\n';
+    }
+
+    if (levels['吵闹'] > 30) {
+      description += '🔉 环境较为吵闹，接近商业区标准，可能影响专注力。\n';
+    }
+
+    if (levels['一般'] > 40) {
+      description += '🗣️ 环境噪音处于正常水平，符合居民区标准。\n';
+    }
+
+    if (levels['安静'] > 50) {
+      description += '🤫 环境较为安静，达到疗养区标准，适合办公学习。\n';
+    }
+
+    if (levels['非常安静'] > 60) {
+      description += '🌙 环境非常安静，优于疗养区标准，适合休息。\n';
+    }
+
+    return description.trim();
+  }
+
+  private getAreaTypeForHighNoise(): string {
+    // 根据噪音特征判断具体区域类型
+    // 这里需要根据实际数据实现具体逻辑
+    // 暂时返回默认值'4a类（交通干线两侧区域）'
+    return '4a类（交通干线两侧区域）';
+  }
+
   build() {
     Column() {
       Text('统计数据')
@@ -63,6 +110,13 @@ export struct Statistics {
         .fontWeight(FontWeight.Medium)
         .alignSelf(ItemAlign.Start)
         .margin({ bottom: 8, top: -16 })
+
+      Text(this.getOverallNoiseDescription())
+        .fontSize(14)
+        .fontColor('#333333')
+        .margin({ bottom: 16 })
+        .textAlign(TextAlign.Start)
+        .width('100%')
 
       Row() {
         Column() {
@@ -175,14 +229,14 @@ export struct Statistics {
                 .fontColor('#333333')
                 .width(60)
                 .margin({ right: 8 })
-              
+
               Row()
-                .width(`${segment.value}%`)
+                .width(`${segment.value * 0.8}%`)
                 .height(12)
                 .backgroundColor(segment.color)
                 .borderRadius(6)
                 .margin({ right: 8 })
-              
+
               Text(`${segment.value}%`)
                 .fontSize(12)
                 .fontColor('#666666')
@@ -193,7 +247,6 @@ export struct Statistics {
           })
         }
         .width('100%')
-        .height(200)  // 添加明确的高度
         .padding({ left: 16, right: 16 })
       }
     }
