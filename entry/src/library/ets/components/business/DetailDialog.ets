@@ -937,21 +937,7 @@ export struct DetailDialog {
                 .margin({ bottom: 12 })
 
                 this.ChartBuilder(this.selectedRecord, this.decibelService)
-  
-                // 噪音标准展示
-                Column() {
-                  Text('噪音标准参考')
-                    .fontSize(16)
-                    .fontWeight(FontWeight.Medium)
-                    .alignSelf(ItemAlign.Start)
-                    .margin({ bottom: 12 })
-  
-                  ForEach(NoiseStandards, (standard: NoiseStandard) => {
-                    NoiseStandardCardBuilder(standard, this.context)
-                  })
-                }
-                .width('100%')
-                .padding({ left: 16, right: 16 })
+
               }
               .width('100%')
               .padding({ left: 16, right: 16, bottom: 16 })

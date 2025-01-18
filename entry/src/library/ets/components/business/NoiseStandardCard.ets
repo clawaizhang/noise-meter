@@ -1,5 +1,4 @@
 import { NoiseStandard } from '../../models/NoiseStandard';
-import { NoiseStandardType } from '../../constants/NoiseStandardConstants';
 import common from '@ohos.app.ability.common';
 import { DecibelService } from '../../../../noise_meter/ets/services/DecibelService';
 
@@ -13,30 +12,63 @@ export struct NoiseStandardCard {
   private CardContent() {
     Column() {
       // 标题
-      Text(this.standard.typeName)
-        .fontSize(18)
-        .fontWeight(FontWeight.Medium)
-        .fontColor('#333333')
-        .margin({ bottom: 8 })
+      Row() {
+        Image($r('app.media.ic_info'))
+          .width(24)
+          .height(24)
+          .margin({ right: 8 })
+
+        Text(this.standard.typeName)
+          .fontSize(18)
+          .fontWeight(FontWeight.Medium)
+          .fontColor('#333333')
+      }
+      .width('100%')
+      .margin({ bottom: 12 })
+
+      // 分隔线
+      Divider()
+        .strokeWidth(1)
+        .color('#F0F0F0')
+        .margin({ bottom: 12 })
 
       // 分贝范围
-      Row() {
-        Text('分贝范围：')
-          .fontSize(14)
-          .fontColor('#666666')
-        Text(`${this.standard.dayLimit} - ${this.standard.nightLimit} dB`)
-          .fontSize(14)
-          .fontColor(this.decibelService.getDecibelColor((this.standard.dayLimit + this.standard.nightLimit) / 2))
+      GridRow() {
+        GridCol({ span: { xs: 24 } }) {
+          Column() {
+            Text('分贝范围')
+              .fontSize(14)
+              .fontColor('#999999')
+              .margin({ bottom: 4 })
+
+            Text(`${this.standard.dayLimit} - ${this.standard.nightLimit} dB`)
+              .fontSize(16)
+              .fontColor(this.decibelService.getDecibelColor((this.standard.dayLimit + this.standard.nightLimit) / 2))
+              .fontWeight(FontWeight.Medium)
+          }
+        }
       }
-      .margin({ bottom: 8 })
+      .margin({ bottom: 16 })
 
       // 描述
-      Text(this.standard.description)
-        .fontSize(14)
-        .fontColor('#666666')
-        .lineHeight(20)
+      GridRow() {
+        GridCol({ span: { xs: 24 } }) {
+          Column() {
+            Text('描述')
+              .fontSize(14)
+              .fontColor('#999999')
+              .margin({ bottom: 4 })
+
+            Text(this.standard.description)
+              .fontSize(14)
+              .fontColor('#666666')
+              .lineHeight(20)
+          }
+        }
+      }
     }
     .padding(16)
+    .width('100%')
   }
 
   build() {
@@ -51,6 +83,6 @@ export struct NoiseStandardCard {
 }
 
 @Builder
-export function NoiseStandardCardBuilder(standard: NoiseStandard, context: common.Context|null) {
+export function NoiseStandardCardBuilder(standard: NoiseStandard, context: common.Context | null) {
   NoiseStandardCard({ standard: standard, context: context })
 }
