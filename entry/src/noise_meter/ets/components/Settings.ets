@@ -98,7 +98,7 @@ export struct Settings {
   @Local isModeChangeEnabled: boolean = true;
   @Local remainingTime: number = 0;
   @Local calibrationValue: number = 0;
-  private readonly COOLDOWN_DURATION: number = 1000; // 3秒冷却时间
+  private readonly COOLDOWN_DURATION: number = 500; // 0.5秒冷却时间
 
   // 工具方法
   private getWeightingIndex(type: WeightingType): number {

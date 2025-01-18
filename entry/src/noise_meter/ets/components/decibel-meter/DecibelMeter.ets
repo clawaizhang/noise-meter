@@ -42,6 +42,7 @@ export struct DecibelMeter {
   @Local private weightingType: WeightingType = WeightingType.A // 当前FFT大小
   @Local private currentMode: AudioAnalysisMode = AudioAnalysisMode.FAST_TIME_WEIGHTING // 当前模式
   @Local private currentFftSize: number = 2048 // 当前FFT大小
+  @Local private initialSamplesToSkip: number = 1 // 初始采样跳过计数
   @Consumer(noiseMeterNavStack) navStack: NavPathStack = new NavPathStack()
   private decibelService: DecibelService = new DecibelService()
   private audioService: AudioService = AudioService.getInstance(getContext() as common.UIAbilityContext)
@@ -212,12 +213,23 @@ export struct DecibelMeter {
 
       // 开始处理音频数据
       this.audioService.startProcessing((buffer: ArrayBuffer) => {
+        // 只在快速模式和脉冲模式下跳过初始采样
+        if (this.currentMode === AudioAnalysisMode.FAST_TIME_WEIGHTING ||
+            this.currentMode === AudioAnalysisMode.IMPULSE_TIME_WEIGHTING) {
+          if (this.initialSamplesToSkip > 0) {
+            this.initialSamplesToSkip--;
+            console.info(`[FREQ_TRACE][Audio] 跳过初始采样，剩余: ${this.initialSamplesToSkip}`);
+            return;
+          }
+        }
+        
         taskpool.execute<[string, ArrayBuffer,
           WeightingType, number], Float32Array>(concurrentCalculateSpectrum, this.currentMode,
           buffer, this.weightingType, this.calibrationGain).then(spectrum => {
           const config = AudioPresets.getConfig(this.currentMode as AudioAnalysisMode);
           const db: number = new FFTAnalyzer(config.fftSize, config.windowType, config.smoothingFactor,
             config.overlap).calculateAverageDb(spectrum);
+            
           this.currentDecibel = Math.round(db);
           this.values.push(this.currentDecibel);
           this.updateStatistics(this.currentDecibel);
