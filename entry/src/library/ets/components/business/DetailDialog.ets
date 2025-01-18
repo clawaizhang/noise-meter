@@ -1,7 +1,5 @@
 import { DecibelRecord } from "../../models/DecibelRecord"
 import { DecibelService } from "../../../../noise_meter/ets/services/DecibelService"
-import { NoiseStandardCardBuilder } from "./NoiseStandardCard"
-import { NoiseStandards } from "../../constants/NoiseStandardConstants"
 import { AudioPlayerService, PlayerState } from "../../services/AudioPlayerService"
 import common from '@ohos.app.ability.common'
 import { FileService } from "../../services/FileService"
@@ -10,7 +8,6 @@ import { noiseMeterNavStack } from '../../../../noise_meter/ets/constant/Provide
 import { JSON } from '@kit.ArkTS'
 import { display } from "@kit.ArkUI"
 import { ScreenshotUtils } from "../../utils/ScreenshotUtils"
-import { NoiseStandard } from "../../models/NoiseStandard"
 
 const TAG = 'DetailDialog';
 const DOMAIN = 0x0000;

@@ -24,6 +24,11 @@
       "name": "DetailDialog",
       "pageSourceFile": "src/library/ets/components/business/DetailDialog.ets",
       "buildFunction": "DetailDialogBuilder"
+    },
+    {
+      "name": "NoiseStandardDialog",
+      "pageSourceFile": "src/noise_meter/ets/pages/NoiseStandardDialog.ets",
+      "buildFunction": "NoiseStandardDialogBuilder"
     }
   ]
 } 

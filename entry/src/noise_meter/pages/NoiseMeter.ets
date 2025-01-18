@@ -41,7 +41,7 @@ export struct NoiseMeter {
                 {
                   icon: $r('app.media.ic_info'),
                   onClick: () => {
-
+                    this.navStack.pushPathByName('NoiseStandardDialog',null);
                   }
                 },
                 {
