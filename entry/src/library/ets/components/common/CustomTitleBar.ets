@@ -1,5 +1,6 @@
 interface TitleButton {
-  text: string;
+  text?: string;
+  icon?: Resource;
   onClick: () => void;
 }
 
@@ -20,10 +21,18 @@ export struct CustomTitleBar {
         Row() {
           Blank()
           Button() {
-            Text(this.rightButton.text)
-              .fontSize(14)
-              .fontColor('#666666')
-              .textAlign(TextAlign.Center)
+            if (this.rightButton.icon) {
+              Image(this.rightButton.icon)
+                .width(20)
+                .height(20)
+                .margin({ right: 4 })
+            }
+            else if (this.rightButton.text) {
+              Text(this.rightButton.text)
+                .fontSize(14)
+                .fontColor('#666666')
+                .textAlign(TextAlign.Center)
+            }
           }
           .height(32)
           .width(56)
