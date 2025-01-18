@@ -7,6 +7,7 @@ import hilog from '@ohos.hilog'
 import { noiseMeterNavStack } from '../../../../noise_meter/ets/constant/ProviderConstant'
 import { JSON } from '@kit.ArkTS'
 import { display } from "@kit.ArkUI"
+import { ScreenshotUtils } from "../../utils/ScreenshotUtils"
 
 const TAG = 'DetailDialog';
 const DOMAIN = 0x0000;
@@ -19,10 +20,14 @@ export interface DetailDialogParams {
 
 // 标题栏构建器
 @Builder
-function DialogTitleBuilder(selectedRecord: DecibelRecord, closeDialog: () => void) {
+function DialogTitleBuilder(
+  selectedRecord: DecibelRecord,
+  closeDialog: () => void,
+  onShare: () => Promise<void>
+) {
   Row() {
     Row() {
-      Text('检测报告')
+      Text('噪音检测报告')
         .fontSize(18)
         .fontWeight(FontWeight.Medium)
       if (selectedRecord!.isFavorite) {
@@ -33,7 +38,19 @@ function DialogTitleBuilder(selectedRecord: DecibelRecord, closeDialog: () => vo
           .margin({ left: 8 })
       }
     }
+
     Blank()
+    Button() {
+      Image($r('app.media.ic_share'))
+        .width(24)
+        .height(24)
+        .fillColor('#666666')
+    }
+    .type(ButtonType.Circle)
+    .backgroundColor(Color.Transparent)
+    .onClick(onShare)
+    .margin({ right: 8 })
+
     Button() {
       Image($r('app.media.ic_close'))
         .width(24)
@@ -110,7 +127,12 @@ function BasicInfoBuilder(selectedRecord: DecibelRecord) {
     }
   }
   .width('100%')
-  .padding({ left: 16, right: 16, top: 12, bottom: 12 })
+  .padding({
+    left: 16,
+    right: 16,
+    top: 12,
+    bottom: 12
+  })
   .backgroundColor(Color.White)
   .borderRadius(12)
   .margin({ bottom: 12 })
@@ -160,12 +182,12 @@ export struct DetailDialog {
       this.bgOpacity = 0;
       // 从导航参数获取数据
       const params = JSON.parse(JSON.stringify(this.navStack.getParamByName('DetailDialog'))) as DetailDialogParams[];
-      
+
       if (!params || typeof params !== 'object') {
         hilog.error(DOMAIN, TAG, '导航参数无效');
         return;
       }
-      const  param = params[0];
+      const param = params[0];
       // 类型检查
       if (!param.selectedRecord || !param.context || !param.fileService) {
         hilog.error(DOMAIN, TAG, '导航参数缺少必要字段');
@@ -332,7 +354,12 @@ export struct DetailDialog {
           .justifyContent(FlexAlign.End)
         }
         .width('100%')
-        .padding({ left: 8, right: 16, top: 12, bottom: 12 })
+        .padding({
+          left: 8,
+          right: 16,
+          top: 12,
+          bottom: 12
+        })
         .backgroundColor(Color.White)
         .borderRadius(12)
         .margin({ bottom: 12 })
@@ -340,336 +367,344 @@ export struct DetailDialog {
     }
   }
 
-@Builder
-ChartBuilder(selectedRecord: DecibelRecord, decibelService: DecibelService) {
-  Column() {
-    Row() {
-      Text('声级-时间散点图')
-        .fontSize(16)
-        .fontWeight(FontWeight.Medium)
+  @Builder
+  ChartBuilder(selectedRecord: DecibelRecord, decibelService: DecibelService) {
+    Column() {
+      Row() {
+        Text('声级-时间散点图')
+          .fontSize(16)
+          .fontWeight(FontWeight.Medium)
 
-      if (selectedRecord!.audioFilePath) {
-        Blank()
-        Row() {
-          // 添加停止按钮
-          if (this.playerState === PlayerState.STATE_PLAYING || this.playerState === PlayerState.STATE_PAUSED) {
-            Button() {
-              Image($r('app.media.ic_stop'))
-                .width(20)
-                .height(20)
-                .fillColor('#666666')
+        if (selectedRecord!.audioFilePath) {
+          Blank()
+          Row() {
+            // 添加停止按钮
+            if (this.playerState === PlayerState.STATE_PLAYING || this.playerState === PlayerState.STATE_PAUSED) {
+              Button() {
+                Image($r('app.media.ic_stop'))
+                  .width(20)
+                  .height(20)
+                  .fillColor('#666666')
+              }
+              .type(ButtonType.Normal)
+              .backgroundColor(Color.Transparent)
+              .margin({ right: 8 })
+              .onClick(async () => {
+                try {
+                  await this.audioPlayerService.stop();
+                } catch (error) {
+                  hilog.error(DOMAIN, TAG, '停止播放失败: %{public}s',
+                    error instanceof Error ? error.message : String(error));
+                }
+              })
             }
-            .type(ButtonType.Normal)
-            .backgroundColor(Color.Transparent)
-            .margin({ right: 8 })
+
+            Button() {
+              Row() {
+                Image(this.playerState === PlayerState.STATE_PLAYING ? $r('app.media.ic_pause') :
+                $r('app.media.ic_play'))
+                  .width(20)
+                  .height(20)
+                  .fillColor('#666666')
+                  .margin({ right: 8 })
+                Text(this.playerState === PlayerState.STATE_PLAYING ? '暂停播放' :
+                  this.playerState === PlayerState.STATE_PAUSED ? '继续播放' : '播放录音')
+                  .fontSize(14)
+                  .fontColor('#666666')
+              }
+              .alignItems(VerticalAlign.Center)
+              .justifyContent(FlexAlign.Center)
+            }
+            .type(ButtonType.Capsule)
+            .backgroundColor('#F5F5F5')
+            .height(36)
+            .padding({ left: 16, right: 16 })
             .onClick(async () => {
               try {
-                await this.audioPlayerService.stop();
+                if (this.playerState === PlayerState.STATE_PLAYING) {
+                  await this.audioPlayerService.pause();
+                } else {
+                  if (this.playerState === PlayerState.STATE_PAUSED) {
+                    await this.audioPlayerService.resume();
+                  } else {
+                    if (this.selectedRecord?.audioFilePath) {
+                      await this.audioPlayerService.playAudioFile(this.selectedRecord.audioFilePath);
+                    }
+                  }
+                }
               } catch (error) {
-                hilog.error(DOMAIN, TAG, '停止播放失败: %{public}s', error instanceof Error ? error.message : String(error));
+                hilog.error(DOMAIN, TAG, '播放音频失败: %{public}s',
+                  error instanceof Error ? error.message : String(error));
               }
             })
           }
-          
-          Button() {
-            Row() {
-              Image(this.playerState === PlayerState.STATE_PLAYING ? $r('app.media.ic_pause') : $r('app.media.ic_play'))
-                .width(20)
-                .height(20)
-                .fillColor('#666666')
-                .margin({ right: 8 })
-              Text(this.playerState === PlayerState.STATE_PLAYING ? '暂停播放' : 
-                   this.playerState === PlayerState.STATE_PAUSED ? '继续播放' : '播放录音')
-                .fontSize(14)
-                .fontColor('#666666')
-            }
-            .alignItems(VerticalAlign.Center)
-            .justifyContent(FlexAlign.Center)
-          }
-          .type(ButtonType.Capsule)
-          .backgroundColor('#F5F5F5')
-          .height(36)
-          .padding({ left: 16, right: 16 })
-          .onClick(async () => {
-            try {
-              if (this.playerState === PlayerState.STATE_PLAYING) {
-                await this.audioPlayerService.pause();
-              } else {
-                if (this.playerState === PlayerState.STATE_PAUSED) {
-                  await this.audioPlayerService.resume();
+        }
+      }
+      .width('100%')
+      .margin({ bottom: 12 })
+      .alignItems(VerticalAlign.Center)
+
+      if (selectedRecord!.decibelValues.length === 0) {
+        Column() {
+          Image($r('app.media.ic_empty'))
+            .width(32)
+            .height(32)
+            .fillColor('#999999')
+            .margin({ bottom: 8 })
+          Text('暂无分贝值变化数据')
+            .fontSize(14)
+            .fontColor('#999999')
+        }
+        .width('100%')
+        .justifyContent(FlexAlign.Center)
+        .margin({ top: 20, bottom: 20 })
+      } else {
+        Column() {
+          // Canvas 容器
+          Canvas(this.canvasContext)
+            .width(this.canvasWidth)
+            .height(this.canvasHeight)
+            .onReady(() => {
+              const values = selectedRecord.decibelValues;
+              const duration = selectedRecord.duration;
+              const maxValue = Math.max(...values);
+              const minValue = Math.min(...values);
+
+              // 设置边距
+              const margin: Margin = {
+                top: vp2px(2),
+                right: vp2px(2),
+                bottom: vp2px(4),
+                left: vp2px(6)
+              };
+              const chartWidth = this.canvasContext.width - margin.left - margin.right;
+              const chartHeight = this.canvasContext.height - margin.top - margin.bottom;
+
+              // 清空画布
+              this.canvasContext.clearRect(0, 0, this.canvasContext.width, this.canvasContext.height);
+
+              // 绘制背景
+              this.canvasContext.fillStyle = '#F5F5F5';
+              this.canvasContext.fillRect(margin.left, margin.top, chartWidth, chartHeight);
+
+              // 设置字体样式
+              this.canvasContext.font = `${vp2px(12)}px sans-serif`;
+              this.canvasContext.textBaseline = 'middle';
+
+              // 绘制网格线
+              this.canvasContext.strokeStyle = '#E0E0E0';
+              this.canvasContext.lineWidth = 1;
+
+              // 计算Y轴刻度
+              const yMin = Math.floor(minValue);
+              const yMax = Math.ceil(maxValue);
+              const range = yMax - yMin;
+
+              // 计算最佳步长
+              let bestStep = 5; // 默认步长为5
+              let bestGridCount = Math.ceil(range / bestStep);
+
+              // 调整步长使刻度数在5-7之间
+              while (bestGridCount < 5) {
+                bestStep /= 2;
+                bestGridCount = Math.ceil(range / bestStep);
+              }
+              while (bestGridCount > 7) {
+                bestStep *= 2;
+                bestGridCount = Math.ceil(range / bestStep);
+              }
+
+              // 计算刻度列表
+              const ticks: number[] = [];
+
+              // 计算第一个刻度，确保以0或5结尾
+              let firstTick = Math.floor(yMin / 5) * 5;
+              if (firstTick < yMin) {
+                firstTick += 5;
+              }
+              ticks.push(firstTick);
+
+              // 计算后续刻度
+              let current = firstTick;
+              while (current < yMax) {
+                current += bestStep;
+                // 确保刻度值以0或5结尾
+                const roundedValue = Math.round(current / 5) * 5;
+                if (roundedValue <= yMax) {
+                  ticks.push(roundedValue);
                 } else {
-                  if (this.selectedRecord?.audioFilePath) {
-                    await this.audioPlayerService.playAudioFile(this.selectedRecord.audioFilePath);
-                  }
+                  ticks.push(yMax);
+                  break;
                 }
               }
-            } catch (error) {
-              hilog.error(DOMAIN, TAG, '播放音频失败: %{public}s', error instanceof Error ? error.message : String(error));
-            }
-          })
+
+              // 确保刻度数在5-7之间
+              if (ticks.length < 5) {
+                // 补充刻度
+                const lastTick = ticks[ticks.length - 1];
+                while (ticks.length < 5) {
+                  const newTick = lastTick + bestStep;
+                  ticks.push(Math.min(newTick, yMax));
+                }
+              } else if (ticks.length > 7) {
+                // 截断刻度
+                ticks.length = 7;
+                ticks[6] = yMax;
+              }
+
+              // 绘制更细的辅助线
+              this.canvasContext.strokeStyle = '#E8E8E8'; // 加深辅助线颜色
+              this.canvasContext.lineWidth = 0.5; // 更细的线宽
+              const ySubStep = bestStep / 2; // 在主要网格线之间添加辅助线
+              for (let i = yMin; i <= yMax; i += ySubStep) {
+                const y = margin.top + chartHeight - ((i - yMin) / (yMax - yMin)) * chartHeight;
+                this.canvasContext.beginPath();
+                this.canvasContext.moveTo(margin.left, y);
+                this.canvasContext.lineTo(margin.left + chartWidth, y);
+                this.canvasContext.stroke();
+              }
+
+              // 统一主要网格线样式
+              this.canvasContext.strokeStyle = '#E0E0E0'; // 加深主要网格线颜色
+              this.canvasContext.lineWidth = 1; // 保持线宽一致
+
+              // 绘制Y轴单位
+              this.canvasContext.fillStyle = '#666666';
+              this.canvasContext.textAlign = 'right';
+              this.canvasContext.fillText('分贝', margin.left - vp2px(2), margin.top - vp2px(10));
+
+              // 绘制Y轴刻度
+              for (let i = yMin; i <= yMax; i += bestStep) {
+                const y = margin.top + chartHeight - ((i - yMin) / (yMax - yMin)) * chartHeight;
+                this.canvasContext.fillText(`${i}`, margin.left - vp2px(2), y);
+              }
+
+              // 重新设计X轴刻度计算逻辑
+              const totalSeconds = duration / 1000;
+              const targetXGridCount = 7; // 显示6-8个网格
+              const extendedSeconds = Math.max(totalSeconds * 1.1, 0.1); // 增加10%时间跨度，最小0.1秒
+
+              // 计算最佳步长
+              let xInterval: number;
+              if (totalSeconds >= 3) {
+                // 长时间：使用整数刻度
+                xInterval = Math.ceil(extendedSeconds / targetXGridCount);
+                // 确保步长是合理的整数
+                const possibleSteps = [1, 2, 5, 10, 15, 20, 30, 60];
+                xInterval = possibleSteps.find(step => step >= xInterval) || xInterval;
+              } else {
+                // 短时间：使用小数刻度
+                xInterval = extendedSeconds / targetXGridCount;
+                // 确保步长是0.1的倍数
+                xInterval = Math.round(xInterval * 10) / 10; // 使用round而不是ceil
+                xInterval = Math.max(xInterval, 0.1); // 最小0.1秒
+              }
+
+              // 确保最后一个刻度 >= 总时间
+              let actualGridCount = Math.ceil(extendedSeconds / xInterval);
+              if ((actualGridCount - 1) * xInterval < totalSeconds) {
+                actualGridCount = Math.ceil(totalSeconds / xInterval) + 1;
+              }
+              const xStep = chartWidth / (actualGridCount - 1);
+
+              // 格式化时间显示，保留1位小数
+              const formatTime = (seconds: number) => {
+                return seconds % 1 === 0 ? `${seconds}` : `${seconds.toFixed(1)}`;
+              };
+
+              // 绘制X轴单位
+              this.canvasContext.textAlign = 'center';
+              this.canvasContext.fillText('秒', margin.left + chartWidth / 2, margin.top + chartHeight + vp2px(12));
+
+              // 绘制X轴刻度
+              for (let i = 0; i < targetXGridCount; i++) {
+                const x = margin.left + i * xStep;
+                const seconds = i * xInterval;
+                this.canvasContext.fillText(formatTime(seconds), x, margin.top + chartHeight + vp2px(2));
+
+                // 绘制X轴主要网格线
+                this.canvasContext.beginPath();
+                this.canvasContext.moveTo(x, margin.top);
+                this.canvasContext.lineTo(x, margin.top + chartHeight);
+                this.canvasContext.stroke();
+              }
+
+              // 绘制Y轴主要网格线
+              for (let i = yMin; i <= yMax; i += bestStep) {
+                const y = margin.top + chartHeight - ((i - yMin) / (yMax - yMin)) * chartHeight;
+                this.canvasContext.beginPath();
+                this.canvasContext.moveTo(margin.left, y);
+                this.canvasContext.lineTo(margin.left + chartWidth, y);
+                this.canvasContext.stroke();
+              }
+
+              // 绘制X轴辅助线
+              this.canvasContext.strokeStyle = '#F0F0F0';
+              this.canvasContext.lineWidth = 0.5;
+              const xSubStep = xStep / 2;
+              for (let i = 0; i < targetXGridCount * 2; i++) {
+                const x = margin.left + i * xSubStep;
+                this.canvasContext.beginPath();
+                this.canvasContext.moveTo(x, margin.top);
+                this.canvasContext.lineTo(x, margin.top + chartHeight);
+                this.canvasContext.stroke();
+              }
+
+              // 恢复主要网格线样式
+              this.canvasContext.strokeStyle = '#E0E0E0';
+              this.canvasContext.lineWidth = 1;
+
+              // 绘制数据点
+              // 计算x轴比例，考虑边距
+              const xScale = (chartWidth - margin.left - margin.right) / totalSeconds;
+              const yScale = chartHeight / (maxValue - minValue);
+
+              // 计算每个点的时间间隔
+              const timeInterval = totalSeconds / (values.length - 1);
+
+              values.forEach((value, index) => {
+                // 计算当前点的时间位置
+                const currentTime = index * timeInterval;
+                // 计算x坐标，确保在图表区域内
+                const x = Math.min(
+                  margin.left + currentTime * xScale,
+                  margin.left + chartWidth - margin.right
+                );
+                const y = margin.top + chartHeight - (value - minValue) * yScale;
+
+                // 绘制点
+                this.canvasContext.fillStyle = decibelService.getDecibelColor(value);
+                this.canvasContext.beginPath();
+                this.canvasContext.arc(x, y, 1.5, 0, Math.PI * 2);
+                this.canvasContext.fill();
+
+                // 绘制连线
+                if (index > 0) {
+                  this.canvasContext.lineTo(x, y);
+                } else {
+                  this.canvasContext.moveTo(x, y);
+                }
+              });
+
+              this.canvasContext.stroke();
+            })
         }
+        .width('100%')
+        .height(200)
+        .padding({ bottom: 12 })
       }
     }
     .width('100%')
-    .margin({ bottom: 12 })
-    .alignItems(VerticalAlign.Center)
-
-    if (selectedRecord!.decibelValues.length === 0) {
-      Column() {
-        Image($r('app.media.ic_empty'))
-          .width(32)
-          .height(32)
-          .fillColor('#999999')
-          .margin({ bottom: 8 })
-        Text('暂无分贝值变化数据')
-          .fontSize(14)
-          .fontColor('#999999')
-      }
-      .width('100%')
-      .justifyContent(FlexAlign.Center)
-      .margin({ top: 20, bottom: 20 })
-    } else {
-      Column() {
-        // Canvas 容器
-        Canvas(this.canvasContext)
-          .width(this.canvasWidth)
-          .height(this.canvasHeight)
-          .onReady(() => {
-            const values = selectedRecord.decibelValues;
-            const duration = selectedRecord.duration;
-            const maxValue = Math.max(...values);
-            const minValue = Math.min(...values);
-
-            // 设置边距
-            const margin: Margin = {
-              top: vp2px(2),
-              right: vp2px(2),
-              bottom: vp2px(4),
-              left: vp2px(6)
-            };
-            const chartWidth = this.canvasContext.width - margin.left - margin.right;
-            const chartHeight = this.canvasContext.height - margin.top - margin.bottom;
-
-            // 清空画布
-            this.canvasContext.clearRect(0, 0, this.canvasContext.width, this.canvasContext.height);
-
-            // 绘制背景
-            this.canvasContext.fillStyle = '#F5F5F5';
-            this.canvasContext.fillRect(margin.left, margin.top, chartWidth, chartHeight);
-
-            // 设置字体样式
-            this.canvasContext.font = `${vp2px(12)}px sans-serif`;
-            this.canvasContext.textBaseline = 'middle';
-
-            // 绘制网格线
-            this.canvasContext.strokeStyle = '#E0E0E0';
-            this.canvasContext.lineWidth = 1;
-
-            // 计算Y轴刻度
-            const yMin = Math.floor(minValue);
-            const yMax = Math.ceil(maxValue);
-            const range = yMax - yMin;
-            
-            // 计算最佳步长
-            let bestStep = 5; // 默认步长为5
-            let bestGridCount = Math.ceil(range / bestStep);
-            
-            // 调整步长使刻度数在5-7之间
-            while (bestGridCount < 5) {
-              bestStep /= 2;
-              bestGridCount = Math.ceil(range / bestStep);
-            }
-            while (bestGridCount > 7) {
-              bestStep *= 2;
-              bestGridCount = Math.ceil(range / bestStep);
-            }
-            
-            // 计算刻度列表
-            const ticks: number[] = [];
-            
-            // 计算第一个刻度，确保以0或5结尾
-            let firstTick = Math.floor(yMin / 5) * 5;
-            if (firstTick < yMin) {
-              firstTick += 5;
-            }
-            ticks.push(firstTick);
-            
-            // 计算后续刻度
-            let current = firstTick;
-            while (current < yMax) {
-              current += bestStep;
-              // 确保刻度值以0或5结尾
-              const roundedValue = Math.round(current / 5) * 5;
-              if (roundedValue <= yMax) {
-                ticks.push(roundedValue);
-              } else {
-                ticks.push(yMax);
-                break;
-              }
-            }
-            
-            // 确保刻度数在5-7之间
-            if (ticks.length < 5) {
-              // 补充刻度
-              const lastTick = ticks[ticks.length - 1];
-              while (ticks.length < 5) {
-                const newTick = lastTick + bestStep;
-                ticks.push(Math.min(newTick, yMax));
-              }
-            } else if (ticks.length > 7) {
-              // 截断刻度
-              ticks.length = 7;
-              ticks[6] = yMax;
-            }
-
-            // 绘制更细的辅助线
-            this.canvasContext.strokeStyle = '#E8E8E8'; // 加深辅助线颜色
-            this.canvasContext.lineWidth = 0.5; // 更细的线宽
-            const ySubStep = bestStep / 2; // 在主要网格线之间添加辅助线
-            for (let i = yMin; i <= yMax; i += ySubStep) {
-              const y = margin.top + chartHeight - ((i - yMin) / (yMax - yMin)) * chartHeight;
-              this.canvasContext.beginPath();
-              this.canvasContext.moveTo(margin.left, y);
-              this.canvasContext.lineTo(margin.left + chartWidth, y);
-              this.canvasContext.stroke();
-            }
-
-            // 统一主要网格线样式
-            this.canvasContext.strokeStyle = '#E0E0E0'; // 加深主要网格线颜色
-            this.canvasContext.lineWidth = 1; // 保持线宽一致
-
-            // 绘制Y轴单位
-            this.canvasContext.fillStyle = '#666666';
-            this.canvasContext.textAlign = 'right';
-            this.canvasContext.fillText('分贝', margin.left - vp2px(2), margin.top - vp2px(10));
-
-            // 绘制Y轴刻度
-            for (let i = yMin; i <= yMax; i += bestStep) {
-              const y = margin.top + chartHeight - ((i - yMin) / (yMax - yMin)) * chartHeight;
-              this.canvasContext.fillText(`${i}`, margin.left - vp2px(2), y);
-            }
-
-            // 重新设计X轴刻度计算逻辑
-            const totalSeconds = duration / 1000;
-            const targetXGridCount = 7; // 显示6-8个网格
-            const extendedSeconds = Math.max(totalSeconds * 1.1, 0.1); // 增加10%时间跨度，最小0.1秒
-
-            // 计算最佳步长
-            let xInterval: number;
-            if (totalSeconds >= 3) {
-              // 长时间：使用整数刻度
-              xInterval = Math.ceil(extendedSeconds / targetXGridCount);
-              // 确保步长是合理的整数
-              const possibleSteps = [1, 2, 5, 10, 15, 20, 30, 60];
-              xInterval = possibleSteps.find(step => step >= xInterval) || xInterval;
-            } else {
-              // 短时间：使用小数刻度
-              xInterval = extendedSeconds / targetXGridCount;
-              // 确保步长是0.1的倍数
-              xInterval = Math.round(xInterval * 10) / 10; // 使用round而不是ceil
-              xInterval = Math.max(xInterval, 0.1); // 最小0.1秒
-            }
-
-            // 确保最后一个刻度 >= 总时间
-            let actualGridCount = Math.ceil(extendedSeconds / xInterval);
-            if ((actualGridCount - 1) * xInterval < totalSeconds) {
-              actualGridCount = Math.ceil(totalSeconds / xInterval) + 1;
-            }
-            const xStep = chartWidth / (actualGridCount - 1);
-
-            // 格式化时间显示，保留1位小数
-            const formatTime = (seconds: number) => {
-              return seconds % 1 === 0 ? `${seconds}` : `${seconds.toFixed(1)}`;
-            };
-
-            // 绘制X轴单位
-            this.canvasContext.textAlign = 'center';
-            this.canvasContext.fillText('秒', margin.left + chartWidth / 2, margin.top + chartHeight + vp2px(12));
-
-            // 绘制X轴刻度
-            for (let i = 0; i < targetXGridCount; i++) {
-              const x = margin.left + i * xStep;
-              const seconds = i * xInterval;
-              this.canvasContext.fillText(formatTime(seconds), x, margin.top + chartHeight + vp2px(2));
-              
-              // 绘制X轴主要网格线
-              this.canvasContext.beginPath();
-              this.canvasContext.moveTo(x, margin.top);
-              this.canvasContext.lineTo(x, margin.top + chartHeight);
-              this.canvasContext.stroke();
-            }
-
-            // 绘制Y轴主要网格线
-            for (let i = yMin; i <= yMax; i += bestStep) {
-              const y = margin.top + chartHeight - ((i - yMin) / (yMax - yMin)) * chartHeight;
-              this.canvasContext.beginPath();
-              this.canvasContext.moveTo(margin.left, y);
-              this.canvasContext.lineTo(margin.left + chartWidth, y);
-              this.canvasContext.stroke();
-            }
-
-            // 绘制X轴辅助线
-            this.canvasContext.strokeStyle = '#F0F0F0';
-            this.canvasContext.lineWidth = 0.5;
-            const xSubStep = xStep / 2;
-            for (let i = 0; i < targetXGridCount * 2; i++) {
-              const x = margin.left + i * xSubStep;
-              this.canvasContext.beginPath();
-              this.canvasContext.moveTo(x, margin.top);
-              this.canvasContext.lineTo(x, margin.top + chartHeight);
-              this.canvasContext.stroke();
-            }
-
-            // 恢复主要网格线样式
-            this.canvasContext.strokeStyle = '#E0E0E0';
-            this.canvasContext.lineWidth = 1;
-
-            // 绘制数据点
-            // 计算x轴比例，考虑边距
-            const xScale = (chartWidth - margin.left - margin.right) / totalSeconds;
-            const yScale = chartHeight / (maxValue - minValue);
-
-            // 计算每个点的时间间隔
-            const timeInterval = totalSeconds / (values.length - 1);
-
-            values.forEach((value, index) => {
-              // 计算当前点的时间位置
-              const currentTime = index * timeInterval;
-              // 计算x坐标，确保在图表区域内
-              const x = Math.min(
-                margin.left + currentTime * xScale,
-                margin.left + chartWidth - margin.right
-              );
-              const y = margin.top + chartHeight - (value - minValue) * yScale;
-
-              // 绘制点
-              this.canvasContext.fillStyle = decibelService.getDecibelColor(value);
-              this.canvasContext.beginPath();
-              this.canvasContext.arc(x, y, 1.5, 0, Math.PI * 2);
-              this.canvasContext.fill();
-
-              // 绘制连线
-              if (index > 0) {
-                this.canvasContext.lineTo(x, y);
-              } else {
-                this.canvasContext.moveTo(x, y);
-              }
-            });
-
-            this.canvasContext.stroke();
-          })
-      }
-      .width('100%')
-      .height(200)
-      .padding({ bottom: 12 })
-    }
+    .padding({
+      left: 16,
+      right: 16,
+      top: 12,
+      bottom: 12
+    })
+    .backgroundColor(Color.White)
+    .borderRadius(12)
+    .margin({ bottom: 12, top: -32 })
   }
-  .width('100%')
-  .padding({ left: 16, right: 16, top: 12, bottom: 12 })
-  .backgroundColor(Color.White)
-  .borderRadius(12)
-  .margin({ bottom: 12, top: -32 })
-}
 
   build() {
     NavDestination() {
@@ -692,6 +727,24 @@ ChartBuilder(selectedRecord: DecibelRecord, decibelService: DecibelService) {
             if (this.selectedRecord) {
               DialogTitleBuilder(this.selectedRecord, () => {
                 this.navStack.pop();
+              }, async () => {
+                const context = getContext(this) as common.UIAbilityContext;
+                const uiContext = this.getUIContext();
+                try {
+                  const now = new Date();
+                  const timestamp = now.toISOString().replace(/[:.]/g, '-').slice(0, 19);
+                  await ScreenshotUtils.captureAndShare(
+                    context,
+                    uiContext,
+                    'detailDialogRoot',
+                    `noise_report_${timestamp}.jpg`,
+                    '噪音检测报告截图',
+                    '当前噪音检测报告详情截图'
+                  );
+                } catch (error) {
+                  hilog.error(DOMAIN, TAG, '截图分享失败: %{public}s',
+                    error instanceof Error ? error.message : String(error));
+                }
               })
 
               Column() {
@@ -722,6 +775,7 @@ ChartBuilder(selectedRecord: DecibelRecord, decibelService: DecibelService) {
                           .alignSelf(ItemAlign.End)
                           .margin({ bottom: 4 })
                       }
+
                       Text(this.decibelService.getDecibelLevel(this.selectedRecord!.minDecibel))
                         .fontSize(12)
                         .fontColor(this.decibelService.getDecibelColor(this.selectedRecord!.minDecibel))
@@ -754,6 +808,7 @@ ChartBuilder(selectedRecord: DecibelRecord, decibelService: DecibelService) {
                           .alignSelf(ItemAlign.End)
                           .margin({ bottom: 4 })
                       }
+
                       Text(this.decibelService.getDecibelLevel(this.selectedRecord!.avgDecibel))
                         .fontSize(12)
                         .fontColor(this.decibelService.getDecibelColor(this.selectedRecord!.avgDecibel))
@@ -786,6 +841,7 @@ ChartBuilder(selectedRecord: DecibelRecord, decibelService: DecibelService) {
                           .alignSelf(ItemAlign.End)
                           .margin({ bottom: 4 })
                       }
+
                       Text(this.decibelService.getDecibelLevel(this.selectedRecord!.maxDecibel))
                         .fontSize(12)
                         .fontColor(this.decibelService.getDecibelColor(this.selectedRecord!.maxDecibel))
@@ -861,10 +917,16 @@ ChartBuilder(selectedRecord: DecibelRecord, decibelService: DecibelService) {
                   }
                 }
                 .width('100%')
-                .padding({ left: 16, right: 16, top: 12, bottom: 12 })
+                .padding({
+                  left: 16,
+                  right: 16,
+                  top: 12,
+                  bottom: 12
+                })
                 .backgroundColor(Color.White)
                 .borderRadius(12)
                 .margin({ bottom: 12 })
+
                 this.ChartBuilder(this.selectedRecord, this.decibelService)
               }
               .width('100%')
@@ -873,6 +935,7 @@ ChartBuilder(selectedRecord: DecibelRecord, decibelService: DecibelService) {
           }
           .width('100%')
         }
+        .id("detailDialogRoot")
         .width('100%')
         .backgroundColor(Color.White)
         .borderRadius({ topLeft: 16, topRight: 16 })
@@ -940,6 +1003,7 @@ ChartBuilder(selectedRecord: DecibelRecord, decibelService: DecibelService) {
   }
 }
 
-@Builder export function DetailDialogBuilder() {
+@Builder
+export function DetailDialogBuilder() {
   DetailDialog()
 }
