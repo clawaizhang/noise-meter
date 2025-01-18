@@ -13,61 +13,35 @@ export struct NoiseStandardCard {
     Column() {
       // 标题
       Row() {
-        Image($r('app.media.ic_info'))
-          .width(24)
-          .height(24)
-          .margin({ right: 8 })
-
         Text(this.standard.typeName)
-          .fontSize(18)
-          .fontWeight(FontWeight.Medium)
-          .fontColor('#333333')
+          .fontSize(20)
+          .fontWeight(FontWeight.Bold)
+          .fontColor('#1A1A1A')
       }
       .width('100%')
-      .margin({ bottom: 12 })
 
-      // 分隔线
-      Divider()
-        .strokeWidth(1)
-        .color('#F0F0F0')
-        .margin({ bottom: 12 })
-
-      // 分贝范围
-      GridRow() {
-        GridCol({ span: { xs: 24 } }) {
+      // 分贝范围和描述
+      GridRow({ columns: { xs: 12 }, gutter: { x: 16 } }) {
+        GridCol({ span: { xs: 5 } }) {
           Column() {
-            Text('分贝范围')
-              .fontSize(14)
-              .fontColor('#999999')
-              .margin({ bottom: 4 })
-
             Text(`${this.standard.dayLimit} - ${this.standard.nightLimit} dB`)
-              .fontSize(16)
+              .fontSize(18)
               .fontColor(this.decibelService.getDecibelColor((this.standard.dayLimit + this.standard.nightLimit) / 2))
-              .fontWeight(FontWeight.Medium)
+              .fontWeight(FontWeight.Bold)
           }
         }
-      }
-      .margin({ bottom: 16 })
 
-      // 描述
-      GridRow() {
-        GridCol({ span: { xs: 24 } }) {
+        GridCol({ span: { xs: 7 } }) {
           Column() {
-            Text('描述')
-              .fontSize(14)
-              .fontColor('#999999')
-              .margin({ bottom: 4 })
-
             Text(this.standard.description)
               .fontSize(14)
-              .fontColor('#666666')
+              .fontColor('#333333')
               .lineHeight(20)
           }
         }
-      }
+      }.margin({ top: 4 })
     }
-    .padding(16)
+    .padding(8)
     .width('100%')
   }
 
@@ -77,8 +51,7 @@ export struct NoiseStandardCard {
     }
     .backgroundColor(Color.White)
     .borderRadius(12)
-    .shadow({ radius: 4, color: '#1A000000', offsetY: 2 })
-    .margin({ bottom: 12 })
+    .shadow({ radius: 0, color: '#1A000000', offsetY: 2 })
   }
 }
 

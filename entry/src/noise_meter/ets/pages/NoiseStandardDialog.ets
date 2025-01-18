@@ -16,10 +16,12 @@ export struct NoiseStandardDialog {
 
   @Builder
   StandardCardBuilder() {
-    ForEach(NoiseStandards, (standard: NoiseStandard, index: number) => {
-      NoiseStandardCardBuilder(standard, getContext(this) as common.UIAbilityContext)
-    }
-    )
+    Column() {
+      ForEach(NoiseStandards, (standard: NoiseStandard, index: number) => {
+        NoiseStandardCardBuilder(standard, getContext(this) as common.UIAbilityContext)
+      }
+      )
+    }.margin({ bottom: 16 })
   }
 }
 

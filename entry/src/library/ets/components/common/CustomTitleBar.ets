@@ -11,11 +11,15 @@ export struct CustomTitleBar {
 
   build() {
     Stack() {
-      Text(this.title)
-        .fontSize(20)
-        .fontWeight(FontWeight.Medium)
-        .width('100%')
-        .textAlign(TextAlign.Center)
+      Row() {
+        Text(this.title)
+          .fontSize(20)
+          .fontWeight(FontWeight.Medium)
+          .margin({ left: 16 })
+          .textAlign(TextAlign.Start)
+        Blank()
+      }
+      .width('100%')
 
       if (this.buttons && this.buttons.length > 0) {
         Row() {
@@ -53,4 +57,4 @@ export struct CustomTitleBar {
     .height(56)
     .backgroundColor('#F5F5F5')
   }
-} 
+}
