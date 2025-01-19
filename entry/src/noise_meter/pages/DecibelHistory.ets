@@ -15,6 +15,10 @@ class DecibelRecordDataSource implements IDataSource {
     this.records = records;
   }
 
+  replaceData(records: DecibelRecord[]) {
+    this.records = records;
+  }
+
   totalCount(): number {
     return this.records.length;
   }
@@ -61,6 +65,7 @@ export struct DecibelHistory {
   @Consumer(noiseMeterNavStack) navStack: NavPathStack = new NavPathStack()
   @Param currentTabIndex: number = 0
   @Local records: DecibelRecord[] = [];
+  @Local dataSource: DecibelRecordDataSource = new DecibelRecordDataSource([]);
   @Local selectedRecord: DecibelRecord | null = null;
   @Local showingDeleteButtonId: string = ''; // 当前显示删除按钮的记录ID
   @Local currentSlidingId: string = ''; // 当前正在滑动的记录ID
@@ -80,6 +85,7 @@ export struct DecibelHistory {
     const currentValue = monitor.value<number>()?.now;
     if (currentValue === 1) {
       this.loadRecords();
+      this.dataSource.notifyDataReload();
     }
   }
 
@@ -142,6 +148,12 @@ export struct DecibelHistory {
   async loadRecords() {
     try {
       this.records = await this.recordService.getRecords();
+      if (this.dataSource) {
+        this.dataSource.replaceData(this.records);
+        this.dataSource.notifyDataReload();
+      } else {
+        this.dataSource = new DecibelRecordDataSource(this.records);
+      }
     } catch (error) {
       console.error('加载历史记录失败:', error);
     }
@@ -541,6 +553,7 @@ export struct DecibelHistory {
       // 隐藏删除按钮
       this.showingDeleteButtonId = '';
       this.pendingDeleteId = '';
+      this.dataSource.notifyDataDelete(index);
       // 显示删除成功提示
       this.promptAction.showToast({
         message: '删除成功',
@@ -606,7 +619,7 @@ export struct DecibelHistory {
         .justifyContent(FlexAlign.Center)
       } else {
         List({ space: 0 }) {
-          LazyForEach(new DecibelRecordDataSource(this.records), (record: DecibelRecord) => {
+          LazyForEach(this.dataSource, (record: DecibelRecord) => {
             ListItem() {
               Column() {
                 this.RecordItem(record)
@@ -648,4 +661,4 @@ export struct DecibelHistory {
     .height('100%')
     .backgroundColor('#F5F5F5')
   }
-} 
+}

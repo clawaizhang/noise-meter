@@ -148,7 +148,7 @@ export struct DecibelMeter {
         this.locationService.clearCache();
       } else {
         // 初始化位置信息
-        await this.locationService.requestSingleLocation();
+        this.locationService.requestSingleLocation();
       }
       this.preferenceService.addChangeListener(PreferenceKeyConstants.LOCATION,
         (key: string, value: PreferenceValue) => {
@@ -156,6 +156,8 @@ export struct DecibelMeter {
             this.isLocationEnabled = value;
             if (!value) {
               this.locationService.clearCache();
+            } else {
+              this.locationService.requestSingleLocation();
             }
           }
         });
@@ -329,7 +331,7 @@ export struct DecibelMeter {
         let locationInfo: LocationInfo | null = null;
         
         if (this.isLocationEnabled) {
-          locationInfo = await this.locationService.requestSingleLocation();
+          locationInfo = this.locationService.getCachedLocation();
           console.info('[FREQ_TRACE][Location] 位置信息:', locationInfo);
         } else {
           // 位置服务关闭时清除缓存
