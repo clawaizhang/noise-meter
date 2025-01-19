@@ -341,7 +341,7 @@ export class AudioPlayerService {
     if (this.player) {
       try {
         const normalizedVolume = Math.max(0, Math.min(1, volume));
-        await this.player.setVolume(normalizedVolume);
+        this.player.setVolume(normalizedVolume);
       } catch (error) {
         hilog.error(DOMAIN, TAG, '设置音量失败: %{public}s', error instanceof Error ? error.message : String(error));
       }
@@ -355,7 +355,7 @@ export class AudioPlayerService {
   async seekTo(position: number): Promise<void> {
     if (this.player) {
       try {
-        await this.player.seek(position);
+        this.player.seek(position);
       } catch (error) {
         hilog.error(DOMAIN, TAG, '跳转失败: %{public}s', error instanceof Error ? error.message : String(error));
         throw new Error(error instanceof Error ? error.message : String(error));
