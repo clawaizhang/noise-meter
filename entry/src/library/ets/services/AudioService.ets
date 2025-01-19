@@ -191,10 +191,12 @@ export class AudioService {
       this.setState(AudioServiceState.CAPTURING);
       console.info('[音频采集] 音频采集已启动');
     } catch (err) {
-      const errMsg = `启动音频采集失败: ${err instanceof Error ? err.message : String(err)}`;
+      const errMsg = `启动音频采集失败: ${String(err)}`;
       console.error(`[音频采集] ${errMsg}`);
       this.setState(AudioServiceState.IDLE);
-      throw new Error(errMsg);
+      
+      // 检查是否是资源占用错误
+      throw new Error('麦克风资源被占用，请关闭其他使用麦克风的应用后重试');
     }
   }
 

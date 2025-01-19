@@ -59,7 +59,7 @@ export struct ResetSaveButton {
         type: ButtonType.Circle,
         stateEffect: true
       }) {
-        Image(this.isUILocked ? $r('app.media.ic_lock') : $r('app.media.ic_unlock'))
+        Image($r('app.media.ic_lock'))
           .width(28)
           .height(28)
       }
