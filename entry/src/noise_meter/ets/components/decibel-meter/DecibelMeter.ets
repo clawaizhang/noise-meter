@@ -415,8 +415,11 @@ export struct DecibelMeter {
           this.maxDecibel = value;
         }
       }
-      if(this.dbCount <= 3 && this.currentMode != AudioAnalysisMode.SLOW_TIME_WEIGHTING) {
-        this.maxDecibel = this.minDecibel;
+      if(this.dbCount <= 3 && this.currentMode == AudioAnalysisMode.FAST_TIME_WEIGHTING) {
+        this.maxDecibel = this.avgDecibel;
+      }
+      if(this.dbCount <= 5 && this.currentMode == AudioAnalysisMode.IMPULSE_TIME_WEIGHTING) {
+        this.maxDecibel = this.avgDecibel;
       }
       // 更新平均值
       this.dbSum += value;
