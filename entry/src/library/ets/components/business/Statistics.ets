@@ -338,7 +338,7 @@ export struct Statistics {
                 .margin({ right: 8 })
 
               Row()
-                .width(`${segment.value * 0.8}%`)
+                .width(`${segment.value * 0.7}%`)
                 .height(12)
                 .backgroundColor(segment.color)
                 .borderRadius(6)

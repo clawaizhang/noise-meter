@@ -260,7 +260,6 @@ export struct DecibelMeter {
           if (this.initialSamplesToSkip > 0) {
             this.initialSamplesToSkip--;
             console.info(`[FREQ_TRACE][Audio] 跳过初始采样，剩余: ${this.initialSamplesToSkip}`);
-            return;
           }
         }
 
@@ -275,7 +274,9 @@ export struct DecibelMeter {
           this.values.push(decibel);
           if (!this.isUILocked) {
             this.currentDecibel = decibel;
-            this.updateStatistics(this.currentDecibel);
+            if(this.initialSamplesToSkip === 0) {
+              this.updateStatistics(this.currentDecibel);
+            }
             this.drawSpectrumLocal(spectrum);
           }
           // 更新计时器（毫秒级）
