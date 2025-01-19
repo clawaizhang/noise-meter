@@ -6,11 +6,14 @@ import { CustomTitleBar } from '../../library/ets/components/common/CustomTitleB
 import { Settings } from '../ets/components/Settings';
 import { common } from '@kit.AbilityKit';
 import { ScreenshotUtils } from '../../library/ets/utils/ScreenshotUtils';
+import promptAction from '@ohos.promptAction';
 
 @ComponentV2
 export struct NoiseMeter {
   @Provider(noiseMeterNavStack) navStack: NavPathStack = new NavPathStack()
   @Local currentIndex: number = 0
+  @Local meterOn: boolean = true
+
 
   @Builder
   TabBuilder(title: string, icon: Resource, index: number) {
@@ -39,6 +42,33 @@ export struct NoiseMeter {
               title: getTitleName(),
               buttons: [
                 {
+                  icon: this.meterOn ? $r("app.media.ic_power_off") : $r('app.media.ic_power_on'),
+                  onClick: () => {
+                    if (this.meterOn) {
+                      promptAction.showDialog({
+                        title: '确认关机',
+                        message: '确认要关闭噪音检测仪吗？',
+                        buttons: [
+                          {
+                            text: '取消',
+                            color: '#666666'
+                          },
+                          {
+                            text: '确认',
+                            color: '#FF0000'
+                          }
+                        ]
+                      }).then((result) => {
+                        if (result.index === 1) { // 1 表示确定按钮
+                          this.meterOn = false;
+                        }
+                      });
+                    } else {
+                      this.meterOn = true;
+                    }
+                  }
+                },
+                {
                   icon: $r('app.media.ic_info'),
                   onClick: () => {
                     this.navStack.pushPathByName('NoiseStandardDialog',null);
@@ -65,7 +95,7 @@ export struct NoiseMeter {
             })
 
             // 噪音检测区域
-            DecibelMeter()
+            DecibelMeter({ meterOn: this.meterOn })
               .width('92%')
           }
           .id('decibelMeterRoot')

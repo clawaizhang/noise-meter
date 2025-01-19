@@ -28,6 +28,7 @@ import { drawSpectrum, getDbSteps, getFrequencySteps } from './DrawSpectrum';
 
 @ComponentV2
 export struct DecibelMeter {
+  @Param @Require meterOn:boolean = true;
   @Local private currentDecibel: number = 0
   @Local private minDecibel: number = 0
   @Local private maxDecibel: number = 0
@@ -81,6 +82,46 @@ export struct DecibelMeter {
       console.error('[FREQ_TRACE][显示设备信息] 计算Canvas尺寸失败:', error);
     }
   }
+
+  @Monitor('meterOn')
+  async onTabIndexChange(monitor: IMonitor) {
+    const lastValue = monitor.value<boolean>()?.before;
+    const currentValue = monitor.value<boolean>()?.now;
+    if (!lastValue && currentValue) {
+      // 启动音频采集，带重试机制
+      const maxRetries = 3;
+      const retryInterval = 1000; // 1秒
+      let retryCount = 0;
+
+      while (true) {
+        try {
+          await this.audioService.startCapture();
+          console.info('[FREQ_TRACE][Audio] 音频采集启动成功');
+          // 直接开始检测
+          this.startRecording();
+          break; // 成功则退出循环
+        } catch (error) {
+          retryCount++;
+          console.error(`[FREQ_TRACE][Audio] 音频采集启动失败，重试次数：${retryCount}/${maxRetries}`, error);
+          await new Promise<void>(resolve => setTimeout(resolve, retryInterval));
+          if (retryCount > maxRetries) {
+            // 达到最大重试次数，提示用户
+            promptAction.showToast({
+              message: error.message,
+              duration: 1000
+            });
+          }
+        }
+      }
+    } else {
+      if (lastValue && !currentValue) {
+        // 停止音频采集
+        this.audioService.stopCapture();
+        this.resetData();
+      }
+    }
+  }
+
 
   @Builder
   private SpectrumView() {

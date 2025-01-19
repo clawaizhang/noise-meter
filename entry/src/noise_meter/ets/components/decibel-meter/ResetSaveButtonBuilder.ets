@@ -36,15 +36,15 @@ export struct ResetSaveButton {
       })
       .onClick(async () => {
         const confirmed = await promptAction.showDialog({
-          title: '重置数据',
-          message: '确定要重置当前数据吗？此操作不可恢复。',
+          title: '确认重置',
+          message: '确认要重置当前数据吗？此操作不可恢复。',
           buttons: [
             {
               text: '取消',
               color: '#666666'
             },
             {
-              text: '重置',
+              text: '确认',
               color: '#FF4444'
             }
           ]
@@ -95,7 +95,7 @@ export struct ResetSaveButton {
       })
       .onClick(async () => {
         const confirmed = await promptAction.showDialog({
-          title: '保存数据',
+          title: '确定保存',
           message: '确定要保存当前数据吗？',
           buttons: [
             {
@@ -103,7 +103,7 @@ export struct ResetSaveButton {
               color: '#666666'
             },
             {
-              text: '保存',
+              text: '确定',
               color: '#4A90E2'
             }
           ]
