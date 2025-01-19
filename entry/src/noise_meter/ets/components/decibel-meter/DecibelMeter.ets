@@ -43,7 +43,7 @@ export struct DecibelMeter {
   @Local private weightingType: WeightingType = WeightingType.A // 当前FFT大小
   @Local private currentMode: AudioAnalysisMode = AudioAnalysisMode.FAST_TIME_WEIGHTING // 当前模式
   @Local private currentFftSize: number = 2048 // 当前FFT大小
-  @Local private initialSamplesToSkip: number = 1 // 初始采样跳过计数
+  @Local private initialSamplesToSkip: number = 3 // 初始采样跳过计数
   @Consumer(noiseMeterNavStack) navStack: NavPathStack = new NavPathStack()
   private decibelService: DecibelService = new DecibelService()
   private audioService: AudioService = AudioService.getInstance(getContext() as common.UIAbilityContext)
