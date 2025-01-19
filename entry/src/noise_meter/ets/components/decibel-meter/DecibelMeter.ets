@@ -44,7 +44,6 @@ export struct DecibelMeter {
   @Local private weightingType: WeightingType = WeightingType.A // 当前FFT大小
   @Local private currentMode: AudioAnalysisMode = AudioAnalysisMode.FAST_TIME_WEIGHTING // 当前模式
   @Local private currentFftSize: number = 2048 // 当前FFT大小
-  @Local private initialSamplesToSkip: number = 3 // 初始采样跳过计数
   @Consumer(noiseMeterNavStack) navStack: NavPathStack = new NavPathStack()
   private decibelService: DecibelService = new DecibelService()
   private audioService: AudioService = AudioService.getInstance(getContext() as common.UIAbilityContext)
@@ -230,7 +229,7 @@ export struct DecibelMeter {
         if (retryCount > maxRetries) {
           // 达到最大重试次数，提示用户
           promptAction.showToast({
-            message: '麦克风被占用，正在等待其他应用释放...',
+            message: error.message,
             duration: 1000
           });
         }
@@ -265,14 +264,6 @@ export struct DecibelMeter {
 
       // 开始处理音频数据
       this.audioService.startProcessing((buffer: ArrayBuffer) => {
-        // 只在快速模式和脉冲模式下跳过初始采样
-        if (this.currentMode === AudioAnalysisMode.FAST_TIME_WEIGHTING ||
-          this.currentMode === AudioAnalysisMode.IMPULSE_TIME_WEIGHTING) {
-          if (this.initialSamplesToSkip > 0) {
-            this.initialSamplesToSkip--;
-            console.info(`[FREQ_TRACE][Audio] 跳过初始采样，剩余: ${this.initialSamplesToSkip}`);
-          }
-        }
 
         taskpool.execute<[string, ArrayBuffer,
           WeightingType, number], Float32Array>(concurrentCalculateSpectrum, this.currentMode,
@@ -285,9 +276,7 @@ export struct DecibelMeter {
           this.values.push(decibel);
           if (!this.isUILocked) {
             this.currentDecibel = decibel;
-            if(this.initialSamplesToSkip === 0) {
-              this.updateStatistics(this.currentDecibel);
-            }
+            this.updateStatistics(this.currentDecibel);
             this.drawSpectrumLocal(spectrum);
           }
           // 更新计时器（毫秒级）

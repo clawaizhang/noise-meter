@@ -168,7 +168,8 @@ export class AudioService {
       const hasPermission = await this.checkMicrophonePermission();
       if (!hasPermission) {
         console.error('[音频采集] 没有麦克风权限');
-        throw new Error('没有麦克风权限');
+        await PermissionUtil.requestPermissionOnSettingEasy(['ohos.permission.MICROPHONE']);
+        throw new Error('没有麦克风权限, 尝试获取权限');
       }
 
       // 创建音频采集器
@@ -190,7 +191,7 @@ export class AudioService {
       this.setState(AudioServiceState.IDLE);
 
       // 检查是否是资源占用错误
-      throw new Error('麦克风资源被占用，请关闭其他使用麦克风的应用后重试');
+      throw new Error('麦克风被占用, 正在等待其他应用释放');
     }
   }
 
