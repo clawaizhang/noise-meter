@@ -1,6 +1,6 @@
 import { AudioService } from '../../../../library/ets/services/AudioService';
 import { DecibelService } from '../../services/DecibelService';
-import { LocationService } from '../../../../library/ets/services/LocationService';
+import { LocationInfo, LocationService } from '../../../../library/ets/services/LocationService';
 import { DecibelRecord } from '../../../../library/ets/models/DecibelRecord';
 import { DecibelRecordService } from '../../services/DecibelRecordService';
 import { LocationDisplay } from '../../../../library/ets/components/business/LocationDisplay'
@@ -37,6 +37,7 @@ export struct DecibelMeter {
   @Local private recordingTime: number = 0
   @Local private isRecordEnabled: boolean = false
   @Local private isUILocked: boolean = false // 新增UI锁定状态
+  @Local private isLocationEnabled: boolean = false // 位置服务状态
   @Local private canvasWidth: number = 0 // Canvas宽度
   @Local private canvasHeight: number = 0 // Canvas高度
   @Local private calibrationGain: number = 0 // gain
@@ -130,6 +131,26 @@ export struct DecibelMeter {
 
   async aboutToAppear() {
     try {
+
+      
+      // 初始化位置服务状态
+      this.isLocationEnabled = this.preferenceService.isEnabled(PreferenceKeyConstants.LOCATION);
+      if(!this.isLocationEnabled) {
+        this.locationService.clearCache();
+      } else {
+        // 初始化位置信息
+        await this.locationService.requestSingleLocation();
+      }
+      this.preferenceService.addChangeListener(PreferenceKeyConstants.LOCATION,
+        (key: string, value: PreferenceValue) => {
+          if (key === PreferenceKeyConstants.LOCATION && typeof value === 'boolean') {
+            this.isLocationEnabled = value;
+            if (!value) {
+              this.locationService.clearCache();
+            }
+          }
+        });
+
       // 获取当前的增益
       this.calibrationGain =
         this.preferenceService.getNumber(PreferenceKeyConstants.CALIBRATION, 0);
@@ -222,7 +243,7 @@ export struct DecibelMeter {
         0, // avgDecibel
         0, // duration
         [], // decibelValues
-        this.locationService.getCachedLocation()?.address, // location
+        undefined, // location
         undefined// audioFilePath
       );
 
@@ -295,9 +316,16 @@ export struct DecibelMeter {
       console.info("[FREQ_TRACE][Recording] 停止检测 - 开始");
 
       try {
-        // 获取缓存的位置信息
-        const locationInfo = this.locationService.getCachedLocation();
-        console.info('[FREQ_TRACE][Location] 位置信息:', locationInfo);
+        let locationInfo: LocationInfo | null = null;
+        
+        if (this.isLocationEnabled) {
+          locationInfo = await this.locationService.requestSingleLocation();
+          console.info('[FREQ_TRACE][Location] 位置信息:', locationInfo);
+        } else {
+          // 位置服务关闭时清除缓存
+          this.locationService.clearCache();
+          console.info('[FREQ_TRACE][Location] 位置服务已关闭，不保存位置信息');
+        }
 
         // 计算检测时长
         const duration: number = new Date().getTime() - this.startTime;
@@ -325,6 +353,7 @@ export struct DecibelMeter {
           this.currentRecord.duration = duration;
           this.currentRecord.decibelValues = [...this.values];
           this.currentRecord.audioFilePath = currentAudioFilePath;
+          this.currentRecord.location = locationInfo?.address;
 
           // 保存记录
           await this.recordService.saveRecord(this.currentRecord);
