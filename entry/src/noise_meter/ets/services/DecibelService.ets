@@ -28,4 +28,24 @@ export class DecibelService {
     if (value < 100) return '#F44336'; // 非常吵闹 - 红色
     return '#8B0000';                 // 难以忍受 - 深红色
   }
+
+  /**
+   * 获取分贝值对应的具体描述
+   * @param value - 分贝值
+   * @returns string - 具体描述
+   */
+  getDecibelDescription(value: number): string {
+    if (value < 10) return '几乎无声';
+    if (value < 20) return '安静的录音室';
+    if (value < 30) return '耳语声';
+    if (value < 40) return '安静的图书馆';
+    if (value < 50) return '安静的办公室';
+    if (value < 60) return '普通对话';
+    if (value < 70) return '繁忙的餐厅';
+    if (value < 80) return '繁忙的街道';
+    if (value < 90) return '重型卡车';
+    if (value < 100) return '地铁列车';
+    if (value < 110) return '摇滚音乐会';
+    return '喷气发动机';
+  }
 }

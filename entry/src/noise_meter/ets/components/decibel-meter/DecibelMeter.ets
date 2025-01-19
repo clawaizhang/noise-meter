@@ -109,6 +109,15 @@ export struct DecibelMeter {
             this.recordingTime = new Date().getTime() - this.startTime;
           })
 
+        // 在频谱仪左上角显示描述
+        Text(this.decibelService.getDecibelDescription(this.currentDecibel))
+          .fontSize(12)
+          .fontColor('#EEEEEE') // 浅灰色
+          .backgroundColor('#80000000') // 半透明黑色背景
+          .borderRadius(4)
+          .position({ x: '10%', y: '2%' })
+          .textAlign(TextAlign.Start)
+  
         // 将校准指示器移动到Canvas右上角
         CalibrationIndicator({ gain: this.calibrationGain })
 
