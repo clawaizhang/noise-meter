@@ -15,7 +15,6 @@ interface NoiseDistribution {
 @ComponentV2
 export struct Statistics {
   @Param selectedRecord: DecibelRecord | null = null;
-  private decibelService: DecibelService = new DecibelService();
   @Local noiseDistribution: NoiseDistribution = { segments: [], values: [] };
 
   aboutToAppear() {
@@ -32,7 +31,7 @@ export struct Statistics {
     const values = this.selectedRecord.decibelValues;
     const levelCounts = new Map<string, number>();
     values.forEach(value => {
-      const level = this.decibelService.getDecibelLevel(value);
+      const level = DecibelService.getDecibelLevel(value);
       levelCounts.set(level, (levelCounts.get(level) || 0) + 1);
     });
 
@@ -43,11 +42,11 @@ export struct Statistics {
     levelOrder.forEach(level => {
       const count = levelCounts.get(level) || 0;
       if (count > 0) {
-        const sampleValue = values.find(v => this.decibelService.getDecibelLevel(v) === level) || 0;
+        const sampleValue = values.find(v => DecibelService.getDecibelLevel(v) === level) || 0;
         segments.push({
           name: level,
           value: parseFloat(((count / total) * 100).toFixed(1)),
-          color: this.decibelService.getDecibelColor(sampleValue)
+          color: DecibelService.getDecibelColor(sampleValue)
         });
       }
     });
@@ -235,7 +234,7 @@ export struct Statistics {
             Text(this.selectedRecord!.minDecibel.toString())
               .fontSize(24)
               .fontWeight(FontWeight.Bold)
-              .fontColor(this.decibelService.getDecibelColor(this.selectedRecord!.minDecibel))
+              .fontColor(DecibelService.getDecibelColor(this.selectedRecord!.minDecibel))
             Text(' 分贝')
               .fontSize(12)
               .fontColor('#666666')
@@ -244,9 +243,9 @@ export struct Statistics {
               .margin({ bottom: 4 })
           }
 
-          Text(this.decibelService.getDecibelLevel(this.selectedRecord!.minDecibel))
+          Text(DecibelService.getDecibelLevel(this.selectedRecord!.minDecibel))
             .fontSize(12)
-            .fontColor(this.decibelService.getDecibelColor(this.selectedRecord!.minDecibel))
+            .fontColor(DecibelService.getDecibelColor(this.selectedRecord!.minDecibel))
             .margin({ top: 8 })
         }
         .layoutWeight(1)
@@ -268,7 +267,7 @@ export struct Statistics {
             Text(this.selectedRecord!.avgDecibel.toString())
               .fontSize(24)
               .fontWeight(FontWeight.Bold)
-              .fontColor(this.decibelService.getDecibelColor(this.selectedRecord!.avgDecibel))
+              .fontColor(DecibelService.getDecibelColor(this.selectedRecord!.avgDecibel))
             Text(' 分贝')
               .fontSize(12)
               .fontColor('#666666')
@@ -277,9 +276,9 @@ export struct Statistics {
               .margin({ bottom: 4 })
           }
 
-          Text(this.decibelService.getDecibelLevel(this.selectedRecord!.avgDecibel))
+          Text(DecibelService.getDecibelLevel(this.selectedRecord!.avgDecibel))
             .fontSize(12)
-            .fontColor(this.decibelService.getDecibelColor(this.selectedRecord!.avgDecibel))
+            .fontColor(DecibelService.getDecibelColor(this.selectedRecord!.avgDecibel))
             .margin({ top: 8 })
         }
         .layoutWeight(1)
@@ -301,7 +300,7 @@ export struct Statistics {
             Text(this.selectedRecord!.maxDecibel.toString())
               .fontSize(24)
               .fontWeight(FontWeight.Bold)
-              .fontColor(this.decibelService.getDecibelColor(this.selectedRecord!.maxDecibel))
+              .fontColor(DecibelService.getDecibelColor(this.selectedRecord!.maxDecibel))
             Text(' 分贝')
               .fontSize(12)
               .fontColor('#666666')
@@ -310,9 +309,9 @@ export struct Statistics {
               .margin({ bottom: 4 })
           }
 
-          Text(this.decibelService.getDecibelLevel(this.selectedRecord!.maxDecibel))
+          Text(DecibelService.getDecibelLevel(this.selectedRecord!.maxDecibel))
             .fontSize(12)
-            .fontColor(this.decibelService.getDecibelColor(this.selectedRecord!.maxDecibel))
+            .fontColor(DecibelService.getDecibelColor(this.selectedRecord!.maxDecibel))
             .margin({ top: 8 })
         }
         .layoutWeight(1)

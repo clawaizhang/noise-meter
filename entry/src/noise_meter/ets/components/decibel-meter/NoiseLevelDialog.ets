@@ -2,8 +2,7 @@ import { DialogContainer } from '../../../../library/ets/components/common/Dialo
 
 import { DecibelService, NoiseLevel } from '../../services/DecibelService';
 
-const decibelService = new DecibelService();
-const noiseLevels = decibelService.getNoiseLevels();
+const noiseLevels = DecibelService.getNoiseLevels();
 
 @ComponentV2
 export struct NoiseLevelDialog {

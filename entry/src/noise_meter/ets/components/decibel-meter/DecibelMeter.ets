@@ -46,7 +46,6 @@ export struct DecibelMeter {
   @Local private currentMode: AudioAnalysisMode = AudioAnalysisMode.FAST_TIME_WEIGHTING // 当前模式
   @Local private currentFftSize: number = 2048 // 当前FFT大小
   @Consumer(noiseMeterNavStack) navStack: NavPathStack = new NavPathStack()
-  private decibelService: DecibelService = new DecibelService()
   private audioService: AudioService = AudioService.getInstance(getContext() as common.UIAbilityContext)
   private locationService: LocationService = LocationService.getInstance()
   private recordService: DecibelRecordService = new DecibelRecordService(getContext() as common.UIAbilityContext)
@@ -150,13 +149,24 @@ export struct DecibelMeter {
           })
 
         // 在频谱仪左上角显示描述
-        Text(this.decibelService.getDecibelDescription(this.currentDecibel))
-          .fontSize(12)
-          .fontColor('#EEEEEE') // 浅灰色
-          .backgroundColor('#80000000') // 半透明黑色背景
-          .borderRadius(4)
-          .position({ x: '10%', y: '2%' })
-          .textAlign(TextAlign.Start)
+        Row() {
+          Image($r('app.media.ic_info'))
+            .width(12)
+            .height(12)
+            .margin({ right: 4 })
+            .fillColor('#EEEEEE') // 浅灰色
+
+
+          Text(DecibelService.getDecibelDescription(this.currentDecibel))
+            .fontSize(12)
+            .fontColor('#EEEEEE') // 浅灰色
+        }
+        .backgroundColor('#80000000') // 半透明黑色背景
+        .borderRadius(4)
+        .position({ x: '10%', y: '2%' })
+        .onClick(() => {
+          this.navStack.pushDestinationByName('NoiseDescriptionDialog',null);
+        })
   
         // 将校准指示器移动到Canvas右上角
         CalibrationIndicator({ gain: this.calibrationGain })
@@ -487,7 +497,7 @@ export struct DecibelMeter {
               Text(this.minDecibel === 0 ? '-' : this.minDecibel.toString())
                 .fontSize(32)
                 .fontWeight(FontWeight.Medium)
-                .fontColor(this.decibelService.getDecibelColor(this.minDecibel))
+                .fontColor(DecibelService.getDecibelColor(this.minDecibel))
             }
             .alignItems(HorizontalAlign.Center)
             .margin({ right: 16 })
@@ -496,7 +506,7 @@ export struct DecibelMeter {
               Text(this.currentDecibel === 0 ? '-' : this.currentDecibel.toString())
                 .fontSize(80)
                 .fontWeight(FontWeight.Bold)
-                .fontColor(this.decibelService.getDecibelColor(this.currentDecibel))
+                .fontColor(DecibelService.getDecibelColor(this.currentDecibel))
               Row() {
                 if (this.isRecording) {
                   Text(new Date(this.startTime).toLocaleTimeString('zh-CN', {
@@ -517,12 +527,20 @@ export struct DecibelMeter {
                     .fontSize(14)
                     .fontColor('#666666')
                 }
-                Text(this.decibelService.getDecibelLevel(this.currentDecibel))
-                  .onClick(() => {
-                    this.navStack.pushPathByName("NoiseLevelDialog",null);
-                  })
-                  .fontSize(14)
-                  .fontColor(this.decibelService.getDecibelColor(this.currentDecibel))
+                Row() {
+                  Image($r('app.media.ic_info'))
+                    .width(12)
+                    .height(12)
+                    .margin({ right: 4 })
+                    .fillColor(DecibelService.getDecibelColor(this.currentDecibel))
+                    
+                  Text(DecibelService.getDecibelLevel(this.currentDecibel))
+                    .fontSize(14)
+                    .fontColor(DecibelService.getDecibelColor(this.currentDecibel))
+                }
+                .onClick(() => {
+                  this.navStack.pushPathByName("NoiseLevelDialog",null);
+                })
               }
               .margin({ top: 4 })
             }
@@ -536,7 +554,7 @@ export struct DecibelMeter {
               Text(this.maxDecibel === 0 ? '-' : this.maxDecibel.toString())
                 .fontSize(32)
                 .fontWeight(FontWeight.Medium)
-                .fontColor(this.decibelService.getDecibelColor(this.maxDecibel))
+                .fontColor(DecibelService.getDecibelColor(this.maxDecibel))
             }
             .alignItems(HorizontalAlign.Center)
             .margin({ left: 16 })

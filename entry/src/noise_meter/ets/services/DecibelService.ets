@@ -5,45 +5,52 @@ export interface NoiseLevel {
   description: string;
 }
 
+export interface NoiseLevelDescription {
+  minDecibel: number;
+  maxDecibel: number;
+  basicDescription: string;
+  detailedDescription: string;
+}
+
 @Observed
 export class DecibelService {
-  public getNoiseLevels(): NoiseLevel[] {
+  public static getNoiseLevels(): NoiseLevel[] {
     return [
       {
         range: '100+ dB',
-        level: this.getDecibelLevel(110),
-        color: this.getDecibelColor(110),
-        description: this.getDecibelDescription(110)
+        level: DecibelService.getDecibelLevel(110),
+        color: DecibelService.getDecibelColor(110),
+        description: DecibelService.getDecibelDescription(110)
       },
       {
         range: '80-100 dB',
-        level: this.getDecibelLevel(90),
-        color: this.getDecibelColor(90),
-        description: this.getDecibelDescription(90)
+        level: DecibelService.getDecibelLevel(90),
+        color: DecibelService.getDecibelColor(90),
+        description: DecibelService.getDecibelDescription(90)
       },
       {
         range: '60-80 dB',
-        level: this.getDecibelLevel(70),
-        color: this.getDecibelColor(70),
-        description: this.getDecibelDescription(70)
+        level: DecibelService.getDecibelLevel(70),
+        color: DecibelService.getDecibelColor(70),
+        description: DecibelService.getDecibelDescription(70)
       },
       {
         range: '40-60 dB',
-        level: this.getDecibelLevel(50),
-        color: this.getDecibelColor(50),
-        description: this.getDecibelDescription(50)
+        level: DecibelService.getDecibelLevel(50),
+        color: DecibelService.getDecibelColor(50),
+        description: DecibelService.getDecibelDescription(50)
       },
       {
         range: '20-40 dB',
-        level: this.getDecibelLevel(30),
-        color: this.getDecibelColor(30),
-        description: this.getDecibelDescription(30)
+        level: DecibelService.getDecibelLevel(30),
+        color: DecibelService.getDecibelColor(30),
+        description: DecibelService.getDecibelDescription(30)
       },
       {
         range: '0-20 dB',
-        level: this.getDecibelLevel(10),
-        color: this.getDecibelColor(10),
-        description: this.getDecibelDescription(10)
+        level: DecibelService.getDecibelLevel(10),
+        color: DecibelService.getDecibelColor(10),
+        description: DecibelService.getDecibelDescription(10)
       }
     ];
   }
@@ -53,7 +60,7 @@ export class DecibelService {
    * @param value - 分贝值
    * @returns string - 级别描述
    */
-  getDecibelLevel(value: number): string {
+  static getDecibelLevel(value: number): string {
     if (value < 20) return '非常安静';
     if (value < 40) return '安静';
     if (value < 60) return '一般';
@@ -67,7 +74,7 @@ export class DecibelService {
    * @param value - 分贝值
    * @returns string - 颜色值（十六进制）
    */
-  getDecibelColor(value: number): string {
+  static getDecibelColor(value: number): string {
     if (value < 20) return '#3EA665';  // 非常安静 - 绿色
     if (value < 40) return '#4CAF50';  // 安静 - 浅绿色
     if (value < 60) return '#FFC107';  // 一般 - 黄色
@@ -81,7 +88,7 @@ export class DecibelService {
    * @param value - 分贝值
    * @returns string - 具体描述
    */
-  getDecibelDescription(value: number): string {
+  static getDecibelDescription(value: number): string {
     if (value < 10) return '几乎无声';
     if (value < 20) return '安静的录音室';
     if (value < 30) return '耳语声';
@@ -94,5 +101,20 @@ export class DecibelService {
     if (value < 100) return '地铁列车';
     if (value < 110) return '摇滚音乐会';
     return '喷气发动机';
+  }
+
+  static getDetailedDecibelDescription(value: number): string {
+    if (value < 10) return '人类听觉阈值下限，几乎完全无声的环境，如隔音室或太空舱内';
+    if (value < 20) return '极其安静的环境，适合录制高质量音频，如专业录音棚';
+    if (value < 30) return '适合私人交谈的安静环境，如深夜的卧室或图书馆的安静角落';
+    if (value < 40) return '适合专注学习的安静环境，如图书馆或安静的办公室';
+    if (value < 50) return '适合日常工作的环境，如普通办公室或安静的咖啡厅';
+    if (value < 60) return '正常交流音量，如普通对话或小型会议';
+    if (value < 70) return '可能影响交流的嘈杂环境，如繁忙的餐厅或商场';
+    if (value < 80) return '长期暴露可能影响听力的环境，如繁忙的城市街道或地铁站';
+    if (value < 90) return '需要采取听力保护措施的环境，如建筑工地或重型机械附近';
+    if (value < 100) return '短期暴露即可能损伤听力的环境，如地铁列车内部或摇滚音乐会前排';
+    if (value < 110) return '需要专业听力保护的环境，如飞机引擎附近或大型演唱会现场';
+    return '立即损伤听力的危险水平，如喷气发动机附近或爆炸现场';
   }
 }

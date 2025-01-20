@@ -6,7 +6,6 @@ import { DecibelService } from '../../../../noise_meter/ets/services/DecibelServ
 export struct NoiseStandardCard {
   @Param @Require standard: NoiseStandard;
   @Param @Require context: common.Context | null;
-  private decibelService: DecibelService = new DecibelService();
 
   @Builder
   private CardContent() {
@@ -31,7 +30,7 @@ export struct NoiseStandardCard {
                 .fontColor('#666666')
               Text(`${this.standard.dayLimit} dB`)
                 .fontSize(18)
-                .fontColor(this.decibelService.getDecibelColor(this.standard.dayLimit))
+                .fontColor(DecibelService.getDecibelColor(this.standard.dayLimit))
                 .fontWeight(FontWeight.Bold)
                 .margin({ left: 8 })
             }
@@ -44,7 +43,7 @@ export struct NoiseStandardCard {
                 .fontColor('#666666')
               Text(`${this.standard.nightLimit} dB`)
                 .fontSize(18)
-                .fontColor(this.decibelService.getDecibelColor(this.standard.nightLimit))
+                .fontColor(DecibelService.getDecibelColor(this.standard.nightLimit))
                 .fontWeight(FontWeight.Bold)
                 .margin({ left: 8 })
             }

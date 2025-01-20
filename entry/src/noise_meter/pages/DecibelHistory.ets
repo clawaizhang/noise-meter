@@ -314,7 +314,7 @@ export struct DecibelHistory {
                 Text(record.minDecibel.toString())
                   .fontSize(16)
                   .fontWeight(FontWeight.Medium)
-                  .fontColor(this.decibelService.getDecibelColor(record.minDecibel))
+                  .fontColor(DecibelService.getDecibelColor(record.minDecibel))
               }
               .height(40) // 固定高度确保对齐
 
@@ -326,7 +326,7 @@ export struct DecibelHistory {
                 Text(record.avgDecibel.toString())
                   .fontSize(16)
                   .fontWeight(FontWeight.Medium)
-                  .fontColor(this.decibelService.getDecibelColor(record.avgDecibel))
+                  .fontColor(DecibelService.getDecibelColor(record.avgDecibel))
               }
               .height(40) // 固定高度确保对齐
               .margin({ left: 24, right: 24 })
@@ -339,7 +339,7 @@ export struct DecibelHistory {
                 Text(record.maxDecibel.toString())
                   .fontSize(16)
                   .fontWeight(FontWeight.Medium)
-                  .fontColor(this.decibelService.getDecibelColor(record.maxDecibel))
+                  .fontColor(DecibelService.getDecibelColor(record.maxDecibel))
               }
               .height(40) // 固定高度确保对齐
             }

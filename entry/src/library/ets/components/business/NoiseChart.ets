@@ -257,7 +257,7 @@ export struct NoiseChart {
 
                 let color = colorCache.get(value);
                 if (!color) {
-                  color = this.decibelService.getDecibelColor(value);
+                  color = DecibelService.getDecibelColor(value);
                   colorCache.set(value, color);
                 }
 
