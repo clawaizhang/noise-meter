@@ -518,6 +518,9 @@ export struct DecibelMeter {
                     .fontColor('#666666')
                 }
                 Text(this.decibelService.getDecibelLevel(this.currentDecibel))
+                  .onClick(() => {
+                    this.navStack.pushPathByName("NoiseLevelDialog",null);
+                  })
                   .fontSize(14)
                   .fontColor(this.decibelService.getDecibelColor(this.currentDecibel))
               }

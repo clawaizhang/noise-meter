@@ -29,6 +29,11 @@
       "name": "NoiseStandardDialog",
       "pageSourceFile": "src/noise_meter/ets/pages/NoiseStandardDialog.ets",
       "buildFunction": "NoiseStandardDialogBuilder"
+    },
+    {
+      "name": "NoiseLevelDialog",
+      "pageSourceFile": "src/noise_meter/ets/components/decibel-meter/NoiseLevelDialog.ets",
+      "buildFunction": "NoiseLevelDialogBuilder"
     }
   ]
 } 

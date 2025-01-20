@@ -1,5 +1,52 @@
+export interface NoiseLevel {
+  range: string;
+  level: string;
+  color: string;
+  description: string;
+}
+
 @Observed
 export class DecibelService {
+  public getNoiseLevels(): NoiseLevel[] {
+    return [
+      {
+        range: '100+ dB',
+        level: this.getDecibelLevel(110),
+        color: this.getDecibelColor(110),
+        description: this.getDecibelDescription(110)
+      },
+      {
+        range: '80-100 dB',
+        level: this.getDecibelLevel(90),
+        color: this.getDecibelColor(90),
+        description: this.getDecibelDescription(90)
+      },
+      {
+        range: '60-80 dB',
+        level: this.getDecibelLevel(70),
+        color: this.getDecibelColor(70),
+        description: this.getDecibelDescription(70)
+      },
+      {
+        range: '40-60 dB',
+        level: this.getDecibelLevel(50),
+        color: this.getDecibelColor(50),
+        description: this.getDecibelDescription(50)
+      },
+      {
+        range: '20-40 dB',
+        level: this.getDecibelLevel(30),
+        color: this.getDecibelColor(30),
+        description: this.getDecibelDescription(30)
+      },
+      {
+        range: '0-20 dB',
+        level: this.getDecibelLevel(10),
+        color: this.getDecibelColor(10),
+        description: this.getDecibelDescription(10)
+      }
+    ];
+  }
 
   /**
    * 获取分贝级别描述
