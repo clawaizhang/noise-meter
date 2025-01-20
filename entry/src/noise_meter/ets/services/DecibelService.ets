@@ -1,3 +1,5 @@
+import { BasicStats, HealthStats } from "../types/NoiseStats";
+
 export interface NoiseLevel {
   range: string;
   level: string;
@@ -14,6 +16,19 @@ export interface NoiseLevelDescription {
 
 @Observed
 export class DecibelService {
+  static leqData: number[] = []
+
+  /**
+   * 计算Leq值
+   * @param samples - 采样数据数组
+   * @returns number - 计算得到的Leq值
+   */
+  static calculateLeq(samples: number[]): number {
+    if (samples.length === 0) return 0
+    const sum = samples.reduce((a, v) => a + v ** 2, 0)
+    return 10 * Math.log10(sum / samples.length)
+  }
+
   public static getNoiseLevels(): NoiseLevel[] {
     return [
       {
@@ -116,5 +131,61 @@ export class DecibelService {
     if (value < 100) return '短期暴露即可能损伤听力的环境，如地铁列车内部或摇滚音乐会前排';
     if (value < 110) return '需要专业听力保护的环境，如飞机引擎附近或大型演唱会现场';
     return '立即损伤听力的危险水平，如喷气发动机附近或爆炸现场';
+  }
+
+  /**
+   * 获取健康统计数据
+   */
+  static async getHealthStats(): Promise<HealthStats> {
+    const leqValues = DecibelService.leqData;
+    const dailyDose = DecibelService.calculateDailyDose(leqValues);
+    const weeklyAvg = DecibelService.calculateWeeklyAverage(leqValues);
+    const peakEvents = DecibelService.countPeakEvents(leqValues);
+
+    return {
+      dailyDose,
+      weeklyAvg,
+      peakEvents
+    };
+  }
+
+  private static calculateDailyDose(leqValues: number[]): number {
+    if (leqValues.length === 0) return 0;
+    const avgLeq = leqValues.reduce((a, b) => a + b, 0) / leqValues.length;
+    return Math.min(avgLeq / 85 * 100, 100); // 85dB为安全阈值
+  }
+
+  private static calculateWeeklyAverage(leqValues: number[]): number {
+    if (leqValues.length === 0) return 0;
+    return leqValues.reduce((a, b) => a + b, 0) / leqValues.length;
+  }
+
+  private static countPeakEvents(leqValues: number[]): number {
+    return leqValues.filter(v => v > 85).length;
+  }
+
+  /**
+   * 获取基础声学统计数据
+   */
+  static async getBasicStats(): Promise<BasicStats> {
+    const leqValues = DecibelService.leqData;
+    const stats: BasicStats = {
+      leq: DecibelService.calculateLeq(leqValues),
+      lmax: Math.max(...leqValues),
+      lmin: Math.min(...leqValues),
+      l10: DecibelService.calculatePercentile(leqValues, 0.1),
+      l50: DecibelService.calculatePercentile(leqValues, 0.5),
+      l90: DecibelService.calculatePercentile(leqValues, 0.9),
+      lpeak: undefined
+    };
+
+    return stats;
+  }
+
+  private static calculatePercentile(values: number[], percentile: number): number {
+    if (values.length === 0) return 0;
+    const sorted = [...values].sort((a, b) => a - b);
+    const index = Math.floor(sorted.length * percentile);
+    return sorted[index];
   }
 }

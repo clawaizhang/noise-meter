@@ -7,6 +7,7 @@ import { Settings } from '../ets/components/Settings';
 import { common } from '@kit.AbilityKit';
 import { ScreenshotUtils } from '../../library/ets/utils/ScreenshotUtils';
 import promptAction from '@ohos.promptAction';
+import { LeqStatistics } from '../ets/components/LeqStatistics';
 
 @ComponentV2
 export struct NoiseMeter {
@@ -110,6 +111,11 @@ export struct NoiseMeter {
           DecibelHistory({ currentTabIndex: this.currentIndex })
         }
         .tabBar(this.TabBuilder('检测记录', $r('app.media.ic_history'), 1))
+
+        // TabContent() {
+        //   LeqStatistics()
+        // }
+        // .tabBar(this.TabBuilder('统计', $r('app.media.ic_stats'), 2))
 
         TabContent() {
           Settings()

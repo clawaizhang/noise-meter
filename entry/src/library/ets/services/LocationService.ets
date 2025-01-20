@@ -1,6 +1,7 @@
 import common from '@ohos.app.ability.common';
 import { LocationUtil } from '@pura/harmony-utils';
 import geoLocationManager from '@ohos.geoLocationManager';
+import { SpatialStats } from '../../../noise_meter/ets/types/NoiseStats';
 
 /**
  * 位置信息
@@ -84,5 +85,25 @@ export class LocationService {
    */
   public clearCache(): void {
     this.cachedLocation = null;
+  }
+
+  /**
+   * 获取空间统计数据
+   */
+  public static async getSpatialStats(): Promise<SpatialStats> {
+    const instance = LocationService.getInstance();
+    const location = await instance.requestSingleLocation();
+    
+    const stats: SpatialStats = {
+      hotSpots: [{
+        coord: location.coordinates,
+        value: 1 // TODO: 实现真实的热度值计算
+      }],
+      movementPath: [{
+        lat: parseFloat(location.coordinates.split(',')[0]),
+        lng: parseFloat(location.coordinates.split(',')[1])
+      }]
+    };
+    return stats;
   }
 }
