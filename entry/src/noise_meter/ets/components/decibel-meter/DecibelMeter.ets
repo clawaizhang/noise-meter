@@ -33,6 +33,7 @@ export struct DecibelMeter {
   @Local private minDecibel: number = 0
   @Local private maxDecibel: number = 0
   @Local private avgDecibel: number = 0
+  @Local private showAvgInsteadOfMin: boolean = false
   @Local private isRecording: boolean = false
   @Local private showStats: boolean = false
   @Local private recordingTime: number = 0
@@ -490,14 +491,20 @@ export struct DecibelMeter {
           // 分贝值显示
           Row() {
             Column() {
-              Text('最小')
+              Text(this.showAvgInsteadOfMin ? '平均' : '最小')
                 .fontSize(12)
                 .fontColor('#999999')
                 .margin({ bottom: 4 })
-              Text(this.minDecibel === 0 ? '-' : this.minDecibel.toString())
+              Text(this.showAvgInsteadOfMin ?
+                  (this.avgDecibel === 0 ? '-' : this.avgDecibel.toString()) :
+                  (this.minDecibel === 0 ? '-' : this.minDecibel.toString()))
                 .fontSize(32)
                 .fontWeight(FontWeight.Medium)
-                .fontColor(DecibelService.getDecibelColor(this.minDecibel))
+                .fontColor(DecibelService.getDecibelColor(
+                  this.showAvgInsteadOfMin ? this.avgDecibel : this.minDecibel))
+                .onClick(() => {
+                  this.showAvgInsteadOfMin = !this.showAvgInsteadOfMin;
+                })
             }
             .alignItems(HorizontalAlign.Center)
             .margin({ right: 16 })
