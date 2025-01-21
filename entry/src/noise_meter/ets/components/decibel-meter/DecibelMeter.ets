@@ -22,7 +22,7 @@ import { WeightingType } from '../../../../library/ets/constants/WeightingConsta
 import { taskpool } from '@kit.ArkTS';
 import { concurrentCalculateSpectrum } from '../../concurrent/ConcurrentFftAnalyzer';
 import { secondsToHoursMinutesSecondsWithDecimal } from '../../util/TimeUtils';
-import {  ResetSaveButton } from './ResetSaveButtonBuilder';
+import { ActionPanel } from './ActionPanel';
 import { CalibrationIndicator } from './CalibrationIndicator';
 import { drawSpectrum, getDbSteps, getFrequencySteps } from './DrawSpectrum';
 
@@ -594,10 +594,9 @@ export struct DecibelMeter {
       .width('92%')
       .margin({ top: 16, bottom: 16 })
 
-      ResetSaveButton({
+      ActionPanel({
         isUILocked: this.isUILocked,
         onReset: () => {
-          // 重置音频数据和统计信息
           this.audioService.resetData();
           this.resetData();
         },
@@ -607,7 +606,7 @@ export struct DecibelMeter {
         lockToggle: () => {
           this.isUILocked = !this.isUILocked;
         }
-      });
+      })
     }
     .width('100%')
     .padding({ top: 8, bottom: 16 })
