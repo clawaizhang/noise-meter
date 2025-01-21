@@ -1,5 +1,4 @@
-import { DecibelRecord } from "../../models/DecibelRecord"
-import hilog from '@ohos.hilog'
+import { DecibelRecord } from "../../../../library/ets/models/DecibelRecord"
 
 const TAG = 'DialogTitle';
 const DOMAIN = 0x0000;

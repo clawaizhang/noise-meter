@@ -1,6 +1,6 @@
-import { NoiseStandard } from '../../models/NoiseStandard';
+import { NoiseStandard } from '../../../../library/ets/models/NoiseStandard';
 import common from '@ohos.app.ability.common';
-import { DecibelService } from '../../../../noise_meter/ets/services/DecibelService';
+import { DecibelService } from '../../services/DecibelService';
 
 @ComponentV2
 export struct NoiseStandardCard {

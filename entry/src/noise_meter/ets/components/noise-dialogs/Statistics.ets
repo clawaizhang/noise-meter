@@ -1,5 +1,5 @@
-import { DecibelRecord } from "../../models/DecibelRecord"
-import { DecibelService } from "../../../../noise_meter/ets/services/DecibelService"
+import { DecibelRecord } from "../../../../library/ets/models/DecibelRecord"
+import { DecibelService } from "../../services/DecibelService"
 
 interface NoiseSegment {
   name: string;

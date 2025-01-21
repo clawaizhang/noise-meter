@@ -1,5 +1,5 @@
 import { DecibelRecord } from '../../library/ets/models/DecibelRecord';
-import { DetailDialogParams } from '../../library/ets/components/business/DetailDialog';
+import { DetailDialogParams } from '../ets/components/noise-dialogs/DetailDialog';
 import { PromptAction } from '@ohos.arkui.UIContext';
 import { DecibelService } from '../ets/services/DecibelService';
 import { DecibelRecordService } from '../ets/services/DecibelRecordService';

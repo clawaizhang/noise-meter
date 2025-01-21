@@ -1,4 +1,4 @@
-import { DecibelRecord } from "../../models/DecibelRecord"
+import { DecibelRecord } from "../../../../library/ets/models/DecibelRecord"
 
 @Builder
 export function BasicInfoBuilder(selectedRecord: DecibelRecord) {

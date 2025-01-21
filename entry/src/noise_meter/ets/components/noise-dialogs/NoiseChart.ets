@@ -1,7 +1,7 @@
-import { DecibelRecord } from "../../models/DecibelRecord"
-import { DecibelService } from "../../../../noise_meter/ets/services/DecibelService"
+import { DecibelRecord } from "../../../../library/ets/models/DecibelRecord"
+import { DecibelService } from "../../services/DecibelService"
 import { display } from "@kit.ArkUI"
-import { AudioPlayer } from "./AudioPlayer";
+import { AudioPlayer } from "../../../../library/ets/components/business/AudioPlayer";
 
 interface Margin {
   top: number;

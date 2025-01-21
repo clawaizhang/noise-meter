@@ -1,10 +1,10 @@
-import { DecibelRecord } from "../../models/DecibelRecord"
+import { DecibelRecord } from "../../../../library/ets/models/DecibelRecord"
 import common from '@ohos.app.ability.common'
-import { FileService } from "../../services/FileService"
+import { FileService } from "../../../../library/ets/services/FileService"
 import hilog from '@ohos.hilog'
-import { noiseMeterNavStack } from '../../../../noise_meter/ets/constant/ProviderConstant'
+import { noiseMeterNavStack } from '../../constant/ProviderConstant'
 import { JSON } from '@kit.ArkTS'
-import { ScreenshotUtils } from "../../utils/ScreenshotUtils"
+import { ScreenshotUtils } from "../../../../library/ets/utils/ScreenshotUtils"
 import { DialogTitleBuilder } from "./DialogTitle"
 import { BasicInfoBuilder } from "./BasicInfo"
 import { Statistics } from "./Statistics"

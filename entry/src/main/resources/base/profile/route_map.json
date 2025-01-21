@@ -12,7 +12,7 @@
     },
     {
       "name": "NoiseInfoDialog",
-      "pageSourceFile": "src/library/ets/components/business/dialogs/NoiseInfoDialog.ets",
+      "pageSourceFile": "src/noise_meter/ets/components/noise-dialogs/NoiseInfoDialog.ets",
       "buildFunction": "DecibelHistoryBuilder"
     },
     {
@@ -22,7 +22,7 @@
     },
     {
       "name": "DetailDialog",
-      "pageSourceFile": "src/library/ets/components/business/DetailDialog.ets",
+      "pageSourceFile": "src/noise_meter/ets/components/noise-dialogs/DetailDialog.ets",
       "buildFunction": "DetailDialogBuilder"
     },
     {

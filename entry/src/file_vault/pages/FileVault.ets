@@ -1,6 +1,7 @@
 import photoAccessHelper from '@ohos.file.photoAccessHelper';
 import fs from '@ohos.file.fs';
 import common from '@ohos.app.ability.common';
+import router from '@ohos.router';
 
 @Builder
 function FileVaultBuilder() {
@@ -9,27 +10,20 @@ function FileVaultBuilder() {
 
 @Component
 export struct FileVault {
-  @State files: Array<FileInfo> = [];
+  @State notes: Array<NoteInfo> = [];
   private context = getContext(this) as common.UIAbilityContext;
 
-  // 导入文件
-  async importFile() {
+  // 创建新笔记
+  async createNote() {
     try {
-      const photoPicker = new photoAccessHelper.PhotoViewPicker();
-      const options: photoAccessHelper.PhotoSelectOptions = {
-        maxSelectNumber: 1,
-        isEditSupported: false,
-        isOriginalSupported: true,
-        MIMEType: photoAccessHelper.PhotoViewMIMETypes.IMAGE_VIDEO_TYPE
-      };
-      const result = await photoPicker.select(options);
-      if (result && result.photoUris && result.photoUris.length > 0) {
-        // TODO: 复制文件到应用私有目录
-        // TODO: 加密文件
-        // TODO: 保存文件信息到数据库
-      }
+      const newNote = new NoteInfo(
+        Date.now().toString(),
+        '新笔记',
+        '在这里写下你的想法...'
+      );
+      this.notes = [...this.notes, newNote];
     } catch (error) {
-      console.error('导入文件失败:', error);
+      console.error('创建笔记失败:', error);
     }
   }
 
@@ -41,10 +35,10 @@ export struct FileVault {
         .height(120)
         .fillColor('#CCCCCC')
         .margin({ bottom: 16 })
-      Text('暂无文件')
+      Text('暂无笔记')
         .fontSize(16)
         .fontColor('#999999')
-      Text('点击右上角的按钮导入文件')
+      Text('点击右上角的按钮创建新笔记')
         .fontSize(14)
         .fontColor('#999999')
         .margin({ top: 8 })
@@ -59,12 +53,12 @@ export struct FileVault {
     Column() {
       // 顶部导航栏
       Row() {
-        Text('文件保密柜')
+        Text('小蓝书')
           .fontSize(20)
           .fontWeight(FontWeight.Medium)
         Blank()
         Button() {
-          Image($r('app.media.ic_import'))
+          Image($r('app.media.ic_pin'))
             .width(24)
             .height(24)
             .fillColor('#333333')
@@ -74,7 +68,7 @@ export struct FileVault {
         .height(40)
         .backgroundColor('#F5F5F5')
         .onClick(() => {
-          this.importFile();
+          this.createNote();
         })
       }
       .width('100%')
@@ -83,11 +77,92 @@ export struct FileVault {
       .backgroundColor(Color.White)
 
       // 文件列表或空状态
-      if (this.files.length > 0) {
+      if (this.notes.length > 0) {
         List() {
-          ForEach(this.files, (file: FileInfo) => {
+          ForEach(this.notes, (note: NoteInfo) => {
             ListItem() {
-              // TODO: 实现文件列表项UI
+              Column() {
+                // 封面图片
+                if (note.images.length > 0) {
+                  Image(note.images[0])
+                    .width('100%')
+                    .height(200)
+                    .objectFit(ImageFit.Cover)
+                    .borderRadius(8)
+                } else {
+                  Image($r('app.media.ic_empty'))
+                    .width('100%')
+                    .height(200)
+                    .objectFit(ImageFit.Cover)
+                    .borderRadius(8)
+                    .backgroundColor('#F5F5F5')
+                }
+
+                // 标题和内容
+                Column() {
+                  Text(note.title)
+                    .fontSize(16)
+                    .fontWeight(FontWeight.Medium)
+                    .margin({ bottom: 8 })
+                  
+                  Text(note.content)
+                    .fontSize(14)
+                    .maxLines(2)
+                    .textOverflow({ overflow: TextOverflow.Ellipsis })
+                    .fontColor('#666666')
+                }
+                .padding(12)
+
+                // 标签和操作按钮
+                Row() {
+                  // 标签
+                  if (note.tags.length > 0) {
+                    ForEach(note.tags, (tag: string) => {
+                      Text(`#${tag}`)
+                        .fontSize(12)
+                        .fontColor('#666666')
+                        .padding({ left: 8, right: 8, top: 4, bottom: 4 })
+                        .backgroundColor('#F5F5F5')
+                        .borderRadius(12)
+                        .margin({ right: 8 })
+                    })
+                  }
+
+                  Blank()
+
+                  // 收藏按钮
+                  Button() {
+                    Image($r('app.media.ic_favorite'))
+                      .width(16)
+                      .height(16)
+                      .fillColor(note.isFavorite ? '#FF3B30' : '#CCCCCC')
+                  }
+                  .type(ButtonType.Circle)
+                  .width(32)
+                  .height(32)
+                  .backgroundColor('#FFFFFF')
+                  .onClick(() => {
+                    note.isFavorite = !note.isFavorite;
+                    this.notes = [...this.notes];
+                  })
+                }
+                .padding({ left: 12, right: 12, bottom: 12 })
+              }
+              .width('100%')
+              .backgroundColor(Color.White)
+              .borderRadius(8)
+              .margin({ top: 8, bottom: 8 })
+              .shadow({ radius: 4, color: '#00000010', offsetX: 0, offsetY: 2 })
+              .onClick(() => {
+                router.pushUrl({
+                  url: 'pages/NoteDetail',
+                  params: {
+                    noteId: note.id,
+                    noteTitle: note.title,
+                    noteContent: note.content
+                  }
+                });
+              })
             }
           })
         }
@@ -103,20 +178,21 @@ export struct FileVault {
   }
 }
 
-class FileInfo {
+class NoteInfo {
   id: string;
-  name: string;
-  path: string;
-  size: number;
-  type: string;
+  title: string;
+  content: string;
+  images: Array<string> = [];
+  tags: Array<string> = [];
+  isFavorite: boolean = false;
   createTime: number;
+  updateTime: number;
 
-  constructor(id: string, name: string, path: string, size: number, type: string) {
+  constructor(id: string, title: string, content: string) {
     this.id = id;
-    this.name = name;
-    this.path = path;
-    this.size = size;
-    this.type = type;
+    this.title = title;
+    this.content = content;
     this.createTime = new Date().getTime();
+    this.updateTime = this.createTime;
   }
-} 
+}
