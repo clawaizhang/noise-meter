@@ -1,14 +1,18 @@
 import router from '@ohos.router';
 import common from '@ohos.app.ability.common';
 import { PhotoAccessHelperService } from '../services/PhotoAccessHelperService';
+import { NavPathStack } from '@ohos.arkui.navigation';
+import { CustomTitleBar } from '../../library/ets/components/common/CustomTitleBar';
 
 @Builder
 function FileVaultBuilder() {
   FileVault()
 }
+
 @ComponentV2
 export struct FileVault {
   @Local private notes: Array<NoteInfo> = [];
+  @Consumer private navStack: NavPathStack = new NavPathStack();
   @Local private currentIndex: number = 0;
   private context = getContext(this) as common.UIAbilityContext;
   private photoService = new PhotoAccessHelperService(this.context);
@@ -23,13 +27,40 @@ export struct FileVault {
     this.notes = [newNote, ...this.notes];
   }
 
-  build() {
+  @Builder
+  TabBuilder(title: string, icon: Resource, index: number) {
     Column() {
-      // 内容区域
-      Stack() {
-        if (this.currentIndex === 0) {
-          // 首页 - 笔记列表
+      Image(icon)
+        .width(24)
+        .height(24)
+        .fillColor(this.currentIndex === index ? '#007AFF' : '#999999')
+      Text(title)
+        .fontSize(12)
+        .fontColor(this.currentIndex === index ? '#007AFF' : '#999999')
+        .margin({ top: 4 })
+    }
+    .width('100%')
+    .height('100%')
+    .justifyContent(FlexAlign.Center)
+  }
+
+  build() {
+    Navigation(this.navStack) {
+      Tabs({ barPosition: BarPosition.End, index: this.currentIndex }) {
+        TabContent() {
           Column() {
+            CustomTitleBar({
+              title: '小蓝书',
+              buttons: [
+                {
+                  icon: $r('app.media.ic_add'),
+                  onClick: () => {
+                    this.navStack.pushDestinationByName('PublishPage');
+                  }
+                }
+              ]
+            })
+
             // 笔记列表
             List() {
               ForEach(this.notes, (note:NoteInfo) => {
@@ -51,13 +82,10 @@ export struct FileVault {
                   .borderRadius(8)
                   .margin({ bottom: 8 })
                   .onClick(() => {
-                    router.pushUrl({
-                      url: 'pages/NoteDetail',
-                      params: {
-                        noteId: note.id,
-                        noteTitle: note.title,
-                        noteContent: note.content
-                      }
+                    this.navStack.pushDestinationByName('NoteDetail', {
+                      noteId: note.id,
+                      noteTitle: note.title,
+                      noteContent: note.content
                     });
                   });
                 }
@@ -65,98 +93,57 @@ export struct FileVault {
             }
             .layoutWeight(1)
           }
-        } else if (this.currentIndex === 1) {
-          // 发布页面
+          .width('100%')
+          .height('100%')
+          .backgroundColor('#F5F5F5')
+        }
+        .tabBar(this.TabBuilder('首页', $r('app.media.ic_home'), 0))
+
+        TabContent() {
           Column() {
-            // TODO: 添加笔记表单
-            Text('发布新笔记')
+            CustomTitleBar({
+              title: '创作',
+              buttons: []
+            })
+            
+            Text('开始创作')
               .fontSize(20)
               .fontWeight(FontWeight.Bold)
               .margin({ top: 16 });
           }
-        } else {
-          // 个人中心
+        }
+        .tabBar(this.TabBuilder('创作', $r('app.media.ic_add'), 1))
+
+        TabContent() {
           Column() {
+            CustomTitleBar({
+              title: '个人中心',
+              buttons: []
+            })
+            
             Text('个人中心')
               .fontSize(20)
               .fontWeight(FontWeight.Bold)
               .margin({ top: 16 });
           }
         }
+        .tabBar(this.TabBuilder('我', $r('app.media.ic_user'), 2))
       }
-      .layoutWeight(1)
-
-      // 底部Tab栏
-      Row() {
-        // 首页
-        Column() {
-          Image($r('app.media.ic_home'))
-            .width(24)
-            .height(24)
-            .fillColor(this.currentIndex === 0 ? '#007AFF' : '#999999')
-          Text('首页')
-            .fontSize(12)
-            .fontColor(this.currentIndex === 0 ? '#007AFF' : '#999999');
-        }
-        .layoutWeight(1)
-        .onClick(() => {
-          this.currentIndex = 0;
-        });
-
-        // 发布
-        Column() {
-          Image($r('app.media.ic_add'))
-            .width(24)
-            .height(24)
-            .fillColor(this.currentIndex === 1 ? '#007AFF' : '#999999')
-          Text('发布')
-            .fontSize(12)
-            .fontColor(this.currentIndex === 1 ? '#007AFF' : '#999999');
-        }
-        .layoutWeight(1)
-        .onClick(async () => {
-          try {
-            // 使用PhotoAccessHelperService选择文件
-            const selectedFiles = await this.photoService.selectFiles();
-            
-            if (selectedFiles.length > 0) {
-              
-              // 跳转到发布页面并传递文件
-              router.pushUrl({
-                url: 'pages/PublishPage',
-                params: {
-                  files: JSON.stringify(selectedFiles)
-                }
-              });
-            }
-          } catch (err) {
-            console.error('Failed to pick files:', err);
-          }
-        });
-
-        // 我
-        Column() {
-          Image($r('app.media.ic_user'))
-            .width(24)
-            .height(24)
-            .fillColor(this.currentIndex === 2 ? '#007AFF' : '#999999')
-          Text('我')
-            .fontSize(12)
-            .fontColor(this.currentIndex === 2 ? '#007AFF' : '#999999');
-        }
-        .layoutWeight(1)
-        .onClick(() => {
-          this.currentIndex = 2;
-        });
-      }
+      .scrollable(false)
+      .onChange((index: number) => {
+        this.currentIndex = index;
+      })
       .width('100%')
-      .height(56)
-      .backgroundColor(Color.White)
-      .border({ width: 1, color: '#F5F5F5' });
+      .height('100%')
+      .barHeight(56)
+      .barMode(BarMode.Fixed)
+      .animationDuration(0)
     }
-    .width('100%')
-    .height('100%')
-    .backgroundColor('#F5F5F5');
+    .hideTitleBar(true)
+    .hideBackButton(true)
+    .backgroundColor('#F5F5F5')
+    .navBarPosition(NavBarPosition.Start)
+    .hideToolBar(true)
   }
 }
 
