@@ -1,180 +1,162 @@
-import photoAccessHelper from '@ohos.file.photoAccessHelper';
-import fs from '@ohos.file.fs';
-import common from '@ohos.app.ability.common';
 import router from '@ohos.router';
+import common from '@ohos.app.ability.common';
+import { PhotoAccessHelperService } from '../services/PhotoAccessHelperService';
 
 @Builder
 function FileVaultBuilder() {
   FileVault()
 }
-
-@Component
+@ComponentV2
 export struct FileVault {
-  @State notes: Array<NoteInfo> = [];
+  @Local private notes: Array<NoteInfo> = [];
+  @Local private currentIndex: number = 0;
   private context = getContext(this) as common.UIAbilityContext;
+  private photoService = new PhotoAccessHelperService(this.context);
 
   // 创建新笔记
-  async createNote() {
-    try {
-      const newNote = new NoteInfo(
-        Date.now().toString(),
-        '新笔记',
-        '在这里写下你的想法...'
-      );
-      this.notes = [...this.notes, newNote];
-    } catch (error) {
-      console.error('创建笔记失败:', error);
-    }
-  }
-
-  @Builder
-  EmptyState() {
-    Column() {
-      Image($r('app.media.ic_empty'))
-        .width(120)
-        .height(120)
-        .fillColor('#CCCCCC')
-        .margin({ bottom: 16 })
-      Text('暂无笔记')
-        .fontSize(16)
-        .fontColor('#999999')
-      Text('点击右上角的按钮创建新笔记')
-        .fontSize(14)
-        .fontColor('#999999')
-        .margin({ top: 8 })
-    }
-    .width('100%')
-    .height('100%')
-    .backgroundColor('#F5F5F5')
-    .justifyContent(FlexAlign.Center)
+  private createNote(title: string, content: string) {
+    const newNote = new NoteInfo(
+      Date.now().toString(),
+      title,
+      content
+    );
+    this.notes = [newNote, ...this.notes];
   }
 
   build() {
     Column() {
-      // 顶部导航栏
+      // 内容区域
+      Stack() {
+        if (this.currentIndex === 0) {
+          // 首页 - 笔记列表
+          Column() {
+            // 笔记列表
+            List() {
+              ForEach(this.notes, (note:NoteInfo) => {
+                ListItem() {
+                  Column() {
+                    Text(note.title)
+                      .fontSize(18)
+                      .fontWeight(FontWeight.Bold)
+                      .margin({ bottom: 8 });
+                    
+                    Text(note.content)
+                      .fontSize(14)
+                      .maxLines(2)
+                      .textOverflow({ overflow: TextOverflow.Ellipsis });
+                  }
+                  .padding(16)
+                  .width('100%')
+                  .backgroundColor(Color.White)
+                  .borderRadius(8)
+                  .margin({ bottom: 8 })
+                  .onClick(() => {
+                    router.pushUrl({
+                      url: 'pages/NoteDetail',
+                      params: {
+                        noteId: note.id,
+                        noteTitle: note.title,
+                        noteContent: note.content
+                      }
+                    });
+                  });
+                }
+              });
+            }
+            .layoutWeight(1)
+          }
+        } else if (this.currentIndex === 1) {
+          // 发布页面
+          Column() {
+            // TODO: 添加笔记表单
+            Text('发布新笔记')
+              .fontSize(20)
+              .fontWeight(FontWeight.Bold)
+              .margin({ top: 16 });
+          }
+        } else {
+          // 个人中心
+          Column() {
+            Text('个人中心')
+              .fontSize(20)
+              .fontWeight(FontWeight.Bold)
+              .margin({ top: 16 });
+          }
+        }
+      }
+      .layoutWeight(1)
+
+      // 底部Tab栏
       Row() {
-        Text('小蓝书')
-          .fontSize(20)
-          .fontWeight(FontWeight.Medium)
-        Blank()
-        Button() {
-          Image($r('app.media.ic_pin'))
+        // 首页
+        Column() {
+          Image($r('app.media.ic_home'))
             .width(24)
             .height(24)
-            .fillColor('#333333')
+            .fillColor(this.currentIndex === 0 ? '#007AFF' : '#999999')
+          Text('首页')
+            .fontSize(12)
+            .fontColor(this.currentIndex === 0 ? '#007AFF' : '#999999');
         }
-        .type(ButtonType.Circle)
-        .width(40)
-        .height(40)
-        .backgroundColor('#F5F5F5')
+        .layoutWeight(1)
         .onClick(() => {
-          this.createNote();
-        })
+          this.currentIndex = 0;
+        });
+
+        // 发布
+        Column() {
+          Image($r('app.media.ic_add'))
+            .width(24)
+            .height(24)
+            .fillColor(this.currentIndex === 1 ? '#007AFF' : '#999999')
+          Text('发布')
+            .fontSize(12)
+            .fontColor(this.currentIndex === 1 ? '#007AFF' : '#999999');
+        }
+        .layoutWeight(1)
+        .onClick(async () => {
+          try {
+            // 使用PhotoAccessHelperService选择文件
+            const selectedFiles = await this.photoService.selectFiles();
+            
+            if (selectedFiles.length > 0) {
+              
+              // 跳转到发布页面并传递文件
+              router.pushUrl({
+                url: 'pages/PublishPage',
+                params: {
+                  files: JSON.stringify(selectedFiles)
+                }
+              });
+            }
+          } catch (err) {
+            console.error('Failed to pick files:', err);
+          }
+        });
+
+        // 我
+        Column() {
+          Image($r('app.media.ic_user'))
+            .width(24)
+            .height(24)
+            .fillColor(this.currentIndex === 2 ? '#007AFF' : '#999999')
+          Text('我')
+            .fontSize(12)
+            .fontColor(this.currentIndex === 2 ? '#007AFF' : '#999999');
+        }
+        .layoutWeight(1)
+        .onClick(() => {
+          this.currentIndex = 2;
+        });
       }
       .width('100%')
       .height(56)
-      .padding({ left: 16, right: 16 })
       .backgroundColor(Color.White)
-
-      // 文件列表或空状态
-      if (this.notes.length > 0) {
-        List() {
-          ForEach(this.notes, (note: NoteInfo) => {
-            ListItem() {
-              Column() {
-                // 封面图片
-                if (note.images.length > 0) {
-                  Image(note.images[0])
-                    .width('100%')
-                    .height(200)
-                    .objectFit(ImageFit.Cover)
-                    .borderRadius(8)
-                } else {
-                  Image($r('app.media.ic_empty'))
-                    .width('100%')
-                    .height(200)
-                    .objectFit(ImageFit.Cover)
-                    .borderRadius(8)
-                    .backgroundColor('#F5F5F5')
-                }
-
-                // 标题和内容
-                Column() {
-                  Text(note.title)
-                    .fontSize(16)
-                    .fontWeight(FontWeight.Medium)
-                    .margin({ bottom: 8 })
-                  
-                  Text(note.content)
-                    .fontSize(14)
-                    .maxLines(2)
-                    .textOverflow({ overflow: TextOverflow.Ellipsis })
-                    .fontColor('#666666')
-                }
-                .padding(12)
-
-                // 标签和操作按钮
-                Row() {
-                  // 标签
-                  if (note.tags.length > 0) {
-                    ForEach(note.tags, (tag: string) => {
-                      Text(`#${tag}`)
-                        .fontSize(12)
-                        .fontColor('#666666')
-                        .padding({ left: 8, right: 8, top: 4, bottom: 4 })
-                        .backgroundColor('#F5F5F5')
-                        .borderRadius(12)
-                        .margin({ right: 8 })
-                    })
-                  }
-
-                  Blank()
-
-                  // 收藏按钮
-                  Button() {
-                    Image($r('app.media.ic_favorite'))
-                      .width(16)
-                      .height(16)
-                      .fillColor(note.isFavorite ? '#FF3B30' : '#CCCCCC')
-                  }
-                  .type(ButtonType.Circle)
-                  .width(32)
-                  .height(32)
-                  .backgroundColor('#FFFFFF')
-                  .onClick(() => {
-                    note.isFavorite = !note.isFavorite;
-                    this.notes = [...this.notes];
-                  })
-                }
-                .padding({ left: 12, right: 12, bottom: 12 })
-              }
-              .width('100%')
-              .backgroundColor(Color.White)
-              .borderRadius(8)
-              .margin({ top: 8, bottom: 8 })
-              .shadow({ radius: 4, color: '#00000010', offsetX: 0, offsetY: 2 })
-              .onClick(() => {
-                router.pushUrl({
-                  url: 'pages/NoteDetail',
-                  params: {
-                    noteId: note.id,
-                    noteTitle: note.title,
-                    noteContent: note.content
-                  }
-                });
-              })
-            }
-          })
-        }
-        .width('100%')
-        .layoutWeight(1)
-        .backgroundColor('#F5F5F5')
-      } else {
-        this.EmptyState()
-      }
+      .border({ width: 1, color: '#F5F5F5' });
     }
     .width('100%')
     .height('100%')
+    .backgroundColor('#F5F5F5');
   }
 }
 
@@ -182,17 +164,12 @@ class NoteInfo {
   id: string;
   title: string;
   content: string;
-  images: Array<string> = [];
-  tags: Array<string> = [];
-  isFavorite: boolean = false;
   createTime: number;
-  updateTime: number;
 
   constructor(id: string, title: string, content: string) {
     this.id = id;
     this.title = title;
     this.content = content;
-    this.createTime = new Date().getTime();
-    this.updateTime = this.createTime;
+    this.createTime = Date.now();
   }
 }
