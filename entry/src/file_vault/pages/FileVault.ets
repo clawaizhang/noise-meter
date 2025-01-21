@@ -1,7 +1,6 @@
 import router from '@ohos.router';
 import common from '@ohos.app.ability.common';
 import { PhotoAccessHelperService } from '../services/PhotoAccessHelperService';
-import { NavPathStack } from '@ohos.arkui.navigation';
 import { CustomTitleBar } from '../../library/ets/components/common/CustomTitleBar';
 
 @Builder
@@ -12,7 +11,7 @@ function FileVaultBuilder() {
 @ComponentV2
 export struct FileVault {
   @Local private notes: Array<NoteInfo> = [];
-  @Consumer private navStack: NavPathStack = new NavPathStack();
+  @Provider() private navStack: NavPathStack = new NavPathStack();
   @Local private currentIndex: number = 0;
   private context = getContext(this) as common.UIAbilityContext;
   private photoService = new PhotoAccessHelperService(this.context);
@@ -51,14 +50,6 @@ export struct FileVault {
           Column() {
             CustomTitleBar({
               title: '小蓝书',
-              buttons: [
-                {
-                  icon: $r('app.media.ic_add'),
-                  onClick: () => {
-                    this.navStack.pushDestinationByName('PublishPage');
-                  }
-                }
-              ]
             })
 
             // 笔记列表
