@@ -87,15 +87,6 @@ export struct DialogContainer {
       }
       .height('100%')
       .width('100%')
-      .onClick(() => {
-        this.navStack.pop();
-        animateTo({ duration: 1200, curve: Curve.EaseIn }, () => {
-          this.translateY = 1000;
-        });
-        animateTo({ duration: 600, curve: Curve.EaseIn }, () => {
-          this.bgOpacity = 0;
-        });
-      })
     }
     .backgroundColor(`rgba(0,0,0,${this.bgOpacity})`)
     .animation({
