@@ -172,13 +172,13 @@ export struct Settings {
   private getAnalysisModeDescription(mode: AudioAnalysisMode): string {
     switch (mode) {
       case AudioAnalysisMode.FAST_TIME_WEIGHTING:
-        return '时间常数125ms，适合测量快速变化的噪声';
+        return '时间常数200ms，适合测量快速变化的噪声';
       case AudioAnalysisMode.SLOW_TIME_WEIGHTING:
-        return '时间常数1000ms，适合测量稳态噪声';
+        return '时间常数500ms，适合测量稳态噪声';
       case AudioAnalysisMode.IMPULSE_TIME_WEIGHTING:
         return '时间常数35ms，适合测量脉冲噪声';
       default:
-        return '时间常数125ms，适合测量快速变化的噪声';
+        return '时间常数200ms，适合测量快速变化的噪声';
     }
   }
 

@@ -34,7 +34,7 @@ export class AudioPresets {
   // 快速时间计权模式配置（F）
   public static readonly FAST_TIME_WEIGHTING: AudioAnalysisConfig = {
     fftSize: 2048,          // 中等FFT size，平衡时间和频率分辨率
-    updateInterval: 125,   // 125ms符合快速响应时间常数
+    updateInterval: 200,   // 200ms符合快速响应时间常数
     smoothingFactor: 0.2,   // 增加平滑度，减少快速变化带来的波动
     windowType: WindowType.BLACKMAN, // 使用主瓣更窄的窗函数
     overlap: 0.4,          // 降低重叠率，提高时间分辨率
@@ -44,7 +44,7 @@ export class AudioPresets {
   // 慢速时间计权模式配置（S）
   public static readonly SLOW_TIME_WEIGHTING: AudioAnalysisConfig = {
     fftSize: 4096,         // 较大FFT size，提高频率分辨率
-    updateInterval: 1000,  // 1000ms符合慢速响应时间常数
+    updateInterval: 500,   // 500ms符合慢速响应时间常数
     smoothingFactor: 0.05,  // 降低平滑度，保留更多细节
     windowType: WindowType.HANNING,
     overlap: 0.6,          // 提高重叠率，增加频率分辨率
