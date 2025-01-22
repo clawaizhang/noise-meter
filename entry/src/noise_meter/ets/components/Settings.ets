@@ -443,7 +443,7 @@ Slider({
           Column() {
             Row() {
               Row() {
-                Image($r('app.media.ic_power_on'))
+                Image($r('app.media.ic_keep_screen_on'))
                   .itemIcon()
 
                 Text('屏幕常亮')
