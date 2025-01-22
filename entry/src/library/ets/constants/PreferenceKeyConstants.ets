@@ -26,4 +26,9 @@ export class PreferenceKeyConstants {
    * 分贝校准值
    */
   static readonly CALIBRATION: string = 'calibration_value';
+
+  /**
+   * 屏幕常亮设置
+   */
+  static readonly KEEP_SCREEN_ON: string = 'keep_screen_on';
 }

@@ -2,15 +2,31 @@ import UIAbility from '@ohos.app.ability.UIAbility';
 import window from '@ohos.window';
 import { AbilityConstant, Want } from '@kit.AbilityKit';
 import hilog from '@ohos.hilog';
-import { BusinessError } from '@kit.BasicServicesKit';
+import { WindowManager } from '../utils/WindowManager';
+import { PreferenceService, PreferenceValue } from '../../../library/ets/services/PreferenceService';
+import { PreferenceKeyConstants } from '../../../library/ets/constants/PreferenceKeyConstants';
 
 const TAG = 'EntryAbility';
 const DOMAIN = 0x0000;
 
 export default class EntryAbility extends UIAbility {
-  private windowStage: window.WindowStage | null = null;
+  private keepScreenOn: boolean = false;
+
   async onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): Promise<void> {
     hilog.info(DOMAIN, TAG, 'Ability onCreate');
+
+    // 初始化首选项默认值
+    const preferenceService = PreferenceService.getInstance();
+    // 获取初始值
+    this.keepScreenOn = preferenceService.getBoolean(PreferenceKeyConstants.KEEP_SCREEN_ON, false);
+
+    // 注册监听器
+    preferenceService.addChangeListener(PreferenceKeyConstants.KEEP_SCREEN_ON,
+      (key: string, newValue: PreferenceValue) => {
+        this.keepScreenOn = newValue as boolean;
+        const windowManager = WindowManager.getInstance();
+        windowManager.setKeepScreenOn(this.keepScreenOn);
+      });
   }
 
   onDestroy(): void {
@@ -19,113 +35,28 @@ export default class EntryAbility extends UIAbility {
 
   onWindowStageCreate(windowStage: window.WindowStage): void {
     hilog.info(DOMAIN, TAG, 'Ability onWindowStageCreate');
-    this.windowStage = windowStage;
-    // 加载页面内容
-    this.windowStage.loadContent('pages/Index', (err) => {
-      if (err.code) {
-        hilog.error(DOMAIN, TAG, 'Failed to load the content. Cause: %{public}s', JSON.stringify(err) ?? '');
-        return;
-      }
-      hilog.info(DOMAIN, TAG, 'Succeeded in loading the content.');
-    });
-
-    // 设置屏幕常亮
-    let windowClass: window.Window | undefined = undefined;
-    this.windowStage.getMainWindow((err, data) => {
-      if (err.code) {
-        hilog.error(DOMAIN, TAG, 'Failed to obtain the main window. Cause: %{public}s', JSON.stringify(err) ?? '');
-        return;
-      }
-      windowClass = data;
-      try {
-        let promise = windowClass.setWindowKeepScreenOn(true);
-        promise.then(() => {
-          hilog.info(DOMAIN, TAG, 'Succeeded in setting window keep screen on.');
-        }).catch((err: BusinessError) => {
-          hilog.error(DOMAIN, TAG, 'Failed to set window keep screen on. Cause: %{public}s', JSON.stringify(err) ?? '');
-        });
-      } catch (exception) {
-        hilog.error(DOMAIN, TAG, 'Failed to set window keep screen on. Cause: %{public}s',
-          JSON.stringify(exception) ?? '');
-      }
-    });
+    // 注册窗口并加载内容
+    const windowManager = WindowManager.getInstance();
+    windowManager.registerWindowStage(windowStage);
+    windowManager.loadContent('pages/Index');
+    windowManager.setKeepScreenOn(this.keepScreenOn);
   }
 
   onWindowStageDestroy(): void {
-    // 设置屏幕常亮
-    if(this.windowStage) {
-      let windowClass: window.Window | undefined = undefined;
-      this.windowStage.getMainWindow((err, data) => {
-        if (err.code) {
-          hilog.error(DOMAIN, TAG, 'Failed to obtain the main window. Cause: %{public}s', JSON.stringify(err) ?? '');
-          return;
-        }
-        windowClass = data;
-        try {
-          let promise = windowClass.setWindowKeepScreenOn(false);
-          promise.then(() => {
-            hilog.info(DOMAIN, TAG, 'Succeeded in setting window keep screen on.');
-          }).catch((err: BusinessError) => {
-            hilog.error(DOMAIN, TAG, 'Failed to set window keep screen on. Cause: %{public}s', JSON.stringify(err) ?? '');
-          });
-        } catch (exception) {
-          hilog.error(DOMAIN, TAG, 'Failed to set window keep screen on. Cause: %{public}s',
-            JSON.stringify(exception) ?? '');
-        }
-      });
-    }
+    const windowManager = WindowManager.getInstance();
+    windowManager.setKeepScreenOn(this.keepScreenOn);
     hilog.info(DOMAIN, TAG, 'Ability onWindowStageDestroy');
   }
 
   onForeground(): void {
-    // 设置屏幕常亮
-    if(this.windowStage) {
-      let windowClass: window.Window | undefined = undefined;
-      this.windowStage.getMainWindow((err, data) => {
-        if (err.code) {
-          hilog.error(DOMAIN, TAG, 'Failed to obtain the main window. Cause: %{public}s', JSON.stringify(err) ?? '');
-          return;
-        }
-        windowClass = data;
-        try {
-          let promise = windowClass.setWindowKeepScreenOn(true);
-          promise.then(() => {
-            hilog.info(DOMAIN, TAG, 'Succeeded in setting window keep screen on.');
-          }).catch((err: BusinessError) => {
-            hilog.error(DOMAIN, TAG, 'Failed to set window keep screen on. Cause: %{public}s', JSON.stringify(err) ?? '');
-          });
-        } catch (exception) {
-          hilog.error(DOMAIN, TAG, 'Failed to set window keep screen on. Cause: %{public}s',
-            JSON.stringify(exception) ?? '');
-        }
-      });
-    }
+    const windowManager = WindowManager.getInstance();
+    windowManager.setKeepScreenOn(this.keepScreenOn);
     hilog.info(DOMAIN, TAG, 'Ability onForeground');
   }
 
   onBackground(): void {
-    // 设置屏幕常亮
-    if(this.windowStage) {
-      let windowClass: window.Window | undefined = undefined;
-      this.windowStage.getMainWindow((err, data) => {
-        if (err.code) {
-          hilog.error(DOMAIN, TAG, 'Failed to obtain the main window. Cause: %{public}s', JSON.stringify(err) ?? '');
-          return;
-        }
-        windowClass = data;
-        try {
-          let promise = windowClass.setWindowKeepScreenOn(false);
-          promise.then(() => {
-            hilog.info(DOMAIN, TAG, 'Succeeded in setting window keep screen on.');
-          }).catch((err: BusinessError) => {
-            hilog.error(DOMAIN, TAG, 'Failed to set window keep screen on. Cause: %{public}s', JSON.stringify(err) ?? '');
-          });
-        } catch (exception) {
-          hilog.error(DOMAIN, TAG, 'Failed to set window keep screen on. Cause: %{public}s',
-            JSON.stringify(exception) ?? '');
-        }
-      });
-    }
+    const windowManager = WindowManager.getInstance();
+    windowManager.setKeepScreenOn(this.keepScreenOn);
     hilog.info(DOMAIN, TAG, 'Ability onBackground');
   }
 }

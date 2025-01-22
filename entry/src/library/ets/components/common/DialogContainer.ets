@@ -18,7 +18,7 @@ export struct DialogContainer {
         this.translateY = 0;
         setTimeout(() => {
           animateTo({ duration: 400, curve: Curve.EaseIn }, () => {
-            this.bgOpacity = 0.3;
+            this.bgOpacity = 0.18;
           });
         }, 400);
       });
@@ -30,6 +30,21 @@ export struct DialogContainer {
   build() {
     NavDestination() {
       Stack({ alignContent: Alignment.Bottom }) {
+        // 背景遮罩层
+        Column()
+          .width('100%')
+          .height('100%')
+          .onClick(() => {
+            this.navStack.pop();
+            animateTo({ duration: 1200, curve: Curve.EaseIn }, () => {
+              this.translateY = 1000;
+            });
+            animateTo({ duration: 600, curve: Curve.EaseIn }, () => {
+              this.bgOpacity = 0;
+            });
+          })
+
+        // 弹窗内容
         Column() {
           // 顶部拖动条
           Row() {
@@ -54,6 +69,9 @@ export struct DialogContainer {
         .backgroundColor(Color.White)
         .borderRadius({ topLeft: 16, topRight: 16 })
         .translate({ y: this.translateY })
+        .onClick(() => {
+          // 阻止事件冒泡
+        })
         .gesture(
           PanGesture({ direction: PanDirection.Vertical })
             .onActionStart((event: GestureEvent) => {
@@ -63,7 +81,7 @@ export struct DialogContainer {
               const deltaY = event.offsetY - this.startY;
               if (deltaY > 0) {
                 this.translateY = deltaY;
-                this.bgOpacity = Math.max(0, 0.3 * (1 - deltaY / 250));
+                this.bgOpacity = Math.max(0, 0.18 * (1 - deltaY / 250));
               }
             })
             .onActionEnd(() => {
@@ -75,7 +93,7 @@ export struct DialogContainer {
               } else {
                 animateTo({ duration: 800, curve: Curve.Smooth }, () => {
                   this.translateY = 0;
-                  this.bgOpacity = 0.3;
+                  this.bgOpacity = 0.18;
                 });
               }
             })

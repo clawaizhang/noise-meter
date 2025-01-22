@@ -91,6 +91,7 @@ export struct Settings {
   private preferenceService: PreferenceService = PreferenceService.getInstance();
   @Local isLocationEnabled: boolean = false;
   @Local isRecordEnabled: boolean = false;
+  @Local isKeepScreenOn: boolean = false;
   @Local selectedWeighting: WeightingType = WeightingType.A;
   @Local selectedAnalysisMode: AudioAnalysisMode = AudioAnalysisMode.FAST_TIME_WEIGHTING;
   @Local analysisModeDescription: string = '';
@@ -182,6 +183,7 @@ export struct Settings {
   aboutToAppear() {
     this.isLocationEnabled = this.preferenceService.isEnabled(PreferenceKeyConstants.LOCATION);
     this.isRecordEnabled = this.preferenceService.isEnabled(PreferenceKeyConstants.RECORD);
+    this.isKeepScreenOn = this.preferenceService.getBoolean(PreferenceKeyConstants.KEEP_SCREEN_ON, true);
     this.selectedWeighting =
       (this.preferenceService.getString(PreferenceKeyConstants.WEIGHTING) || WeightingType.A) as WeightingType;
     this.selectedAnalysisMode = (this.preferenceService.getString(PreferenceKeyConstants.ANALYSIS_MODE) ||
@@ -432,6 +434,39 @@ Slider({
 
         ListItem() {
           Text(this.isRecordEnabled ? '保存原始音频数据用于后期分析' : '不会保存音频数据')
+            .itemDescription()
+        }
+        .descriptionContainer()
+
+        // 屏幕常亮设置
+        ListItem() {
+          Column() {
+            Row() {
+              Row() {
+                Image($r('app.media.ic_power_on'))
+                  .itemIcon()
+
+                Text('屏幕常亮')
+                  .itemTitle()
+              }
+
+              Blank()
+
+              Toggle({ type: ToggleType.Switch, isOn: this.isKeepScreenOn })
+                .selectedColor('#0091FF')
+                .switchPointColor('#FFFFFF')
+                .onChange((isOn: boolean) => {
+                  void this.preferenceService.setBoolean(PreferenceKeyConstants.KEEP_SCREEN_ON, isOn);
+                  this.isKeepScreenOn = isOn;
+                })
+            }
+            .listItemRow()
+          }
+          .listItemStyle()
+        }
+
+        ListItem() {
+          Text(this.isKeepScreenOn ? '屏幕将保持常亮状态' : '屏幕会根据系统设置自动休眠')
             .itemDescription()
         }
         .descriptionContainer()
