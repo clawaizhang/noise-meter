@@ -1,9 +1,10 @@
+import { AppStorageV2 } from '@kit.ArkUI';
 import { PreferenceService } from '../../../library/ets/services/PreferenceService';
 import { PreferenceKeyConstants } from '../../../library/ets/constants/PreferenceKeyConstants';
 import { CustomTitleBar } from '../../../library/ets/components/common/CustomTitleBar';
 import { WeightingType, getWeightingDescription } from '../../../library/ets/constants/WeightingConstants';
 import { AudioAnalysisMode, AudioPresets } from '../../../library/ets/common/AudioConfig';
-import { AudioService } from '../../../library/ets/services/AudioService';
+import { DecibelState } from '../types/DecibelState';
 
 @Extend(Image)
 function itemIcon() {
@@ -99,6 +100,7 @@ export struct Settings {
   @Local isModeChangeEnabled: boolean = true;
   @Local remainingTime: number = 0;
   @Local calibrationValue: number = 0;
+  @Local decibelState: DecibelState = AppStorageV2.connect(DecibelState, 'DecibelState', () => new DecibelState())!;
   private readonly COOLDOWN_DURATION: number = 500; // 0.5秒冷却时间
 
   // 工具方法
@@ -353,7 +355,7 @@ Slider({
   .blockColor('#0091FF')
   .trackColor('#F0F0F0')
   .selectedColor('#0091FF')
-  .showTips(true)
+  .showTips(true, `${this.decibelState.currentDecibel}dB`)
   .onChange((value: number) => {
     this.calibrationValue = value;
     void this.preferenceService.setNumber(PreferenceKeyConstants.CALIBRATION, value);

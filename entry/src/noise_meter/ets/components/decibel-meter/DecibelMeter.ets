@@ -7,14 +7,13 @@ import { LocationDisplay } from '../../../../library/ets/components/business/Loc
 import common from '@ohos.app.ability.common';
 import { FileService } from '../../../../library/ets/services/FileService';
 import { noiseMeterNavStack } from '../../constant/ProviderConstant';
-import { promptAction } from '@kit.ArkUI';
+import { AppStorageV2, promptAction } from '@kit.ArkUI';
 import {
   PreferenceService,
   PreferenceChangeListener,
   PreferenceValue
 } from '../../../../library/ets/services/PreferenceService';
 import { PreferenceKeyConstants } from '../../../../library/ets/constants/PreferenceKeyConstants';
-import type { BusinessError } from '@ohos.base';
 import display from '@ohos.display';
 import { AudioAnalysisMode, AudioPresets, PREF_ANALYSIS_MODE } from '../../../../library/ets/common/AudioConfig';
 import { FFTAnalyzer } from '../../../../library/ets/utils/FFTAnalyzer'; // 导入 FFTAnalyzer
@@ -25,11 +24,12 @@ import { secondsToHoursMinutesSecondsWithDecimal } from '../../util/TimeUtils';
 import { ActionPanel } from './ActionPanel';
 import { CalibrationIndicator } from './CalibrationIndicator';
 import { drawSpectrum, getDbSteps, getFrequencySteps } from './DrawSpectrum';
+import { DecibelState } from '../../types/DecibelState';
 
 @ComponentV2
 export struct DecibelMeter {
   @Param @Require meterOn:boolean = true;
-  @Local private currentDecibel: number = 0
+  @Local private decibelState: DecibelState =  AppStorageV2.connect(DecibelState, 'DecibelState', () => new DecibelState())!;
   @Local private minDecibel: number = 0
   @Local private maxDecibel: number = 0
   @Local private avgDecibel: number = 0
@@ -158,7 +158,7 @@ export struct DecibelMeter {
             .fillColor('#EEEEEE') // 浅灰色
 
 
-          Text(DecibelService.getDecibelDescription(this.currentDecibel))
+          Text(DecibelService.getDecibelDescription(this.decibelState.currentDecibel))
             .fontSize(12)
             .fontColor('#EEEEEE') // 浅灰色
         }
@@ -327,8 +327,8 @@ export struct DecibelMeter {
           let decibel = Math.round(db);
           this.values.push(decibel);
           if (!this.isUILocked) {
-            this.currentDecibel = decibel;
-            this.updateStatistics(this.currentDecibel);
+            this.decibelState.currentDecibel = decibel;
+            this.updateStatistics(this.decibelState.currentDecibel);
             this.drawSpectrumLocal(spectrum);
           }
           // 更新计时器（毫秒级）
@@ -352,7 +352,7 @@ export struct DecibelMeter {
 
   private resetData() {
     // 重置状态
-    this.currentDecibel = 0;
+    this.decibelState.currentDecibel = 0;
     this.minDecibel = 0;
     this.maxDecibel = 0;
     this.avgDecibel = 0;
@@ -510,10 +510,10 @@ export struct DecibelMeter {
             .margin({ right: 16 })
 
             Column() {
-              Text(this.currentDecibel === 0 ? '-' : this.currentDecibel.toString())
+              Text(this.decibelState.currentDecibel === 0 ? '-' : this.decibelState.currentDecibel.toString())
                 .fontSize(80)
                 .fontWeight(FontWeight.Bold)
-                .fontColor(DecibelService.getDecibelColor(this.currentDecibel))
+                .fontColor(DecibelService.getDecibelColor(this.decibelState.currentDecibel))
               Row() {
                 if (this.isRecording) {
                   Text(new Date(this.startTime).toLocaleTimeString('zh-CN', {
@@ -539,11 +539,11 @@ export struct DecibelMeter {
                     .width(12)
                     .height(12)
                     .margin({ right: 4 })
-                    .fillColor(DecibelService.getDecibelColor(this.currentDecibel))
+                    .fillColor(DecibelService.getDecibelColor(this.decibelState.currentDecibel))
                     
-                  Text(DecibelService.getDecibelLevel(this.currentDecibel))
+                  Text(DecibelService.getDecibelLevel(this.decibelState.currentDecibel))
                     .fontSize(14)
-                    .fontColor(DecibelService.getDecibelColor(this.currentDecibel))
+                    .fontColor(DecibelService.getDecibelColor(this.decibelState.currentDecibel))
                 }
                 .onClick(() => {
                   this.navStack.pushPathByName("NoiseLevelDialog",null);
