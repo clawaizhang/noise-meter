@@ -44,17 +44,6 @@ struct Index {
         throw new Error('数据库初始化失败');
       }
 
-      // 初始化首选项
-      const defaultValues = new Map<string, boolean>([
-        [PreferenceKeyConstants.LOCATION, true],
-        [PreferenceKeyConstants.RECORD, true]
-      ]);
-
-      const prefResult = await this.preferenceService.init(getContext(this), PreferenceStoreConstants.NOISE_METER, defaultValues);
-      if (!prefResult) {
-        throw new Error('首选项初始化失败');
-      }
-
       // 初始化加权类型
       if (!this.preferenceService.getString(PreferenceKeyConstants.WEIGHTING)) {
         this.preferenceService.setString(PreferenceKeyConstants.WEIGHTING, WeightingType.A);

@@ -17,7 +17,6 @@ export type PreferenceChangeListener = (key: string, value: PreferenceValue) => 
  */
 export class PreferenceService {
   private static instance: PreferenceService;
-  private context: common.Context | null = null;
   private preferences: preferences.Preferences | null = null;
   private isInitialized: boolean = false;
   private listeners: Map<string, Set<PreferenceChangeListener>> = new Map();
@@ -104,39 +103,19 @@ export class PreferenceService {
    * @param storeName 首选项存储名称
    * @param defaultValues 默认值配置
    */
-  public async init(context: common.Context, storeName: string, defaultValues: Map<string, boolean>): Promise<boolean> {
+  public async init(context: common.Context): Promise<boolean> {
     if (this.isInitialized) {
       return true;
     }
 
     try {
-      this.context = context;
       hilog.info(DOMAIN, TAG, '开始初始化首选项');
 
       // 获取首选项实例
       const options: preferences.Options = {
-        name: storeName
+        name: 'app-settings'
       };
       this.preferences = preferences.getPreferencesSync(context, options);
-
-      // 初始化默认值
-      defaultValues.forEach((value: boolean, key: string) => {
-        if (!this.preferences!.hasSync(key)) {
-          this.preferences!.putSync(key, value);
-        }
-      });
-
-      // 持久化到文件
-      await new Promise<void>((resolve, reject) => {
-        this.preferences!.flush((err: BusinessError) => {
-          if (err) {
-            reject(new Error(`持久化首选项失败: ${err.message}`));
-            return;
-          }
-          resolve();
-        });
-      });
-
       this.isInitialized = true;
       hilog.info(DOMAIN, TAG, '首选项初始化完成');
       return true;

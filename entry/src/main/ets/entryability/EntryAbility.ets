@@ -17,6 +17,7 @@ export default class EntryAbility extends UIAbility {
 
     // 初始化首选项默认值
     const preferenceService = PreferenceService.getInstance();
+    preferenceService.init(this.context);
     // 获取初始值
     this.keepScreenOn = preferenceService.getBoolean(PreferenceKeyConstants.KEEP_SCREEN_ON, false);
 
