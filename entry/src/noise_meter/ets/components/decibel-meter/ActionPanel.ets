@@ -47,11 +47,11 @@ export struct ActionPanel {
           Image($r('app.media.ic_lock'))
             .width(20)
             .height(20)
-            .fillColor('#666666')
+            .fillColor(this.isUILocked ? '#FF4444' : '#666666')
         }
         .width(40)
         .height(40)
-        .backgroundColor(this.isUILocked ? '#E0E0E0' : '#F5F5F5')
+        .backgroundColor(this.isUILocked ? '#FFEAEA' : '#F5F5F5')
         .accessibilityDescription(this.isUILocked ? '解锁界面' : '锁定界面')
         .onClick(() => {
           this.lockToggle();

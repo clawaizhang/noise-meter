@@ -1,0 +1,39 @@
+{
+  "routerMap": [
+    {
+      "name": "DecibelHistory",
+      "pageSourceFile": "src/noise_meter/pages/DecibelHistory.ets",
+      "buildFunction": "DecibelHistoryBuilder"
+    },
+    {
+      "name": "NoiseInfoDialog",
+      "pageSourceFile": "src/noise_meter/ets/components/noise-dialogs/NoiseInfoDialog.ets",
+      "buildFunction": "DecibelHistoryBuilder"
+    },
+    {
+      "name": "FileVault",
+      "pageSourceFile": "src/file_vault/pages/FileVault.ets",
+      "buildFunction": "FileVaultBuilder"
+    },
+    {
+      "name": "DetailDialog",
+      "pageSourceFile": "src/noise_meter/ets/components/noise-dialogs/DetailDialog.ets",
+      "buildFunction": "DetailDialogBuilder"
+    },
+    {
+      "name": "NoiseStandardDialog",
+      "pageSourceFile": "src/noise_meter/ets/pages/NoiseStandardDialog.ets",
+      "buildFunction": "NoiseStandardDialogBuilder"
+    },
+    {
+      "name": "NoiseLevelDialog",
+      "pageSourceFile": "src/noise_meter/ets/components/decibel-meter/NoiseLevelDialog.ets",
+      "buildFunction": "NoiseLevelDialogBuilder"
+    },
+    {
+      "name": "NoiseDescriptionDialog",
+      "pageSourceFile": "src/noise_meter/ets/components/decibel-meter/NoiseDescriptionDialog.ets",
+      "buildFunction": "NoiseDescriptionDialogBuilder"
+    }
+  ]
+} 
