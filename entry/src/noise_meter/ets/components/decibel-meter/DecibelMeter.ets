@@ -582,7 +582,7 @@ export struct DecibelMeter {
         .borderRadius(24)
       }
       .width('100%')
-      .margin({ left: 8, right: 8, top: 24 })
+      .margin({ left: 16, right: 16, top: 16 })
       .backgroundColor(Color.White)
       .borderRadius(12)
       .shadow({ radius: 2, color: '#1A000000', offsetY: 2 })
@@ -592,7 +592,7 @@ export struct DecibelMeter {
         LocationDisplay()
       }
       .width('92%')
-      .margin({ top: 16, bottom: 16 })
+      .margin({ top: 12, bottom: 12 })
 
       ActionPanel({
         isUILocked: this.isUILocked,
@@ -609,7 +609,7 @@ export struct DecibelMeter {
       })
     }
     .width('100%')
-    .padding({ top: 8, bottom: 16 })
+    .padding({ top: 12, bottom: 12 })
     .alignItems(HorizontalAlign.Center)
   }
 }
