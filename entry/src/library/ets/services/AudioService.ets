@@ -6,6 +6,7 @@ import { WavFileGenerator } from '../utils/WavFileGenerator';
 import { PreferenceService, PreferenceValue } from './PreferenceService';
 import { AudioAnalysisMode, AudioPresets, PREF_ANALYSIS_MODE } from '../common/AudioConfig';
 import { FileService } from './FileService';
+import { AudioEnhancer } from './AudioEnhancer';
 
 /**
  * 音频服务类
@@ -218,20 +219,14 @@ export class AudioService {
           if (this.isRecording) {
             // 创建副本以避免引用问题
             const bufferCopy = buffer.slice(0);
-
-            // 将副本转换为 Int16Array 以便处理
-            const audioData = new Int16Array(bufferCopy);
-
-            // 应用增益（提高18倍）
-            for (let i = 0; i < audioData.length; i++) {
-              // 将 Int16 值转换为浮点数进行计算
-              const sample = audioData[i] / 32768.0; // 归一化到 [-1.0, 1.0]
-              const adjustedSample = sample * 18; // 应用增益
-              const clampedSample = Math.max(-1.0, Math.min(1.0, adjustedSample)); // 限制范围
-              audioData[i] = Math.round(clampedSample * 32768.0); // 转换回 Int16
-            }
+            const enhancer = new AudioEnhancer();
+            // 自定义参数（根据实际环境调整）
+            enhancer.setGainParams(200);
+            enhancer.setNoiseParams(0.03, 0.35);
+            // 处理音频数据
+            const processedBuffer = enhancer.processAudio(bufferCopy);
             // 保存调整后的副本到 audioBuffers
-            this.audioBuffers.push(audioData.buffer as ArrayBuffer);
+            this.audioBuffers.push(processedBuffer);
           }
 
           // 处理音频数据
