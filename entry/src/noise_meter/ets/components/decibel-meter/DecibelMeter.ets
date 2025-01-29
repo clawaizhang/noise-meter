@@ -28,8 +28,9 @@ import { DecibelState } from '../../types/DecibelState';
 
 @ComponentV2
 export struct DecibelMeter {
-  @Param @Require meterOn:boolean = true;
-  @Local private decibelState: DecibelState =  AppStorageV2.connect(DecibelState, 'DecibelState', () => new DecibelState())!;
+  @Param @Require meterOn: boolean = true;
+  @Local private decibelState: DecibelState =
+    AppStorageV2.connect(DecibelState, 'DecibelState', () => new DecibelState())!;
   @Local private minDecibel: number = 0
   @Local private maxDecibel: number = 0
   @Local private avgDecibel: number = 0
@@ -46,6 +47,8 @@ export struct DecibelMeter {
   @Local private weightingType: WeightingType = WeightingType.A // 当前FFT大小
   @Local private currentMode: AudioAnalysisMode = AudioAnalysisMode.FAST_TIME_WEIGHTING // 当前模式
   @Local private currentFftSize: number = 2048 // 当前FFT大小
+  @Local private noiseThreshold: number = 80 // 设置噪音阈值为80分贝
+  @Local private isNoiseAlarm: boolean = false // 是否触发噪音报警
   @Consumer(noiseMeterNavStack) navStack: NavPathStack = new NavPathStack()
   private audioService: AudioService = AudioService.getInstance(getContext() as common.UIAbilityContext)
   private locationService: LocationService = LocationService.getInstance()
@@ -66,6 +69,7 @@ export struct DecibelMeter {
   private readonly sampleRate: number = 44100 // 采样率
   private canvasSettings: RenderingContextSettings = new RenderingContextSettings(true) // Canvas设置
   private canvasContext: CanvasRenderingContext2D = new CanvasRenderingContext2D(this.canvasSettings) // Canvas上下文
+  private noiseAlarmTimer: number = -1 // 定时器ID用于控制闪烁
 
   // 计算Canvas尺寸
   private async calculateCanvasDimensions(): Promise<void> {
@@ -122,7 +126,6 @@ export struct DecibelMeter {
     }
   }
 
-
   @Builder
   private SpectrumView() {
     Column() {
@@ -166,9 +169,9 @@ export struct DecibelMeter {
         .borderRadius(4)
         .position({ x: '10%', y: '2%' })
         .onClick(() => {
-          this.navStack.pushDestinationByName('NoiseDescriptionDialog',null);
+          this.navStack.pushDestinationByName('NoiseDescriptionDialog', null);
         })
-  
+
         // 将校准指示器移动到Canvas右上角
         CalibrationIndicator({ gain: this.calibrationGain, weightingType: this.weightingType })
 
@@ -192,10 +195,10 @@ export struct DecibelMeter {
   async aboutToAppear() {
     try {
 
-      
+
       // 初始化位置服务状态
       this.isLocationEnabled = this.preferenceService.isEnabled(PreferenceKeyConstants.LOCATION);
-      if(!this.isLocationEnabled) {
+      if (!this.isLocationEnabled) {
         this.locationService.clearCache();
       } else {
         // 初始化位置信息
@@ -266,7 +269,7 @@ export struct DecibelMeter {
     const maxRetries = 3;
     const retryInterval = 1000; // 1秒
     let retryCount = 0;
-    
+
     while (true) {
       try {
         await this.audioService.startCapture();
@@ -363,6 +366,58 @@ export struct DecibelMeter {
     this.recordingTime = 0;
   }
 
+  private updateStatistics(value: number) {
+    if (value > 0) {
+      // 记录分贝值
+      this.values.push(value);
+
+      if (this.dbCount === 0) {
+        // 第一次检测到的值作为初始值
+        this.minDecibel = value;
+        this.maxDecibel = value;
+        this.avgDecibel = value;
+        // 延迟显示统计区域，添加动画效果
+        animateTo({ duration: 300, curve: Curve.EaseOut }, () => {
+          this.showStats = true;
+        })
+      } else {
+        // 更新最小值
+        if (value < this.minDecibel) {
+          this.minDecibel = value;
+        }
+        // 更新最大值
+        if (value > this.maxDecibel) {
+          this.maxDecibel = value;
+        }
+      }
+      if (this.dbCount <= 5 && this.currentMode == AudioAnalysisMode.FAST_TIME_WEIGHTING) {
+        this.maxDecibel = this.minDecibel;
+      }
+      if (this.dbCount <= 10 && this.currentMode == AudioAnalysisMode.IMPULSE_TIME_WEIGHTING) {
+        this.maxDecibel = this.minDecibel;
+      }
+      // 更新平均值
+      this.dbSum += value;
+      this.dbCount++;
+      this.avgDecibel = Math.round(this.dbSum / this.dbCount);
+
+      // 判断是否超过噪音阈值
+      if (value > this.noiseThreshold) {
+        if (this.noiseAlarmTimer === -1) {
+          this.noiseAlarmTimer = setInterval(() => {
+            this.isNoiseAlarm = !this.isNoiseAlarm;
+          }, 300); // 每300毫秒切换一次
+        }
+      } else {
+        if (this.noiseAlarmTimer !== -1) {
+          clearInterval(this.noiseAlarmTimer);
+          this.noiseAlarmTimer = -1;
+          this.isNoiseAlarm = false;
+        }
+      }
+    }
+  }
+
   private async stopRecording() {
     if (this.isRecording) {
       this.isRecording = false;
@@ -370,7 +425,7 @@ export struct DecibelMeter {
 
       try {
         let locationInfo: LocationInfo | null = null;
-        
+
         if (this.isLocationEnabled) {
           locationInfo = this.locationService.getCachedLocation();
           console.info('[FREQ_TRACE][Location] 位置信息:', locationInfo);
@@ -441,42 +496,12 @@ export struct DecibelMeter {
         }, 500);
       }
     }
-  }
 
-  private updateStatistics(value: number) {
-    if (value > 0) {
-      // 记录分贝值
-      this.values.push(value);
-
-      if (this.dbCount === 0) {
-        // 第一次检测到的值作为初始值
-        this.minDecibel = value;
-        this.maxDecibel = value;
-        this.avgDecibel = value;
-        // 延迟显示统计区域，添加动画效果
-        animateTo({ duration: 300, curve: Curve.EaseOut }, () => {
-          this.showStats = true;
-        })
-      } else {
-        // 更新最小值
-        if (value < this.minDecibel) {
-          this.minDecibel = value;
-        }
-        // 更新最大值
-        if (value > this.maxDecibel) {
-          this.maxDecibel = value;
-        }
-      }
-      if(this.dbCount <= 5 && this.currentMode == AudioAnalysisMode.FAST_TIME_WEIGHTING) {
-        this.maxDecibel = this.minDecibel;
-      }
-      if(this.dbCount <= 10 && this.currentMode == AudioAnalysisMode.IMPULSE_TIME_WEIGHTING) {
-        this.maxDecibel = this.minDecibel;
-      }
-      // 更新平均值
-      this.dbSum += value;
-      this.dbCount++;
-      this.avgDecibel = Math.round(this.dbSum / this.dbCount);
+    // 清除闪烁定时器
+    if (this.noiseAlarmTimer !== -1) {
+      clearInterval(this.noiseAlarmTimer);
+      this.noiseAlarmTimer = -1;
+      this.isNoiseAlarm = false;
     }
   }
 
@@ -516,8 +541,8 @@ export struct DecibelMeter {
                 .fontColor('#999999')
                 .margin({ bottom: 4 })
               Text(this.showAvgInsteadOfMin ?
-                  (this.avgDecibel === 0 ? '-' : this.avgDecibel.toString()) :
-                  (this.minDecibel === 0 ? '-' : this.minDecibel.toString()))
+                (this.avgDecibel === 0 ? '-' : this.avgDecibel.toString()) :
+                (this.minDecibel === 0 ? '-' : this.minDecibel.toString()))
                 .fontSize(32)
                 .fontWeight(FontWeight.Medium)
                 .fontColor(DecibelService.getDecibelColor(
@@ -527,7 +552,7 @@ export struct DecibelMeter {
                 })
             }
             .alignItems(HorizontalAlign.Center)
-            .margin({ right: 16 })
+            .margin({ right: 8 })
 
             Column() {
               Text(this.decibelState.currentDecibel === 0 ? '-' : this.decibelState.currentDecibel.toString())
@@ -560,13 +585,13 @@ export struct DecibelMeter {
                     .height(12)
                     .margin({ right: 4 })
                     .fillColor(DecibelService.getDecibelColor(this.decibelState.currentDecibel))
-                    
+
                   Text(DecibelService.getDecibelLevel(this.decibelState.currentDecibel))
                     .fontSize(14)
                     .fontColor(DecibelService.getDecibelColor(this.decibelState.currentDecibel))
                 }
                 .onClick(() => {
-                  this.navStack.pushPathByName("NoiseLevelDialog",null);
+                  this.navStack.pushPathByName("NoiseLevelDialog", null);
                 })
               }
               .margin({ top: 4 })
@@ -584,7 +609,7 @@ export struct DecibelMeter {
                 .fontColor(DecibelService.getDecibelColor(this.maxDecibel))
             }
             .alignItems(HorizontalAlign.Center)
-            .margin({ left: 16 })
+            .margin({ left: 8 })
           }
           .width('100%')
           .justifyContent(FlexAlign.Center)
@@ -599,7 +624,10 @@ export struct DecibelMeter {
           right: 16
         })
         .backgroundColor(Color.White)
-        .borderRadius(24)
+        .borderRadius(12)
+        .borderWidth(2)
+        .borderColor(this.isNoiseAlarm ? DecibelService.getDecibelColor(this.decibelState.currentDecibel) : Color.Transparent)
+
       }
       .width('100%')
       .margin({ left: 16, right: 16, top: 16 })
@@ -638,4 +666,3 @@ export struct DecibelMeter {
     .alignItems(HorizontalAlign.Center)
   }
 }
-
