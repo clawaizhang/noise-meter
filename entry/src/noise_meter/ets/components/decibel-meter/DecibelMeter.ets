@@ -170,7 +170,7 @@ export struct DecibelMeter {
         })
   
         // 将校准指示器移动到Canvas右上角
-        CalibrationIndicator({ gain: this.calibrationGain })
+        CalibrationIndicator({ gain: this.calibrationGain, weightingType: this.weightingType })
 
       }
     }

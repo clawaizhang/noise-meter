@@ -1,6 +1,8 @@
+import { WeightingType } from "../../../../library/ets/constants/WeightingConstants";
 
 interface CalibrationConfig {
   gain: number;
+  weightingType: WeightingType;
 }
 
 @Builder
@@ -10,13 +12,13 @@ export function CalibrationIndicator(config: CalibrationConfig) {
       .fontSize(12)
       .fontColor(Color.Gray)
 
-    Text(`${config.gain} dB`)
+    Text(`${config.gain} ${config.weightingType === WeightingType.A ? 'dB(A)' : config.weightingType === WeightingType.C ? 'dB(C)' : 'dB'}`)
       .fontSize(12)
       .fontColor(Color.Gray)
       .margin({ left: 5 })
   }
   .position({
-    x: '70%', // 调整到右侧
+    x: '65%', // 调整到右侧
     y: '2%'    // 调整到顶部
   })
   .margin({ right: 8 })
