@@ -31,4 +31,7 @@ export class PreferenceKeyConstants {
    * 屏幕常亮设置
    */
   static readonly KEEP_SCREEN_ON: string = 'keep_screen_on';
+
+  static readonly NOISE_ALARM_ENABLED: string = 'noise_alarm_enabled';
+  static readonly NOISE_THRESHOLD: string = 'noise_threshold';
 }

@@ -47,7 +47,8 @@ export struct DecibelMeter {
   @Local private weightingType: WeightingType = WeightingType.A // 当前FFT大小
   @Local private currentMode: AudioAnalysisMode = AudioAnalysisMode.FAST_TIME_WEIGHTING // 当前模式
   @Local private currentFftSize: number = 2048 // 当前FFT大小
-  @Local private noiseThreshold: number = 80 // 设置噪音阈值为80分贝
+  @Local private noiseAlarmEnabled: boolean = true; // 是否启用噪音阈值警报
+  @Local private noiseThreshold: number = 80; // 设置噪音阈值为80分贝
   @Local private isNoiseAlarm: boolean = false // 是否触发噪音报警
   @Consumer(noiseMeterNavStack) navStack: NavPathStack = new NavPathStack()
   private audioService: AudioService = AudioService.getInstance(getContext() as common.UIAbilityContext)
@@ -249,6 +250,21 @@ export struct DecibelMeter {
       // 获取屏幕信息并初始化Canvas尺寸
       await this.calculateCanvasDimensions();
       console.info(`[FREQ_TRACE][Screen] aboutToAppear - 初始化后的Canvas尺寸: ${this.canvasWidth}x${this.canvasHeight}`);
+
+      // 读取噪音阈值警报的开关和阈值设置
+      this.noiseAlarmEnabled = this.preferenceService.getBoolean(PreferenceKeyConstants.NOISE_ALARM_ENABLED, true);
+      this.noiseThreshold = this.preferenceService.getNumber(PreferenceKeyConstants.NOISE_THRESHOLD, 80);
+      this.preferenceService.addChangeListener(PreferenceKeyConstants.NOISE_ALARM_ENABLED, (key:string,value: PreferenceValue) => {
+        if (key === PreferenceKeyConstants.NOISE_ALARM_ENABLED && typeof value === 'boolean') {
+          this.noiseAlarmEnabled = value;
+        }
+      });
+      this.preferenceService.addChangeListener(PreferenceKeyConstants.NOISE_THRESHOLD, (key:string,value: PreferenceValue) => {
+        if (key === PreferenceKeyConstants.NOISE_THRESHOLD && typeof value === 'number') {
+          this.noiseThreshold = value;
+        }
+      });
+
     } catch (error) {
       console.error('[FREQ_TRACE][Screen] 初始化失败:', error);
     }
@@ -402,18 +418,16 @@ export struct DecibelMeter {
       this.avgDecibel = Math.round(this.dbSum / this.dbCount);
 
       // 判断是否超过噪音阈值
-      if (value > this.noiseThreshold) {
+      if (value > this.noiseThreshold && this.noiseAlarmEnabled) {
         if (this.noiseAlarmTimer === -1) {
           this.noiseAlarmTimer = setInterval(() => {
             this.isNoiseAlarm = !this.isNoiseAlarm;
           }, 300); // 每300毫秒切换一次
         }
       } else {
-        if (this.noiseAlarmTimer !== -1) {
-          clearInterval(this.noiseAlarmTimer);
-          this.noiseAlarmTimer = -1;
-          this.isNoiseAlarm = false;
-        }
+        clearInterval(this.noiseAlarmTimer);
+        this.noiseAlarmTimer = -1;
+        this.isNoiseAlarm = false;
       }
     }
   }

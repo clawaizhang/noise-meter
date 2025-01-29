@@ -101,6 +101,9 @@ export struct Settings {
   @Local remainingTime: number = 0;
   @Local calibrationValue: number = 0;
   @Local decibelState: DecibelState = AppStorageV2.connect(DecibelState, 'DecibelState', () => new DecibelState())!;
+  @Local isNoiseAlarmEnabled: boolean = true;
+  @Local noiseThreshold: number = 80;
+  @Local noiseAlarmDescription: string = ''; // 添加新的变量来存储噪音警报描述
   private readonly COOLDOWN_DURATION: number = 500; // 0.5秒冷却时间
 
   // 工具方法
@@ -191,7 +194,10 @@ export struct Settings {
     this.selectedAnalysisMode = (this.preferenceService.getString(PreferenceKeyConstants.ANALYSIS_MODE) ||
     AudioAnalysisMode.FAST_TIME_WEIGHTING) as AudioAnalysisMode;
     this.calibrationValue = this.preferenceService.getNumber(PreferenceKeyConstants.CALIBRATION) || 0;
+    this.isNoiseAlarmEnabled = this.preferenceService.getBoolean(PreferenceKeyConstants.NOISE_ALARM_ENABLED, false);
+    this.noiseThreshold = this.preferenceService.getNumber(PreferenceKeyConstants.NOISE_THRESHOLD, 80);
     this.updateAnalysisModeCache();
+    this.updateNoiseAlarmDescription(); // 初始化噪音警报描述
     this.preferenceService.addChangeListener(PreferenceKeyConstants.WEIGHTING,
       (key: string, value: PreferenceValue) => {
         this.selectedWeighting = value as WeightingType;
@@ -207,6 +213,10 @@ export struct Settings {
       `时间分辨率: ${(config.fftSize / 44100 * 1000).toFixed(1)}ms`,
       `更新间隔: ${config.updateInterval}ms`
     ];
+  }
+
+  private updateNoiseAlarmDescription() {
+    this.noiseAlarmDescription = this.isNoiseAlarmEnabled ? '噪音警报已开启' : '噪音警报已关闭';
   }
 
   build() {
@@ -374,6 +384,89 @@ Slider({
 
         ListItem() {
           Text('校准声级计，范围从-30dB到+30dB')
+            .itemDescription()
+        }
+        .descriptionContainer()
+
+
+        // 添加噪音阈值警报的开关
+        ListItem() {
+          Column() {
+            Row() {
+              Row() {
+                Image($r('app.media.ic_alarm')) // 确保资源名称正确
+                  .itemIcon()
+
+                Text('噪音警报')
+                  .itemTitle()
+              }
+
+              Blank()
+
+              Toggle({ type: ToggleType.Switch, isOn: this.isNoiseAlarmEnabled })
+                .selectedColor('#0091FF')
+                .switchPointColor('#FFFFFF')
+                .onChange((isOn: boolean) => {
+                  void this.preferenceService.setBoolean(PreferenceKeyConstants.NOISE_ALARM_ENABLED, isOn);
+                  this.isNoiseAlarmEnabled = isOn;
+                  this.updateNoiseAlarmDescription(); // 更新噪音警报描述
+                })
+            }
+            .listItemRow()
+          }
+          .listItemStyle()
+        }
+
+        ListItem() {
+          Text(this.noiseAlarmDescription)
+            .itemDescription()
+        }
+        .descriptionContainer()
+
+        // 添加噪音阈值的设置
+        ListItem() {
+          Column() {
+            Row() {
+              Row() {
+                Image($r('app.media.ic_threshold'))
+                  .itemIcon()
+
+                Text('噪音警报阈值')
+                  .itemTitle()
+              }
+
+              Blank()
+
+              Text(`${this.noiseThreshold}dB`)
+                .fontSize(14)
+                .fontColor('#666666')
+                .margin({ right: 8 })
+            }
+            .listItemRow()
+
+            Slider({
+              value: this.noiseThreshold,
+              min: 30,
+              max: 120,
+              style: SliderStyle.InSet
+            })
+              .blockColor('#0091FF')
+              .trackColor('#F0F0F0')
+              .selectedColor('#0091FF')
+              .onChange((value: number) => {
+                this.noiseThreshold = value;
+                void this.preferenceService.setNumber(PreferenceKeyConstants.NOISE_THRESHOLD, value);
+              })
+              .margin({ top: 12, bottom: 12 })
+              .height(24)
+              .trackThickness(24)
+              .blockSize({width: 24, height: 24})
+          }
+          .listItemStyle()
+        }
+
+        ListItem() {
+          Text('设置触发噪音警报的阈值，范围从30dB到120dB')
             .itemDescription()
         }
         .descriptionContainer()
