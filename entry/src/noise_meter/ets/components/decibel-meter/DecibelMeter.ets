@@ -492,6 +492,11 @@ export struct DecibelMeter {
         this.weightingType = WeightingType.A;
         break;
     }
+    // 弹出提示框显示当前频率加权方式
+    promptAction.showToast({
+      message: `频率加权: ${this.weightingType} 计权`,
+      duration: 2000
+    });
     this.preferenceService.setString(PreferenceKeyConstants.WEIGHTING, this.weightingType);
   }
 
