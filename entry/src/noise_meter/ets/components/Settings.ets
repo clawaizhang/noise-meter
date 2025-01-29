@@ -1,5 +1,5 @@
 import { AppStorageV2 } from '@kit.ArkUI';
-import { PreferenceService } from '../../../library/ets/services/PreferenceService';
+import { PreferenceService, PreferenceValue } from '../../../library/ets/services/PreferenceService';
 import { PreferenceKeyConstants } from '../../../library/ets/constants/PreferenceKeyConstants';
 import { CustomTitleBar } from '../../../library/ets/components/common/CustomTitleBar';
 import { WeightingType, getWeightingDescription } from '../../../library/ets/constants/WeightingConstants';
@@ -192,6 +192,10 @@ export struct Settings {
     AudioAnalysisMode.FAST_TIME_WEIGHTING) as AudioAnalysisMode;
     this.calibrationValue = this.preferenceService.getNumber(PreferenceKeyConstants.CALIBRATION) || 0;
     this.updateAnalysisModeCache();
+    this.preferenceService.addChangeListener(PreferenceKeyConstants.WEIGHTING,
+      (key: string, value: PreferenceValue) => {
+        this.selectedWeighting = value as WeightingType;
+      })
   }
 
   private updateAnalysisModeCache() {

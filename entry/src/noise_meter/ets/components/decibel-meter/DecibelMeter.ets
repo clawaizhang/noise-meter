@@ -480,6 +480,21 @@ export struct DecibelMeter {
     }
   }
 
+  private toggleWeightingType() {
+    switch (this.weightingType) {
+      case WeightingType.A:
+        this.weightingType = WeightingType.C;
+        break;
+      case WeightingType.C:
+        this.weightingType = WeightingType.Z;
+        break;
+      case WeightingType.Z:
+        this.weightingType = WeightingType.A;
+        break;
+    }
+    this.preferenceService.setString(PreferenceKeyConstants.WEIGHTING, this.weightingType);
+  }
+
   build() {
     Column() {
       // 频谱显示
@@ -596,6 +611,7 @@ export struct DecibelMeter {
 
       ActionPanel({
         isUILocked: this.isUILocked,
+        weightingType: this.weightingType,
         onReset: () => {
           this.audioService.resetData();
           this.resetData();
@@ -605,6 +621,10 @@ export struct DecibelMeter {
         },
         lockToggle: () => {
           this.isUILocked = !this.isUILocked;
+        },
+        // 添加新的按钮用于切换频率加权方式
+        onToggleWeighting: () => {
+          this.toggleWeightingType();
         }
       })
     }
@@ -613,3 +633,4 @@ export struct DecibelMeter {
     .alignItems(HorizontalAlign.Center)
   }
 }
+

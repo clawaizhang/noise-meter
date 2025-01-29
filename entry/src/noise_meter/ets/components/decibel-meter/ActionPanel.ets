@@ -1,11 +1,14 @@
 import promptAction from '@ohos.promptAction';
+import { WeightingType } from '../../../../library/ets/constants/WeightingConstants';
 
 @ComponentV2
 export struct ActionPanel {
   @Param isUILocked: boolean = false;
+  @Param weightingType: WeightingType = WeightingType.A;
   @Event onReset: () => void;
   @Event onSave: () => void;
   @Event lockToggle: () => void;
+  @Event onToggleWeighting: () => void;
 
   build() {
     Column() {
@@ -55,6 +58,21 @@ export struct ActionPanel {
         .accessibilityDescription(this.isUILocked ? '解锁界面' : '锁定界面')
         .onClick(() => {
           this.lockToggle();
+        })
+
+        // 新增：切换频率加权方式按钮
+        Button({ type: ButtonType.Circle }) {
+          Text(` ${this.weightingType}`) // 假设有一个图标表示切换频率加权方式
+            .width(20)
+            .height(20)
+        }
+        .alignSelf(ItemAlign.Center)
+        .width(40)
+        .height(40)
+        .backgroundColor('#F0F0F0')
+        .accessibilityDescription('切换频率加权方式')
+        .onClick(() => {
+          this.onToggleWeighting();
         })
 
         // 保存按钮
