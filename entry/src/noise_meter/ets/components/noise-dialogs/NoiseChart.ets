@@ -76,7 +76,7 @@ export struct NoiseChart {
 
               const margin: Margin = {
                 top: vp2px(2),
-                right: vp2px(2),
+                right: vp2px(3),
                 bottom: vp2px(4),
                 left: vp2px(6)
               };
