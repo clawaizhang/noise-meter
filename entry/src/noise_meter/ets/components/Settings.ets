@@ -499,7 +499,7 @@ Slider({
         }
 
         ListItem() {
-          Text(this.isLocationEnabled ? '记录测量地点的经纬度坐标' : '不会采集地理位置信息')
+          Text(this.isLocationEnabled ? '记录检测地点的位置信息' : '不会采集地理位置信息')
             .itemDescription()
         }
         .descriptionContainer()
