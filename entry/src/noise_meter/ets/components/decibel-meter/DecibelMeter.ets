@@ -519,26 +519,6 @@ export struct DecibelMeter {
     }
   }
 
-  private toggleWeightingType() {
-    switch (this.weightingType) {
-      case WeightingType.A:
-        this.weightingType = WeightingType.C;
-        break;
-      case WeightingType.C:
-        this.weightingType = WeightingType.Z;
-        break;
-      case WeightingType.Z:
-        this.weightingType = WeightingType.A;
-        break;
-    }
-    // 弹出提示框显示当前频率加权方式
-    promptAction.showToast({
-      message: `频率加权: ${this.weightingType} 计权`,
-      duration: 2000
-    });
-    this.preferenceService.setString(PreferenceKeyConstants.WEIGHTING, this.weightingType);
-  }
-
   build() {
     Column() {
       // 频谱显示
@@ -669,9 +649,16 @@ export struct DecibelMeter {
         lockToggle: () => {
           this.isUILocked = !this.isUILocked;
         },
-        // 添加新的按钮用于切换频率加权方式
-        onToggleWeighting: () => {
-          this.toggleWeightingType();
+        // 修改：将onToggleWeighting的参数类型改为WeightingType
+        onToggleWeighting: (weightingType: WeightingType) => {
+          this.weightingType = weightingType;
+          // 弹出提示框显示当前频率加权方式
+          promptAction.showToast({
+            bottom: '53%',
+            message: `频率加权: ${this.weightingType} 计权`,
+            duration: 2000
+          });
+          this.preferenceService.setString(PreferenceKeyConstants.WEIGHTING, this.weightingType);
         }
       })
     }

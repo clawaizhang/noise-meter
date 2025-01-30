@@ -4,11 +4,13 @@ import { WeightingType } from '../../../../library/ets/constants/WeightingConsta
 @ComponentV2
 export struct ActionPanel {
   @Param isUILocked: boolean = false;
-  @Param weightingType: WeightingType = WeightingType.A;
+  @Param @Require weightingType: WeightingType;
   @Event onReset: () => void;
   @Event onSave: () => void;
   @Event lockToggle: () => void;
-  @Event onToggleWeighting: () => void;
+  @Event onToggleWeighting: (weightingType: WeightingType) => void;
+  private weightingTypes: Array<SelectOption> =
+    [{ value: WeightingType.A }, { value: WeightingType.C }, { value: WeightingType.Z }];
 
   build() {
     Column() {
@@ -60,20 +62,17 @@ export struct ActionPanel {
           this.lockToggle();
         })
 
-        // 新增：切换频率加权方式按钮
-        Button({ type: ButtonType.Circle }) {
-          Text(` ${this.weightingType}`) // 假设有一个图标表示切换频率加权方式
-            .width(20)
-            .height(20)
-        }
-        .alignSelf(ItemAlign.Center)
-        .width(40)
-        .height(40)
-        .backgroundColor('#F0F0F0')
-        .accessibilityDescription('切换频率加权方式')
-        .onClick(() => {
-          this.onToggleWeighting();
-        })
+        // 新增：切换频率加权方式选择框
+        Select(this.weightingTypes)
+          .width(40)
+          .height(40)
+          .backgroundColor('#F0F0F0')
+          .selected(this.getSelectedIndex())
+          .value(this.weightingType)
+          .accessibilityDescription('切换频率加权方式')
+          .onSelect((index: number, value: string) => {
+            this.onToggleWeighting(value as WeightingType);
+          })
 
         // 保存按钮
         Button({ type: ButtonType.Circle }) {
@@ -108,12 +107,31 @@ export struct ActionPanel {
       }
       .width('100%')
       .justifyContent(FlexAlign.SpaceBetween)
-      .padding({ left: 24, right: 24, top: 8, bottom: 8 })
+      .padding({
+        left: 24,
+        right: 24,
+        top: 8,
+        bottom: 8
+      })
     }
     .width('100%')
     .backgroundColor(Color.White)
     .borderRadius(12)
     .shadow({ radius: 2, color: '#1A000000', offsetY: 1 })
     .margin({ top: 8 })
+  }
+
+  // 新增方法：根据weightingType获取对应的索引
+  getSelectedIndex(): number {
+    switch (this.weightingType) {
+      case WeightingType.A:
+        return 0;
+      case WeightingType.C:
+        return 1;
+      case WeightingType.Z:
+        return 2;
+      default:
+        return 0;
+    }
   }
 }
