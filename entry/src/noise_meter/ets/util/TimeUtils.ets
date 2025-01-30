@@ -35,3 +35,13 @@ export function secondsToHoursMinutesSecondsWithDecimal(milliseconds: number): s
 
   return result;
 }
+
+
+export function formatStartTime(startTime: number) {
+  return new Date(startTime).toLocaleTimeString('zh-CN', {
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false
+  });
+}

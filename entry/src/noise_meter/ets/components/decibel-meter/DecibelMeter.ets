@@ -20,7 +20,7 @@ import { FFTAnalyzer } from '../../../../library/ets/utils/FFTAnalyzer'; // 导�
 import { WeightingType } from '../../../../library/ets/constants/WeightingConstants';
 import { taskpool } from '@kit.ArkTS';
 import { concurrentCalculateSpectrum } from '../../concurrent/ConcurrentFftAnalyzer';
-import { secondsToHoursMinutesSecondsWithDecimal } from '../../util/TimeUtils';
+import { formatStartTime, secondsToHoursMinutesSecondsWithDecimal } from '../../util/TimeUtils';
 import { ActionPanel } from './ActionPanel';
 import { CalibrationIndicator } from './CalibrationIndicator';
 import { drawSpectrum, getDbSteps, getFrequencySteps } from './DrawSpectrum';
@@ -50,6 +50,7 @@ export struct DecibelMeter {
   @Local private noiseAlarmEnabled: boolean = true; // 是否启用噪音阈值警报
   @Local private noiseThreshold: number = 80; // 设置噪音阈值为80分贝
   @Local private isNoiseAlarm: boolean = false // 是否触发噪音报警
+  @Local startTime: number = 0
   @Consumer(noiseMeterNavStack) navStack: NavPathStack = new NavPathStack()
   private audioService: AudioService = AudioService.getInstance(getContext() as common.UIAbilityContext)
   private locationService: LocationService = LocationService.getInstance()
@@ -59,7 +60,6 @@ export struct DecibelMeter {
   private dbCount: number = 0
   private dbSum: number = 0
   private values: number[] = []
-  private startTime: number = 0
   private releaseTimer: number = -1
   private currentRecord?: DecibelRecord
   private recordListener?: PreferenceChangeListener
@@ -254,16 +254,18 @@ export struct DecibelMeter {
       // 读取噪音阈值警报的开关和阈值设置
       this.noiseAlarmEnabled = this.preferenceService.getBoolean(PreferenceKeyConstants.NOISE_ALARM_ENABLED, true);
       this.noiseThreshold = this.preferenceService.getNumber(PreferenceKeyConstants.NOISE_THRESHOLD, 80);
-      this.preferenceService.addChangeListener(PreferenceKeyConstants.NOISE_ALARM_ENABLED, (key:string,value: PreferenceValue) => {
-        if (key === PreferenceKeyConstants.NOISE_ALARM_ENABLED && typeof value === 'boolean') {
-          this.noiseAlarmEnabled = value;
-        }
-      });
-      this.preferenceService.addChangeListener(PreferenceKeyConstants.NOISE_THRESHOLD, (key:string,value: PreferenceValue) => {
-        if (key === PreferenceKeyConstants.NOISE_THRESHOLD && typeof value === 'number') {
-          this.noiseThreshold = value;
-        }
-      });
+      this.preferenceService.addChangeListener(PreferenceKeyConstants.NOISE_ALARM_ENABLED,
+        (key: string, value: PreferenceValue) => {
+          if (key === PreferenceKeyConstants.NOISE_ALARM_ENABLED && typeof value === 'boolean') {
+            this.noiseAlarmEnabled = value;
+          }
+        });
+      this.preferenceService.addChangeListener(PreferenceKeyConstants.NOISE_THRESHOLD,
+        (key: string, value: PreferenceValue) => {
+          if (key === PreferenceKeyConstants.NOISE_THRESHOLD && typeof value === 'number') {
+            this.noiseThreshold = value;
+          }
+        });
 
     } catch (error) {
       console.error('[FREQ_TRACE][Screen] 初始化失败:', error);
@@ -555,12 +557,7 @@ export struct DecibelMeter {
                 .fontColor(DecibelService.getDecibelColor(this.decibelState.currentDecibel))
               Row() {
                 if (this.isRecording) {
-                  Text(new Date(this.startTime).toLocaleTimeString('zh-CN', {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                    second: '2-digit',
-                    hour12: false
-                  }))
+                  Text(formatStartTime(this.startTime))
                     .fontSize(14)
                     .fontColor('#666666')
                   Text(' | ')
@@ -620,7 +617,8 @@ export struct DecibelMeter {
         .backgroundColor(Color.White)
         .borderRadius(12)
         .borderWidth(2)
-        .borderColor(this.isNoiseAlarm ? DecibelService.getDecibelColor(this.decibelState.currentDecibel) : Color.Transparent)
+        .borderColor(this.isNoiseAlarm ? DecibelService.getDecibelColor(this.decibelState.currentDecibel) :
+        Color.Transparent)
 
       }
       .width('100%')
@@ -666,4 +664,5 @@ export struct DecibelMeter {
     .padding({ top: 12, bottom: 12 })
     .alignItems(HorizontalAlign.Center)
   }
+
 }
