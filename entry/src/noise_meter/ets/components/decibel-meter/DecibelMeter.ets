@@ -386,8 +386,6 @@ export struct DecibelMeter {
 
   private updateStatistics(value: number) {
     if (value > 0) {
-      // 记录分贝值
-      this.values.push(value);
 
       if (this.dbCount === 0) {
         // 第一次检测到的值作为初始值
@@ -410,9 +408,13 @@ export struct DecibelMeter {
       }
       if (this.dbCount <= 5 && this.currentMode == AudioAnalysisMode.FAST_TIME_WEIGHTING) {
         this.maxDecibel = this.minDecibel;
+        this.values.shift();
+        this.values.unshift(this.minDecibel);
       }
       if (this.dbCount <= 10 && this.currentMode == AudioAnalysisMode.IMPULSE_TIME_WEIGHTING) {
         this.maxDecibel = this.minDecibel;
+        this.values.shift();
+        this.values.unshift(this.minDecibel);
       }
       // 更新平均值
       this.dbSum += value;
@@ -664,5 +666,4 @@ export struct DecibelMeter {
     .padding({ top: 12, bottom: 12 })
     .alignItems(HorizontalAlign.Center)
   }
-
 }
