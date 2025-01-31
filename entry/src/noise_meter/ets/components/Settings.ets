@@ -59,7 +59,7 @@ function detailText() {
   .margin({ top: 4, left: 48 })
 }
 
-@Extend(Row)
+@Extend(ListItem)
 function dividerStyle() {
   .width('100%')
   .height(1)
@@ -254,6 +254,9 @@ export struct Settings {
           })
         })
 
+        ListItem() {
+        }.dividerStyle() // 添加分隔符
+
         if (this.isAudioAnalysisExpanded) {
           // 时间计权模式
           ListItem() {
@@ -445,6 +448,9 @@ export struct Settings {
           })
         })
 
+        ListItem() {
+        }.dividerStyle() // 添加分隔符
+
         if (this.isAlertsAndNotificationsExpanded) {
           // 添加噪音阈值警报的开关
           ListItem() {
@@ -553,6 +559,9 @@ export struct Settings {
             this.isDeviceSettingsExpanded = false;
           })
         })
+
+        ListItem() {
+        }.dividerStyle() // 添加分隔符
 
         if (this.isDataRecordingAndPrivacyExpanded) {
           // 位置开关
