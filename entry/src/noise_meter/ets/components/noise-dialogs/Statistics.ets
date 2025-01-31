@@ -235,12 +235,6 @@ export struct Statistics {
               .fontSize(24)
               .fontWeight(FontWeight.Bold)
               .fontColor(DecibelService.getDecibelColor(this.selectedRecord!.minDecibel))
-            Text(' 分贝')
-              .fontSize(12)
-              .fontColor('#666666')
-              .margin({ left: 4 })
-              .alignSelf(ItemAlign.End)
-              .margin({ bottom: 4 })
           }
 
           Text(DecibelService.getDecibelLevel(this.selectedRecord!.minDecibel))
@@ -268,12 +262,6 @@ export struct Statistics {
               .fontSize(24)
               .fontWeight(FontWeight.Bold)
               .fontColor(DecibelService.getDecibelColor(this.selectedRecord!.avgDecibel))
-            Text(' 分贝')
-              .fontSize(12)
-              .fontColor('#666666')
-              .margin({ left: 4 })
-              .alignSelf(ItemAlign.End)
-              .margin({ bottom: 4 })
           }
 
           Text(DecibelService.getDecibelLevel(this.selectedRecord!.avgDecibel))
@@ -301,12 +289,6 @@ export struct Statistics {
               .fontSize(24)
               .fontWeight(FontWeight.Bold)
               .fontColor(DecibelService.getDecibelColor(this.selectedRecord!.maxDecibel))
-            Text(' 分贝')
-              .fontSize(12)
-              .fontColor('#666666')
-              .margin({ left: 4 })
-              .alignSelf(ItemAlign.End)
-              .margin({ bottom: 4 })
           }
 
           Text(DecibelService.getDecibelLevel(this.selectedRecord!.maxDecibel))
