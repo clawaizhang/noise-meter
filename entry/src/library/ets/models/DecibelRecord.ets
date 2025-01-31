@@ -1,5 +1,6 @@
 import util from '@ohos.util';
 import relationalStore from '@ohos.data.relationalStore';
+import { WeightingType } from '../constants/WeightingConstants';
 
 /**
  * 分贝值范围定义
@@ -40,6 +41,7 @@ export class DecibelRecord {
   audioFilePath?: string;
   @Trace
   isFavorite: boolean;
+  weightingTypes: WeightingType[]; // 新增字段
 
   constructor(
     minDecibel: number,
@@ -60,42 +62,28 @@ export class DecibelRecord {
     this.location = location;
     this.audioFilePath = audioFilePath;
     this.isFavorite = false;
+    this.weightingTypes = []; // 初始化为空数组
   }
 
   static getTableName(): string {
     return 'decibel_records';
   }
 
-  static getCreateTableSql(): string {
-    return `
-      CREATE TABLE IF NOT EXISTS ${DecibelRecord.getTableName()} (
-        id TEXT PRIMARY KEY NOT NULL,
-        timestamp INTEGER NOT NULL,
-        minDecibel REAL NOT NULL,
-        maxDecibel REAL NOT NULL,
-        avgDecibel REAL NOT NULL,
-        duration INTEGER NOT NULL,
-        decibelValues TEXT NOT NULL,
-        location TEXT,
-        audioFilePath TEXT,
-        isFavorite INTEGER DEFAULT 0
-      )
-    `;
-  }
-
   static fromResultSet(resultSet: relationalStore.ResultSet): DecibelRecord {
     const record = new DecibelRecord(
-      resultSet.getDouble(resultSet.getColumnIndex('minDecibel')),
-      resultSet.getDouble(resultSet.getColumnIndex('maxDecibel')),
-      resultSet.getDouble(resultSet.getColumnIndex('avgDecibel')),
-      resultSet.getLong(resultSet.getColumnIndex('duration')),
-      JSON.parse(resultSet.getString(resultSet.getColumnIndex('decibelValues'))),
-      resultSet.getString(resultSet.getColumnIndex('location')),
-      resultSet.getString(resultSet.getColumnIndex('audioFilePath'))
+        resultSet.getDouble(resultSet.getColumnIndex('minDecibel')),
+        resultSet.getDouble(resultSet.getColumnIndex('maxDecibel')),
+        resultSet.getDouble(resultSet.getColumnIndex('avgDecibel')),
+        resultSet.getLong(resultSet.getColumnIndex('duration')),
+        JSON.parse(resultSet.getString(resultSet.getColumnIndex('decibelValues'))),
+        resultSet.getString(resultSet.getColumnIndex('location')),
+        resultSet.getString(resultSet.getColumnIndex('audioFilePath'))
     );
     record.id = resultSet.getString(resultSet.getColumnIndex('id'));
     record.timestamp = resultSet.getLong(resultSet.getColumnIndex('timestamp'));
     record.isFavorite = resultSet.getLong(resultSet.getColumnIndex('isFavorite')) === 1;
+    const weightingTypesStr = resultSet.getString(resultSet.getColumnIndex('weightingTypes'));
+    record.weightingTypes = weightingTypesStr ? JSON.parse(weightingTypesStr) : [];
     return record;
   }
 
@@ -110,7 +98,8 @@ export class DecibelRecord {
       decibelValues: JSON.stringify(this.decibelValues),
       location: this.location ?? null,
       audioFilePath: this.audioFilePath ?? null,
-      isFavorite: this.isFavorite ? 1 : 0
+      isFavorite: this.isFavorite ? 1 : 0,
+      weightingTypes: JSON.stringify(this.weightingTypes) // 确保正确处理 weightingTypes
     };
     return valueBucket;
   }

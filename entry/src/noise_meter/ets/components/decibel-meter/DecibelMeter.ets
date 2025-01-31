@@ -60,6 +60,7 @@ export struct DecibelMeter {
   private dbCount: number = 0
   private dbSum: number = 0
   private values: number[] = []
+  private weightingTypes: WeightingType[] = []
   private releaseTimer: number = -1
   private currentRecord?: DecibelRecord
   private recordListener?: PreferenceChangeListener
@@ -330,6 +331,9 @@ export struct DecibelMeter {
         undefined// audioFilePath
       );
 
+      // 初始化 weightingTypes 数组
+      this.weightingTypes = [];
+
       // 如果启用了录音功能，开始录音
       if (this.isRecordEnabled) {
         this.audioService.startRecording();
@@ -341,27 +345,28 @@ export struct DecibelMeter {
         taskpool.execute<[string, ArrayBuffer,
           WeightingType, number], Float32Array>(concurrentCalculateSpectrum, this.currentMode,
           buffer, this.weightingType, this.calibrationGain).then(spectrum => {
-          const config = AudioPresets.getConfig(this.currentMode as AudioAnalysisMode);
-          const db: number = new FFTAnalyzer(config.fftSize, config.windowType, config.smoothingFactor,
-            config.overlap).calculateAverageDb(spectrum);
+        const config = AudioPresets.getConfig(this.currentMode as AudioAnalysisMode);
+        const db: number = new FFTAnalyzer(config.fftSize, config.windowType, config.smoothingFactor,
+          config.overlap).calculateAverageDb(spectrum);
 
-          let decibel = Math.round(db);
-          this.values.push(decibel);
-          if (!this.isUILocked) {
-            this.decibelState.currentDecibel = decibel;
-            this.updateStatistics(this.decibelState.currentDecibel);
-            this.drawSpectrumLocal(spectrum);
-          }
-          // 更新计时器（毫秒级）
-          this.recordingTime = new Date().getTime() - this.startTime;
-        })
-      });
-    } catch (error) {
-      // 如果启动失败，重置状态
-      this.isRecording = false;
-      this.resetData();
-    }
+        let decibel = Math.round(db);
+        this.values.push(decibel);
+        this.weightingTypes.push(this.weightingType)
+        if (!this.isUILocked) {
+          this.decibelState.currentDecibel = decibel;
+          this.updateStatistics(this.decibelState.currentDecibel);
+          this.drawSpectrumLocal(spectrum);
+        }
+        // 更新计时器（毫秒级）
+        this.recordingTime = new Date().getTime() - this.startTime;
+      })
+    });
+  } catch (error) {
+    // 如果启动失败，重置状态
+    this.isRecording = false;
+    this.resetData();
   }
+}
 
   private drawSpectrumLocal(spectrum: Float32Array) {
     // 分贝网格点生成
@@ -382,11 +387,13 @@ export struct DecibelMeter {
     this.values = [];
     this.startTime = new Date().getTime();
     this.recordingTime = 0;
+
+    // 重置 weightingTypes 数组
+    this.weightingTypes = [];
   }
 
   private updateStatistics(value: number) {
     if (value > 0) {
-
       if (this.dbCount === 0) {
         // 第一次检测到的值作为初始值
         this.minDecibel = value;
@@ -478,6 +485,7 @@ export struct DecibelMeter {
           this.currentRecord.avgDecibel = this.avgDecibel;
           this.currentRecord.duration = duration;
           this.currentRecord.decibelValues = [...this.values];
+          this.currentRecord.weightingTypes = [...this.weightingTypes];
           this.currentRecord.audioFilePath = currentAudioFilePath;
           this.currentRecord.location = locationInfo?.address;
 

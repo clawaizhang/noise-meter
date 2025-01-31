@@ -19,4 +19,12 @@ export class TableCreateSql {
       isFavorite INTEGER DEFAULT 0
     )
   `;
+
+  /**
+   * 添加 weightingTypes 列到 decibel_records 表
+   */
+  static readonly ADD_WEIGHTING_TYPES_COLUMN = `
+    ALTER TABLE decibel_records
+    ADD COLUMN weightingTypes TEXT
+  `;
 } 

@@ -38,7 +38,8 @@ export class DecibelRecordService {
         decibelValues: JSON.stringify(record.decibelValues),
         location: record.location ?? null,
         audioFilePath: record.audioFilePath ?? null,
-        isFavorite: record.isFavorite ? 1 : 0
+        isFavorite: record.isFavorite ? 1 : 0,
+        weightingTypes: JSON.stringify(record.weightingTypes) // 确保正确处理 weightingTypes
       };
       hilog.info(DOMAIN, TAG, '转换为 ValuesBucket: %{public}s', JSON.stringify(valueBucket));
       

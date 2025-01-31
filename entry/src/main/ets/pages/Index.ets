@@ -36,6 +36,10 @@ struct Index {
         {
           version: 1,
           sqls: [TableCreateSql.DECIBEL_RECORDS]
+        },
+        {
+          version: 2,
+          sqls: [TableCreateSql.ADD_WEIGHTING_TYPES_COLUMN]
         }
       ];
 
