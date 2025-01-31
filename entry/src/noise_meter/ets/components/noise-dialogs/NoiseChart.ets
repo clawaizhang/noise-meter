@@ -78,7 +78,7 @@ export struct NoiseChart {
                 top: vp2px(2),
                 right: vp2px(3),
                 bottom: vp2px(4),
-                left: vp2px(6)
+                left: vp2px(9)
               };
               const chartWidth = this.canvasContext.width - margin.left - margin.right;
               const chartHeight = this.canvasContext.height - margin.top - margin.bottom;
