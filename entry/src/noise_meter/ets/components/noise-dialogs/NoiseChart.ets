@@ -40,7 +40,7 @@ export struct NoiseChart {
   build() {
     Column() {
       Row() {
-        Text('统计图(分贝-时间)')
+        Text('统计图(分贝-秒)')
           .fontSize(16)
           .fontWeight(FontWeight.Medium)
 
