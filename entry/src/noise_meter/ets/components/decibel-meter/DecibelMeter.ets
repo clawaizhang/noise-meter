@@ -199,7 +199,7 @@ export struct DecibelMeter {
 
 
       // 初始化位置服务状态
-      this.isLocationEnabled = this.preferenceService.isEnabled(PreferenceKeyConstants.LOCATION);
+      this.isLocationEnabled = this.preferenceService.getBoolean(PreferenceKeyConstants.LOCATION, true);
       if (!this.isLocationEnabled) {
         this.locationService.clearCache();
       } else {
@@ -274,7 +274,7 @@ export struct DecibelMeter {
 
     // 原有的初始化代码
     // 获取录音开关状态
-    this.isRecordEnabled = this.preferenceService.isEnabled(PreferenceKeyConstants.RECORD);
+    this.isRecordEnabled = this.preferenceService.getBoolean(PreferenceKeyConstants.RECORD,true);
 
     // 监听录音开关状态变化
     this.recordListener = (key: string, value: PreferenceValue): void => {

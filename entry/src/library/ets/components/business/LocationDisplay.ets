@@ -19,7 +19,7 @@ export struct LocationDisplay {
     this.preferenceService = PreferenceService.getInstance();
     
     // 获取位置开关状态
-    this.isEnabled = this.preferenceService.isEnabled(PreferenceKeyConstants.LOCATION);
+    this.isEnabled = this.preferenceService.getBoolean(PreferenceKeyConstants.LOCATION, true);
     
     // 如果位置开关是打开的,自动获取位置信息
     if (this.isEnabled) {
@@ -29,7 +29,7 @@ export struct LocationDisplay {
     // 使用新的监听方式
     this.locationListener = (key: string, value: PreferenceValue): void => {
       if (key === PreferenceKeyConstants.LOCATION) {
-        const newEnabled = this.preferenceService.isEnabled(PreferenceKeyConstants.LOCATION);
+        const newEnabled = this.preferenceService.getBoolean(PreferenceKeyConstants.LOCATION, true);
         if (newEnabled !== this.isEnabled) {
           this.isEnabled = newEnabled;
           if (this.isEnabled) {

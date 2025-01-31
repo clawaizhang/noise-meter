@@ -489,7 +489,7 @@ export struct Settings {
                 .selectedColor('#0091FF')
                 .switchPointColor('#FFFFFF')
                 .onChange((isOn: boolean) => {
-                  void this.preferenceService.setEnabled(PreferenceKeyConstants.LOCATION, isOn);
+                  void this.preferenceService.setBoolean(PreferenceKeyConstants.LOCATION, isOn);
                   this.isLocationEnabled = isOn;
                 })
             }
@@ -522,7 +522,7 @@ export struct Settings {
                 .selectedColor('#0091FF')
                 .switchPointColor('#FFFFFF')
                 .onChange((isOn: boolean) => {
-                  void this.preferenceService.setEnabled(PreferenceKeyConstants.RECORD, isOn);
+                  void this.preferenceService.setBoolean(PreferenceKeyConstants.RECORD, isOn);
                   this.isRecordEnabled = isOn;
                 })
             }

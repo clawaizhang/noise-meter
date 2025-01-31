@@ -129,45 +129,6 @@ export class PreferenceService {
   }
 
   /**
-   * 获取开关状态
-   * @param key 键名
-   */
-  public isEnabled(key: string): boolean {
-    if (!this.preferences) {
-      throw new Error('首选项未初始化');
-    }
-    return this.getBoolean(key, false);
-  }
-
-  /**
-   * 设置开关状态
-   * @param key 键名
-   * @param enabled 开关状态
-   */
-  public async setEnabled(key: string, enabled: boolean): Promise<void> {
-    if (!this.preferences) {
-      throw new Error('首选项未初始化');
-    }
-
-    try {
-      this.setBoolean(key, enabled);
-      await new Promise<void>((resolve, reject) => {
-        this.preferences!.flush((err: BusinessError) => {
-          if (err) {
-            reject(new Error(`持久化开关状态失败: ${err.message}`));
-            return;
-          }
-          resolve();
-        });
-      });
-      hilog.info(DOMAIN, TAG, '开关状态已更新: %{public}s = %{public}s', key, enabled.toString());
-    } catch (error) {
-      hilog.error(DOMAIN, TAG, '设置开关状态失败: %{public}s', error instanceof Error ? error.message : String(error));
-      throw new Error('设置开关状态失败');
-    }
-  }
-
-  /**
    * 获取字符串值
    * @param key 键名
    * @param defaultValue 默认值
