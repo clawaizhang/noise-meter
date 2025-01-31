@@ -1,79 +1,175 @@
 # 分贝检测应用
 
-一个基于 HarmonyOS 的分贝检测应用，可以实时检测环境噪音分贝值。
+基于HarmonyOS的环境噪音检测应用，采用ArkTS开发框架。
 
-## 功能特性
+## 技术架构
 
-- 实时分贝值检测和显示
-- 检测过程中自动记录最小值、平均值和最大值
-- 支持位置信息记录
-- 历史记录查看和管理
-- 点击分贝面板可查看当前检测的详细数据
-- 检测结束后自动显示详情弹窗
-- 支持收藏重要记录
-
-## 更新日志
-
-### 2024-01-20
-- 新增：点击分贝面板可随时查看当前检测的详细数据
-- 优化：停止检测时保留数据，方便随时查看统计信息
-- 优化：详情弹窗支持空数据提示
-
-### 2024-01-19
-- 新增：历史记录收藏功能
-- 新增：检测结束后显示详情弹窗
-- 优化：UI界面交互体验
-
-## 技术特性
-
-- **开发语言**：ArkTS
-- **目标平台**：HarmonyOS
-- **最低API版本**：API 9
-- **权限要求**：
-  - 麦克风权限 (MICROPHONE)
+- HarmonyOS API 9 开发平台
+- ArkTS 声明式开发范式
+- @pura/harmony-utils ^1.0.0 工具库
+- RelationalStore 关系型数据库
+- Preferences API 首选项存储
 
 ## 项目结构
 
+```bash
+entry/src/main/ets/          # 源码主目录
+├── abilitystage/           # 应用生命周期管理
+├── components/             # 界面组件
+├── entryability/          # 入口能力
+├── pages/                 # 页面文件
+│   └── Index.ets          # 主页面入口
+├── services/              # 服务层实现
+└── utils/                 # 工具类
+
+library/ets/                # 公共库目录
+├── services/              # 服务实现
+│   ├── RelationalStoreService.ets  # 数据库服务
+│   └── PreferenceService.ets       # 配置服务
+├── constants/             # 常量定义
+│   ├── DatabaseConstants.ets       # 数据库常量
+│   └── PreferenceKeyConstants.ets  # 配置项常量
+└── interfaces/            # 接口定义
+    └── DatabaseInterfaces.ets      # 数据库接口
 ```
-entry/src/main/
-├── ets/                    # 源代码目录
-│   ├── components/        # UI组件
-│   │   ├── ControlButton  # 控制按钮组件
-│   │   ├── DBDisplay      # 分贝显示组件
-│   │   ├── HeaderTitle    # 标题组件
-│   │   ├── PermissionError# 权限错误提示组件
-│   │   └── StatisticsView # 统计数据显示组件
-│   ├── pages/            # 页面
-│   │   └── Index         # 主页面
-│   └── services/         # 服务
-│       ├── AudioService   # 音频处理服务
-│       └── PermissionService # 权限管理服务
-└── resources/            # 资源文件
+
+## 数据存储实现
+
+### 关系型数据库
+```sql
+-- 分贝记录表结构
+CREATE TABLE IF NOT EXISTS DecibelRecords (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,  -- 主键，自增
+  value REAL NOT NULL,                   -- 分贝值
+  timestamp INTEGER DEFAULT (strftime('%s','now')),  -- 时间戳
+  weighting TEXT CHECK(weighting IN ('A','C','Z'))   -- 加权类型
+);
 ```
 
-## 安装使用
+### 首选项配置
+```typescript
+// 配置键定义
+static readonly WEIGHTING: string = 'weighting_type';  // 加权类型配置项
+```
 
-1. 克隆项目到本地
-2. 使用 DevEco Studio 打开项目
-3. 运行到设备或模拟器上
-4. 首次运行时需要授予麦克风权限
+## 状态管理
 
-## 开发环境要求
+```typescript
+@Component
+struct Index {
+  // 初始化状态管理
+  @State isInitialized: boolean = false;  // 初始化完成标志
+  @State isLoading: boolean = true;       // 加载状态标志
+  
+  // 服务实例
+  private relationalStoreService: RelationalStoreService = RelationalStoreService.getInstance();
+}
+```
 
-- DevEco Studio 3.1.0 Beta2 或更高版本
-- HarmonyOS SDK API 9 或更高版本
-- 支持 HarmonyOS 的设备或模拟器
+## 开发指南
 
-## 贡献指南
+### 1. 环境要求
+- DevEco Studio 3.1 或更高版本
+- HarmonyOS SDK API 9
+- Node.js 16+
 
-欢迎提交问题和改进建议。如果您想贡献代码：
+### 2. 开发步骤
+```bash
+# 1. 克隆项目
+git clone <仓库地址>
 
-1. Fork 本仓库
-2. 创建您的特性分支 (`git checkout -b feature/AmazingFeature`)
-3. 提交您的改动 (`git commit -m 'Add some AmazingFeature'`)
-4. 推送到分支 (`git push origin feature/AmazingFeature`)
-5. 打开一个 Pull Request
+# 2. 安装依赖
+npm install
 
-## 许可证
+# 3. 使用DevEco Studio打开项目
+File > Open > 选择项目目录
+```
 
-[MIT License](LICENSE)
+### 3. 数据库升级流程
+```typescript
+// 版本升级配置
+const upgradeConfigs: DatabaseUpgradeConfig[] = [
+  {
+    version: 1,  // 初始版本
+    sqls: [TableCreateSql.DECIBEL_RECORDS]  // 创建表
+  },
+  {
+    version: 2,  // 升级版本
+    sqls: [TableCreateSql.ADD_WEIGHTING_TYPES_COLUMN]  // 添加列
+  }
+];
+```
+
+## 开发规范
+
+### 1. 类型定义
+```typescript
+// 正确示例
+private service: RelationalStoreService;  // 使用具体类型
+
+// 错误示例
+private service: any;  // 禁止使用any类型
+```
+
+### 2. 错误处理
+```typescript
+try {
+  // 执行初始化
+  await this.initialize();
+} catch (error) {
+  // 使用hilog记录错误
+  hilog.error(DOMAIN, TAG, '初始化失败: %{public}s', 
+    error instanceof Error ? error.message : String(error));
+}
+```
+
+### 3. 装饰器使用
+```typescript
+@Entry
+@Component
+struct MainPage {
+  // 使用@State管理状态
+  @State private isLoading: boolean = true;
+}
+```
+
+## 安全说明
+
+1. 数据安全
+   - 使用SecurityLevel.S1加密级别
+   - 事务保证数据一致性
+   - SQL参数化查询防注入
+
+2. 权限控制
+   - 运行时权限申请
+   - 异常状态处理
+   - 降级方案支持
+
+## 调试工具
+
+### 数据库调试
+```bash
+# 查看表结构
+adb shell "run-as com.example.myapplication6 sqlite3 
+  /data/app/el2/100/database/NoiseMeterDb/NoiseMeter.db 
+  '.schema'"
+```
+
+### 配置检查
+```bash
+# 查看配置文件
+adb shell "run-as com.example.myapplication6 cat 
+  /data/app/el2/100/preferences/NoiseMeterPref.xml"
+```
+
+## 版本记录
+
+### v2.0 版本
+- 新增加权类型(A/C/Z)支持
+- 数据库结构升级
+- 完善错误处理机制
+
+### v1.0 版本
+- 初始版本发布
+- 基础数据库实现
+- 配置管理支持
