@@ -105,6 +105,11 @@ export struct Settings {
   @Local noiseThreshold: number = 80;
   @Local noiseAlarmDescription: string = ''; // 添加新的变量来存储噪音警报描述
   private readonly COOLDOWN_DURATION: number = 500; // 0.5秒冷却时间
+  // 新增状态变量来控制每个 AccordionItem 的展开和收起状态
+  @Local isAudioAnalysisExpanded: boolean = false;
+  @Local isAlertsAndNotificationsExpanded: boolean = false;
+  @Local isDataRecordingAndPrivacyExpanded: boolean = false;
+  @Local isDeviceSettingsExpanded: boolean = false;
 
   // 工具方法
   private getWeightingIndex(type: WeightingType): number {
@@ -224,66 +229,91 @@ export struct Settings {
       CustomTitleBar({ title: '设置' })
 
       List() {
-        // 音频分析模式设置
+        // 音频分析设置
         ListItem() {
           Column() {
             Row() {
-              Row() {
-                Image($r('app.media.ic_time_weighting'))
-                  .itemIcon()
-
-                Text('时间计权模式')
-                  .itemTitle()
-              }
-
+              Text('音频分析设置')
+                .itemTitle()
               Blank()
-
-              Row() {
-                Text(this.remainingTime > 0 ? `${(this.remainingTime / 1000).toFixed(1)}秒` : '')
-                  .fontSize(14)
-                  .fontColor('#CCCCCC')
-                  .margin({ right: -2 })
-
-                Select([
-                  { value: '快速(F)' },
-                  { value: '慢速(S)' },
-                  { value: '脉冲(I)' }
-                ])
-                  .selected(this.getAnalysisModeIndex(this.selectedAnalysisMode))
-                  .value(this.getAnalysisModeDisplayName(this.selectedAnalysisMode))
-                  .selectStyle()
-
-                  .onSelect((index: number) => {
-                    if (!this.isModeChangeEnabled) {
-                      return;
+              Button(this.isAudioAnalysisExpanded ? '收起' : '展开')
+                .onClick(() => {
+                  animateTo({
+                    duration: 300,
+                    onFinish: () => {
+                      console.info('animation end');
                     }
-
-                    // 禁用切换
-                    this.isModeChangeEnabled = false;
-
-                    const mode = this.getAnalysisModeFromIndex(index);
-                    void this.preferenceService.setString(PreferenceKeyConstants.ANALYSIS_MODE, mode);
-                    this.selectedAnalysisMode = mode;
-                    this.updateAnalysisModeCache();
-
-                    // 启动冷却计时器
-                    this.remainingTime = this.COOLDOWN_DURATION;
-                    const interval = setInterval(() => {
-                      this.remainingTime -= 100;
-                      if (this.remainingTime <= 0) {
-                        clearInterval(interval);
-                        this.isModeChangeEnabled = true;
-                        this.remainingTime = 0;
-                      }
-                    }, 100);
+                  }, () => {
+                    this.isAudioAnalysisExpanded = !this.isAudioAnalysisExpanded;
                   })
-                  .enabled(this.isModeChangeEnabled)
-              }
+                })
             }
             .listItemRow()
           }
           .listItemStyle()
         }
+
+        if (this.isAudioAnalysisExpanded) {
+          // 时间计权模式
+          ListItem() {
+            Column() {
+              Row() {
+                Row() {
+                  Image($r('app.media.ic_time_weighting'))
+                    .itemIcon()
+
+                  Text('时间计权模式')
+                    .itemTitle()
+                }
+
+                Blank()
+
+                Row() {
+                  Text(this.remainingTime > 0 ? `${(this.remainingTime / 1000).toFixed(1)}秒` : '')
+                    .fontSize(14)
+                    .fontColor('#CCCCCC')
+                    .margin({ right: -2 })
+
+                  Select([
+                    { value: '快速(F)' },
+                    { value: '慢速(S)' },
+                    { value: '脉冲(I)' }
+                  ])
+                    .selected(this.getAnalysisModeIndex(this.selectedAnalysisMode))
+                    .value(this.getAnalysisModeDisplayName(this.selectedAnalysisMode))
+                    .selectStyle()
+
+                    .onSelect((index: number) => {
+                      if (!this.isModeChangeEnabled) {
+                        return;
+                      }
+
+                      // 禁用切换
+                      this.isModeChangeEnabled = false;
+
+                      const mode = this.getAnalysisModeFromIndex(index);
+                      void this.preferenceService.setString(PreferenceKeyConstants.ANALYSIS_MODE, mode);
+                      this.selectedAnalysisMode = mode;
+                      this.updateAnalysisModeCache();
+
+                      // 启动冷却计时器
+                      this.remainingTime = this.COOLDOWN_DURATION;
+                      const interval = setInterval(() => {
+                        this.remainingTime -= 100;
+                        if (this.remainingTime <= 0) {
+                          clearInterval(interval);
+                          this.isModeChangeEnabled = true;
+                          this.remainingTime = 0;
+                        }
+                      }, 100);
+                    })
+                    .enabled(this.isModeChangeEnabled)
+                }
+              }
+              .listItemRow()
+            }
+            .listItemStyle()
+          }
 
         ListItem() {
           Column() {
@@ -308,108 +338,104 @@ export struct Settings {
                 Image($r('app.media.ic_frequency_weighting'))
                   .itemIcon()
 
-                Text('频率加权')
-                  .itemTitle()
+                  Text('频率加权')
+                    .itemTitle()
+                }
+
+                Blank()
+
+                Select([
+                  { value: 'A计权' },
+                  { value: 'C计权' },
+                  { value: 'Z计权' }
+                ])
+                  .selected(this.getWeightingIndex(this.selectedWeighting))
+                  .value(this.selectedWeighting + '计权')
+                  .selectStyle()
+                  .onSelect((index: number) => {
+                    const weightingType = this.getWeightingType(index);
+                    void this.preferenceService.setString(PreferenceKeyConstants.WEIGHTING, weightingType);
+                    this.selectedWeighting = weightingType;
+                  })
               }
-
-              Blank()
-
-              Select([
-                { value: 'A计权' },
-                { value: 'C计权' },
-                { value: 'Z计权' }
-              ])
-                .selected(this.getWeightingIndex(this.selectedWeighting))
-                .value(this.selectedWeighting + '计权')
-                .selectStyle()
-                .onSelect((index: number) => {
-                  const weightingType = this.getWeightingType(index);
-                  void this.preferenceService.setString(PreferenceKeyConstants.WEIGHTING, weightingType);
-                  this.selectedWeighting = weightingType;
-                })
+              .listItemRow()
             }
-            .listItemRow()
+            .listItemStyle()
           }
-          .listItemStyle()
-        }
 
-        ListItem() {
-          Text(getWeightingDescription(this.selectedWeighting))
-            .itemDescription()
-        }
-        .descriptionContainer()
+          ListItem() {
+            Text(getWeightingDescription(this.selectedWeighting))
+              .itemDescription()
+          }
+          .descriptionContainer()
 
-        // 声级校准设置
-        ListItem() {
-          Column() {
-            Row() {
+          // 声级校准设置
+          ListItem() {
+            Column() {
               Row() {
-                Image($r('app.media.ic_calibration'))
-                  .itemIcon()
+                Row() {
+                  Image($r('app.media.ic_calibration'))
+                    .itemIcon()
 
-                Text('声级校准')
-                  .itemTitle()
+                  Text('声级校准')
+                    .itemTitle()
+                }
+
+                Blank()
+
+                Text(`${this.calibrationValue}dB`)
+                  .fontSize(14)
+                  .fontColor('#666666')
+                  .margin({ right: 8 })
               }
+              .listItemRow()
 
-              Blank()
-
-              Text(`${this.calibrationValue}dB`)
-                .fontSize(14)
-                .fontColor('#666666')
-                .margin({ right: 8 })
-            }
-            .listItemRow()
-
-            Slider({
-              value: this.calibrationValue,
-              min: -30,
-              max: 30,
-              style: SliderStyle.InSet
-            })
-              .blockColor('#0091FF')
-              .trackColor('#F0F0F0')
-              .selectedColor('#0091FF')
-              .showTips(true, `${this.decibelState.currentDecibel}dB`)
-              .onChange((value: number) => {
-                this.calibrationValue = value;
-                void this.preferenceService.setNumber(PreferenceKeyConstants.CALIBRATION, value);
+              Slider({
+                value: this.calibrationValue,
+                min: -30,
+                max: 30,
+                style: SliderStyle.InSet
               })
-              .margin({ top: 12, bottom: 12 })
-              .height(24)
-              .trackThickness(24)
-              .blockSize({ width: 24, height: 24 })
+                .blockColor('#0091FF')
+                .trackColor('#F0F0F0')
+                .selectedColor('#0091FF')
+                .showTips(true, `${this.decibelState.currentDecibel}dB`)
+                .onChange((value: number) => {
+                  this.calibrationValue = value;
+                  void this.preferenceService.setNumber(PreferenceKeyConstants.CALIBRATION, value);
+                })
+                .margin({ top: 12, bottom: 12 })
+                .height(24)
+                .trackThickness(24)
+                .blockSize({ width: 24, height: 24 })
+            }
+            .listItemStyle()
           }
-          .listItemStyle()
+
+          ListItem() {
+            Text('校准声级计，范围从-30dB到+30dB')
+              .itemDescription()
+          }
+          .descriptionContainer()
         }
 
-        ListItem() {
-          Text('校准声级计，范围从-30dB到+30dB')
-            .itemDescription()
-        }
-        .descriptionContainer()
-
-
-        // 添加噪音阈值警报的开关
+        // 警报与通知
         ListItem() {
           Column() {
             Row() {
-              Row() {
-                Image($r('app.media.ic_alarm'))// 确保资源名称正确
-                  .itemIcon()
-
-                Text('噪音警报')
-                  .itemTitle()
-              }
-
+              Text('警报与通知')
+                .itemTitle()
               Blank()
-
-              Toggle({ type: ToggleType.Switch, isOn: this.isNoiseAlarmEnabled })
-                .selectedColor('#0091FF')
-                .switchPointColor('#FFFFFF')
-                .onChange((isOn: boolean) => {
-                  void this.preferenceService.setBoolean(PreferenceKeyConstants.NOISE_ALARM_ENABLED, isOn);
-                  this.isNoiseAlarmEnabled = isOn;
-                  this.updateNoiseAlarmDescription(); // 更新噪音警报描述
+              Button(this.isAlertsAndNotificationsExpanded ? '收起' : '展开')
+                .onClick(() => {
+                  animateTo({
+                    duration: 300,
+                    onFinish: () => {
+                      console.info('animation end');
+                    }
+                  }, () => {
+                    this.isAlertsAndNotificationsExpanded = !this.isAlertsAndNotificationsExpanded;
+                  })
                 })
             }
             .listItemRow()
@@ -417,80 +443,107 @@ export struct Settings {
           .listItemStyle()
         }
 
-        ListItem() {
-          Text(this.noiseAlarmDescription)
-            .itemDescription()
-        }
-        .descriptionContainer()
-
-        // 添加噪音阈值的设置
-        ListItem() {
-          Column() {
-            Row() {
+        if (this.isAlertsAndNotificationsExpanded) {
+          // 添加噪音阈值警报的开关
+          ListItem() {
+            Column() {
               Row() {
-                Image($r('app.media.ic_threshold'))
-                  .itemIcon()
+                Row() {
+                  Image($r('app.media.ic_alarm'))// 确保资源名称正确
+                    .itemIcon()
 
-                Text('噪音警报阈值')
-                  .itemTitle()
+                  Text('噪音警报')
+                    .itemTitle()
+                }
+
+                Blank()
+
+                Toggle({ type: ToggleType.Switch, isOn: this.isNoiseAlarmEnabled })
+                  .selectedColor('#0091FF')
+                  .switchPointColor('#FFFFFF')
+                  .onChange((isOn: boolean) => {
+                    void this.preferenceService.setBoolean(PreferenceKeyConstants.NOISE_ALARM_ENABLED, isOn);
+                    this.isNoiseAlarmEnabled = isOn;
+                    this.updateNoiseAlarmDescription(); // 更新噪音警报描述
+                  })
               }
-
-              Blank()
-
-              Text(`${this.noiseThreshold}dB`)
-                .fontSize(14)
-                .fontColor('#666666')
-                .margin({ right: 8 })
+              .listItemRow()
             }
-            .listItemRow()
+            .listItemStyle()
+          }
 
-            Slider({
-              value: this.noiseThreshold,
-              min: 30,
-              max: 120,
-              style: SliderStyle.InSet
-            })
-              .blockColor('#0091FF')
-              .trackColor('#F0F0F0')
-              .selectedColor('#0091FF')
-              .onChange((value: number) => {
-                this.noiseThreshold = value;
-                void this.preferenceService.setNumber(PreferenceKeyConstants.NOISE_THRESHOLD, value);
+          ListItem() {
+            Text(this.noiseAlarmDescription)
+              .itemDescription()
+          }
+          .descriptionContainer()
+
+          // 添加噪音阈值的设置
+          ListItem() {
+            Column() {
+              Row() {
+                Row() {
+                  Image($r('app.media.ic_threshold'))
+                    .itemIcon()
+
+                  Text('噪音警报阈值')
+                    .itemTitle()
+                }
+
+                Blank()
+
+                Text(`${this.noiseThreshold}dB`)
+                  .fontSize(14)
+                  .fontColor('#666666')
+                  .margin({ right: 8 })
+              }
+              .listItemRow()
+
+              Slider({
+                value: this.noiseThreshold,
+                min: 30,
+                max: 120,
+                style: SliderStyle.InSet
               })
-              .margin({ top: 12, bottom: 12 })
-              .height(24)
-              .trackThickness(24)
-              .blockSize({ width: 24, height: 24 })
+                .blockColor('#0091FF')
+                .trackColor('#F0F0F0')
+                .selectedColor('#0091FF')
+                .onChange((value: number) => {
+                  this.noiseThreshold = value;
+                  void this.preferenceService.setNumber(PreferenceKeyConstants.NOISE_THRESHOLD, value);
+                })
+                .margin({ top: 12, bottom: 12 })
+                .height(24)
+                .trackThickness(24)
+                .blockSize({ width: 24, height: 24 })
+            }
+            .listItemStyle()
           }
-          .listItemStyle()
+
+          ListItem() {
+            Text('设置触发噪音警报的阈值，范围从30dB到120dB')
+              .itemDescription()
+          }
+          .descriptionContainer()
         }
 
-        ListItem() {
-          Text('设置触发噪音警报的阈值，范围从30dB到120dB')
-            .itemDescription()
-        }
-        .descriptionContainer()
-
-        // 位置开关
+        // 数据记录与隐私
         ListItem() {
           Column() {
             Row() {
-              Row() {
-                Image($r('app.media.ic_location'))
-                  .itemIcon()
-
-                Text('地理位置')
-                  .itemTitle()
-              }
-
+              Text('数据记录与隐私')
+                .itemTitle()
               Blank()
-
-              Toggle({ type: ToggleType.Switch, isOn: this.isLocationEnabled })
-                .selectedColor('#0091FF')
-                .switchPointColor('#FFFFFF')
-                .onChange((isOn: boolean) => {
-                  void this.preferenceService.setBoolean(PreferenceKeyConstants.LOCATION, isOn);
-                  this.isLocationEnabled = isOn;
+              Button(this.isDataRecordingAndPrivacyExpanded ? '收起' : '展开')
+                .onClick(() => {
+                  animateTo({
+                    duration: 300,
+                    onFinish: () => {
+                      console.info('animation end');
+                    }
+                  }, () => {
+                    this.isDataRecordingAndPrivacyExpanded = !this.isDataRecordingAndPrivacyExpanded;
+                  })
                 })
             }
             .listItemRow()
@@ -498,32 +551,91 @@ export struct Settings {
           .listItemStyle()
         }
 
-        ListItem() {
-          Text(this.isLocationEnabled ? '记录检测地点的位置信息' : '不会采集地理位置信息')
-            .itemDescription()
-        }
-        .descriptionContainer()
+        if (this.isDataRecordingAndPrivacyExpanded) {
+          // 位置开关
+          ListItem() {
+            Column() {
+              Row() {
+                Row() {
+                  Image($r('app.media.ic_location'))
+                    .itemIcon()
 
-        // 录音开关
+                  Text('地理位置')
+                    .itemTitle()
+                }
+
+                Blank()
+
+                Toggle({ type: ToggleType.Switch, isOn: this.isLocationEnabled })
+                  .selectedColor('#0091FF')
+                  .switchPointColor('#FFFFFF')
+                  .onChange((isOn: boolean) => {
+                    void this.preferenceService.setBoolean(PreferenceKeyConstants.LOCATION, isOn);
+                    this.isLocationEnabled = isOn;
+                  })
+              }
+              .listItemRow()
+            }
+            .listItemStyle()
+          }
+
+          ListItem() {
+            Text(this.isLocationEnabled ? '记录检测地点的位置信息' : '不会采集地理位置信息')
+              .itemDescription()
+          }
+          .descriptionContainer()
+
+          // 录音开关
+          ListItem() {
+            Column() {
+              Row() {
+                Row() {
+                  Image($r('app.media.ic_mic'))
+                    .itemIcon()
+
+                  Text('音频记录')
+                    .itemTitle()
+                }
+
+                Blank()
+
+                Toggle({ type: ToggleType.Switch, isOn: this.isRecordEnabled })
+                  .selectedColor('#0091FF')
+                  .switchPointColor('#FFFFFF')
+                  .onChange((isOn: boolean) => {
+                    void this.preferenceService.setBoolean(PreferenceKeyConstants.RECORD, isOn);
+                    this.isRecordEnabled = isOn;
+                  })
+              }
+              .listItemRow()
+            }
+            .listItemStyle()
+          }
+
+          ListItem() {
+            Text(this.isRecordEnabled ? '保存原始音频数据用于后期分析' : '不会保存音频数据')
+              .itemDescription()
+          }
+          .descriptionContainer()
+        }
+
+        // 设备设置
         ListItem() {
           Column() {
             Row() {
-              Row() {
-                Image($r('app.media.ic_mic'))
-                  .itemIcon()
-
-                Text('音频记录')
-                  .itemTitle()
-              }
-
+              Text('设备设置')
+                .itemTitle()
               Blank()
-
-              Toggle({ type: ToggleType.Switch, isOn: this.isRecordEnabled })
-                .selectedColor('#0091FF')
-                .switchPointColor('#FFFFFF')
-                .onChange((isOn: boolean) => {
-                  void this.preferenceService.setBoolean(PreferenceKeyConstants.RECORD, isOn);
-                  this.isRecordEnabled = isOn;
+              Button(this.isDeviceSettingsExpanded ? '收起' : '展开')
+                .onClick(() => {
+                  animateTo({
+                    duration: 300,
+                    onFinish: () => {
+                      console.info('animation end');
+                    }
+                  }, () => {
+                    this.isDeviceSettingsExpanded = !this.isDeviceSettingsExpanded;
+                  })
                 })
             }
             .listItemRow()
@@ -531,44 +643,40 @@ export struct Settings {
           .listItemStyle()
         }
 
-        ListItem() {
-          Text(this.isRecordEnabled ? '保存原始音频数据用于后期分析' : '不会保存音频数据')
-            .itemDescription()
-        }
-        .descriptionContainer()
-
-        // 屏幕常亮设置
-        ListItem() {
-          Column() {
-            Row() {
+        if (this.isDeviceSettingsExpanded) {
+          // 屏幕常亮设置
+          ListItem() {
+            Column() {
               Row() {
-                Image($r('app.media.ic_keep_screen_on'))
-                  .itemIcon()
+                Row() {
+                  Image($r('app.media.ic_keep_screen_on'))
+                    .itemIcon()
 
-                Text('屏幕常亮')
-                  .itemTitle()
+                  Text('屏幕常亮')
+                    .itemTitle()
+                }
+
+                Blank()
+
+                Toggle({ type: ToggleType.Switch, isOn: this.isKeepScreenOn })
+                  .selectedColor('#0091FF')
+                  .switchPointColor('#FFFFFF')
+                  .onChange((isOn: boolean) => {
+                    void this.preferenceService.setBoolean(PreferenceKeyConstants.KEEP_SCREEN_ON, isOn);
+                    this.isKeepScreenOn = isOn;
+                  })
               }
-
-              Blank()
-
-              Toggle({ type: ToggleType.Switch, isOn: this.isKeepScreenOn })
-                .selectedColor('#0091FF')
-                .switchPointColor('#FFFFFF')
-                .onChange((isOn: boolean) => {
-                  void this.preferenceService.setBoolean(PreferenceKeyConstants.KEEP_SCREEN_ON, isOn);
-                  this.isKeepScreenOn = isOn;
-                })
+              .listItemRow()
             }
-            .listItemRow()
+            .listItemStyle()
           }
-          .listItemStyle()
-        }
 
-        ListItem() {
-          Text(this.isKeepScreenOn ? '屏幕将保持常亮状态' : '屏幕会根据系统设置自动休眠')
-            .itemDescription()
+          ListItem() {
+            Text(this.isKeepScreenOn ? '屏幕将保持常亮状态' : '屏幕会根据系统设置自动休眠')
+              .itemDescription()
+          }
+          .descriptionContainer()
         }
-        .descriptionContainer()
       }
       .width('100%')
       .layoutWeight(1)
