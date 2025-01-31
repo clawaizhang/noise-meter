@@ -236,22 +236,23 @@ export struct Settings {
               Text('音频分析设置')
                 .itemTitle()
               Blank()
-              Button(this.isAudioAnalysisExpanded ? '收起' : '展开')
-                .onClick(() => {
-                  animateTo({
-                    duration: 300,
-                    onFinish: () => {
-                      console.info('animation end');
-                    }
-                  }, () => {
-                    this.isAudioAnalysisExpanded = !this.isAudioAnalysisExpanded;
-                  })
-                })
             }
             .listItemRow()
           }
           .listItemStyle()
-        }
+        }.onClick(() => {
+          animateTo({
+            duration: 300,
+            onFinish: () => {
+              console.info('animation end');
+            }
+          }, () => {
+            this.isAudioAnalysisExpanded = !this.isAudioAnalysisExpanded;
+            this.isAlertsAndNotificationsExpanded = false;
+            this.isDataRecordingAndPrivacyExpanded = false;
+            this.isDeviceSettingsExpanded = false;
+          })
+        })
 
         if (this.isAudioAnalysisExpanded) {
           // 时间计权模式
@@ -315,28 +316,28 @@ export struct Settings {
             .listItemStyle()
           }
 
-        ListItem() {
-          Column() {
-            Text(this.analysisModeDescription)
-              .analysisDescription()
-            ForEach(this.analysisModeDetails, (detail: string) => {
-              Text(detail)
-                .analysisDetail()
-            })
+          ListItem() {
+            Column() {
+              Text(this.analysisModeDescription)
+                .analysisDescription()
+              ForEach(this.analysisModeDetails, (detail: string) => {
+                Text(detail)
+                  .analysisDetail()
+              })
+            }
+            .width('100%')
+            .alignItems(HorizontalAlign.Start)
+            .padding({ left: 48 })
           }
-          .width('100%')
-          .alignItems(HorizontalAlign.Start)
-          .padding({ left: 48 })
-        }
-        .descriptionContainer()
+          .descriptionContainer()
 
-        // 分贝计权设置
-        ListItem() {
-          Column() {
-            Row() {
+          // 分贝计权设置
+          ListItem() {
+            Column() {
               Row() {
-                Image($r('app.media.ic_frequency_weighting'))
-                  .itemIcon()
+                Row() {
+                  Image($r('app.media.ic_frequency_weighting'))
+                    .itemIcon()
 
                   Text('频率加权')
                     .itemTitle()
@@ -426,22 +427,23 @@ export struct Settings {
               Text('警报与通知')
                 .itemTitle()
               Blank()
-              Button(this.isAlertsAndNotificationsExpanded ? '收起' : '展开')
-                .onClick(() => {
-                  animateTo({
-                    duration: 300,
-                    onFinish: () => {
-                      console.info('animation end');
-                    }
-                  }, () => {
-                    this.isAlertsAndNotificationsExpanded = !this.isAlertsAndNotificationsExpanded;
-                  })
-                })
             }
             .listItemRow()
           }
           .listItemStyle()
-        }
+        }.onClick(() => {
+          animateTo({
+            duration: 300,
+            onFinish: () => {
+              console.info('animation end');
+            }
+          }, () => {
+            this.isAudioAnalysisExpanded = false;
+            this.isAlertsAndNotificationsExpanded = !this.isAlertsAndNotificationsExpanded;
+            this.isDataRecordingAndPrivacyExpanded = false;
+            this.isDeviceSettingsExpanded = false;
+          })
+        })
 
         if (this.isAlertsAndNotificationsExpanded) {
           // 添加噪音阈值警报的开关
@@ -534,22 +536,23 @@ export struct Settings {
               Text('数据记录与隐私')
                 .itemTitle()
               Blank()
-              Button(this.isDataRecordingAndPrivacyExpanded ? '收起' : '展开')
-                .onClick(() => {
-                  animateTo({
-                    duration: 300,
-                    onFinish: () => {
-                      console.info('animation end');
-                    }
-                  }, () => {
-                    this.isDataRecordingAndPrivacyExpanded = !this.isDataRecordingAndPrivacyExpanded;
-                  })
-                })
             }
             .listItemRow()
           }
           .listItemStyle()
-        }
+        }.onClick(() => {
+          animateTo({
+            duration: 300,
+            onFinish: () => {
+              console.info('animation end');
+            }
+          }, () => {
+            this.isAudioAnalysisExpanded = false;
+            this.isAlertsAndNotificationsExpanded = false;
+            this.isDataRecordingAndPrivacyExpanded = !this.isDataRecordingAndPrivacyExpanded;
+            this.isDeviceSettingsExpanded = false;
+          })
+        })
 
         if (this.isDataRecordingAndPrivacyExpanded) {
           // 位置开关
@@ -626,22 +629,23 @@ export struct Settings {
               Text('设备设置')
                 .itemTitle()
               Blank()
-              Button(this.isDeviceSettingsExpanded ? '收起' : '展开')
-                .onClick(() => {
-                  animateTo({
-                    duration: 300,
-                    onFinish: () => {
-                      console.info('animation end');
-                    }
-                  }, () => {
-                    this.isDeviceSettingsExpanded = !this.isDeviceSettingsExpanded;
-                  })
-                })
             }
             .listItemRow()
           }
           .listItemStyle()
-        }
+        }.onClick(() => {
+          animateTo({
+            duration: 300,
+            onFinish: () => {
+              console.info('animation end');
+            }
+          }, () => {
+            this.isAudioAnalysisExpanded = false;
+            this.isAlertsAndNotificationsExpanded = false;
+            this.isDataRecordingAndPrivacyExpanded = false;
+            this.isDeviceSettingsExpanded = !this.isDeviceSettingsExpanded;
+          })
+        })
 
         if (this.isDeviceSettingsExpanded) {
           // 屏幕常亮设置
