@@ -149,31 +149,27 @@ export struct NoiseChart {
                 ticks[6] = yMax;
               }
 
-              // 绘制更细的辅助线
-              this.canvasContext.strokeStyle = '#E8E8E8';
-              this.canvasContext.lineWidth = 0.5;
-              const ySubStep = bestStep / 2;
-              for (let i = yMin; i <= yMax; i += ySubStep) {
-                const y = margin.top + chartHeight - ((i - yMin) / (yMax - yMin)) * chartHeight;
-                this.canvasContext.beginPath();
-                this.canvasContext.moveTo(margin.left, y);
-                this.canvasContext.lineTo(margin.left + chartWidth, y);
-                this.canvasContext.stroke();
-              }
-
-              // 统一主要网格线样式
-              this.canvasContext.strokeStyle = '#E0E0E0';
-              this.canvasContext.lineWidth = 1;
-
-              // 绘制Y轴单位
+              // 绘制Y轴刻度
               this.canvasContext.fillStyle = '#666666';
               this.canvasContext.textAlign = 'right';
-              this.canvasContext.fillText('分贝', margin.left - vp2px(2), margin.top - vp2px(10));
+              for (let i = 0; i < ticks.length; i++) {
+                const y = margin.top + chartHeight - ((ticks[i] - yMin) / (yMax - yMin)) * chartHeight;
+                if (i === 0 || i === ticks.length - 1) {
+                  if (ticks[i] % 5 === 0) {
+                    this.canvasContext.fillText(`${ticks[i]}`, margin.left - vp2px(2), y);
+                  }
+                } else {
+                  this.canvasContext.fillText(`${ticks[i]}`, margin.left - vp2px(2), y);
+                }
 
-              // 绘制Y轴刻度
-              for (let i = yMin; i <= yMax; i += bestStep) {
-                const y = margin.top + chartHeight - ((i - yMin) / (yMax - yMin)) * chartHeight;
-                this.canvasContext.fillText(`${i}`, margin.left - vp2px(2), y);
+                // 绘制垂直网格线，仅在有标签的位置绘制
+                if (ticks[i] % 5 === 0) {
+                  this.canvasContext.beginPath();
+                  this.canvasContext.moveTo(margin.left, y);
+                  this.canvasContext.lineTo(margin.left + chartWidth, y);
+                  this.canvasContext.strokeStyle = '#E0E0E0'; // 主要网格线颜色
+                  this.canvasContext.stroke();
+                }
               }
 
               // 重新设计X轴刻度计算逻辑
@@ -205,41 +201,36 @@ export struct NoiseChart {
               this.canvasContext.textAlign = 'center';
               this.canvasContext.fillText('秒', margin.left + chartWidth / 2, margin.top + chartHeight + vp2px(12));
 
-              for (let i = 0; i < targetXGridCount; i++) {
+              for (let i = 0; i < actualGridCount; i++) {
                 const x = margin.left + i * xStep;
                 const seconds = i * xInterval;
                 this.canvasContext.fillText(formatTime(seconds), x, margin.top + chartHeight + vp2px(2));
-
+                this.canvasContext.strokeStyle = '#E0E0E0'; // 辅助网格线颜色
+                this.canvasContext.lineWidth = 1; // 更细的线条
+                // 绘制垂直网格线
                 this.canvasContext.beginPath();
                 this.canvasContext.moveTo(x, margin.top);
                 this.canvasContext.lineTo(x, margin.top + chartHeight);
                 this.canvasContext.stroke();
-              }
 
-              // 绘制Y轴主要网格线
-              for (let i = yMin; i <= yMax; i += bestStep) {
-                const y = margin.top + chartHeight - ((i - yMin) / (yMax - yMin)) * chartHeight;
-                this.canvasContext.beginPath();
-                this.canvasContext.moveTo(margin.left, y);
-                this.canvasContext.lineTo(margin.left + chartWidth, y);
-                this.canvasContext.stroke();
-              }
+                // 添加辅助网格线
+                if (i < actualGridCount - 1) {
+                  const nextX = margin.left + (i + 1) * xStep;
+                  const subGridCount = 1;
+                  const subXStep = (nextX - x) / (subGridCount + 1);
 
-              // 绘制X轴辅助线
-              this.canvasContext.strokeStyle = '#F0F0F0';
-              this.canvasContext.lineWidth = 0.5;
-              const xSubStep = xStep / 2;
-              for (let i = 0; i < targetXGridCount * 2; i++) {
-                const x = margin.left + i * xSubStep;
-                this.canvasContext.beginPath();
-                this.canvasContext.moveTo(x, margin.top);
-                this.canvasContext.lineTo(x, margin.top + chartHeight);
-                this.canvasContext.stroke();
-              }
+                  this.canvasContext.strokeStyle = '#D3D3D3'; // 辅助网格线颜色
+                  this.canvasContext.lineWidth = 0.2; // 更细的线条
 
-              // 恢复主要网格线样式
-              this.canvasContext.strokeStyle = '#E0E0E0';
-              this.canvasContext.lineWidth = 1;
+                  for (let j = 1; j <= subGridCount; j++) {
+                    const subX = x + j * subXStep;
+                    this.canvasContext.beginPath();
+                    this.canvasContext.moveTo(subX, margin.top);
+                    this.canvasContext.lineTo(subX, margin.top + chartHeight);
+                    this.canvasContext.stroke();
+                  }
+                }
+              }
 
               // 绘制数据点
               const xScale = (chartWidth - margin.left - margin.right) / totalSeconds;
