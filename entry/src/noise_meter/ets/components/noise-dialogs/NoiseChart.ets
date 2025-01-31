@@ -2,6 +2,7 @@ import { DecibelRecord } from "../../../../library/ets/models/DecibelRecord"
 import { DecibelService } from "../../services/DecibelService"
 import { display } from "@kit.ArkUI"
 import { AudioPlayer } from "../../../../library/ets/components/business/AudioPlayer";
+import { WeightingType } from "../../../../library/ets/constants/WeightingConstants";
 
 interface Margin {
   top: number;
@@ -14,7 +15,6 @@ interface Margin {
 export struct NoiseChart {
   @Param playAudio: boolean = false;
   @Param selectedRecord: DecibelRecord | null = null;
-  private decibelService: DecibelService = new DecibelService();
   private canvasSettings: RenderingContextSettings = new RenderingContextSettings(true)
   private canvasContext: CanvasRenderingContext2D = new CanvasRenderingContext2D(this.canvasSettings)
   private canvasWidth = 320;
@@ -27,10 +27,20 @@ export struct NoiseChart {
     this.canvasHeight = this.canvasWidth / 1.5;
   }
 
+  @Computed
+  get uniqueWeightingTypes() {
+    return Array.from(new Set(this.selectedRecord!.weightingTypes));
+  }
+
+  @Computed
+  get uniqueWeightingColors() {
+    return this.uniqueWeightingTypes.map((type: WeightingType) => DecibelService.getWeightingColor(type));
+  }
+
   build() {
     Column() {
       Row() {
-        Text('统计图')
+        Text('统计图(分贝-时间)')
           .fontSize(16)
           .fontWeight(FontWeight.Medium)
 
@@ -293,36 +303,26 @@ export struct NoiseChart {
               });
 
               this.canvasContext.stroke();
-
-              let uniqueWeightingTypes = Array.from(new Set(weightingTypes));
-              // 绘制图例
-              if (uniqueWeightingTypes.length > 0) {
-                const legendMargin = vp2px(8);
-                const legendHeight = vp2px(20);
-                const legendSpacing = vp2px(10);
-                const legendStartX = margin.left;
-                const legendStartY = margin.top + chartHeight + vp2px(20);
-
-                uniqueWeightingTypes.forEach((type, index) => {
-                  const color = weightingColors[index];
-                  const text = `${type} 计权`;
-
-                  // 绘制颜色块
-                  this.canvasContext.fillStyle = color;
-                  this.canvasContext.fillRect(legendStartX, legendStartY + index * (legendHeight + legendSpacing),
-                    vp2px(16), legendHeight);
-
-                  // 绘制文本
-                  this.canvasContext.fillStyle = '#000000';
-                  this.canvasContext.fillText(text, legendStartX + vp2px(20),
-                    legendStartY + index * (legendHeight + legendSpacing) + legendHeight / 2);
-                });
-              }
             })
         }
         .width('100%')
         .height(200)
-        .padding({ bottom: 12 })
+
+        if (this.uniqueWeightingTypes!.length > 0) {
+          Row() {
+            ForEach(this.uniqueWeightingTypes, (type: WeightingType, index) => {
+              Column()
+                .width(16)
+                .height(16)// 修改: 将高度改为16以适应圆形
+                .backgroundColor(this.uniqueWeightingColors![index])
+                .borderRadius(8) // 新增: 设置边框半径为8以形成圆形
+              Text(`${type}计权`)
+                .fontSize(12)
+                .fontColor('#000000')
+                .margin({ left: 4, right: 8 })
+            })
+          }.margin({ top: -30 })
+        }
       }
     }
     .width('100%')
