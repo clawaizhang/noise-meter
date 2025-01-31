@@ -222,24 +222,6 @@ export struct NoiseChart {
                 this.canvasContext.moveTo(x, margin.top);
                 this.canvasContext.lineTo(x, margin.top + chartHeight);
                 this.canvasContext.stroke();
-
-                // 添加辅助网格线
-                if (i < actualGridCount - 1) {
-                  const nextX = margin.left + (i + 1) * xStep;
-                  const subGridCount = 1;
-                  const subXStep = (nextX - x) / (subGridCount + 1);
-
-                  this.canvasContext.strokeStyle = '#D3D3D3'; // 辅助网格线颜色
-                  this.canvasContext.lineWidth = 0.2; // 更细的线条
-
-                  for (let j = 1; j <= subGridCount; j++) {
-                    const subX = x + j * subXStep;
-                    this.canvasContext.beginPath();
-                    this.canvasContext.moveTo(subX, margin.top);
-                    this.canvasContext.lineTo(subX, margin.top + chartHeight);
-                    this.canvasContext.stroke();
-                  }
-                }
               }
 
               // 绘制数据点
