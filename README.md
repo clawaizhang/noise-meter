@@ -1,175 +1,187 @@
-# 分贝检测应用
+# 噪音监测与分析系统
 
-基于HarmonyOS的环境噪音检测应用，采用ArkTS开发框架。
+基于HarmonyOS的专业噪音监测与分析系统，采用ArkTS开发框架，提供实时分贝检测、频谱分析、数据记录等功能。
+
+## 核心功能
+
+1. **实时音频分析**
+   - 多种加权方式(A/C/Z)支持
+   - 实时频谱分析与显示
+   - 快速/慢速时间加权选项
+
+2. **数据管理**
+   - 本地数据持久化存储
+   - 历史记录查询与统计
+   - 数据导出功能
+
+3. **位置服务**
+   - 噪音数据地理位置标记
+   - 位置信息可视化
+
+4. **音频处理**
+   - WAV文件生成与保存
+   - FFT频谱分析
+   - 音频增强处理
 
 ## 技术架构
 
-- HarmonyOS API 9 开发平台
-- ArkTS 声明式开发范式
-- @pura/harmony-utils ^1.0.0 工具库
-- RelationalStore 关系型数据库
-- Preferences API 首选项存储
+### 开发环境
+- HarmonyOS API 9
+- DevEco Studio 3.1+
+- Node.js 16+
+
+### 核心依赖
+```json
+{
+  "@pura/harmony-utils": "^1.0.0",
+  "@ohos.multimedia.audio": "9.0.0",
+  "@ohos.data.relationalStore": "9.0.0"
+}
+```
 
 ## 项目结构
 
 ```bash
-entry/src/main/ets/          # 源码主目录
-├── abilitystage/           # 应用生命周期管理
-├── components/             # 界面组件
-├── entryability/          # 入口能力
-├── pages/                 # 页面文件
-│   └── Index.ets          # 主页面入口
-├── services/              # 服务层实现
-└── utils/                 # 工具类
-
-library/ets/                # 公共库目录
-├── services/              # 服务实现
-│   ├── RelationalStoreService.ets  # 数据库服务
-│   └── PreferenceService.ets       # 配置服务
-├── constants/             # 常量定义
-│   ├── DatabaseConstants.ets       # 数据库常量
-│   └── PreferenceKeyConstants.ets  # 配置项常量
-└── interfaces/            # 接口定义
-    └── DatabaseInterfaces.ets      # 数据库接口
+entry/
+├── src/
+│   ├── library/ets/           # 核心库
+│   │   ├── components/        # 组件
+│   │   │   ├── business/     # 业务组件
+│   │   │   └── common/       # 通用组件
+│   │   ├── services/         # 服务层
+│   │   │   ├── AudioService.ets        # 音频服务
+│   │   │   ├── LocationService.ets     # 位置服务
+│   │   │   └── RelationalStoreService.ets  # 数据库服务
+│   │   └── utils/            # 工具类
+│   │       ├── FFTAnalyzer.ets         # FFT分析器
+│   │       └── WavFileGenerator.ets     # WAV文件生成器
+│   └── main/
+│       └── ets/
+│           ├── pages/        # 页面
+│           └── entryability/ # 入口能力
 ```
 
-## 数据存储实现
+## 数据存储
 
-### 关系型数据库
+### 数据库结构
 ```sql
--- 分贝记录表结构
+-- 分贝记录表
 CREATE TABLE IF NOT EXISTS DecibelRecords (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,  -- 主键，自增
-  value REAL NOT NULL,                   -- 分贝值
-  timestamp INTEGER DEFAULT (strftime('%s','now')),  -- 时间戳
-  weighting TEXT CHECK(weighting IN ('A','C','Z'))   -- 加权类型
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  value REAL NOT NULL,                    -- 分贝值
+  timestamp INTEGER,                      -- 记录时间
+  weighting TEXT,                         -- 加权类型(A/C/Z)
+  location TEXT,                          -- 位置信息
+  note TEXT,                             -- 备注
+  spectrum BLOB                          -- 频谱数据
 );
 ```
 
 ### 首选项配置
 ```typescript
-// 配置键定义
-static readonly WEIGHTING: string = 'weighting_type';  // 加权类型配置项
+// 音频分析配置
+const PREF_ANALYSIS_MODE = 'audio_analysis_mode';    // 分析模式
+const PREF_TARGET_SAMPLES = 'audio_target_samples';  // 目标采样数
+const PREF_PROCESS_INTERVAL = 'audio_process_interval'; // 处理间隔
 ```
 
-## 状态管理
+## 音频处理流程
 
-```typescript
-@Component
-struct Index {
-  // 初始化状态管理
-  @State isInitialized: boolean = false;  // 初始化完成标志
-  @State isLoading: boolean = true;       // 加载状态标志
-  
-  // 服务实例
-  private relationalStoreService: RelationalStoreService = RelationalStoreService.getInstance();
-}
-```
+1. **采集初始化**
+   ```typescript
+   audioCapturerOptions = {
+     streamInfo: {
+       samplingRate: 44100,
+       channels: CHANNEL_1,
+       sampleFormat: SAMPLE_FORMAT_S16LE,
+       encodingType: ENCODING_TYPE_RAW
+     }
+   };
+   ```
 
-## 开发指南
+2. **实时处理**
+   - 音频数据缓冲
+   - FFT频谱分析
+   - 分贝值计算
+   - 数据持久化
 
-### 1. 环境要求
-- DevEco Studio 3.1 或更高版本
-- HarmonyOS SDK API 9
-- Node.js 16+
+3. **数据输出**
+   - 实时显示
+   - 文件保存
+   - 数据库存储
 
-### 2. 开发步骤
-```bash
-# 1. 克隆项目
-git clone <仓库地址>
+## 安全特性
 
-# 2. 安装依赖
-npm install
+1. **数据安全**
+   - 数据库加密（SecurityLevel.S1）
+   - 事务完整性保护
+   - SQL注入防护
 
-# 3. 使用DevEco Studio打开项目
-File > Open > 选择项目目录
-```
+2. **权限管理**
+   - 麦克风权限
+   - 位置权限
+   - 存储权限
 
-### 3. 数据库升级流程
-```typescript
-// 版本升级配置
-const upgradeConfigs: DatabaseUpgradeConfig[] = [
-  {
-    version: 1,  // 初始版本
-    sqls: [TableCreateSql.DECIBEL_RECORDS]  // 创建表
-  },
-  {
-    version: 2,  // 升级版本
-    sqls: [TableCreateSql.ADD_WEIGHTING_TYPES_COLUMN]  // 添加列
-  }
-];
-```
+## 使用说明
 
-## 开发规范
+1. **环境准备**
+   ```bash
+   # 安装依赖
+   npm install
+   ```
 
-### 1. 类型定义
-```typescript
-// 正确示例
-private service: RelationalStoreService;  // 使用具体类型
+2. **开发调试**
+   - 使用DevEco Studio打开项目
+   - 选择目标设备或模拟器
+   - 点击运行按钮
 
-// 错误示例
-private service: any;  // 禁止使用any类型
-```
-
-### 2. 错误处理
-```typescript
-try {
-  // 执行初始化
-  await this.initialize();
-} catch (error) {
-  // 使用hilog记录错误
-  hilog.error(DOMAIN, TAG, '初始化失败: %{public}s', 
-    error instanceof Error ? error.message : String(error));
-}
-```
-
-### 3. 装饰器使用
-```typescript
-@Entry
-@Component
-struct MainPage {
-  // 使用@State管理状态
-  @State private isLoading: boolean = true;
-}
-```
-
-## 安全说明
-
-1. 数据安全
-   - 使用SecurityLevel.S1加密级别
-   - 事务保证数据一致性
-   - SQL参数化查询防注入
-
-2. 权限控制
-   - 运行时权限申请
-   - 异常状态处理
-   - 降级方案支持
+3. **发布部署**
+   ```bash
+   # 构建发布包
+   npm run build
+   ```
 
 ## 调试工具
 
 ### 数据库调试
 ```bash
-# 查看表结构
+# 查看数据库结构
 adb shell "run-as com.example.myapplication6 sqlite3 
   /data/app/el2/100/database/NoiseMeterDb/NoiseMeter.db 
   '.schema'"
 ```
 
-### 配置检查
+### 日志查看
 ```bash
-# 查看配置文件
-adb shell "run-as com.example.myapplication6 cat 
-  /data/app/el2/100/preferences/NoiseMeterPref.xml"
+# 查看应用日志
+hdc shell hilog | grep com.example.myapplication6
 ```
 
-## 版本记录
+## 版本历史
 
-### v2.0 版本
-- 新增加权类型(A/C/Z)支持
-- 数据库结构升级
-- 完善错误处理机制
+### v2.1.0 (2025-01-31)
+- 新增频谱分析功能
+- 优化音频处理性能
+- 添加位置服务支持
 
-### v1.0 版本
-- 初始版本发布
-- 基础数据库实现
-- 配置管理支持
+### v2.0.0
+- 实现多种加权方式
+- 重构音频处理模块
+- 优化数据存储结构
+
+### v1.0.0
+- 基础噪音检测
+- 数据库支持
+- 配置管理
+
+## 参与贡献
+
+1. Fork 项目
+2. 创建特性分支
+3. 提交更改
+4. 推送到分支
+5. 创建 Pull Request
+
+## 开源协议
+
+本项目采用 MIT 协议开源，详见 [LICENSE](LICENSE) 文件。
