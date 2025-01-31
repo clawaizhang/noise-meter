@@ -1,3 +1,4 @@
+import { WeightingType } from "../../../library/ets/constants/WeightingConstants";
 import { BasicStats, HealthStats } from "../types/NoiseStats";
 
 export interface NoiseLevel {
@@ -131,6 +132,20 @@ export class DecibelService {
     if (value < 100) return '短期暴露即可能损伤听力的环境，如地铁列车内部或摇滚音乐会前排';
     if (value < 110) return '需要专业听力保护的环境，如飞机引擎附近或大型演唱会现场';
     return '立即损伤听力的危险水平，如喷气发动机附近或爆炸现场';
+  }
+
+  // 新增方法：获取频率加权方式的颜色
+  static getWeightingColor(type: WeightingType): string {
+    switch (type) {
+      case WeightingType.A:
+        return '#E0E0E0'; // 浅灰色
+      case WeightingType.C:
+        return '#BDBDBD'; // 更浅的灰色
+      case WeightingType.Z:
+        return '#9E9E9E'; // 再浅一点的灰色
+      default:
+        return '#E0E0E0'; // 默认浅灰色
+    }
   }
 
   /**

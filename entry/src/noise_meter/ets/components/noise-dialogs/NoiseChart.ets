@@ -237,6 +237,36 @@ export struct NoiseChart {
               const yScale = chartHeight / (maxValue - minValue);
               const timeInterval = totalSeconds / (values.length - 1);
               const colorCache = new Map<number, string>();
+              const weightingTypes = this.selectedRecord!.weightingTypes;
+
+              // 获取唯一的加权类型及其颜色
+              const uniqueWeightingTypes = Array.from(new Set(weightingTypes));
+              const weightingColors: string[] =
+                uniqueWeightingTypes.map(type => DecibelService.getWeightingColor(type));
+
+              // 绘制背景色
+              for (let i = 0; i < values.length - 1; i++) {
+                const currentTime = i * timeInterval;
+                const nextTime = (i + 1) * timeInterval;
+                const x1 = margin.left + currentTime * xScale;
+                const x2 = margin.left + nextTime * xScale;
+                const y1 = margin.top + chartHeight - (values[i] - minValue) * yScale;
+                const y2 = margin.top + chartHeight - (values[i + 1] - minValue) * yScale;
+
+                const typeIndex = i < weightingTypes.length ? weightingTypes[i] : 0;
+                const color: string = weightingColors[typeIndex];
+
+                this.canvasContext.fillStyle = color;
+                this.canvasContext.globalAlpha = 0.2; // 设置透明度以避免喧宾夺主
+                this.canvasContext.beginPath();
+                this.canvasContext.moveTo(x1, y1);
+                this.canvasContext.lineTo(x2, y2);
+                this.canvasContext.lineTo(x2, margin.top + chartHeight);
+                this.canvasContext.lineTo(x1, margin.top + chartHeight);
+                this.canvasContext.closePath();
+                this.canvasContext.fill();
+                this.canvasContext.globalAlpha = 1; // 恢复透明度
+              }
 
               values.forEach((value, index) => {
                 const currentTime = index * timeInterval;
@@ -265,6 +295,30 @@ export struct NoiseChart {
               });
 
               this.canvasContext.stroke();
+
+              // 绘制图例
+              if (uniqueWeightingTypes.length > 0) {
+                const legendMargin = vp2px(8);
+                const legendHeight = vp2px(20);
+                const legendSpacing = vp2px(10);
+                const legendStartX = margin.left;
+                const legendStartY = margin.top + chartHeight + vp2px(20);
+
+                uniqueWeightingTypes.forEach((type, index) => {
+                  const color = weightingColors[index];
+                  const text = `${type} 计权`;
+
+                  // 绘制颜色块
+                  this.canvasContext.fillStyle = color;
+                  this.canvasContext.fillRect(legendStartX, legendStartY + index * (legendHeight + legendSpacing),
+                    vp2px(16), legendHeight);
+
+                  // 绘制文本
+                  this.canvasContext.fillStyle = '#000000';
+                  this.canvasContext.fillText(text, legendStartX + vp2px(20),
+                    legendStartY + index * (legendHeight + legendSpacing) + legendHeight / 2);
+                });
+              }
             })
         }
         .width('100%')
