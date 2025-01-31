@@ -90,9 +90,9 @@ function analysisDetail() {
 @ComponentV2
 export struct Settings {
   private preferenceService: PreferenceService = PreferenceService.getInstance();
-  @Local isLocationEnabled: boolean = false;
-  @Local isRecordEnabled: boolean = false;
-  @Local isKeepScreenOn: boolean = false;
+  @Local isLocationEnabled: boolean = true;
+  @Local isRecordEnabled: boolean = true;
+  @Local isKeepScreenOn: boolean = true;
   @Local selectedWeighting: WeightingType = WeightingType.A;
   @Local selectedAnalysisMode: AudioAnalysisMode = AudioAnalysisMode.FAST_TIME_WEIGHTING;
   @Local analysisModeDescription: string = '';
@@ -186,15 +186,15 @@ export struct Settings {
   }
 
   aboutToAppear() {
-    this.isLocationEnabled = this.preferenceService.isEnabled(PreferenceKeyConstants.LOCATION);
-    this.isRecordEnabled = this.preferenceService.isEnabled(PreferenceKeyConstants.RECORD);
+    this.isLocationEnabled = this.preferenceService.getBoolean(PreferenceKeyConstants.LOCATION, true);
+    this.isRecordEnabled = this.preferenceService.getBoolean(PreferenceKeyConstants.RECORD, true);
     this.isKeepScreenOn = this.preferenceService.getBoolean(PreferenceKeyConstants.KEEP_SCREEN_ON, true);
     this.selectedWeighting =
       (this.preferenceService.getString(PreferenceKeyConstants.WEIGHTING) || WeightingType.A) as WeightingType;
     this.selectedAnalysisMode = (this.preferenceService.getString(PreferenceKeyConstants.ANALYSIS_MODE) ||
     AudioAnalysisMode.FAST_TIME_WEIGHTING) as AudioAnalysisMode;
     this.calibrationValue = this.preferenceService.getNumber(PreferenceKeyConstants.CALIBRATION) || 0;
-    this.isNoiseAlarmEnabled = this.preferenceService.getBoolean(PreferenceKeyConstants.NOISE_ALARM_ENABLED, false);
+    this.isNoiseAlarmEnabled = this.preferenceService.getBoolean(PreferenceKeyConstants.NOISE_ALARM_ENABLED, true);
     this.noiseThreshold = this.preferenceService.getNumber(PreferenceKeyConstants.NOISE_THRESHOLD, 80);
     this.updateAnalysisModeCache();
     this.updateNoiseAlarmDescription(); // 初始化噪音警报描述
@@ -360,24 +360,24 @@ export struct Settings {
             }
             .listItemRow()
 
-Slider({
-  value: this.calibrationValue,
-  min: -30,
-  max: 30,
-  style: SliderStyle.InSet
-})
-  .blockColor('#0091FF')
-  .trackColor('#F0F0F0')
-  .selectedColor('#0091FF')
-  .showTips(true, `${this.decibelState.currentDecibel}dB`)
-  .onChange((value: number) => {
-    this.calibrationValue = value;
-    void this.preferenceService.setNumber(PreferenceKeyConstants.CALIBRATION, value);
-  })
-  .margin({ top: 12, bottom: 12 })
-  .height(24)
-  .trackThickness(24)
-  .blockSize({width: 24, height: 24})
+            Slider({
+              value: this.calibrationValue,
+              min: -30,
+              max: 30,
+              style: SliderStyle.InSet
+            })
+              .blockColor('#0091FF')
+              .trackColor('#F0F0F0')
+              .selectedColor('#0091FF')
+              .showTips(true, `${this.decibelState.currentDecibel}dB`)
+              .onChange((value: number) => {
+                this.calibrationValue = value;
+                void this.preferenceService.setNumber(PreferenceKeyConstants.CALIBRATION, value);
+              })
+              .margin({ top: 12, bottom: 12 })
+              .height(24)
+              .trackThickness(24)
+              .blockSize({ width: 24, height: 24 })
           }
           .listItemStyle()
         }
@@ -394,7 +394,7 @@ Slider({
           Column() {
             Row() {
               Row() {
-                Image($r('app.media.ic_alarm')) // 确保资源名称正确
+                Image($r('app.media.ic_alarm'))// 确保资源名称正确
                   .itemIcon()
 
                 Text('噪音警报')
@@ -460,7 +460,7 @@ Slider({
               .margin({ top: 12, bottom: 12 })
               .height(24)
               .trackThickness(24)
-              .blockSize({width: 24, height: 24})
+              .blockSize({ width: 24, height: 24 })
           }
           .listItemStyle()
         }
