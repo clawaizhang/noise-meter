@@ -30,7 +30,7 @@ export struct NoiseChart {
   build() {
     Column() {
       Row() {
-        Text('声级-时间散点图')
+        Text('统计图')
           .fontSize(16)
           .fontWeight(FontWeight.Medium)
 
@@ -239,10 +239,9 @@ export struct NoiseChart {
               const colorCache = new Map<number, string>();
               const weightingTypes = this.selectedRecord!.weightingTypes;
 
-              // 获取唯一的加权类型及其颜色
-              const uniqueWeightingTypes = Array.from(new Set(weightingTypes));
+              // 获取加权类型及其颜色
               const weightingColors: string[] =
-                uniqueWeightingTypes.map(type => DecibelService.getWeightingColor(type));
+                weightingTypes.map(type => DecibelService.getWeightingColor(type));
 
               // 绘制背景色
               for (let i = 0; i < values.length - 1; i++) {
@@ -253,8 +252,7 @@ export struct NoiseChart {
                 const y1 = margin.top + chartHeight - (values[i] - minValue) * yScale;
                 const y2 = margin.top + chartHeight - (values[i + 1] - minValue) * yScale;
 
-                const typeIndex = i < weightingTypes.length ? weightingTypes[i] : 0;
-                const color: string = weightingColors[typeIndex];
+                const color: string = weightingColors[i];
 
                 this.canvasContext.fillStyle = color;
                 this.canvasContext.globalAlpha = 0.2; // 设置透明度以避免喧宾夺主
@@ -296,6 +294,7 @@ export struct NoiseChart {
 
               this.canvasContext.stroke();
 
+              let uniqueWeightingTypes = Array.from(new Set(weightingTypes));
               // 绘制图例
               if (uniqueWeightingTypes.length > 0) {
                 const legendMargin = vp2px(8);

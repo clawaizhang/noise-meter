@@ -138,13 +138,13 @@ export class DecibelService {
   static getWeightingColor(type: WeightingType): string {
     switch (type) {
       case WeightingType.A:
-        return '#E0E0E0'; // 浅灰色
+        return '#A9A9A9'; // 浅灰色 -> 更深的浅灰色
       case WeightingType.C:
-        return '#BDBDBD'; // 更浅的灰色
+        return '#81D4FA'; // 更浅的蓝色 -> 更深的更浅的蓝色
       case WeightingType.Z:
-        return '#9E9E9E'; // 再浅一点的灰色
+        return '#BA68C8'; // 更浅的紫色 -> 更深的更浅的紫色
       default:
-        return '#E0E0E0'; // 默认浅灰色
+        return '#F0F0F0'; // 默认更浅的灰色
     }
   }
 
