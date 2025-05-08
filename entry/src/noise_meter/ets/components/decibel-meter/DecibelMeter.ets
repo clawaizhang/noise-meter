@@ -7,7 +7,7 @@ import { LocationDisplay } from '../../../../library/ets/components/business/Loc
 import common from '@ohos.app.ability.common';
 import { FileService } from '../../../../library/ets/services/FileService';
 import { noiseMeterNavStack } from '../../constant/ProviderConstant';
-import { AppStorageV2, promptAction } from '@kit.ArkUI';
+import { AppStorageV2, promptAction, window } from '@kit.ArkUI';
 import {
   PreferenceService,
   PreferenceChangeListener,
@@ -66,7 +66,8 @@ export struct DecibelMeter {
   private recordListener?: PreferenceChangeListener
   // Canvas相关属性
 
-  private readonly ASPECT_RATIO: number = 1.5 // 宽高比改为3:2
+  private ASPECT_RATIO: number = 1.5 // 宽高比改为3:2
+  private foldStatus: display.FoldStatus = display.FoldStatus.FOLD_STATUS_UNKNOWN;
   private readonly SIDE_MARGIN: number = 16 // 左右边距各16vp
   private readonly sampleRate: number = 44100 // 采样率
   private canvasSettings: RenderingContextSettings = new RenderingContextSettings(true) // Canvas设置
@@ -77,10 +78,28 @@ export struct DecibelMeter {
   private async calculateCanvasDimensions(): Promise<void> {
     try {
       // 获取屏幕信息
+      let callback: Callback<display.FoldStatus> = (foldStatus: display.FoldStatus) => {
+        // 获取折叠折痕区域，left与top属性为矩形区域的左边界与上边界，width与height属性为矩形区域的宽高。
+        this.foldStatus = foldStatus;
+      };
+      try {
+        display.on('foldStatusChange', callback);
+      } catch (exception) {
+        console.error('Failed to register callback. Code: ' + JSON.stringify(exception));
+      }
       // 获取实际可用区域
       const availableArea = await display.getDefaultDisplaySync().getAvailableArea();
+      this.foldStatus = display.getFoldStatus();
+      const availableWidth = availableArea.width < availableArea.height ? availableArea.width : availableArea.height;
+      const availableHeight = availableArea.width < availableArea.height ? availableArea.height : availableArea.width;
+      if(availableWidth / availableHeight < 1 && this.foldStatus === display.FoldStatus.FOLD_STATUS_EXPANDED) {
+        this.ASPECT_RATIO = 3;
+      }
+      if(availableWidth / availableHeight < 1 && this.foldStatus === display.FoldStatus.FOLD_STATUS_FOLDED) {
+        this.ASPECT_RATIO = 3.5;
+      }
       // 先把可用区域的像素转换为vp
-      const availableWidthVp = px2vp(availableArea.width);
+      const availableWidthVp = px2vp(availableWidth);
       // 然后用vp单位进行计算
       this.canvasWidth = availableWidthVp - (this.SIDE_MARGIN * 2);
       this.canvasHeight = this.canvasWidth / this.ASPECT_RATIO;

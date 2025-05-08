@@ -10,9 +10,9 @@ export struct PrivacyDialog {
   @Consumer(noiseMeterNavStack) navStack: NavPathStack = new NavPathStack();
   private preferenceService: PreferenceService = PreferenceService.getInstance();
   private promptAction: PromptAction = this.getUIContext().getPromptAction();
-  private agreeCallback: () => void = () => {
+  private agreeCallback: () => void = async () => {
     // 同意隐私协议
-    this.preferenceService.setBoolean(PreferenceKeyConstants.PRIVACY_AGREED, true);
+    await this.preferenceService.setBoolean(PreferenceKeyConstants.PRIVACY_AGREED, true);
     let want: Want = {
       bundleName: 'yu.zhang.myapplication.noisemeter',
       abilityName: 'EntryAbility'
@@ -70,8 +70,8 @@ export struct PrivacyDialog {
             .width('40%')
             .height(40)
             .margin({ left: 16 })
-            .onClick(() => {
-              this.agreeCallback();
+            .onClick(async () => {
+              await this.agreeCallback();
             })
         }
         .width('100%')
