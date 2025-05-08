@@ -9,9 +9,14 @@ import { ScreenshotUtils } from '../../library/ets/utils/ScreenshotUtils';
 import promptAction from '@ohos.promptAction';
 import { LeqStatistics } from '../ets/components/LeqStatistics';
 
+@Builder
+export function NoiseMeterBuilder() {
+  NoiseMeter()
+}
+
 @ComponentV2
 export struct NoiseMeter {
-  @Provider(noiseMeterNavStack) navStack: NavPathStack = new NavPathStack()
+  @Consumer(noiseMeterNavStack) navStack: NavPathStack = new NavPathStack()
   @Local currentIndex: number = 0
   @Local meterOn: boolean = true
 
@@ -34,7 +39,7 @@ export struct NoiseMeter {
   }
 
   build() {
-    Navigation(this.navStack) {
+    Navigation() {
       Tabs({ barPosition: BarPosition.End, index: this.currentIndex }) {
         TabContent() {
           Column() {

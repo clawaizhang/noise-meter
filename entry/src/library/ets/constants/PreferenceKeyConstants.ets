@@ -34,4 +34,9 @@ export class PreferenceKeyConstants {
 
   static readonly NOISE_ALARM_ENABLED: string = 'noise_alarm_enabled';
   static readonly NOISE_THRESHOLD: string = 'noise_threshold';
+  
+  /**
+   * 隐私协议同意状态
+   */
+  static readonly PRIVACY_AGREED: string = 'privacy_agreed';
 }

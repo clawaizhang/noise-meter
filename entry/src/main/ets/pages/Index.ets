@@ -5,9 +5,11 @@ import { DatabaseConstants } from '../../../library/ets/constants/DatabaseConsta
 import { TableCreateSql } from '../../../library/ets/constants/TableCreateSql';
 import { DatabaseUpgradeConfig } from '../../../library/ets/interfaces/DatabaseInterfaces';
 import { PreferenceService } from '../../../library/ets/services/PreferenceService';
-import { PreferenceStoreConstants } from '../../../library/ets/constants/PreferenceStoreConstants';
 import { PreferenceKeyConstants } from '../../../library/ets/constants/PreferenceKeyConstants';
 import { WeightingType } from '../../../library/ets/constants/WeightingConstants';
+import { DialogContainerBuilder } from '../../../library/ets/components/common/DialogContainer';
+import { PromptAction } from '@kit.ArkUI';
+import { noiseMeterNavStack } from '../../../noise_meter/ets/constant/ProviderConstant';
 
 const TAG = 'Index';
 const DOMAIN = 0x0000;
@@ -18,10 +20,12 @@ function IndexBuilder() {
 }
 
 @Entry
-@Component
+@ComponentV2
 struct Index {
-  @State isInitialized: boolean = false;
-  @State isLoading: boolean = true;
+  @Provider(noiseMeterNavStack) navStack: NavPathStack = new NavPathStack()
+  @Local isInitialized: boolean = false;
+  @Local isLoading: boolean = true;
+  @Local showPrivacyDialog: boolean = false;
   private relationalStoreService: RelationalStoreService = RelationalStoreService.getInstance();
   private preferenceService: PreferenceService = PreferenceService.getInstance();
 
@@ -54,6 +58,12 @@ struct Index {
       }
 
       this.isInitialized = true;
+      
+      // 检查隐私协议
+      this.showPrivacyDialog = !this.preferenceService.getBoolean(PreferenceKeyConstants.PRIVACY_AGREED, false);
+      if (this.showPrivacyDialog) {
+        this.navStack.pushPathByName('PrivacyDialog',null);
+      }
     } catch (error) {
       hilog.error(DOMAIN, TAG, '初始化失败: %{public}s', error instanceof Error ? error.message : String(error));
       this.isInitialized = false;
@@ -95,8 +105,10 @@ struct Index {
         .justifyContent(FlexAlign.Center)
       } else {
         // 显示正常内容
-        Navigation() {
-          MainPage()
+        Navigation(this.navStack) {
+          if (!this.showPrivacyDialog) {
+            MainPage()
+          }
         }
         .size({ width: '100%', height: '100%' })
         .hideTitleBar(true)

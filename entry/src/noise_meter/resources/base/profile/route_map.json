@@ -1,6 +1,10 @@
 {
   "routerMap": [
     {
+      "name": "NoiseMeter",
+      "pageSourceFile": "src/noise_meter/pages/NoiseMeter.ets",
+      "buildFunction": "NoiseMeterBuilder"
+    },{
       "name": "DecibelHistory",
       "pageSourceFile": "src/noise_meter/pages/DecibelHistory.ets",
       "buildFunction": "DecibelHistoryBuilder"
@@ -34,6 +38,11 @@
       "name": "NoiseDescriptionDialog",
       "pageSourceFile": "src/noise_meter/ets/components/decibel-meter/NoiseDescriptionDialog.ets",
       "buildFunction": "NoiseDescriptionDialogBuilder"
+    },
+    {
+      "name": "PrivacyDialog",
+      "pageSourceFile": "src/main/ets/components/PrivacyDialog.ets",
+      "buildFunction": "PrivacyDialogBuilder"
     }
   ]
 } 
