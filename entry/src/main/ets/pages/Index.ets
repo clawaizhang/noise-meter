@@ -113,6 +113,7 @@ struct Index {
         .size({ width: '100%', height: '100%' })
         .hideTitleBar(true)
         .titleMode(NavigationTitleMode.Mini)
+        .mode(NavigationMode.Stack)
       }
     }
     .width('100%')

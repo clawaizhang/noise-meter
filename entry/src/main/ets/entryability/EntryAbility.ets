@@ -41,6 +41,7 @@ export default class EntryAbility extends UIAbility {
     windowManager.registerWindowStage(windowStage);
     windowManager.loadContent('pages/Index');
     windowManager.setKeepScreenOn(this.keepScreenOn);
+    windowStage.getMainWindowSync().setPreferredOrientation(window.Orientation.PORTRAIT);
   }
 
   onWindowStageDestroy(): void {

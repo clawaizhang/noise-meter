@@ -20,7 +20,6 @@ export struct NoiseMeter {
   @Local currentIndex: number = 0
   @Local meterOn: boolean = true
 
-
   @Builder
   TabBuilder(title: string, icon: Resource, index: number) {
     Column() {
@@ -39,7 +38,7 @@ export struct NoiseMeter {
   }
 
   build() {
-    Navigation() {
+    NavDestination() {
       Tabs({ barPosition: BarPosition.End, index: this.currentIndex }) {
         TabContent() {
           Column() {
@@ -77,7 +76,7 @@ export struct NoiseMeter {
                 {
                   icon: $r('app.media.ic_info'),
                   onClick: () => {
-                    this.navStack.pushPathByName('NoiseStandardDialog',null);
+                    this.navStack.pushPathByName('NoiseStandardDialog', null);
                   }
                 },
                 {
@@ -138,9 +137,8 @@ export struct NoiseMeter {
       .animationDuration(0)
     }
     .hideTitleBar(true)
-    .hideBackButton(true)
     .backgroundColor('#F5F5F5')
-    .navBarPosition(NavBarPosition.Start)
     .hideToolBar(true)
+    .mode(NavDestinationMode.STANDARD)
   }
 }
