@@ -1,9 +1,9 @@
-import { DialogContainer } from '../../../library/ets/components/common/DialogContainer';
 import { PreferenceKeyConstants } from '../../../library/ets/constants/PreferenceKeyConstants';
 import { PreferenceService } from '../../../library/ets/services/PreferenceService';
 import { noiseMeterNavStack } from '../../../noise_meter/ets/constant/ProviderConstant';
 import { PromptAction } from '@kit.ArkUI';
 import { Want } from '@kit.AbilityKit';
+import { webview } from '@kit.ArkWeb';
 
 @ComponentV2
 export struct PrivacyDialog {
@@ -44,12 +44,14 @@ export struct PrivacyDialog {
 
         // 内容区域
         Scroll() {
-          Text($r('app.string.privacy_content'))
-            .fontSize(14)
-            .textAlign(TextAlign.Start)
-            .fontColor('#666666')
+          Web({
+            src: 'https://agreement-drcn.hispace.dbankcloud.cn/index.html?lang=zh&agreementId=1603946590609908800',
+            controller: new webview.WebviewController()
+          })
+            .width('100%')
+            .height('100%')
         }
-        .height('60%')
+        .height('80%')
         .width('100%')
         .margin({ bottom: 24 })
 
