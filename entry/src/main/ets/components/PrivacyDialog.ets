@@ -6,6 +6,9 @@ import { webview } from '@kit.ArkWeb';
 
 @ComponentV2
 export struct PrivacyDialog {
+  @Local countdown: number = 3;
+  @Local agreeText:string = '同意并继续';
+  private countdownTimer: number | null = null;
   @Consumer(noiseMeterNavStack) navStack: NavPathStack = new NavPathStack();
   private preferenceService: PreferenceService = PreferenceService.getInstance();
   private promptAction: PromptAction = this.getUIContext().getPromptAction();
@@ -23,9 +26,31 @@ export struct PrivacyDialog {
     }, 1000);
   };
 
+  aboutToAppear(): void {
+    this.startCountdown();
+  }
+
   aboutToDisappear(): void {
+    this.clearCountdown();
     if (!this.preferenceService.getBoolean(PreferenceKeyConstants.PRIVACY_AGREED, false)) {
       this.disagreeCallback();
+    }
+  }
+
+  private startCountdown(): void {
+    this.countdownTimer = setInterval(() => {
+      if (this.countdown > 0) {
+        this.countdown--;
+      } else {
+        this.clearCountdown();
+      }
+    }, 1000);
+  }
+
+  private clearCountdown(): void {
+    if (this.countdownTimer) {
+      clearInterval(this.countdownTimer);
+      this.countdownTimer = null;
     }
   }
 
@@ -62,13 +87,17 @@ export struct PrivacyDialog {
             .onClick(() => {
               this.disagreeCallback();
             })
-
-          Button($r('app.string.agree'), { type: ButtonType.Capsule })
+          ;
+          Button(this.countdown > 0 ? `${this.agreeText}(${this.countdown}s)` : $r('app.string.agree'),
+            { type: ButtonType.Capsule })
             .width('40%')
             .height(40)
             .margin({ left: 16 })
+            .enabled(this.countdown === 0)
             .onClick(async () => {
-              await this.agreeCallback();
+              if (this.countdown === 0) {
+                await this.agreeCallback();
+              }
             })
         }
         .width('100%')
