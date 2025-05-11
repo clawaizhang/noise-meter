@@ -4,7 +4,7 @@ import { RelationalStoreService } from '../../../library/ets/services/Relational
 import { DatabaseConstants } from '../../../library/ets/constants/DatabaseConstants';
 import { TableCreateSql } from '../../../library/ets/constants/TableCreateSql';
 import { DatabaseUpgradeConfig } from '../../../library/ets/interfaces/DatabaseInterfaces';
-import { PreferenceService } from '../../../library/ets/services/PreferenceService';
+import { PreferenceService, PreferenceValue } from '../../../library/ets/services/PreferenceService';
 import { PreferenceKeyConstants } from '../../../library/ets/constants/PreferenceKeyConstants';
 import { WeightingType } from '../../../library/ets/constants/WeightingConstants';
 import { DialogContainerBuilder } from '../../../library/ets/components/common/DialogContainer';
@@ -26,6 +26,7 @@ struct Index {
   @Local isInitialized: boolean = false;
   @Local isLoading: boolean = true;
   @Local showPrivacyDialog: boolean = false;
+  @Local privacyAgreed: boolean = false;
   private relationalStoreService: RelationalStoreService = RelationalStoreService.getInstance();
   private preferenceService: PreferenceService = PreferenceService.getInstance();
 
@@ -56,6 +57,11 @@ struct Index {
       if (!this.preferenceService.getString(PreferenceKeyConstants.WEIGHTING)) {
         this.preferenceService.setString(PreferenceKeyConstants.WEIGHTING, WeightingType.A);
       }
+      this.privacyAgreed = this.preferenceService.getBoolean(PreferenceKeyConstants.PRIVACY_AGREED, false);
+      this.preferenceService.addChangeListener(PreferenceKeyConstants.PRIVACY_AGREED, (key: string, newValue: PreferenceValue) => {
+        this.privacyAgreed = !!newValue;
+      })
+
 
       this.isInitialized = true;
       
@@ -106,7 +112,7 @@ struct Index {
       } else {
         // 显示正常内容
         Navigation(this.navStack) {
-          if (!this.showPrivacyDialog) {
+          if (this.privacyAgreed) {
             MainPage()
           }
         }

@@ -2,7 +2,6 @@ import { PreferenceKeyConstants } from '../../../library/ets/constants/Preferenc
 import { PreferenceService } from '../../../library/ets/services/PreferenceService';
 import { noiseMeterNavStack } from '../../../noise_meter/ets/constant/ProviderConstant';
 import { PromptAction } from '@kit.ArkUI';
-import { Want } from '@kit.AbilityKit';
 import { webview } from '@kit.ArkWeb';
 
 @ComponentV2
@@ -13,11 +12,7 @@ export struct PrivacyDialog {
   private agreeCallback: () => void = async () => {
     // 同意隐私协议
     await this.preferenceService.setBoolean(PreferenceKeyConstants.PRIVACY_AGREED, true);
-    let want: Want = {
-      bundleName: 'yu.zhang.myapplication.noisemeter',
-      abilityName: 'EntryAbility'
-    }
-    getContext(this).getApplicationContext().restartApp(want)
+    this.navStack.pop();
   };
   private disagreeCallback: () => void = () => {
     // 拒绝隐私协议
@@ -29,7 +24,9 @@ export struct PrivacyDialog {
   };
 
   aboutToDisappear(): void {
-    this.disagreeCallback()
+    if (!this.preferenceService.getBoolean(PreferenceKeyConstants.PRIVACY_AGREED, false)) {
+      this.disagreeCallback();
+    }
   }
 
   build() {
