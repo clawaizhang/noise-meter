@@ -39,4 +39,6 @@ export class PreferenceKeyConstants {
    * 隐私协议同意状态
    */
   static readonly PRIVACY_AGREED: string = 'privacy_agreed';
+
+  static readonly METER_ON: string = 'meter_on';
 }

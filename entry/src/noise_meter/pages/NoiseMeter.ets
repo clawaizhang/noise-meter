@@ -8,6 +8,8 @@ import { common } from '@kit.AbilityKit';
 import { ScreenshotUtils } from '../../library/ets/utils/ScreenshotUtils';
 import promptAction from '@ohos.promptAction';
 import { LeqStatistics } from '../ets/components/LeqStatistics';
+import { PreferenceService } from '../../library/ets/services/PreferenceService';
+import { PreferenceKeyConstants } from '../../library/ets/constants/PreferenceKeyConstants';
 
 @Builder
 export function NoiseMeterBuilder() {
@@ -18,7 +20,8 @@ export function NoiseMeterBuilder() {
 export struct NoiseMeter {
   @Consumer(noiseMeterNavStack) navStack: NavPathStack = new NavPathStack()
   @Local currentIndex: number = 0
-  @Local meterOn: boolean = true
+  @Local meterOn: boolean = true;
+  private preferenceService: PreferenceService = PreferenceService.getInstance();
 
   @Builder
   TabBuilder(title: string, icon: Resource, index: number) {
@@ -66,10 +69,12 @@ export struct NoiseMeter {
                       }).then((result) => {
                         if (result.index === 1) { // 1 表示确定按钮
                           this.meterOn = false;
+                          this.preferenceService.setBoolean(PreferenceKeyConstants.METER_ON, false);
                         }
                       });
                     } else {
                       this.meterOn = true;
+                      this.preferenceService.setBoolean(PreferenceKeyConstants.METER_ON, true);
                     }
                   }
                 },

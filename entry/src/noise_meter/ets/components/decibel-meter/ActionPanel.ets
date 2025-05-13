@@ -1,5 +1,7 @@
 import promptAction from '@ohos.promptAction';
+import { PreferenceKeyConstants } from '../../../../library/ets/constants/PreferenceKeyConstants';
 import { WeightingType } from '../../../../library/ets/constants/WeightingConstants';
+import { PreferenceService, PreferenceValue } from '../../../../library/ets/services/PreferenceService';
 
 @ComponentV2
 export struct ActionPanel {
@@ -9,8 +11,17 @@ export struct ActionPanel {
   @Event onSave: () => void;
   @Event lockToggle: () => void;
   @Event onToggleWeighting: (weightingType: WeightingType) => void;
+  @Local meterOn:boolean = false;
+  private preferenceService: PreferenceService = PreferenceService.getInstance();
   private weightingTypes: Array<SelectOption> =
     [{ value: WeightingType.A }, { value: WeightingType.C }, { value: WeightingType.Z }];
+
+  aboutToAppear(): void {
+    this.meterOn  = this.preferenceService.getBoolean(PreferenceKeyConstants.METER_ON, true);
+    this.preferenceService.addChangeListener(PreferenceKeyConstants.METER_ON, (value: PreferenceValue) => {
+      this.meterOn = value as boolean;
+    })
+  }
 
   build() {
     Column() {
@@ -25,6 +36,7 @@ export struct ActionPanel {
         }
         .width(40)
         .height(40)
+        .enabled(this.meterOn)
         .backgroundColor('#F0F0F0')
         .accessibilityDescription('重置当前数据')
         .onClick(async () => {
@@ -56,6 +68,7 @@ export struct ActionPanel {
         }
         .width(40)
         .height(40)
+        .enabled(this.meterOn)
         .backgroundColor(this.isUILocked ? '#FFEAEA' : '#F5F5F5')
         .accessibilityDescription(this.isUILocked ? '解锁界面' : '锁定界面')
         .onClick(() => {
@@ -67,6 +80,7 @@ export struct ActionPanel {
           .width(40)
           .height(40)
           .backgroundColor('#F0F0F0')
+          .enabled(this.meterOn)
           .selected(this.getSelectedIndex())
           .value(this.weightingType)
           .accessibilityDescription('切换频率加权方式')
@@ -83,6 +97,7 @@ export struct ActionPanel {
         }
         .width(40)
         .height(40)
+        .enabled(this.meterOn)
         .backgroundColor('#F0F0F0')
         .accessibilityDescription('保存当前数据')
         .onClick(async () => {

@@ -28,18 +28,19 @@ export class DecibelRecordService {
   async saveRecord(record: DecibelRecord): Promise<void> {
     try {
       hilog.info(DOMAIN, TAG, '准备保存记录: %{public}s', JSON.stringify(record));
+      let decibelValues = JSON.stringify(record.decibelValues) as string;
       const valueBucket: relationalStore.ValuesBucket = {
-        id: record.id,
-        timestamp: record.timestamp,
-        minDecibel: record.minDecibel,
-        maxDecibel: record.maxDecibel,
-        avgDecibel: record.avgDecibel,
-        duration: record.duration,
-        decibelValues: JSON.stringify(record.decibelValues),
-        location: record.location ?? null,
-        audioFilePath: record.audioFilePath ?? null,
-        isFavorite: record.isFavorite ? 1 : 0,
-        weightingTypes: JSON.stringify(record.weightingTypes) // 确保正确处理 weightingTypes
+        'id': record.id,
+        'timestamp': record.timestamp,
+        'minDecibel': record.minDecibel,
+        'maxDecibel': record.maxDecibel,
+        'avgDecibel': record.avgDecibel,
+        'duration': record.duration,
+        'decibelValues': decibelValues,
+        'location': record.location ?? null,
+        'audioFilePath': record.audioFilePath ?? null,
+        'isFavorite': record.isFavorite ? 1 : 0,
+        'weightingTypes': JSON.stringify(record.weightingTypes) // 确保正确处理 weightingTypes
       };
       hilog.info(DOMAIN, TAG, '转换为 ValuesBucket: %{public}s', JSON.stringify(valueBucket));
       

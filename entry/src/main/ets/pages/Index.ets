@@ -7,9 +7,9 @@ import { DatabaseUpgradeConfig } from '../../../library/ets/interfaces/DatabaseI
 import { PreferenceService, PreferenceValue } from '../../../library/ets/services/PreferenceService';
 import { PreferenceKeyConstants } from '../../../library/ets/constants/PreferenceKeyConstants';
 import { WeightingType } from '../../../library/ets/constants/WeightingConstants';
-import { DialogContainerBuilder } from '../../../library/ets/components/common/DialogContainer';
-import { PromptAction } from '@kit.ArkUI';
 import { noiseMeterNavStack } from '../../../noise_meter/ets/constant/ProviderConstant';
+import { commonEventManager } from '@kit.BasicServicesKit';
+import { privacyManager } from '@kit.StoreKit';
 
 const TAG = 'Index';
 const DOMAIN = 0x0000;
@@ -25,17 +25,29 @@ struct Index {
   @Provider(noiseMeterNavStack) navStack: NavPathStack = new NavPathStack()
   @Local isInitialized: boolean = false;
   @Local isLoading: boolean = true;
-  @Local showPrivacyDialog: boolean = false;
   @Local privacyAgreed: boolean = false;
   private relationalStoreService: RelationalStoreService = RelationalStoreService.getInstance();
   private preferenceService: PreferenceService = PreferenceService.getInstance();
+  private readonly eventId = 'usual.event.PRIVACY_STATE_CHANGED';
+  // 订阅者信息, 用于保存创建成功的订阅者对象，后续使用其完成订阅及退订的动作
+  private subscriber: commonEventManager.CommonEventSubscriber | undefined = undefined;
+  // 事件列表
+  private subscribeInfo: commonEventManager.CommonEventSubscribeInfo = {
+    events: [this.eventId]
+  };
+
 
   async aboutToAppear() {
+    if(!this.privacyAgreed) {
+      this.subscribe();
+    }
     this.initialize();
   }
 
   private async initialize() {
     try {
+      let appPrivacyResults: privacyManager.AppPrivacyResult[] = privacyManager.getAppPrivacyResult();
+      this.privacyAgreed = appPrivacyResults[0]?.result === 1;
       // 初始化数据库
       const upgradeConfigs: DatabaseUpgradeConfig[] = [
         {
@@ -57,25 +69,42 @@ struct Index {
       if (!this.preferenceService.getString(PreferenceKeyConstants.WEIGHTING)) {
         this.preferenceService.setString(PreferenceKeyConstants.WEIGHTING, WeightingType.A);
       }
-      this.privacyAgreed = this.preferenceService.getBoolean(PreferenceKeyConstants.PRIVACY_AGREED, false);
-      this.preferenceService.addChangeListener(PreferenceKeyConstants.PRIVACY_AGREED, (key: string, newValue: PreferenceValue) => {
-        this.privacyAgreed = !!newValue;
-      })
-
 
       this.isInitialized = true;
       
-      // 检查隐私协议
-      this.showPrivacyDialog = !this.preferenceService.getBoolean(PreferenceKeyConstants.PRIVACY_AGREED, false);
-      if (this.showPrivacyDialog) {
-        this.navStack.pushPathByName('PrivacyDialog',null);
-      }
     } catch (error) {
       hilog.error(DOMAIN, TAG, '初始化失败: %{public}s', error instanceof Error ? error.message : String(error));
       this.isInitialized = false;
     } finally {
       this.isLoading = false;
     }
+  }
+
+  public subscribe(): void {
+    hilog.info(0, TAG, "subscribe");
+    // 创建订阅者
+    commonEventManager.createSubscriber(this.subscribeInfo).then((commonEventSubscriber) => {
+      hilog.info(0, TAG, "createSubscriber");
+      this.subscriber = commonEventSubscriber;
+
+      // 订阅公共事件
+      try {
+        commonEventManager.subscribe(this.subscriber, (err, data) => {
+          if (err) {
+            hilog.error(0, TAG, `subscribe failed, code is ${err?.code}, message is ${err?.message}`);
+            return;
+          }
+
+          let result = JSON.parse(data?.data ?? '{}')?.resultType as number;
+          if (result === 1) {
+            // 隐私同意处理
+            this.privacyAgreed = true;
+          }
+        });
+      } catch (error) {
+        hilog.error(0, TAG, "init createSubscriber failed, exception code: " + error.code + ", exception message: " + error.message);
+      }
+    });
   }
 
   build() {

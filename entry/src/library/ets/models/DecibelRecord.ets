@@ -89,17 +89,17 @@ export class DecibelRecord {
 
   toValuesBucket(): relationalStore.ValuesBucket {
     const valueBucket: relationalStore.ValuesBucket = {
-      id: this.id,
-      timestamp: this.timestamp,
-      minDecibel: this.minDecibel,
-      maxDecibel: this.maxDecibel,
-      avgDecibel: this.avgDecibel,
-      duration: this.duration,
-      decibelValues: JSON.stringify(this.decibelValues),
-      location: this.location ?? null,
-      audioFilePath: this.audioFilePath ?? null,
-      isFavorite: this.isFavorite ? 1 : 0,
-      weightingTypes: JSON.stringify(this.weightingTypes) // 确保正确处理 weightingTypes
+      'id': this.id,
+      'timestamp': this.timestamp,
+      'minDecibel': this.minDecibel,
+      'maxDecibel': this.maxDecibel,
+      'avgDecibel': this.avgDecibel,
+      'duration': this.duration,
+      'decibelValues': JSON.stringify(this.decibelValues),
+      'location': this.location ?? null,
+      'audioFilePath': this.audioFilePath ?? null,
+      'isFavorite': this.isFavorite ? 1 : 0,
+      'weightingTypes': JSON.stringify(this.weightingTypes) // 确保正确处理 weightingTypes
     };
     return valueBucket;
   }
