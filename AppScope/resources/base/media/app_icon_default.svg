@@ -48,6 +48,6 @@
         </g>
         
         <!-- dB文字 -->
-        <text x="42" y="86" font-size="18" fill="#FFFFFF" style="font-weight: bold;">噪音检测仪</text>
+        <text x="42" y="86" font-size="18" fill="#FFFFFF" style="font-weight: bold;">dB</text>
     </g>
 </svg>

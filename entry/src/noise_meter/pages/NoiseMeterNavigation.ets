@@ -55,7 +55,7 @@ export struct NoiseMeter {
                     if (this.meterOn) {
                       promptAction.showDialog({
                         title: '确认关机',
-                        message: '确认要关闭噪音检测仪吗？',
+                        message: '确认要关闭检测仪吗？',
                         buttons: [
                           {
                             text: '取消',
@@ -96,7 +96,7 @@ export struct NoiseMeter {
                       uiContext,
                       'decibelMeterRoot',
                       `noise_meter_screenshot_${timestamp}.jpg`,
-                      '噪音检测仪截图',
+                      '止喧噪音检测截图',
                       '当前噪音检测结果截图'
                     );
                   }
@@ -114,7 +114,7 @@ export struct NoiseMeter {
           .backgroundColor('#F5F5F5')
           .alignItems(HorizontalAlign.Center)
         }
-        .tabBar(this.TabBuilder('噪音检测仪', $r('app.media.ic_meter'), 0))
+        .tabBar(this.TabBuilder('检测仪', $r('app.media.ic_meter'), 0))
 
         TabContent() {
           DecibelHistory({ currentTabIndex: this.currentIndex })
