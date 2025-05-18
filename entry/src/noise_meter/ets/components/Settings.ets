@@ -5,6 +5,8 @@ import { CustomTitleBar } from '../../../library/ets/components/common/CustomTit
 import { WeightingType, getWeightingDescription } from '../../../library/ets/constants/WeightingConstants';
 import { AudioAnalysisMode, AudioPresets } from '../../../library/ets/common/AudioConfig';
 import { DecibelState } from '../types/DecibelState';
+import { privacyManager } from '@kit.StoreKit';
+import { common } from '@kit.AbilityKit';
 
 @Extend(Image)
 function itemIcon() {
@@ -110,6 +112,7 @@ export struct Settings {
   @Local isAlertsAndNotificationsExpanded: boolean = false;
   @Local isDataRecordingAndPrivacyExpanded: boolean = false;
   @Local isDeviceSettingsExpanded: boolean = false;
+  @Local isAboutExpanded: boolean = false;
 
   // 工具方法
   private getWeightingIndex(type: WeightingType): number {
@@ -251,6 +254,7 @@ export struct Settings {
             this.isAlertsAndNotificationsExpanded = false;
             this.isDataRecordingAndPrivacyExpanded = false;
             this.isDeviceSettingsExpanded = false;
+            this.isAboutExpanded = false;
           })
         })
 
@@ -445,6 +449,7 @@ export struct Settings {
             this.isAlertsAndNotificationsExpanded = !this.isAlertsAndNotificationsExpanded;
             this.isDataRecordingAndPrivacyExpanded = false;
             this.isDeviceSettingsExpanded = false;
+            this.isAboutExpanded = false;
           })
         })
 
@@ -557,6 +562,7 @@ export struct Settings {
             this.isAlertsAndNotificationsExpanded = false;
             this.isDataRecordingAndPrivacyExpanded = !this.isDataRecordingAndPrivacyExpanded;
             this.isDeviceSettingsExpanded = false;
+            this.isAboutExpanded = false;
           })
         })
 
@@ -653,6 +659,7 @@ export struct Settings {
             this.isAlertsAndNotificationsExpanded = false;
             this.isDataRecordingAndPrivacyExpanded = false;
             this.isDeviceSettingsExpanded = !this.isDeviceSettingsExpanded;
+            this.isAboutExpanded = false;
           })
         })
 
@@ -686,6 +693,66 @@ export struct Settings {
 
           ListItem() {
             Text(this.isKeepScreenOn ? '屏幕将保持常亮状态' : '屏幕会根据系统设置自动休眠')
+              .itemDescription()
+          }
+          .descriptionContainer()
+        }
+
+        // 关于
+        ListItem() {
+          Column() {
+            Row() {
+              Text('关于')
+                .itemTitle()
+              Blank()
+            }
+            .listItemRow()
+          }
+          .listItemStyle()
+        }.onClick(() => {
+          animateTo({
+            duration: 300,
+            onFinish: () => {
+              console.info('animation end');
+            }
+          }, () => {
+            this.isAudioAnalysisExpanded = false;
+            this.isAlertsAndNotificationsExpanded = false;
+            this.isDataRecordingAndPrivacyExpanded = false;
+            this.isDeviceSettingsExpanded = false;
+            this.isAboutExpanded = !this.isAboutExpanded;
+          })
+        })
+
+        ListItem() {
+        }.dividerStyle() // 添加分隔符
+
+        if (this.isAboutExpanded) {
+          // 隐私政策
+          ListItem() {
+            Column() {
+              Row() {
+                Row() {
+                  Image($r('app.media.ic_info'))
+                    .itemIcon()
+
+                  Text('隐私政策')
+                    .itemTitle()
+                }
+
+                Blank()
+              }
+              .listItemRow()
+            }
+            .listItemStyle()
+          }.onClick(async () => {
+            // 这里添加打开隐私政策的逻辑
+            const uiContext = getContext(this) as common.UIAbilityContext;
+            await privacyManager.requestAppPrivacyConsent(uiContext);
+          })
+
+          ListItem() {
+            Text('查看应用的隐私政策')
               .itemDescription()
           }
           .descriptionContainer()
