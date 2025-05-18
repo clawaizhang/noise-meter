@@ -1,6 +1,6 @@
-import { DialogContainer } from '../../../../library/ets/components/common/DialogContainer';
+import { DialogContainer } from '../../../library/ets/components/common/DialogContainer';
 
-import { DecibelService, NoiseLevel } from '../../services/DecibelService';
+import { DecibelService, NoiseLevel } from '../services/DecibelService';
 
 const noiseLevels = DecibelService.getNoiseLevels();
 

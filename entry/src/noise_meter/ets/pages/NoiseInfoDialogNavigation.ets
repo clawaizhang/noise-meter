@@ -1,4 +1,4 @@
-import { noiseMeterNavStack } from "../../constant/ProviderConstant";
+import { noiseMeterNavStack } from "../constant/ProviderConstant";
 
 @Builder
 function DecibelHistoryBuilder() {

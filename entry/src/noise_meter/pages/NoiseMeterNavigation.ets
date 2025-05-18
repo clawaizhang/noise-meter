@@ -1,7 +1,7 @@
 import { DecibelMeter } from '../ets/components/decibel-meter/DecibelMeter';
 import { noiseMeterNavStack } from '../ets/constant/ProviderConstant';
 import { getTitleName } from '../MainPageInfo';
-import { DecibelHistory } from './DecibelHistory';
+import { DecibelHistory } from './DecibelHistoryNavigation';
 import { CustomTitleBar } from '../../library/ets/components/common/CustomTitleBar';
 import { Settings } from '../ets/components/Settings';
 import { common } from '@kit.AbilityKit';

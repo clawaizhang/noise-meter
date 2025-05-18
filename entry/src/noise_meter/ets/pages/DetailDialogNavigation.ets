@@ -1,14 +1,14 @@
-import { DecibelRecord } from "../../../../library/ets/models/DecibelRecord"
+import { DecibelRecord } from "../../../library/ets/models/DecibelRecord"
 import common from '@ohos.app.ability.common'
-import { FileService } from "../../../../library/ets/services/FileService"
+import { FileService } from "../../../library/ets/services/FileService"
 import hilog from '@ohos.hilog'
-import { noiseMeterNavStack } from '../../constant/ProviderConstant'
+import { noiseMeterNavStack } from '../constant/ProviderConstant'
 import { JSON } from '@kit.ArkTS'
-import { ScreenshotUtils } from "../../../../library/ets/utils/ScreenshotUtils"
-import { DialogTitleBuilder } from "./DialogTitle"
-import { BasicInfoBuilder } from "./BasicInfo"
-import { Statistics } from "./Statistics"
-import { NoiseChart } from "./NoiseChart"
+import { ScreenshotUtils } from "../../../library/ets/utils/ScreenshotUtils"
+import { DialogTitleBuilder } from "../components/noise-dialogs/DialogTitle"
+import { BasicInfoBuilder } from "../components/noise-dialogs/BasicInfo"
+import { Statistics } from "../components/noise-dialogs/Statistics"
+import { NoiseChart } from "../components/noise-dialogs/NoiseChart"
 
 const TAG = 'DetailDialog';
 const DOMAIN = 0x0000;
