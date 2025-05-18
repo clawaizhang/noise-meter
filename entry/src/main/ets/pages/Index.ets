@@ -9,7 +9,7 @@ import { PreferenceKeyConstants } from '../../../library/ets/constants/Preferenc
 import { WeightingType } from '../../../library/ets/constants/WeightingConstants';
 import { noiseMeterNavStack } from '../../../noise_meter/ets/constant/ProviderConstant';
 import { commonEventManager } from '@kit.BasicServicesKit';
-// import { privacyManager } from '@kit.StoreKit';
+import { privacyManager } from '@kit.StoreKit';
 
 const TAG = 'Index';
 const DOMAIN = 0x0000;
@@ -39,15 +39,15 @@ struct Index {
 
   async aboutToAppear() {
     if(!this.privacyAgreed) {
-      // this.subscribe();
+      this.subscribe();
     }
     this.initialize();
   }
 
   private async initialize() {
     try {
-      // let appPrivacyResults: privacyManager.AppPrivacyResult[] = privacyManager.getAppPrivacyResult();
-      // this.privacyAgreed = appPrivacyResults[0]?.result === 1;
+      let appPrivacyResults: privacyManager.AppPrivacyResult[] = privacyManager.getAppPrivacyResult();
+      this.privacyAgreed = appPrivacyResults[0]?.result === 1;
       // 初始化数据库
       const upgradeConfigs: DatabaseUpgradeConfig[] = [
         {
@@ -141,9 +141,9 @@ struct Index {
       } else {
         // 显示正常内容
         Navigation(this.navStack) {
-          // if (this.privacyAgreed) {
+          if (this.privacyAgreed) {
             MainPage()
-          // }
+          }
         }
         .size({ width: '100%', height: '100%' })
         .hideTitleBar(true)
