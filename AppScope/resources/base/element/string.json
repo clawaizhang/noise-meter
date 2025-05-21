@@ -2,11 +2,11 @@
   "string": [
     {
       "name": "app_name",
-      "value": "噪音测量仪"
+      "value": "止喧噪音检测"
     },
     {
       "name": "noise_meter_app_name",
-      "value": "噪音测量仪"
+      "value": "止喧噪音检测"
     },
     {
       "name": "file_vault_app_name",

@@ -25,6 +25,7 @@ import { ActionPanel } from './ActionPanel';
 import { CalibrationIndicator } from './CalibrationIndicator';
 import { drawSpectrum, getDbSteps, getFrequencySteps } from './DrawSpectrum';
 import { DecibelState } from '../../types/DecibelState';
+import { DisplayManager } from '../../../../main/ets/utils/DisplayManager';
 
 @ComponentV2
 export struct DecibelMeter {
@@ -50,6 +51,7 @@ export struct DecibelMeter {
   @Local private noiseAlarmEnabled: boolean = true; // 是否启用噪音阈值警报
   @Local private noiseThreshold: number = 80; // 设置噪音阈值为80分贝
   @Local private isNoiseAlarm: boolean = false // 是否触发噪音报警
+  @Local private isDisplayApp: boolean = true
   @Local startTime: number = 0
   @Consumer(noiseMeterNavStack) navStack: NavPathStack = new NavPathStack()
   private audioService: AudioService = AudioService.getInstance(getContext() as common.UIAbilityContext)
@@ -168,7 +170,9 @@ export struct DecibelMeter {
             // 初始化完成后开始绘制
             // 创建一个空的 Float32Array 用于初始化显示
             const emptySpectrum: Float32Array = new Float32Array(this.currentFftSize * 2); // 每个点用2字节表示
-            this.drawSpectrumLocal(emptySpectrum);
+            if(this.isDisplayApp) {
+              this.drawSpectrumLocal(emptySpectrum);
+            }
             // 更新计时器（毫秒级）
             this.recordingTime = new Date().getTime() - this.startTime;
           })
@@ -215,7 +219,13 @@ export struct DecibelMeter {
 
   async aboutToAppear() {
     try {
-
+      let displayManager:DisplayManager  =  DisplayManager.getInstance();
+      displayManager.onDisplay(() => {
+        this.isDisplayApp = true;
+      });
+      displayManager.onHidden(() => {
+        this.isDisplayApp = false;
+      });
 
       // 初始化位置服务状态
       this.isLocationEnabled = this.preferenceService.getBoolean(PreferenceKeyConstants.LOCATION, true);
@@ -371,7 +381,7 @@ export struct DecibelMeter {
         let decibel = Math.round(db);
         this.values.push(decibel);
         this.weightingTypes.push(this.weightingType)
-        if (!this.isUILocked) {
+        if (!this.isUILocked && this.isDisplayApp) {
           this.decibelState.currentDecibel = decibel;
           this.updateStatistics(this.decibelState.currentDecibel);
           this.drawSpectrumLocal(spectrum);

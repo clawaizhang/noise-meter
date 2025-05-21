@@ -5,6 +5,7 @@ import hilog from '@ohos.hilog';
 import { WindowManager } from '../utils/WindowManager';
 import { PreferenceService, PreferenceValue } from '../../../library/ets/services/PreferenceService';
 import { PreferenceKeyConstants } from '../../../library/ets/constants/PreferenceKeyConstants';
+import { DisplayManager } from '../utils/DisplayManager';
 
 const TAG = 'EntryAbility';
 const DOMAIN = 0x0000;
@@ -53,12 +54,14 @@ export default class EntryAbility extends UIAbility {
   onForeground(): void {
     const windowManager = WindowManager.getInstance();
     windowManager.setKeepScreenOn(this.keepScreenOn);
+    DisplayManager.getInstance().onForeground()
     hilog.info(DOMAIN, TAG, 'Ability onForeground');
   }
 
   onBackground(): void {
     const windowManager = WindowManager.getInstance();
     windowManager.setKeepScreenOn(this.keepScreenOn);
+    DisplayManager.getInstance().onBackground();
     hilog.info(DOMAIN, TAG, 'Ability onBackground');
   }
 }
