@@ -6,7 +6,8 @@ import { WeightingType, getWeightingDescription } from '../../../library/ets/con
 import { AudioAnalysisMode, AudioPresets } from '../../../library/ets/common/AudioConfig';
 import { DecibelState } from '../types/DecibelState';
 import { privacyManager } from '@kit.StoreKit';
-import { common } from '@kit.AbilityKit';
+import { common, Want } from '@kit.AbilityKit';
+import { BusinessError } from '@kit.BasicServicesKit';
 
 @Extend(Image)
 function itemIcon() {
@@ -762,6 +763,26 @@ export struct Settings {
       .layoutWeight(1)
       .backgroundColor('#F5F5F5')
       .margin({ top: 12 })
+
+      // 给作者留言按钮
+      Button('给作者留言')
+        .width('90%')
+        .height(40)
+        .margin({ bottom: 60 })
+        .backgroundColor('#0091FF')
+        .fontColor(Color.White)
+        .onClick(() => {
+          const context = getContext(this) as common.UIAbilityContext;
+          const want: Want = {
+            action: 'ohos.want.action.appdetail',
+            uri: 'store://appgallery.huawei.com/app/detail?id=yu.zhang.myapplication.noise_meter&action=write-review'
+          };
+          context.startAbility(want).then(() => {
+            console.info('Succeeded in starting Ability successfully.');
+          }).catch((err:BusinessError) => {
+            console.error(`Failed to start ability. Code: ${err.code}, message: ${err.message}`);
+          });
+        })
     }
     .width('100%')
     .height('100%')
