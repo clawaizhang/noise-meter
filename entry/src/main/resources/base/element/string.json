@@ -21,6 +21,10 @@
       "value": "需要获取位置信息来记录噪音检测位置"
     },
     {
+      "name": "background_permission_reason",
+      "value": "需要在后台录音来生成噪音报告"
+    },
+    {
       "name": "internet_reason",
       "value": "需要访问网络以获取位置信息"
     },

@@ -2,6 +2,8 @@ import UIAbility from '@ohos.app.ability.UIAbility';
 import window from '@ohos.window';
 import { AbilityConstant, Want } from '@kit.AbilityKit';
 import hilog from '@ohos.hilog';
+import backgroundTaskManager from '@ohos.resourceschedule.backgroundTaskManager';
+import wantAgent from '@ohos.app.ability.wantAgent';
 import { WindowManager } from '../utils/WindowManager';
 import { PreferenceService, PreferenceValue } from '../../../library/ets/services/PreferenceService';
 import { PreferenceKeyConstants } from '../../../library/ets/constants/PreferenceKeyConstants';
@@ -9,9 +11,9 @@ import { DisplayManager } from '../utils/DisplayManager';
 
 const TAG = 'EntryAbility';
 const DOMAIN = 0x0000;
-
 export default class EntryAbility extends UIAbility {
   private keepScreenOn: boolean = false;
+
 
   async onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): Promise<void> {
     hilog.info(DOMAIN, TAG, 'Ability onCreate');
@@ -54,7 +56,18 @@ export default class EntryAbility extends UIAbility {
   onForeground(): void {
     const windowManager = WindowManager.getInstance();
     windowManager.setKeepScreenOn(this.keepScreenOn);
-    DisplayManager.getInstance().onForeground()
+    DisplayManager.getInstance().onForeground();
+    try {
+      backgroundTaskManager.stopBackgroundRunning(this.context, (err) => {
+        if (err) {
+          hilog.error(DOMAIN, TAG, `Stop background running failed, error: ${JSON.stringify(err)}`);
+          return;
+        }
+        hilog.info(DOMAIN, TAG, 'Stop background running successfully');
+      });
+    } catch (err) {
+      hilog.error(DOMAIN, TAG, `Stop background running failed, error: ${JSON.stringify(err)}`);
+    }
     hilog.info(DOMAIN, TAG, 'Ability onForeground');
   }
 
@@ -62,6 +75,40 @@ export default class EntryAbility extends UIAbility {
     const windowManager = WindowManager.getInstance();
     windowManager.setKeepScreenOn(this.keepScreenOn);
     DisplayManager.getInstance().onBackground();
+
+    // 创建WantAgent参数
+    const wantAgentInfo: wantAgent.WantAgentInfo = {
+      wants: [
+        {
+          bundleName: this.context.applicationInfo.name,
+          abilityName: 'EntryAbility'
+        }
+      ],
+      operationType: wantAgent.OperationType.START_ABILITY,
+      requestCode: 0,
+      wantAgentFlags: [wantAgent.WantAgentFlags.UPDATE_PRESENT_FLAG]
+    };
+
+    try {
+      wantAgent.getWantAgent(wantAgentInfo, (err, agent) => {
+        if (err) {
+          hilog.error(DOMAIN, TAG, `Get wantAgent failed, error: ${JSON.stringify(err)}`);
+          return;
+        }
+        backgroundTaskManager.startBackgroundRunning(this.context,
+          backgroundTaskManager.BackgroundMode.AUDIO_RECORDING,
+          agent,
+          (err) => {
+            if (err) {
+              hilog.error(DOMAIN, TAG, `Start background running failed, error: ${JSON.stringify(err)}`);
+              return;
+            }
+            hilog.info(DOMAIN, TAG, 'Start background running successfully');
+          });
+      });
+    } catch (err) {
+      hilog.error(DOMAIN, TAG, `Start background running failed, error: ${JSON.stringify(err)}`);
+    }
     hilog.info(DOMAIN, TAG, 'Ability onBackground');
   }
 }
