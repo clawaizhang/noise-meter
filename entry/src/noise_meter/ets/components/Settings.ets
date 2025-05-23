@@ -1,4 +1,4 @@
-import { AppStorageV2 } from '@kit.ArkUI';
+import { AppStorageV2, promptAction } from '@kit.ArkUI';
 import { PreferenceService, PreferenceValue } from '../../../library/ets/services/PreferenceService';
 import { PreferenceKeyConstants } from '../../../library/ets/constants/PreferenceKeyConstants';
 import { CustomTitleBar } from '../../../library/ets/components/common/CustomTitleBar';
@@ -103,6 +103,9 @@ export struct Settings {
   @Local isModeChangeEnabled: boolean = true;
   @Local remainingTime: number = 0;
   @Local calibrationValue: number = 0;
+  @Local isAutoCalibrating: boolean = false;
+  @Local countdown: number = 0;
+  @Local calibrationProgress: number = 0;
   @Local decibelState: DecibelState = AppStorageV2.connect(DecibelState, 'DecibelState', () => new DecibelState())!;
   @Local isNoiseAlarmEnabled: boolean = true;
   @Local noiseThreshold: number = 80;
@@ -230,6 +233,51 @@ export struct Settings {
     this.noiseAlarmDescription = this.isNoiseAlarmEnabled
       ? '检测到噪音超过阈值时将触发警报'
       : '系统不会发出噪音超标警报';
+  }
+
+  private startAutoCalibration() {
+    this.isAutoCalibrating = true;
+    this.countdown = 3;
+    
+    // 5秒倒计时
+    const countdownInterval = setInterval(() => {
+      this.countdown -= 1;
+      if (this.countdown <= 0) {
+        clearInterval(countdownInterval);
+        this.beginCalibration();
+      }
+    }, 1000);
+  }
+
+  private beginCalibration() {
+    const calibrationDuration = 8; // 8秒校准
+    this.calibrationProgress = 0;
+    let totalDecibel = 0;
+    let sampleCount = 0;
+
+    // 开始校准
+    const calibrationInterval = setInterval(() => {
+      this.calibrationProgress += 1;
+      totalDecibel += this.decibelState.currentDecibel;
+      sampleCount += 1;
+
+      if (this.calibrationProgress >= calibrationDuration) {
+        clearInterval(calibrationInterval);
+        this.finishCalibration(totalDecibel / sampleCount);
+      }
+    }, 1000);
+  }
+
+  private finishCalibration(averageDecibel: number) {
+    this.isAutoCalibrating = false;
+    const newCalibrationValue = 26 - averageDecibel; // 计算与26dB的差值
+    this.calibrationValue = Math.round(newCalibrationValue * 10) / 10; // 保留1位小数
+    void this.preferenceService.setNumber(PreferenceKeyConstants.CALIBRATION, this.calibrationValue);
+    
+    promptAction.showToast({
+      message: `自动校准完成，新校准值: ${this.calibrationValue}dB`,
+      duration: 3000
+    });
   }
 
   build() {
@@ -426,7 +474,69 @@ export struct Settings {
           }
 
           ListItem() {
-            Text('校准麦克风灵敏度，确保测量精度')
+            Text('手动校准麦克风灵敏度，确保测量精度')
+              .itemDescription()
+          }
+          .descriptionContainer()
+
+          // 自动校准按钮
+          ListItem() {
+            Column() {
+              Row() {
+                Row() {
+                  Image($r('app.media.ic_calibration'))
+                    .itemIcon()
+
+                  Text('自动校准')
+                    .itemTitle()
+                }
+
+                Blank()
+
+                if (this.isAutoCalibrating) {
+                  Text(this.countdown > 0 ? `${this.countdown}秒后开始校准` : `校准中...${10 - this.calibrationProgress}秒`)
+                    .fontSize(14)
+                    .fontColor('#666666')
+                    .margin({ right: 8 })
+                } else {
+                  Button('开始校准')
+                    .type(ButtonType.Normal)
+                    .fontSize(14)
+                    .fontColor('#FFFFFF')
+                    .backgroundColor('#0091FF')
+                    .borderRadius(16)
+                    .height(32)
+                    .width(120)
+                    .onClick(async () => {
+                        const result = await promptAction.showDialog({
+                          title: '自动校准提示',
+                          message: '请在非常安静的房间中进行自动校准，特别是夜间效果最佳',
+                          buttons: [
+                            {
+                              text: '取消',
+                              color: '#666666'
+                            },
+                            {
+                              text: '确认',
+                              color: '#0091FF'
+                            }
+                          ]
+                        });
+                        
+                        // 根据用户选择处理
+                        if (result.index === 1) { // 确认按钮
+                          this.startAutoCalibration();
+                        }
+                    })
+                }
+              }
+              .listItemRow()
+            }
+            .listItemStyle()
+          }
+
+          ListItem() {
+            Text('自动计算并设置校准值')
               .itemDescription()
           }
           .descriptionContainer()
