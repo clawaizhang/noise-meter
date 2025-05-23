@@ -35,6 +35,18 @@
     {
       "name": "network_permission_reason",
       "value": "需要获取网络状态以确保位置服务正常工作"
+    },
+    {
+      "name": "background_running",
+      "value": "后台运行"
+    },
+    {
+      "name": "background_running_desc_on",
+      "value": "允许应用在后台持续运行并监测噪音"
+    },
+    {
+      "name": "background_running_desc_off",
+      "value": "应用不会在后台运行"
     }
   ]
 }

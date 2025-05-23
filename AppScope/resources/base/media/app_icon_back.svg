@@ -3,7 +3,7 @@
     <defs>
         <!-- 主渐变背景 -->
         <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" style="stop-color:#64B5F6"/>
+<!--            <stop offset="0%" style="stop-color:#64B5F6"/>-->
             <stop offset="100%" style="stop-color:#1E88E5"/>
         </linearGradient>
 <!--        &lt;!&ndash; 波纹渐变 &ndash;&gt;-->

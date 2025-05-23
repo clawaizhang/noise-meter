@@ -107,6 +107,7 @@ export struct Settings {
   @Local isNoiseAlarmEnabled: boolean = true;
   @Local noiseThreshold: number = 80;
   @Local noiseAlarmDescription: string = ''; // 添加新的变量来存储噪音警报描述
+  @Local isBackgroundRunning: boolean = false; // 后台运行开关状态
   private readonly COOLDOWN_DURATION: number = 500; // 0.5秒冷却时间
   // 新增状态变量来控制每个 AccordionItem 的展开和收起状态
   @Local isAudioAnalysisExpanded: boolean = false;
@@ -205,6 +206,7 @@ export struct Settings {
     this.calibrationValue = this.preferenceService.getNumber(PreferenceKeyConstants.CALIBRATION) || 0;
     this.isNoiseAlarmEnabled = this.preferenceService.getBoolean(PreferenceKeyConstants.NOISE_ALARM_ENABLED, true);
     this.noiseThreshold = this.preferenceService.getNumber(PreferenceKeyConstants.NOISE_THRESHOLD, 80);
+    this.isBackgroundRunning = this.preferenceService.getBoolean(PreferenceKeyConstants.BACKGROUND_RUNNING, false);
     this.updateAnalysisModeCache();
     this.updateNoiseAlarmDescription(); // 初始化噪音警报描述
     this.preferenceService.addChangeListener(PreferenceKeyConstants.WEIGHTING,
@@ -665,6 +667,39 @@ export struct Settings {
         })
 
         if (this.isDeviceSettingsExpanded) {
+          // 后台运行设置
+          ListItem() {
+            Column() {
+              Row() {
+                Row() {
+                  Image($r('app.media.ic_meter'))
+                    .itemIcon()
+
+                  Text($r('app.string.background_running'))
+                    .itemTitle()
+                }
+
+                Blank()
+
+                Toggle({ type: ToggleType.Switch, isOn: this.isBackgroundRunning })
+                  .selectedColor('#0091FF')
+                  .switchPointColor('#FFFFFF')
+                  .onChange((isOn: boolean) => {
+                    void this.preferenceService.setBoolean(PreferenceKeyConstants.BACKGROUND_RUNNING, isOn);
+                    this.isBackgroundRunning = isOn;
+                  })
+              }
+              .listItemRow()
+            }
+            .listItemStyle()
+          }
+
+          ListItem() {
+            Text(this.isBackgroundRunning ? $r('app.string.background_running_desc_on') : $r('app.string.background_running_desc_off'))
+              .itemDescription()
+          }
+          .descriptionContainer()
+
           // 屏幕常亮设置
           ListItem() {
             Column() {
@@ -768,7 +803,7 @@ export struct Settings {
       Button('给作者留言')
         .width('90%')
         .height(40)
-        .margin({ bottom: 60 })
+        .margin({ bottom: 30, top: 12 })
         .backgroundColor('#0091FF')
         .fontColor(Color.White)
         .onClick(() => {

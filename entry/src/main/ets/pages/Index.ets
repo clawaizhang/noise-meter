@@ -36,9 +36,8 @@ struct Index {
     events: [this.eventId]
   };
 
-
   async aboutToAppear() {
-    if(!this.privacyAgreed) {
+    if (!this.privacyAgreed) {
       this.subscribe();
     }
     this.initialize();
@@ -60,7 +59,8 @@ struct Index {
         }
       ];
 
-      const dbResult = await this.relationalStoreService.init(getContext(this), DatabaseConstants.NOISE_METER_DB, upgradeConfigs);
+      const dbResult =
+        await this.relationalStoreService.init(getContext(this), DatabaseConstants.NOISE_METER_DB, upgradeConfigs);
       if (!dbResult) {
         throw new Error('数据库初始化失败');
       }
@@ -71,7 +71,7 @@ struct Index {
       }
 
       this.isInitialized = true;
-      
+
     } catch (error) {
       hilog.error(DOMAIN, TAG, '初始化失败: %{public}s', error instanceof Error ? error.message : String(error));
       this.isInitialized = false;
@@ -102,7 +102,8 @@ struct Index {
           }
         });
       } catch (error) {
-        hilog.error(0, TAG, "init createSubscriber failed, exception code: " + error.code + ", exception message: " + error.message);
+        hilog.error(0, TAG,
+          "init createSubscriber failed, exception code: " + error.code + ", exception message: " + error.message);
       }
     });
   }
@@ -112,6 +113,7 @@ struct Index {
       if (this.isLoading) {
         // 显示加载中
         Column() {
+          Image($r('app.media.app_icon_fore'))
           LoadingProgress()
             .width(64)
             .height(64)
@@ -119,8 +121,6 @@ struct Index {
             .fontSize(16)
             .margin({ top: 12 })
         }
-        .width('100%')
-        .height('100%')
         .justifyContent(FlexAlign.Center)
       } else if (!this.isInitialized) {
         // 显示错误状态
@@ -143,16 +143,22 @@ struct Index {
         Navigation(this.navStack) {
           if (this.privacyAgreed) {
             MainPage()
+          } else {
+            Column() {
+              Image($r('app.media.app_icon_fore'))
+                .width(120).height(120)
+            }.justifyContent(FlexAlign.Center)
           }
         }
         .size({ width: '100%', height: '100%' })
         .hideTitleBar(true)
         .titleMode(NavigationTitleMode.Mini)
         .mode(NavigationMode.Stack)
+        .backgroundColor('#1E88E5')
       }
     }
     .width('100%')
     .height('100%')
-    .backgroundColor('#F5F5F5')
+    .backgroundColor('#1E88E5')
   }
 }

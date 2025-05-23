@@ -13,7 +13,8 @@ const TAG = 'EntryAbility';
 const DOMAIN = 0x0000;
 export default class EntryAbility extends UIAbility {
   private keepScreenOn: boolean = false;
-
+  private backgroundRunningEnabled: boolean = false;
+  private backgroundRunningRequested: boolean = false;
 
   async onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): Promise<void> {
     hilog.info(DOMAIN, TAG, 'Ability onCreate');
@@ -23,6 +24,7 @@ export default class EntryAbility extends UIAbility {
     preferenceService.init(this.context);
     // 获取初始值
     this.keepScreenOn = preferenceService.getBoolean(PreferenceKeyConstants.KEEP_SCREEN_ON, false);
+    this.backgroundRunningEnabled = preferenceService.getBoolean(PreferenceKeyConstants.BACKGROUND_RUNNING, false);
 
     // 注册监听器
     preferenceService.addChangeListener(PreferenceKeyConstants.KEEP_SCREEN_ON,
@@ -30,6 +32,11 @@ export default class EntryAbility extends UIAbility {
         this.keepScreenOn = newValue as boolean;
         const windowManager = WindowManager.getInstance();
         windowManager.setKeepScreenOn(this.keepScreenOn);
+      });
+
+    preferenceService.addChangeListener(PreferenceKeyConstants.BACKGROUND_RUNNING,
+      (key: string, newValue: PreferenceValue) => {
+        this.backgroundRunningEnabled = newValue as boolean;
       });
   }
 
@@ -57,16 +64,8 @@ export default class EntryAbility extends UIAbility {
     const windowManager = WindowManager.getInstance();
     windowManager.setKeepScreenOn(this.keepScreenOn);
     DisplayManager.getInstance().onForeground();
-    try {
-      backgroundTaskManager.stopBackgroundRunning(this.context, (err) => {
-        if (err) {
-          hilog.error(DOMAIN, TAG, `Stop background running failed, error: ${JSON.stringify(err)}`);
-          return;
-        }
-        hilog.info(DOMAIN, TAG, 'Stop background running successfully');
-      });
-    } catch (err) {
-      hilog.error(DOMAIN, TAG, `Stop background running failed, error: ${JSON.stringify(err)}`);
+    if (this.backgroundRunningRequested) {
+      this.stopBackgroundRunning();
     }
     hilog.info(DOMAIN, TAG, 'Ability onForeground');
   }
@@ -76,6 +75,13 @@ export default class EntryAbility extends UIAbility {
     windowManager.setKeepScreenOn(this.keepScreenOn);
     DisplayManager.getInstance().onBackground();
 
+    if (this.backgroundRunningEnabled) {
+      this.startBackgroundRunning();
+    }
+    hilog.info(DOMAIN, TAG, 'Ability onBackground');
+  }
+
+  private startBackgroundRunning(): void {
     // 创建WantAgent参数
     const wantAgentInfo: wantAgent.WantAgentInfo = {
       wants: [
@@ -103,12 +109,27 @@ export default class EntryAbility extends UIAbility {
               hilog.error(DOMAIN, TAG, `Start background running failed, error: ${JSON.stringify(err)}`);
               return;
             }
+            this.backgroundRunningRequested = true;
             hilog.info(DOMAIN, TAG, 'Start background running successfully');
           });
       });
     } catch (err) {
       hilog.error(DOMAIN, TAG, `Start background running failed, error: ${JSON.stringify(err)}`);
     }
-    hilog.info(DOMAIN, TAG, 'Ability onBackground');
+  }
+
+  private stopBackgroundRunning(): void {
+    try {
+      backgroundTaskManager.stopBackgroundRunning(this.context, (err) => {
+        if (err) {
+          hilog.error(DOMAIN, TAG, `Stop background running failed, error: ${JSON.stringify(err)}`);
+          return;
+        }
+        this.backgroundRunningRequested = false;
+        hilog.info(DOMAIN, TAG, 'Stop background running successfully');
+      });
+    } catch (err) {
+      hilog.error(DOMAIN, TAG, `Stop background running failed, error: ${JSON.stringify(err)}`);
+    }
   }
 }

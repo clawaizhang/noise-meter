@@ -41,4 +41,9 @@ export class PreferenceKeyConstants {
   static readonly PRIVACY_AGREED: string = 'privacy_agreed';
 
   static readonly METER_ON: string = 'meter_on';
+
+  /**
+   * 后台运行开关状态键名
+   */
+  static readonly BACKGROUND_RUNNING: string = 'background_running';
 }
