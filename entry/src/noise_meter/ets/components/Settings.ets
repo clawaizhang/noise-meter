@@ -227,7 +227,9 @@ export struct Settings {
   }
 
   private updateNoiseAlarmDescription() {
-    this.noiseAlarmDescription = this.isNoiseAlarmEnabled ? '噪音警报已开启' : '噪音警报已关闭';
+    this.noiseAlarmDescription = this.isNoiseAlarmEnabled
+      ? '检测到噪音超过阈值时将触发警报'
+      : '系统不会发出噪音超标警报';
   }
 
   build() {
@@ -424,7 +426,7 @@ export struct Settings {
           }
 
           ListItem() {
-            Text('校准声级计，范围从-30dB到+30dB')
+            Text('校准麦克风灵敏度，确保测量精度')
               .itemDescription()
           }
           .descriptionContainer()
@@ -537,7 +539,7 @@ export struct Settings {
           }
 
           ListItem() {
-            Text('设置触发噪音警报的阈值，范围从30dB到120dB')
+            Text('环境噪音超过设定阈值时，系统将发出警报提示')
               .itemDescription()
           }
           .descriptionContainer()
