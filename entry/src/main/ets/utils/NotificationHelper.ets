@@ -1,7 +1,7 @@
 import { notificationManager } from '@kit.NotificationKit';
 import { BusinessError } from '@kit.BasicServicesKit';
 import { hilog } from '@kit.PerformanceAnalysisKit';
-import { common } from '@kit.AbilityKit';
+import { common, WantAgent, wantAgent } from '@kit.AbilityKit';
 
 const TAG = 'NotificationHelper';
 const DOMAIN = 0xFF00;
@@ -45,6 +45,27 @@ export class NotificationHelper {
 
   public async showNotification(id: number, title: string, text: string, additionalText: string = ''): Promise<void> {
     try {
+      // 创建WantAgent用于点击通知返回应用
+      const wantAgentInfo: wantAgent.WantAgentInfo = {
+        wants: [{
+          bundleName: this.context.applicationInfo.name,
+          abilityName: 'EntryAbility'
+        }],
+        operationType: wantAgent.OperationType.START_ABILITY,
+        requestCode: 0,
+        wantAgentFlags: [wantAgent.WantAgentFlags.UPDATE_PRESENT_FLAG]
+      };
+
+      const agent = await new Promise<WantAgent>((resolve, reject) => {
+        wantAgent.getWantAgent(wantAgentInfo, (err, agent) => {
+          if (err) {
+            reject(err);
+          } else {
+            resolve(agent);
+          }
+        });
+      });
+
       const notificationRequest: notificationManager.NotificationRequest = {
         id: id,
         content: {
@@ -54,7 +75,8 @@ export class NotificationHelper {
             text: text,
             additionalText: additionalText
           }
-        }
+        },
+        wantAgent: agent
       };
 
       notificationManager.publish(notificationRequest, (err: BusinessError) => {
@@ -67,6 +89,21 @@ export class NotificationHelper {
     } catch (err) {
       const error = err as BusinessError;
       hilog.error(DOMAIN, TAG, `Notification error: ${error.code}, ${error.message}`);
+    }
+  }
+
+  public cancelNotification(id: number): void {
+    try {
+      notificationManager.cancel(id, (err: BusinessError) => {
+        if (err) {
+          hilog.error(DOMAIN, TAG, `Failed to cancel notification. Code: ${err.code}, message: ${err.message}`);
+          return;
+        }
+        hilog.info(DOMAIN, TAG, `Notification ${id} cancelled successfully`);
+      });
+    } catch (err) {
+      const error = err as BusinessError;
+      hilog.error(DOMAIN, TAG, `Cancel notification error: ${error.code}, ${error.message}`);
     }
   }
 }

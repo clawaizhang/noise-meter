@@ -73,6 +73,11 @@ export default class EntryAbility extends UIAbility {
     if (this.backgroundRunningRequested) {
       this.stopBackgroundRunning();
     }
+
+    // 取消后台通知
+    const notificationHelper = NotificationHelper.getInstance(this.context);
+    notificationHelper.cancelNotification(NOTIFICATION_ID);
+
     hilog.info(DOMAIN, TAG, 'Ability onForeground');
   }
 
