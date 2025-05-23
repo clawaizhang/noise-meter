@@ -55,6 +55,10 @@
     {
       "name": "privacy_disagree_message",
       "value": "您需要同意隐私协议才能使用本应用"
+    },
+    {
+      "name": "background_toast_message",
+      "value": "应用已转入后台运行"
     }
   ]
 }

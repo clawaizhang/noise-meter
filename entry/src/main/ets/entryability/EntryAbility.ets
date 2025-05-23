@@ -1,6 +1,6 @@
 import UIAbility from '@ohos.app.ability.UIAbility';
 import window from '@ohos.window';
-import { AbilityConstant, Want } from '@kit.AbilityKit';
+import { AbilityConstant, Want, common } from '@kit.AbilityKit';
 import hilog from '@ohos.hilog';
 import backgroundTaskManager from '@ohos.resourceschedule.backgroundTaskManager';
 import wantAgent from '@ohos.app.ability.wantAgent';
@@ -8,9 +8,11 @@ import { WindowManager } from '../utils/WindowManager';
 import { PreferenceService, PreferenceValue } from '../../../library/ets/services/PreferenceService';
 import { PreferenceKeyConstants } from '../../../library/ets/constants/PreferenceKeyConstants';
 import { DisplayManager } from '../utils/DisplayManager';
+import { NotificationHelper } from '../utils/NotificationHelper';
 
 const TAG = 'EntryAbility';
 const DOMAIN = 0x0000;
+const NOTIFICATION_ID = 1;
 export default class EntryAbility extends UIAbility {
   private keepScreenOn: boolean = false;
   private backgroundRunningEnabled: boolean = false;
@@ -18,6 +20,10 @@ export default class EntryAbility extends UIAbility {
 
   async onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): Promise<void> {
     hilog.info(DOMAIN, TAG, 'Ability onCreate');
+
+    // 请求通知权限
+    const notificationHelper = NotificationHelper.getInstance(this.context);
+    await notificationHelper.checkAndRequestPermission();
 
     // 初始化首选项默认值
     const preferenceService = PreferenceService.getInstance();
@@ -78,6 +84,16 @@ export default class EntryAbility extends UIAbility {
     if (this.backgroundRunningEnabled) {
       this.startBackgroundRunning();
     }
+
+    // 发布后台通知
+    const notificationHelper = NotificationHelper.getInstance(this.context);
+    notificationHelper.showNotification(
+      NOTIFICATION_ID,
+      '噪音监测中',
+      '应用已转入后台持续监测环境噪音',
+      '点击返回应用查看实时数据'
+    );
+
     hilog.info(DOMAIN, TAG, 'Ability onBackground');
   }
 
