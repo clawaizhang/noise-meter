@@ -71,12 +71,11 @@ export default class EntryAbility extends UIAbility {
     windowManager.setKeepScreenOn(this.keepScreenOn);
     DisplayManager.getInstance().onForeground();
     if (this.backgroundRunningRequested) {
+      // 取消后台通知
+      const notificationHelper = NotificationHelper.getInstance(this.context);
+      notificationHelper.cancelNotification(NOTIFICATION_ID);
       this.stopBackgroundRunning();
     }
-
-    // 取消后台通知
-    const notificationHelper = NotificationHelper.getInstance(this.context);
-    notificationHelper.cancelNotification(NOTIFICATION_ID);
 
     hilog.info(DOMAIN, TAG, 'Ability onForeground');
   }
@@ -89,15 +88,6 @@ export default class EntryAbility extends UIAbility {
     if (this.backgroundRunningEnabled) {
       this.startBackgroundRunning();
     }
-
-    // 发布后台通知
-    const notificationHelper = NotificationHelper.getInstance(this.context);
-    notificationHelper.showNotification(
-      NOTIFICATION_ID,
-      '噪音监测中',
-      '应用已转入后台持续监测环境噪音',
-      '点击返回应用查看实时数据'
-    );
 
     hilog.info(DOMAIN, TAG, 'Ability onBackground');
   }
@@ -131,6 +121,14 @@ export default class EntryAbility extends UIAbility {
               return;
             }
             this.backgroundRunningRequested = true;
+            // 发布后台通知
+            const notificationHelper = NotificationHelper.getInstance(this.context);
+            notificationHelper.showNotification(
+              NOTIFICATION_ID,
+              '噪音监测中',
+              '应用已转入后台持续监测环境噪音',
+              '点击返回应用查看实时数据'
+            );
             hilog.info(DOMAIN, TAG, 'Start background running successfully');
           });
       });
