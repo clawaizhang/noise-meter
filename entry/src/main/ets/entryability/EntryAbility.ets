@@ -21,10 +21,6 @@ export default class EntryAbility extends UIAbility {
   async onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): Promise<void> {
     hilog.info(DOMAIN, TAG, 'Ability onCreate');
 
-    // 请求通知权限
-    const notificationHelper = NotificationHelper.getInstance(this.context);
-    await notificationHelper.checkAndRequestPermission();
-
     // 初始化首选项默认值
     const preferenceService = PreferenceService.getInstance();
     preferenceService.init(this.context);
@@ -43,6 +39,15 @@ export default class EntryAbility extends UIAbility {
     preferenceService.addChangeListener(PreferenceKeyConstants.BACKGROUND_RUNNING,
       (key: string, newValue: PreferenceValue) => {
         this.backgroundRunningEnabled = newValue as boolean;
+      });
+
+    preferenceService.addChangeListener(PreferenceKeyConstants.PRIVACY_AGREED,
+      (key: string, newValue: PreferenceValue) => {
+        if (newValue) {
+          // 请求通知权限
+          const notificationHelper = NotificationHelper.getInstance(this.context);
+          notificationHelper.checkAndRequestPermission();
+        }
       });
   }
 

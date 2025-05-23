@@ -7,7 +7,6 @@ import { Settings } from '../ets/components/Settings';
 import { common } from '@kit.AbilityKit';
 import { ScreenshotUtils } from '../../library/ets/utils/ScreenshotUtils';
 import promptAction from '@ohos.promptAction';
-import { LeqStatistics } from '../ets/components/LeqStatistics';
 import { PreferenceService } from '../../library/ets/services/PreferenceService';
 import { PreferenceKeyConstants } from '../../library/ets/constants/PreferenceKeyConstants';
 

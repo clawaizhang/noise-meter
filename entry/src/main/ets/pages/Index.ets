@@ -47,6 +47,7 @@ struct Index {
     try {
       let appPrivacyResults: privacyManager.AppPrivacyResult[] = privacyManager.getAppPrivacyResult();
       this.privacyAgreed = appPrivacyResults[0]?.result === 1;
+      PreferenceService.getInstance().setBoolean(PreferenceKeyConstants.PRIVACY_AGREED, this.privacyAgreed);
       // 初始化数据库
       const upgradeConfigs: DatabaseUpgradeConfig[] = [
         {
