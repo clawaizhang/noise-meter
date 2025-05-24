@@ -76,7 +76,6 @@ export struct DecibelHistory {
   private hasDeleteButtonOnStart: boolean = false; // 滑动开始时是否有删除按钮示
   private context: Context = getContext(this)
   private recordService: DecibelRecordService = new DecibelRecordService(this.context);
-  private decibelService: DecibelService = new DecibelService();
   private promptAction: PromptAction = this.getUIContext().getPromptAction();
   private fileService: FileService = new FileService(this.context)
   private pendingHideButtonId: string = ''; // 当前正在隐藏按钮的记录ID
@@ -480,7 +479,6 @@ export struct DecibelHistory {
             }
             .width(160)
             .height(96)
-            .borderRadius(16)
             .type(ButtonType.Normal)
             .backgroundColor('#FF3B30')
             .onClick(() => {
@@ -497,7 +495,6 @@ export struct DecibelHistory {
               }
               .width(80)
               .height(96)
-              .borderRadius(16)
               .type(ButtonType.Normal)
               .backgroundColor(record.isFavorite ? '#FFE0EB' : '#FF4081')
               .onClick(async () => {
@@ -532,7 +529,7 @@ export struct DecibelHistory {
               }
               .width(80)
               .height(96)
-              .borderRadius(16)
+              .margin(12)
               .type(ButtonType.Normal)
               .backgroundColor('#666666')
               .onClick(() => {
@@ -541,7 +538,8 @@ export struct DecibelHistory {
                 this.currentSlideOffset = -160;
                 this.currentSlidingId = record.id;
               })
-            }
+            }.justifyContent(FlexAlign.Center)
+            .alignItems(VerticalAlign.Center)
           }
         }
         .width(160)
