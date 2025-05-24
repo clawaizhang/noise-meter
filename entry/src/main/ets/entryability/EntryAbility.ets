@@ -16,6 +16,7 @@ const NOTIFICATION_ID = 1;
 export default class EntryAbility extends UIAbility {
   private keepScreenOn: boolean = false;
   private backgroundRunningEnabled: boolean = false;
+  private meterOn: boolean = false;
   private backgroundRunningRequested: boolean = false;
 
   async onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): Promise<void> {
@@ -27,6 +28,7 @@ export default class EntryAbility extends UIAbility {
     // 获取初始值
     this.keepScreenOn = preferenceService.getBoolean(PreferenceKeyConstants.KEEP_SCREEN_ON, false);
     this.backgroundRunningEnabled = preferenceService.getBoolean(PreferenceKeyConstants.BACKGROUND_RUNNING, false);
+    this.meterOn = preferenceService.getBoolean(PreferenceKeyConstants.METER_ON, false);
 
     // 注册监听器
     preferenceService.addChangeListener(PreferenceKeyConstants.KEEP_SCREEN_ON,
@@ -48,6 +50,10 @@ export default class EntryAbility extends UIAbility {
           const notificationHelper = NotificationHelper.getInstance(this.context);
           notificationHelper.checkAndRequestPermission();
         }
+      });
+    preferenceService.addChangeListener(PreferenceKeyConstants.METER_ON,
+      (key: string, newValue: PreferenceValue) => {
+        this.meterOn = newValue as boolean;
       });
   }
 
@@ -90,7 +96,7 @@ export default class EntryAbility extends UIAbility {
     windowManager.setKeepScreenOn(this.keepScreenOn);
     DisplayManager.getInstance().onBackground();
 
-    if (this.backgroundRunningEnabled) {
+    if (this.backgroundRunningEnabled && this.meterOn) {
       this.startBackgroundRunning();
     }
 

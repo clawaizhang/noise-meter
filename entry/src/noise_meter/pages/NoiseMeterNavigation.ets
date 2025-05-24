@@ -22,6 +22,11 @@ export struct NoiseMeter {
   @Local meterOn: boolean = true;
   private preferenceService: PreferenceService = PreferenceService.getInstance();
 
+  aboutToAppear(): void {
+    this.preferenceService.setBoolean(PreferenceKeyConstants.METER_ON, true);
+    this.meterOn = this.preferenceService.getBoolean(PreferenceKeyConstants.METER_ON, true);
+  }
+
   @Builder
   TabBuilder(title: string, icon: Resource, index: number) {
     Column() {
