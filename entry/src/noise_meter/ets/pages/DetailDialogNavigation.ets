@@ -6,9 +6,10 @@ import { noiseMeterNavStack } from '../constant/ProviderConstant'
 import { JSON } from '@kit.ArkTS'
 import { ScreenshotUtils } from "../../../library/ets/utils/ScreenshotUtils"
 import { DialogTitleBuilder } from "../components/noise-dialogs/DialogTitle"
-import { BasicInfoBuilder } from "../components/noise-dialogs/BasicInfo"
+import { BasicInfo } from "../components/noise-dialogs/BasicInfo"
 import { Statistics } from "../components/noise-dialogs/Statistics"
 import { NoiseChart } from "../components/noise-dialogs/NoiseChart"
+import { DecibelRecordService } from "../services/DecibelRecordService"
 
 const TAG = 'DetailDialog';
 const DOMAIN = 0x0000;
@@ -28,6 +29,7 @@ export struct DetailDialog {
   @Local translateY: number = 1000;
   private startY: number = 0;
   @Local private bgOpacity: number = 0;
+  private recordService: DecibelRecordService = new DecibelRecordService(getContext() as common.UIAbilityContext)
 
   async aboutToAppear() {
     try {
@@ -44,8 +46,9 @@ export struct DetailDialog {
         hilog.error(DOMAIN, TAG, '导航参数缺少必要字段');
         return;
       }
-
-      this.selectedRecord = param.selectedRecord;
+      this.recordService.getRecordById(param.selectedRecord.id).then((record) => {
+        this.selectedRecord = record
+      })
       this.context = param.context;
       this.fileService = param.fileService;
 
@@ -91,7 +94,7 @@ export struct DetailDialog {
           Column() {
             if (this.selectedRecord) {
               DialogTitleBuilder(this.selectedRecord, () => {
-                this.navStack.pop();
+                this.closeDialog();
               }, async () => {
                 const context = getContext(this) as common.UIAbilityContext;
                 const uiContext = this.getUIContext();
@@ -113,7 +116,10 @@ export struct DetailDialog {
               })
 
               Column() {
-                BasicInfoBuilder(this.selectedRecord)
+                BasicInfo({  selectedRecord: this.selectedRecord,commentChange: (comment: string) => {
+                  this.selectedRecord!.comment = comment;
+                  this.recordService.updateRecord(this.selectedRecord!);
+                }})
                 Statistics({ selectedRecord: this.selectedRecord })
                 NoiseChart({ playAudio: true, selectedRecord: this.selectedRecord })
               }
@@ -142,7 +148,7 @@ export struct DetailDialog {
             })
             .onActionEnd(() => {
               if (this.translateY > 100) {
-                this.navStack.pop();
+                this.closeDialog();
                 animateTo({ duration: 1200, curve: Curve.EaseIn }, () => {
                   this.translateY = 1000;
                 });
@@ -173,7 +179,7 @@ export struct DetailDialog {
     .mode(NavDestinationMode.DIALOG)
     .ignoreLayoutSafeArea([LayoutSafeAreaType.SYSTEM], [LayoutSafeAreaEdge.TOP, LayoutSafeAreaEdge.BOTTOM])
     .onBackPressed(() => {
-      this.navStack.pop();
+      this.closeDialog()
       animateTo({ duration: 1200, curve: Curve.EaseIn }, () => {
         this.translateY = 1000;
       });
@@ -182,6 +188,10 @@ export struct DetailDialog {
       });
       return true;
     })
+  }
+
+  private closeDialog() {
+    this.navStack.pop();
   }
 }
 

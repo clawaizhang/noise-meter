@@ -183,4 +183,29 @@ export class DecibelRecord {
 
     return description;
   }
-} 
+  /**
+   * 从普通对象创建DecibelRecord实例
+   * @param plainObject 包含DecibelRecord属性的普通对象
+   * @returns 完整的DecibelRecord实例
+   */
+  static fromPlainObject(plainObject: DecibelRecord): DecibelRecord {
+    const record = new DecibelRecord(
+      plainObject.minDecibel,
+      plainObject.maxDecibel,
+      plainObject.avgDecibel,
+      plainObject.duration,
+      plainObject.decibelValues,
+      plainObject.location,
+      plainObject.audioFilePath,
+      plainObject.comment
+    );
+
+    // 复制其他属性
+    record.id = plainObject.id || record.id;
+    record.timestamp = plainObject.timestamp || record.timestamp;
+    record.isFavorite = plainObject.isFavorite || false;
+    record.weightingTypes = plainObject.weightingTypes || [];
+
+    return record;
+  }
+}

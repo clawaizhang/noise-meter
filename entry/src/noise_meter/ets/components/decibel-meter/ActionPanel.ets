@@ -2,7 +2,7 @@ import promptAction from '@ohos.promptAction';
 import { PreferenceKeyConstants } from '../../../../library/ets/constants/PreferenceKeyConstants';
 import { WeightingType } from '../../../../library/ets/constants/WeightingConstants';
 import { PreferenceService, PreferenceValue } from '../../../../library/ets/services/PreferenceService';
-import { SaveDialog } from './SaveDialog';
+import { InputDialog } from './InputDialog';
 
 @ComponentV2
 export struct ActionPanel {
@@ -103,7 +103,7 @@ export struct ActionPanel {
         .accessibilityDescription('保存当前数据')
         .onClick(async () => {
           const dialogController = new CustomDialogController({
-            builder: SaveDialog({
+            builder: InputDialog({
               onConfirm: (comment: string) => {
                 this.onSave(comment);
               },

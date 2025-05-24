@@ -342,8 +342,8 @@ export struct DecibelMeter {
     }
   }
 
-  // 最大录音时长5分钟(毫秒)
-  private readonly MAX_RECORDING_DURATION: number = 300_000;
+  // 最大录音时长1小时(毫秒)
+  private readonly MAX_RECORDING_DURATION: number = 60 * 60_000;
 
   private async startRecording() {
     try {
@@ -518,14 +518,7 @@ export struct DecibelMeter {
 
         // 如果启用了录音功能，获取并保存音频文件
         let currentAudioFilePath: string = '';
-        
-        // 自动保存时不显示提示
-        if (!isAutoSave) {
-          promptAction.showToast({
-            message: '正在保存录音...',
-            duration: 1000
-          });
-        }
+
         if (this.isRecordEnabled) {
           try {
             currentAudioFilePath = await this.audioService.stopRecordingAndGetWavData(this.fileService);
