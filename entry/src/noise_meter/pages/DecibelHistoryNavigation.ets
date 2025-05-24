@@ -397,6 +397,8 @@ export struct DecibelHistory {
           .color('#F5F5F5')
       }
       .backgroundColor(Color.White)
+      .borderRadius(16)
+      .margin({ left: 16,right:16 })
       .translate({
         x: record.id === this.currentSlidingId ?
         this.currentSlideOffset : // 直接使用滑动偏移量
