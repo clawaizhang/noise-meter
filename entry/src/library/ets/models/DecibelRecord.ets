@@ -41,7 +41,8 @@ export class DecibelRecord {
   audioFilePath?: string;
   @Trace
   isFavorite: boolean;
-  weightingTypes: WeightingType[]; // 新增字段
+  weightingTypes: WeightingType[];
+  comment: string; // 备注字段
 
   constructor(
     minDecibel: number,
@@ -50,7 +51,8 @@ export class DecibelRecord {
     duration: number,
     decibelValues: number[],
     location?: string,
-    audioFilePath?: string
+    audioFilePath?: string,
+    comment: string = ''
   ) {
     this.id = util.generateRandomUUID();
     this.timestamp = Date.now();
@@ -62,7 +64,8 @@ export class DecibelRecord {
     this.location = location;
     this.audioFilePath = audioFilePath;
     this.isFavorite = false;
-    this.weightingTypes = []; // 初始化为空数组
+    this.weightingTypes = [];
+    this.comment = comment;
   }
 
   static getTableName(): string {
@@ -77,7 +80,8 @@ export class DecibelRecord {
         resultSet.getLong(resultSet.getColumnIndex('duration')),
         JSON.parse(resultSet.getString(resultSet.getColumnIndex('decibelValues'))),
         resultSet.getString(resultSet.getColumnIndex('location')),
-        resultSet.getString(resultSet.getColumnIndex('audioFilePath'))
+        resultSet.getString(resultSet.getColumnIndex('audioFilePath')),
+        resultSet.getString(resultSet.getColumnIndex('comment')) || ''
     );
     record.id = resultSet.getString(resultSet.getColumnIndex('id'));
     record.timestamp = resultSet.getLong(resultSet.getColumnIndex('timestamp'));
@@ -99,7 +103,8 @@ export class DecibelRecord {
       'location': this.location ?? null,
       'audioFilePath': this.audioFilePath ?? null,
       'isFavorite': this.isFavorite ? 1 : 0,
-      'weightingTypes': JSON.stringify(this.weightingTypes) // 确保正确处理 weightingTypes
+      'weightingTypes': JSON.stringify(this.weightingTypes),
+      'comment': this.comment || null
     };
     return valueBucket;
   }

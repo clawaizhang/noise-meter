@@ -2,22 +2,23 @@ import promptAction from '@ohos.promptAction';
 import { PreferenceKeyConstants } from '../../../../library/ets/constants/PreferenceKeyConstants';
 import { WeightingType } from '../../../../library/ets/constants/WeightingConstants';
 import { PreferenceService, PreferenceValue } from '../../../../library/ets/services/PreferenceService';
+import { SaveDialog } from './SaveDialog';
 
 @ComponentV2
 export struct ActionPanel {
   @Param isUILocked: boolean = false;
   @Param @Require weightingType: WeightingType;
   @Event onReset: () => void;
-  @Event onSave: () => void;
+  @Event onSave: (comment: string) => void;
   @Event lockToggle: () => void;
   @Event onToggleWeighting: (weightingType: WeightingType) => void;
-  @Local meterOn:boolean = false;
+  @Local meterOn: boolean = false;
   private preferenceService: PreferenceService = PreferenceService.getInstance();
   private weightingTypes: Array<SelectOption> =
     [{ value: WeightingType.A }, { value: WeightingType.C }, { value: WeightingType.Z }];
 
   aboutToAppear(): void {
-    this.meterOn  = this.preferenceService.getBoolean(PreferenceKeyConstants.METER_ON, true);
+    this.meterOn = this.preferenceService.getBoolean(PreferenceKeyConstants.METER_ON, true);
     this.preferenceService.addChangeListener(PreferenceKeyConstants.METER_ON, (value: PreferenceValue) => {
       this.meterOn = value as boolean;
     })
@@ -101,23 +102,21 @@ export struct ActionPanel {
         .backgroundColor('#F0F0F0')
         .accessibilityDescription('保存当前数据')
         .onClick(async () => {
-          const confirmed = await promptAction.showDialog({
-            title: '确定保存',
-            message: '确定要保存当前数据吗？',
-            buttons: [
-              {
-                text: '取消',
-                color: '#666666'
+          const dialogController = new CustomDialogController({
+            builder: SaveDialog({
+              onConfirm: (comment: string) => {
+                this.onSave(comment);
               },
-              {
-                text: '确定',
-                color: '#4A90E2'
+              onClose: () => {
+                dialogController.close();
               }
-            ]
+            }),
+            cancel: () => {
+              console.log('Dialog canceled');
+            },
+            autoCancel: true
           });
-          if (confirmed.index === 1) {
-            this.onSave();
-          }
+          dialogController.open();
         })
       }
       .width('100%')

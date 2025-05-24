@@ -25,20 +25,11 @@ export function BasicInfoBuilder(selectedRecord: DecibelRecord) {
       }))
         .fontSize(14)
         .fontColor('#333333')
-        .width('70%')
-    }
-    .width('100%')
-    .margin({ bottom: 8 })
-
-    Row() {
-      Text('检测时长')
-        .fontSize(14)
-        .fontColor('#666666')
-        .width('30%')
-      Text(`${(selectedRecord!.duration / 1000).toFixed(1)}秒`)
+        .width('50%')
+      Text(`共${(selectedRecord!.duration / 1000).toFixed(1)}秒`)
         .fontSize(14)
         .fontColor('#333333')
-        .width('70%')
+        .width('20%')
     }
     .width('100%')
     .margin({ bottom: 8 })
@@ -58,6 +49,26 @@ export function BasicInfoBuilder(selectedRecord: DecibelRecord) {
       .width('100%')
       .margin({ bottom: 8 })
     }
+
+    // 添加备注显示区域
+    if (selectedRecord?.comment) {
+      Row() {
+        Text('备注')
+          .fontSize(14)
+          .fontColor('#666666')
+          .width('30%')
+        Text(selectedRecord!.comment)
+          .fontSize(14)
+          .fontColor('#666666')
+          .backgroundColor('#F5F5F5')
+
+          .width('70%')
+          .textOverflow({ overflow: TextOverflow.None })
+      }
+      .width('100%')
+      .margin({ bottom: 8 })
+    }
+
   }
   .width('100%')
   .padding({

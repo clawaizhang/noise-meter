@@ -27,4 +27,12 @@ export class TableCreateSql {
     ALTER TABLE decibel_records
     ADD COLUMN weightingTypes TEXT
   `;
-} 
+
+  /**
+   * 添加 comment 列到 decibel_records 表
+   */
+  static readonly ADD_COMMENT_COLUMN = `
+    ALTER TABLE decibel_records
+    ADD COLUMN comment TEXT
+  `;
+}

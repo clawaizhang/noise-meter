@@ -379,7 +379,7 @@ export struct DecibelMeter {
         const currentDuration = new Date().getTime() - this.startTime;
         if (currentDuration > this.MAX_RECORDING_DURATION) {
           console.info('[自动保存] 达到5分钟录音限制，自动保存并开始新录音');
-          this.stopRecording().then(() => {
+          this.stopRecording('自动保存').then(() => {
             // 延迟100ms确保完全停止后再开始新录音
             setTimeout(()=> {
               this.startRecording();
@@ -489,7 +489,7 @@ export struct DecibelMeter {
     }
   }
 
-  private async stopRecording(): Promise<void> {
+  private async stopRecording(comments:string): Promise<void> {
     if (this.isRecording) {
       this.isRecording = false;
       console.info("[FREQ_TRACE][Recording] 停止检测 - 开始");
@@ -545,6 +545,7 @@ export struct DecibelMeter {
           this.currentRecord.weightingTypes = [...this.weightingTypes];
           this.currentRecord.audioFilePath = currentAudioFilePath;
           this.currentRecord.location = locationInfo?.address;
+          this.currentRecord.comment = comments;
 
           // 保存记录
           await this.recordService.saveRecord(this.currentRecord);
@@ -711,8 +712,8 @@ export struct DecibelMeter {
           this.audioService.resetData();
           this.resetData();
         },
-        onSave: () => {
-          this.stopRecording();
+        onSave: (comments) => {
+          this.stopRecording(comments);
         },
         lockToggle: () => {
           if(this.isUILocked) {

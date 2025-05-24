@@ -57,6 +57,10 @@ struct Index {
         {
           version: 2,
           sqls: [TableCreateSql.ADD_WEIGHTING_TYPES_COLUMN]
+        },
+        {
+          version: 3,
+          sqls: [TableCreateSql.ADD_COMMENT_COLUMN]
         }
       ];
 
