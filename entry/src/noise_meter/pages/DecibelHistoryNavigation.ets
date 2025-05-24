@@ -529,7 +529,6 @@ export struct DecibelHistory {
               }
               .width(80)
               .height(96)
-              .margin(12)
               .type(ButtonType.Normal)
               .backgroundColor('#666666')
               .onClick(() => {
