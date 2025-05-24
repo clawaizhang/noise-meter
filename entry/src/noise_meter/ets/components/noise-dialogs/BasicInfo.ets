@@ -1,4 +1,5 @@
 import { DecibelRecord } from "../../../../library/ets/models/DecibelRecord"
+import { Theme } from "../../utils/Theme"
 import { InputDialog } from "../decibel-meter/InputDialog"
 
 @ComponentV2
@@ -22,7 +23,7 @@ export struct BasicInfo {
       Row() {
         Text('检测时间')
           .fontSize(14)
-          .fontColor('#666666')
+          .fontColor(Theme.getColor('text_secondary'))
           .width('30%')
         Text(new Date(this.selectedRecord!.timestamp).toLocaleString('zh-CN', {
           year: 'numeric',
@@ -34,11 +35,11 @@ export struct BasicInfo {
           hour12: false
         }))
           .fontSize(14)
-          .fontColor('#333333')
+          .fontColor(Theme.getColor('text_primary'))
           .width('50%')
         Text(`共${(this.selectedRecord!.duration / 1000).toFixed(1)}秒`)
           .fontSize(14)
-          .fontColor('#333333')
+          .fontColor(Theme.getColor('text_primary'))
           .width('20%')
       }
       .width('100%')
@@ -48,11 +49,11 @@ export struct BasicInfo {
         Row() {
           Text('检测位置')
             .fontSize(14)
-            .fontColor('#666666')
+            .fontColor(Theme.getColor('text_secondary'))
             .width('30%')
           Text(this.selectedRecord!.location)
             .fontSize(14)
-            .fontColor('#333333')
+            .fontColor(Theme.getColor('text_primary'))
             .width('70%')
             .textOverflow({ overflow: TextOverflow.None })
         }
@@ -64,12 +65,12 @@ export struct BasicInfo {
       Row() {
         Text('备注')
           .fontSize(14)
-          .fontColor('#666666')
+          .fontColor(Theme.getColor('text_secondary'))
           .width('30%')
         Text(this.comment === '' ? '点击添加备注' : this.comment)
           .fontSize(14)
-          .fontColor('#666666')
-          .backgroundColor('#F5F5F5')
+          .fontColor(Theme.getColor('text_secondary'))
+          .backgroundColor(Theme.getColor('background_secondary'))
           .width('70%')
           .textOverflow({ overflow: TextOverflow.None })
           .onClick(() => {
@@ -104,7 +105,7 @@ export struct BasicInfo {
       top: 12,
       bottom: 12
     })
-    .backgroundColor(Color.White)
+    .backgroundColor(Theme.getColor('background_primary'))
     .borderRadius(12)
     .margin({ bottom: 12 })
   }

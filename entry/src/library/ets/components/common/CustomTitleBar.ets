@@ -1,3 +1,5 @@
+import { Theme } from "../../../../noise_meter/ets/utils/Theme";
+
 interface TitleButton {
   text?: string;
   icon?: Resource;
@@ -35,13 +37,13 @@ export struct CustomTitleBar {
               else if (button.text) {
                 Text(button.text)
                   .fontSize(14)
-                  .fontColor('#666666')
+                  .fontColor(Theme.getColor('text_secondary'))
                   .textAlign(TextAlign.Center)
               }
             }
             .height(32)
             .width(56)
-            .backgroundColor('#EEEEEE')
+            .backgroundColor(Theme.getColor('button_secondary'))
             .padding({ left: 12, right: 12 })
             .borderRadius(16)
             .onClick(button.onClick)
@@ -55,6 +57,6 @@ export struct CustomTitleBar {
     }
     .width('100%')
     .height(56)
-    .backgroundColor('#F5F5F5')
+    .backgroundColor(Theme.getColor('background_secondary'))
   }
 }

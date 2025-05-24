@@ -219,7 +219,7 @@ export struct Statistics {
 
       Text(this.getOverallNoiseDescription())
         .fontSize(14)
-        .fontColor('#333333')
+        .fontColor($r('app.color.dark_text_secondary'))
         .margin({ bottom: 16 })
         .textAlign(TextAlign.Start)
         .width('100%')
@@ -228,7 +228,7 @@ export struct Statistics {
         Column() {
           Text('最小值')
             .fontSize(12)
-            .fontColor('#666666')
+            .fontColor($r('app.color.dark_text_secondary'))
             .margin({ bottom: 8 })
           Row() {
             Text(this.selectedRecord!.minDecibel.toString())
@@ -249,13 +249,13 @@ export struct Statistics {
         Divider()
           .width(1)
           .height(60)
-          .backgroundColor('#E0E0E0')
+          .backgroundColor($r('app.color.dark_divider'))
           .margin({ left: 12, right: 12 })
 
         Column() {
           Text('平均值')
             .fontSize(12)
-            .fontColor('#666666')
+            .fontColor($r('app.color.dark_text_secondary'))
             .margin({ bottom: 8 })
           Row() {
             Text(this.selectedRecord!.avgDecibel.toString())
@@ -282,7 +282,7 @@ export struct Statistics {
         Column() {
           Text('最大值')
             .fontSize(12)
-            .fontColor('#666666')
+            .fontColor($r('app.color.dark_text_secondary'))
             .margin({ bottom: 8 })
           Row() {
             Text(this.selectedRecord!.maxDecibel.toString())
@@ -305,7 +305,7 @@ export struct Statistics {
       Divider()
         .width('100%')
         .height(1)
-        .backgroundColor('#E0E0E0')
+        .backgroundColor($r('app.color.dark_divider'))
         .margin({ top: 12, bottom: 16 })
 
       if (this.selectedRecord && this.selectedRecord.decibelValues.length > 0) {
@@ -314,7 +314,7 @@ export struct Statistics {
             Row() {
               Text(segment.name)
                 .fontSize(12)
-                .fontColor('#333333')
+                .fontColor($r('app.color.dark_text_secondary'))
                 .width(60)
                 .margin({ right: 8 })
 
@@ -327,7 +327,7 @@ export struct Statistics {
 
               Text(`${segment.value}%`)
                 .fontSize(12)
-                .fontColor('#666666')
+                .fontColor($r('app.color.dark_text_secondary'))
             }
             .width('100%')
             .margin({ bottom: 8 })
@@ -345,7 +345,7 @@ export struct Statistics {
       top: 12,
       bottom: 12
     })
-    .backgroundColor(Color.White)
+    .backgroundColor($r('app.color.dark_background_secondary'))
     .borderRadius(12)
     .margin({ bottom: 12 })
   }

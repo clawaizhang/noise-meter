@@ -8,6 +8,7 @@ import { PreferenceService, PreferenceValue } from '../../../library/ets/service
 import { PreferenceKeyConstants } from '../../../library/ets/constants/PreferenceKeyConstants';
 import { WeightingType } from '../../../library/ets/constants/WeightingConstants';
 import { noiseMeterNavStack } from '../../../noise_meter/ets/constant/ProviderConstant';
+import { Theme } from '../../../noise_meter/ets/utils/Theme';
 import { commonEventManager } from '@kit.BasicServicesKit';
 import { privacyManager } from '@kit.StoreKit';
 
@@ -159,11 +160,11 @@ struct Index {
         .hideTitleBar(true)
         .titleMode(NavigationTitleMode.Mini)
         .mode(NavigationMode.Stack)
-        .backgroundColor('#1E88E5')
+        .backgroundColor(Theme.getColor('background_primary'))
       }
     }
     .width('100%')
     .height('100%')
-    .backgroundColor('#1E88E5')
+    .backgroundColor(Theme.getColor('background_primary'))
   }
 }

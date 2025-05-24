@@ -3,6 +3,26 @@
     {
       "name": "start_window_background",
       "value": "#1E88E5"
+    },
+    {
+      "name": "dark_background_primary",
+      "value": "#121212"
+    },
+    {
+      "name": "dark_background_secondary", 
+      "value": "#1E1E1E"
+    },
+    {
+      "name": "dark_text_primary",
+      "value": "#E0E0E0"
+    },
+    {
+      "name": "dark_text_secondary",
+      "value": "#AAAAAA"
+    },
+    {
+      "name": "dark_primary",
+      "value": "#BB86FC"
     }
   ]
 }

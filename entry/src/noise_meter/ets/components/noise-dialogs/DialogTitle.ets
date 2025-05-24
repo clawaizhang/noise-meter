@@ -1,4 +1,5 @@
 import { DecibelRecord } from "../../../../library/ets/models/DecibelRecord"
+import { Theme } from "../../utils/Theme"
 
 const TAG = 'DialogTitle';
 const DOMAIN = 0x0000;
@@ -18,7 +19,7 @@ export function DialogTitleBuilder(
         Image($r('app.media.ic_favorite'))
           .width(20)
           .height(20)
-          .fillColor('#FF4081')
+          .fillColor(Theme.getColor('icon_accent'))
           .margin({ left: 8 })
       }
     }
@@ -28,7 +29,7 @@ export function DialogTitleBuilder(
       Image($r('app.media.ic_share'))
         .width(24)
         .height(24)
-        .fillColor('#666666')
+        .fillColor(Theme.getColor('icon_primary'))
     }
     .type(ButtonType.Circle)
     .backgroundColor(Color.Transparent)
@@ -39,7 +40,7 @@ export function DialogTitleBuilder(
       Image($r('app.media.ic_close'))
         .width(24)
         .height(24)
-        .fillColor('#666666')
+        .fillColor(Theme.getColor('icon_primary'))
     }
     .type(ButtonType.Circle)
     .backgroundColor(Color.Transparent)

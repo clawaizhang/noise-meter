@@ -3,6 +3,7 @@ import { DecibelService } from "../../services/DecibelService"
 import { display } from "@kit.ArkUI"
 import { AudioPlayer } from "../../../../library/ets/components/business/AudioPlayer";
 import { WeightingType } from "../../../../library/ets/constants/WeightingConstants";
+import { Theme } from "../../utils/Theme";
 
 interface Margin {
   top: number;
@@ -64,11 +65,11 @@ export struct NoiseChart {
           Image($r('app.media.ic_empty'))
             .width(32)
             .height(32)
-            .fillColor('#999999')
+            .fillColor(Theme.getColor('text_secondary'))
             .margin({ bottom: 8 })
           Text('暂无分贝值变化数据')
             .fontSize(14)
-            .fontColor('#999999')
+            .fontColor(Theme.getColor('text_secondary'))
         }
         .width('100%')
         .justifyContent(FlexAlign.Center)
@@ -97,7 +98,7 @@ export struct NoiseChart {
               this.canvasContext.clearRect(0, 0, this.canvasContext.width, this.canvasContext.height);
 
               // 绘制背景
-              this.canvasContext.fillStyle = '#F5F5F5';
+              this.canvasContext.fillStyle = Theme.getColor('background_secondary');
               this.canvasContext.fillRect(margin.left, margin.top, chartWidth, chartHeight);
 
               // 设置字体样式
@@ -105,7 +106,7 @@ export struct NoiseChart {
               this.canvasContext.textBaseline = 'middle';
 
               // 绘制网格线
-              this.canvasContext.strokeStyle = '#E0E0E0';
+              this.canvasContext.strokeStyle = Theme.getColor('divider');
               this.canvasContext.lineWidth = 1;
 
               // 计算Y轴刻度
@@ -160,7 +161,7 @@ export struct NoiseChart {
               }
 
               // 绘制Y轴刻度
-              this.canvasContext.fillStyle = '#666666';
+              this.canvasContext.fillStyle = Theme.getColor('text_primary');
               this.canvasContext.textAlign = 'right';
               for (let i = 0; i < ticks.length; i++) {
                 const y = margin.top + chartHeight - ((ticks[i] - yMin) / (yMax - yMin)) * chartHeight;
@@ -177,7 +178,7 @@ export struct NoiseChart {
                   this.canvasContext.beginPath();
                   this.canvasContext.moveTo(margin.left, y);
                   this.canvasContext.lineTo(margin.left + chartWidth, y);
-                  this.canvasContext.strokeStyle = '#E0E0E0'; // 主要网格线颜色
+                  this.canvasContext.strokeStyle = Theme.getColor('divider'); // 主要网格线颜色
                   this.canvasContext.stroke();
                 }
               }
@@ -215,7 +216,7 @@ export struct NoiseChart {
                 const x = margin.left + i * xStep;
                 const seconds = i * xInterval;
                 this.canvasContext.fillText(formatTime(seconds), x, margin.top + chartHeight + vp2px(2));
-                this.canvasContext.strokeStyle = '#E0E0E0'; // 辅助网格线颜色
+                this.canvasContext.strokeStyle = Theme.getColor('divider'); // 辅助网格线颜色
                 this.canvasContext.lineWidth = 1; // 更细的线条
                 // 绘制垂直网格线
                 this.canvasContext.beginPath();
@@ -300,7 +301,7 @@ export struct NoiseChart {
                 .borderRadius(8) // 新增: 设置边框半径为8以形成圆形
               Text(`${type}计权`)
                 .fontSize(12)
-                .fontColor('#000000')
+                .fontColor(Theme.getColor('text_primary'))
                 .margin({ left: 4, right: 8 })
             })
           }.margin({ top: -30 })
@@ -314,7 +315,7 @@ export struct NoiseChart {
       top: 12,
       bottom: 12
     })
-    .backgroundColor(Color.White)
+    .backgroundColor(Theme.getColor('background_primary'))
     .borderRadius(12)
     .margin({ bottom: 12, top: -32 })
   }

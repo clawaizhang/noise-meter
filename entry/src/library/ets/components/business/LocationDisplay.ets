@@ -1,9 +1,8 @@
 import promptAction from '@ohos.promptAction';
 import { LocationService, LocationInfo } from '../../services/LocationService';
-import common from '@ohos.app.ability.common';
-import { PermissionUtil } from '@pura/harmony-utils';
 import { PreferenceService, PreferenceChangeListener, PreferenceValue } from '../../services/PreferenceService';
 import { PreferenceKeyConstants } from '../../constants/PreferenceKeyConstants';
+import { Theme } from '../../../../noise_meter/ets/utils/Theme';
 
 @ComponentV2
 export struct LocationDisplay {
@@ -54,11 +53,11 @@ export struct LocationDisplay {
       buttons: [
         {
           text: '取消',
-          color: '#666666'
+          color: Theme.getColor('text_secondary')
         },
         {
           text: '去开启',
-          color: '#0091FF'
+          color: Theme.getColor('button_primary')
         }
       ]
     });
@@ -123,7 +122,7 @@ export struct LocationDisplay {
             Image($r('app.media.ic_refresh'))
               .width(16)
               .height(16)
-              .fillColor('#666666')
+              .fillColor(Theme.getColor('text_secondary'))
               .rotate({
                 angle: this.isRefreshing ? 360 : 0,
                 centerX: '50%',
@@ -138,7 +137,7 @@ export struct LocationDisplay {
         }
         .width(20)
         .height(20)
-        .backgroundColor('#F5F5F5')
+        .backgroundColor(Theme.getColor('button_secondary'))
         .enabled(!this.isRefreshing)
         .onClick(() => {
           this.startSingleLocation();
@@ -148,7 +147,7 @@ export struct LocationDisplay {
 
       Text(this.isEnabled ? (this.address || '点击刷新按钮获取位置') : '开启位置服务可记录噪音检测位置')
         .fontSize(14)
-        .fontColor('#666666')
+        .fontColor(Theme.getColor('text_secondary'))
         .textAlign(TextAlign.Center)
         .layoutWeight(1)
     }

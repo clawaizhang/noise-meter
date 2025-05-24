@@ -1,4 +1,5 @@
 import { DecibelRecord } from '../../library/ets/models/DecibelRecord';
+import { Theme } from '../ets/utils/Theme';
 import { DetailDialogParams } from '../ets/pages/DetailDialogNavigation';
 import { PromptAction } from '@ohos.arkui.UIContext';
 import { DecibelService } from '../ets/services/DecibelService';
@@ -104,16 +105,16 @@ export struct DecibelHistory {
       offset: { dx: 0, dy: -20 },
       primaryButton: {
         value: '取消',
-        fontColor: '#666666',
-        backgroundColor: '#EEEEEE',
+        fontColor: Theme.getColor('text_secondary'),
+        backgroundColor: Theme.getColor('button_secondary'),
         action: () => {
           // 不执行任何操作
         }
       },
       secondaryButton: {
         value: '删除',
-        fontColor: '#FFFFFF',
-        backgroundColor: '#666666',
+        fontColor: Theme.getColor('text_primary'),
+        backgroundColor: Theme.getColor('button_primary'),
         action: async () => {
           try {
             const recordToDelete = this.records.find(r => r.id === this.showingDeleteButtonId);
@@ -173,7 +174,7 @@ export struct DecibelHistory {
         Image($r('app.media.ic_back'))
           .width(24)
           .height(24)
-          .fillColor('#333333')
+          .fillColor(Theme.getColor('icon_primary'))
           .onClick(() => {
             this.navStack.pop()
           })
@@ -192,7 +193,7 @@ export struct DecibelHistory {
     }
     .width('100%')
     .height(56)
-    .backgroundColor('#F5F5F5')
+    .backgroundColor(Theme.getColor('background_secondary'))
   }
 
   emptyAll = async () => {
@@ -203,16 +204,16 @@ export struct DecibelHistory {
       offset: { dx: 0, dy: -20 },
       primaryButton: {
         value: '取消',
-        fontColor: '#666666',
-        backgroundColor: '#EEEEEE',
+        fontColor: Theme.getColor('text_secondary'),
+        backgroundColor: Theme.getColor('button_secondary'),
         action: () => {
           // 不执行任何操作
         }
       },
       secondaryButton: {
         value: '清空',
-        fontColor: '#FFFFFF',
-        backgroundColor: '#666666',
+        fontColor: Theme.getColor('text_primary'),
+        backgroundColor: Theme.getColor('button_primary'),
         action: async () => {
           try {
             // 清空非收藏记录
@@ -238,12 +239,12 @@ export struct DecibelHistory {
     Button() {
       Text('清空')
         .fontSize(14)
-        .fontColor('#666666')
+        .fontColor(Theme.getColor('text_secondary'))
         .textAlign(TextAlign.Center)
     }
     .height(32)
     .width(56)
-    .backgroundColor('#EEEEEE')
+    .backgroundColor(Theme.getColor('button_secondary'))
     .padding({ left: 12, right: 12 })
     .borderRadius(16)
     .onClick(this.emptyAll)
@@ -260,7 +261,7 @@ export struct DecibelHistory {
               // 位置信息显示
               Text(record.location || '未获取位置信息')
                 .fontSize(12)
-                .fontColor(record.location ? '#999999' : '#CCCCCC')
+                .fontColor(record.location ? Theme.getColor('text_secondary') : Theme.getColor('text_disabled'))
                 .maxLines(3)
                 .textOverflow({ overflow: TextOverflow.Ellipsis })
                 .width('100%')
@@ -270,7 +271,7 @@ export struct DecibelHistory {
             Row() {
               Text(record.comment || '无备注')
                 .fontSize(12)
-                .fontColor('#999999')
+                .fontColor(Theme.getColor('text_secondary'))
                 .maxLines(3)
                 .textOverflow({ overflow: TextOverflow.Ellipsis })
                 .margin({ top: 8})
@@ -286,12 +287,12 @@ export struct DecibelHistory {
                 hour12: false
               }))
                 .fontSize(14)
-                .fontColor('#666666')
+                .fontColor(Theme.getColor('text_secondary'))
                 .margin({ top: 8 }) // 减小间距
               // 检测时长
               Text(` 共: ${Math.round(record.duration / 1000)}秒`)
                 .fontSize(14)
-                .fontColor('#666666')
+                .fontColor(Theme.getColor('text_secondary'))
                 .margin({ top: 8 })
             }
 
@@ -302,7 +303,7 @@ export struct DecibelHistory {
                 Image($r('app.media.ic_favorite'))
                   .width(16)
                   .height(16)
-                  .fillColor('#FF4081')
+                  .fillColor(Theme.getColor('icon_favorite'))
                   .animation({
                     duration: 450,
                     curve: Curve.EaseInOut,
@@ -324,7 +325,7 @@ export struct DecibelHistory {
               Column() {
                 Text('最小值')
                   .fontSize(12)
-                  .fontColor('#666666')
+                  .fontColor(Theme.getColor('text_secondary'))
                   .margin({ bottom: 4 })
                 Text(record.minDecibel.toString())
                   .fontSize(16)
@@ -336,7 +337,7 @@ export struct DecibelHistory {
               Column() {
                 Text('平均值')
                   .fontSize(12)
-                  .fontColor('#666666')
+                  .fontColor(Theme.getColor('text_secondary'))
                   .margin({ bottom: 4 })
                 Text(record.avgDecibel.toString())
                   .fontSize(16)
@@ -349,7 +350,7 @@ export struct DecibelHistory {
               Column() {
                 Text('最大值')
                   .fontSize(12)
-                  .fontColor('#666666')
+                  .fontColor(Theme.getColor('text_secondary'))
                   .margin({ bottom: 4 })
                 Text(record.maxDecibel.toString())
                   .fontSize(16)
@@ -394,9 +395,9 @@ export struct DecibelHistory {
 
         Divider()
           .width('92%')
-          .color('#F5F5F5')
+          .color(Theme.getColor('divider_primary'))
       }
-      .backgroundColor(Color.White)
+      .backgroundColor(Theme.getColor('background_primary'))
       .borderRadius(16)
       .margin({ left: 16,right:16 })
       .translate({
@@ -493,7 +494,7 @@ export struct DecibelHistory {
             .width(160)
             .height(96)
             .type(ButtonType.Normal)
-            .backgroundColor('#FF3B30')
+            .backgroundColor(Theme.getColor('button_danger'))
             .onClick(() => {
               this.deleteRecord(record);
             })
@@ -646,7 +647,7 @@ export struct DecibelHistory {
         }
         .width('100%')
         .layoutWeight(1)
-        .backgroundColor('#F5F5F5')
+        .backgroundColor(Theme.getColor('background_secondary'))
         .justifyContent(FlexAlign.Center)
       } else {
         List({ space: 0 }) {
@@ -657,7 +658,7 @@ export struct DecibelHistory {
                 Divider()
                   .width('100%')
                   .height(8)
-                  .color('#F5F5F5')
+                  .color(Theme.getColor('background_secondary'))
               }
             }
           }, (record: DecibelRecord) => record.id)
@@ -675,13 +676,13 @@ export struct DecibelHistory {
               Divider()
                 .width('100%')
                 .height(8)
-                .color('#F5F5F5')
+                .color(Theme.getColor('background_secondary'))
             }
           }
         }
         .width('100%')
         .layoutWeight(1)
-        .backgroundColor('#F5F5F5')
+        .backgroundColor(Theme.getColor('background_secondary'))
         .scrollBar(BarState.Auto)
         .edgeEffect(EdgeEffect.Spring)
         .listDirection(Axis.Vertical)
@@ -690,6 +691,6 @@ export struct DecibelHistory {
     }
     .width('100%')
     .height('100%')
-    .backgroundColor('#F5F5F5')
+    .backgroundColor(Theme.getColor('background_secondary'))
   }
 }

@@ -1,3 +1,4 @@
+import { Theme } from "../../utils/Theme";
 
 @CustomDialog
 export struct InputDialog {
@@ -23,7 +24,7 @@ export struct InputDialog {
         .enableKeyboardOnFocus(true)
         .enterKeyType(EnterKeyType.Go)
         .fontSize(14)
-        .fontColor('#333333')
+        .fontColor(Theme.getColor('text_primary'))
         .onChange((value: string) => {
           this.comment = value;
           if (value.length > 64) {
@@ -38,7 +39,7 @@ export struct InputDialog {
         }
         .width('40%')
         .height(40)
-        .backgroundColor('#F0F0F0')
+        .backgroundColor(Theme.getColor('button_primary'))
         .onClick(() => {
           this.onClose();
         })
@@ -50,7 +51,7 @@ export struct InputDialog {
         }
         .width('40%')
         .height(40)
-        .backgroundColor('#4A90E2')
+        .backgroundColor(Theme.getColor('button_primary'))
         .margin({ left: 16 })
         .onClick(() => {
           this.onClose();

@@ -1,4 +1,5 @@
 import promptAction from '@ohos.promptAction';
+import { Theme } from '../../utils/Theme';
 
 @ComponentV2
 export struct ResetSaveButton {
@@ -28,10 +29,10 @@ export struct ResetSaveButton {
       .width('25%')
       .height(42)
       .margin({ top: 0, left: 32, right: 16 })
-      .backgroundColor('#4A90E2')
+      .backgroundColor(Theme.getColor('button_primary'))
       .shadow({
         radius: 4,
-        color: '#1A4A90E2',
+        color: Theme.getColor('divider_primary'),
         offsetY: 2
       })
       .onClick(async () => {
@@ -41,11 +42,11 @@ export struct ResetSaveButton {
           buttons: [
             {
               text: '取消',
-              color: '#666666'
+              color: Theme.getColor('text_secondary')
             },
             {
               text: '确认',
-              color: '#FF4444'
+              color: Theme.getColor('button_danger')
             }
           ]
         });
@@ -65,7 +66,7 @@ export struct ResetSaveButton {
       }
       .width(64)
       .height(64)
-      .backgroundColor(this.isUILocked ? '#E0E0E0' : '#F5F5F5')
+      .backgroundColor(this.isUILocked ? Theme.getColor('button_secondary') : Theme.getColor('background_secondary'))
       .onClick(this.lockToggle)
   
       Button({
@@ -87,10 +88,10 @@ export struct ResetSaveButton {
       .width('25%')
       .height(42)
       .margin({ top: 0, left: 16, right: 32 })
-      .backgroundColor('#1A5A9E') // 深蓝色
+      .backgroundColor(Theme.getColor('button_primary'))
       .shadow({
         radius: 4,
-        color: '#1A1A5A9E', // 轻微阴影
+        color: Theme.getColor('divider_primary'),
         offsetY: 2
       })
       .onClick(async () => {
@@ -100,11 +101,11 @@ export struct ResetSaveButton {
           buttons: [
             {
               text: '取消',
-              color: '#666666'
+              color: Theme.getColor('text_secondary')
             },
             {
               text: '确定',
-              color: '#4A90E2'
+              color: Theme.getColor('button_primary')
             }
           ]
         });

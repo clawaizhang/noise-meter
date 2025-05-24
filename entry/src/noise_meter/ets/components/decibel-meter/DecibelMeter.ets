@@ -159,7 +159,7 @@ export struct DecibelMeter {
         Canvas(this.canvasContext)
           .width(this.canvasWidth)
           .height(this.canvasHeight)
-          .backgroundColor('#000000')
+          .backgroundColor($r('app.color.dark_background_primary'))
           .borderRadius(12)
           .onAreaChange((oldArea: Area, newArea: Area) => {
             console.info(`[FREQ_TRACE][Canvas] Canvas区域变化: 旧尺寸=${oldArea.width}x${oldArea.height}, 新尺寸=${newArea.width}x${newArea.height}`);
@@ -185,14 +185,14 @@ export struct DecibelMeter {
             .width(12)
             .height(12)
             .margin({ right: 4 })
-            .fillColor('#EEEEEE') // 浅灰色
+            .fillColor($r('app.color.dark_text_secondary')) // 使用暗黑主题文字颜色
 
 
           Text(DecibelService.getDecibelDescription(this.decibelState.currentDecibel))
             .fontSize(12)
-            .fontColor('#EEEEEE') // 浅灰色
+            .fontColor($r('app.color.dark_text_primary')) // 使用暗黑主题主文字颜色
         }
-        .backgroundColor('#80000000') // 半透明黑色背景
+        .backgroundColor($r('app.color.dark_background_secondary')) // 使用暗黑主题背景色
         .borderRadius(4)
         .position({ x: '10%', y: '2%' })
         .onClick(() => {
@@ -604,7 +604,7 @@ export struct DecibelMeter {
             Column() {
               Text(this.showAvgInsteadOfMin ? '平均' : '最小')
                 .fontSize(12)
-                .fontColor('#999999')
+                .fontColor($r('app.color.dark_text_secondary'))
                 .margin({ bottom: 4 })
               Text(this.showAvgInsteadOfMin ?
                 (this.avgDecibel === 0 ? '-' : this.avgDecibel.toString()) :
@@ -629,10 +629,10 @@ export struct DecibelMeter {
                 if (this.isRecording) {
                   Text(`${secondsToHoursMinutesSecondsWithDecimal(this.MAX_RECORDING_DURATION - this.recordingTime)} 后自动保存`)
                     .fontSize(14)
-                    .fontColor('#666666')
+                    .fontColor($r('app.color.dark_text_secondary'))
                   Text(' | ')
                     .fontSize(14)
-                    .fontColor('#666666')
+                    .fontColor($r('app.color.dark_text_secondary'))
                 }
                 Row() {
                   Image($r('app.media.ic_info'))
@@ -656,7 +656,7 @@ export struct DecibelMeter {
             Column() {
               Text('最大')
                 .fontSize(12)
-                .fontColor('#999999')
+                .fontColor($r('app.color.dark_text_secondary'))
                 .margin({ bottom: 4 })
               Text(this.maxDecibel === 0 ? '-' : this.maxDecibel.toString())
                 .fontSize(32)
@@ -678,7 +678,7 @@ export struct DecibelMeter {
           left: 16,
           right: 16
         })
-        .backgroundColor(Color.White)
+        .backgroundColor($r('app.color.background_secondary'))
         .borderRadius(12)
         .borderWidth(2)
         .borderColor(this.isNoiseAlarm ? DecibelService.getDecibelColor(this.decibelState.currentDecibel) :

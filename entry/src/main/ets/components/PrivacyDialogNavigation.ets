@@ -1,6 +1,7 @@
 import { PreferenceKeyConstants } from '../../../library/ets/constants/PreferenceKeyConstants';
 import { PreferenceService } from '../../../library/ets/services/PreferenceService';
 import { noiseMeterNavStack } from '../../../noise_meter/ets/constant/ProviderConstant';
+import { Theme } from '../../../noise_meter/ets/utils/Theme';
 import { PromptAction } from '@kit.ArkUI';
 import { webview } from '@kit.ArkWeb';
 
@@ -61,7 +62,7 @@ export struct PrivacyDialog {
         Text($r('app.string.privacy_title'))
           .fontSize(20)
           .fontWeight(FontWeight.Bold)
-          .fontColor('#333333')
+          .fontColor(Theme.getColor('text_primary'))
           .margin({ bottom: 16 })
 
         // 内容区域
@@ -82,8 +83,8 @@ export struct PrivacyDialog {
           Button($r('app.string.disagree'), { type: ButtonType.Normal })
             .width('40%')
             .height(40)
-            .backgroundColor('#F5F5F5')
-            .fontColor('#333333')
+            .backgroundColor(Theme.getColor('button_secondary'))
+            .fontColor(Theme.getColor('text_primary'))
             .onClick(() => {
               this.disagreeCallback();
             })
@@ -105,7 +106,7 @@ export struct PrivacyDialog {
       }
       .padding(24)
     }
-    .backgroundColor('rgba(0,0,0,0.5)')
+    .backgroundColor(Theme.getColor('background_secondary'))
     .hideTitleBar(true)
     .mode(NavDestinationMode.DIALOG)
   }

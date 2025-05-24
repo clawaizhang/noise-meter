@@ -1,4 +1,5 @@
 import { DecibelMeter } from '../ets/components/decibel-meter/DecibelMeter';
+import { Theme } from '../ets/utils/Theme';
 import { noiseMeterNavStack } from '../ets/constant/ProviderConstant';
 import { getTitleName } from '../MainPageInfo';
 import { DecibelHistory } from './DecibelHistoryNavigation';
@@ -33,10 +34,10 @@ export struct NoiseMeter {
       Image(icon)
         .width(24)
         .height(24)
-        .fillColor(this.currentIndex === index ? '#2196F3' : '#666666')
+        .fillColor(this.currentIndex === index ? Theme.getColor('icon_active') : Theme.getColor('icon_inactive'))
       Text(title)
         .fontSize(12)
-        .fontColor(this.currentIndex === index ? '#2196F3' : '#666666')
+        .fontColor(this.currentIndex === index ? Theme.getColor('text_primary') : Theme.getColor('text_secondary'))
         .margin({ top: 4 })
     }
     .width('100%')
@@ -63,11 +64,11 @@ export struct NoiseMeter {
                         buttons: [
                           {
                             text: '取消',
-                            color: '#666666'
+                            color: Theme.getColor('text_secondary')
                           },
                           {
                             text: '确认',
-                            color: '#FF0000'
+                            color: Theme.getColor('button_danger')
                           }
                         ]
                       }).then((result) => {
@@ -115,7 +116,7 @@ export struct NoiseMeter {
           .id('decibelMeterRoot')
           .width('100%')
           .height('100%')
-          .backgroundColor('#F5F5F5')
+          .backgroundColor(Theme.getColor('background_secondary'))
           .alignItems(HorizontalAlign.Center)
         }
         .tabBar(this.TabBuilder('检测仪', $r('app.media.ic_meter'), 0))
@@ -146,7 +147,7 @@ export struct NoiseMeter {
       .animationDuration(0)
     }
     .hideTitleBar(true)
-    .backgroundColor('#F5F5F5')
+    .backgroundColor(Theme.getColor('background_secondary'))
     .hideToolBar(true)
     .mode(NavDestinationMode.STANDARD)
   }

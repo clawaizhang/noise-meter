@@ -88,7 +88,7 @@ export struct DetailDialog {
               .width(40)
               .height(4)
               .borderRadius(2)
-              .backgroundColor('#DDDDDD')
+              .backgroundColor($r('app.color.dark_text_secondary'))
           }
           .width('100%')
           .height(20)
@@ -134,7 +134,7 @@ export struct DetailDialog {
         }
         .id("detailDialogRoot")
         .width('100%')
-        .backgroundColor(Color.White)
+        .backgroundColor($r('app.color.dark_background_primary'))
         .borderRadius({ topLeft: 16, topRight: 16 })
         .translate({ y: this.translateY })
         .gesture(
@@ -171,7 +171,7 @@ export struct DetailDialog {
       .height('100%')
       .width('100%')
     }
-    .backgroundColor(`rgba(0,0,0,${this.bgOpacity})`)
+    .backgroundColor($r('app.color.dark_background_primary'))
     .animation({
       duration: 400,
       curve: Curve.EaseOut,

@@ -15,7 +15,7 @@ export struct NoiseStandardCard {
         Text(this.standard.typeName)
           .fontSize(20)
           .fontWeight(FontWeight.Bold)
-          .fontColor('#1A1A1A')
+          .fontColor($r('app.color.dark_text_primary'))
       }
       .width('100%')
 
@@ -27,7 +27,7 @@ export struct NoiseStandardCard {
             Row() {
               Text('白天')
                 .fontSize(14)
-                .fontColor('#666666')
+                .fontColor($r('app.color.dark_text_secondary'))
               Text(`${this.standard.dayLimit} dB`)
                 .fontSize(18)
                 .fontColor(DecibelService.getDecibelColor(this.standard.dayLimit))
@@ -40,7 +40,7 @@ export struct NoiseStandardCard {
             Row() {
               Text('夜间')
                 .fontSize(14)
-                .fontColor('#666666')
+                .fontColor($r('app.color.dark_text_secondary'))
               Text(`${this.standard.nightLimit} dB`)
                 .fontSize(18)
                 .fontColor(DecibelService.getDecibelColor(this.standard.nightLimit))
@@ -54,7 +54,7 @@ export struct NoiseStandardCard {
           Column() {
             Text(this.standard.description)
               .fontSize(14)
-              .fontColor('#333333')
+              .fontColor($r('app.color.dark_text_secondary'))
               .lineHeight(20)
           }
         }
@@ -68,9 +68,9 @@ export struct NoiseStandardCard {
     Column() {
       this.CardContent()
     }
-    .backgroundColor(Color.White)
+    .backgroundColor($r('app.color.dark_background_secondary'))
     .borderRadius(12)
-    .shadow({ radius: 0, color: '#1A000000', offsetY: 2 })
+    .shadow({ radius: 0, color: '#33000000', offsetY: 2 })
   }
 }
 

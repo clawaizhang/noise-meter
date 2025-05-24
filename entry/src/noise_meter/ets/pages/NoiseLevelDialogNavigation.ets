@@ -11,7 +11,7 @@ export struct NoiseLevelDialog {
     Column() {
       Text('噪音等级说明')
         .fontSize(20)
-        .fontColor('#333333')
+        .fontColor($r('app.color.dark_divider'))
         .fontWeight(FontWeight.Bold)
         .margin({ bottom: 16 });
 
@@ -26,27 +26,27 @@ export struct NoiseLevelDialog {
 
             Text(item.level)
               .fontSize(14)
-              .fontColor('#666666')
+              .fontColor($r('app.color.dark_text_secondary'))
               .margin({ right: 8 });
 
             Text(item.description)
               .fontSize(12)
-              .fontColor('#999999')
+              .fontColor($r('app.color.dark_text_secondary'))
               .lineHeight(16)
               .maxLines(1)
               .textOverflow({ overflow: TextOverflow.Ellipsis });
           }
           .width('100%')
           .padding(12)
-          .backgroundColor('#FFFFFF')
+          .backgroundColor($r('app.color.dark_background_secondary'))
           .borderRadius(12)
-          .shadow({ radius: 2, color: '#1A000000', offsetY: 2 })
+          .shadow({ radius: 2, color: '#33000000', offsetY: 2 })
           .margin({ bottom: 8 });
         });
       }
     }
     .padding(16)
-    .backgroundColor('#F5F5F5')
+    .backgroundColor($r('app.color.dark_background_primary'))
   }
 
   build() {
