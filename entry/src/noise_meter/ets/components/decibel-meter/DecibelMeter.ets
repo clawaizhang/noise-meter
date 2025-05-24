@@ -20,7 +20,9 @@ import { FFTAnalyzer } from '../../../../library/ets/utils/FFTAnalyzer'; // 导�
 import { WeightingType } from '../../../../library/ets/constants/WeightingConstants';
 import { taskpool } from '@kit.ArkTS';
 import { concurrentCalculateSpectrum } from '../../concurrent/ConcurrentFftAnalyzer';
-import { formatStartTime, secondsToHoursMinutesSecondsWithDecimal } from '../../util/TimeUtils';
+import { formatStartTime,
+  secondsToHoursMinutesSeconds,
+  secondsToHoursMinutesSecondsWithDecimal } from '../../util/TimeUtils';
 import { ActionPanel } from './ActionPanel';
 import { CalibrationIndicator } from './CalibrationIndicator';
 import { drawSpectrum, getDbSteps, getFrequencySteps } from './DrawSpectrum';
@@ -340,6 +342,9 @@ export struct DecibelMeter {
     }
   }
 
+  // 最大录音时长5分钟(毫秒)
+  private readonly MAX_RECORDING_DURATION: number = 300_000;
+
   private async startRecording() {
     try {
       this.isRecording = true;
@@ -370,6 +375,18 @@ export struct DecibelMeter {
 
       // 开始处理音频数据
       this.audioService.startProcessing((buffer: ArrayBuffer) => {
+        // 检查录音时长是否超过限制
+        const currentDuration = new Date().getTime() - this.startTime;
+        if (currentDuration > this.MAX_RECORDING_DURATION) {
+          console.info('[自动保存] 达到5分钟录音限制，自动保存并开始新录音');
+          this.stopRecording().then(() => {
+            // 延迟100ms确保完全停止后再开始新录音
+            setTimeout(()=> {
+              this.startRecording();
+            }, 100);
+          });
+          return;
+        }
 
         taskpool.execute<[string, ArrayBuffer,
           WeightingType, number], Float32Array>(concurrentCalculateSpectrum, this.currentMode,
@@ -472,10 +489,13 @@ export struct DecibelMeter {
     }
   }
 
-  private async stopRecording() {
+  private async stopRecording(): Promise<void> {
     if (this.isRecording) {
       this.isRecording = false;
       console.info("[FREQ_TRACE][Recording] 停止检测 - 开始");
+      
+      // 如果是自动保存，不显示保存提示
+      const isAutoSave = new Date().getTime() - this.startTime >= this.MAX_RECORDING_DURATION;
 
       try {
         let locationInfo: LocationInfo | null = null;
@@ -498,6 +518,14 @@ export struct DecibelMeter {
 
         // 如果启用了录音功能，获取并保存音频文件
         let currentAudioFilePath: string = '';
+        
+        // 自动保存时不显示提示
+        if (!isAutoSave) {
+          promptAction.showToast({
+            message: '正在保存录音...',
+            duration: 1000
+          });
+        }
         if (this.isRecordEnabled) {
           try {
             currentAudioFilePath = await this.audioService.stopRecordingAndGetWavData(this.fileService);
@@ -523,11 +551,19 @@ export struct DecibelMeter {
           console.info('[FREQ_TRACE][Record] 记录保存成功');
 
           // 显示详情对话框
-          this.navStack.pushDestinationByName('DetailDialog', {
-            selectedRecord: this.currentRecord,
-            context: getContext(this),
-            fileService: this.fileService
-          });
+          if (isAutoSave) {
+            promptAction.showToast({
+              message: '自动保存记录成功',
+              duration: 3000
+            });
+          } else {
+            this.navStack.pushDestinationByName('DetailDialog', {
+              selectedRecord: this.currentRecord,
+              context: getContext(this),
+              fileService: this.fileService
+            });
+          }
+
         }
 
         // 重置状态
@@ -567,6 +603,7 @@ export struct DecibelMeter {
 
       // 分贝显示卡片
       Stack({ alignContent: Alignment.TopEnd }) {
+
         Column() {
           // 分贝值显示
           Row() {
@@ -596,13 +633,7 @@ export struct DecibelMeter {
                 .fontColor(DecibelService.getDecibelColor(this.decibelState.currentDecibel))
               Row() {
                 if (this.isRecording) {
-                  Text(formatStartTime(this.startTime))
-                    .fontSize(14)
-                    .fontColor('#666666')
-                  Text(' | ')
-                    .fontSize(14)
-                    .fontColor('#666666')
-                  Text(secondsToHoursMinutesSecondsWithDecimal(this.recordingTime))
+                  Text(`${secondsToHoursMinutesSecondsWithDecimal(this.MAX_RECORDING_DURATION - this.recordingTime)} 后自动保存`)
                     .fontSize(14)
                     .fontColor('#666666')
                   Text(' | ')
@@ -644,7 +675,7 @@ export struct DecibelMeter {
           .width('100%')
           .justifyContent(FlexAlign.Center)
           .alignItems(VerticalAlign.Center)
-          .margin({ top: 20, bottom: 20 })
+          .margin({ bottom: 20 })
         }
         .width('100%')
         .padding({
@@ -684,6 +715,17 @@ export struct DecibelMeter {
           this.stopRecording();
         },
         lockToggle: () => {
+          if(this.isUILocked) {
+            promptAction.showToast({
+              message: '已解锁',
+              duration: 2000
+            });
+          } else {
+            promptAction.showToast({
+              message: '已锁定,持续检测中...',
+              duration: 2000
+            });
+          }
           this.isUILocked = !this.isUILocked;
         },
         // 修改：将onToggleWeighting的参数类型改为WeightingType

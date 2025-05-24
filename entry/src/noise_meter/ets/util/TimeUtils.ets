@@ -20,7 +20,7 @@ export function secondsToHoursMinutesSecondsWithDecimal(milliseconds: number): s
   const hours: number = Math.floor(totalSeconds / 3600);
   const minutes: number = Math.floor((totalSeconds % 3600) / 60);
   const remainingSeconds: number = totalSeconds % 60;
-  const decimalPart: number = Math.floor((remainingSeconds % 1) * 10);
+  // const decimalPart: number = Math.floor((remainingSeconds % 1) * 10);
 
   // 使用固定宽度格式：HH:MM:SS.s
   const pad = (num: number, size: number) => String(num).padStart(size, '0');
@@ -30,8 +30,8 @@ export function secondsToHoursMinutesSecondsWithDecimal(milliseconds: number): s
     result += `${pad(hours, 2)}:`;
   }
   result += `${pad(minutes, 2)}:`;
-  result += `${pad(Math.floor(remainingSeconds), 2)}.`;
-  result += `${decimalPart}`;
+  result += `${pad(Math.floor(remainingSeconds), 2)}`;
+  // result += `${decimalPart}`;
 
   return result;
 }

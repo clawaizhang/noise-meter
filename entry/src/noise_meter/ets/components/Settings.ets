@@ -494,7 +494,7 @@ export struct Settings {
                 Blank()
 
                 if (this.isAutoCalibrating) {
-                  Text(this.countdown > 0 ? `${this.countdown}秒后开始校准` : `校准中...${10 - this.calibrationProgress}秒`)
+                  Text(this.countdown > 0 ? `${this.countdown}秒后开始校准` : `校准中...${8 - this.calibrationProgress}秒`)
                     .fontSize(14)
                     .fontColor('#666666')
                     .margin({ right: 8 })
@@ -506,7 +506,7 @@ export struct Settings {
                     .backgroundColor('#0091FF')
                     .borderRadius(16)
                     .height(32)
-                    .width(120)
+                    .width(90)
                     .onClick(async () => {
                         const result = await promptAction.showDialog({
                           title: '自动校准提示',
