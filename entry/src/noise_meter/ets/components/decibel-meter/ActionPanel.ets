@@ -104,6 +104,7 @@ export struct ActionPanel {
         .onClick(async () => {
           const dialogController = new CustomDialogController({
             builder: InputDialog({
+              title: '保存记录',
               onConfirm: (comment: string) => {
                 this.onSave(comment);
               },

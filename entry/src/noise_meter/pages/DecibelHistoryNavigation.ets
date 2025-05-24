@@ -6,6 +6,7 @@ import { DecibelRecordService } from '../ets/services/DecibelRecordService';
 import { FileService } from '../../library/ets/services/FileService';
 import { noiseMeterNavStack } from '../ets/constant/ProviderConstant';
 import { CustomTitleBar } from '../../library/ets/components/common/CustomTitleBar';
+import { AudioPlayer } from '../../library/ets/components/business/AudioPlayer';
 
 class DecibelRecordDataSource implements IDataSource {
   private records: DecibelRecord[];
@@ -260,26 +261,40 @@ export struct DecibelHistory {
               Text(record.location || '未获取位置信息')
                 .fontSize(12)
                 .fontColor(record.location ? '#999999' : '#CCCCCC')
-                .maxLines(1)
+                .maxLines(3)
                 .textOverflow({ overflow: TextOverflow.Ellipsis })
                 .width('100%')
             }
-            .height(20) // 减小高度
             .width('100%')
 
-            // 时间信息
-            Text(new Date(record.timestamp).toLocaleString('zh-CN', {
-              year: 'numeric',
-              month: '2-digit',
-              day: '2-digit',
-              hour: '2-digit',
-              minute: '2-digit',
-              second: '2-digit',
-              hour12: false
-            }))
-              .fontSize(14)
-              .fontColor('#666666')
-              .margin({ top: 4 }) // 减小间距
+            Row() {
+              Text(record.comment || '无备注')
+                .fontSize(12)
+                .fontColor('#999999')
+                .maxLines(3)
+                .textOverflow({ overflow: TextOverflow.Ellipsis })
+                .margin({ top: 8})
+            }
+            Row() {
+              // 时间信息
+              Text(new Date(record.timestamp).toLocaleString('zh-CN', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false
+              }))
+                .fontSize(14)
+                .fontColor('#666666')
+                .margin({ top: 8 }) // 减小间距
+              // 检测时长
+              Text(` 共: ${Math.round(record.duration / 1000)}秒`)
+                .fontSize(14)
+                .fontColor('#666666')
+                .margin({ top: 8 })
+            }
+
 
             // 收藏状态
             Row() {
@@ -343,18 +358,21 @@ export struct DecibelHistory {
               }
               .height(40) // 固定高度确保对齐
             }
-
-            // 检测时长
-            Text(`检测时长: ${Math.round(record.duration / 1000)}秒`)
-              .fontSize(12)
-              .fontColor('#999999')
-              .margin({ top: 8 })
+            Row(){
+              if (record!.audioFilePath) {
+                AudioPlayer({
+                  audioFilePath: record!.audioFilePath,
+                })
+              }
+            }.margin({ top: 8 })
           }
           .layoutWeight(1)
+          .justifyContent(FlexAlign.SpaceBetween)
+          .height('80')
           .alignItems(HorizontalAlign.End)
         }
         .width('100%')
-        .padding(16)
+        .padding({  left: 16, right: 16, top: 16})
         .onClick(() => {
           if (this.showingDeleteButtonId === record.id) {
             this.showingDeleteButtonId = '';
@@ -462,6 +480,7 @@ export struct DecibelHistory {
             }
             .width(160)
             .height(96)
+            .borderRadius(16)
             .type(ButtonType.Normal)
             .backgroundColor('#FF3B30')
             .onClick(() => {
@@ -478,6 +497,7 @@ export struct DecibelHistory {
               }
               .width(80)
               .height(96)
+              .borderRadius(16)
               .type(ButtonType.Normal)
               .backgroundColor(record.isFavorite ? '#FFE0EB' : '#FF4081')
               .onClick(async () => {
@@ -501,7 +521,6 @@ export struct DecibelHistory {
                   this.pendingHideButtonId = '';
                 })
               })
-
               // 删除按钮
               Button() {
                 Text('删除')
@@ -513,6 +532,7 @@ export struct DecibelHistory {
               }
               .width(80)
               .height(96)
+              .borderRadius(16)
               .type(ButtonType.Normal)
               .backgroundColor('#666666')
               .onClick(() => {
@@ -526,7 +546,8 @@ export struct DecibelHistory {
         }
         .width(160)
         .height(96)
-        .justifyContent(FlexAlign.End)
+        .justifyContent(FlexAlign.Center)
+        .alignItems(VerticalAlign.Center)
         .position({ x: '100%', y: 0 })
         .translate({
           x: record.id === this.currentSlidingId ?

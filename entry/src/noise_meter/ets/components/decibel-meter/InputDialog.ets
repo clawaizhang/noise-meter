@@ -2,6 +2,7 @@
 @CustomDialog
 export struct InputDialog {
   @State comment: string = '';
+  title:string = '';
   default:string = '';
   controller: CustomDialogController;
   onConfirm?: (comment: string) => void;
@@ -9,7 +10,7 @@ export struct InputDialog {
 
   build() {
     Column() {
-      Text('保存记录')
+      Text(this.title)
         .fontSize(18)
         .fontWeight(FontWeight.Medium)
         .margin({ bottom: 16 })

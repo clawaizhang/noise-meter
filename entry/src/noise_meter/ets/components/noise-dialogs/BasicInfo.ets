@@ -8,7 +8,7 @@ export struct BasicInfo {
   @Local comment:string=''
 
   aboutToAppear(): void {
-    this.comment = this.selectedRecord!.comment ?? ''
+    this.comment = this.selectedRecord!.comment
   }
 
   build() {
@@ -66,7 +66,7 @@ export struct BasicInfo {
           .fontSize(14)
           .fontColor('#666666')
           .width('30%')
-        Text(this.comment ?? '点击添加备注')
+        Text(this.comment === '' ? '点击添加备注' : this.comment)
           .fontSize(14)
           .fontColor('#666666')
           .backgroundColor('#F5F5F5')
@@ -75,6 +75,7 @@ export struct BasicInfo {
           .onClick(() => {
             const dialogController = new CustomDialogController({
               builder: InputDialog({
+                title: '添加备注',
                 default: this.selectedRecord!.comment,
                 onConfirm: (comment: string) => {
                   this.comment = comment;
