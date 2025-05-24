@@ -7,6 +7,7 @@ import { FileService } from '../../library/ets/services/FileService';
 import { noiseMeterNavStack } from '../ets/constant/ProviderConstant';
 import { CustomTitleBar } from '../../library/ets/components/common/CustomTitleBar';
 import { AudioPlayer } from '../../library/ets/components/business/AudioPlayer';
+import { emitter } from '@kit.BasicServicesKit';
 
 class DecibelRecordDataSource implements IDataSource {
   private records: DecibelRecord[];
@@ -378,6 +379,16 @@ export struct DecibelHistory {
           } else {
             this.selectedRecord = record;
             this.showDetailDialog();
+
+            const DETAIL_DIALOG_CLOSED_EVENT = 100101
+            emitter.on({eventId:DETAIL_DIALOG_CLOSED_EVENT}, (data:emitter.EventData) => {
+              let id = data?.data?.id as string;
+              if (id) {
+                this.recordService.getRecordById(id).then((newRecord) => {
+                  record!.comment = newRecord!.comment;
+                });
+              }
+            })
           }
         })
 

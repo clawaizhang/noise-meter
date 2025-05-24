@@ -10,6 +10,9 @@ import { BasicInfo } from "../components/noise-dialogs/BasicInfo"
 import { Statistics } from "../components/noise-dialogs/Statistics"
 import { NoiseChart } from "../components/noise-dialogs/NoiseChart"
 import { DecibelRecordService } from "../services/DecibelRecordService"
+import emitter from '@ohos.events.emitter'
+
+const DETAIL_DIALOG_CLOSED_EVENT = 100101
 
 const TAG = 'DetailDialog';
 const DOMAIN = 0x0000;
@@ -191,6 +194,16 @@ export struct DetailDialog {
   }
 
   private closeDialog() {
+    if (this.selectedRecord) {
+      const eventData: emitter.EventData = {
+        data: {
+          id: this.selectedRecord.id
+        }
+      };
+      emitter.emit({
+        eventId: DETAIL_DIALOG_CLOSED_EVENT
+      }, eventData);
+    }
     this.navStack.pop();
   }
 }

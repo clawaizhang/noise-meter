@@ -42,6 +42,7 @@ export class DecibelRecord {
   @Trace
   isFavorite: boolean;
   weightingTypes: WeightingType[];
+  @Trace
   comment: string; // 备注字段
 
   constructor(
