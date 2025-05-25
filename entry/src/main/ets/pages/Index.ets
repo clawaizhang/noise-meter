@@ -1,16 +1,16 @@
 import hilog from '@ohos.hilog';
 import { MainPage } from 'entry/MainPageInfo';
-import { RelationalStoreService } from '../../../library/ets/services/RelationalStoreService';
-import { DatabaseConstants } from '../../../library/ets/constants/DatabaseConstants';
-import { TableCreateSql } from '../../../library/ets/constants/TableCreateSql';
-import { DatabaseUpgradeConfig } from '../../../library/ets/interfaces/DatabaseInterfaces';
-import { PreferenceService, PreferenceValue } from '../../../library/ets/services/PreferenceService';
-import { PreferenceKeyConstants } from '../../../library/ets/constants/PreferenceKeyConstants';
-import { WeightingType } from '../../../library/ets/constants/WeightingConstants';
-import { noiseMeterNavStack } from '../../../noise_meter/ets/constant/ProviderConstant';
-import { Theme } from '../../../noise_meter/ets/utils/Theme';
 import { commonEventManager } from '@kit.BasicServicesKit';
 import { privacyManager } from '@kit.StoreKit';
+import { DatabaseConstants } from '../constants/DatabaseConstants';
+import { PreferenceKeyConstants } from '../constants/PreferenceKeyConstants';
+import { noiseMeterNavStack } from '../constants/ProviderConstant';
+import { TableCreateSql } from '../constants/TableCreateSql';
+import { WeightingType } from '../constants/WeightingConstants';
+import { DatabaseUpgradeConfig } from '../interfaces/DatabaseInterfaces';
+import { PreferenceService } from '../services/PreferenceService';
+import { RelationalStoreService } from '../services/RelationalStoreService';
+import { Theme } from '../utils/Theme';
 
 const TAG = 'Index';
 const DOMAIN = 0x0000;

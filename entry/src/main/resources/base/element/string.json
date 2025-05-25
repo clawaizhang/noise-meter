@@ -37,28 +37,16 @@
       "value": "需要获取网络状态以确保位置服务正常工作"
     },
     {
-      "name": "privacy_title",
-      "value": "隐私协议与用户协议"
+      "name": "background_running",
+      "value": "后台运行"
     },
     {
-      "name": "privacy_content",
-      "value": "我们非常重视您的隐私和个人信息保护。在使用我们的服务前，请您仔细阅读并同意《隐私政策》和《用户协议》。\n\n1. 我们将按照相关法律法规要求，采取安全保护措施保护您的个人信息安全。\n2. 我们会收集必要的设备信息和服务日志信息，以提供更好的服务体验。\n3. 您可以在设置中管理您的隐私偏好。\n4. 如不同意本协议，将无法使用本应用。"
+      "name": "background_running_desc_on",
+      "value": "允许应用在后台持续运行并监测噪音"
     },
     {
-      "name": "agree",
-      "value": "同意并继续"
-    },
-    {
-      "name": "disagree",
-      "value": "不同意"
-    },
-    {
-      "name": "privacy_disagree_message",
-      "value": "您需要同意隐私协议才能使用本应用"
-    },
-    {
-      "name": "background_toast_message",
-      "value": "应用已转入后台运行"
+      "name": "background_running_desc_off",
+      "value": "应用不会在后台运行"
     }
   ]
 }

@@ -5,10 +5,10 @@ import hilog from '@ohos.hilog';
 import backgroundTaskManager from '@ohos.resourceschedule.backgroundTaskManager';
 import wantAgent from '@ohos.app.ability.wantAgent';
 import { WindowManager } from '../utils/WindowManager';
-import { PreferenceService, PreferenceValue } from '../../../library/ets/services/PreferenceService';
-import { PreferenceKeyConstants } from '../../../library/ets/constants/PreferenceKeyConstants';
 import { DisplayManager } from '../utils/DisplayManager';
 import { NotificationHelper } from '../utils/NotificationHelper';
+import { PreferenceService, PreferenceValue } from '../services/PreferenceService';
+import { PreferenceKeyConstants } from '../constants/PreferenceKeyConstants';
 
 const TAG = 'EntryAbility';
 const DOMAIN = 0x0000;

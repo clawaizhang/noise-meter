@@ -9,7 +9,7 @@
       "value": "#121212"
     },
     {
-      "name": "dark_background_secondary", 
+      "name": "dark_background_secondary",
       "value": "#1E1E1E"
     },
     {
@@ -23,6 +23,34 @@
     {
       "name": "dark_primary",
       "value": "#BB86FC"
+    },
+    {
+      "name": "dark_secondary",
+      "value": "#03DAC6"
+    },
+    {
+      "name": "dark_error",
+      "value": "#CF6679"
+    },
+    {
+      "name": "dark_button_background",
+      "value": "#2D2D2D"
+    },
+    {
+      "name": "dark_button_red",
+      "value": "#CF6679"
+    },
+    {
+      "name": "dark_accent_red",
+      "value": "#FF4444"
+    },
+    {
+      "name": "dark_divider",
+      "value": "#333333"
+    },
+    {
+      "name": "background_secondary",
+      "value": "#1A1A1A"
     }
   ]
 }

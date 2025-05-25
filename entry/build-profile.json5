@@ -29,30 +29,11 @@
           "pages/Index",
         ],
         "sourceRoots": [
-          "./src/noise_meter"
+          "./src/main"
         ]
       },
       "resource": {
         "directories": [
-          "./src/noise_meter/resources",
-          "./src/main/resources"
-        ]
-      }
-    },
-    {
-      "name": "file_vault",
-      "runtimeOS": "HarmonyOS",
-      "source": {
-        "pages": [
-          "pages/Index"
-        ],
-        "sourceRoots": [
-          "./src/file_vault"
-        ]
-      },
-      "resource": {
-        "directories": [
-          "./src/file_vault/resources",
           "./src/main/resources"
         ]
       }
