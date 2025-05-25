@@ -144,6 +144,10 @@ export struct DecibelHistory {
   }
 
   aboutToAppear() {
+    emitter.on({ eventId: 101 }, () => {
+      this.emptyAll()
+    })
+
     this.loadRecords();
   }
 
@@ -620,15 +624,6 @@ export struct DecibelHistory {
 
   build() {
     Column() {
-      // 使用自定义标题栏
-      CustomTitleBar({
-        title: '检测记录',
-        buttons: [{
-          text: '清空',
-          onClick: this.emptyAll
-        }]
-      })
-
       // 内容区域
       if (this.records.length === 0) {
         Column() {
