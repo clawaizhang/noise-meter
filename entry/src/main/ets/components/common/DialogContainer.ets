@@ -1,6 +1,5 @@
 import hilog from '@ohos.hilog'
 import { noiseMeterNavStack } from '../../constants/ProviderConstant';
-import { Theme } from '../../utils/Theme';
 
 const TAG = 'DialogContainer';
 const DOMAIN = 0x0000;
@@ -53,7 +52,7 @@ export struct DialogContainer {
               .width(40)
               .height(4)
               .borderRadius(2)
-              .backgroundColor(Theme.getColor('background_secondary'))
+              .backgroundColor($r('app.color.background_secondary'))
           }
           .width('100%')
           .height(20)
@@ -67,7 +66,7 @@ export struct DialogContainer {
         }
         .id("dialogRoot")
         .width('100%')
-        .backgroundColor(Theme.getColor('background_primary'))
+        .backgroundColor($r('app.color.background_primary'))
         .borderRadius({ topLeft: 16, topRight: 16 })
         .translate({ y: this.translateY })
         .onClick(() => {
@@ -107,7 +106,7 @@ export struct DialogContainer {
       .height('100%')
       .width('100%')
     }
-    .backgroundColor(Theme.getColor('background_tertiary'))
+    .backgroundColor($r('app.color.background_tertiary'))
     .animation({
       duration: 400,
       curve: Curve.EaseOut,

@@ -1,5 +1,4 @@
 import promptAction from '@ohos.promptAction';
-import { Theme } from '../../utils/Theme';
 
 @ComponentV2
 export struct ResetSaveButton {

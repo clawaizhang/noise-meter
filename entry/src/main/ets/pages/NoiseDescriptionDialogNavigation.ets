@@ -17,7 +17,7 @@ export struct NoiseDescriptionDialog {
       Text('噪音场景参考')
         .fontSize(20)
         .fontWeight(FontWeight.Bold)
-        .fontColor($r('app.color.dark_divider'))
+        .fontColor($r('app.color.divider'))
         .margin({ bottom: 16 })
 
       // 噪音等级列表
@@ -32,7 +32,7 @@ export struct NoiseDescriptionDialog {
 
             Text(DecibelService.getDecibelDescription(db - 1))
               .fontSize(14)
-              .fontColor($r('app.color.dark_text_secondary'))
+              .fontColor($r('app.color.text_secondary'))
               .width('75%')
           }
           .justifyContent(FlexAlign.SpaceBetween)
@@ -42,7 +42,7 @@ export struct NoiseDescriptionDialog {
             left: 12,
             right: 12
           })
-          .backgroundColor($r('app.color.dark_background_secondary'))
+          .backgroundColor($r('app.color.background_secondary'))
           .margin({ bottom: 2 })
         })
       }

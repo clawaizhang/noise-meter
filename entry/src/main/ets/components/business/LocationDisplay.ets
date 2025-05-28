@@ -2,7 +2,6 @@ import promptAction from '@ohos.promptAction';
 import { LocationService, LocationInfo } from '../../services/LocationService';
 import { PreferenceService, PreferenceChangeListener, PreferenceValue } from '../../services/PreferenceService';
 import { PreferenceKeyConstants } from '../../constants/PreferenceKeyConstants';
-import { Theme } from '../../utils/Theme';
 
 @ComponentV2
 export struct LocationDisplay {
@@ -53,11 +52,11 @@ export struct LocationDisplay {
       buttons: [
         {
           text: '取消',
-          color: Theme.getColor('text_secondary')
+          color: $r('app.color.text_secondary')
         },
         {
           text: '去开启',
-          color: Theme.getColor('button_primary')
+          color: $r('app.color.button_primary')
         }
       ]
     });
@@ -122,7 +121,7 @@ export struct LocationDisplay {
             Image($r('app.media.ic_refresh'))
               .width(16)
               .height(16)
-              .fillColor(Theme.getColor('text_secondary'))
+              .fillColor($r('app.color.text_secondary'))
               .rotate({
                 angle: this.isRefreshing ? 360 : 0,
                 centerX: '50%',
@@ -137,7 +136,7 @@ export struct LocationDisplay {
         }
         .width(20)
         .height(20)
-        .backgroundColor(Theme.getColor('button_secondary'))
+        .backgroundColor($r('app.color.button_secondary'))
         .enabled(!this.isRefreshing)
         .onClick(() => {
           this.startSingleLocation();
@@ -147,7 +146,7 @@ export struct LocationDisplay {
 
       Text(this.isEnabled ? (this.address || '点击刷新按钮获取位置') : '开启位置服务可记录噪音检测位置')
         .fontSize(14)
-        .fontColor(Theme.getColor('text_secondary'))
+        .fontColor($r('app.color.text_secondary'))
         .textAlign(TextAlign.Center)
         .layoutWeight(1)
     }

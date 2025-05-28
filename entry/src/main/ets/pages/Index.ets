@@ -10,7 +10,6 @@ import { WeightingType } from '../constants/WeightingConstants';
 import { DatabaseUpgradeConfig } from '../interfaces/DatabaseInterfaces';
 import { PreferenceService } from '../services/PreferenceService';
 import { RelationalStoreService } from '../services/RelationalStoreService';
-import { Theme } from '../utils/Theme';
 
 const TAG = 'Index';
 const DOMAIN = 0x0000;
@@ -160,11 +159,11 @@ struct Index {
         .hideTitleBar(true)
         .titleMode(NavigationTitleMode.Mini)
         .mode(NavigationMode.Stack)
-        .backgroundColor(Theme.getColor('background_primary'))
+        .backgroundColor($r('app.color.background_primary'))
       }
     }
     .width('100%')
     .height('100%')
-    .backgroundColor(Theme.getColor('background_primary'))
+    .backgroundColor($r('app.color.background_primary'))
   }
 }

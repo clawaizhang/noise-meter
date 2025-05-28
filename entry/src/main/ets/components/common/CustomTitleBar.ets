@@ -1,4 +1,3 @@
-import { Theme } from "../../utils/Theme";
 
 interface TitleButton {
   text?: string;
@@ -37,13 +36,13 @@ export struct CustomTitleBar {
               else if (button.text) {
                 Text(button.text)
                   .fontSize(14)
-                  .fontColor(Theme.getColor('text_secondary'))
+                  .fontColor($r('app.color.text_secondary'))
                   .textAlign(TextAlign.Center)
               }
             }
             .height(32)
             .width(56)
-            .backgroundColor(Theme.getColor('button_secondary'))
+            .backgroundColor($r('app.color.button_secondary'))
             .padding({ left: 12, right: 12 })
             .borderRadius(16)
             .onClick(button.onClick)
@@ -57,6 +56,6 @@ export struct CustomTitleBar {
     }
     .width('100%')
     .height(56)
-    .backgroundColor(Theme.getColor('background_secondary'))
+    .backgroundColor($r('app.color.background_secondary'))
   }
 }

@@ -1,5 +1,4 @@
 import { DecibelMeter } from '../ets/components/decibel-meter/DecibelMeter';
-import { Theme } from '../ets/utils/Theme';
 import { noiseMeterNavStack } from '../ets/constants/ProviderConstant';
 import { DecibelHistory } from './DecibelHistoryNavigation';
 import { Settings } from '../ets/components/Settings';
@@ -54,10 +53,10 @@ export struct NoiseMeter {
       Image(icon)
         .width(24)
         .height(24)
-        .fillColor(this.currentIndex === index ? Theme.getColor('icon_active') : Theme.getColor('icon_inactive'))
+        .fillColor(this.currentIndex === index ? $r('app.color.icon_active') : $r('app.color.icon_inactive'))
       Text(title)
         .fontSize(12)
-        .fontColor(this.currentIndex === index ? Theme.getColor('text_primary') : Theme.getColor('text_secondary'))
+        .fontColor(this.currentIndex === index ? $r('app.color.text_primary') : $r('app.color.text_secondary'))
         .margin({ top: 4 })
     }
     .width('100%')
@@ -77,11 +76,11 @@ export struct NoiseMeter {
             buttons: [
               {
                 text: '取消',
-                color: Theme.getColor('text_secondary')
+                color: $r('app.color.text_secondary')
               },
               {
                 text: '确认',
-                color: Theme.getColor('button_danger')
+                color: $r('app.color.button_danger')
               }
             ]
           }).then((result) => {
@@ -144,7 +143,7 @@ export struct NoiseMeter {
           .id('decibelMeterRoot')
           .width('100%')
           .height('100%')
-          .backgroundColor(Theme.getColor('background_secondary'))
+          .backgroundColor($r('app.color.background_secondary'))
           .alignItems(HorizontalAlign.Center)
         }
         .tabBar(this.TabBuilder('检测仪', $r('app.media.ic_meter'), 0))
@@ -176,7 +175,7 @@ export struct NoiseMeter {
     }
     .title(this.title, { mainTitleModifier: new MyTextModifier() })
     .menus(this.menuItems)
-    .backgroundColor(Theme.getColor('background_secondary'))
+    .backgroundColor($r('app.color.background_secondary'))
     .hideToolBar(true)
     .mode(NavDestinationMode.STANDARD)
   }
@@ -184,6 +183,6 @@ export struct NoiseMeter {
 
 class MyTextModifier implements AttributeModifier<TextAttribute> {
   applyNormalAttribute(instance: TextAttribute): void {
-    instance.fontColor($r('app.color.dark_text_primary'));
+    instance.fontColor($r('app.color.text_primary'));
   }
 }

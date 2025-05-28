@@ -87,7 +87,7 @@ struct HeaderSummary {
         .margin({ left: 16 })
     }
     .padding(16)
-    .backgroundColor($r('app.color.dark_background_primary'))
+    .backgroundColor($r('app.color.background_primary'))
   }
 }
 

@@ -1,5 +1,4 @@
 import { AppStorageV2, promptAction } from '@kit.ArkUI';
-import { Theme } from '../utils/Theme';
 import { DecibelState } from '../types/DecibelState';
 import { privacyManager } from '@kit.StoreKit';
 import { common, Want } from '@kit.AbilityKit';
@@ -20,13 +19,13 @@ function itemIcon() {
 @Extend(Text)
 function itemTitle() {
   .fontWeight(FontWeight.Medium)
-  .fontColor(Theme.getColor('text_primary'))
+  .fontColor($r('app.color.text_primary'))
   .fontSize(16)
 }
 
 @Extend(Text)
 function itemDescription() {
-  .fontColor(Theme.getColor('text_secondary'))
+  .fontColor($r('app.color.text_secondary'))
   .fontSize(14)
   .textAlign(TextAlign.Start)
   .margin({ left: 48 })
@@ -34,7 +33,7 @@ function itemDescription() {
 
 @Extend(Select)
 function selectStyle() {
-  .backgroundColor(Theme.getColor('background_secondary'))
+  .backgroundColor($r('app.color.background_secondary'))
   .borderRadius(16)
   .padding({ left: 12, right: 12 })
   .font({ size: 16, weight: FontWeight.Normal, family: 'HarmonyHeiTi' })
@@ -46,7 +45,7 @@ function selectStyle() {
 function listItemStyle() {
   .width('100%')
   .padding({ left: 16, right: 16 })
-  .backgroundColor(Theme.getColor('background_secondary'))
+  .backgroundColor($r('app.color.background_secondary'))
 }
 
 @Extend(Row)
@@ -58,7 +57,7 @@ function listItemRow() {
 
 @Extend(Text)
 function detailText() {
-  .fontColor(Theme.getColor('text_secondary'))
+  .fontColor($r('app.color.text_secondary'))
   .fontSize(14)
   .margin({ top: 4, left: 48 })
 }
@@ -67,25 +66,25 @@ function detailText() {
 function dividerStyle() {
   .width('100%')
   .height(1)
-  .backgroundColor(Theme.getColor('background_secondary'))
+  .backgroundColor($r('app.color.background_secondary'))
 }
 
 @Extend(ListItem)
 function descriptionContainer() {
-  .backgroundColor(Theme.getColor('background_secondary'))
+  .backgroundColor($r('app.color.background_secondary'))
   .padding({ top: 8, bottom: 12 })
 }
 
 @Extend(Text)
 function analysisDescription() {
-  .fontColor(Theme.getColor('text_secondary'))
+  .fontColor($r('app.color.text_secondary'))
   .fontSize(14)
   .textAlign(TextAlign.Start)
 }
 
 @Extend(Text)
 function analysisDetail() {
-  .fontColor(Theme.getColor('text_secondary'))
+  .fontColor($r('app.color.text_secondary'))
   .fontSize(14)
   .textAlign(TextAlign.Start)
   .margin({ top: 8 })
@@ -333,7 +332,7 @@ export struct Settings {
                 Row() {
                   Text(this.remainingTime > 0 ? `${(this.remainingTime / 1000).toFixed(1)}秒` : '')
                     .fontSize(14)
-                    .fontColor(Theme.getColor('text_secondary'))
+                    .fontColor($r('app.color.text_secondary'))
                     .margin({ right: -2 })
 
                   Select([
@@ -447,7 +446,7 @@ export struct Settings {
 
                 Text(`${this.calibrationValue}dB`)
                   .fontSize(14)
-                  .fontColor(Theme.getColor('text_secondary'))
+                  .fontColor($r('app.color.text_secondary'))
                   .margin({ right: 8 })
               }
               .listItemRow()
@@ -458,9 +457,9 @@ export struct Settings {
                 max: 30,
                 style: SliderStyle.InSet
               })
-                .blockColor(Theme.getColor('primary'))
-                .trackColor(Theme.getColor('background_secondary'))
-                .selectedColor(Theme.getColor('primary'))
+                .blockColor($r('app.color.primary'))
+                .trackColor($r('app.color.background_secondary'))
+                .selectedColor($r('app.color.primary'))
                 .showTips(true, `${this.decibelState.currentDecibel}dB`)
                 .onChange((value: number) => {
                   this.calibrationValue = value;
@@ -497,14 +496,14 @@ export struct Settings {
                 if (this.isAutoCalibrating) {
                   Text(this.countdown > 0 ? `${this.countdown}秒后开始校准` : `校准中...${8 - this.calibrationProgress}秒`)
                     .fontSize(14)
-                    .fontColor(Theme.getColor('text_secondary'))
+                    .fontColor($r('app.color.text_secondary'))
                     .margin({ right: 8 })
                 } else {
                   Button('开始校准')
                     .type(ButtonType.Normal)
                     .fontSize(14)
-                    .fontColor($r('app.color.dark_text_primary'))
-                    .backgroundColor($r('app.color.dark_primary'))
+                    .fontColor($r('app.color.text_primary'))
+                    .backgroundColor($r('app.color.primary'))
                     .borderRadius(16)
                     .height(32)
                     .width(90)
@@ -515,11 +514,11 @@ export struct Settings {
                           buttons: [
                             {
                               text: '取消',
-                              color: Theme.getColor('text_disabled')
+                              color: $r('app.color.text_disabled')
                             },
                             {
                               text: '确认',
-                              color: $r('app.color.dark_primary')
+                              color: $r('app.color.primary')
                             }
                           ]
                         });
@@ -588,8 +587,8 @@ export struct Settings {
                 Blank()
 
                 Toggle({ type: ToggleType.Switch, isOn: this.isNoiseAlarmEnabled })
-                  .selectedColor($r('app.color.dark_primary'))
-                  .switchPointColor(Theme.getColor('background_primary'))
+                  .selectedColor($r('app.color.primary'))
+                  .switchPointColor($r('app.color.background_primary'))
                   .onChange((isOn: boolean) => {
                     void this.preferenceService.setBoolean(PreferenceKeyConstants.NOISE_ALARM_ENABLED, isOn);
                     this.isNoiseAlarmEnabled = isOn;
@@ -623,7 +622,7 @@ export struct Settings {
 
                 Text(`${this.noiseThreshold}dB`)
                   .fontSize(14)
-                  .fontColor($r('app.color.dark_text_secondary'))
+                  .fontColor($r('app.color.text_secondary'))
                   .margin({ right: 8 })
               }
               .listItemRow()
@@ -634,9 +633,9 @@ export struct Settings {
                 max: 120,
                 style: SliderStyle.InSet
               })
-                .blockColor($r('app.color.dark_primary'))
-                .trackColor($r('app.color.dark_background_secondary'))
-                .selectedColor($r('app.color.dark_primary'))
+                .blockColor($r('app.color.primary'))
+                .trackColor($r('app.color.background_secondary'))
+                .selectedColor($r('app.color.primary'))
                 .onChange((value: number) => {
                   this.noiseThreshold = value;
                   void this.preferenceService.setNumber(PreferenceKeyConstants.NOISE_THRESHOLD, value);
@@ -701,8 +700,8 @@ export struct Settings {
                 Blank()
 
                 Toggle({ type: ToggleType.Switch, isOn: this.isLocationEnabled })
-                  .selectedColor(Theme.getColor('toggle_active'))
-                  .switchPointColor(Theme.getColor('background_primary'))
+                  .selectedColor($r('app.color.toggle_active'))
+                  .switchPointColor($r('app.color.background_primary'))
                   .onChange((isOn: boolean) => {
                     void this.preferenceService.setBoolean(PreferenceKeyConstants.LOCATION, isOn);
                     this.isLocationEnabled = isOn;
@@ -734,8 +733,8 @@ export struct Settings {
                 Blank()
 
                 Toggle({ type: ToggleType.Switch, isOn: this.isRecordEnabled })
-                  .selectedColor(Theme.getColor('toggle_active'))
-                  .switchPointColor(Theme.getColor('background_primary'))
+                  .selectedColor($r('app.color.toggle_active'))
+                  .switchPointColor($r('app.color.background_primary'))
                   .onChange((isOn: boolean) => {
                     void this.preferenceService.setBoolean(PreferenceKeyConstants.RECORD, isOn);
                     this.isRecordEnabled = isOn;
@@ -795,8 +794,8 @@ export struct Settings {
                 Blank()
 
                 Toggle({ type: ToggleType.Switch, isOn: this.isBackgroundRunning })
-                  .selectedColor(Theme.getColor('toggle_active'))
-                  .switchPointColor(Theme.getColor('background_primary'))
+                  .selectedColor($r('app.color.toggle_active'))
+                  .switchPointColor($r('app.color.background_primary'))
                   .onChange((isOn: boolean) => {
                     void this.preferenceService.setBoolean(PreferenceKeyConstants.BACKGROUND_RUNNING, isOn);
                     this.isBackgroundRunning = isOn;
@@ -828,8 +827,8 @@ export struct Settings {
                 Blank()
 
                 Toggle({ type: ToggleType.Switch, isOn: this.isKeepScreenOn })
-                  .selectedColor(Theme.getColor('toggle_active'))
-                  .switchPointColor(Theme.getColor('background_primary'))
+                  .selectedColor($r('app.color.toggle_active'))
+                  .switchPointColor($r('app.color.background_primary'))
                   .onChange((isOn: boolean) => {
                     void this.preferenceService.setBoolean(PreferenceKeyConstants.KEEP_SCREEN_ON, isOn);
                     this.isKeepScreenOn = isOn;
@@ -909,7 +908,7 @@ export struct Settings {
       }
       .width('100%')
       .layoutWeight(1)
-      .backgroundColor(Theme.getColor('background_tertiary'))
+      .backgroundColor($r('app.color.background_tertiary'))
       .margin({ top: 12 })
 
       // 给作者留言按钮
@@ -917,8 +916,8 @@ export struct Settings {
         .width('90%')
         .height(40)
         .margin({ bottom: 30, top: 12 })
-        .backgroundColor(Theme.getColor('toggle_active'))
-        .fontColor(Theme.getColor('text_primary'))
+        .backgroundColor($r('app.color.toggle_active'))
+        .fontColor($r('app.color.text_primary'))
         .onClick(() => {
           const context = getContext(this) as common.UIAbilityContext;
           const want: Want = {
@@ -934,6 +933,6 @@ export struct Settings {
     }
     .width('100%')
     .height('100%')
-    .backgroundColor(Theme.getColor('background_tertiary'))
+    .backgroundColor($r('app.color.background_tertiary'))
   }
 }

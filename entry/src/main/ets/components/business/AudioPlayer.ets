@@ -2,7 +2,6 @@ import { PlayerState } from "../../services/AudioPlayerService"
 import { AudioPlayerService } from "../../services/AudioPlayerService"
 import hilog from '@ohos.hilog'
 import { FileService } from "../../services/FileService";
-import { Theme } from "../../utils/Theme";
 
 const TAG = 'AudioPlayer';
 const DOMAIN = 0x0000;
@@ -22,7 +21,7 @@ export struct AudioPlayer {
           Image($r('app.media.ic_stop'))
             .width(20)
             .height(20)
-            .fillColor(Theme.getColor('icon_inactive'))
+            .fillColor($r('app.color.icon_inactive'))
         }
         .type(ButtonType.Normal)
         .backgroundColor(Color.Transparent)
@@ -43,18 +42,18 @@ export struct AudioPlayer {
           $r('app.media.ic_play'))
             .width(20)
             .height(20)
-            .fillColor(Theme.getColor('icon_inactive'))
+            .fillColor($r('app.color.icon_inactive'))
             .margin({ right: 8 })
           Text(this.playerState === PlayerState.STATE_PLAYING ? '暂停播放' :
             this.playerState === PlayerState.STATE_PAUSED ? '继续播放' : '播放录音')
             .fontSize(14)
-            .fontColor(Theme.getColor('text_secondary'))
+            .fontColor($r('app.color.text_secondary'))
         }
         .alignItems(VerticalAlign.Center)
         .justifyContent(FlexAlign.Center)
       }
       .type(ButtonType.Capsule)
-      .backgroundColor(Theme.getColor('background_secondary'))
+      .backgroundColor($r('app.color.background_secondary'))
       .height(36)
       .padding({ left: 16, right: 16 })
       .onClick(async () => {
