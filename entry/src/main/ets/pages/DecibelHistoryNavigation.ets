@@ -1,13 +1,12 @@
-import { DetailDialogParams } from '../ets/pages/DetailDialogNavigation';
+import { DetailDialogParams } from './DetailDialogNavigation';
 import { PromptAction } from '@ohos.arkui.UIContext';
-import { DecibelService } from '../ets/services/DecibelService';
-import { DecibelRecordService } from '../ets/services/DecibelRecordService';
-import { noiseMeterNavStack } from '../ets/constants/ProviderConstant';
+import { DecibelService } from '../services/DecibelService';
+import { DecibelRecordService } from '../services/DecibelRecordService';
+import { noiseMeterNavStack } from '../constants/ProviderConstant';
 import { emitter } from '@kit.BasicServicesKit';
-import { AudioPlayer } from '../ets/components/business/AudioPlayer';
-import { CustomTitleBar } from '../ets/components/common/CustomTitleBar';
-import { DecibelRecord } from '../ets/models/DecibelRecord';
-import { FileService } from '../ets/services/FileService';
+import { AudioPlayer } from '../components/business/AudioPlayer';
+import { DecibelRecord } from '../models/DecibelRecord';
+import { FileService } from '../services/FileService';
 
 class DecibelRecordDataSource implements IDataSource {
   private records: DecibelRecord[];

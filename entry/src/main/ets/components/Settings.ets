@@ -7,7 +7,6 @@ import { PreferenceService, PreferenceValue } from '../services/PreferenceServic
 import { getWeightingDescription, WeightingType } from '../constants/WeightingConstants';
 import { AudioAnalysisMode, AudioPresets } from '../common/AudioConfig';
 import { PreferenceKeyConstants } from '../constants/PreferenceKeyConstants';
-import { CustomTitleBar } from './common/CustomTitleBar';
 
 @Extend(Image)
 function itemIcon() {
@@ -282,7 +281,6 @@ export struct Settings {
 
   build() {
     Column() {
-      CustomTitleBar({ title: '设置' })
 
       List() {
         // 音频分析设置

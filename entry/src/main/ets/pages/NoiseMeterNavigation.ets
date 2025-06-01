@@ -1,12 +1,12 @@
-import { DecibelMeter } from '../ets/components/decibel-meter/DecibelMeter';
-import { noiseMeterNavStack } from '../ets/constants/ProviderConstant';
+import { DecibelMeter } from '../components/decibel-meter/DecibelMeter';
+import { noiseMeterNavStack } from '../constants/ProviderConstant';
 import { DecibelHistory } from './DecibelHistoryNavigation';
-import { Settings } from '../ets/components/Settings';
+import { Settings } from '../components/Settings';
 import { common } from '@kit.AbilityKit';
 import promptAction from '@ohos.promptAction';
-import { PreferenceKeyConstants } from '../ets/constants/PreferenceKeyConstants';
-import { PreferenceService } from '../ets/services/PreferenceService';
-import { ScreenshotUtils } from '../ets/utils/ScreenshotUtils';
+import { PreferenceKeyConstants } from '../constants/PreferenceKeyConstants';
+import { PreferenceService } from '../services/PreferenceService';
+import { ScreenshotUtils } from '../utils/ScreenshotUtils';
 import { emitter } from '@kit.BasicServicesKit';
 
 @Builder

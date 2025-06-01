@@ -2,11 +2,11 @@
   "routerMap": [
     {
       "name": "NoiseMeter",
-      "pageSourceFile": "src/main/pages/NoiseMeterNavigation.ets",
+      "pageSourceFile": "src/main/ets/pages/NoiseMeterNavigation.ets",
       "buildFunction": "NoiseMeterBuilder"
     },{
       "name": "DecibelHistory",
-      "pageSourceFile": "src/main/pages/DecibelHistoryNavigation.ets",
+      "pageSourceFile": "src/main/ets/pages/DecibelHistoryNavigation.ets",
       "buildFunction": "DecibelHistoryBuilder"
     },
     {
