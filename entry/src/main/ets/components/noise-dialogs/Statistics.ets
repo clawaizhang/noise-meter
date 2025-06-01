@@ -276,7 +276,7 @@ export struct Statistics {
         Divider()
           .width(1)
           .height(60)
-          .backgroundColor('#E0E0E0')
+          .backgroundColor($r('app.color.text_primary'))
           .margin({ left: 12, right: 12 })
 
         Column() {

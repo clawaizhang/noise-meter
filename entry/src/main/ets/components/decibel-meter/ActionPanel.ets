@@ -47,11 +47,11 @@ export struct ActionPanel {
             buttons: [
               {
                 text: '取消',
-                color: '#666666'
+                color: $r('app.color.button_cancel')
               },
               {
                 text: '确认',
-                color: '#FF4444'
+                color: $r('app.color.button_warning')
               }
             ]
           });

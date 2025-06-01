@@ -683,7 +683,7 @@ export struct DecibelMeter {
       }
       .width('100%')
       .margin({ left: 16, right: 16, top: 16 })
-      .backgroundColor(Color.White)
+      .backgroundColor($r('app.color.white'))
       .borderRadius(12)
       .shadow({ radius: 2, color: '#1A000000', offsetY: 2 })
 

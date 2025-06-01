@@ -18,20 +18,20 @@ export struct ResetSaveButton {
             .width(14)
             .height(14)
             .margin({ right: 4 })
-            .fillColor(Color.White)
+            .fillColor($r('app.color.white'))
           Text('重置')
             .fontSize(12)
             .fontWeight(FontWeight.Medium)
-            .fontColor(Color.White)
+            .fontColor($r('app.color.white'))
         }
       }
       .width('25%')
       .height(42)
       .margin({ top: 0, left: 32, right: 16 })
-      .backgroundColor(Theme.getColor('button_primary'))
+      .backgroundColor($r('app.color.button_primary'))
       .shadow({
         radius: 4,
-        color: Theme.getColor('divider_primary'),
+        color: $r( 'app.color.divider_primary'),
         offsetY: 2
       })
       .onClick(async () => {
@@ -41,11 +41,11 @@ export struct ResetSaveButton {
           buttons: [
             {
               text: '取消',
-              color: Theme.getColor('text_secondary')
+              color: $r( 'app.color.text_secondary')
             },
             {
               text: '确认',
-              color: Theme.getColor('button_danger')
+              color: $r( 'app.color.button_danger')
             }
           ]
         });
@@ -65,7 +65,7 @@ export struct ResetSaveButton {
       }
       .width(64)
       .height(64)
-      .backgroundColor(this.isUILocked ? Theme.getColor('button_secondary') : Theme.getColor('background_secondary'))
+      .backgroundColor(this.isUILocked ? $r( 'app.color.background_tertiary') : $r( 'app.color.background_secondary'))
       .onClick(this.lockToggle)
   
       Button({
@@ -77,20 +77,20 @@ export struct ResetSaveButton {
             .width(14)
             .height(14)
             .margin({ right: 4 })
-            .fillColor(Color.White)
+            .fillColor($r('app.color.white'))
           Text('保存')
             .fontSize(12)
             .fontWeight(FontWeight.Medium)
-            .fontColor(Color.White)
+            .fontColor($r('app.color.white'))
         }
       }
       .width('25%')
       .height(42)
       .margin({ top: 0, left: 16, right: 32 })
-      .backgroundColor(Theme.getColor('button_primary'))
+      .backgroundColor($r( 'app.color.button_primary'))
       .shadow({
         radius: 4,
-        color: Theme.getColor('divider_primary'),
+        color: $r( 'app.color.divider_primary'),
         offsetY: 2
       })
       .onClick(async () => {
@@ -100,11 +100,11 @@ export struct ResetSaveButton {
           buttons: [
             {
               text: '取消',
-              color: Theme.getColor('text_secondary')
+              color: $r( 'app.color.text_secondary')
             },
             {
               text: '确定',
-              color: Theme.getColor('button_primary')
+              color: $r( 'app.color.button_primary')
             }
           ]
         });

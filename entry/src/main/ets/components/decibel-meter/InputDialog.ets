@@ -46,7 +46,7 @@ export struct InputDialog {
         Button() {
           Text('保存')
             .fontSize(16)
-            .fontColor(Color.White)
+            .fontColor($r('app.color.white'))
         }
         .width('40%')
         .height(40)

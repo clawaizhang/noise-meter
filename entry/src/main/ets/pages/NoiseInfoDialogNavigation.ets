@@ -274,7 +274,7 @@ export struct NoiseInfoDialog {
             .width('100%')
             .height(40)
             .backgroundColor($r('app.color.primary'))
-            .fontColor(Color.White)
+            .fontColor($r('app.color.white'))
             .margin({ top: 16 })
             .onClick(() => {
               this.pageStack.pop();

@@ -10,11 +10,11 @@ export function CalibrationIndicator(config: CalibrationConfig) {
   Row() {
     Text('声级校准:')
       .fontSize(12)
-      .fontColor(Color.Gray)
+      .fontColor($r('app.color.text_disabled'))
 
     Text(`${config.gain} ${config.weightingType === WeightingType.A ? 'dB(A)' : config.weightingType === WeightingType.C ? 'dB(C)' : 'dB'}`)
       .fontSize(12)
-      .fontColor(Color.Gray)
+      .fontColor($r('app.color.text_disabled'))
       .margin({ left: 5 })
   }
   .position({
