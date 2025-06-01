@@ -6,31 +6,31 @@
     },
     {
       "name": "background_primary",
-      "value": "#121212"
+      "value": "#FFFFFF"
     },
     {
       "name": "background_secondary",
-      "value": "#1E1E1E"
+      "value": "#F5F5F5"
     },
     {
       "name": "background_tertiary",
-      "value": "#2D2D2D"
+      "value": "#EEEEEE"
     },
     {
       "name": "text_primary",
-      "value": "#E0E0E0"
+      "value": "#212121"
     },
     {
       "name": "text_secondary",
-      "value": "#AAAAAA"
+      "value": "#757575"
     },
     {
       "name": "text_disabled",
-      "value": "#616161"
+      "value": "#BDBDBD"
     },
     {
       "name": "primary",
-      "value": "#BB86FC"
+      "value": "#1E88E5"
     },
     {
       "name": "secondary",
@@ -42,11 +42,11 @@
     },
     {
       "name": "button_primary",
-      "value": "#BB86FC"
+      "value": "#6200EE"
     },
     {
       "name": "button_secondary",
-      "value": "#424242"
+      "value": "#3700B3"
     },
     {
       "name": "button_danger",
@@ -58,15 +58,15 @@
     },
     {
       "name": "icon_primary",
-      "value": "#E0E0E0"
+      "value": "#424242"
     },
     {
       "name": "icon_active",
-      "value": "#BB86FC"
+      "value": "#1E88E5"
     },
     {
       "name": "icon_inactive",
-      "value": "#616161"
+      "value": "#BDBDBD"
     },
     {
       "name": "icon_favorite",
@@ -98,7 +98,7 @@
     },
     {
       "name": "button_background",
-      "value": "#2D2D2D"
+      "value": "#EEEEEE"
     },
     {
       "name": "button_red",
