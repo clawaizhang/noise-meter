@@ -107,6 +107,82 @@
     {
       "name": "accent_red",
       "value": "#CF6679"
+    },
+    {
+      "name": "decibel_very_quiet",
+      "value": "#3EA665"
+    },
+    {
+      "name": "decibel_quiet",
+      "value": "#4CAF50"
+    },
+    {
+      "name": "decibel_normal",
+      "value": "#FFC107"
+    },
+    {
+      "name": "decibel_noisy",
+      "value": "#FF9800"
+    },
+    {
+      "name": "decibel_very_noisy",
+      "value": "#F44336"
+    },
+    {
+      "name": "decibel_unbearable",
+      "value": "#8B0000"
+    },
+    {
+      "name": "shadow_light",
+      "value": "#1A000000"
+    },
+    {
+      "name": "shadow_medium",
+      "value": "#33000000"
+    },
+    {
+      "name": "shadow_dark",
+      "value": "#4D000000"
+    },
+    {
+      "name": "white",
+      "value": "#FFFFFF"
+    },
+    {
+      "name": "transparent_black_70",
+      "value": "#B2000000"
+    },
+    {
+      "name": "transparent_white_90",
+      "value": "#E6FFFFFF"
+    },
+    {
+      "name": "button_cancel",
+      "value": "#666666"
+    },
+    {
+      "name": "button_confirm",
+      "value": "#2196F3"
+    },
+    {
+      "name": "button_warning",
+      "value": "#FF4444"
+    },
+    {
+      "name": "weighting_a",
+      "value": "#A9A9A9"
+    },
+    {
+      "name": "weighting_c",
+      "value": "#81D4FA"
+    },
+    {
+      "name": "weighting_z",
+      "value": "#BA68C8"
+    },
+    {
+      "name": "weighting_default",
+      "value": "#F0F0F0"
     }
   ]
 }

@@ -3,6 +3,7 @@ import { display } from "@kit.ArkUI"
 import { DecibelRecord } from "../../models/DecibelRecord";
 import { AudioPlayer } from "../business/AudioPlayer";
 import { WeightingType } from "../../constants/WeightingConstants";
+import { resourceManager } from "@kit.LocalizationKit";
 
 interface Margin {
   top: number;
@@ -228,11 +229,11 @@ export struct NoiseChart {
               const xScale = (chartWidth - margin.left - margin.right) / totalSeconds;
               const yScale = chartHeight / (maxValue - minValue);
               const timeInterval = totalSeconds / (values.length - 1);
-              const colorCache = new Map<number, string>();
+              const colorCache = new Map<number, Resource>();
               const weightingTypes = this.selectedRecord!.weightingTypes;
 
               // 获取加权类型及其颜色
-              const weightingColors: string[] =
+              const weightingColors: Resource[] =
                 weightingTypes.map(type => DecibelService.getWeightingColor(type));
 
               // 绘制背景色
@@ -244,9 +245,10 @@ export struct NoiseChart {
                 const y1 = margin.top + chartHeight - (values[i] - minValue) * yScale;
                 const y2 = margin.top + chartHeight - (values[i + 1] - minValue) * yScale;
 
-                const color: string = weightingColors[i];
-
-                this.canvasContext.fillStyle = color;
+                const color: Resource = weightingColors[i];
+                resourceManager.getSystemResourceManager() .getColor(color).then(color => {
+                  this.canvasContext.fillStyle = color;
+                });
                 this.canvasContext.globalAlpha = 0.2; // 设置透明度以避免喧宾夺主
                 this.canvasContext.beginPath();
                 this.canvasContext.moveTo(x1, y1);
@@ -271,8 +273,9 @@ export struct NoiseChart {
                   color = DecibelService.getDecibelColor(value);
                   colorCache.set(value, color);
                 }
-
-                this.canvasContext.fillStyle = color;
+                resourceManager.getSystemResourceManager() .getColor(color).then(color => {
+                  this.canvasContext.fillStyle = color;
+                });
                 this.canvasContext.beginPath();
                 this.canvasContext.arc(x, y, 1.5, 0, Math.PI * 2);
                 this.canvasContext.fill();

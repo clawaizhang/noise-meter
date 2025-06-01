@@ -116,8 +116,8 @@ export class AudioService {
           title: '需要录音权限',
           message: '检测噪音需要使用麦克风，是否去设置开启权限？',
           buttons: [
-            { text: '取消', color: '#666666' },
-            { text: '去设置', color: '#2196F3' }
+            { text: '取消', color: $r('app.color.button_cancel') },
+            { text: '去设置', color: $r('app.color.button_confirm') }
           ]
         });
 

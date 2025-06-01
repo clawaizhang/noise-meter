@@ -4,7 +4,7 @@ import { BasicStats, HealthStats } from "../types/NoiseStats";
 export interface NoiseLevel {
   range: string;
   level: string;
-  color: string;
+  color: Resource;
   description: string;
 }
 
@@ -90,13 +90,13 @@ export class DecibelService {
    * @param value - 分贝值
    * @returns string - 颜色值（十六进制）
    */
-  static getDecibelColor(value: number): string {
-    if (value < 20) return '#3EA665';  // 非常安静 - 绿色
-    if (value < 40) return '#4CAF50';  // 安静 - 浅绿色
-    if (value < 60) return '#FFC107';  // 一般 - 黄色
-    if (value < 80) return '#FF9800';  // 吵闹 - 橙色
-    if (value < 100) return '#F44336'; // 非常吵闹 - 红色
-    return '#8B0000';                 // 难以忍受 - 深红色
+  static getDecibelColor(value: number): Resource {
+    if (value < 20) return $r('app.color.decibel_very_quiet');  // 非常安静 - 绿色
+    if (value < 40) return $r('app.color.decibel_quiet');      // 安静 - 浅绿色
+    if (value < 60) return $r('app.color.decibel_normal');     // 一般 - 黄色
+    if (value < 80) return $r('app.color.decibel_noisy');      // 吵闹 - 橙色
+    if (value < 100) return $r('app.color.decibel_very_noisy'); // 非常吵闹 - 红色
+    return $r('app.color.decibel_unbearable');                 // 难以忍受 - 深红色
   }
 
   /**
@@ -135,16 +135,16 @@ export class DecibelService {
   }
 
   // 新增方法：获取频率加权方式的颜色
-  static getWeightingColor(type: WeightingType): string {
+  static getWeightingColor(type: WeightingType): Resource {
     switch (type) {
       case WeightingType.A:
-        return '#A9A9A9'; // 浅灰色 -> 更深的浅灰色
+        return $r('app.color.weighting_a'); // A加权 - 灰色
       case WeightingType.C:
-        return '#81D4FA'; // 更浅的蓝色 -> 更深的更浅的蓝色
+        return $r('app.color.weighting_c'); // C加权 - 蓝色
       case WeightingType.Z:
-        return '#BA68C8'; // 更浅的紫色 -> 更深的更浅的紫色
+        return $r('app.color.weighting_z'); // Z加权 - 紫色
       default:
-        return '#F0F0F0'; // 默认更浅的灰色
+        return $r('app.color.weighting_default'); // 默认灰色
     }
   }
 

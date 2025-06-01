@@ -4,7 +4,7 @@ import { DecibelService } from "../../services/DecibelService"
 interface NoiseSegment {
   name: string;
   value: number;
-  color: string;
+  color: Resource;
 }
 
 interface NoiseDistribution {
