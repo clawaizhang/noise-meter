@@ -61,6 +61,7 @@ export struct InputDialog {
       .margin({ top: 16 })
       .justifyContent(FlexAlign.Center)
     }
+    .backgroundColor($r('app.color.background_primary'))
     .width('80%')
     .padding(16)
   }
