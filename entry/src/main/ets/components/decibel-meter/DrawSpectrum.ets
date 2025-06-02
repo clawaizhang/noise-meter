@@ -12,7 +12,7 @@ export function getFrequencySteps(): number[] {
 // 绘制频谱的方法
 export function drawSpectrum(canvasContext: CanvasRenderingContext2D, canvasWidth: number, canvasHeight: number,
   rawSpectrum: Float32Array, dbSteps: number[], frequencySteps: number[], fftSize: number, sampleRate: number,
-  fontSize: number = 10): void {
+  lineColor: Resource, fontSize: number = 12): void {
   console.info(`[频谱绘制] 开始绘制频谱，数据长度=${rawSpectrum.length}`);
   if (canvasContext) {
     // 清除画布
@@ -20,15 +20,11 @@ export function drawSpectrum(canvasContext: CanvasRenderingContext2D, canvasWidt
     console.info(`[频谱绘制] 频率步进点=${frequencySteps.join(', ')}`);
     canvasContext.clearRect(0, 0, canvasWidth, canvasHeight);
     // 绘制分贝刻度
-    resourceManager.getSystemResourceManager().getStringValue($r('app.color.divider')).then((value) => {
-      canvasContext.strokeStyle = value;
-    });
-    canvasContext.lineWidth = 0.5;
+    canvasContext.strokeStyle = lineColor.toString();
+    canvasContext.lineWidth = 1;
     canvasContext.textAlign = 'right';
-    canvasContext.font = `${vp2px(fontSize)}px sans-serif`; // 字体大小需要转换为px
-    resourceManager.getSystemResourceManager().getStringValue($r('app.color.text_secondary')).then((value) => {
-      canvasContext.fillStyle = value;
-    });
+    canvasContext.font = `${vp2px(fontSize)}px sans-serif`;
+    canvasContext.fillStyle = lineColor.toString();
 
     let minDb = dbSteps[0];
     let maxDb = dbSteps[dbSteps.length -1];
@@ -41,9 +37,7 @@ export function drawSpectrum(canvasContext: CanvasRenderingContext2D, canvasWidt
       if (db === minDb || db === maxDb) {
         // 但是仍然绘制最顶部的标签
         if (db === maxDb) {
-          resourceManager.getSystemResourceManager().getStringValue($r('app.color.text_secondary')).then((value) => {
-            canvasContext.fillStyle = value;
-          });
+          canvasContext.fillStyle = lineColor.toString();
           canvasContext.font = `${vp2px(fontSize)}px sans-serif`;
           canvasContext.textAlign = 'right';
           canvasContext.fillText(
@@ -63,9 +57,7 @@ export function drawSpectrum(canvasContext: CanvasRenderingContext2D, canvasWidt
 
       // 只为特定分贝值显示标签
       if (dbSteps.includes(db)) {
-        resourceManager.getSystemResourceManager().getStringValue($r('app.color.text_secondary')).then((value) => {
-          canvasContext.fillStyle = value;
-        });
+        canvasContext.fillStyle = lineColor.toString();
         canvasContext.font = `${vp2px(fontSize)}px sans-serif`;
         canvasContext.textAlign = 'right';
         canvasContext.fillText(
@@ -79,9 +71,7 @@ export function drawSpectrum(canvasContext: CanvasRenderingContext2D, canvasWidt
     // 绘制频率刻度
     canvasContext.textAlign = 'left';
     canvasContext.font = `${vp2px(fontSize)}px sans-serif`;
-    resourceManager.getSystemResourceManager().getStringValue($r('app.color.text_secondary')).then((value) => {
-      canvasContext.fillStyle = value;
-    });
+    canvasContext.fillStyle = lineColor.toString();
 
     // 计算对数坐标映射的常量
     const logMin: number = Math.log10(16);

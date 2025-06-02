@@ -27,6 +27,16 @@ import { WeightingType } from '../../constants/WeightingConstants';
 
 @ComponentV2
 export struct DecibelMeter {
+  // 新增方法：根据分贝值获取对应颜色
+  private getDecibelColor(decibel: number): Resource {
+    if (decibel >= 85) return $r('app.color.decibel_unbearable');
+    if (decibel >= 75) return $r('app.color.decibel_very_noisy');
+    if (decibel >= 65) return $r('app.color.decibel_noisy');
+    if (decibel >= 55) return $r('app.color.decibel_normal');
+    if (decibel >= 45) return $r('app.color.decibel_quiet');
+    return $r('app.color.decibel_very_quiet');
+  }
+
   @Param @Require meterOn: boolean = true;
   @Local private decibelState: DecibelState =
     AppStorageV2.connect(DecibelState, 'DecibelState', () => new DecibelState())!;
@@ -157,6 +167,16 @@ export struct DecibelMeter {
           .height(this.canvasHeight)
           .backgroundColor($r('app.color.background_primary'))
           .borderRadius(12)
+          .shadow({
+            radius: 8,
+            color: $r('app.color.shadow_medium'),
+            offsetX: 2,
+            offsetY: 2
+          })
+          .border({
+            width: 1,
+            color: $r('app.color.divider_primary')
+          })
           .onAreaChange((oldArea: Area, newArea: Area) => {
             console.info(`[FREQ_TRACE][Canvas] Canvas区域变化: 旧尺寸=${oldArea.width}x${oldArea.height}, 新尺寸=${newArea.width}x${newArea.height}`);
             this.canvasWidth = newArea.width as number;
@@ -166,36 +186,39 @@ export struct DecibelMeter {
           })
           .onReady(() => {
             // 初始化完成后开始绘制
-            // 创建一个空的 Float32Array 用于初始化显示
-            const emptySpectrum: Float32Array = new Float32Array(this.currentFftSize * 2); // 每个点用2字节表示
+            const emptySpectrum: Float32Array = new Float32Array(this.currentFftSize * 2);
             if(this.isDisplayApp) {
               this.drawSpectrumLocal(emptySpectrum);
             }
-            // 更新计时器（毫秒级）
             this.recordingTime = new Date().getTime() - this.startTime;
           })
 
-        // 在频谱仪左上角显示描述
+        // 优化信息标签显示
         Row() {
           Image($r('app.media.ic_info'))
-            .width(12)
-            .height(12)
-            .margin({ right: 4 })
-            .fillColor($r('app.color.text_secondary')) // 使用暗黑主题文字颜色
-
+            .width(16)
+            .height(16)
+            .margin({ right: 6 })
+            .fillColor(this.getDecibelColor(this.decibelState.currentDecibel))
 
           Text(DecibelService.getDecibelDescription(this.decibelState.currentDecibel))
-            .fontSize(12)
-            .fontColor($r('app.color.text_primary')) // 使用暗黑主题主文字颜色
+            .fontSize(14)
+            .fontColor(this.getDecibelColor(this.decibelState.currentDecibel))
+            .fontWeight(FontWeight.Medium)
         }
-        .backgroundColor($r('app.color.background_secondary')) // 使用暗黑主题背景色
-        .borderRadius(4)
-        .position({ x: '10%', y: '2%' })
+        .padding(8)
+        .backgroundColor($r('app.color.transparent_white_90'))
+        .borderRadius(8)
+        .border({
+          width: 1,
+          color: this.getDecibelColor(this.decibelState.currentDecibel)
+        })
+        .position({ x: '5%', y: '3%' })
         .onClick(() => {
           this.navStack.pushDestinationByName('NoiseDescriptionDialog', null);
         })
 
-        // 将校准指示器移动到Canvas右上角
+        // 校准指示器
         CalibrationIndicator({ gain: this.calibrationGain, weightingType: this.weightingType })
 
       }
@@ -411,11 +434,10 @@ export struct DecibelMeter {
 }
 
   private drawSpectrumLocal(spectrum: Float32Array) {
-    // 分贝网格点生成
     const dbSteps: number[] = getDbSteps();
     const frequencySteps: number[] = getFrequencySteps();
     drawSpectrum(this.canvasContext, this.canvasWidth, this.canvasHeight, spectrum, dbSteps, frequencySteps,
-      this.currentFftSize, this.sampleRate);
+      this.currentFftSize, this.sampleRate, this.getDecibelColor(this.decibelState.currentDecibel));
   }
 
   private resetData() {
