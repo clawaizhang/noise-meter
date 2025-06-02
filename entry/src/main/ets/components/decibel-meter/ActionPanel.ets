@@ -65,7 +65,7 @@ export struct ActionPanel {
           Image($r('app.media.ic_lock'))
             .width(20)
             .height(20)
-            .fillColor(this.isUILocked ? $r('app.color.accent_red') : $r('app.color.text_secondary'))
+            .fillColor(this.isUILocked ? $r('app.color.white') : $r('app.color.text_secondary'))
         }
         .width(40)
         .height(40)
@@ -130,7 +130,7 @@ export struct ActionPanel {
       })
     }
     .width('100%')
-    .backgroundColor($r('app.color.background_secondary'))
+    .backgroundColor($r('app.color.background_tertiary'))
     .borderRadius(12)
     .shadow({ radius: 2, color: '#1A000000', offsetY: 1 })
     .margin({ top: 8 })

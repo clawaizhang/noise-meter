@@ -27,6 +27,7 @@ function itemDescription() {
   .fontColor($r('app.color.text_secondary'))
   .fontSize(14)
   .textAlign(TextAlign.Start)
+  .width( '100%')
   .margin({ left: 48 })
 }
 
@@ -492,7 +493,7 @@ export struct Settings {
                 Blank()
 
                 if (this.isAutoCalibrating) {
-                  Text(this.countdown > 0 ? `${this.countdown}秒后开始校准` : `校准中...${8 - this.calibrationProgress}秒`)
+                  Text(this.countdown > 0 ? `${this.countdown}秒后开始校准` : `校准中,请保持安静...${8 - this.calibrationProgress}秒`)
                     .fontSize(14)
                     .fontColor($r('app.color.text_secondary'))
                     .margin({ right: 8 })
@@ -500,7 +501,6 @@ export struct Settings {
                   Button('开始校准')
                     .type(ButtonType.Normal)
                     .fontSize(14)
-                    .fontColor($r('app.color.text_primary'))
                     .backgroundColor($r('app.color.primary'))
                     .borderRadius(16)
                     .height(32)
@@ -915,7 +915,6 @@ export struct Settings {
         .height(40)
         .margin({ bottom: 30, top: 12 })
         .backgroundColor($r('app.color.toggle_active'))
-        .fontColor($r('app.color.text_primary'))
         .onClick(() => {
           const context = getContext(this) as common.UIAbilityContext;
           const want: Want = {

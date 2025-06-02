@@ -106,7 +106,7 @@ export struct DialogContainer {
       .height('100%')
       .width('100%')
     }
-    .backgroundColor($r('app.color.background_tertiary'))
+    .backgroundBlurStyle(BlurStyle.BACKGROUND_THIN)
     .animation({
       duration: 400,
       curve: Curve.EaseOut,

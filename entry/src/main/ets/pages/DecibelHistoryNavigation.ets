@@ -206,15 +206,15 @@ export struct DecibelHistory {
       offset: { dx: 0, dy: -20 },
       primaryButton: {
         value: '取消',
-        fontColor: $r('app.color.text_secondary'),
-        backgroundColor: $r('app.color.button_secondary'),
+        fontColor: $r('app.color.background_primary'),
+        backgroundColor: $r('app.color.background_tertiary'),
         action: () => {
           // 不执行任何操作
         }
       },
       secondaryButton: {
         value: '清空',
-        fontColor: $r('app.color.text_primary'),
+        fontColor: $r('app.color.background_primary'),
         backgroundColor: $r('app.color.button_primary'),
         action: async () => {
           try {

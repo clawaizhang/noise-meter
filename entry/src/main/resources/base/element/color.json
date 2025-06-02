@@ -2,27 +2,27 @@
   "color": [
     {
       "name": "start_window_background",
-      "value": "#1E88E5"
+      "value": "#ff0a59f7"
     },
     {
       "name": "background_primary",
-      "value": "#FFFFFF"
+      "value": "#ffffffff"
     },
     {
       "name": "background_secondary",
-      "value": "#F5F5F5"
+      "value": "#fff1f3f5"
     },
     {
       "name": "background_tertiary",
-      "value": "#EEEEEE"
+      "value": "#ffe5e5ea"
     },
     {
       "name": "text_primary",
-      "value": "#212121"
+      "value": "#e5000000"
     },
     {
       "name": "text_secondary",
-      "value": "#757575"
+      "value": "#99000000"
     },
     {
       "name": "text_disabled",
@@ -30,7 +30,7 @@
     },
     {
       "name": "primary",
-      "value": "#1E88E5"
+      "value": "#ff0a59f7"
     },
     {
       "name": "secondary",
@@ -38,11 +38,11 @@
     },
     {
       "name": "error",
-      "value": "#CF6679"
+      "value": "#ffe84026"
     },
     {
       "name": "button_primary",
-      "value": "#6200EE"
+      "value": "#ff0a59f7"
     },
     {
       "name": "button_secondary",
@@ -50,7 +50,7 @@
     },
     {
       "name": "button_danger",
-      "value": "#CF6679"
+      "value": "#ffe84026"
     },
     {
       "name": "icon_accent",
@@ -58,11 +58,11 @@
     },
     {
       "name": "icon_primary",
-      "value": "#424242"
+      "value": "#e5000000"
     },
     {
       "name": "icon_active",
-      "value": "#1E88E5"
+      "value": "#ff0a59f7"
     },
     {
       "name": "icon_inactive",
@@ -74,7 +74,7 @@
     },
     {
       "name": "divider",
-      "value": "#424242"
+      "value": "#33000000"
     },
     {
       "name": "divider_primary",
@@ -94,7 +94,7 @@
     },
     {
       "name": "toggle_active",
-      "value": "#0091FF"
+      "value": "#ff0a59f7"
     },
     {
       "name": "button_background",
@@ -102,11 +102,11 @@
     },
     {
       "name": "button_red",
-      "value": "#F44336"
+      "value": "#ffe84026"
     },
     {
       "name": "accent_red",
-      "value": "#CF6679"
+      "value": "#ffe84026"
     },
     {
       "name": "decibel_very_quiet",
@@ -146,7 +146,7 @@
     },
     {
       "name": "white",
-      "value": "#FFFFFF"
+      "value": "#ffffffff"
     },
     {
       "name": "transparent_black_70",
@@ -162,11 +162,11 @@
     },
     {
       "name": "button_confirm",
-      "value": "#2196F3"
+      "value": "#ff0a59f7"
     },
     {
       "name": "button_warning",
-      "value": "#FF4444"
+      "value": "#ffe84026"
     },
     {
       "name": "weighting_a",

@@ -1,7 +1,7 @@
 
 @CustomDialog
 export struct InputDialog {
-  @State comment: string = '';
+  comment: string = '';
   title:string = '';
   default:string = '';
   controller: CustomDialogController;
@@ -13,6 +13,7 @@ export struct InputDialog {
       Text(this.title)
         .fontSize(18)
         .fontWeight(FontWeight.Medium)
+        .fontColor($r('app.color.icon_active'))
         .margin({ bottom: 16 })
 
       TextArea({ placeholder: '请输入备注(最多64字)', text: this.default })
@@ -23,7 +24,7 @@ export struct InputDialog {
         .enableKeyboardOnFocus(true)
         .enterKeyType(EnterKeyType.Go)
         .fontSize(14)
-        .fontColor($r('app.color.text_primary'))
+        .fontColor((this.comment.length > 64) ? $r('app.color.error') : $r('app.color.text_primary'))
         .onChange((value: string) => {
           this.comment = value;
           if (value.length > 64) {
@@ -36,9 +37,9 @@ export struct InputDialog {
           Text('取消')
             .fontSize(16)
         }
-        .width('40%')
+        .width('45%')
         .height(40)
-        .backgroundColor($r('app.color.button_primary'))
+        .backgroundColor($r('app.color.button_cancel'))
         .onClick(() => {
           this.onClose();
         })
@@ -48,10 +49,10 @@ export struct InputDialog {
             .fontSize(16)
             .fontColor($r('app.color.white'))
         }
-        .width('40%')
+        .width('45%')
         .height(40)
         .backgroundColor($r('app.color.button_primary'))
-        .margin({ left: 16 })
+        .margin({ left: 24 })
         .onClick(() => {
           this.onClose();
           this.onConfirm?.(this.comment);
@@ -61,7 +62,6 @@ export struct InputDialog {
       .margin({ top: 16 })
       .justifyContent(FlexAlign.Center)
     }
-    .backgroundColor($r('app.color.background_primary'))
     .width('80%')
     .padding(16)
   }
