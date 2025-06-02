@@ -255,6 +255,7 @@ export struct DecibelHistory {
   @Builder
   RecordItem(record: DecibelRecord) {
     Stack() {
+
       Column() {
         Row() {
           // 左侧位置和时间信息列
@@ -276,8 +277,9 @@ export struct DecibelHistory {
                 .fontColor($r('app.color.text_secondary'))
                 .maxLines(3)
                 .textOverflow({ overflow: TextOverflow.Ellipsis })
-                .margin({ top: 8})
+                .margin({ top: 8 })
             }
+
             Row() {
               // 时间信息
               Text(new Date(record.timestamp).toLocaleString('zh-CN', {
@@ -291,8 +293,11 @@ export struct DecibelHistory {
                 .fontSize(14)
                 .fontColor($r('app.color.text_secondary'))
                 .margin({ top: 8 }) // 减小间距
+            }
+
+            Row() {
               // 检测时长
-              Text(` 共: ${Math.round(record.duration / 1000)}秒`)
+              Text(`时长: ${Math.round(record.duration / 1000)}秒`)
                 .fontSize(14)
                 .fontColor($r('app.color.text_secondary'))
                 .margin({ top: 8 })
@@ -319,7 +324,8 @@ export struct DecibelHistory {
             .margin({ top: 4 })
           }
           .alignItems(HorizontalAlign.Start)
-          .layoutWeight(1)
+          .layoutWeight(1).flexShrink(1) // 添加弹性收缩
+
 
           // 右侧区域：分贝值信息
           Column() {
@@ -361,7 +367,8 @@ export struct DecibelHistory {
               }
               .height(40) // 固定高度确保对齐
             }
-            Row(){
+
+            Row() {
               if (record!.audioFilePath) {
                 AudioPlayer({
                   audioFilePath: record!.audioFilePath,
@@ -373,9 +380,11 @@ export struct DecibelHistory {
           .justifyContent(FlexAlign.SpaceBetween)
           .height('80')
           .alignItems(HorizontalAlign.End)
+          .flexShrink(0) // 禁止收缩
+
         }
         .width('100%')
-        .padding({  left: 16, right: 16, top: 16})
+        .padding({ left: 16, right: 16, top: 16 })
         .onClick(() => {
           if (this.showingDeleteButtonId === record.id) {
             this.showingDeleteButtonId = '';
@@ -384,7 +393,7 @@ export struct DecibelHistory {
             this.showDetailDialog();
 
             const DETAIL_DIALOG_CLOSED_EVENT = 100101
-            emitter.on({eventId:DETAIL_DIALOG_CLOSED_EVENT}, (data:emitter.EventData) => {
+            emitter.on({ eventId: DETAIL_DIALOG_CLOSED_EVENT }, (data: emitter.EventData) => {
               let id = data?.data?.id as string;
               if (id) {
                 this.recordService.getRecordById(id).then((newRecord) => {
@@ -401,7 +410,7 @@ export struct DecibelHistory {
       }
       .backgroundColor($r('app.color.background_primary'))
       .borderRadius(16)
-      .margin({ left: 16,right:16 })
+      .margin({ left: 16, right: 16 })
       .translate({
         x: record.id === this.currentSlidingId ?
         this.currentSlideOffset : // 直接使用滑动偏移量
@@ -534,6 +543,7 @@ export struct DecibelHistory {
                   this.pendingHideButtonId = '';
                 })
               })
+
               // 删除按钮
               Button() {
                 Text('删除')
@@ -665,7 +675,7 @@ export struct DecibelHistory {
                 .textAlign(TextAlign.Center)
                 .width('100%')
                 .padding(16)
-              
+
               Divider()
                 .width('100%')
                 .height(8)
