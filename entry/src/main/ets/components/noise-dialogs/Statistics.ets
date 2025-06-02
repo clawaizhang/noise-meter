@@ -4,7 +4,7 @@ import { DecibelService } from "../../services/DecibelService"
 interface NoiseSegment {
   name: string;
   value: number;
-  color: Resource;
+  color: string;
 }
 
 interface NoiseDistribution {
@@ -211,12 +211,6 @@ export struct Statistics {
 
   build() {
     Column() {
-      Text('统计数据')
-        .fontSize(16)
-        .fontWeight(FontWeight.Medium)
-        .alignSelf(ItemAlign.Start)
-        .margin({ bottom: 8, top: -16 })
-
       Text(this.getOverallNoiseDescription())
         .fontSize(14)
         .fontColor($r('app.color.text_secondary'))

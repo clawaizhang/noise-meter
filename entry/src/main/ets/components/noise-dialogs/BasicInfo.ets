@@ -13,12 +13,6 @@ export struct BasicInfo {
 
   build() {
     Column() {
-      Text('基本信息')
-        .fontSize(16)
-        .fontWeight(FontWeight.Medium)
-        .alignSelf(ItemAlign.Start)
-        .margin({ bottom: 12 })
-
       Row() {
         Text('检测时间')
           .fontSize(14)
@@ -69,9 +63,26 @@ export struct BasicInfo {
         Text(this.comment === '' ? '点击添加备注' : this.comment)
           .fontSize(14)
           .fontColor($r('app.color.text_secondary'))
-          .backgroundColor($r('app.color.background_secondary'))
           .width('70%')
           .textOverflow({ overflow: TextOverflow.None })
+          .focusable(true)
+          .accessibilityDescription('备注输入区域')
+          .stateStyles({
+            normal: {
+              .backgroundColor($r('app.color.background_secondary'))
+            },
+            pressed: {
+              .backgroundColor($r('app.color.primary_active'))
+              .scale({ x: 0.98, y: 0.98 })
+            },
+            focused: {
+              .backgroundColor($r('app.color.primary_active'))
+            }
+          })
+          .animation({
+            duration: 200,
+            curve: Curve.EaseOut
+          })
           .onClick(() => {
             const dialogController = new CustomDialogController({
               builder: InputDialog({
@@ -106,6 +117,5 @@ export struct BasicInfo {
     })
     .backgroundColor($r('app.color.background_primary'))
     .borderRadius(12)
-    .margin({ bottom: 12 })
   }
 }

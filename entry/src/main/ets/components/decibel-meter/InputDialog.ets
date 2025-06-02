@@ -39,7 +39,7 @@ export struct InputDialog {
         }
         .width('45%')
         .height(40)
-        .backgroundColor($r('app.color.button_cancel'))
+        .backgroundColor($r('app.color.transparent_white_90'))
         .onClick(() => {
           this.onClose();
         })

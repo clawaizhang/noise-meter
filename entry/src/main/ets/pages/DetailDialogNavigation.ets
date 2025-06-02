@@ -88,7 +88,8 @@ export struct DetailDialog {
               .width(40)
               .height(4)
               .borderRadius(2)
-              .backgroundColor($r('app.color.text_secondary'))
+              .backgroundColor($r('app.color.divider_primary'))
+              .hitTestBehavior(HitTestMode.Block) // 扩大触摸区域
           }
           .width('100%')
           .height(20)
@@ -118,16 +119,27 @@ export struct DetailDialog {
                 }
               })
 
+              // 内容区域 - 添加组件间距和响应式padding
               Column() {
                 BasicInfo({  selectedRecord: this.selectedRecord,commentChange: (comment: string) => {
                   this.selectedRecord!.comment = comment;
                   this.recordService.updateRecord(this.selectedRecord!);
                 }})
+
                 Statistics({ selectedRecord: this.selectedRecord })
+
                 NoiseChart({ playAudio: true, selectedRecord: this.selectedRecord })
               }
               .width('100%')
-              .padding({ left: 16, right: 16, bottom: 16 })
+              .padding({
+                left: '4%',
+                right: '4%',
+                bottom: 24, // 底部padding增加至24vp
+                top: 16
+              })
+              .margin({
+                bottom: SafeAreaEdge.BOTTOM // 安全区域处理
+              })
             }
           }
           .width('100%')

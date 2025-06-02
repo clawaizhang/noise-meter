@@ -183,6 +183,10 @@
     {
       "name": "weighting_default",
       "value": "#F0F0F0"
+    },
+    {
+      "name": "primary_active",
+      "value": "#19000000"
     }
   ]
 }

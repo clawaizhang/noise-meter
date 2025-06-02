@@ -41,10 +41,6 @@ export struct NoiseChart {
   build() {
     Column() {
       Row() {
-        Text('统计图(分贝-秒)')
-          .fontSize(16)
-          .fontWeight(FontWeight.Medium)
-
         if (this.playAudio && this.selectedRecord!.audioFilePath) {
           Blank()
           Row() {
@@ -98,7 +94,7 @@ export struct NoiseChart {
               this.canvasContext.clearRect(0, 0, this.canvasContext.width, this.canvasContext.height);
 
               // 绘制背景
-              this.canvasContext.fillStyle = $r('app.color.background_secondary').toString();
+              this.canvasContext.fillStyle = "#fff1f3f5";
               this.canvasContext.fillRect(margin.left, margin.top, chartWidth, chartHeight);
 
               // 设置字体样式
@@ -106,7 +102,7 @@ export struct NoiseChart {
               this.canvasContext.textBaseline = 'middle';
 
               // 绘制网格线
-              this.canvasContext.strokeStyle = $r('app.color.divider').toString();
+              this.canvasContext.strokeStyle = '#33000000';
               this.canvasContext.lineWidth = 1;
 
               // 计算Y轴刻度
@@ -161,7 +157,7 @@ export struct NoiseChart {
               }
 
               // 绘制Y轴刻度
-              this.canvasContext.fillStyle = $r('app.color.text_primary').toString();
+              this.canvasContext.fillStyle = '#33000000';
               this.canvasContext.textAlign = 'right';
               for (let i = 0; i < ticks.length; i++) {
                 const y = margin.top + chartHeight - ((ticks[i] - yMin) / (yMax - yMin)) * chartHeight;
@@ -178,7 +174,7 @@ export struct NoiseChart {
                   this.canvasContext.beginPath();
                   this.canvasContext.moveTo(margin.left, y);
                   this.canvasContext.lineTo(margin.left + chartWidth, y);
-                  this.canvasContext.strokeStyle = $r('app.color.divider').toString(); // 主要网格线颜色
+                  this.canvasContext.strokeStyle = '#616161'; // 主要网格线颜色
                   this.canvasContext.stroke();
                 }
               }
@@ -216,7 +212,7 @@ export struct NoiseChart {
                 const x = margin.left + i * xStep;
                 const seconds = i * xInterval;
                 this.canvasContext.fillText(formatTime(seconds), x, margin.top + chartHeight + vp2px(2));
-                this.canvasContext.strokeStyle = $r('app.color.divider').toString(); // 辅助网格线颜色
+                this.canvasContext.strokeStyle = '#33000000'; // 辅助网格线颜色
                 this.canvasContext.lineWidth = 1; // 更细的线条
                 // 绘制垂直网格线
                 this.canvasContext.beginPath();
@@ -229,11 +225,11 @@ export struct NoiseChart {
               const xScale = (chartWidth - margin.left - margin.right) / totalSeconds;
               const yScale = chartHeight / (maxValue - minValue);
               const timeInterval = totalSeconds / (values.length - 1);
-              const colorCache = new Map<number, Resource>();
+              const colorCache = new Map<number, string>();
               const weightingTypes = this.selectedRecord!.weightingTypes;
 
               // 获取加权类型及其颜色
-              const weightingColors: Resource[] =
+              const weightingColors: string[] =
                 weightingTypes.map(type => DecibelService.getWeightingColor(type));
 
               // 绘制背景色
@@ -245,10 +241,8 @@ export struct NoiseChart {
                 const y1 = margin.top + chartHeight - (values[i] - minValue) * yScale;
                 const y2 = margin.top + chartHeight - (values[i + 1] - minValue) * yScale;
 
-                const color: Resource = weightingColors[i];
-                resourceManager.getSystemResourceManager() .getColor(color).then(color => {
-                  this.canvasContext.fillStyle = color;
-                });
+                const color: string = weightingColors[i];
+                this.canvasContext.fillStyle = color;
                 this.canvasContext.globalAlpha = 0.2; // 设置透明度以避免喧宾夺主
                 this.canvasContext.beginPath();
                 this.canvasContext.moveTo(x1, y1);
@@ -273,9 +267,7 @@ export struct NoiseChart {
                   color = DecibelService.getDecibelColor(value);
                   colorCache.set(value, color);
                 }
-                resourceManager.getSystemResourceManager() .getColor(color).then(color => {
-                  this.canvasContext.fillStyle = color;
-                });
+                this.canvasContext.fillStyle = color;
                 this.canvasContext.beginPath();
                 this.canvasContext.arc(x, y, 1.5, 0, Math.PI * 2);
                 this.canvasContext.fill();
@@ -319,6 +311,6 @@ export struct NoiseChart {
     })
     .backgroundColor($r('app.color.background_primary'))
     .borderRadius(12)
-    .margin({ bottom: 12, top: -32 })
+    .margin({ bottom: 12 })
   }
 }
