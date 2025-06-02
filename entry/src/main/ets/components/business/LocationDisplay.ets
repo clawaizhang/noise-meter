@@ -136,7 +136,7 @@ export struct LocationDisplay {
         }
         .width(20)
         .height(20)
-        .backgroundColor($r('app.color.button_secondary'))
+        .backgroundColor($r('app.color.background_tertiary'))
         .enabled(!this.isRefreshing)
         .onClick(() => {
           this.startSingleLocation();
