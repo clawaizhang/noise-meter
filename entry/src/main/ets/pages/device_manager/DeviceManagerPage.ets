@@ -26,18 +26,6 @@
 export struct DeviceManagerPage {
   build() {
     Column() {
-      // 顶部状态栏
-      Row() {
-        Text('设备管理')
-          .titleTextStyle()
-        Blank()
-        Image($r('app.media.ic_settings'))
-          .width(24)
-          .height(24)
-      }
-      .width('100%')
-      .padding({ left: 16, right: 16, top: 12, bottom: 12 })
-
       // 设备状态卡片
       Column() {
         Row() {
@@ -130,38 +118,6 @@ export struct DeviceManagerPage {
       .height(180)
       .margin({ bottom: 16 })
 
-      // 底部导航栏
-      Row() {
-        Column() {
-          Image($r('app.media.ic_home'))
-            .width(24)
-            .height(24)
-          Text('首页')
-            .gridItemTextStyle()
-        }
-        .margin({ right: 32 })
-
-        Column() {
-          Image($r('app.media.ic_meter'))
-            .width(24)
-            .height(24)
-          Text('设备')
-            .gridItemTextStyle()
-        }
-        .margin({ right: 32 })
-
-        Column() {
-          Image($r('app.media.ic_stats'))
-            .width(24)
-            .height(24)
-          Text('统计')
-            .gridItemTextStyle()
-        }
-      }
-      .width('100%')
-      .justifyContent(FlexAlign.Center)
-      .padding({ top: 12, bottom: 12 })
-      .backgroundColor($r('app.color.background_secondary'))
     }
     .width('100%')
     .height('100%')
