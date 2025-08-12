@@ -46,4 +46,5 @@ export class PreferenceKeyConstants {
    * 后台运行开关状态键名
    */
   static readonly BACKGROUND_RUNNING: string = 'background_running';
+  static VOLUME: string = 'volume';
 }

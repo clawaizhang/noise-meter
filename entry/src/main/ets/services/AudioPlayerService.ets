@@ -5,6 +5,9 @@ import media from '@ohos.multimedia.media';
 import audio from '@ohos.multimedia.audio';
 import hilog from '@ohos.hilog';
 import fs from '@ohos.file.fs';
+import { promptAction } from '@kit.ArkUI';
+import { PreferenceService } from './PreferenceService';
+import { PreferenceKeyConstants } from '../constants/PreferenceKeyConstants';
 
 const TAG = 'AudioPlayerService';
 const DOMAIN = 0x0000;
@@ -65,7 +68,7 @@ export class AudioPlayerService {
 
       // 设置播放器事件监听
       this.setupPlayerListeners();
-      
+
       this.updateState(PlayerState.STATE_IDLE);
       hilog.info(DOMAIN, TAG, '播放器初始化完成');
     } catch (error) {
@@ -123,6 +126,8 @@ export class AudioPlayerService {
         case 'prepared': // prepare调用成功后上报该状态机
           this.updateState(PlayerState.STATE_PREPARED);
           if (this.player) {
+            // await audio.getAudioManager().getVolumeManager().setAppVolumePercentage(100);
+            promptAction.openToast({ message: '播放中...请调大音量' });
             await this.player.play(); // 自动开始播放
           }
           break;
@@ -134,18 +139,27 @@ export class AudioPlayerService {
 
         case 'paused': // pause成功调用后触发该状态机上报
           this.updateState(PlayerState.STATE_PAUSED);
+          // await audio.getAudioManager()
+          //   .getVolumeManager()
+          //   .setAppVolumePercentage(PreferenceService.getInstance().getNumber(PreferenceKeyConstants.VOLUME));
           this.stopProgressTimer();
           break;
 
         case 'completed': // 播放结束后触发该状态机上报
           this.updateState(PlayerState.STATE_COMPLETED);
           this.stopProgressTimer();
+          // await audio.getAudioManager()
+          //   .getVolumeManager()
+          //   .setAppVolumePercentage(PreferenceService.getInstance().getNumber(PreferenceKeyConstants.VOLUME));
           if (this.player) {
             await this.player.stop(); // 调用播放结束接口
           }
           break;
 
         case 'stopped': // stop接口成功调用后触发该状态机上报
+          // await audio.getAudioManager()
+          //   .getVolumeManager()
+          //   .setAppVolumePercentage(PreferenceService.getInstance().getNumber(PreferenceKeyConstants.VOLUME));
           this.updateState(PlayerState.STATE_STOPPED);
           if (this.player) {
             await this.player.reset(); // 调用reset接口初始化avplayer状态
@@ -153,6 +167,9 @@ export class AudioPlayerService {
           break;
 
         case 'released': // release接口成功调用后触发该状态机上报
+          // await audio.getAudioManager()
+          //   .getVolumeManager()
+          //   .setAppVolumePercentage(PreferenceService.getInstance().getNumber(PreferenceKeyConstants.VOLUME));
           this.updateState(PlayerState.STATE_RELEASED);
           break;
 
@@ -180,7 +197,7 @@ export class AudioPlayerService {
       }
 
       hilog.info(DOMAIN, TAG, '准备播放音频文件: %{public}s', audioFilePath);
-      
+
       // 关闭之前的文件描述符
       if (this.currentFile) {
         try {
@@ -190,15 +207,15 @@ export class AudioPlayerService {
           hilog.error(DOMAIN, TAG, '关闭文件描述符失败: %{public}s', e instanceof Error ? e.message : String(e));
         }
       }
-      
+
       // 打开文件获取文件描述符
       this.currentFile = await fs.open(audioFilePath);
       const fdPath = `fd://${this.currentFile.fd}`;
-      
+
       // 设置音频源
       this.player.url = fdPath;
       this.updateState(PlayerState.STATE_PREPARING);
-      
+
       hilog.info(DOMAIN, TAG, '开始播放音频');
     } catch (error) {
       hilog.error(DOMAIN, TAG, '播放音频失败: %{public}s', error instanceof Error ? error.message : String(error));
@@ -225,14 +242,14 @@ export class AudioPlayerService {
         if (this.isPlaying()) {
           await this.stop();
         }
-        
+
         // 停止进度计时器
         this.stopProgressTimer();
-        
+
         // 取消事件监听
         this.player.off('error');
         this.player.off('stateChange');
-        
+
         // 关闭文件描述符
         if (this.currentFile) {
           try {
@@ -242,14 +259,15 @@ export class AudioPlayerService {
             hilog.error(DOMAIN, TAG, '关闭文件描述符失败: %{public}s', e instanceof Error ? e.message : String(e));
           }
         }
-        
+
         // 释放播放器资源
         await this.player.release();
         this.player = null;
         this.updateState(PlayerState.STATE_NOT_INIT);
         hilog.info(DOMAIN, TAG, '播放器资源释放成功');
       } catch (error) {
-        hilog.error(DOMAIN, TAG, '释放播放器资源失败: %{public}s', error instanceof Error ? error.message : String(error));
+        hilog.error(DOMAIN, TAG, '释放播放器资源失败: %{public}s',
+          error instanceof Error ? error.message : String(error));
         throw new Error(error instanceof Error ? error.message : String(error));
       }
     }
@@ -373,7 +391,8 @@ export class AudioPlayerService {
     try {
       return this.player.currentTime;
     } catch (error) {
-      hilog.error(DOMAIN, TAG, '获取当前播放位置失败: %{public}s', error instanceof Error ? error.message : String(error));
+      hilog.error(DOMAIN, TAG, '获取当前播放位置失败: %{public}s',
+        error instanceof Error ? error.message : String(error));
       return 0;
     }
   }
@@ -388,7 +407,8 @@ export class AudioPlayerService {
     try {
       return this.player.duration;
     } catch (error) {
-      hilog.error(DOMAIN, TAG, '获取音频总时长失败: %{public}s', error instanceof Error ? error.message : String(error));
+      hilog.error(DOMAIN, TAG, '获取音频总时长失败: %{public}s',
+        error instanceof Error ? error.message : String(error));
       return 0;
     }
   }
