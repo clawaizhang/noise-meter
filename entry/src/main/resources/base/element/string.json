@@ -47,6 +47,22 @@
     {
       "name": "background_running_desc_off",
       "value": "应用不会在后台运行"
+    },
+    {
+      "name": "success",
+      "value": "成功"
+    },
+    {
+      "name": "ic_battery",
+      "value": "电池图标"
+    },
+    {
+      "name": "ic_storage",
+      "value": "存储图标"
+    },
+    {
+      "name": "ic_security",
+      "value": "安全图标"
     }
   ]
 }

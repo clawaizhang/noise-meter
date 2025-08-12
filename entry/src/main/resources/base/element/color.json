@@ -187,6 +187,10 @@
     {
       "name": "primary_active",
       "value": "#19000000"
+    },
+    {
+      "name": "success",
+      "value": "#4CAF50"
     }
   ]
 }
