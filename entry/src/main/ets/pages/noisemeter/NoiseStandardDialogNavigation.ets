@@ -1,8 +1,8 @@
 import { common } from '@kit.AbilityKit';
-import { DialogContainer } from '../components/common/DialogContainer';
-import { NoiseStandardCardBuilder } from '../components/noise-dialogs/NoiseStandardCard';
-import { NoiseStandards } from '../constants/NoiseStandardConstants';
-import { NoiseStandard } from '../models/NoiseStandard';
+import { DialogContainer } from '../../components/common/DialogContainer';
+import { NoiseStandardCardBuilder } from '../../components/noise-dialogs/NoiseStandardCard';
+import { NoiseStandards } from '../../constants/NoiseStandardConstants';
+import { NoiseStandard } from '../../models/NoiseStandard';
 
 @ComponentV2
 export struct NoiseStandardDialog {

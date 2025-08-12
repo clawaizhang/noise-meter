@@ -70,14 +70,14 @@ export default class EntryAbility extends UIAbility {
     windowManager.loadContent('pages/Index');
     windowManager.setKeepScreenOn(this.keepScreenOn);
     windowStage.getMainWindowSync().setPreferredOrientation(window.Orientation.PORTRAIT);
-    audio.getAudioManager().getVolumeManager().getAppVolumePercentage().then((volume) => {
-      PreferenceService.getInstance().setNumber(PreferenceKeyConstants.VOLUME, volume);
-    });
-    audio.getAudioManager().getVolumeManager().on('volumeChange', (volume) => {
-      if (volume.volumeType === audio.AudioVolumeType.MEDIA && volume.volume < 100) {
-        PreferenceService.getInstance().setNumber(PreferenceKeyConstants.VOLUME, volume.volume);
-      }
-    });
+    // audio.getAudioManager().getVolumeManager().getAppVolumePercentage().then((volume) => {
+    //   PreferenceService.getInstance().setNumber(PreferenceKeyConstants.VOLUME, volume);
+    // });
+    // audio.getAudioManager().getVolumeManager().on('volumeChange', (volume) => {
+    //   if (volume.volumeType === audio.AudioVolumeType.MEDIA && volume.volume < 100) {
+    //     PreferenceService.getInstance().setNumber(PreferenceKeyConstants.VOLUME, volume.volume);
+    //   }
+    // });
   }
 
   onWindowStageDestroy(): void {

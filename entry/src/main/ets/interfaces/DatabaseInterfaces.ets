@@ -11,4 +11,9 @@ export interface DatabaseUpgradeConfig {
    * 该版本需要执行的SQL语句数组
    */
   sqls: string[];
-} 
+}
+
+export interface DbConfig {
+  dbName: string;
+  upgradeConfigs: DatabaseUpgradeConfig[];
+}

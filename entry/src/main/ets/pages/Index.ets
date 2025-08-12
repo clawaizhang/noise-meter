@@ -1,15 +1,16 @@
-import hilog from '@ohos.hilog';
-import { MainPage } from 'entry/MainPageInfo';
-import { commonEventManager } from '@kit.BasicServicesKit';
-import { privacyManager } from '@kit.StoreKit';
-import { DatabaseConstants } from '../constants/DatabaseConstants';
-import { PreferenceKeyConstants } from '../constants/PreferenceKeyConstants';
-import { noiseMeterNavStack } from '../constants/ProviderConstant';
-import { TableCreateSql } from '../constants/TableCreateSql';
-import { WeightingType } from '../constants/WeightingConstants';
-import { DatabaseUpgradeConfig } from '../interfaces/DatabaseInterfaces';
-import { PreferenceService } from '../services/PreferenceService';
-import { RelationalStoreService } from '../services/RelationalStoreService';
+import { app } from '../apps/AppManager'
+import { navigationStack } from '../constants/ProviderConstant'
+import { PreferenceService } from '../services/PreferenceService'
+import { RelationalStoreService } from '../services/RelationalStoreService'
+import { MainDeviceManager } from './device_manager/MainDeviceManagerNavigation'
+import { commonEventManager } from '@kit.BasicServicesKit'
+import { privacyManager } from '@kit.StoreKit'
+import { PreferenceKeyConstants } from '../constants/PreferenceKeyConstants'
+import { DatabaseUpgradeConfig, DbConfig } from '../interfaces/DatabaseInterfaces'
+import hilog from '@ohos.hilog'
+import { DbManager } from '../apps/DbManager'
+import { MainNoiseMeter } from './noisemeter/NoiseMeterNavigation'
+
 
 const TAG = 'Index';
 const DOMAIN = 0x0000;
@@ -22,12 +23,11 @@ function IndexBuilder() {
 @Entry
 @ComponentV2
 struct Index {
-  @Provider(noiseMeterNavStack) navStack: NavPathStack = new NavPathStack()
+  @Provider(navigationStack) navStack: NavPathStack = new NavPathStack()
   @Local isInitialized: boolean = false;
   @Local isLoading: boolean = true;
   @Local privacyAgreed: boolean = false;
   private relationalStoreService: RelationalStoreService = RelationalStoreService.getInstance();
-  private preferenceService: PreferenceService = PreferenceService.getInstance();
   private readonly eventId = 'usual.event.PRIVACY_STATE_CHANGED';
   // 订阅者信息, 用于保存创建成功的订阅者对象，后续使用其完成订阅及退订的动作
   private subscriber: commonEventManager.CommonEventSubscriber | undefined = undefined;
@@ -48,31 +48,14 @@ struct Index {
       let appPrivacyResults: privacyManager.AppPrivacyResult[] = privacyManager.getAppPrivacyResult();
       this.privacyAgreed = appPrivacyResults[0]?.result === 1;
       PreferenceService.getInstance().setBoolean(PreferenceKeyConstants.PRIVACY_AGREED, this.privacyAgreed);
+      const dbConfig: DbConfig = DbManager.getDbUpgradeConfigs();
       // 初始化数据库
-      const upgradeConfigs: DatabaseUpgradeConfig[] = [
-        {
-          version: 1,
-          sqls: [TableCreateSql.DECIBEL_RECORDS]
-        },
-        {
-          version: 2,
-          sqls: [TableCreateSql.ADD_WEIGHTING_TYPES_COLUMN]
-        },
-        {
-          version: 3,
-          sqls: [TableCreateSql.ADD_COMMENT_COLUMN]
-        }
-      ];
+      const upgradeConfigs: DatabaseUpgradeConfig[] = dbConfig.upgradeConfigs;
 
       const dbResult =
-        await this.relationalStoreService.init(getContext(this), DatabaseConstants.NOISE_METER_DB, upgradeConfigs);
+        await this.relationalStoreService.init(getContext(this), dbConfig.dbName, upgradeConfigs);
       if (!dbResult) {
         throw new Error('数据库初始化失败');
-      }
-
-      // 初始化加权类型
-      if (!this.preferenceService.getString(PreferenceKeyConstants.WEIGHTING)) {
-        this.preferenceService.setString(PreferenceKeyConstants.WEIGHTING, WeightingType.A);
       }
 
       this.isInitialized = true;
@@ -130,10 +113,10 @@ struct Index {
       } else if (!this.isInitialized) {
         // 显示错误状态
         Column() {
-          Text('初始化失败')
+          Text('数据加载中...')
             .fontSize(16)
             .margin({ top: 12 })
-          Button('重试')
+          Button('立即加载')
             .margin({ top: 24 })
             .onClick(() => {
               this.isLoading = true;
@@ -147,7 +130,12 @@ struct Index {
         // 显示正常内容
         Navigation(this.navStack) {
           if (this.privacyAgreed) {
-            MainPage()
+            if (app.noiseMeter) {
+              MainNoiseMeter()
+            }
+            if (app.deviceManager) {
+              MainDeviceManager()
+            }
           } else {
             Column() {
               Image($r('app.media.app_icon_fore'))

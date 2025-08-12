@@ -1,16 +1,16 @@
 import common from '@ohos.app.ability.common'
 import hilog from '@ohos.hilog'
-import { noiseMeterNavStack } from '../constants/ProviderConstant'
+import { navigationStack } from '../../constants/ProviderConstant'
 import { JSON } from '@kit.ArkTS'
-import { DialogTitleBuilder } from "../components/noise-dialogs/DialogTitle"
-import { BasicInfo } from "../components/noise-dialogs/BasicInfo"
-import { Statistics } from "../components/noise-dialogs/Statistics"
-import { NoiseChart } from "../components/noise-dialogs/NoiseChart"
-import { DecibelRecordService } from "../services/DecibelRecordService"
+import { DialogTitleBuilder } from "../../components/noise-dialogs/DialogTitle"
+import { BasicInfo } from "../../components/noise-dialogs/BasicInfo"
+import { Statistics } from "../../components/noise-dialogs/Statistics"
+import { NoiseChart } from "../../components/noise-dialogs/NoiseChart"
+import { DecibelRecordService } from "../../services/DecibelRecordService"
 import emitter from '@ohos.events.emitter'
-import { DecibelRecord } from '../models/DecibelRecord'
-import { FileService } from '../services/FileService'
-import { ScreenshotUtils } from '../utils/ScreenshotUtils'
+import { DecibelRecord } from '../../models/DecibelRecord'
+import { FileService } from '../../services/FileService'
+import { ScreenshotUtils } from '../../utils/ScreenshotUtils'
 
 const DETAIL_DIALOG_CLOSED_EVENT = 100101
 
@@ -25,7 +25,7 @@ export interface DetailDialogParams {
 
 @ComponentV2
 export struct DetailDialog {
-  @Consumer(noiseMeterNavStack) navStack: NavPathStack = new NavPathStack();
+  @Consumer(navigationStack) navStack: NavPathStack = new NavPathStack();
   @Local selectedRecord: DecibelRecord | null = null;
   @Local context: common.Context | null = null;
   @Local fileService: FileService | null = null;

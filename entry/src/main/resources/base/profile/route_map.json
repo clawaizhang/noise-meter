@@ -2,36 +2,42 @@
   "routerMap": [
     {
       "name": "NoiseMeter",
-      "pageSourceFile": "src/main/ets/pages/NoiseMeterNavigation.ets",
+      "pageSourceFile": "src/main/ets/pages/noisemeter/NoiseMeterNavigation.ets",
       "buildFunction": "NoiseMeterBuilder"
-    },{
+    },
+    {
+      "name": "DeviceManager",
+      "pageSourceFile": "src/main/ets/pages/device_manager/MainDeviceManagerNavigation.ets",
+      "buildFunction": "DeviceManagerBuilder"
+    },
+    {
       "name": "DecibelHistory",
-      "pageSourceFile": "src/main/ets/pages/DecibelHistoryNavigation.ets",
+      "pageSourceFile": "src/main/ets/pages/noisemeter/DecibelHistoryNavigation.ets",
       "buildFunction": "DecibelHistoryBuilder"
     },
     {
       "name": "NoiseInfoDialog",
-      "pageSourceFile": "src/main/ets/pages/NoiseInfoDialogNavigation.ets",
+      "pageSourceFile": "src/main/ets/pages/noisemeter/NoiseInfoDialogNavigation.ets",
       "buildFunction": "DecibelHistoryBuilder"
     },
     {
       "name": "DetailDialog",
-      "pageSourceFile": "src/main/ets/pages/DetailDialogNavigation.ets",
+      "pageSourceFile": "src/main/ets/pages/noisemeter/DetailDialogNavigation.ets",
       "buildFunction": "DetailDialogBuilder"
     },
     {
       "name": "NoiseStandardDialog",
-      "pageSourceFile": "src/main/ets/pages/NoiseStandardDialogNavigation.ets",
+      "pageSourceFile": "src/main/ets/pages/noisemeter/NoiseStandardDialogNavigation.ets",
       "buildFunction": "NoiseStandardDialogBuilder"
     },
     {
       "name": "NoiseLevelDialog",
-      "pageSourceFile": "src/main/ets/pages/NoiseLevelDialogNavigation.ets",
+      "pageSourceFile": "src/main/ets/pages/noisemeter/NoiseLevelDialogNavigation.ets",
       "buildFunction": "NoiseLevelDialogBuilder"
     },
     {
       "name": "NoiseDescriptionDialog",
-      "pageSourceFile": "src/main/ets/pages/NoiseDescriptionDialogNavigation.ets",
+      "pageSourceFile": "src/main/ets/pages/noisemeter/NoiseDescriptionDialogNavigation.ets",
       "buildFunction": "NoiseDescriptionDialogBuilder"
     }
   ]

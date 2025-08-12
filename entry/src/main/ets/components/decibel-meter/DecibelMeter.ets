@@ -1,14 +1,14 @@
 import { DecibelService } from '../../services/DecibelService';
 import { DecibelRecordService } from '../../services/DecibelRecordService';
 import common from '@ohos.app.ability.common';
-import { noiseMeterNavStack } from '../../constants/ProviderConstant';
+import { navigationStack } from '../../constants/ProviderConstant';
 import { AppStorageV2, promptAction, window } from '@kit.ArkUI';
 import display from '@ohos.display';
 import { taskpool } from '@kit.ArkTS';
 import { concurrentCalculateSpectrum } from '../../concurrent/ConcurrentFftAnalyzer';
 import { formatStartTime,
   secondsToHoursMinutesSeconds,
-  secondsToHoursMinutesSecondsWithDecimal } from '../../util/TimeUtils';
+  secondsToHoursMinutesSecondsWithDecimal } from '../../utils/TimeUtils';
 import { ActionPanel } from './ActionPanel';
 import { CalibrationIndicator } from './CalibrationIndicator';
 import { drawSpectrum, getDbSteps, getFrequencySteps } from './DrawSpectrum';
@@ -61,7 +61,7 @@ export struct DecibelMeter {
   @Local private isNoiseAlarm: boolean = false // 是否触发噪音报警
   @Local private isDisplayApp: boolean = true
   @Local startTime: number = 0
-  @Consumer(noiseMeterNavStack) navStack: NavPathStack = new NavPathStack()
+  @Consumer(navigationStack) navStack: NavPathStack = new NavPathStack()
   private audioService: AudioService = AudioService.getInstance(getContext() as common.UIAbilityContext)
   private locationService: LocationService = LocationService.getInstance()
   private recordService: DecibelRecordService = new DecibelRecordService(getContext() as common.UIAbilityContext)

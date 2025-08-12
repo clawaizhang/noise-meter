@@ -1,12 +1,12 @@
 import hilog from '@ohos.hilog'
-import { noiseMeterNavStack } from '../../constants/ProviderConstant';
+import { navigationStack } from '../../constants/ProviderConstant';
 
 const TAG = 'DialogContainer';
 const DOMAIN = 0x0000;
 
 @ComponentV2
 export struct DialogContainer {
-  @Consumer(noiseMeterNavStack) navStack: NavPathStack = new NavPathStack();
+  @Consumer(navigationStack) navStack: NavPathStack = new NavPathStack();
   @Local translateY: number = 1000;
   @Local bgOpacity: number = 0;
   private startY: number = 0;

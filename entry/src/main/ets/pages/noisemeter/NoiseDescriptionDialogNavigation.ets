@@ -1,5 +1,5 @@
-import { DialogContainer } from '../components/common/DialogContainer';
-import { DecibelService } from '../services/DecibelService';
+import { DialogContainer } from '../../components/common/DialogContainer';
+import { DecibelService } from '../../services/DecibelService';
 
 @ComponentV2
 export struct NoiseDescriptionDialog {

@@ -1,1 +1,1 @@
-export const noiseMeterNavStack = "noiseMeterNavStack"
+export const navigationStack = "navigationStack"

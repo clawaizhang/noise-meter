@@ -6,4 +6,5 @@ export class DatabaseConstants {
    * 噪音检测仪数据库
    */
   static readonly NOISE_METER_DB = 'noise_meter.db';
-} 
+  static readonly DEVICE_MANAGER_DB = 'device_manager.db';
+}

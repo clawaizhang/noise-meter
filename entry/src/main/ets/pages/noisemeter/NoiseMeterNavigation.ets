@@ -1,22 +1,23 @@
-import { DecibelMeter } from '../components/decibel-meter/DecibelMeter';
-import { noiseMeterNavStack } from '../constants/ProviderConstant';
+import { DecibelMeter } from '../../components/decibel-meter/DecibelMeter';
+import { navigationStack } from '../../constants/ProviderConstant';
 import { DecibelHistory } from './DecibelHistoryNavigation';
-import { Settings } from '../components/Settings';
+import { Settings } from '../../components/Settings';
 import { common } from '@kit.AbilityKit';
 import promptAction from '@ohos.promptAction';
-import { PreferenceKeyConstants } from '../constants/PreferenceKeyConstants';
-import { PreferenceService } from '../services/PreferenceService';
-import { ScreenshotUtils } from '../utils/ScreenshotUtils';
+import { PreferenceKeyConstants } from '../../constants/PreferenceKeyConstants';
+import { PreferenceService } from '../../services/PreferenceService';
+import { ScreenshotUtils } from '../../utils/ScreenshotUtils';
 import { emitter } from '@kit.BasicServicesKit';
+import { WeightingType } from '../../constants/WeightingConstants';
 
 @Builder
 export function NoiseMeterBuilder() {
-  NoiseMeter()
+  MainNoiseMeter()
 }
 
 @ComponentV2
-export struct NoiseMeter {
-  @Consumer(noiseMeterNavStack) navStack: NavPathStack = new NavPathStack()
+export struct MainNoiseMeter {
+  @Consumer(navigationStack) navStack: NavPathStack = new NavPathStack()
   @Local currentIndex: number = 0
   @Local meterOn: boolean = true;
   @Local title:string = '检测仪';
@@ -24,6 +25,10 @@ export struct NoiseMeter {
   private preferenceService: PreferenceService = PreferenceService.getInstance();
 
   aboutToAppear(): void {
+    // 初始化加权类型
+    if (!this.preferenceService.getString(PreferenceKeyConstants.WEIGHTING)) {
+      this.preferenceService.setString(PreferenceKeyConstants.WEIGHTING, WeightingType.A);
+    }
     this.menuItems = this.noiseMeterMenus;
     this.preferenceService.setBoolean(PreferenceKeyConstants.METER_ON, true);
     this.meterOn = this.preferenceService.getBoolean(PreferenceKeyConstants.METER_ON, true);

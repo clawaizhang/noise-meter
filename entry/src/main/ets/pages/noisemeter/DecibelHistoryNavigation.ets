@@ -1,12 +1,12 @@
 import { DetailDialogParams } from './DetailDialogNavigation';
 import { PromptAction } from '@ohos.arkui.UIContext';
-import { DecibelService } from '../services/DecibelService';
-import { DecibelRecordService } from '../services/DecibelRecordService';
-import { noiseMeterNavStack } from '../constants/ProviderConstant';
+import { DecibelService } from '../../services/DecibelService';
+import { DecibelRecordService } from '../../services/DecibelRecordService';
+import { navigationStack } from '../../constants/ProviderConstant';
 import { emitter } from '@kit.BasicServicesKit';
-import { AudioPlayer } from '../components/business/AudioPlayer';
-import { DecibelRecord } from '../models/DecibelRecord';
-import { FileService } from '../services/FileService';
+import { AudioPlayer } from '../../components/business/AudioPlayer';
+import { DecibelRecord } from '../../models/DecibelRecord';
+import { FileService } from '../../services/FileService';
 
 class DecibelRecordDataSource implements IDataSource {
   private records: DecibelRecord[];
@@ -63,7 +63,7 @@ function DecibelHistoryBuilder() {
 
 @ComponentV2
 export struct DecibelHistory {
-  @Consumer(noiseMeterNavStack) navStack: NavPathStack = new NavPathStack()
+  @Consumer(navigationStack) navStack: NavPathStack = new NavPathStack()
   @Param currentTabIndex: number = 0
   @Local records: DecibelRecord[] = [];
   @Local dataSource: DecibelRecordDataSource = new DecibelRecordDataSource([]);

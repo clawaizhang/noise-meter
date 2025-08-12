@@ -1,4 +1,4 @@
-import { noiseMeterNavStack } from "../constants/ProviderConstant";
+import { navigationStack } from "../../constants/ProviderConstant";
 
 @Builder
 function DecibelHistoryBuilder() {
@@ -7,7 +7,7 @@ function DecibelHistoryBuilder() {
 
 @ComponentV2
 export struct NoiseInfoDialog {
-  @Consumer(noiseMeterNavStack) pageStack: NavPathStack = new NavPathStack();
+  @Consumer(navigationStack) pageStack: NavPathStack = new NavPathStack();
 
   build() {
     NavDestination() {

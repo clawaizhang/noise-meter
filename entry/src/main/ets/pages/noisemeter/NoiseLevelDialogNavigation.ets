@@ -1,5 +1,5 @@
-import { DialogContainer } from '../components/common/DialogContainer';
-import { DecibelService, NoiseLevel } from '../services/DecibelService';
+import { DialogContainer } from '../../components/common/DialogContainer';
+import { DecibelService, NoiseLevel } from '../../services/DecibelService';
 
 const noiseLevels = DecibelService.getNoiseLevels();
 
