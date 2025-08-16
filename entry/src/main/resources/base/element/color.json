@@ -191,6 +191,18 @@
     {
       "name": "success",
       "value": "#4CAF50"
+    },
+    {
+      "name": "health_good",
+      "value": "#4CAF50"
+    },
+    {
+      "name": "health_warning",
+      "value": "#FFC107"
+    },
+    {
+      "name": "health_bad",
+      "value": "#F44336"
     }
   ]
 }

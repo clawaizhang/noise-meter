@@ -63,6 +63,26 @@
     {
       "name": "ic_security",
       "value": "安全图标"
+    },
+    {
+      "name": "device_health_title",
+      "value": "设备健康度"
+    },
+    {
+      "name": "battery_label",
+      "value": "电池"
+    },
+    {
+      "name": "cpu_label",
+      "value": "CPU"
+    },
+    {
+      "name": "memory_label",
+      "value": "内存"
+    },
+    {
+      "name": "storage_label",
+      "value": "存储"
     }
   ]
 }
