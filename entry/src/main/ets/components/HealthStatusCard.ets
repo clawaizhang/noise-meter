@@ -1,10 +1,11 @@
-import { DeviceHealthInfo } from "../types/DeviceHealthInfo"
+import { DeviceHealthInfo, ScoreHealth } from "../types/DeviceHealthInfo"
 import { LengthUnit } from "@kit.ArkUI"
 import { DeviceHealthService } from "../services/DeviceHealthService"
 
 @ComponentV2
 export struct HealthStatusCard {
-   @Local healthInfo: DeviceHealthInfo = DeviceHealthService.getInstance().getHealthInfo();
+  @Param @Require memoryUsagePercentage: number
+  @Local healthInfo: DeviceHealthInfo = DeviceHealthService.getInstance().getHealthInfo();
 
   build() {
     Flex({
@@ -48,18 +49,96 @@ export struct HealthStatusCard {
         justifyContent: FlexAlign.Center,
         alignItems: ItemAlign.Center
       }) {
-        this.HealthMetricItem($r('app.media.ic_battery'), $r('app.string.battery_label'),
-          `${this.healthInfo.battery.level}%`, this.healthInfo.battery.health)
+        Column() {
+          Image($r('app.media.ic_battery'))
+            .width(20)
+            .height(20)
+            .margin({ right: 8 })
+          Column() {
+            Text($r('app.string.battery_label'))
+              .fontSize(12)
+              .fontColor($r('app.color.text_secondary'))
+            Text(this.healthInfo.battery.level + '%')
+              .fontSize(18)
+              .fontWeight(FontWeight.Medium)
+              .fontColor(this.getMetricColor(this.healthInfo.battery.health))
+          }
+          .alignItems(HorizontalAlign.Start)
+        }
+        .padding(12)
+        .backgroundColor($r('app.color.background_secondary'))
+        .borderRadius(12)
+        .width(120)
+        .height(80)
 
-        this.HealthMetricItem($r('app.media.ic_meter'), $r('app.string.cpu_label'),
-          `${this.healthInfo.performance.cpu}%`, 100 - this.healthInfo.performance.cpu)
+        Column() {
+          Image($r('app.media.ic_meter'))
+            .width(20)
+            .height(20)
+            .margin({ right: 8 })
+          Column() {
+            Text($r('app.string.cpu_label'))
+              .fontSize(12)
+              .fontColor($r('app.color.text_secondary'))
+            Text(`${(this.healthInfo.performance.cpu).toFixed(2)}%`)
+              .fontSize(18)
+              .fontWeight(FontWeight.Medium)
+              .fontColor(this.getMetricColor(100 - this.healthInfo.performance.cpu))
+          }
+          .alignItems(HorizontalAlign.Start)
+        }
+        .padding(12)
+        .backgroundColor($r('app.color.background_secondary'))
+        .borderRadius(12)
+        .width(120)
+        .height(80)
 
-        this.HealthMetricItem($r('app.media.ic_storage'), $r('app.string.memory_label'),
-          `${this.getMemoryUsage()}%`,
-          100 - this.getMemoryUsage())
+        Column() {
+          Image($r('app.media.ic_storage'))
+            .width(20)
+            .height(20)
+            .margin({ right: 8 })
+          Column() {
+            Text($r('app.string.memory_label'))
+              .fontSize(12)
+              .fontColor($r('app.color.text_secondary'))
+            Text(`${this.memoryUsagePercentage}%`)
+              .fontSize(18)
+              .fontWeight(FontWeight.Medium)
+              .fontColor(this.getMetricColor(100 - this.memoryUsagePercentage))
+          }
+          .alignItems(HorizontalAlign.Start)
+        }
+        .padding(12)
+        .backgroundColor($r('app.color.background_secondary'))
+        .borderRadius(12)
+        .width(120)
+        .height(80)
 
-        this.HealthMetricItem($r('app.media.ic_storage'), $r('app.string.storage_label'),
-          `${this.getStorageUsage()}%`, 100 - this.getStorageUsage())
+        Column() {
+          Image($r('app.media.ic_storage'))
+            .width(20)
+            .height(20)
+            .margin({ right: 8 })
+          Column() {
+            Text($r('app.string.storage_label'))
+              .fontSize(12)
+              .fontColor($r('app.color.text_secondary'))
+            Text(`${Math.round((this.healthInfo.performance.storage.used / this.healthInfo.performance.storage.total) *
+              100)}%`)
+              .fontSize(18)
+              .fontWeight(FontWeight.Medium)
+              .fontColor(this.getMetricColor(100 -
+              Math.round((this.healthInfo.performance.storage.used / this.healthInfo.performance.storage.total) * 100)))
+          }
+          .alignItems(HorizontalAlign.Start)
+        }
+        .padding(12)
+        .backgroundColor($r('app.color.background_secondary'))
+        .borderRadius(12)
+        .width(120)
+        .height(80)
+
       }
     }
     .margin({ top: 32 })
@@ -75,21 +154,21 @@ export struct HealthStatusCard {
     .width('100%')
   }
 
-  @Builder
-  HealthMetricItem(icon: Resource, label: ResourceStr, value: string, score: number) {
+  @LocalBuilder
+  HealthMetricItem($$: ScoreHealth) {
     Column() {
-      Image(icon)
+      Image($$.icon)
         .width(20)
         .height(20)
         .margin({ right: 8 })
       Column() {
-        Text(label)
+        Text($$.label)
           .fontSize(12)
           .fontColor($r('app.color.text_secondary'))
-        Text(value)
+        Text($$.value)
           .fontSize(18)
           .fontWeight(FontWeight.Medium)
-          .fontColor(this.getMetricColor(score))
+          .fontColor(this.getMetricColor($$.score))
       }
       .alignItems(HorizontalAlign.Start)
     }
@@ -122,13 +201,16 @@ export struct HealthStatusCard {
 
   private getMemoryUsage(): number {
     const total = Number(this.healthInfo.performance.memory.totalMem);
-    const used = total - Number(this.healthInfo.performance.memory.availableMem);
-    return Math.round((used / total) * 100);
+    const used =
+      Number(this.healthInfo.performance.memory.totalMem) - Number(this.healthInfo.performance.memory.availableMem);
+    return Math.round((Number(this.healthInfo.performance.memory.totalMem) -
+      Number(this.healthInfo.performance.memory.availableMem) / Number(this.healthInfo.performance.memory.totalMem)) *
+      100);
   }
 
   private getStorageUsage(): number {
     const total = this.healthInfo.performance.storage.total;
     const used = this.healthInfo.performance.storage.used;
-    return Math.round((used / total) * 100);
+    return Math.round((this.healthInfo.performance.storage.used / this.healthInfo.performance.storage.total) * 100);
   }
 }

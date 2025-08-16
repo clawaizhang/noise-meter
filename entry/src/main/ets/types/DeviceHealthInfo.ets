@@ -39,7 +39,7 @@ export class StorageInfo {
 }
 
 @ObservedV2
-class PerformanceInfo {
+export class PerformanceInfo {
   @Trace cpu: number;
   @Trace memory: SystemMemInfo;
   @Trace storage: StorageInfo;
@@ -138,5 +138,20 @@ export class DeviceHealthInfo {
     this.sensors = sensors;
     this.score = score;
     this.lastUpdated = lastUpdated;
+  }
+}
+
+@ObservedV2
+export class ScoreHealth {
+  icon: Resource;
+  label: ResourceStr;
+  @Trace value: string;
+  @Trace score: number;
+
+  constructor(icon: Resource, label: ResourceStr, value: string, score: number) {
+    this.icon = icon;
+    this.label = label;
+    this.value = value;
+    this.score = score;
   }
 }

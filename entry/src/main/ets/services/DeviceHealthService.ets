@@ -11,7 +11,10 @@ import {
   NetworkInfo,
   NetType,
   NetworkGeneration,
-  CellularNetworkInfo
+  CellularNetworkInfo,
+  SystemMemInfo,
+  StorageInfo,
+  SensorInfo
 } from '../types/DeviceHealthInfo';
 import abilityAccessCtrl from '@ohos.abilityAccessCtrl';
 
@@ -63,47 +66,26 @@ export class DeviceHealthService {
   }
 
   private getDefaultHealthInfo(): DeviceHealthInfo {
-    return {
-      battery: {
-        level: 0,
-        health: 100,
-        temperature: 25,
-        status: 'unknown'
-      },
-      performance: {
-        cpu: 0,
-        memory: { totalMem: 0n, freeMem: 0n, availableMem: 0n },
-        storage: { total: 0, used: 0, free: 0 }
-      },
-      network: {
-        isConnected: false,
-        type: 'none',
-        signalStrength: 0,
-        networkGeneration: 'unknown',
-        downloadSpeed: 0,
-        uploadSpeed: 0,
-        latency: 0,
-        packetLoss: 0,
-        isMetered: false,
-        isBlocked: false,
-        is5GReady: false
-      },
-      sensors: { status: 'normal' },
-      score: 100,
-      lastUpdated: new Date().toISOString()
-    };
+    return new DeviceHealthInfo(
+      new BatteryInfo(0, 100, 0, 'unknown'),
+      new PerformanceInfo(0, new SystemMemInfo(0n, 0n, 0n), new StorageInfo(0, 0, 0)),
+      new NetworkInfo(false, 'none', 0, 0, 0, 0, 0, false, false, false),
+      new SensorInfo('normal'),
+      0,
+      '',
+    );
+
   }
 
   public async updateHealthInfo(): Promise<void> {
     console.log('[DeviceHealthService] Updating health info...');
     // 获取电池信息
-    this.healthInfo.battery = {
-      level: batteryInfo.batterySOC,
-      health: batteryInfo.healthStatus === batteryInfo.BatteryHealthState.GOOD ? 100 :
-        batteryInfo.healthStatus === batteryInfo.BatteryHealthState.OVERHEAT ? 60 : 30,
-      temperature: batteryInfo.batteryTemperature,
-      status: batteryInfo.chargingStatus === batteryInfo.BatteryChargeState.ENABLE ? 'charging' : 'discharging'
-    };
+    this.healthInfo.battery.level = batteryInfo.batterySOC;
+    this.healthInfo.battery.health = batteryInfo.healthStatus === batteryInfo.BatteryHealthState.GOOD ? 100 :
+      batteryInfo.healthStatus === batteryInfo.BatteryHealthState.OVERHEAT ? 60 : 30;
+    this.healthInfo.battery.temperature = batteryInfo.batteryTemperature;
+    this.healthInfo.battery.status =
+      batteryInfo.chargingStatus === batteryInfo.BatteryChargeState.ENABLE ? 'charging' : 'discharging';
 
     // 获取性能数据
     setTimeout(async () => {
@@ -182,7 +164,12 @@ export class DeviceHealthService {
     };
 
     const batteryScore = this.healthInfo.battery.health * 0.01;
+    console.log('[DeviceHealthService] Battery score:', batteryScore);
     const cpuScore = 1 - (this.healthInfo.performance.cpu / 100);
+    console.log('[DeviceHealthService] CPU score:', cpuScore);
+    console.log('[DeviceHealthService] availableMem Memory usage:', this.healthInfo.performance.memory.availableMem);
+    console.log('[DeviceHealthService] totalMem Memory usage:', this.healthInfo.performance.memory.totalMem);
+    console.log('[DeviceHealthService] Storage usage:', this.healthInfo.performance.storage.free);
     const memoryScore = Number(this.healthInfo.performance.memory.availableMem) /
     Number(this.healthInfo.performance.memory.totalMem);
 
@@ -190,13 +177,16 @@ export class DeviceHealthService {
       (this.networkHealthScore / 100) * 0.5 +
         (this.healthInfo.network.signalStrength / 4) * 0.3 +
         (1 - this.healthInfo.network.packetLoss / 100) * 0.2;
-
+    console.log('[DeviceHealthService] Network score:', networkScore)
+    console.log('[DeviceHealthService] Memory score:', memoryScore)
     this.healthInfo.score = Math.round((
       batteryScore * weights.battery +
         (cpuScore * 0.6 + memoryScore * 0.4) * weights.performance +
         networkScore * weights.network +
         (this.healthInfo.sensors.status === 'normal' ? 1 : 0.5) * weights.sensors
     ) * 100);
+
+    console.log('[DeviceHealthService] Calculating health score...', this.healthInfo.score);
   }
 
   private registerNetworkListener(): void {
@@ -226,22 +216,20 @@ export class DeviceHealthService {
     console.log('[DeviceHealthService] Updating network info...');
     try {
       const netHandle = connection.getDefaultNetSync();
-      const connProperties = connection.getConnectionPropertiesSync(netHandle);
       const cellularInfo = await this.getCellularNetworkInfo();
 
-      this.healthInfo.network = {
-        isConnected: netCap?.networkCap?.includes(connection.NetCap.NET_CAPABILITY_INTERNET) ?? false,
-        type: this.mapNetType(netCap?.bearerTypes[0]),
-        signalStrength: cellularInfo.signalStrength,
-        networkGeneration: cellularInfo.generation,
-        downloadSpeed: netCap?.linkDownBandwidthKbps || 0,
-        uploadSpeed: netCap?.linkUpBandwidthKbps || 0,
-        latency: 55,
-        packetLoss: 0,
-        isMetered: connection.isDefaultNetMeteredSync(),
-        isBlocked: this.healthInfo.network.isBlocked,
-        is5GReady: cellularInfo.is5GReady
-      };
+      this.healthInfo.network.isConnected =
+        netCap?.networkCap?.includes(connection.NetCap.NET_CAPABILITY_INTERNET) ?? false;
+      this.healthInfo.network.type = this.mapNetType(netCap?.bearerTypes[0]);
+      this.healthInfo.network.signalStrength = cellularInfo.signalStrength;
+      this.healthInfo.network.networkGeneration = cellularInfo.generation;
+      this.healthInfo.network.downloadSpeed = netCap?.linkDownBandwidthKbps || 0;
+      this.healthInfo.network.uploadSpeed = netCap?.linkUpBandwidthKbps || 0;
+      this.healthInfo.network.latency = 55;
+      this.healthInfo.network.packetLoss = 0;
+      this.healthInfo.network.isMetered = connection.isDefaultNetMeteredSync();
+      this.healthInfo.network.isBlocked = this.healthInfo.network.isBlocked;
+      this.healthInfo.network.is5GReady = cellularInfo.is5GReady;
 
       this.calculateHealthScore();
       this.emitUpdate();
@@ -269,19 +257,11 @@ export class DeviceHealthService {
       const radioTech = radio.getRadioTechSync(slotId);
       const signalInfo = radio.getSignalInformationSync(slotId);
       const is5GSupported = radio.isNRSupported(slotId);
-
-      return {
-        generation: this.mapGeneration(radioTech.psRadioTech),
-        signalStrength: this.getMaxSignalLevel(signalInfo),
-        is5GReady: is5GSupported && radioTech.psRadioTech === radio.RadioTechnology.RADIO_TECHNOLOGY_NR
-      };
+      return new CellularNetworkInfo(this.mapGeneration(radioTech.psRadioTech),
+        this.getMaxSignalLevel(signalInfo), is5GSupported);
     } catch (error) {
       console.error('Get cellular network info failed:', error);
-      return {
-        generation: '4g',
-        signalStrength: 0,
-        is5GReady: false
-      };
+      return new CellularNetworkInfo('4g', 0, false);
     }
   }
 

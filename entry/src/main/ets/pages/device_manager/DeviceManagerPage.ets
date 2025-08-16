@@ -72,6 +72,16 @@ export struct DeviceManagerPage {
     if (this.memoryInfo) {
       const usedMem = Number(this.memoryInfo.totalMem - this.memoryInfo.availableMem);
       const totalMem = Number(this.memoryInfo.totalMem);
+      DeviceHealthService.getInstance()
+        .getHealthInfo()
+        .performance
+        .memory
+        .availableMem = this.memoryInfo.availableMem;
+      DeviceHealthService.getInstance()
+        .getHealthInfo()
+        .performance
+        .memory
+        .totalMem = this.memoryInfo.totalMem;
       this.usagePercent = Number((usedMem / totalMem * 100).toFixed(1));
       this.progressColor = this.usagePercent > 80 ? '#FF4D4F' :
         this.usagePercent > 60 ? '#FAAD14' : '#52C41A';
@@ -188,7 +198,7 @@ export struct DeviceManagerPage {
   build() {
     Column() {
       // 健康度卡片
-      HealthStatusCard()
+      HealthStatusCard({ memoryUsagePercentage: this.usagePercent })
 
       // 设备状态卡片
       Column() {
