@@ -44,11 +44,91 @@ export struct HealthStatusCard {
       // 详细指标 - 环形进度条布局
       Flex({
         wrap: FlexWrap.Wrap,
-        space: { main: { value: 24, unit: LengthUnit.VP }, cross: { value: 24, unit: LengthUnit.VP } },
+        space: { main: { value: 8, unit: LengthUnit.VP }, cross: { value: 8, unit: LengthUnit.VP } },
         alignContent: FlexAlign.Center,
         justifyContent: FlexAlign.Center,
         alignItems: ItemAlign.Center
       }) {
+        // 网络质量
+        Stack() {
+          Progress({
+            value: this.healthInfo.network.signalStrength * 25,
+            type: ProgressType.Ring
+          })
+            .width(120)
+            .height(120)
+            .style({
+              strokeWidth: 12,
+              scaleWidth: 4,
+            })
+            .color(this.getMetricColor(this.healthInfo.network.signalStrength * 25))
+            .backgroundColor($r('app.color.background_tertiary'))
+            .animation({
+              duration: 1000,
+              curve: Curve.EaseOut
+            })
+
+          Column() {
+            Image($r('app.media.ic_security'))
+              .width(16)
+              .height(16)
+              .margin({ bottom: 4 })
+            Text($r('app.string.network_label'))
+              .fontSize(10)
+              .fontColor($r('app.color.text_secondary'))
+            Text(`${this.healthInfo.network.signalStrength}/4`)
+              .fontSize(14)
+              .fontWeight(FontWeight.Medium)
+              .fontColor(this.getMetricColor(this.healthInfo.network.signalStrength * 25))
+          }
+        }
+        .width(120)
+        .height(120)
+
+        // 传感器状态
+        Stack() {
+          Progress({
+            value: this.healthInfo.sensors.status === 'normal' ? 100 :
+                   this.healthInfo.sensors.status === 'warning' ? 60 : 30,
+            type: ProgressType.Ring
+          })
+            .width(120)
+            .height(120)
+            .style({
+              strokeWidth: 12,
+              scaleWidth: 4,
+            })
+            .color(this.getMetricColor(
+              this.healthInfo.sensors.status === 'normal' ? 100 :
+              this.healthInfo.sensors.status === 'warning' ? 60 : 30
+            ))
+            .backgroundColor($r('app.color.background_tertiary'))
+            .animation({
+              duration: 1000,
+              curve: Curve.EaseOut
+            })
+
+          Column() {
+            Image($r('app.media.ic_meter'))
+              .width(16)
+              .height(16)
+              .margin({ bottom: 4 })
+            Text($r('app.string.sensors_label'))
+              .fontSize(10)
+              .fontColor($r('app.color.text_secondary'))
+            Text(this.healthInfo.sensors.status === 'normal' ? '正常' :
+                 this.healthInfo.sensors.status === 'warning' ? '警告' : '错误')
+              .fontSize(14)
+              .fontWeight(FontWeight.Medium)
+              .fontColor(this.getMetricColor(
+                this.healthInfo.sensors.status === 'normal' ? 100 :
+                this.healthInfo.sensors.status === 'warning' ? 60 : 30
+              ))
+          }
+        }
+        .width(120)
+        .height(120)
+
         // 电池健康度
         Stack() {
           Progress({

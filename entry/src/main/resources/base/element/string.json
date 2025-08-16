@@ -83,6 +83,14 @@
     {
       "name": "storage_label",
       "value": "可用存储"
+    },
+    {
+      "name": "network_label",
+      "value": "网络质量"
+    },
+    {
+      "name": "sensors_label",
+      "value": "传感器状态"
     }
   ]
 }
