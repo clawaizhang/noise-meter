@@ -42,7 +42,6 @@ export struct DeviceManagerPage {
   @Local rotateAngle: number = 0;
   @Local usagePercent: number = 0;
   @Local progressColor: string = '#52C41A';
-  @Local healthInfo: DeviceHealthInfo = DeviceHealthService.getInstance().getHealthInfo();
 
   aboutToAppear() {
     this.getSystemMemoryInfo();
@@ -53,11 +52,6 @@ export struct DeviceManagerPage {
     // 动画效果
     animateTo({ duration: 1000 }, () => {
       this.rotateAngle = 360;
-    });
-
-    // 健康度数据更新监听
-    DeviceHealthService.getInstance().registerUpdateListener((score: number) => {
-      this.healthInfo = DeviceHealthService.getInstance().getHealthInfo();
     });
   }
 
@@ -194,18 +188,7 @@ export struct DeviceManagerPage {
   build() {
     Column() {
       // 健康度卡片
-      HealthStatusCard({ healthInfo: this.healthInfo })
-
-      // 手动刷新按钮
-      Button('手动刷新')
-        .onClick(() => {
-          DeviceHealthService.getInstance().updateHealthInfo();
-          this.healthInfo = DeviceHealthService.getInstance().getHealthInfo();
-        })
-        .width('50%')
-        .margin(10)
-        .backgroundColor($r('app.color.primary'))
-        .fontColor(Color.White)
+      HealthStatusCard()
 
       // 设备状态卡片
       Column() {

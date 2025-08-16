@@ -1,9 +1,10 @@
 import { DeviceHealthInfo } from "../types/DeviceHealthInfo"
 import { LengthUnit } from "@kit.ArkUI"
+import { DeviceHealthService } from "../services/DeviceHealthService"
 
 @ComponentV2
 export struct HealthStatusCard {
-  @Param @Require healthInfo: DeviceHealthInfo
+   @Local healthInfo: DeviceHealthInfo = DeviceHealthService.getInstance().getHealthInfo();
 
   build() {
     Flex({

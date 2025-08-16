@@ -38,10 +38,6 @@ interface NetworkQosExtended extends netQuality.NetworkQos {
   weakSignalPrediction?: WeakSignalPrediction;
 }
 
-interface weakSignalPredictionObj {
-  weakSignalPrediction?: WeakSignalPrediction;
-}
-
 export class DeviceHealthService {
   private static instance: DeviceHealthService;
   private healthInfo: DeviceHealthInfo;
