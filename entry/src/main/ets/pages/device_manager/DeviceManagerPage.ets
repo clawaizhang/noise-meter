@@ -49,12 +49,12 @@ export struct DeviceManagerPage {
     setInterval(() => {
       this.getSystemMemoryInfo();
     }, 5000);
-    
+
     // 动画效果
     animateTo({ duration: 1000 }, () => {
       this.rotateAngle = 360;
     });
-    
+
     // 健康度数据更新监听
     DeviceHealthService.getInstance().registerUpdateListener((score: number) => {
       this.healthInfo = DeviceHealthService.getInstance().getHealthInfo();
@@ -73,14 +73,14 @@ export struct DeviceManagerPage {
       freeMem: rawData.freeMem,
       availableMem: rawData.availableMem
     };
-    
+
     // 计算初始值
     if (this.memoryInfo) {
       const usedMem = Number(this.memoryInfo.totalMem - this.memoryInfo.availableMem);
       const totalMem = Number(this.memoryInfo.totalMem);
       this.usagePercent = Number((usedMem / totalMem * 100).toFixed(1));
       this.progressColor = this.usagePercent > 80 ? '#FF4D4F' :
-                         this.usagePercent > 60 ? '#FAAD14' : '#52C41A';
+        this.usagePercent > 60 ? '#FAAD14' : '#52C41A';
     }
   }
 
@@ -90,7 +90,7 @@ export struct DeviceManagerPage {
       Image(icon)
         .width(20)
         .height(20)
-        .margin({right: 8})
+        .margin({ right: 8 })
       Text(label)
         .fontSize(14)
         .layoutWeight(1)
@@ -99,7 +99,7 @@ export struct DeviceManagerPage {
         .fontColor('#1890FF')
     }
     .width('100%')
-    .margin({bottom: 12})
+    .margin({ bottom: 12 })
   }
 
   @Builder
@@ -111,14 +111,14 @@ export struct DeviceManagerPage {
           Image($r('app.media.ic_storage'))
             .width(24)
             .height(24)
-            .margin({right: 8})
+            .margin({ right: 8 })
           Text('内存使用情况')
             .fontSize(18)
             .fontWeight(FontWeight.Bold)
         }
         .width('100%')
         .justifyContent(FlexAlign.Start)
-        .margin({bottom: 12})
+        .margin({ bottom: 12 })
 
         // 内存卡片
         Column() {
@@ -128,14 +128,14 @@ export struct DeviceManagerPage {
               value: this.usagePercent,
               type: ProgressType.Ring,
             })
-            .width(80)
-            .height(80)
-            .style({
-              strokeWidth: 8,
-            })
+              .width(80)
+              .height(80)
+              .style({
+                strokeWidth: 8,
+              })
               .backgroundColor('#F5F5F5')
               .color(this.progressColor)
-            .rotate({angle: this.rotateAngle})
+              .rotate({ angle: this.rotateAngle })
 
             Column() {
               Text(`${this.usagePercent}%`)
@@ -146,12 +146,14 @@ export struct DeviceManagerPage {
                 .fontColor('#666')
             }
           }
-          .margin({top: 8, bottom: 12})
+          .margin({ top: 8, bottom: 12 })
 
           // 内存详情
           Column() {
             this.MemoryDetailItem('可用内存', formatMemory(this.memoryInfo.availableMem), $r('app.media.ic_security'))
-            this.MemoryDetailItem('已使用', formatMemory(BigInt(Number(this.memoryInfo.totalMem - this.memoryInfo.availableMem))), $r('app.media.ic_battery'))
+            this.MemoryDetailItem('已使用',
+              formatMemory(BigInt(Number(this.memoryInfo.totalMem - this.memoryInfo.availableMem))),
+              $r('app.media.ic_battery'))
             this.MemoryDetailItem('总内存', formatMemory(this.memoryInfo.totalMem), $r('app.media.ic_storage'))
           }
           .width('100%')
@@ -159,7 +161,12 @@ export struct DeviceManagerPage {
         .padding(8)
         .borderRadius(8)
         .backgroundColor('#FFF')
-        .shadow({radius: 6, color: '#00000010', offsetX: 0, offsetY: 2})
+        .shadow({
+          radius: 6,
+          color: '#00000010',
+          offsetX: 0,
+          offsetY: 2
+        })
       }
       .width('100%')
       .padding(16)
@@ -172,7 +179,7 @@ export struct DeviceManagerPage {
       Image(icon)
         .width(20)
         .height(20)
-        .margin({right: 8})
+        .margin({ right: 8 })
       Text(label)
         .fontSize(14)
         .layoutWeight(1)
@@ -181,14 +188,14 @@ export struct DeviceManagerPage {
         .fontColor('#1890FF')
     }
     .width('100%')
-    .margin({bottom: 12})
+    .margin({ bottom: 12 })
   }
 
   build() {
     Column() {
       // 健康度卡片
       HealthStatusCard({ healthInfo: this.healthInfo })
-      
+
       // 手动刷新按钮
       Button('手动刷新')
         .onClick(() => {
@@ -199,30 +206,10 @@ export struct DeviceManagerPage {
         .margin(10)
         .backgroundColor($r('app.color.primary'))
         .fontColor(Color.White)
-        
+
       // 设备状态卡片
       Column() {
-        Row() {
-          Text('设备状态')
-            .cardTitleStyle()
-          Blank()
-          Text('良好')
-            .fontSize(14)
-            .fontColor($r('app.color.success'))
-        }
-        .width('100%')
-
-        Divider()
-          .strokeWidth(1)
-          .color($r('app.color.divider'))
-
-        Row() {
-
-          Column() {
-            this.buildMemoryInfo()
-          }
-        }
-        .margin({ top: 12 })
+        this.buildMemoryInfo()
       }
       .width('90%')
       .padding(16)
