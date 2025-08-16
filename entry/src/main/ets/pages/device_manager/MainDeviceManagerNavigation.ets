@@ -3,7 +3,7 @@ import { PreferenceService } from '../../services/PreferenceService'
 import { DeviceManagerPage } from './DeviceManagerPage'
 import { ScreenshotUtils } from '../../utils/ScreenshotUtils'
 import { common } from '@kit.AbilityKit'
-import { Settings } from '../../components/Settings'
+import { SettingsDeviceManager } from '../../components/SettingsDeviceManager'
 
 @Builder
 export function DeviceManagerBuilder() {
@@ -104,7 +104,7 @@ export struct MainDeviceManager {
 
 
         TabContent() {
-          Settings()
+          SettingsDeviceManager()
         }
         .tabBar(this.TabBuilder('设置', $r('app.media.ic_settings'), 2))
       }

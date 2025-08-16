@@ -109,9 +109,29 @@ export struct DeviceManagerPage {
               .gridItemTextStyle()
           }
         }
+
+        GridItem() {
+          Column() {
+            Image($r('app.media.ic_security'))
+              .width(32)
+              .height(32)
+            Text('安全中心')
+              .gridItemTextStyle()
+          }
+        }
+
+        GridItem() {
+          Column() {
+            Image($r('app.media.ic_security'))
+              .width(32)
+              .height(32)
+            Text('安全中心')
+              .gridItemTextStyle()
+          }
+        }
       }
-      .columnsTemplate('1fr 1fr')
-      .rowsTemplate('1fr 1fr')
+      .columnsTemplate('1fr 1fr 1fr')
+      .rowsTemplate('1fr 1fr 1fr')
       .columnsGap(12)
       .rowsGap(12)
       .width('90%')
