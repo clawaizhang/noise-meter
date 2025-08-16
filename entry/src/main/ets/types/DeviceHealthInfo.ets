@@ -1,62 +1,142 @@
-export interface BatteryInfo {
-  level: number;
-  health: number;
-  temperature: number;
-  status: 'charging'|'discharging'|'full'|'unknown';
+@ObservedV2
+export class BatteryInfo {
+  @Trace level: number;
+  @Trace health: number;
+  @Trace temperature: number;
+  @Trace status: 'charging' | 'discharging' | 'full' | 'unknown';
+
+  constructor(level: number, health: number, temperature: number,
+    status: 'charging' | 'discharging' | 'full' | 'unknown') {
+    this.level = level;
+    this.health = health;
+    this.temperature = temperature;
+    this.status = status;
+  }
 }
 
-export interface SystemMemInfo {
+export class SystemMemInfo {
   totalMem: bigint;
   freeMem: bigint;
   availableMem: bigint;
+
+  constructor(totalMem: bigint, freeMem: bigint, availableMem: bigint) {
+    this.totalMem = totalMem;
+    this.freeMem = freeMem;
+    this.availableMem = availableMem;
+  }
 }
 
-export interface StorageInfo {
+export class StorageInfo {
   total: number;
   used: number;
   free: number;
+
+  constructor(total: number, used: number, free: number) {
+    this.total = total;
+    this.used = used;
+    this.free = free;
+  }
 }
 
-export interface PerformanceInfo {
-  cpu: number;
-  memory: SystemMemInfo;
-  storage: StorageInfo;
+@ObservedV2
+class PerformanceInfo {
+  @Trace cpu: number;
+  @Trace memory: SystemMemInfo;
+  @Trace storage: StorageInfo;
+
+  constructor(cpu: number, memory: SystemMemInfo, storage: StorageInfo) {
+    this.cpu = cpu;
+    this.memory = memory;
+    this.storage = storage;
+  }
 }
 
-export interface NetworkInfo {
-  isConnected: boolean;
-  type: NetType;
-  signalStrength: number; // 0-4
-  networkGeneration?: string;
-  downloadSpeed: number; // kbps
-  uploadSpeed: number; // kbps
-  latency: number; // ms
-  packetLoss: number; // percentage
-  isMetered:boolean;
-  isBlocked:boolean;
-  is5GReady:boolean;
+@ObservedV2
+export class NetworkInfo {
+  @Trace isConnected: boolean;
+  @Trace type: NetType;
+  @Trace signalStrength: number; // 0-4
+  @Trace networkGeneration?: string;
+  @Trace downloadSpeed: number; // kbps
+  @Trace uploadSpeed: number; // kbps
+  @Trace latency: number; // ms
+  @Trace packetLoss: number; // percentage
+  @Trace isMetered: boolean;
+  @Trace isBlocked: boolean;
+  @Trace is5GReady: boolean;
+
+  constructor(
+    isConnected: boolean,
+    type: NetType,
+    signalStrength: number,
+    downloadSpeed: number,
+    uploadSpeed: number,
+    latency: number,
+    packetLoss: number,
+    isMetered: boolean,
+    isBlocked: boolean,
+    is5GReady: boolean,
+    networkGeneration?: string,
+  ) {
+    this.isConnected = isConnected;
+    this.type = type;
+    this.signalStrength = signalStrength;
+    this.networkGeneration = networkGeneration;
+    this.downloadSpeed = downloadSpeed;
+    this.uploadSpeed = uploadSpeed;
+    this.latency = latency;
+    this.packetLoss = packetLoss;
+    this.isMetered = isMetered;
+    this.isBlocked = isBlocked;
+    this.is5GReady = is5GReady;
+  }
 }
 
 export type NetworkGeneration = '2g' | '3g' | '4g' | '5g' | 'unknown';
-export type NetType =  'wifi' | 'cellular' | 'ethernet' | 'none';
 
-export interface CellularNetworkInfo {
+export type NetType = 'wifi' | 'cellular' | 'ethernet' | 'none';
+
+export class CellularNetworkInfo {
   generation: NetworkGeneration;
   signalStrength: number;
   is5GReady: boolean;
-  latency?: number;  // 新增网络延迟指标
+  latency?: number; // 新增网络延迟指标
   quality?: 'excellent' | 'good' | 'fair' | 'poor'; // 新增质量评级
+  constructor(generation: NetworkGeneration, signalStrength: number, is5GReady: boolean, latency?: number,
+    quality?: 'excellent' | 'good' | 'fair' | 'poor') {
+    this.generation = generation;
+    this.signalStrength = signalStrength;
+    this.is5GReady = is5GReady;
+    this.latency = latency;
+    this.quality = quality;
+  }
 }
 
-export interface SensorInfo {
-  status: 'normal'|'warning'|'error';
+@ObservedV2
+export class SensorInfo {
+  @Trace status: 'normal' | 'warning' | 'error';
+
+  constructor(status: 'normal' | 'warning' | 'error') {
+    this.status = status;
+  }
 }
 
-export interface DeviceHealthInfo {
-  battery: BatteryInfo;
-  performance: PerformanceInfo;
-  network: NetworkInfo;
-  sensors: SensorInfo;
-  score: number;
-  lastUpdated: string;
+@ObservedV2
+export class DeviceHealthInfo {
+  @Trace battery: BatteryInfo;
+  @Trace performance: PerformanceInfo;
+  @Trace network: NetworkInfo;
+  @Trace sensors: SensorInfo;
+  @Trace score: number;
+  @Trace lastUpdated: string;
+
+  constructor(battery: BatteryInfo, performance: PerformanceInfo, network: NetworkInfo, sensors: SensorInfo,
+    score: number, lastUpdated: string) {
+    this.battery = battery;
+    this.performance = performance;
+    this.network = network;
+    this.sensors = sensors;
+    this.score = score;
+    this.lastUpdated = lastUpdated;
+  }
 }

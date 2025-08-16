@@ -278,19 +278,6 @@ export struct DeviceManagerPage {
           })
         }
 
-        GridItem() {
-          Column() {
-            Image($r('app.media.ic_info'))
-              .width(32)
-              .height(32)
-            Text('测试评分')
-              .gridItemTextStyle()
-          }
-          .onClick(() => {
-            DeviceHealthService.getInstance().testScoring();
-          })
-        }
-
       }
       .columnsTemplate('1fr 1fr 1fr')
       .rowsTemplate('1fr 1fr 1fr')

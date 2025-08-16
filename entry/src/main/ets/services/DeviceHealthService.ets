@@ -46,11 +46,13 @@ export class DeviceHealthService {
   private updateCallbacks: Array<(score: number) => void> = [];
 
   private constructor() {
+    console.log('[DeviceHealthService] Initializing service...');
     this.healthInfo = this.getDefaultHealthInfo();
     this.netConnection = connection.createNetConnection();
     this.registerNetworkListener();
     this.setupNetworkQualityMonitor();
     this.startMonitoring();
+    console.log('[DeviceHealthService] Service initialized successfully');
   }
 
   public static getInstance(): DeviceHealthService {
@@ -93,6 +95,7 @@ export class DeviceHealthService {
   }
 
   public async updateHealthInfo(): Promise<void> {
+    console.log('[DeviceHealthService] Updating health info...');
     // 获取电池信息
     this.healthInfo.battery = {
       level: batteryInfo.batterySOC,
@@ -117,6 +120,7 @@ export class DeviceHealthService {
 
     this.calculateHealthScore();
     this.healthInfo.lastUpdated = new Date().toISOString();
+    console.log('[DeviceHealthService] Health info updated:', JSON.stringify(this.healthInfo));
     this.emitUpdate();
   }
 
@@ -166,6 +170,10 @@ export class DeviceHealthService {
   }
 
   private calculateHealthScore(): void {
+    console.log('[DeviceHealthService] Calculating health score...');
+    console.log('[DeviceHealthService] Current battery health:', this.healthInfo.battery.health);
+    console.log('[DeviceHealthService] Current CPU usage:', this.healthInfo.performance.cpu);
+    console.log('[DeviceHealthService] Current network score:', this.networkHealthScore);
     const weights: HealtyWeight = {
       battery: 0.3,
       performance: 0.4,
@@ -192,6 +200,7 @@ export class DeviceHealthService {
   }
 
   private registerNetworkListener(): void {
+    console.log('[DeviceHealthService] Registering network listener...');
     this.netConnection.register((err: BusinessError) => {
       if (err) {
         console.error('注册网络监听器失败:', err);
@@ -209,10 +218,12 @@ export class DeviceHealthService {
   }
 
   private startMonitoring(): void {
+    console.log('[DeviceHealthService] Starting health monitoring with 5s interval');
     setInterval(() => this.updateHealthInfo(), 5000);
   }
 
   private async updateNetworkInfo(netCap?: connection.NetCapabilities): Promise<void> {
+    console.log('[DeviceHealthService] Updating network info...');
     try {
       const netHandle = connection.getDefaultNetSync();
       const connProperties = connection.getConnectionPropertiesSync(netHandle);
@@ -293,13 +304,6 @@ export class DeviceHealthService {
     }
   }
 
-  private calculateLatencyStatus(rtt: number): string {
-    if (rtt < 50) return 'excellent';
-    if (rtt < 100) return 'good';
-    if (rtt < 200) return 'fair';
-    return 'poor';
-  }
-
   private getMaxSignalLevel(signals: radio.SignalInformation[]): number {
     return signals.reduce((max, signal) =>
     Math.max(max, signal.signalLevel), 0);
@@ -320,12 +324,9 @@ export class DeviceHealthService {
   }
 
   private emitUpdate(): void {
+    console.log('[DeviceHealthService] Emitting update with score:', this.healthInfo.score);
+    console.log('[DeviceHealthService] Number of registered callbacks:', this.updateCallbacks.length);
     this.updateCallbacks.forEach(cb => cb(this.healthInfo.score));
-  }
-
-  // 保留原有测试方法
-  public testScoring(): void {
-    // ...原有测试代码...
   }
 
   private adjustDataStrategy(reason: string): void {
