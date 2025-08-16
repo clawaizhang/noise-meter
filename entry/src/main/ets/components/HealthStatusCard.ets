@@ -57,7 +57,7 @@ export struct HealthStatusCard {
   }
 
   @Builder
-  HealthMetricItem(label: string, value: string, score: number) {
+  HealthMetricItem(label: ResourceStr, value: string, score: number) {
     Column() {
       Text(label)
         .fontSize(14)

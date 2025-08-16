@@ -24,8 +24,16 @@ export interface PerformanceInfo {
 }
 
 export interface NetworkInfo {
-  latency: number;
-  packetLoss: number;
+  isConnected: boolean;
+  type: 'wifi' | 'cellular' | 'ethernet' | 'none';
+  signalStrength: number; // 0-4
+  networkGeneration?: string;
+  downloadSpeed: number; // kbps
+  uploadSpeed: number; // kbps
+  latency: number; // ms
+  packetLoss: number; // percentage
+  isMetered:boolean;
+  isBlocked:boolean;
 }
 
 export interface SensorInfo {

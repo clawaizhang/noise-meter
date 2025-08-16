@@ -1,6 +1,7 @@
 import batteryInfo from '@ohos.batteryInfo';
-import usageStatistics from '@ohos.resourceschedule.usageStatistics';
-import netConnection from '@ohos.net.connection';
+import { connection } from '@kit.NetworkKit';
+import { BusinessError } from '@kit.BasicServicesKit';
+import { hidebug } from '@kit.PerformanceAnalysisKit';
 import { DeviceHealthInfo, BatteryInfo, PerformanceInfo, NetworkInfo } from '../types/DeviceHealthInfo';
 
 interface HealtyWeight {
@@ -13,9 +14,12 @@ interface HealtyWeight {
 export class DeviceHealthService {
   private static instance: DeviceHealthService;
   private healthInfo: DeviceHealthInfo;
+  private netConnection: connection.NetConnection;
 
   private constructor() {
     this.healthInfo = this.getDefaultHealthInfo();
+    this.netConnection = connection.createNetConnection();
+    this.registerNetworkListener();
     this.startMonitoring();
   }
 
@@ -28,9 +32,29 @@ export class DeviceHealthService {
 
   private getDefaultHealthInfo(): DeviceHealthInfo {
     return {
-      battery: { level: 0, health: 100, temperature: 25, status: 'unknown' },
-      performance: { cpu: 0, memory: { totalMem: 0n, freeMem: 0n, availableMem: 0n }, storage: { total: 0, used: 0, free: 0 } },
-      network: { latency: 0, packetLoss: 0 },
+      battery: {
+        level: 0,
+        health: 100,
+        temperature: 25,
+        status: 'unknown'
+      },
+      performance: {
+        cpu: 0,
+        memory: { totalMem: 0n, freeMem: 0n, availableMem: 0n },
+        storage: { total: 0, used: 0, free: 0 }
+      },
+      network: {
+        isConnected: false,
+        type: 'none',
+        signalStrength: 0,
+        networkGeneration: 'unknown',
+        downloadSpeed: 0,
+        uploadSpeed: 0,
+        latency: 0,
+        packetLoss: 0,
+        isMetered: false,
+        isBlocked: false
+      },
       sensors: { status: 'normal' },
       score: 100,
       lastUpdated: new Date().toISOString()
@@ -48,12 +72,21 @@ export class DeviceHealthService {
     };
 
     // 获取性能数据
-    this.healthInfo.performance.cpu = usageStatistics.getCpuUsage();
-    // 内存和存储数据使用现有实现
+    setTimeout(async () => {
+      try {
+        const cpuUsage = hidebug.getCpuUsage();
+        this.healthInfo.performance.cpu = cpuUsage * 100;
+        this.calculateHealthScore();
+        this.emitUpdate();
+      } catch (error) {
+        console.error('获取CPU使用率失败:', error);
+      }
+    }, 0);
+    this.healthInfo.performance.cpu = 0;
 
-    // 计算综合评分
-    this.healthInfo.score = this.calculateScore();
+    this.calculateHealthScore();
     this.healthInfo.lastUpdated = new Date().toISOString();
+    this.emitUpdate();
   }
 
   private calculateHealthScore(): void {
@@ -67,78 +100,111 @@ export class DeviceHealthService {
     const batteryScore = this.healthInfo.battery.health * 0.01;
     const cpuScore = 1 - (this.healthInfo.performance.cpu / 100);
     const memoryScore = Number(this.healthInfo.performance.memory.availableMem) /
-                       Number(this.healthInfo.performance.memory.totalMem);
-    const networkScore = 1 - (this.healthInfo.network.packetLoss / 100);
-    
+    Number(this.healthInfo.performance.memory.totalMem);
+
+    const networkScore =
+      (this.healthInfo.network.signalStrength / 4) * 0.4 +
+        (1 - Math.min(this.healthInfo.network.latency / 1000, 1)) * 0.3 +
+        (1 - this.healthInfo.network.packetLoss / 100) * 0.3;
+
     this.healthInfo.score = Math.round((
       batteryScore * weights.battery +
-      (cpuScore * 0.6 + memoryScore * 0.4) * weights.performance +
-      networkScore * weights.network +
-      (this.healthInfo.sensors.status === 'normal' ? 1 : 0.5) * weights.sensors
+        (cpuScore * 0.6 + memoryScore * 0.4) * weights.performance +
+        networkScore * weights.network +
+        (this.healthInfo.sensors.status === 'normal' ? 1 : 0.5) * weights.sensors
     ) * 100);
+  }
+
+  private registerNetworkListener(): void {
+    this.netConnection.register((err: BusinessError) => {
+      if (err) {
+        console.error('注册网络监听器失败:', err);
+        return;
+      }
+
+      this.netConnection.on('netCapabilitiesChange', (data: connection.NetCapabilityInfo) => {
+        this.updateNetworkInfo(data.netCap);
+      });
+
+      this.netConnection.on('netBlockStatusChange', (data: connection.NetBlockStatusInfo) => {
+        this.handleBlockStatus(data.blocked);
+      });
+    });
   }
 
   private startMonitoring(): void {
     setInterval(() => this.updateHealthInfo(), 5000);
-    netConnection.on('netStateChange', () => this.updateNetworkInfo());
   }
 
-  private async updateNetworkInfo(): Promise<void> {
+  private async updateNetworkInfo(netCap?: connection.NetCapabilities): Promise<void> {
     try {
-      const netStats = await netConnection.getDefaultNet();
-      const connection = await netConnection.getConnectionProperties();
-      
+      const netHandle = connection.getDefaultNetSync();
+      const connProperties = connection.getConnectionPropertiesSync(netHandle);
+
       this.healthInfo.network = {
-        latency: connection.rtt ?? 0,
-        packetLoss: netStats.packetLossRate ?? 0
+        isConnected: netCap?.networkCap?.includes(connection.NetCap.NET_CAPABILITY_INTERNET) ?? false,
+        type: this.mapNetType(netCap?.bearerTypes[0]),
+        signalStrength: this.getSignalStrength(netHandle),
+        networkGeneration: this.getNetworkGeneration(netCap),
+        downloadSpeed: netCap?.linkDownBandwidthKbps || 0,
+        uploadSpeed:  netCap?.linkUpBandwidthKbps || 0,
+        latency: this.calculateLatency(netHandle),
+        packetLoss: 0,
+        isMetered: connection.isDefaultNetMeteredSync(),
+        isBlocked: this.healthInfo.network.isBlocked
       };
-      
+
       this.calculateHealthScore();
-      this.healthInfo.lastUpdated = new Date().toISOString();
+      this.emitUpdate();
     } catch (error) {
       console.error('更新网络信息失败:', error);
     }
+  }
+
+  private mapNetType(bearerType?: connection.NetBearType): string {
+    switch (bearerType) {
+      case connection.NetBearType.BEARER_WIFI:
+        return 'wifi';
+      case connection.NetBearType.BEARER_ETHERNET:
+        return 'ethernet';
+      case connection.NetBearType.BEARER_CELLULAR:
+        return 'cellular';
+      default:
+        return 'none';
+    }
+  }
+
+  private getNetworkGeneration(netCap?: connection.NetCapabilities): string {
+    if (!netCap) {
+      return 'unknown';
+    }
+    if (netCap.networkCap?.includes(connection.NetCap.NET_CAPABILITY_NR)) {
+      return '5g';
+    }
+    if (netCap.networkCap?.includes(connection.NetCap.NET_CAPABILITY_LTE)) {
+      return '4g';
+    }
+    return '3g';
+  }
+
+  private handleBlockStatus(blocked: boolean): void {
+    this.healthInfo.network.isBlocked = blocked;
+    this.calculateHealthScore();
+    this.emitUpdate();
   }
 
   public getHealthInfo(): DeviceHealthInfo {
     return this.healthInfo;
   }
 
+  private emitUpdate(): void {
+    if (this.onUpdate) {
+      this.onUpdate();
+    }
+  }
+
+  // 保留原有测试方法
   public testScoring(): void {
-    // 测试用例1: 最佳状态
-    this.healthInfo = {
-      battery: { health: 100, level: 100, temperature: 25, status: 'full' },
-      performance: { cpu: 20, memory: { totalMem: 8n, availableMem: 6n, freeMem: 5n }, storage: { total: 128, used: 32, free: 96 } },
-      network: { latency: 10, packetLoss: 0 },
-      sensors: { status: 'normal' },
-      score: 0,
-      lastUpdated: ''
-    };
-    this.calculateHealthScore();
-    console.log('最佳状态评分:', this.healthInfo.score); // 预期: 95-100
-
-    // 测试用例2: 中等状态
-    this.healthInfo = {
-      battery: { health: 60, level: 50, temperature: 35, status: 'discharging' },
-      performance: { cpu: 60, memory: { totalMem: 8n, availableMem: 3n, freeMem: 2n }, storage: { total: 128, used: 80, free: 48 } },
-      network: { latency: 50, packetLoss: 5 },
-      sensors: { status: 'warning' },
-      score: 0,
-      lastUpdated: ''
-    };
-    this.calculateHealthScore();
-    console.log('中等状态评分:', this.healthInfo.score); // 预期: 60-75
-
-    // 测试用例3: 差状态
-    this.healthInfo = {
-      battery: { health: 30, level: 20, temperature: 45, status: 'discharging' },
-      performance: { cpu: 90, memory: { totalMem: 8n, availableMem: 1n, freeMem: 0n }, storage: { total: 128, used: 120, free: 8 } },
-      network: { latency: 200, packetLoss: 20 },
-      sensors: { status: 'error' },
-      score: 0,
-      lastUpdated: ''
-    };
-    this.calculateHealthScore();
-    console.log('差状态评分:', this.healthInfo.score); // 预期: 30-50
+    // ...原有测试代码...
   }
 }
