@@ -171,7 +171,7 @@ export class DeviceHealthService {
     console.log('[DeviceHealthService] totalMem Memory usage:', this.healthInfo.performance.memory.totalMem);
     console.log('[DeviceHealthService] Storage usage:', this.healthInfo.performance.storage.free);
     const memoryScore = Number(this.healthInfo.performance.memory.availableMem) /
-    Number(this.healthInfo.performance.memory.totalMem);
+    Number(this.healthInfo.performance.memory.totalMem) / 0.2;
 
     const networkScore =
       (this.networkHealthScore / 100) * 0.5 +

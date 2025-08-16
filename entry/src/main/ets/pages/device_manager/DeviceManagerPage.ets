@@ -82,7 +82,11 @@ export struct DeviceManagerPage {
         .performance
         .memory
         .totalMem = this.memoryInfo.totalMem;
-      this.usagePercent = Number((usedMem / totalMem * 100).toFixed(1));
+      let usageString = (usedMem / totalMem * 100).toFixed(1);
+      if (usageString.includes(".")) {
+        usageString = usageString.substring(0, usageString.indexOf("."));
+      }
+      this.usagePercent = Number(usageString);
       this.progressColor = this.usagePercent > 80 ? '#FF4D4F' :
         this.usagePercent > 60 ? '#FAAD14' : '#52C41A';
     }

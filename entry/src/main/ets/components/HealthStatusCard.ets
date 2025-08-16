@@ -41,103 +41,161 @@ export struct HealthStatusCard {
       .width('100%')
       .height(140)
 
-      // 详细指标
+      // 详细指标 - 环形进度条布局
       Flex({
         wrap: FlexWrap.Wrap,
-        space: { main: { value: 16, unit: LengthUnit.VP }, cross: { value: 16, unit: LengthUnit.VP } },
+        space: { main: { value: 24, unit: LengthUnit.VP }, cross: { value: 24, unit: LengthUnit.VP } },
         alignContent: FlexAlign.Center,
         justifyContent: FlexAlign.Center,
         alignItems: ItemAlign.Center
       }) {
-        Column() {
-          Image($r('app.media.ic_battery'))
-            .width(20)
-            .height(20)
-            .margin({ right: 8 })
+        // 电池健康度
+        Stack() {
+          Progress({
+            value: this.healthInfo.battery.level,
+            type: ProgressType.Ring
+          })
+            .width(120)
+            .height(120)
+            .style({
+              strokeWidth: 12,
+              scaleWidth: 4,
+            })
+            .color(this.getMetricColor(this.healthInfo.battery.health))
+            .backgroundColor($r('app.color.background_tertiary'))
+            .animation({
+              duration: 1000,
+              curve: Curve.EaseOut
+            })
+
           Column() {
+            Image($r('app.media.ic_battery'))
+              .width(16)
+              .height(16)
+              .margin({ bottom: 4 })
             Text($r('app.string.battery_label'))
-              .fontSize(12)
+              .fontSize(10)
               .fontColor($r('app.color.text_secondary'))
             Text(this.healthInfo.battery.level + '%')
-              .fontSize(18)
+              .fontSize(14)
               .fontWeight(FontWeight.Medium)
               .fontColor(this.getMetricColor(this.healthInfo.battery.health))
           }
-          .alignItems(HorizontalAlign.Start)
         }
-        .padding(12)
-        .backgroundColor($r('app.color.background_secondary'))
-        .borderRadius(12)
         .width(120)
-        .height(80)
+        .height(120)
 
-        Column() {
-          Image($r('app.media.ic_meter'))
-            .width(20)
-            .height(20)
-            .margin({ right: 8 })
+        // CPU使用率
+        Stack() {
+          Progress({
+            value: this.healthInfo.performance.cpu,
+            type: ProgressType.Ring
+          })
+            .width(120)
+            .height(120)
+            .style({
+              strokeWidth: 12,
+              scaleWidth: 4,
+            })
+            .color(this.getMetricColor(100 - this.healthInfo.performance.cpu))
+            .backgroundColor($r('app.color.background_tertiary'))
+            .animation({
+              duration: 1000,
+              curve: Curve.EaseOut
+            })
+
           Column() {
+            Image($r('app.media.ic_meter'))
+              .width(16)
+              .height(16)
+              .margin({ bottom: 4 })
             Text($r('app.string.cpu_label'))
-              .fontSize(12)
+              .fontSize(10)
               .fontColor($r('app.color.text_secondary'))
-            Text(`${(this.healthInfo.performance.cpu).toFixed(2)}%`)
-              .fontSize(18)
+            Text(`${(this.healthInfo.performance.cpu).toFixed(1)}%`)
+              .fontSize(14)
               .fontWeight(FontWeight.Medium)
               .fontColor(this.getMetricColor(100 - this.healthInfo.performance.cpu))
           }
-          .alignItems(HorizontalAlign.Start)
         }
-        .padding(12)
-        .backgroundColor($r('app.color.background_secondary'))
-        .borderRadius(12)
         .width(120)
-        .height(80)
+        .height(120)
 
-        Column() {
-          Image($r('app.media.ic_storage'))
-            .width(20)
-            .height(20)
-            .margin({ right: 8 })
+        // 内存使用率
+        Stack() {
+          Progress({
+            value: 100 - Number(this.memoryUsagePercentage.toFixed(1)),
+            type: ProgressType.Ring
+          })
+            .width(120)
+            .height(120)
+            .style({
+              strokeWidth: 12,
+              scaleWidth: 4,
+            })
+            .color(this.getMetricColor(this.memoryUsagePercentage))
+            .backgroundColor($r('app.color.background_tertiary'))
+            .animation({
+              duration: 1000,
+              curve: Curve.EaseOut
+            })
+
           Column() {
+            Image($r('app.media.ic_storage'))
+              .width(16)
+              .height(16)
+              .margin({ bottom: 4 })
             Text($r('app.string.memory_label'))
-              .fontSize(12)
+              .fontSize(10)
               .fontColor($r('app.color.text_secondary'))
-            Text(`${this.memoryUsagePercentage}%`)
-              .fontSize(18)
+            Text(`${100-this.memoryUsagePercentage}%`)
+              .fontSize(14)
               .fontWeight(FontWeight.Medium)
-              .fontColor(this.getMetricColor(100 - this.memoryUsagePercentage))
+              .fontColor(this.getMetricColor(this.memoryUsagePercentage))
           }
-          .alignItems(HorizontalAlign.Start)
         }
-        .padding(12)
-        .backgroundColor($r('app.color.background_secondary'))
-        .borderRadius(12)
         .width(120)
-        .height(80)
+        .height(120)
 
-        Column() {
-          Image($r('app.media.ic_storage'))
-            .width(20)
-            .height(20)
-            .margin({ right: 8 })
+        // 存储使用率
+        Stack() {
+          Progress({
+            value: Math.round((this.healthInfo.performance.storage.used / this.healthInfo.performance.storage.total) *
+              100),
+            type: ProgressType.Ring
+          })
+            .width(120)
+            .height(120)
+            .style({
+              strokeWidth: 12,
+              scaleWidth: 4,
+            })
+            .color(this.getMetricColor(100 -
+            Math.round((this.healthInfo.performance.storage.used / this.healthInfo.performance.storage.total) * 100)))
+            .backgroundColor($r('app.color.background_tertiary'))
+            .animation({
+              duration: 1000,
+              curve: Curve.EaseOut
+            })
+
           Column() {
+            Image($r('app.media.ic_storage'))
+              .width(16)
+              .height(16)
+              .margin({ bottom: 4 })
             Text($r('app.string.storage_label'))
-              .fontSize(12)
+              .fontSize(10)
               .fontColor($r('app.color.text_secondary'))
             Text(`${Math.round((this.healthInfo.performance.storage.used / this.healthInfo.performance.storage.total) *
               100)}%`)
-              .fontSize(18)
+              .fontSize(14)
               .fontWeight(FontWeight.Medium)
               .fontColor(this.getMetricColor(100 -
               Math.round((this.healthInfo.performance.storage.used / this.healthInfo.performance.storage.total) * 100)))
           }
-          .alignItems(HorizontalAlign.Start)
         }
-        .padding(12)
-        .backgroundColor($r('app.color.background_secondary'))
-        .borderRadius(12)
         .width(120)
-        .height(80)
+        .height(120)
 
       }
     }
