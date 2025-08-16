@@ -6,6 +6,7 @@ import { formatMemory } from '../../utils/MemoryUtils';
 import { DeviceHealthInfo } from '../../types/DeviceHealthInfo';
 import { DeviceHealthService } from '../../services/DeviceHealthService';
 import { HealthStatusCard } from '../../components/HealthStatusCard';
+import { netQuality } from '@kit.NetworkBoostKit';
 
 @Extend(Text)
 function titleTextStyle() {
@@ -55,9 +56,13 @@ export struct DeviceManagerPage {
     });
     
     // 健康度数据更新监听
-    DeviceHealthService.getInstance().onUpdate = () => {
+    DeviceHealthService.getInstance().registerUpdateListener((score: number) => {
       this.healthInfo = DeviceHealthService.getInstance().getHealthInfo();
-    };
+    });
+  }
+
+  aboutToDisappear(): void {
+    netQuality.off('netQosChange');
   }
 
   // 获取系统内存信息
@@ -182,7 +187,7 @@ export struct DeviceManagerPage {
   build() {
     Column() {
       // 健康度卡片
-      HealthStatusCard({ healthInfo: $healthInfo })
+      HealthStatusCard({ healthInfo: this.healthInfo })
       
       // 手动刷新按钮
       Button('手动刷新')

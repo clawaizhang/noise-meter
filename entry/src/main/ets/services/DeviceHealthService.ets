@@ -1,8 +1,25 @@
 import batteryInfo from '@ohos.batteryInfo';
 import { connection } from '@kit.NetworkKit';
+import { radio } from '@kit.TelephonyKit';
 import { BusinessError } from '@kit.BasicServicesKit';
 import { hidebug } from '@kit.PerformanceAnalysisKit';
-import { DeviceHealthInfo, BatteryInfo, PerformanceInfo, NetworkInfo } from '../types/DeviceHealthInfo';
+import { netQuality } from '@kit.NetworkBoostKit';
+import {
+  DeviceHealthInfo,
+  BatteryInfo,
+  PerformanceInfo,
+  NetworkInfo,
+  NetType,
+  NetworkGeneration,
+  CellularNetworkInfo
+} from '../types/DeviceHealthInfo';
+import abilityAccessCtrl from '@ohos.abilityAccessCtrl';
+
+interface NetworkQosParams {
+  latency: number;
+  uploadSpeed: number;
+  downloadSpeed: number;
+};
 
 interface HealtyWeight {
   battery: number;
@@ -11,15 +28,32 @@ interface HealtyWeight {
   sensors: number;
 }
 
+interface WeakSignalPrediction {
+  isLastPredictionValid: boolean;
+  startTime: number;
+  duration: number;
+}
+
+interface NetworkQosExtended extends netQuality.NetworkQos {
+  weakSignalPrediction?: WeakSignalPrediction;
+}
+
+interface weakSignalPredictionObj {
+  weakSignalPrediction?: WeakSignalPrediction;
+}
+
 export class DeviceHealthService {
   private static instance: DeviceHealthService;
   private healthInfo: DeviceHealthInfo;
   private netConnection: connection.NetConnection;
+  private networkHealthScore: number = 100;
+  private updateCallbacks: Array<(score: number) => void> = [];
 
   private constructor() {
     this.healthInfo = this.getDefaultHealthInfo();
     this.netConnection = connection.createNetConnection();
     this.registerNetworkListener();
+    this.setupNetworkQualityMonitor();
     this.startMonitoring();
   }
 
@@ -53,7 +87,8 @@ export class DeviceHealthService {
         latency: 0,
         packetLoss: 0,
         isMetered: false,
-        isBlocked: false
+        isBlocked: false,
+        is5GReady: false
       },
       sensors: { status: 'normal' },
       score: 100,
@@ -89,6 +124,51 @@ export class DeviceHealthService {
     this.emitUpdate();
   }
 
+  private setupNetworkQualityMonitor(): void {
+    try {
+      netQuality.on('netQosChange', (list: Array<netQuality.NetworkQos>) => {
+        if (list.length > 0) {
+          list.forEach((qos) => {
+            console.info(`Received network QoS update`);
+            this.updateNetworkHealthScore({
+              latency: qos.rttMs,
+              uploadSpeed: qos.linkUpRate,
+              downloadSpeed: qos.linkDownRate
+            });
+            this.handleNetworkQualityChange(qos as NetworkQosExtended);
+          });
+        }
+      });
+
+    } catch (err) {
+      console.error('Network monitoring error:', (err as BusinessError).message);
+    }
+  }
+
+  private updateNetworkHealthScore(params: NetworkQosParams): void {
+    const latencyScore = Math.max(0, 100 - (params.latency / 10));
+    const speedScore = Math.min(100,
+      (params.uploadSpeed / 5e6 + params.downloadSpeed / 20e6) * 50
+    );
+    this.networkHealthScore = Math.round(latencyScore * 0.6 + speedScore * 0.4);
+    this.healthInfo.network.latency = params.latency;
+    this.healthInfo.network.uploadSpeed = params.uploadSpeed;
+    this.healthInfo.network.downloadSpeed = params.downloadSpeed;
+    this.calculateHealthScore();
+  }
+
+  private handleNetworkQualityChange(qos: NetworkQosExtended): void {
+    if (qos.rttMs > 200) {
+      this.adjustDataStrategy('highLatency');
+    }
+    if (qos.weakSignalPrediction?.isLastPredictionValid) {
+      this.prepareForWeakSignal(
+        qos.weakSignalPrediction.startTime,
+        qos.weakSignalPrediction.duration
+      );
+    }
+  }
+
   private calculateHealthScore(): void {
     const weights: HealtyWeight = {
       battery: 0.3,
@@ -103,9 +183,9 @@ export class DeviceHealthService {
     Number(this.healthInfo.performance.memory.totalMem);
 
     const networkScore =
-      (this.healthInfo.network.signalStrength / 4) * 0.4 +
-        (1 - Math.min(this.healthInfo.network.latency / 1000, 1)) * 0.3 +
-        (1 - this.healthInfo.network.packetLoss / 100) * 0.3;
+      (this.networkHealthScore / 100) * 0.5 +
+        (this.healthInfo.network.signalStrength / 4) * 0.3 +
+        (1 - this.healthInfo.network.packetLoss / 100) * 0.2;
 
     this.healthInfo.score = Math.round((
       batteryScore * weights.battery +
@@ -140,18 +220,20 @@ export class DeviceHealthService {
     try {
       const netHandle = connection.getDefaultNetSync();
       const connProperties = connection.getConnectionPropertiesSync(netHandle);
+      const cellularInfo = await this.getCellularNetworkInfo();
 
       this.healthInfo.network = {
         isConnected: netCap?.networkCap?.includes(connection.NetCap.NET_CAPABILITY_INTERNET) ?? false,
         type: this.mapNetType(netCap?.bearerTypes[0]),
-        signalStrength: this.getSignalStrength(netHandle),
-        networkGeneration: this.getNetworkGeneration(netCap),
+        signalStrength: cellularInfo.signalStrength,
+        networkGeneration: cellularInfo.generation,
         downloadSpeed: netCap?.linkDownBandwidthKbps || 0,
-        uploadSpeed:  netCap?.linkUpBandwidthKbps || 0,
-        latency: this.calculateLatency(netHandle),
+        uploadSpeed: netCap?.linkUpBandwidthKbps || 0,
+        latency: 55,
         packetLoss: 0,
         isMetered: connection.isDefaultNetMeteredSync(),
-        isBlocked: this.healthInfo.network.isBlocked
+        isBlocked: this.healthInfo.network.isBlocked,
+        is5GReady: cellularInfo.is5GReady
       };
 
       this.calculateHealthScore();
@@ -161,7 +243,7 @@ export class DeviceHealthService {
     }
   }
 
-  private mapNetType(bearerType?: connection.NetBearType): string {
+  private mapNetType(bearerType?: connection.NetBearType): NetType {
     switch (bearerType) {
       case connection.NetBearType.BEARER_WIFI:
         return 'wifi';
@@ -174,17 +256,57 @@ export class DeviceHealthService {
     }
   }
 
-  private getNetworkGeneration(netCap?: connection.NetCapabilities): string {
-    if (!netCap) {
-      return 'unknown';
+  private async getCellularNetworkInfo(): Promise<CellularNetworkInfo> {
+    try {
+      const slotId = await radio.getPrimarySlotId();
+      const radioTech = radio.getRadioTechSync(slotId);
+      const signalInfo = radio.getSignalInformationSync(slotId);
+      const is5GSupported = radio.isNRSupported(slotId);
+
+      return {
+        generation: this.mapGeneration(radioTech.psRadioTech),
+        signalStrength: this.getMaxSignalLevel(signalInfo),
+        is5GReady: is5GSupported && radioTech.psRadioTech === radio.RadioTechnology.RADIO_TECHNOLOGY_NR
+      };
+    } catch (error) {
+      console.error('Get cellular network info failed:', error);
+      return {
+        generation: '4g',
+        signalStrength: 0,
+        is5GReady: false
+      };
     }
-    if (netCap.networkCap?.includes(connection.NetCap.NET_CAPABILITY_NR)) {
-      return '5g';
+  }
+
+  private mapGeneration(tech: radio.RadioTechnology): NetworkGeneration {
+    switch (tech) {
+      case radio.RadioTechnology.RADIO_TECHNOLOGY_GSM:
+      case radio.RadioTechnology.RADIO_TECHNOLOGY_1XRTT:
+        return '2g';
+      case radio.RadioTechnology.RADIO_TECHNOLOGY_WCDMA:
+      case radio.RadioTechnology.RADIO_TECHNOLOGY_HSPA:
+      case radio.RadioTechnology.RADIO_TECHNOLOGY_TD_SCDMA:
+        return '3g';
+      case radio.RadioTechnology.RADIO_TECHNOLOGY_LTE:
+      case radio.RadioTechnology.RADIO_TECHNOLOGY_LTE_CA:
+        return '4g';
+      case radio.RadioTechnology.RADIO_TECHNOLOGY_NR:
+        return '5g';
+      default:
+        return '4g';
     }
-    if (netCap.networkCap?.includes(connection.NetCap.NET_CAPABILITY_LTE)) {
-      return '4g';
-    }
-    return '3g';
+  }
+
+  private calculateLatencyStatus(rtt: number): string {
+    if (rtt < 50) return 'excellent';
+    if (rtt < 100) return 'good';
+    if (rtt < 200) return 'fair';
+    return 'poor';
+  }
+
+  private getMaxSignalLevel(signals: radio.SignalInformation[]): number {
+    return signals.reduce((max, signal) =>
+    Math.max(max, signal.signalLevel), 0);
   }
 
   private handleBlockStatus(blocked: boolean): void {
@@ -197,14 +319,26 @@ export class DeviceHealthService {
     return this.healthInfo;
   }
 
+  public registerUpdateListener(callback: (score: number) => void): void {
+    this.updateCallbacks.push(callback);
+  }
+
   private emitUpdate(): void {
-    if (this.onUpdate) {
-      this.onUpdate();
-    }
+    this.updateCallbacks.forEach(cb => cb(this.healthInfo.score));
   }
 
   // 保留原有测试方法
   public testScoring(): void {
     // ...原有测试代码...
+  }
+
+  private adjustDataStrategy(reason: string): void {
+    // 实现高延迟时的数据策略调整
+    console.log(`Adjusting data strategy due to: ${reason}`);
+  }
+
+  private prepareForWeakSignal(startTime: number, duration: number): void {
+    // 实现弱信号预测处理
+    console.log(`Preparing for weak signal starting at ${new Date(startTime)} for ${duration}ms`);
   }
 }

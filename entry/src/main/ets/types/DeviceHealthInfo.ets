@@ -25,7 +25,7 @@ export interface PerformanceInfo {
 
 export interface NetworkInfo {
   isConnected: boolean;
-  type: 'wifi' | 'cellular' | 'ethernet' | 'none';
+  type: NetType;
   signalStrength: number; // 0-4
   networkGeneration?: string;
   downloadSpeed: number; // kbps
@@ -34,6 +34,18 @@ export interface NetworkInfo {
   packetLoss: number; // percentage
   isMetered:boolean;
   isBlocked:boolean;
+  is5GReady:boolean;
+}
+
+export type NetworkGeneration = '2g' | '3g' | '4g' | '5g' | 'unknown';
+export type NetType =  'wifi' | 'cellular' | 'ethernet' | 'none';
+
+export interface CellularNetworkInfo {
+  generation: NetworkGeneration;
+  signalStrength: number;
+  is5GReady: boolean;
+  latency?: number;  // 新增网络延迟指标
+  quality?: 'excellent' | 'good' | 'fair' | 'poor'; // 新增质量评级
 }
 
 export interface SensorInfo {
