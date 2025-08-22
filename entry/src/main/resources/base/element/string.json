@@ -111,6 +111,66 @@
     {
       "name": "refresh_button",
       "value": "刷新"
+    },
+    {
+      "name": "rating_excellent",
+      "value": "优秀"
+    },
+    {
+      "name": "rating_good",
+      "value": "良好"
+    },
+    {
+      "name": "rating_fair",
+      "value": "一般"
+    },
+    {
+      "name": "rating_poor",
+      "value": "差"
+    },
+    {
+      "name": "rating_panel_title",
+      "value": "设备评分"
+    },
+    {
+      "name": "data_usage_label",
+      "value": "流量管理"
+    },
+    {
+      "name": "harassment_block_label",
+      "value": "骚扰拦截"
+    },
+    {
+      "name": "storage_management_label",
+      "value": "存储管理"
+    },
+    {
+      "name": "app_management_label",
+      "value": "应用管理"
+    },
+    {
+      "name": "system_settings_unavailable",
+      "value": "系统设置功能暂不可用"
+    },
+    {
+      "name": "function_links_panel_title",
+      "value": "功能快捷入口"
+    },
+    {
+      "name": "device_manager_title",
+      "value": "设备管理器"
+    },
+    {
+      "name": "device_score_title",
+      "value": "设备综合评分"
+    },
+    {
+      "name": "health_status_title",
+      "value": "健康状态监测"
+    },
+    {
+      "name": "function_links_title",
+      "value": "快捷功能入口"
     }
   ]
 }

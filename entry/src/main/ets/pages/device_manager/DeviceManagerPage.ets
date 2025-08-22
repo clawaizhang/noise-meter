@@ -5,6 +5,8 @@ import { formatMemory } from '../../utils/MemoryUtils';
 import { DeviceHealthInfo } from '../../types/DeviceHealthInfo';
 import { DeviceHealthService } from '../../services/DeviceHealthService';
 import { HealthStatusCard } from '../../components/HealthStatusCard';
+import { RatingPanel } from '../../components/RatingPanel';
+import { FunctionLinksPanel } from '../../components/FunctionLinksPanel';
 import { netQuality } from '@kit.NetworkBoostKit';
 
 @Extend(Text)
@@ -92,93 +94,29 @@ export struct DeviceManagerPage {
     }
   }
 
-  @Builder
-  MemoryDetailItem(label: string, value: string, icon: Resource) {
-    Row() {
-      Image(icon)
-        .width(20)
-        .height(20)
-        .margin({ right: 8 })
-      Text(label)
-        .fontSize(14)
-        .layoutWeight(1)
-      Text(value)
-        .fontSize(14)
-        .fontColor($r('app.color.primary'))
+  // 计算设备综合评分
+  private calculateDeviceScore(): number {
+    const healthInfo = this.deviceHealthService.getHealthInfo();
+    
+    // 如果健康信息无效，返回默认评分
+    if (!healthInfo || healthInfo.score === 0) {
+      return 85; // 默认良好评分
     }
-    .width('100%')
-    .margin({ bottom: 12 })
-  }
 
-  @Builder
-  buildMemoryInfo() {
-    if (this.memoryInfo) {
-      Column() {
-        // 标题栏
-        Row() {
-          Image($r('app.media.ic_storage'))
-            .width(24)
-            .height(24)
-            .margin({ right: 8 })
-          Text('内存使用情况')
-            .fontSize(18)
-            .fontWeight(FontWeight.Bold)
-        }
-        .width('100%')
-        .justifyContent(FlexAlign.Start)
-        .margin({ bottom: 12 })
+    // 基于健康状态数据的评分计算逻辑
+    let score = healthInfo.score;
 
-        // 内存卡片
-        Column() {
-          // 环形进度条
-          Stack() {
-            Progress({
-              value: this.usagePercent,
-              type: ProgressType.Ring,
-            })
-              .width(80)
-              .height(80)
-              .style({
-                strokeWidth: 8,
-              })
-              .backgroundColor($r('app.color.background_secondary'))
-              .color(this.progressColor)
-              .rotate({ angle: this.rotateAngle })
-
-            Column() {
-              Text(`${this.usagePercent}%`)
-                .fontSize(18)
-                .fontColor(this.progressColor)
-              Text('已使用')
-                .fontSize(10)
-                .fontColor($r('app.color.text_secondary'))
-            }
-          }
-          .margin({ top: 8, bottom: 12 })
-
-          // 内存详情
-          Column() {
-            this.MemoryDetailItem('可用内存', formatMemory(this.memoryInfo.availableMem), $r('app.media.ic_security'))
-            this.MemoryDetailItem('已使用',
-              formatMemory(BigInt(Number(this.memoryInfo.totalMem - this.memoryInfo.availableMem))),
-              $r('app.media.ic_battery'))
-            this.MemoryDetailItem('总内存', formatMemory(this.memoryInfo.totalMem), $r('app.media.ic_storage'))
-          }
-          .width('100%')
-        }
-        .padding(8)
-        .borderRadius(8)
-        .backgroundColor($r('app.color.white'))
-        .shadow({
-          radius: 6,
-          color: $r('app.color.shadow_light'),
-          offsetX: 0,
-          offsetY: 2
-        })
-      }
-      .width('100%')
-      .padding(16)
+    // 根据内存使用率调整评分
+    if (this.usagePercent > 90) {
+      score -= 15; // 内存使用率过高，扣分
+    } else if (this.usagePercent > 80) {
+      score -= 10; // 内存使用率较高，扣分
+    } else if (this.usagePercent > 70) {
+      score -= 5;  // 内存使用率中等，轻微扣分
     }
+
+    // 确保评分在0-100范围内
+    return Math.max(0, Math.min(100, Math.round(score)));
   }
 
   @Builder
@@ -202,10 +140,50 @@ export struct DeviceManagerPage {
   }
 
   build() {
-    Column() {
-      // 健康度卡片
-      HealthStatusCard({ memoryUsagePercentage: this.usagePercent })
+    Scroll() {
+      Column() {
+        // 设备评分面板 - 放在健康状态卡片上方
+        Column() {
+          Text($r('app.string.device_score_title'))
+            .cardTitleStyle()
+            .margin({ bottom: 12 })
+            .width('100%')
+            .textAlign(TextAlign.Center)
+          
+          RatingPanel({ score: this.calculateDeviceScore() })
+            .width('100%')
+            .alignSelf(ItemAlign.Center)
+        }
+        .margin({ bottom: 24 })
 
+        // 健康度卡片
+        Column() {
+          Text($r('app.string.health_status_title'))
+            .cardTitleStyle()
+            .margin({ bottom: 12 })
+            .width('100%')
+            .textAlign(TextAlign.Center)
+          
+          HealthStatusCard({ memoryUsagePercentage: this.usagePercent })
+        }
+        .margin({ bottom: 24 })
+
+        // 功能链接面板 - 放在健康状态卡片下方
+        Column() {
+          Text($r('app.string.function_links_title'))
+            .cardTitleStyle()
+            .margin({ bottom: 12 })
+            .width('100%')
+            .textAlign(TextAlign.Center)
+          
+          FunctionLinksPanel()
+            .width('100%')
+        }
+        .margin({ bottom: 24 })
+
+      }
+      .width('100%')
+      .padding(16)
     }
     .width('100%')
     .height('100%')
