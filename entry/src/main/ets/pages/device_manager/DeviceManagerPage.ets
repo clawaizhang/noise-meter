@@ -1,5 +1,4 @@
 import router from '@ohos.router';
-import statvfs from '@ohos.file.statvfs';
 import { hidebug } from '@kit.PerformanceAnalysisKit';
 import { SystemMemInfo } from '../../types/DeviceInfo';
 import { formatMemory } from '../../utils/MemoryUtils';
@@ -41,7 +40,8 @@ export struct DeviceManagerPage {
   @Local memoryInfo: SystemMemInfo | null = null;
   @Local rotateAngle: number = 0;
   @Local usagePercent: number = 0;
-  @Local progressColor: string = '#52C41A';
+  @Local progressColor: Resource = $r('app.color.success');
+  private deviceHealthService: DeviceHealthService = DeviceHealthService.getInstance();
 
   aboutToAppear() {
     this.getSystemMemoryInfo();
@@ -72,12 +72,12 @@ export struct DeviceManagerPage {
     if (this.memoryInfo) {
       const usedMem = Number(this.memoryInfo.totalMem - this.memoryInfo.availableMem);
       const totalMem = Number(this.memoryInfo.totalMem);
-      DeviceHealthService.getInstance()
+      this.deviceHealthService
         .getHealthInfo()
         .performance
         .memory
         .availableMem = this.memoryInfo.availableMem;
-      DeviceHealthService.getInstance()
+      this.deviceHealthService
         .getHealthInfo()
         .performance
         .memory
@@ -87,8 +87,8 @@ export struct DeviceManagerPage {
         usageString = usageString.substring(0, usageString.indexOf("."));
       }
       this.usagePercent = Number(usageString);
-      this.progressColor = this.usagePercent > 80 ? '#FF4D4F' :
-        this.usagePercent > 60 ? '#FAAD14' : '#52C41A';
+      this.progressColor = this.usagePercent > 80 ? $r('app.color.health_bad') :
+        this.usagePercent > 60 ? $r('app.color.health_warning') : $r('app.color.success');
     }
   }
 
@@ -104,7 +104,7 @@ export struct DeviceManagerPage {
         .layoutWeight(1)
       Text(value)
         .fontSize(14)
-        .fontColor('#1890FF')
+        .fontColor($r('app.color.primary'))
     }
     .width('100%')
     .margin({ bottom: 12 })
@@ -141,7 +141,7 @@ export struct DeviceManagerPage {
               .style({
                 strokeWidth: 8,
               })
-              .backgroundColor('#F5F5F5')
+              .backgroundColor($r('app.color.background_secondary'))
               .color(this.progressColor)
               .rotate({ angle: this.rotateAngle })
 
@@ -151,7 +151,7 @@ export struct DeviceManagerPage {
                 .fontColor(this.progressColor)
               Text('已使用')
                 .fontSize(10)
-                .fontColor('#666')
+                .fontColor($r('app.color.text_secondary'))
             }
           }
           .margin({ top: 8, bottom: 12 })
@@ -168,10 +168,10 @@ export struct DeviceManagerPage {
         }
         .padding(8)
         .borderRadius(8)
-        .backgroundColor('#FFF')
+        .backgroundColor($r('app.color.white'))
         .shadow({
           radius: 6,
-          color: '#00000010',
+          color: $r('app.color.shadow_light'),
           offsetX: 0,
           offsetY: 2
         })
@@ -182,124 +182,29 @@ export struct DeviceManagerPage {
   }
 
   @Builder
-  buildMemoryDetailItem(label: string, value: string, icon: Resource) {
-    Row() {
+  GridItemBuilder(icon: Resource, label: string, targetPage: string) {
+    Column() {
       Image(icon)
-        .width(20)
-        .height(20)
-        .margin({ right: 8 })
+        .width(32)
+        .height(32)
       Text(label)
-        .fontSize(14)
-        .layoutWeight(1)
-      Text(value)
-        .fontSize(14)
-        .fontColor('#1890FF')
+        .gridItemTextStyle()
     }
-    .width('100%')
-    .margin({ bottom: 12 })
+    .onClick(() => {
+      router.pushUrl({
+        url: targetPage
+      }, router.RouterMode.Standard, (err) => {
+        if (err) {
+          console.error(`Failed to navigate to ${targetPage}: ${JSON.stringify(err)}`);
+        }
+      });
+    })
   }
 
   build() {
     Column() {
       // 健康度卡片
       HealthStatusCard({ memoryUsagePercentage: this.usagePercent })
-
-      // 设备状态卡片
-      Column() {
-        this.buildMemoryInfo()
-      }
-      .width('90%')
-      .padding(16)
-      .backgroundColor($r('app.color.background_secondary'))
-      .borderRadius(12)
-      .margin({ top: 8, bottom: 16 })
-
-      // 功能入口网格
-      Grid() {
-        GridItem() {
-          Column() {
-            Image($r('app.media.ic_audio_analysis'))
-              .width(32)
-              .height(32)
-            Text('清理加速')
-              .gridItemTextStyle()
-          }
-          .onClick(() => {
-            router.pushUrl({
-              url: 'pages/CleanOptimizePage'
-            }, router.RouterMode.Standard, (err) => {
-              if (err) {
-                console.error(`Failed to navigate to CleanOptimizePage: ${JSON.stringify(err)}`);
-              }
-            });
-          })
-        }
-
-        GridItem() {
-          Column() {
-            Image($r('app.media.ic_battery'))
-              .width(32)
-              .height(32)
-            Text('电池管理')
-              .gridItemTextStyle()
-          }
-          .onClick(() => {
-            router.pushUrl({
-              url: 'pages/BatteryManagerPage'
-            }, router.RouterMode.Standard, (err) => {
-              if (err) {
-                console.error(`Failed to navigate to BatteryManagerPage: ${JSON.stringify(err)}`);
-              }
-            });
-          })
-        }
-
-        GridItem() {
-          Column() {
-            Image($r('app.media.ic_storage'))
-              .width(32)
-              .height(32)
-            Text('存储管理')
-              .gridItemTextStyle()
-          }
-          .onClick(() => {
-            router.pushUrl({
-              url: 'pages/StorageManagerPage'
-            }, router.RouterMode.Standard, (err) => {
-              if (err) {
-                console.error(`Failed to navigate to StorageManagerPage: ${JSON.stringify(err)}`);
-              }
-            });
-          })
-        }
-
-        GridItem() {
-          Column() {
-            Image($r('app.media.ic_security'))
-              .width(32)
-              .height(32)
-            Text('安全中心')
-              .gridItemTextStyle()
-          }
-          .onClick(() => {
-            router.pushUrl({
-              url: 'pages/SecurityCenterPage'
-            }, router.RouterMode.Standard, (err) => {
-              if (err) {
-                console.error(`Failed to navigate to SecurityCenterPage: ${JSON.stringify(err)}`);
-              }
-            });
-          })
-        }
-
-      }
-      .columnsTemplate('1fr 1fr 1fr')
-      .rowsTemplate('1fr 1fr 1fr')
-      .columnsGap(12)
-      .rowsGap(12)
-      .width('90%')
-      .height(180)
-      .margin({ bottom: 16 })
 
     }
     .width('100%')

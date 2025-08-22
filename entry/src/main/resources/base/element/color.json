@@ -10,7 +10,7 @@
     },
     {
       "name": "background_secondary",
-      "value": "#fff1f3f5"
+      "value": "#F5F5F5"
     },
     {
       "name": "background_tertiary",
@@ -22,7 +22,7 @@
     },
     {
       "name": "text_secondary",
-      "value": "#99000000"
+      "value": "#666666"
     },
     {
       "name": "text_disabled",
@@ -30,7 +30,7 @@
     },
     {
       "name": "primary",
-      "value": "#ff0a59f7"
+      "value": "#1890FF"
     },
     {
       "name": "secondary",
@@ -134,7 +134,7 @@
     },
     {
       "name": "shadow_light",
-      "value": "#1A000000"
+      "value": "#00000010"
     },
     {
       "name": "shadow_medium",
@@ -146,7 +146,7 @@
     },
     {
       "name": "white",
-      "value": "#ffffffff"
+      "value": "#FFFFFF"
     },
     {
       "name": "transparent_black_70",
@@ -190,7 +190,7 @@
     },
     {
       "name": "success",
-      "value": "#4CAF50"
+      "value": "#52C41A"
     },
     {
       "name": "health_good",
@@ -198,11 +198,11 @@
     },
     {
       "name": "health_warning",
-      "value": "#FFC107"
+      "value": "#FAAD14"
     },
     {
       "name": "health_bad",
-      "value": "#F44336"
+      "value": "#FF4D4F"
     },
     {
       "name": "skeleton_background",

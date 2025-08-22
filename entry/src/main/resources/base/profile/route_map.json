@@ -39,6 +39,11 @@
       "name": "NoiseDescriptionDialog",
       "pageSourceFile": "src/main/ets/pages/noisemeter/NoiseDescriptionDialogNavigation.ets",
       "buildFunction": "NoiseDescriptionDialogBuilder"
+    },
+    {
+      "name": "HealthDetailDialog",
+      "pageSourceFile": "src/main/ets/components/health-dialogs/HealthDetailDialog.ets",
+      "buildFunction": "HealthDetailDialogBuilder"
     }
   ]
 } 

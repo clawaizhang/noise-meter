@@ -133,9 +133,9 @@ export class DesignConstants {
     ICON_SIZE: this.ICON_SIZE_MD, // 20px
     VALUE_SIZE: this.FONT_SIZE_XL, // 18px
     LABEL_SIZE: this.FONT_SIZE_SM, // 12px
-    PADDING: this.SPACING_MD, // 12px
+    PADDING: this.SPACING_SM, // 8px
     SPACING: this.SPACING_XS, // 4px
-    WIDTH: 120,
+    WIDTH: 100, // 减少宽度以适应更多设备
     HEIGHT: 80,
     BORDER_RADIUS: this.BORDER_RADIUS_MD // 12px
   };

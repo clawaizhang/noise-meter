@@ -2,10 +2,9 @@ import { DeviceHealthInfo, ScoreHealth } from "../types/DeviceHealthInfo"
 import { LengthUnit } from "@kit.ArkUI"
 import { DeviceHealthService } from "../services/DeviceHealthService"
 import { MetricItem } from "./common/MetricItem"
-import { DetailModal } from "./common/DetailModal"
 import { DesignConstants } from "../constants/DesignConstants"
 import { MemoryUtils, calculateMemoryUsage, calculateStorageUsage } from "../utils/MemoryUtils"
-import window from '@ohos.window';
+import { navigationStack } from "../constants/ProviderConstant"
 import display from '@ohos.display';
 
 // 健康卡片状态枚举
@@ -16,14 +15,20 @@ enum HealthCardState {
   EMPTY       // 空状态
 }
 
+// 定义导航参数接口
+interface HealthDetailDialogParams {
+  metricType: string;
+  healthInfo: DeviceHealthInfo;
+}
+
 @ComponentV2
 export struct HealthStatusCard {
   @Param @Require memoryUsagePercentage: number
   @Local healthInfo: DeviceHealthInfo = DeviceHealthService.getInstance().getHealthInfo();
   @Local screenWidth: number = 0;
   @Local layoutMode: string = 'large'; // large, medium, small, xsmall
-  @Local showDetailModal: boolean = false
   @Local selectedMetricType: string = ''
+  @Consumer(navigationStack) navStack: NavPathStack = new NavPathStack();
   @Local currentState: HealthCardState = HealthCardState.LOADING
   @Local errorMessage: string = ''
   @Local isLoading: boolean = true
@@ -67,7 +72,7 @@ export struct HealthStatusCard {
   buildLargeLayout() {
     // 大屏布局：单行显示所有6个指标
     Flex({
-      justifyContent: FlexAlign.SpaceBetween,
+      justifyContent: FlexAlign.SpaceAround,
       alignItems: ItemAlign.Center,
       wrap: FlexWrap.NoWrap
     }) {
@@ -354,7 +359,7 @@ export struct HealthStatusCard {
       label: $r('app.string.battery_label'),
       onClickItem: () => {
         this.selectedMetricType = 'battery'
-        this.showDetailModal = true
+        this.showHealthDetailDialog()
       }
     })
 
@@ -365,7 +370,7 @@ export struct HealthStatusCard {
       label: $r('app.string.memory_label'),
       onClickItem: () => {
         this.selectedMetricType = 'memory'
-        this.showDetailModal = true
+        this.showHealthDetailDialog()
       }
     })
 
@@ -376,7 +381,7 @@ export struct HealthStatusCard {
       label: $r('app.string.storage_label'),
       onClickItem: () => {
         this.selectedMetricType = 'storage'
-        this.showDetailModal = true
+        this.showHealthDetailDialog()
       }
     })
 
@@ -387,7 +392,7 @@ export struct HealthStatusCard {
       label: $r('app.string.cpu_label'),
       onClickItem: () => {
         this.selectedMetricType = 'cpu'
-        this.showDetailModal = true
+        this.showHealthDetailDialog()
       }
     })
 
@@ -398,7 +403,7 @@ export struct HealthStatusCard {
       label: $r('app.string.network_label'),
       onClickItem: () => {
         this.selectedMetricType = 'network'
-        this.showDetailModal = true
+        this.showHealthDetailDialog()
       }
     })
 
@@ -410,7 +415,7 @@ export struct HealthStatusCard {
       label: $r('app.string.sensors_label'),
       onClickItem: () => {
         this.selectedMetricType = 'sensors'
-        this.showDetailModal = true
+        this.showHealthDetailDialog()
       }
     })
   }
@@ -425,7 +430,7 @@ export struct HealthStatusCard {
         label: $r('app.string.battery_label'),
         onClickItem: () => {
           this.selectedMetricType = 'battery'
-          this.showDetailModal = true
+          this.showHealthDetailDialog()
         }
       })
     } else if (index === 1) { // 内存（使用缓存优化）
@@ -435,7 +440,7 @@ export struct HealthStatusCard {
         label: $r('app.string.memory_label'),
         onClickItem: () => {
           this.selectedMetricType = 'memory'
-          this.showDetailModal = true
+          this.showHealthDetailDialog()
         }
       })
     } else if (index === 2) { // 存储（使用缓存优化）
@@ -445,7 +450,7 @@ export struct HealthStatusCard {
         label: $r('app.string.storage_label'),
         onClickItem: () => {
           this.selectedMetricType = 'storage'
-          this.showDetailModal = true
+          this.showHealthDetailDialog()
         }
       })
     } else if (index === 3) { // CPU
@@ -455,7 +460,7 @@ export struct HealthStatusCard {
         label: $r('app.string.cpu_label'),
         onClickItem: () => {
           this.selectedMetricType = 'cpu'
-          this.showDetailModal = true
+          this.showHealthDetailDialog()
         }
       })
     } else if (index === 4) { // 网络
@@ -465,7 +470,7 @@ export struct HealthStatusCard {
         label: $r('app.string.network_label'),
         onClickItem: () => {
           this.selectedMetricType = 'network'
-          this.showDetailModal = true
+          this.showHealthDetailDialog()
         }
       })
     } else if (index === 5) { // 传感器
@@ -476,7 +481,7 @@ export struct HealthStatusCard {
         label: $r('app.string.sensors_label'),
         onClickItem: () => {
           this.selectedMetricType = 'sensors'
-          this.showDetailModal = true
+          this.showHealthDetailDialog()
         }
       })
     }
@@ -493,10 +498,15 @@ export struct HealthStatusCard {
     }
   }
 
-  // 关闭详情弹窗
-  private closeDetailModal() {
-    this.showDetailModal = false
-    this.selectedMetricType = ''
+  // 显示健康详情对话框
+  private showHealthDetailDialog() {
+    if (this.selectedMetricType && this.healthInfo) {
+      const navPathInfo = new NavPathInfo(
+        'HealthDetailDialog',
+        { metricType: this.selectedMetricType} as HealthDetailDialogParams
+      )
+      this.navStack.pushPath(navPathInfo)
+    }
   }
 
   build() {
@@ -519,15 +529,6 @@ export struct HealthStatusCard {
         })
       }
 
-      // 详情弹窗
-      DetailModal({
-        isVisible: this.showDetailModal,
-        metricType: this.selectedMetricType,
-        healthInfo: this.healthInfo,
-        onClose: () => {
-          this.closeDetailModal()
-        }
-      })
     }
   }
   
@@ -583,15 +584,20 @@ export struct HealthStatusCard {
   
   // 更新布局模式
   private updateLayoutMode(width: number) {
-    if (width > 1200) {
+    // 计算6个MetricItem所需的最小宽度（包括间距）
+    const minWidthForLargeLayout = DesignConstants.METRIC_ITEM.WIDTH * 6 + DesignConstants.SPACING_MD * 5;
+    
+    if (width >= minWidthForLargeLayout) {
       this.layoutMode = 'large';
-    } else if (width > 768) {
+    } else if (width >= DesignConstants.METRIC_ITEM.WIDTH * 3 + DesignConstants.SPACING_MD * 2) {
       this.layoutMode = 'medium';
-    } else if (width > 480) {
+    } else if (width >= DesignConstants.METRIC_ITEM.WIDTH * 2 + DesignConstants.SPACING_MD) {
       this.layoutMode = 'small';
     } else {
       this.layoutMode = 'xsmall';
     }
+    
+    console.debug(`[LayoutMode] Screen width: ${width}px, Mode: ${this.layoutMode}, Min for large: ${minWidthForLargeLayout}px`);
   }
 
   // 清除缓存
@@ -609,7 +615,7 @@ export struct HealthStatusCard {
   buildSkeletonLoading() {
     Column() {
       Flex({
-        justifyContent: FlexAlign.SpaceBetween,
+        justifyContent: FlexAlign.SpaceAround,
         alignItems: ItemAlign.Center,
         wrap: FlexWrap.NoWrap
       }) {
@@ -626,7 +632,7 @@ export struct HealthStatusCard {
             Column() {
               // 标签占位
               Column()
-                .width(40)
+                .width(35)  // 调整为更小的宽度
                 .height(12)
                 .backgroundColor($r('app.color.skeleton_background'))
                 .borderRadius(DesignConstants.BORDER_RADIUS_XS)
@@ -634,7 +640,7 @@ export struct HealthStatusCard {
               
               // 数值占位
               Column()
-                .width(60)
+                .width(50)  // 调整为更小的宽度
                 .height(16)
                 .backgroundColor($r('app.color.skeleton_background'))
                 .borderRadius(DesignConstants.BORDER_RADIUS_SM)
