@@ -130,15 +130,13 @@ export struct HealthStatusCard {
       .width('100%')
       .margin({ bottom: 12 })
 
-      // 第二行：3个指标
+      // 第二行：1个指标（网络）
       Flex({
-        justifyContent: FlexAlign.SpaceAround,
+        justifyContent: FlexAlign.Center,
         alignItems: ItemAlign.Center,
         wrap: FlexWrap.NoWrap
       }) {
-        this.buildMetricItem(3) // CPU
         this.buildMetricItem(4) // 网络
-        this.buildMetricItem(5) // 传感器
       }
       .width('100%')
     }
@@ -163,28 +161,16 @@ export struct HealthStatusCard {
       .width('100%')
       .margin({ bottom: 10 })
 
-      // 第二行：2个指标
+      // 第二行：1个指标（网络）
       Flex({
-        justifyContent: FlexAlign.SpaceAround,
-        alignItems: ItemAlign.Center,
-        wrap: FlexWrap.NoWrap
-      }) {
-        this.buildMetricItem(2) // 存储
-        this.buildMetricItem(3) // CPU
-      }
-      .width('100%')
-      .margin({ bottom: 10 })
-
-      // 第三行：2个指标
-      Flex({
-        justifyContent: FlexAlign.SpaceAround,
+        justifyContent: FlexAlign.Center,
         alignItems: ItemAlign.Center,
         wrap: FlexWrap.NoWrap
       }) {
         this.buildMetricItem(4) // 网络
-        this.buildMetricItem(5) // 传感器
       }
       .width('100%')
+      .margin({ bottom: 10 })
     }
     .width('100%')
     .margin(DesignConstants.HEALTH_CARD.MARGIN_SMALL)
@@ -195,16 +181,16 @@ export struct HealthStatusCard {
   buildXSmallLayout() {
     // 超小屏布局：六行显示，每行1个指标
     Column() {
-      ForEach([0, 1, 2, 3, 4, 5], (index: number) => {
+      ForEach([0, 1, 2, 4], (index: number) => {
         Flex({
           justifyContent: FlexAlign.Center,
           alignItems: ItemAlign.Center,
           wrap: FlexWrap.NoWrap
         }) {
-          this.buildMetricItem(index)
+          this.buildMetricItem(index === 3 ? 4 : index) // 将索引3映射到网络指标
         }
         .width('100%')
-        .margin({ bottom: index < 5 ? 6 : 0 })
+        .margin({ bottom: index < 3 ? 6 : 0 })
         .padding({ top: 4, bottom: 4 })
       })
     }
@@ -451,17 +437,6 @@ export struct HealthStatusCard {
       }
     })
 
-    // CPU使用率（缓存格式化结果）
-    MetricItem({
-      icon: $r('app.media.ic_cpu'),
-      value: this.getCpuUsageFormatted(),
-      label: $r('app.string.cpu_label'),
-      onClickItem: () => {
-        this.selectedMetricType = 'cpu'
-        this.showHealthDetailDialog()
-      }
-    })
-
     // 网络质量
     MetricItem({
       icon: $r('app.media.ic_security'),
@@ -469,18 +444,6 @@ export struct HealthStatusCard {
       label: $r('app.string.network_label'),
       onClickItem: () => {
         this.selectedMetricType = 'network'
-        this.showHealthDetailDialog()
-      }
-    })
-
-    // 传感器状态
-    MetricItem({
-      icon: $r('app.media.ic_sensor'),
-      value: this.healthInfo.sensors.status === 'normal' ? '正常' :
-        this.healthInfo.sensors.status === 'warning' ? '警告' : '错误',
-      label: $r('app.string.sensors_label'),
-      onClickItem: () => {
-        this.selectedMetricType = 'sensors'
         this.showHealthDetailDialog()
       }
     })
@@ -519,16 +482,6 @@ export struct HealthStatusCard {
           this.showHealthDetailDialog()
         }
       })
-    } else if (index === 3) { // CPU（缓存格式化结果）
-      MetricItem({
-        icon: $r('app.media.ic_cpu'),
-        value: this.getCpuUsageFormatted(),
-        label: $r('app.string.cpu_label'),
-        onClickItem: () => {
-          this.selectedMetricType = 'cpu'
-          this.showHealthDetailDialog()
-        }
-      })
     } else if (index === 4) { // 网络
       MetricItem({
         icon: $r('app.media.ic_security'),
@@ -536,17 +489,6 @@ export struct HealthStatusCard {
         label: $r('app.string.network_label'),
         onClickItem: () => {
           this.selectedMetricType = 'network'
-          this.showHealthDetailDialog()
-        }
-      })
-    } else if (index === 5) { // 传感器
-      MetricItem({
-        icon: $r('app.media.ic_sensor'),
-        value: this.healthInfo.sensors.status === 'normal' ? '正常' :
-          this.healthInfo.sensors.status === 'warning' ? '警告' : '错误',
-        label: $r('app.string.sensors_label'),
-        onClickItem: () => {
-          this.selectedMetricType = 'sensors'
           this.showHealthDetailDialog()
         }
       })

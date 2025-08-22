@@ -149,9 +149,10 @@ export struct DeviceManagerPage {
           
           RatingPanel({ score: this.calculateDeviceScore() })
             .width('100%')
-            .alignSelf(ItemAlign.Center)
         }
         .margin({ bottom: 24 })
+        .width('100%')
+        .alignItems(HorizontalAlign.Center)
 
         // 健康度卡片
         Column() {

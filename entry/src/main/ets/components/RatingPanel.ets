@@ -152,11 +152,17 @@ export struct RatingPanel {
 
   @Builder
   buildLargeLayout() {
-    // 大屏布局：完整的评分面板
-    Column() {
+    // 大屏布局：完整的评分面板 - 文字叠加在圆环中间
+    Stack({ alignContent: Alignment.Center }) {
       this.buildProgressRing()
-      this.buildScoreText()
-      this.buildRatingLabel()
+      Column() {
+        this.buildScoreText()
+        this.buildRatingLabel()
+      }
+      .alignItems(HorizontalAlign.Center)
+      .justifyContent(FlexAlign.Center)
+      .width('100%')
+      .height('100%')
     }
     .padding(DesignConstants.SPACING_LG)
     .backgroundColor($r('app.color.background_secondary'))
@@ -168,11 +174,17 @@ export struct RatingPanel {
 
   @Builder
   buildMediumLayout() {
-    // 中屏布局：稍微紧凑的布局
-    Column() {
+    // 中屏布局：稍微紧凑的布局 - 文字叠加在圆环中间
+    Stack({ alignContent: Alignment.Center }) {
       this.buildProgressRing()
-      this.buildScoreText()
-      this.buildRatingLabel()
+      Column() {
+        this.buildScoreText()
+        this.buildRatingLabel()
+      }
+      .alignItems(HorizontalAlign.Center)
+      .justifyContent(FlexAlign.Center)
+      .width('100%')
+      .height('100%')
     }
     .padding(DesignConstants.SPACING_MD)
     .backgroundColor($r('app.color.background_secondary'))
@@ -184,11 +196,17 @@ export struct RatingPanel {
 
   @Builder
   buildSmallLayout() {
-    // 小屏布局：更紧凑的布局
-    Column() {
+    // 小屏布局：更紧凑的布局 - 文字叠加在圆环中间
+    Stack({ alignContent: Alignment.Center }) {
       this.buildProgressRing()
-      this.buildScoreText()
-      this.buildRatingLabel()
+      Column() {
+        this.buildScoreText()
+        this.buildRatingLabel()
+      }
+      .alignItems(HorizontalAlign.Center)
+      .justifyContent(FlexAlign.Center)
+      .width('100%')
+      .height('100%')
     }
     .padding(DesignConstants.SPACING_SM)
     .backgroundColor($r('app.color.background_secondary'))
@@ -200,11 +218,17 @@ export struct RatingPanel {
 
   @Builder
   buildXSmallLayout() {
-    // 超小屏布局：最紧凑的布局
-    Column() {
+    // 超小屏布局：最紧凑的布局 - 文字叠加在圆环中间
+    Stack({ alignContent: Alignment.Center }) {
       this.buildProgressRing()
-      this.buildScoreText()
-      this.buildRatingLabel()
+      Column() {
+        this.buildScoreText()
+        this.buildRatingLabel()
+      }
+      .alignItems(HorizontalAlign.Center)
+      .justifyContent(FlexAlign.Center)
+      .width('100%')
+      .height('100%')
     }
     .padding(DesignConstants.SPACING_XS)
     .backgroundColor($r('app.color.background_secondary'))
@@ -243,7 +267,7 @@ export struct RatingPanel {
         .backgroundColor(Color.Transparent)
         .color(this.getRatingLevelInfo().color)
     }
-    .margin({ bottom: DesignConstants.SPACING_SM })
+    .margin({ bottom: 0 })
   }
 
   @Builder
@@ -252,7 +276,7 @@ export struct RatingPanel {
       .fontSize(this.getScoreFontSize())
       .fontWeight(FontWeight.Bold)
       .fontColor(this.getRatingLevelInfo().color)
-      .margin({ bottom: DesignConstants.SPACING_XS })
+      .margin({ bottom: 0 })
   }
 
   @Builder
@@ -331,6 +355,8 @@ export struct RatingPanel {
     Column() {
       this.buildResponsiveLayout()
     }
+    .width('100%')
+    .alignItems(HorizontalAlign.Center)
     .onAreaChange((oldValue: Area, newValue: Area) => {
       // 添加防抖机制，避免频繁触发布局更新
       const currentTime = Date.now();
