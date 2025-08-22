@@ -42,6 +42,7 @@ export struct HealthStatusCard {
   @Local cachedStorageUsage: number = -1
   @Local cachedAvailableMemory: string = ''
   @Local cachedFreeStorage: string = ''
+  @Local cachedCpuUsage: string = ''
   @Local lastHealthInfoHash: string = ''
   @Local cachedLayoutMode: string = ''
   @Local cachedScreenWidth: number = 0
@@ -321,22 +322,37 @@ export struct HealthStatusCard {
     if (this.cachedFreeStorage && currentHash === this.lastHealthInfoHash) {
       return this.cachedFreeStorage;
     }
-    
+
     const startTime = Date.now();
     const freeStorageKB = BigInt(Math.round(this.healthInfo.performance.storage.free * 1024)); // 转换为KB
     this.cachedFreeStorage = MemoryUtils.formatMemory(freeStorageKB);
-    
+
     this.recordCalculationTime('storageFormat', Date.now() - startTime);
-    
+
     return this.cachedFreeStorage;
   }
 
-  // 生成健康信息哈希用于缓存验证
+  // 获取CPU使用率格式化字符串（带缓存）
+  private getCpuUsageFormatted(): string {
+    const currentHash = this.getHealthInfoHash();
+    if (this.cachedCpuUsage && currentHash === this.lastHealthInfoHash) {
+      return this.cachedCpuUsage;
+    }
+
+    const startTime = Date.now();
+    this.cachedCpuUsage = this.formatValue(this.healthInfo.performance.cpu, '%');
+
+    this.recordCalculationTime('cpuFormat', Date.now() - startTime);
+
+    return this.cachedCpuUsage;
+  }
+
+  // 生成健康信息哈希用于缓存验证（优化版）
   private getHealthInfoHash(): string {
     return this.generateHealthInfoHash(this.healthInfo);
   }
   
-  // 为指定健康信息生成哈希（用于比较新旧数据）
+  // 为指定健康信息生成哈希（优化算法，减少字符串拼接）
   private generateHealthInfoHash(healthInfo: DeviceHealthInfo): string {
     const mem = healthInfo.performance.memory;
     const storage = healthInfo.performance.storage;
@@ -344,13 +360,24 @@ export struct HealthStatusCard {
     const network = healthInfo.network;
     const sensors = healthInfo.sensors;
     
-    // 使用所有关键数据生成哈希，确保数据变化的精确检测
-    return `${battery.level}_${battery.health}_${battery.temperature}_${battery.status}_` +
-           `${mem.totalMem}_${mem.availableMem}_` +
-           `${storage.total}_${storage.used}_${storage.free}_` +
-           `${healthInfo.performance.cpu}_` +
-           `${network.signalStrength}_${network.type}_${network.isConnected}_` +
-           `${sensors.status}_${healthInfo.score}`;
+    // 使用更高效的哈希算法，只包含关键变化数据
+    // 避免不必要的字符串拼接，使用数字计算
+    const hashParts = [
+      Math.round(battery.level / 5) * 5, // 电池电量按5%分组
+      battery.health,
+      Math.round(battery.temperature),
+      battery.status,
+      Math.round(Number(mem.availableMem) / 1000000), // 内存按MB计算
+      Math.round(storage.used / 1024), // 存储按GB计算
+      Math.round(healthInfo.performance.cpu / 5) * 5, // CPU使用率按5%分组
+      network.signalStrength,
+      network.type,
+      network.isConnected ? 1 : 0,
+      sensors.status === 'normal' ? 1 : sensors.status === 'warning' ? 2 : 3,
+      Math.round(healthInfo.score / 5) * 5 // 评分按5分分组
+    ];
+    
+    return hashParts.join('_');
   }
 
   // 记录计算耗时
@@ -362,7 +389,7 @@ export struct HealthStatusCard {
     // }
   }
 
-  // 数值格式化函数优化版
+  // 数值格式化函数优化版（减少重复调用）
   private formatValue(value: number, unit: string = ''): string {
     // 快速检查无效值
     if (!isFinite(value) || isNaN(value)) {
@@ -372,19 +399,16 @@ export struct HealthStatusCard {
     const startTime = Date.now();
     let result: string;
     
-    switch (unit) {
-      case '%':
-        // 百分比直接取整
-        result = `${Math.round(value)}${unit}`;
-        break;
-      case 'GB':
-      case 'MB':
-        // 存储容量使用更精确的格式化
-        result = `${Math.round(value)}${unit}`;
-        break;
-      default:
-        // 其他情况保留一位小数，但优化性能
-        result = value % 1 === 0 ? `${value}${unit}` : `${value.toFixed(1)}${unit}`;
+    // 使用更高效的条件判断
+    if (unit === '%') {
+      // 百分比直接取整
+      result = `${Math.round(value)}${unit}`;
+    } else if (unit === 'GB' || unit === 'MB') {
+      // 存储容量使用更精确的格式化
+      result = `${Math.round(value)}${unit}`;
+    } else {
+      // 其他情况：如果是整数直接显示，否则保留一位小数
+      result = Number.isInteger(value) ? `${value}${unit}` : `${value.toFixed(1)}${unit}`;
     }
     
     this.recordCalculationTime('formatValue', Date.now() - startTime);
@@ -427,10 +451,10 @@ export struct HealthStatusCard {
       }
     })
 
-    // CPU使用率
+    // CPU使用率（缓存格式化结果）
     MetricItem({
       icon: $r('app.media.ic_cpu'),
-      value: this.formatValue(this.healthInfo.performance.cpu, '%'),
+      value: this.getCpuUsageFormatted(),
       label: $r('app.string.cpu_label'),
       onClickItem: () => {
         this.selectedMetricType = 'cpu'
@@ -495,10 +519,10 @@ export struct HealthStatusCard {
           this.showHealthDetailDialog()
         }
       })
-    } else if (index === 3) { // CPU
+    } else if (index === 3) { // CPU（缓存格式化结果）
       MetricItem({
         icon: $r('app.media.ic_cpu'),
-        value: this.formatValue(this.healthInfo.performance.cpu, '%'),
+        value: this.getCpuUsageFormatted(),
         label: $r('app.string.cpu_label'),
         onClickItem: () => {
           this.selectedMetricType = 'cpu'
@@ -743,6 +767,7 @@ export struct HealthStatusCard {
     this.cachedStorageUsage = -1;
     this.cachedAvailableMemory = '';
     this.cachedFreeStorage = '';
+    this.cachedCpuUsage = '';
     this.lastHealthInfoHash = this.getHealthInfoHash();
     this.calculationTimes = {};
   }

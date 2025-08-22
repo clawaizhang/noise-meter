@@ -72,7 +72,7 @@ export struct DeviceManagerPage {
 
     // 计算初始值
     if (this.memoryInfo) {
-      const usedMem = Number(this.memoryInfo.totalMem - this.memoryInfo.availableMem);
+      const usedMem = Number(this.memoryInfo.totalMem - this.memoryInfo.freeMem);
       const totalMem = Number(this.memoryInfo.totalMem);
       this.deviceHealthService
         .getHealthInfo()
@@ -84,11 +84,8 @@ export struct DeviceManagerPage {
         .performance
         .memory
         .totalMem = this.memoryInfo.totalMem;
-      let usageString = (usedMem / totalMem * 100).toFixed(1);
-      if (usageString.includes(".")) {
-        usageString = usageString.substring(0, usageString.indexOf("."));
-      }
-      this.usagePercent = Number(usageString);
+      // 简化百分比计算，直接取整避免不必要的小数处理
+      this.usagePercent = Math.round(usedMem / totalMem * 100);
       this.progressColor = this.usagePercent > 80 ? $r('app.color.health_bad') :
         this.usagePercent > 60 ? $r('app.color.health_warning') : $r('app.color.success');
     }

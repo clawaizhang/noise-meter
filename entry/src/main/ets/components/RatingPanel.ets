@@ -26,6 +26,12 @@ export struct RatingPanel {
   @Local cachedLayoutMode: string = '';
   @Local cachedScreenWidth: number = 0;
   @Local lastLayoutUpdateTime: number = 0;
+  
+  // 缓存变量声明
+  @Local cachedRingSize: number | undefined = undefined;
+  @Local cachedStrokeWidth: number | undefined = undefined;
+  @Local cachedScoreFontSize: number | undefined = undefined;
+  @Local cachedLabelFontSize: number | undefined = undefined;
 
   aboutToAppear() {
     this.updateScreenWidth();
@@ -94,15 +100,15 @@ export struct RatingPanel {
     }
   }
 
-  // 更新布局模式（带滞后阈值防止频繁切换和缓存优化）
+  // 更新布局模式（基于实际内容计算切换阈值，带缓存优化）
   private updateLayoutMode(width: number) {
-    // 计算各布局模式的最小宽度要求
-    const minWidthForLargeLayout = 300; // 大屏布局最小宽度
-    const minWidthForMediumLayout = 250; // 中屏布局最小宽度
-    const minWidthForSmallLayout = 200; // 小屏布局最小宽度
+    // 基于实际内容计算各布局模式的最小宽度要求
+    const minWidthForLargeLayout = DesignConstants.RATING_PANEL.WIDTH_LARGE + 40; // 面板宽度 + 边距
+    const minWidthForMediumLayout = DesignConstants.RATING_PANEL.WIDTH_MEDIUM + 30;
+    const minWidthForSmallLayout = DesignConstants.RATING_PANEL.WIDTH_SMALL + 20;
     
-    // 添加滞后阈值（15px），防止在边界值附近频繁切换
-    const hysteresis = 15;
+    // 添加滞后阈值（基于屏幕宽度的百分比，更智能的防抖）
+    const hysteresis = Math.max(15, width * 0.03); // 至少15px或屏幕宽度的3%
     
     let newLayoutMode: string;
     
@@ -113,7 +119,7 @@ export struct RatingPanel {
       newLayoutMode = (this.cachedLayoutMode === 'large' && width >= minWidthForLargeLayout - hysteresis) ?
         'large' : 'medium';
     } else if (width >= minWidthForSmallLayout + hysteresis) {
-      // 如果当前是中屏模式，需要更宽的阈值才能切换到中屏
+      // 如果当前是中屏模式，需要更宽的阈值才能切换到小屏
       newLayoutMode = (this.cachedLayoutMode === 'medium' && width >= minWidthForMediumLayout - hysteresis) ?
         'medium' : 'small';
     } else {
@@ -122,10 +128,11 @@ export struct RatingPanel {
         'small' : 'xsmall';
     }
     
-    // 只有当布局模式真正改变时才更新
+    // 只有当布局模式真正改变时才更新（带缓存验证）
     if (newLayoutMode !== this.cachedLayoutMode) {
       this.layoutMode = newLayoutMode;
       this.cachedLayoutMode = newLayoutMode;
+      this.clearCache(); // 清除缓存，确保下次获取新值
       console.debug(`[RatingPanel LayoutMode] Screen width: ${width}px, Mode: ${this.layoutMode}`);
     }
   }
@@ -255,48 +262,69 @@ export struct RatingPanel {
       .fontColor($r('app.color.text_secondary'))
   }
 
-  // 根据布局模式获取环形大小
+  // 根据布局模式获取环形大小（使用缓存机制）
   private getRingSize(): number {
-    switch (this.layoutMode) {
-      case 'large': return 80;
-      case 'medium': return 70;
-      case 'small': return 60;
-      case 'xsmall': return 50;
-      default: return 80;
+    // 缓存计算结果，避免重复switch判断
+    if (!this.cachedRingSize) {
+      switch (this.layoutMode) {
+        case 'large': this.cachedRingSize = DesignConstants.RATING_PANEL.RING_SIZE_LARGE; break;
+        case 'medium': this.cachedRingSize = DesignConstants.RATING_PANEL.RING_SIZE_MEDIUM; break;
+        case 'small': this.cachedRingSize = DesignConstants.RATING_PANEL.RING_SIZE_SMALL; break;
+        case 'xsmall': this.cachedRingSize = DesignConstants.RATING_PANEL.RING_SIZE_XSMALL; break;
+        default: this.cachedRingSize = DesignConstants.RATING_PANEL.RING_SIZE_LARGE;
+      }
     }
+    return this.cachedRingSize;
   }
 
-  // 根据布局模式获取环形宽度
+  // 根据布局模式获取环形宽度（使用缓存机制）
   private getStrokeWidth(): number {
-    switch (this.layoutMode) {
-      case 'large': return 8;
-      case 'medium': return 7;
-      case 'small': return 6;
-      case 'xsmall': return 5;
-      default: return 8;
+    if (!this.cachedStrokeWidth) {
+      switch (this.layoutMode) {
+        case 'large': this.cachedStrokeWidth = DesignConstants.RATING_PANEL.STROKE_WIDTH_LARGE; break;
+        case 'medium': this.cachedStrokeWidth = DesignConstants.RATING_PANEL.STROKE_WIDTH_MEDIUM; break;
+        case 'small': this.cachedStrokeWidth = DesignConstants.RATING_PANEL.STROKE_WIDTH_SMALL; break;
+        case 'xsmall': this.cachedStrokeWidth = DesignConstants.RATING_PANEL.STROKE_WIDTH_XSMALL; break;
+        default: this.cachedStrokeWidth = DesignConstants.RATING_PANEL.STROKE_WIDTH_LARGE;
+      }
     }
+    return this.cachedStrokeWidth;
   }
 
-  // 根据布局模式获取分数字体大小
+  // 根据布局模式获取分数字体大小（使用缓存机制）
   private getScoreFontSize(): number {
-    switch (this.layoutMode) {
-      case 'large': return DesignConstants.FONT_SIZE_3XL;
-      case 'medium': return DesignConstants.FONT_SIZE_2XL;
-      case 'small': return DesignConstants.FONT_SIZE_XL;
-      case 'xsmall': return DesignConstants.FONT_SIZE_LG;
-      default: return DesignConstants.FONT_SIZE_3XL;
+    if (!this.cachedScoreFontSize) {
+      switch (this.layoutMode) {
+        case 'large': this.cachedScoreFontSize = DesignConstants.FONT_SIZE_3XL; break;
+        case 'medium': this.cachedScoreFontSize = DesignConstants.FONT_SIZE_2XL; break;
+        case 'small': this.cachedScoreFontSize = DesignConstants.FONT_SIZE_XL; break;
+        case 'xsmall': this.cachedScoreFontSize = DesignConstants.FONT_SIZE_LG; break;
+        default: this.cachedScoreFontSize = DesignConstants.FONT_SIZE_3XL;
+      }
     }
+    return this.cachedScoreFontSize;
   }
 
-  // 根据布局模式获取标签字体大小
+  // 根据布局模式获取标签字体大小（使用缓存机制）
   private getLabelFontSize(): number {
-    switch (this.layoutMode) {
-      case 'large': return DesignConstants.FONT_SIZE_MD;
-      case 'medium': return DesignConstants.FONT_SIZE_SM;
-      case 'small': return DesignConstants.FONT_SIZE_SM;
-      case 'xsmall': return DesignConstants.FONT_SIZE_XS;
-      default: return DesignConstants.FONT_SIZE_MD;
+    if (!this.cachedLabelFontSize) {
+      switch (this.layoutMode) {
+        case 'large': this.cachedLabelFontSize = DesignConstants.FONT_SIZE_MD; break;
+        case 'medium': this.cachedLabelFontSize = DesignConstants.FONT_SIZE_SM; break;
+        case 'small': this.cachedLabelFontSize = DesignConstants.FONT_SIZE_SM; break;
+        case 'xsmall': this.cachedLabelFontSize = DesignConstants.FONT_SIZE_XS; break;
+        default: this.cachedLabelFontSize = DesignConstants.FONT_SIZE_MD;
+      }
     }
+    return this.cachedLabelFontSize;
+  }
+
+  // 当布局模式改变时清除缓存
+  private clearCache() {
+    this.cachedRingSize = undefined;
+    this.cachedStrokeWidth = undefined;
+    this.cachedScoreFontSize = undefined;
+    this.cachedLabelFontSize = undefined;
   }
 
   build() {

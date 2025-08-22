@@ -33,6 +33,35 @@ interface DetailModalConfig {
   ICON_SIZE: number;
 }
 
+// RatingPanel配置接口
+interface RatingPanelConfig {
+  WIDTH_LARGE: number;
+  WIDTH_MEDIUM: number;
+  WIDTH_SMALL: number;
+  WIDTH_XSMALL: number;
+  HEIGHT_LARGE: number;
+  HEIGHT_MEDIUM: number;
+  HEIGHT_SMALL: number;
+  HEIGHT_XSMALL: number;
+  RING_SIZE_LARGE: number;
+  RING_SIZE_MEDIUM: number;
+  RING_SIZE_SMALL: number;
+  RING_SIZE_XSMALL: number;
+  STROKE_WIDTH_LARGE: number;
+  STROKE_WIDTH_MEDIUM: number;
+  STROKE_WIDTH_SMALL: number;
+  STROKE_WIDTH_XSMALL: number;
+}
+
+// HealthCard布局配置接口（使用相对单位）
+interface HealthCardLayoutConfig {
+  ITEM_WIDTH: string;
+  ITEM_HEIGHT: number;
+  ITEM_SPACING: string;
+  ROW_SPACING: number;
+  CONTAINER_PADDING: number;
+}
+
 // 边距配置接口
 interface MarginPaddingConfig {
   top: number;
@@ -155,5 +184,34 @@ export class DesignConstants {
     MARGIN_SMALL: { top: 10, bottom: 10, right: 16, left: 16 },
     MARGIN_XSMALL: { top: 8, bottom: 8, right: 12, left: 12 },
     PADDING: { top: 8, bottom: 8 }
+  };
+
+  // 评分面板布局规范
+  static readonly RATING_PANEL: RatingPanelConfig = {
+    WIDTH_LARGE: 180,
+    WIDTH_MEDIUM: 160,
+    WIDTH_SMALL: 140,
+    WIDTH_XSMALL: 120,
+    HEIGHT_LARGE: 200,
+    HEIGHT_MEDIUM: 180,
+    HEIGHT_SMALL: 160,
+    HEIGHT_XSMALL: 140,
+    RING_SIZE_LARGE: 80,
+    RING_SIZE_MEDIUM: 70,
+    RING_SIZE_SMALL: 60,
+    RING_SIZE_XSMALL: 50,
+    STROKE_WIDTH_LARGE: 8,
+    STROKE_WIDTH_MEDIUM: 7,
+    STROKE_WIDTH_SMALL: 6,
+    STROKE_WIDTH_XSMALL: 5
+  };
+
+  // 健康卡片布局规范（使用相对单位）
+  static readonly HEALTH_CARD_LAYOUT: HealthCardLayoutConfig = {
+    ITEM_WIDTH: '16%',  // 相对宽度，适应不同屏幕
+    ITEM_HEIGHT: 80,    // 固定高度保持一致性
+    ITEM_SPACING: '2%', // 相对间距
+    ROW_SPACING: 12,
+    CONTAINER_PADDING: 16
   };
 }
