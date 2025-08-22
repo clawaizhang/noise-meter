@@ -32,6 +32,10 @@ export struct HealthStatusCard {
   @Local currentState: HealthCardState = HealthCardState.LOADING
   @Local errorMessage: string = ''
   @Local isLoading: boolean = true
+  @Local lastLayoutUpdateTime: number = 0
+  @Local lastHealthDataUpdateTime: number = 0
+  @Local healthDataUpdateInterval: number = 10000 // 10秒更新间隔
+  @Local dataUpdateTimer: number = 0
   
   // 缓存计算结果
   @Local cachedMemoryUsage: number = -1
@@ -39,6 +43,8 @@ export struct HealthStatusCard {
   @Local cachedAvailableMemory: string = ''
   @Local cachedFreeStorage: string = ''
   @Local lastHealthInfoHash: string = ''
+  @Local cachedLayoutMode: string = ''
+  @Local cachedScreenWidth: number = 0
   
   // 性能监控
   @Local calculationTimes: Record<string, number> = {}
@@ -50,8 +56,22 @@ export struct HealthStatusCard {
       this.updateScreenWidth();
     });
     
-    // 初始化加载数据
+    // 立即加载数据（不等待定时器）
     this.loadHealthData();
+    
+    // 设置定时数据更新检查
+    this.setupDataUpdateTimer();
+  }
+
+  aboutToDisappear() {
+    // 移除屏幕变化监听器
+    display.off('change');
+    
+    // 清除数据更新定时器
+    if (this.dataUpdateTimer) {
+      clearInterval(this.dataUpdateTimer);
+      this.dataUpdateTimer = 0;
+    }
   }
 
 
@@ -487,12 +507,18 @@ export struct HealthStatusCard {
     }
   }
 
-  // 更新屏幕宽度
+  // 更新屏幕宽度（带缓存优化）
   private updateScreenWidth() {
     try {
       const displayClass = display.getDefaultDisplaySync();
-      this.screenWidth = displayClass.width;
-      this.updateLayoutMode(this.screenWidth);
+      const newScreenWidth = displayClass.width;
+      
+      // 只有当屏幕宽度有显著变化时才更新布局模式
+      if (Math.abs(newScreenWidth - this.cachedScreenWidth) > 20) { // 20px变化阈值
+        this.screenWidth = newScreenWidth;
+        this.cachedScreenWidth = newScreenWidth;
+        this.updateLayoutMode(this.screenWidth);
+      }
     } catch (error) {
       console.error('Failed to get display info:', error);
     }
@@ -525,7 +551,12 @@ export struct HealthStatusCard {
           this.buildResponsiveLayout()
         }
         .onAreaChange((oldValue: Area, newValue: Area) => {
-          this.updateLayoutMode(Number(newValue.width));
+          // 添加防抖机制，避免频繁触发布局更新
+          const currentTime = Date.now();
+          if (currentTime - this.lastLayoutUpdateTime > 300) { // 300ms防抖
+            this.updateLayoutMode(Number(newValue.width));
+            this.lastLayoutUpdateTime = currentTime;
+          }
         })
       }
 
@@ -533,10 +564,18 @@ export struct HealthStatusCard {
   }
   
 
-  // 加载健康数据
+  // 加载健康数据（带频率控制）
   private loadHealthData() {
+    const currentTime = Date.now();
+    
+    // 控制数据更新频率，避免过于频繁的更新（但允许初始加载）
+    if (this.lastHealthDataUpdateTime > 0 && currentTime - this.lastHealthDataUpdateTime < this.healthDataUpdateInterval) {
+      return;
+    }
+    
     this.currentState = HealthCardState.LOADING;
     this.isLoading = true;
+    this.lastHealthDataUpdateTime = currentTime;
     
     try {
       // 保存this引用
@@ -548,6 +587,7 @@ export struct HealthStatusCard {
         
         // 检查数据是否有效
         if (self.isDataValid(healthInfo)) {
+          // 即使数据没有显著变化，也要更新状态为成功
           self.healthInfo = healthInfo;
           self.currentState = HealthCardState.SUCCESS;
           // 数据更新时清除缓存
@@ -568,13 +608,12 @@ export struct HealthStatusCard {
   
   // 检查数据有效性
   private isDataValid(healthInfo: DeviceHealthInfo): boolean {
-    // 检查基本数据是否有效
-    return healthInfo &&
-           healthInfo.battery &&
-           healthInfo.performance &&
-           healthInfo.network &&
-           healthInfo.sensors &&
-           healthInfo.score > 0;
+    // 检查基本数据是否有效（允许score为0，因为可能是初始状态）
+    return healthInfo != undefined &&
+           healthInfo.battery != undefined &&
+           healthInfo.performance != undefined &&
+           healthInfo.network != undefined &&
+           healthInfo.sensors != undefined;
   }
   
   // 重试加载数据
@@ -582,22 +621,69 @@ export struct HealthStatusCard {
     this.loadHealthData();
   }
   
-  // 更新布局模式
-  private updateLayoutMode(width: number) {
-    // 计算6个MetricItem所需的最小宽度（包括间距）
-    const minWidthForLargeLayout = DesignConstants.METRIC_ITEM.WIDTH * 6 + DesignConstants.SPACING_MD * 5;
+  // 设置数据更新定时器
+  private setupDataUpdateTimer() {
+    // 每10秒检查一次数据更新（与healthDataUpdateInterval保持一致）
+    this.dataUpdateTimer = setInterval(() => {
+      this.loadHealthData();
+    }, this.healthDataUpdateInterval);
+  }
+  
+  // 检查数据是否有显著变化（避免微小变化触发布局重绘）
+  private hasSignificantChange(newHealthInfo: DeviceHealthInfo): boolean {
+    const oldInfo = this.healthInfo;
     
-    if (width >= minWidthForLargeLayout) {
-      this.layoutMode = 'large';
-    } else if (width >= DesignConstants.METRIC_ITEM.WIDTH * 3 + DesignConstants.SPACING_MD * 2) {
-      this.layoutMode = 'medium';
-    } else if (width >= DesignConstants.METRIC_ITEM.WIDTH * 2 + DesignConstants.SPACING_MD) {
-      this.layoutMode = 'small';
-    } else {
-      this.layoutMode = 'xsmall';
+    // 如果这是第一次加载数据，总是返回true
+    if (!oldInfo || oldInfo.score === 0) {
+      return true;
     }
     
-    console.debug(`[LayoutMode] Screen width: ${width}px, Mode: ${this.layoutMode}, Min for large: ${minWidthForLargeLayout}px`);
+    // 检查各项指标是否有显著变化（阈值可以根据需要调整）
+    const batteryChange = Math.abs(newHealthInfo.battery.level - oldInfo.battery.level) > 2;
+    const cpuChange = Math.abs(newHealthInfo.performance.cpu - oldInfo.performance.cpu) > 5;
+    const memoryChange = Math.abs(
+      Number(newHealthInfo.performance.memory.availableMem) -
+      Number(oldInfo.performance.memory.availableMem)
+    ) > 1000000; // 1MB变化
+    
+    // 如果有任何显著变化，返回true
+    return batteryChange || cpuChange || memoryChange;
+  }
+  
+  // 更新布局模式（带滞后阈值防止频繁切换和缓存优化）
+  private updateLayoutMode(width: number) {
+    // 计算各布局模式的最小宽度要求
+    const minWidthForLargeLayout = DesignConstants.METRIC_ITEM.WIDTH * 6 + DesignConstants.SPACING_MD * 5;
+    const minWidthForMediumLayout = DesignConstants.METRIC_ITEM.WIDTH * 3 + DesignConstants.SPACING_MD * 2;
+    const minWidthForSmallLayout = DesignConstants.METRIC_ITEM.WIDTH * 2 + DesignConstants.SPACING_MD;
+    
+    // 添加滞后阈值（15px），防止在边界值附近频繁切换
+    const hysteresis = 15;
+    
+    let newLayoutMode: string;
+    
+    if (width >= minWidthForLargeLayout + hysteresis) {
+      newLayoutMode = 'large';
+    } else if (width >= minWidthForMediumLayout + hysteresis) {
+      // 如果当前是大屏模式，需要更宽的阈值才能切换到中屏
+      newLayoutMode = (this.cachedLayoutMode === 'large' && width >= minWidthForLargeLayout - hysteresis) ?
+        'large' : 'medium';
+    } else if (width >= minWidthForSmallLayout + hysteresis) {
+      // 如果当前是中屏模式，需要更宽的阈值才能切换到小屏
+      newLayoutMode = (this.cachedLayoutMode === 'medium' && width >= minWidthForMediumLayout - hysteresis) ?
+        'medium' : 'small';
+    } else {
+      // 如果当前是小屏模式，需要更窄的阈值才能切换到超小屏
+      newLayoutMode = (this.cachedLayoutMode === 'small' && width >= minWidthForSmallLayout - hysteresis) ?
+        'small' : 'xsmall';
+    }
+    
+    // 只有当布局模式真正改变时才更新
+    if (newLayoutMode !== this.cachedLayoutMode) {
+      this.layoutMode = newLayoutMode;
+      this.cachedLayoutMode = newLayoutMode;
+      console.debug(`[LayoutMode] Screen width: ${width}px, Mode: ${this.layoutMode}`);
+    }
   }
 
   // 清除缓存
