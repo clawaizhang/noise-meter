@@ -74,7 +74,7 @@
     },
     {
       "name": "cpu_label",
-      "value": "空闲CPU"
+      "value": "CPU占用"
     },
     {
       "name": "memory_label",
@@ -91,6 +91,26 @@
     {
       "name": "sensors_label",
       "value": "传感器状态"
+    },
+    {
+      "name": "health_data_error",
+      "value": "获取健康数据失败，请检查网络连接"
+    },
+    {
+      "name": "health_data_empty",
+      "value": "暂无健康数据可用"
+    },
+    {
+      "name": "no_health_data",
+      "value": "暂无设备健康数据"
+    },
+    {
+      "name": "retry_button",
+      "value": "重试"
+    },
+    {
+      "name": "refresh_button",
+      "value": "刷新"
     }
   ]
 }

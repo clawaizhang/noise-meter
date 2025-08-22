@@ -203,6 +203,14 @@
     {
       "name": "health_bad",
       "value": "#F44336"
+    },
+    {
+      "name": "skeleton_background",
+      "value": "#E0E0E0"
+    },
+    {
+      "name": "border_primary",
+      "value": "#E0E0E0"
     }
   ]
 }
