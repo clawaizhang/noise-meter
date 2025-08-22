@@ -56,8 +56,17 @@ export struct HealthStatusCard {
       this.updateScreenWidth();
     });
     
-    // 立即加载数据（不等待定时器）
-    this.loadHealthData();
+    // 检查是否已经有有效数据，避免不必要的初始加载
+    const currentHealthInfo = DeviceHealthService.getInstance().getHealthInfo();
+    if (this.isDataValid(currentHealthInfo) && currentHealthInfo.score > 0) {
+      // 已经有有效数据，直接使用
+      this.healthInfo = currentHealthInfo;
+      this.currentState = HealthCardState.SUCCESS;
+      this.clearCache(); // 确保缓存正确初始化
+    } else {
+      // 立即加载数据（不等待定时器）
+      this.loadHealthData();
+    }
     
     // 设置定时数据更新检查
     this.setupDataUpdateTimer();
@@ -324,11 +333,24 @@ export struct HealthStatusCard {
 
   // 生成健康信息哈希用于缓存验证
   private getHealthInfoHash(): string {
-    const mem = this.healthInfo.performance.memory;
-    const storage = this.healthInfo.performance.storage;
+    return this.generateHealthInfoHash(this.healthInfo);
+  }
+  
+  // 为指定健康信息生成哈希（用于比较新旧数据）
+  private generateHealthInfoHash(healthInfo: DeviceHealthInfo): string {
+    const mem = healthInfo.performance.memory;
+    const storage = healthInfo.performance.storage;
+    const battery = healthInfo.battery;
+    const network = healthInfo.network;
+    const sensors = healthInfo.sensors;
     
-    // 使用关键数据生成简单哈希
-    return `${mem.totalMem}_${mem.availableMem}_${storage.total}_${storage.used}_${storage.free}`;
+    // 使用所有关键数据生成哈希，确保数据变化的精确检测
+    return `${battery.level}_${battery.health}_${battery.temperature}_${battery.status}_` +
+           `${mem.totalMem}_${mem.availableMem}_` +
+           `${storage.total}_${storage.used}_${storage.free}_` +
+           `${healthInfo.performance.cpu}_` +
+           `${network.signalStrength}_${network.type}_${network.isConnected}_` +
+           `${sensors.status}_${healthInfo.score}`;
   }
 
   // 记录计算耗时
@@ -564,16 +586,29 @@ export struct HealthStatusCard {
   }
   
 
-  // 加载健康数据（带频率控制）
+  // 加载健康数据（带频率控制和状态管理优化）
   private loadHealthData() {
     const currentTime = Date.now();
     
-    // 控制数据更新频率，避免过于频繁的更新（但允许初始加载）
+    // 控制数据更新频率，避免过于频繁的更新
     if (this.lastHealthDataUpdateTime > 0 && currentTime - this.lastHealthDataUpdateTime < this.healthDataUpdateInterval) {
       return;
     }
     
-    this.currentState = HealthCardState.LOADING;
+    const newHealthInfo = DeviceHealthService.getInstance().getHealthInfo();
+    
+    // 检查数据是否有显著变化，如果没有变化则不触发加载状态
+    if (!this.hasSignificantChange(newHealthInfo) && this.currentState === HealthCardState.SUCCESS) {
+      // 数据没有显著变化且当前已经是成功状态，直接更新缓存哈希并返回
+      this.lastHealthInfoHash = this.getHealthInfoHash();
+      this.lastHealthDataUpdateTime = currentTime;
+      return;
+    }
+    
+    // 只有在当前不是加载状态时才显示加载UI
+    if (this.currentState !== HealthCardState.LOADING) {
+      this.currentState = HealthCardState.LOADING;
+    }
     this.isLoading = true;
     this.lastHealthDataUpdateTime = currentTime;
     
@@ -587,11 +622,14 @@ export struct HealthStatusCard {
         
         // 检查数据是否有效
         if (self.isDataValid(healthInfo)) {
-          // 即使数据没有显著变化，也要更新状态为成功
-          self.healthInfo = healthInfo;
+          // 检查数据是否有显著变化，如果没有变化则保持当前状态
+          if (self.hasSignificantChange(healthInfo)) {
+            self.healthInfo = healthInfo;
+            // 数据更新时清除缓存
+            self.clearCache();
+          }
+          // 更新为成功状态
           self.currentState = HealthCardState.SUCCESS;
-          // 数据更新时清除缓存
-          self.clearCache();
         } else {
           self.currentState = HealthCardState.EMPTY;
           self.errorMessage = '健康数据为空';
@@ -625,7 +663,10 @@ export struct HealthStatusCard {
   private setupDataUpdateTimer() {
     // 每10秒检查一次数据更新（与healthDataUpdateInterval保持一致）
     this.dataUpdateTimer = setInterval(() => {
-      this.loadHealthData();
+      // 只有在当前不是加载状态且组件可见时才触发数据加载
+      if (this.currentState !== HealthCardState.LOADING) {
+        this.loadHealthData();
+      }
     }, this.healthDataUpdateInterval);
   }
   
@@ -638,6 +679,14 @@ export struct HealthStatusCard {
       return true;
     }
     
+    // 使用哈希比较作为第一层快速检查
+    const newHash = this.generateHealthInfoHash(newHealthInfo);
+    const oldHash = this.lastHealthInfoHash;
+    
+    if (newHash === oldHash && oldHash !== '') {
+      return false; // 哈希相同，数据没有变化
+    }
+    
     // 检查各项指标是否有显著变化（阈值可以根据需要调整）
     const batteryChange = Math.abs(newHealthInfo.battery.level - oldInfo.battery.level) > 2;
     const cpuChange = Math.abs(newHealthInfo.performance.cpu - oldInfo.performance.cpu) > 5;
@@ -645,9 +694,11 @@ export struct HealthStatusCard {
       Number(newHealthInfo.performance.memory.availableMem) -
       Number(oldInfo.performance.memory.availableMem)
     ) > 1000000; // 1MB变化
+    const networkChange = newHealthInfo.network.signalStrength !== oldInfo.network.signalStrength;
+    const sensorChange = newHealthInfo.sensors.status !== oldInfo.sensors.status;
     
     // 如果有任何显著变化，返回true
-    return batteryChange || cpuChange || memoryChange;
+    return batteryChange || cpuChange || memoryChange || networkChange || sensorChange;
   }
   
   // 更新布局模式（带滞后阈值防止频繁切换和缓存优化）
