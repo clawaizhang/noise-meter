@@ -5,7 +5,6 @@ import { MetricItem } from "./common/MetricItem"
 import { DesignConstants } from "../constants/DesignConstants"
 import { MemoryUtils, calculateMemoryUsage, calculateStorageUsage } from "../utils/MemoryUtils"
 import { navigationStack } from "../constants/ProviderConstant"
-import display from '@ohos.display';
 import { ResponsiveLayout, Breakpoint, LayoutMode, responsiveSpacing, responsiveFontSize, responsiveLayout, WindowChangeListener } from "../utils/ResponsiveLayout"
 
 // 健康卡片状态枚举
@@ -132,21 +131,13 @@ export struct HealthStatusCard {
 
   @Builder
   buildMediumLayout() {
-    // 中屏布局：两行显示，每行3个指标
-    Column() {
-      // 第一行：3个指标
-      Flex({
-        justifyContent: FlexAlign.SpaceAround,
-        alignItems: ItemAlign.Center,
-        wrap: FlexWrap.NoWrap
-      }) {
-        this.buildMetricItem(0) // 电量
-        this.buildMetricItem(1) // 内存
-        this.buildMetricItem(2) // 存储
-      }
-      .width('100%')
-      .margin({ bottom: responsiveSpacing(DesignConstants.SPACING_MD) })
-
+    // 中屏布局：单行显示存储指标
+    Flex({
+      justifyContent: FlexAlign.Center,
+      alignItems: ItemAlign.Center,
+      wrap: FlexWrap.NoWrap
+    }) {
+      this.buildMetricItem(0) // 存储
     }
     .width('100%')
     .margin({
@@ -163,30 +154,13 @@ export struct HealthStatusCard {
 
   @Builder
   buildSmallLayout() {
-    // 小屏布局：三行显示，每行2个指标
-    Column() {
-      // 第一行：2个指标
-      Flex({
-        justifyContent: FlexAlign.SpaceAround,
-        alignItems: ItemAlign.Center,
-        wrap: FlexWrap.NoWrap
-      }) {
-        this.buildMetricItem(0) // 电量
-        this.buildMetricItem(1) // 内存
-      }
-      .width('100%')
-      .margin({ bottom: responsiveSpacing(DesignConstants.SPACING_SM) })
-
-      // 第二行：1个指标（网络）
-      Flex({
-        justifyContent: FlexAlign.Center,
-        alignItems: ItemAlign.Center,
-        wrap: FlexWrap.NoWrap
-      }) {
-        this.buildMetricItem(4) // 网络
-      }
-      .width('100%')
-      .margin({ bottom: responsiveSpacing(DesignConstants.SPACING_SM) })
+    // 小屏布局：单行显示存储指标
+    Flex({
+      justifyContent: FlexAlign.Center,
+      alignItems: ItemAlign.Center,
+      wrap: FlexWrap.NoWrap
+    }) {
+      this.buildMetricItem(0) // 存储
     }
     .width('100%')
     .margin({
@@ -203,23 +177,13 @@ export struct HealthStatusCard {
 
   @Builder
   buildXSmallLayout() {
-    // 超小屏布局：六行显示，每行1个指标
-    Column() {
-      ForEach([0, 1, 2, 4], (index: number) => {
-        Flex({
-          justifyContent: FlexAlign.Center,
-          alignItems: ItemAlign.Center,
-          wrap: FlexWrap.NoWrap
-        }) {
-          this.buildMetricItem(index === 3 ? 4 : index) // 将索引3映射到网络指标
-        }
-        .width('100%')
-        .margin({ bottom: index < 3 ? responsiveSpacing(DesignConstants.SPACING_XS) : 0 })
-        .padding({
-          top: responsiveSpacing(DesignConstants.SPACING_XS),
-          bottom: responsiveSpacing(DesignConstants.SPACING_XS)
-        })
-      })
+    // 超小屏布局：单行显示存储指标
+    Flex({
+      justifyContent: FlexAlign.Center,
+      alignItems: ItemAlign.Center,
+      wrap: FlexWrap.NoWrap
+    }) {
+      this.buildMetricItem(0) // 存储
     }
     .width('100%')
     .margin({
@@ -439,17 +403,6 @@ export struct HealthStatusCard {
   // 构建所有指标项
   @Builder
   buildAllMetrics() {
-    // 电量
-    MetricItem({
-      icon: $r('app.media.ic_battery'),
-      value: `${this.healthInfo.battery.level}%`,
-      label: $r('app.string.battery_label'),
-      onClickItem: () => {
-        this.selectedMetricType = 'battery'
-        this.showHealthDetailDialog()
-      }
-    })
-
     // 可用存储（使用缓存优化）
     MetricItem({
       icon: $r('app.media.ic_storage'),
@@ -460,59 +413,18 @@ export struct HealthStatusCard {
         this.showHealthDetailDialog()
       }
     })
-
-    // 网络质量
-    MetricItem({
-      icon: $r('app.media.ic_security'),
-      value: `${this.healthInfo.network.signalStrength}/4`,
-      label: $r('app.string.network_label'),
-      onClickItem: () => {
-        this.selectedMetricType = 'network'
-        this.showHealthDetailDialog()
-      }
-    })
   }
 
   // 构建单个指标项
   @Builder
   buildMetricItem(index: number) {
-    if (index === 0) { // 电量
-      MetricItem({
-        icon: $r('app.media.ic_battery'),
-        value: `${this.healthInfo.battery.level}%`,
-        label: $r('app.string.battery_label'),
-        onClickItem: () => {
-          this.selectedMetricType = 'battery'
-          this.showHealthDetailDialog()
-        }
-      })
-    } else if (index === 1) { // 内存（使用缓存优化）
-      MetricItem({
-        icon: $r('app.media.ic_storage'),
-        value: this.getAvailableMemoryFormatted(),
-        label: $r('app.string.memory_label'),
-        onClickItem: () => {
-          this.selectedMetricType = 'memory'
-          this.showHealthDetailDialog()
-        }
-      })
-    } else if (index === 2) { // 存储（使用缓存优化）
+    if (index === 0) { // 存储（使用缓存优化）
       MetricItem({
         icon: $r('app.media.ic_storage'),
         value: this.getFreeStorageFormatted(),
         label: $r('app.string.storage_label'),
         onClickItem: () => {
           this.selectedMetricType = 'storage'
-          this.showHealthDetailDialog()
-        }
-      })
-    } else if (index === 4) { // 网络
-      MetricItem({
-        icon: $r('app.media.ic_security'),
-        value: `${this.healthInfo.network.signalStrength}/4`,
-        label: $r('app.string.network_label'),
-        onClickItem: () => {
-          this.selectedMetricType = 'network'
           this.showHealthDetailDialog()
         }
       })
