@@ -147,15 +147,6 @@ export struct HealthStatusCard {
       .width('100%')
       .margin({ bottom: responsiveSpacing(DesignConstants.SPACING_MD) })
 
-      // 第二行：1个指标（网络）
-      Flex({
-        justifyContent: FlexAlign.Center,
-        alignItems: ItemAlign.Center,
-        wrap: FlexWrap.NoWrap
-      }) {
-        this.buildMetricItem(4) // 网络
-      }
-      .width('100%')
     }
     .width('100%')
     .margin({
@@ -459,17 +450,6 @@ export struct HealthStatusCard {
       }
     })
 
-    // 可用内存（使用缓存优化）
-    MetricItem({
-      icon: $r('app.media.ic_storage'),
-      value: this.getAvailableMemoryFormatted(),
-      label: $r('app.string.memory_label'),
-      onClickItem: () => {
-        this.selectedMetricType = 'memory'
-        this.showHealthDetailDialog()
-      }
-    })
-
     // 可用存储（使用缓存优化）
     MetricItem({
       icon: $r('app.media.ic_storage'),
@@ -570,14 +550,6 @@ export struct HealthStatusCard {
           // 响应式指标布局
           this.buildResponsiveLayout()
         }
-        .onAreaChange((oldValue: Area, newValue: Area) => {
-          // 添加防抖机制，避免频繁触发布局更新
-          const currentTime = Date.now();
-          if (currentTime - this.lastLayoutUpdateTime > 300) { // 300ms防抖
-            this.updateLayoutMode(Number(newValue.width));
-            this.lastLayoutUpdateTime = currentTime;
-          }
-        })
       }
 
     }

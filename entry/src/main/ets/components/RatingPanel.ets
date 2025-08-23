@@ -340,13 +340,5 @@ export struct RatingPanel {
     }
     .width('100%')
     .alignItems(HorizontalAlign.Center)
-    .onAreaChange((oldValue: Area, newValue: Area) => {
-      // 添加防抖机制，避免频繁触发布局更新
-      const currentTime = Date.now();
-      if (currentTime - this.lastLayoutUpdateTime > 300) { // 300ms防抖
-        this.updateLayoutMode(Number(newValue.width));
-        this.lastLayoutUpdateTime = currentTime;
-      }
-    })
   }
 }
