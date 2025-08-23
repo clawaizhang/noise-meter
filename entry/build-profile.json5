@@ -29,11 +29,30 @@
           "pages/Index",
         ],
         "sourceRoots": [
-          "./src/main"
+          "./src/noise_meter_pages"
         ]
       },
       "resource": {
         "directories": [
+          "./src/main/noise_meter/resources",
+          "./src/main/resources"
+        ]
+      }
+    },
+    {
+      "name": "device_manager",
+      "runtimeOS": "HarmonyOS",
+      "source": {
+        "pages": [
+          "pages/Index",
+        ],
+        "sourceRoots": [
+          "./src/device_manager_pages"
+        ]
+      },
+      "resource": {
+        "directories": [
+          "./src/main/device_manager/resources",
           "./src/main/resources"
         ]
       }

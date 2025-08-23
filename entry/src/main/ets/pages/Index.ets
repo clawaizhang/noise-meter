@@ -1,16 +1,12 @@
-import { app } from '../apps/AppManager'
 import { navigationStack } from '../constants/ProviderConstant'
 import { PreferenceService } from '../services/PreferenceService'
 import { RelationalStoreService } from '../services/RelationalStoreService'
-import { MainDeviceManager } from './device_manager/MainDeviceManagerNavigation'
 import { commonEventManager } from '@kit.BasicServicesKit'
 import { privacyManager } from '@kit.StoreKit'
 import { PreferenceKeyConstants } from '../constants/PreferenceKeyConstants'
 import { DatabaseUpgradeConfig, DbConfig } from '../interfaces/DatabaseInterfaces'
 import hilog from '@ohos.hilog'
-import { DbManager } from '../apps/DbManager'
-import { MainNoiseMeter } from './noisemeter/NoiseMeterNavigation'
-
+import { MainPage, dbConfig } from 'entry/MainPage'
 
 const TAG = 'Index';
 const DOMAIN = 0x0000;
@@ -48,7 +44,6 @@ struct Index {
       let appPrivacyResults: privacyManager.AppPrivacyResult[] = privacyManager.getAppPrivacyResult();
       this.privacyAgreed = appPrivacyResults[0]?.result === 1;
       PreferenceService.getInstance().setBoolean(PreferenceKeyConstants.PRIVACY_AGREED, this.privacyAgreed);
-      const dbConfig: DbConfig = DbManager.getDbUpgradeConfigs();
       // 初始化数据库
       const upgradeConfigs: DatabaseUpgradeConfig[] = dbConfig.upgradeConfigs;
 
@@ -130,12 +125,7 @@ struct Index {
         // 显示正常内容
         Navigation(this.navStack) {
           if (this.privacyAgreed) {
-            if (app.noiseMeter) {
-              MainNoiseMeter()
-            }
-            if (app.deviceManager) {
-              MainDeviceManager()
-            }
+            MainPage()
           } else {
             Column() {
               Image($r('app.media.app_icon_fore'))

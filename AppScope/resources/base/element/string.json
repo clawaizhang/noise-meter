@@ -6,11 +6,11 @@
     },
     {
       "name": "noise_meter_app_name",
-      "value": "止喧噪音检测"
+      "value": "噪音分贝仪pro"
     },
     {
-      "name": "file_vault_app_name",
-      "value": "小蓝书"
+      "name": "device_manager_app_name",
+      "value": "手机管家pro"
     }
   ]
 }
