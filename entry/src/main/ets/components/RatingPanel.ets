@@ -148,7 +148,7 @@ export struct RatingPanel {
     .borderRadius(DesignConstants.BORDER_RADIUS_LG)
     .shadow(DesignConstants.SHADOW_MD)
     .width(180)
-    .height(200)
+    .height(150)
   }
 
   @Builder

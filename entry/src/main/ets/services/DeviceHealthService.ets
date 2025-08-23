@@ -83,7 +83,7 @@ export class DeviceHealthService {
       this.healthInfo.battery.level = batteryInfo.batterySOC;
       this.healthInfo.battery.health = batteryInfo.healthStatus === batteryInfo.BatteryHealthState.GOOD ? 100 :
         batteryInfo.healthStatus === batteryInfo.BatteryHealthState.OVERHEAT ? 60 : 30;
-      this.healthInfo.battery.temperature = batteryInfo.batteryTemperature;
+      this.healthInfo.battery.temperature = batteryInfo.batteryTemperature / 10;
       this.healthInfo.battery.status =
         batteryInfo.chargingStatus === batteryInfo.BatteryChargeState.ENABLE ? 'charging' : 'discharging';
 
@@ -225,7 +225,7 @@ export class DeviceHealthService {
       const cellularInfo = await this.getCellularNetworkInfo();
 
       this.healthInfo.network.isConnected =
-        netCap?.networkCap?.includes(connection.NetCap.NET_CAPABILITY_INTERNET) ?? false;
+        netCap?.networkCap?.includes(connection.NetCap.NET_CAPABILITY_VALIDATED) ?? false;
       this.healthInfo.network.type = this.mapNetType(netCap?.bearerTypes[0]);
       this.healthInfo.network.signalStrength = cellularInfo.signalStrength;
       this.healthInfo.network.networkGeneration = cellularInfo.generation;

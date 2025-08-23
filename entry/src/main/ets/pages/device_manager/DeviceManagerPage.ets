@@ -141,12 +141,6 @@ export struct DeviceManagerPage {
       Column() {
         // 设备评分面板 - 放在健康状态卡片上方
         Column() {
-          Text($r('app.string.device_score_title'))
-            .cardTitleStyle()
-            .margin({ bottom: 12 })
-            .width('100%')
-            .textAlign(TextAlign.Center)
-          
           RatingPanel({ score: this.calculateDeviceScore() })
             .width('100%')
         }
@@ -156,11 +150,6 @@ export struct DeviceManagerPage {
 
         // 健康度卡片
         Column() {
-          Text($r('app.string.health_status_title'))
-            .cardTitleStyle()
-            .margin({ bottom: 12 })
-            .width('100%')
-            .textAlign(TextAlign.Center)
           
           HealthStatusCard({ memoryUsagePercentage: this.usagePercent })
         }
@@ -168,12 +157,6 @@ export struct DeviceManagerPage {
 
         // 功能链接面板 - 放在健康状态卡片下方
         Column() {
-          Text($r('app.string.function_links_title'))
-            .cardTitleStyle()
-            .margin({ bottom: 12 })
-            .width('100%')
-            .textAlign(TextAlign.Center)
-          
           FunctionLinksPanel()
             .width('100%')
         }
