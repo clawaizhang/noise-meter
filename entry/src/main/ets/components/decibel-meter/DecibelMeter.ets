@@ -24,6 +24,25 @@ import { PreferenceService, PreferenceChangeListener, PreferenceValue } from '..
 import { FFTAnalyzer } from '../../utils/FFTAnalyzer';
 import { LocationDisplay } from '../business/LocationDisplay';
 import { WeightingType } from '../../constants/WeightingConstants';
+import { ResponsiveLayout, Breakpoint, LayoutMode, type WindowChangeListener } from '../../utils/ResponsiveLayout';
+
+// 响应式数值接口定义
+interface ResponsiveNumberValues {
+  xsmall: number;
+  small: number;
+  medium: number;
+  large: number;
+  xlarge: number;
+}
+
+// 响应式字符串接口定义
+interface ResponsiveStringValues {
+  xsmall: string;
+  small: string;
+  medium: string;
+  large: string;
+  xlarge: string;
+}
 
 @ComponentV2
 export struct DecibelMeter {
@@ -61,6 +80,9 @@ export struct DecibelMeter {
   @Local private isNoiseAlarm: boolean = false // 是否触发噪音报警
   @Local private isDisplayApp: boolean = true
   @Local startTime: number = 0
+  @Local private responsiveLayout: ResponsiveLayout = ResponsiveLayout.getInstance()
+  @Local private currentBreakpoint: Breakpoint = Breakpoint.XS
+  @Local private currentLayoutMode: LayoutMode = LayoutMode.XSMALL
   @Consumer(navigationStack) navStack: NavPathStack = new NavPathStack()
   private audioService: AudioService = AudioService.getInstance(getContext() as common.UIAbilityContext)
   private locationService: LocationService = LocationService.getInstance()
@@ -74,6 +96,7 @@ export struct DecibelMeter {
   private releaseTimer: number = -1
   private currentRecord?: DecibelRecord
   private recordListener?: PreferenceChangeListener
+  private responsiveListener?: WindowChangeListener
   // Canvas相关属性
 
   private ASPECT_RATIO: number = 1.5 // 宽高比改为3:2
@@ -84,12 +107,18 @@ export struct DecibelMeter {
   private canvasContext: CanvasRenderingContext2D = new CanvasRenderingContext2D(this.canvasSettings) // Canvas上下文
   private noiseAlarmTimer: number = -1 // 定时器ID用于控制闪烁
 
-  // 计算Canvas尺寸
+  // 更新响应式布局状态
+  private updateResponsiveLayout(width: number): void {
+    this.currentBreakpoint = this.responsiveLayout.getBreakpoint(width);
+    this.currentLayoutMode = this.responsiveLayout.getLayoutMode(this.currentBreakpoint);
+    console.info(`[FREQ_TRACE][Responsive] 断点: ${this.currentBreakpoint}, 布局模式: ${this.currentLayoutMode}`);
+  }
+
+  // 计算Canvas尺寸（响应式版本）
   private async calculateCanvasDimensions(): Promise<void> {
     try {
       // 获取屏幕信息
       let callback: Callback<display.FoldStatus> = (foldStatus: display.FoldStatus) => {
-        // 获取折叠折痕区域，left与top属性为矩形区域的左边界与上边界，width与height属性为矩形区域的宽高。
         this.foldStatus = foldStatus;
       };
       try {
@@ -97,22 +126,56 @@ export struct DecibelMeter {
       } catch (exception) {
         console.error('Failed to register callback. Code: ' + JSON.stringify(exception));
       }
+      
       // 获取实际可用区域
       const availableArea = await display.getDefaultDisplaySync().getAvailableArea();
       this.foldStatus = display.getFoldStatus();
       const availableWidth = availableArea.width < availableArea.height ? availableArea.width : availableArea.height;
       const availableHeight = availableArea.width < availableArea.height ? availableArea.height : availableArea.width;
+      
+      // 更新响应式布局状态
+      const availableWidthVp = px2vp(availableWidth);
+      this.updateResponsiveLayout(availableWidthVp);
+
+      // 根据布局模式调整宽高比
+      switch (this.currentLayoutMode) {
+        case LayoutMode.XSMALL:
+          this.ASPECT_RATIO = 1.2; // 小屏幕使用更紧凑的比例
+          break;
+        case LayoutMode.SMALL:
+          this.ASPECT_RATIO = 1.5;
+          break;
+        case LayoutMode.MEDIUM:
+          this.ASPECT_RATIO = 1.8;
+          break;
+        case LayoutMode.LARGE:
+          this.ASPECT_RATIO = 2.0;
+          break;
+        case LayoutMode.XLARGE:
+          this.ASPECT_RATIO = 2.2; // 大屏幕使用更宽的比例
+          break;
+      }
+
+      // 根据折叠状态进一步调整
       if(availableWidth / availableHeight < 1 && this.foldStatus === display.FoldStatus.FOLD_STATUS_EXPANDED) {
         this.ASPECT_RATIO = 3;
       }
       if(availableWidth / availableHeight < 1 && this.foldStatus === display.FoldStatus.FOLD_STATUS_FOLDED) {
         this.ASPECT_RATIO = 3.5;
       }
-      // 先把可用区域的像素转换为vp
-      const availableWidthVp = px2vp(availableWidth);
-      // 然后用vp单位进行计算
-      this.canvasWidth = availableWidthVp - (this.SIDE_MARGIN * 2);
+
+      // 使用响应式边距
+      const responsiveMargin = this.responsiveLayout.getResponsiveValue<number>({
+        xsmall: 16,
+        small: 20,
+        medium: 24,
+        large: 28,
+        xlarge: 32
+      } as ResponsiveNumberValues);
+      this.canvasWidth = availableWidthVp - (responsiveMargin as number * 2);
       this.canvasHeight = this.canvasWidth / this.ASPECT_RATIO;
+      
+      console.info(`[FREQ_TRACE][Canvas] 响应式Canvas尺寸: ${this.canvasWidth}x${this.canvasHeight}, 边距: ${responsiveMargin}vp`);
     } catch (error) {
       console.error('[FREQ_TRACE][显示设备信息] 计算Canvas尺寸失败:', error);
     }
@@ -193,20 +256,50 @@ export struct DecibelMeter {
             this.recordingTime = new Date().getTime() - this.startTime;
           })
 
-        // 优化信息标签显示
+        // 优化信息标签显示（响应式版本）
         Row() {
           Image($r('app.media.ic_info'))
-            .width(16)
-            .height(16)
-            .margin({ right: 6 })
+            .width(this.responsiveLayout.getResponsiveValue<number>({
+              xsmall: 12,
+              small: 14,
+              medium: 16,
+              large: 18,
+              xlarge: 20
+            } as ResponsiveNumberValues))
+            .height(this.responsiveLayout.getResponsiveValue<number>({
+              xsmall: 12,
+              small: 14,
+              medium: 16,
+              large: 18,
+              xlarge: 20
+            } as ResponsiveNumberValues))
+            .margin({ right: this.responsiveLayout.getResponsiveValue<number>({
+              xsmall: 4,
+              small: 5,
+              medium: 6,
+              large: 7,
+              xlarge: 8
+            } as ResponsiveNumberValues) })
             .fillColor(this.getDecibelColor(this.decibelState.currentDecibel))
 
           Text(DecibelService.getDecibelDescription(this.decibelState.currentDecibel))
-            .fontSize(14)
+            .fontSize(this.responsiveLayout.getResponsiveValue<number>({
+              xsmall: 12,
+              small: 13,
+              medium: 14,
+              large: 15,
+              xlarge: 16
+            } as ResponsiveNumberValues))
             .fontColor(this.getDecibelColor(this.decibelState.currentDecibel))
             .fontWeight(FontWeight.Medium)
         }
-        .padding(8)
+        .padding(this.responsiveLayout.getResponsiveValue<number>({
+          xsmall: 6,
+          small: 7,
+          medium: 8,
+          large: 9,
+          xlarge: 10
+        } as ResponsiveNumberValues))
         .backgroundColor($r('app.color.transparent_white_90'))
         .borderRadius(8)
         .border({
@@ -236,6 +329,11 @@ export struct DecibelMeter {
     }
     this.audioService.stopProcessing();
     this.audioService.stopCapture();
+    
+    // 移除ResponsiveLayout的监听器
+    if (this.responsiveListener) {
+      this.responsiveLayout.removeChangeListener(this.responsiveListener);
+    }
   }
 
   async aboutToAppear() {
@@ -247,6 +345,16 @@ export struct DecibelMeter {
       displayManager.onHidden(() => {
         this.isDisplayApp = false;
       });
+
+      // 使用ResponsiveLayout的统一监听系统
+      this.responsiveListener = (width: number, height: number, breakpoint: Breakpoint, layoutMode: LayoutMode) => {
+        this.updateResponsiveLayout(width);
+        // 重新计算Canvas尺寸
+        this.calculateCanvasDimensions().then(() => {
+          console.info(`[FREQ_TRACE][Responsive] 窗口尺寸变化: ${width}x${height}, 重新计算Canvas尺寸`);
+        });
+      };
+      this.responsiveLayout.addChangeListener(this.responsiveListener);
 
       // 初始化位置服务状态
       this.isLocationEnabled = this.preferenceService.getBoolean(PreferenceKeyConstants.LOCATION, true);
@@ -276,7 +384,7 @@ export struct DecibelMeter {
           if (key === PreferenceKeyConstants.CALIBRATION && typeof value === 'number') {
             this.calibrationGain = value;
           }
-        })
+        });
       // 获取当前的计权类型
       this.weightingType =
         this.preferenceService.getString(PreferenceKeyConstants.WEIGHTING, WeightingType.A) as WeightingType;
@@ -286,7 +394,7 @@ export struct DecibelMeter {
           if (key === PreferenceKeyConstants.WEIGHTING && typeof value === 'string') {
             this.weightingType = value as WeightingType;
           }
-        })
+        });
       //获取fftSize
       // 获取当前分析模式和FFT大小
       this.currentMode = this.preferenceService.getString(PREF_ANALYSIS_MODE, 'default') as AudioAnalysisMode;
@@ -297,7 +405,7 @@ export struct DecibelMeter {
           this.currentMode = value as AudioAnalysisMode;
           this.currentFftSize = AudioPresets.getConfig(this.currentMode).fftSize;
         }
-      })
+      });
       // 获取屏幕信息并初始化Canvas尺寸
       await this.calculateCanvasDimensions();
       console.info(`[FREQ_TRACE][Screen] aboutToAppear - 初始化后的Canvas尺寸: ${this.canvasWidth}x${this.canvasHeight}`);
@@ -621,13 +729,25 @@ export struct DecibelMeter {
           Row() {
             Column() {
               Text(this.showAvgInsteadOfMin ? '平均' : '最小')
-                .fontSize(12)
+                .fontSize(this.responsiveLayout.getResponsiveValue<number>({
+                  xsmall: 10,
+                  small: 12,
+                  medium: 14,
+                  large: 16,
+                  xlarge: 18
+                } as ResponsiveNumberValues))
                 .fontColor($r('app.color.text_secondary'))
                 .margin({ bottom: 4 })
               Text(this.showAvgInsteadOfMin ?
                 (this.avgDecibel === 0 ? '-' : this.avgDecibel.toString()) :
                 (this.minDecibel === 0 ? '-' : this.minDecibel.toString()))
-                .fontSize(32)
+                .fontSize(this.responsiveLayout.getResponsiveValue<number>({
+                  xsmall: 24,
+                  small: 28,
+                  medium: 32,
+                  large: 36,
+                  xlarge: 40
+                } as ResponsiveNumberValues))
                 .fontWeight(FontWeight.Medium)
                 .fontColor(DecibelService.getDecibelColor(
                   this.showAvgInsteadOfMin ? this.avgDecibel : this.minDecibel))
@@ -636,31 +756,73 @@ export struct DecibelMeter {
                 })
             }
             .alignItems(HorizontalAlign.Center)
-            .margin({ right: 8 })
+            .margin({ right: this.responsiveLayout.getResponsiveValue<number>({
+              xsmall: 4,
+              small: 6,
+              medium: 8,
+              large: 10,
+              xlarge: 12
+            } as ResponsiveNumberValues) })
 
             Column() {
               Text(this.decibelState.currentDecibel === 0 ? '-' : this.decibelState.currentDecibel.toString())
-                .fontSize(80)
+                .fontSize(this.responsiveLayout.getResponsiveValue<number>({
+                  xsmall: 60,
+                  small: 70,
+                  medium: 80,
+                  large: 90,
+                  xlarge: 100
+                } as ResponsiveNumberValues))
                 .fontWeight(FontWeight.Bold)
                 .fontColor(DecibelService.getDecibelColor(this.decibelState.currentDecibel))
               Row() {
                 if (this.isRecording) {
                   Text(`${secondsToHoursMinutesSecondsWithDecimal(this.MAX_RECORDING_DURATION - this.recordingTime)} 后自动保存`)
-                    .fontSize(14)
+                    .fontSize(this.responsiveLayout.getResponsiveValue<number>({
+                      xsmall: 12,
+                      small: 14,
+                      medium: 16,
+                      large: 18,
+                      xlarge: 20
+                    } as ResponsiveNumberValues))
                     .fontColor($r('app.color.text_secondary'))
                   Text(' | ')
-                    .fontSize(14)
+                    .fontSize(this.responsiveLayout.getResponsiveValue<number>({
+                      xsmall: 12,
+                      small: 14,
+                      medium: 16,
+                      large: 18,
+                      xlarge: 20
+                    } as ResponsiveNumberValues))
                     .fontColor($r('app.color.text_secondary'))
                 }
                 Row() {
                   Image($r('app.media.ic_info'))
-                    .width(12)
-                    .height(12)
+                    .width(this.responsiveLayout.getResponsiveValue<number>({
+                      xsmall: 10,
+                      small: 12,
+                      medium: 14,
+                      large: 16,
+                      xlarge: 18
+                    } as ResponsiveNumberValues))
+                    .height(this.responsiveLayout.getResponsiveValue<number>({
+                      xsmall: 10,
+                      small: 12,
+                      medium: 14,
+                      large: 16,
+                      xlarge: 18
+                    } as ResponsiveNumberValues))
                     .margin({ right: 4 })
                     .fillColor(DecibelService.getDecibelColor(this.decibelState.currentDecibel))
 
                   Text(DecibelService.getDecibelLevel(this.decibelState.currentDecibel))
-                    .fontSize(14)
+                    .fontSize(this.responsiveLayout.getResponsiveValue<number>({
+                      xsmall: 12,
+                      small: 14,
+                      medium: 16,
+                      large: 18,
+                      xlarge: 20
+                    } as ResponsiveNumberValues))
                     .fontColor(DecibelService.getDecibelColor(this.decibelState.currentDecibel))
                 }
                 .onClick(() => {
@@ -673,28 +835,76 @@ export struct DecibelMeter {
 
             Column() {
               Text('最大')
-                .fontSize(12)
+                .fontSize(this.responsiveLayout.getResponsiveValue<number>({
+                  xsmall: 10,
+                  small: 12,
+                  medium: 14,
+                  large: 16,
+                  xlarge: 18
+                } as ResponsiveNumberValues))
                 .fontColor($r('app.color.text_secondary'))
                 .margin({ bottom: 4 })
               Text(this.maxDecibel === 0 ? '-' : this.maxDecibel.toString())
-                .fontSize(32)
+                .fontSize(this.responsiveLayout.getResponsiveValue<number>({
+                  xsmall: 24,
+                  small: 28,
+                  medium: 32,
+                  large: 36,
+                  xlarge: 40
+                } as ResponsiveNumberValues))
                 .fontWeight(FontWeight.Medium)
                 .fontColor(DecibelService.getDecibelColor(this.maxDecibel))
             }
             .alignItems(HorizontalAlign.Center)
-            .margin({ left: 8 })
+            .margin({ left: this.responsiveLayout.getResponsiveValue<number>({
+              xsmall: 4,
+              small: 6,
+              medium: 8,
+              large: 10,
+              xlarge: 12
+            } as ResponsiveNumberValues) })
           }
           .width('100%')
           .justifyContent(FlexAlign.Center)
           .alignItems(VerticalAlign.Center)
-          .margin({ bottom: 20 })
+          .margin({ bottom: this.responsiveLayout.getResponsiveValue<number>({
+            xsmall: 12,
+            small: 16,
+            medium: 20,
+            large: 24,
+            xlarge: 28
+          } as ResponsiveNumberValues) })
         }
         .width('100%')
         .padding({
-          top: 20,
-          bottom: 20,
-          left: 16,
-          right: 16
+          top: this.responsiveLayout.getResponsiveValue<number>({
+            xsmall: 16,
+            small: 20,
+            medium: 24,
+            large: 28,
+            xlarge: 32
+          } as ResponsiveNumberValues),
+          bottom: this.responsiveLayout.getResponsiveValue<number>({
+            xsmall: 16,
+            small: 20,
+            medium: 24,
+            large: 28,
+            xlarge: 32
+          } as ResponsiveNumberValues),
+          left: this.responsiveLayout.getResponsiveValue<number>({
+            xsmall: 12,
+            small: 16,
+            medium: 20,
+            large: 24,
+            xlarge: 28
+          } as ResponsiveNumberValues),
+          right: this.responsiveLayout.getResponsiveValue<number>({
+            xsmall: 12,
+            small: 16,
+            medium: 20,
+            large: 24,
+            xlarge: 28
+          } as ResponsiveNumberValues)
         })
         .backgroundColor($r('app.color.background_secondary'))
         .borderRadius(12)
@@ -704,7 +914,29 @@ export struct DecibelMeter {
 
       }
       .width('100%')
-      .margin({ left: 16, right: 16, top: 16 })
+      .margin({
+        left: this.responsiveLayout.getResponsiveValue<number>({
+          xsmall: 12,
+          small: 16,
+          medium: 20,
+          large: 24,
+          xlarge: 28
+        } as ResponsiveNumberValues),
+        right: this.responsiveLayout.getResponsiveValue<number>({
+          xsmall: 12,
+          small: 16,
+          medium: 20,
+          large: 24,
+          xlarge: 28
+        } as ResponsiveNumberValues),
+        top: this.responsiveLayout.getResponsiveValue<number>({
+          xsmall: 12,
+          small: 16,
+          medium: 20,
+          large: 24,
+          xlarge: 28
+        } as ResponsiveNumberValues)
+      })
       .backgroundColor($r('app.color.white'))
       .borderRadius(12)
       .shadow({ radius: 2, color: '#1A000000', offsetY: 2 })
@@ -713,8 +945,29 @@ export struct DecibelMeter {
       Row() {
         LocationDisplay()
       }
-      .width('92%')
-      .margin({ top: 12, bottom: 12 })
+      .width(this.responsiveLayout.getResponsiveValue<string>({
+        xsmall: '88%',
+        small: '90%',
+        medium: '92%',
+        large: '94%',
+        xlarge: '96%'
+      } as ResponsiveStringValues))
+      .margin({
+        top: this.responsiveLayout.getResponsiveValue<number>({
+          xsmall: 8,
+          small: 10,
+          medium: 12,
+          large: 14,
+          xlarge: 16
+        } as ResponsiveNumberValues),
+        bottom: this.responsiveLayout.getResponsiveValue<number>({
+          xsmall: 8,
+          small: 10,
+          medium: 12,
+          large: 14,
+          xlarge: 16
+        } as ResponsiveNumberValues)
+      })
 
       ActionPanel({
         isUILocked: this.isUILocked,
@@ -754,7 +1007,22 @@ export struct DecibelMeter {
       })
     }
     .width('100%')
-    .padding({ top: 12, bottom: 12 })
+    .padding({
+      top: this.responsiveLayout.getResponsiveValue<number>({
+        xsmall: 8,
+        small: 10,
+        medium: 12,
+        large: 14,
+        xlarge: 16
+      } as ResponsiveNumberValues),
+      bottom: this.responsiveLayout.getResponsiveValue<number>({
+        xsmall: 8,
+        small: 10,
+        medium: 12,
+        large: 14,
+        xlarge: 16
+      } as ResponsiveNumberValues)
+    })
     .alignItems(HorizontalAlign.Center)
   }
 }

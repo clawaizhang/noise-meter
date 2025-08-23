@@ -6,6 +6,7 @@ import { DesignConstants } from "../constants/DesignConstants"
 import { MemoryUtils, calculateMemoryUsage, calculateStorageUsage } from "../utils/MemoryUtils"
 import { navigationStack } from "../constants/ProviderConstant"
 import display from '@ohos.display';
+import { ResponsiveLayout, Breakpoint, LayoutMode, responsiveSpacing, responsiveFontSize, responsiveLayout, WindowChangeListener } from "../utils/ResponsiveLayout"
 
 // 健康卡片状态枚举
 enum HealthCardState {
@@ -26,7 +27,7 @@ export struct HealthStatusCard {
   @Param @Require memoryUsagePercentage: number
   @Local healthInfo: DeviceHealthInfo = DeviceHealthService.getInstance().getHealthInfo();
   @Local screenWidth: number = 0;
-  @Local layoutMode: string = 'large'; // large, medium, small, xsmall
+  @Local layoutMode: Breakpoint = Breakpoint.LG; // 使用标准断点系统
   @Local selectedMetricType: string = ''
   @Consumer(navigationStack) navStack: NavPathStack = new NavPathStack();
   @Local currentState: HealthCardState = HealthCardState.LOADING
@@ -51,11 +52,16 @@ export struct HealthStatusCard {
   @Local calculationTimes: Record<string, number> = {}
 
   aboutToAppear() {
-    this.updateScreenWidth();
-    // 监听屏幕旋转和尺寸变化
-    display.on('change', () => {
-      this.updateScreenWidth();
-    });
+    // 使用ResponsiveLayout的统一监听系统
+    const responsiveListener: WindowChangeListener = (width: number, height: number, breakpoint: Breakpoint, layoutMode: LayoutMode) => {
+      this.updateLayoutMode(width);
+    };
+    ResponsiveLayout.getInstance().addChangeListener(responsiveListener);
+    
+    // 初始化屏幕宽度和布局模式
+    const screenInfo = ResponsiveLayout.getInstance().getCurrentScreenInfo();
+    this.screenWidth = screenInfo.width;
+    this.updateLayoutMode(this.screenWidth);
     
     // 检查是否已经有有效数据，避免不必要的初始加载
     const currentHealthInfo = DeviceHealthService.getInstance().getHealthInfo();
@@ -74,8 +80,11 @@ export struct HealthStatusCard {
   }
 
   aboutToDisappear() {
-    // 移除屏幕变化监听器
-    display.off('change');
+    // 移除ResponsiveLayout的监听器
+    const responsiveListener: WindowChangeListener = (width: number, height: number, breakpoint: Breakpoint, layoutMode: LayoutMode) => {
+      this.updateLayoutMode(width);
+    };
+    ResponsiveLayout.getInstance().removeChangeListener(responsiveListener);
     
     // 清除数据更新定时器
     if (this.dataUpdateTimer) {
@@ -87,14 +96,14 @@ export struct HealthStatusCard {
 
   @Builder
   buildResponsiveLayout() {
-    if (this.layoutMode === 'xsmall') {
-      this.buildXSmallLayout();
-    } else if (this.layoutMode === 'small') {
-      this.buildSmallLayout();
-    } else if (this.layoutMode === 'medium') {
-      this.buildMediumLayout();
+    if (this.layoutMode === Breakpoint.XS) {
+      this.buildXSmallLayout()
+    } else if (this.layoutMode === Breakpoint.SM) {
+      this.buildSmallLayout()
+    } else if (this.layoutMode === Breakpoint.MD) {
+      this.buildMediumLayout()
     } else {
-      this.buildLargeLayout();
+      this.buildLargeLayout()
     }
   }
 
@@ -109,8 +118,16 @@ export struct HealthStatusCard {
       this.buildAllMetrics()
     }
     .width('100%')
-    .margin(DesignConstants.HEALTH_CARD.MARGIN_LARGE)
-    .padding(DesignConstants.HEALTH_CARD.PADDING)
+    .margin({
+      top: responsiveSpacing(DesignConstants.SPACING_MD),
+      bottom: responsiveSpacing(DesignConstants.SPACING_MD),
+      left: responsiveSpacing(DesignConstants.SPACING_XL),
+      right: responsiveSpacing(DesignConstants.SPACING_XL)
+    })
+    .padding({
+      top: responsiveSpacing(DesignConstants.SPACING_SM),
+      bottom: responsiveSpacing(DesignConstants.SPACING_SM)
+    })
   }
 
   @Builder
@@ -128,7 +145,7 @@ export struct HealthStatusCard {
         this.buildMetricItem(2) // 存储
       }
       .width('100%')
-      .margin({ bottom: 12 })
+      .margin({ bottom: responsiveSpacing(DesignConstants.SPACING_MD) })
 
       // 第二行：1个指标（网络）
       Flex({
@@ -141,8 +158,16 @@ export struct HealthStatusCard {
       .width('100%')
     }
     .width('100%')
-    .margin(DesignConstants.HEALTH_CARD.MARGIN_MEDIUM)
-    .padding(DesignConstants.HEALTH_CARD.PADDING)
+    .margin({
+      top: responsiveSpacing(DesignConstants.SPACING_MD),
+      bottom: responsiveSpacing(DesignConstants.SPACING_MD),
+      left: responsiveSpacing(DesignConstants.SPACING_LG),
+      right: responsiveSpacing(DesignConstants.SPACING_LG)
+    })
+    .padding({
+      top: responsiveSpacing(DesignConstants.SPACING_SM),
+      bottom: responsiveSpacing(DesignConstants.SPACING_SM)
+    })
   }
 
   @Builder
@@ -159,7 +184,7 @@ export struct HealthStatusCard {
         this.buildMetricItem(1) // 内存
       }
       .width('100%')
-      .margin({ bottom: 10 })
+      .margin({ bottom: responsiveSpacing(DesignConstants.SPACING_SM) })
 
       // 第二行：1个指标（网络）
       Flex({
@@ -170,11 +195,19 @@ export struct HealthStatusCard {
         this.buildMetricItem(4) // 网络
       }
       .width('100%')
-      .margin({ bottom: 10 })
+      .margin({ bottom: responsiveSpacing(DesignConstants.SPACING_SM) })
     }
     .width('100%')
-    .margin(DesignConstants.HEALTH_CARD.MARGIN_SMALL)
-    .padding({ top: DesignConstants.SPACING_SM, bottom: DesignConstants.SPACING_SM })
+    .margin({
+      top: responsiveSpacing(DesignConstants.SPACING_SM),
+      bottom: responsiveSpacing(DesignConstants.SPACING_SM),
+      left: responsiveSpacing(DesignConstants.SPACING_MD),
+      right: responsiveSpacing(DesignConstants.SPACING_MD)
+    })
+    .padding({
+      top: responsiveSpacing(DesignConstants.SPACING_SM),
+      bottom: responsiveSpacing(DesignConstants.SPACING_SM)
+    })
   }
 
   @Builder
@@ -190,38 +223,49 @@ export struct HealthStatusCard {
           this.buildMetricItem(index === 3 ? 4 : index) // 将索引3映射到网络指标
         }
         .width('100%')
-        .margin({ bottom: index < 3 ? 6 : 0 })
-        .padding({ top: 4, bottom: 4 })
+        .margin({ bottom: index < 3 ? responsiveSpacing(DesignConstants.SPACING_XS) : 0 })
+        .padding({
+          top: responsiveSpacing(DesignConstants.SPACING_XS),
+          bottom: responsiveSpacing(DesignConstants.SPACING_XS)
+        })
       })
     }
     .width('100%')
-    .margin(DesignConstants.HEALTH_CARD.MARGIN_XSMALL)
-    .padding({ top: DesignConstants.SPACING_XS, bottom: DesignConstants.SPACING_XS })
+    .margin({
+      top: responsiveSpacing(DesignConstants.SPACING_XS),
+      bottom: responsiveSpacing(DesignConstants.SPACING_XS),
+      left: responsiveSpacing(DesignConstants.SPACING_SM),
+      right: responsiveSpacing(DesignConstants.SPACING_SM)
+    })
+    .padding({
+      top: responsiveSpacing(DesignConstants.SPACING_XS),
+      bottom: responsiveSpacing(DesignConstants.SPACING_XS)
+    })
   }
 
   @Builder
   HealthMetricItem($$: ScoreHealth) {
     Column() {
       Image($$.icon)
-        .width(DesignConstants.ICON_SIZE_MD)
-        .height(DesignConstants.ICON_SIZE_MD)
-        .margin({ right: DesignConstants.SPACING_SM })
+        .width(responsiveLayout.getIconSize(DesignConstants.ICON_SIZE_MD))
+        .height(responsiveLayout.getIconSize(DesignConstants.ICON_SIZE_MD))
+        .margin({ right: responsiveSpacing(DesignConstants.SPACING_SM) })
       Column() {
         Text($$.label)
-          .fontSize(DesignConstants.FONT_SIZE_SM)
+          .fontSize(responsiveFontSize(DesignConstants.FONT_SIZE_SM))
           .fontColor($r('app.color.text_secondary'))
         Text($$.value)
-          .fontSize(DesignConstants.FONT_SIZE_XL)
+          .fontSize(responsiveFontSize(DesignConstants.FONT_SIZE_XL))
           .fontWeight(FontWeight.Medium)
           .fontColor(this.getMetricColor($$.score))
       }
       .alignItems(HorizontalAlign.Start)
     }
-    .padding(DesignConstants.METRIC_ITEM.PADDING)
+    .padding(responsiveSpacing(DesignConstants.METRIC_ITEM.PADDING))
     .backgroundColor($r('app.color.background_secondary'))
     .borderRadius(DesignConstants.METRIC_ITEM.BORDER_RADIUS)
-    .width(DesignConstants.METRIC_ITEM.WIDTH)
-    .height(DesignConstants.METRIC_ITEM.HEIGHT)
+    .width(responsiveLayout.getMetricItemWidth(DesignConstants.METRIC_ITEM.WIDTH))
+    .height(responsiveLayout.getMetricItemHeight(DesignConstants.METRIC_ITEM.HEIGHT))
   }
 
   private getScoreColor(): ResourceColor {
@@ -495,21 +539,9 @@ export struct HealthStatusCard {
     }
   }
 
-  // 更新屏幕宽度（带缓存优化）
+  // 更新屏幕宽度（带缓存优化）- 现在通过ResponsiveLayout回调处理
   private updateScreenWidth() {
-    try {
-      const displayClass = display.getDefaultDisplaySync();
-      const newScreenWidth = displayClass.width;
-      
-      // 只有当屏幕宽度有显著变化时才更新布局模式
-      if (Math.abs(newScreenWidth - this.cachedScreenWidth) > 20) { // 20px变化阈值
-        this.screenWidth = newScreenWidth;
-        this.cachedScreenWidth = newScreenWidth;
-        this.updateLayoutMode(this.screenWidth);
-      }
-    } catch (error) {
-      console.error('Failed to get display info:', error);
-    }
+    // 此方法已废弃，通过ResponsiveLayout监听器处理屏幕变化
   }
 
   // 显示健康详情对话框
@@ -667,39 +699,15 @@ export struct HealthStatusCard {
     return batteryChange || cpuChange || memoryChange || networkChange || sensorChange;
   }
   
-  // 更新布局模式（带滞后阈值防止频繁切换和缓存优化）
+  // 更新布局模式（使用标准断点系统）
   private updateLayoutMode(width: number) {
-    // 计算各布局模式的最小宽度要求
-    const minWidthForLargeLayout = DesignConstants.METRIC_ITEM.WIDTH * 6 + DesignConstants.SPACING_MD * 5;
-    const minWidthForMediumLayout = DesignConstants.METRIC_ITEM.WIDTH * 3 + DesignConstants.SPACING_MD * 2;
-    const minWidthForSmallLayout = DesignConstants.METRIC_ITEM.WIDTH * 2 + DesignConstants.SPACING_MD;
+    const newBreakpoint = ResponsiveLayout.getInstance().getBreakpoint(width);
     
-    // 添加滞后阈值（15px），防止在边界值附近频繁切换
-    const hysteresis = 15;
-    
-    let newLayoutMode: string;
-    
-    if (width >= minWidthForLargeLayout + hysteresis) {
-      newLayoutMode = 'large';
-    } else if (width >= minWidthForMediumLayout + hysteresis) {
-      // 如果当前是大屏模式，需要更宽的阈值才能切换到中屏
-      newLayoutMode = (this.cachedLayoutMode === 'large' && width >= minWidthForLargeLayout - hysteresis) ?
-        'large' : 'medium';
-    } else if (width >= minWidthForSmallLayout + hysteresis) {
-      // 如果当前是中屏模式，需要更宽的阈值才能切换到小屏
-      newLayoutMode = (this.cachedLayoutMode === 'medium' && width >= minWidthForMediumLayout - hysteresis) ?
-        'medium' : 'small';
-    } else {
-      // 如果当前是小屏模式，需要更窄的阈值才能切换到超小屏
-      newLayoutMode = (this.cachedLayoutMode === 'small' && width >= minWidthForSmallLayout - hysteresis) ?
-        'small' : 'xsmall';
-    }
-    
-    // 只有当布局模式真正改变时才更新
-    if (newLayoutMode !== this.cachedLayoutMode) {
-      this.layoutMode = newLayoutMode;
-      this.cachedLayoutMode = newLayoutMode;
-      console.debug(`[LayoutMode] Screen width: ${width}px, Mode: ${this.layoutMode}`);
+    // 只有当断点真正改变时才更新
+    if (newBreakpoint !== this.layoutMode) {
+      this.layoutMode = newBreakpoint;
+      this.cachedLayoutMode = this.layoutMode.toString();
+      console.debug(`[LayoutMode] Screen width: ${width}px, Breakpoint: ${Breakpoint[newBreakpoint]}`);
     }
   }
 
@@ -727,11 +735,11 @@ export struct HealthStatusCard {
           Column() {
             // 图标占位
             Column()
-              .width(DesignConstants.ICON_SIZE_MD)
-              .height(DesignConstants.ICON_SIZE_MD)
+              .width(responsiveLayout.getIconSize(DesignConstants.ICON_SIZE_MD))
+              .height(responsiveLayout.getIconSize(DesignConstants.ICON_SIZE_MD))
               .backgroundColor($r('app.color.skeleton_background'))
               .borderRadius(DesignConstants.BORDER_RADIUS_SM)
-              .margin({ right: DesignConstants.SPACING_SM })
+              .margin({ right: responsiveSpacing(DesignConstants.SPACING_SM) })
 
             Column() {
               // 标签占位
@@ -740,7 +748,7 @@ export struct HealthStatusCard {
                 .height(12)
                 .backgroundColor($r('app.color.skeleton_background'))
                 .borderRadius(DesignConstants.BORDER_RADIUS_XS)
-                .margin({ bottom: 4 })
+                .margin({ bottom: responsiveSpacing(DesignConstants.SPACING_XS) })
               
               // 数值占位
               Column()
@@ -751,16 +759,24 @@ export struct HealthStatusCard {
             }
             .alignItems(HorizontalAlign.Start)
           }
-          .padding(DesignConstants.METRIC_ITEM.PADDING)
+          .padding(responsiveSpacing(DesignConstants.METRIC_ITEM.PADDING))
           .backgroundColor($r('app.color.background_secondary'))
           .borderRadius(DesignConstants.METRIC_ITEM.BORDER_RADIUS)
-          .width(DesignConstants.METRIC_ITEM.WIDTH)
-          .height(DesignConstants.METRIC_ITEM.HEIGHT)
+          .width(responsiveLayout.getMetricItemWidth(DesignConstants.METRIC_ITEM.WIDTH))
+          .height(responsiveLayout.getMetricItemHeight(DesignConstants.METRIC_ITEM.HEIGHT))
         })
       }
       .width('100%')
-      .margin(DesignConstants.HEALTH_CARD.MARGIN_LARGE)
-      .padding(DesignConstants.HEALTH_CARD.PADDING)
+      .margin({
+        top: responsiveSpacing(DesignConstants.SPACING_MD),
+        bottom: responsiveSpacing(DesignConstants.SPACING_MD),
+        left: responsiveSpacing(DesignConstants.SPACING_XL),
+        right: responsiveSpacing(DesignConstants.SPACING_XL)
+      })
+      .padding({
+        top: responsiveSpacing(DesignConstants.SPACING_SM),
+        bottom: responsiveSpacing(DesignConstants.SPACING_SM)
+      })
     }
     .width('100%')
   }
@@ -772,12 +788,12 @@ export struct HealthStatusCard {
       Image($r('app.media.ic_empty'))
         .width(80)
         .height(80)
-        .margin({ bottom: DesignConstants.SPACING_MD })
+        .margin({ bottom: responsiveSpacing(DesignConstants.SPACING_MD) })
       
       Text(this.errorMessage)
-        .fontSize(DesignConstants.FONT_SIZE_MD)
+        .fontSize(responsiveFontSize(DesignConstants.FONT_SIZE_MD))
         .fontColor($r('app.color.text_secondary'))
-        .margin({ bottom: DesignConstants.SPACING_LG })
+        .margin({ bottom: responsiveSpacing(DesignConstants.SPACING_LG) })
         .textAlign(TextAlign.Center)
       
       Button($r('app.string.retry_button'), { type: ButtonType.Capsule })
@@ -800,10 +816,10 @@ export struct HealthStatusCard {
       Image($r('app.media.ic_empty'))
         .width(80)
         .height(80)
-        .margin({ bottom: DesignConstants.SPACING_MD })
+        .margin({ bottom: responsiveSpacing(DesignConstants.SPACING_MD) })
       
       Text($r('app.string.no_health_data'))
-        .fontSize(DesignConstants.FONT_SIZE_MD)
+        .fontSize(responsiveFontSize(DesignConstants.FONT_SIZE_MD))
         .fontColor($r('app.color.text_secondary'))
         .textAlign(TextAlign.Center)
       
@@ -813,7 +829,7 @@ export struct HealthStatusCard {
         })
         .backgroundColor($r('app.color.primary'))
         .fontColor(Color.White)
-        .margin({ top: DesignConstants.SPACING_MD })
+        .margin({ top: responsiveSpacing(DesignConstants.SPACING_MD) })
     }
     .width('100%')
     .height(200)

@@ -1,5 +1,6 @@
 import { DesignConstants } from "../constants/DesignConstants"
 import display from '@ohos.display';
+import { ResponsiveLayout, Breakpoint, LayoutMode, WindowChangeListener } from "../utils/ResponsiveLayout"
 
 // 评分等级枚举
 enum RatingLevel {
@@ -22,8 +23,8 @@ interface RatingLevelInfo {
 export struct RatingPanel {
   @Param @Require score: number = 0; // 0-100的评分
   @Local screenWidth: number = 0;
-  @Local layoutMode: string = 'large'; // large, medium, small, xsmall
-  @Local cachedLayoutMode: string = '';
+  @Local layoutMode: LayoutMode = LayoutMode.LARGE;
+  @Local cachedLayoutMode: LayoutMode = LayoutMode.LARGE;
   @Local cachedScreenWidth: number = 0;
   @Local lastLayoutUpdateTime: number = 0;
   
@@ -35,15 +36,21 @@ export struct RatingPanel {
 
   aboutToAppear() {
     this.updateScreenWidth();
-    // 监听屏幕旋转和尺寸变化
-    display.on('change', () => {
-      this.updateScreenWidth();
-    });
+    // 使用统一的ResponsiveLayout监听器
+    ResponsiveLayout.getInstance().addChangeListener(this.layoutChangeCallback);
   }
 
   aboutToDisappear() {
-    // 移除屏幕变化监听器
-    display.off('change');
+    // 移除ResponsiveLayout监听器
+    ResponsiveLayout.getInstance().removeChangeListener(this.layoutChangeCallback);
+  }
+
+  // 布局变化回调函数
+  private layoutChangeCallback: WindowChangeListener = (width: number, height: number, breakpoint: Breakpoint, layoutMode: LayoutMode) => {
+    this.layoutMode = layoutMode;
+    this.cachedLayoutMode = layoutMode;
+    this.clearCache(); // 清除缓存，确保下次获取新值
+    console.debug(`[RatingPanel] Layout mode changed to: ${layoutMode}`);
   }
 
   // 获取评分等级信息
@@ -83,67 +90,39 @@ export struct RatingPanel {
     }
   }
 
-  // 更新屏幕宽度（带缓存优化）
+  // 更新屏幕宽度（初始化时使用）
   private updateScreenWidth() {
     try {
       const displayClass = display.getDefaultDisplaySync();
       const newScreenWidth = displayClass.width;
+      this.screenWidth = newScreenWidth;
+      this.cachedScreenWidth = newScreenWidth;
       
-      // 只有当屏幕宽度有显著变化时才更新布局模式
-      if (Math.abs(newScreenWidth - this.cachedScreenWidth) > 20) { // 20px变化阈值
-        this.screenWidth = newScreenWidth;
-        this.cachedScreenWidth = newScreenWidth;
-        this.updateLayoutMode(this.screenWidth);
-      }
+      // 使用ResponsiveLayout的统一布局模式
+      const screenInfo = ResponsiveLayout.getInstance().getCurrentScreenInfo();
+      this.layoutMode = screenInfo.layoutMode;
+      this.cachedLayoutMode = screenInfo.layoutMode;
     } catch (error) {
       console.error('Failed to get display info:', error);
     }
   }
 
-  // 更新布局模式（基于实际内容计算切换阈值，带缓存优化）
-  private updateLayoutMode(width: number) {
-    // 基于实际内容计算各布局模式的最小宽度要求
-    const minWidthForLargeLayout = DesignConstants.RATING_PANEL.WIDTH_LARGE + 40; // 面板宽度 + 边距
-    const minWidthForMediumLayout = DesignConstants.RATING_PANEL.WIDTH_MEDIUM + 30;
-    const minWidthForSmallLayout = DesignConstants.RATING_PANEL.WIDTH_SMALL + 20;
-    
-    // 添加滞后阈值（基于屏幕宽度的百分比，更智能的防抖）
-    const hysteresis = Math.max(15, width * 0.03); // 至少15px或屏幕宽度的3%
-    
-    let newLayoutMode: string;
-    
-    if (width >= minWidthForLargeLayout + hysteresis) {
-      newLayoutMode = 'large';
-    } else if (width >= minWidthForMediumLayout + hysteresis) {
-      // 如果当前是大屏模式，需要更宽的阈值才能切换到中屏
-      newLayoutMode = (this.cachedLayoutMode === 'large' && width >= minWidthForLargeLayout - hysteresis) ?
-        'large' : 'medium';
-    } else if (width >= minWidthForSmallLayout + hysteresis) {
-      // 如果当前是中屏模式，需要更宽的阈值才能切换到小屏
-      newLayoutMode = (this.cachedLayoutMode === 'medium' && width >= minWidthForMediumLayout - hysteresis) ?
-        'medium' : 'small';
-    } else {
-      // 如果当前是小屏模式，需要更窄的阈值才能切换到超小屏
-      newLayoutMode = (this.cachedLayoutMode === 'small' && width >= minWidthForSmallLayout - hysteresis) ?
-        'small' : 'xsmall';
-    }
-    
-    // 只有当布局模式真正改变时才更新（带缓存验证）
-    if (newLayoutMode !== this.cachedLayoutMode) {
-      this.layoutMode = newLayoutMode;
-      this.cachedLayoutMode = newLayoutMode;
-      this.clearCache(); // 清除缓存，确保下次获取新值
-      console.debug(`[RatingPanel LayoutMode] Screen width: ${width}px, Mode: ${this.layoutMode}`);
-    }
+  // 更新布局模式
+  private updateLayoutMode(width: number): void {
+    const breakpoint = ResponsiveLayout.getInstance().getBreakpoint(width);
+    const layoutMode = ResponsiveLayout.getInstance().getLayoutMode(breakpoint);
+    this.layoutMode = layoutMode;
+    this.cachedLayoutMode = layoutMode;
+    this.clearCache(); // 清除缓存，确保下次获取新值
   }
 
   @Builder
   buildResponsiveLayout() {
-    if (this.layoutMode === 'xsmall') {
+    if (this.layoutMode === LayoutMode.XSMALL) {
       this.buildXSmallLayout();
-    } else if (this.layoutMode === 'small') {
+    } else if (this.layoutMode === LayoutMode.SMALL) {
       this.buildSmallLayout();
-    } else if (this.layoutMode === 'medium') {
+    } else if (this.layoutMode === LayoutMode.MEDIUM) {
       this.buildMediumLayout();
     } else {
       this.buildLargeLayout();
@@ -291,10 +270,11 @@ export struct RatingPanel {
     // 缓存计算结果，避免重复switch判断
     if (!this.cachedRingSize) {
       switch (this.layoutMode) {
-        case 'large': this.cachedRingSize = DesignConstants.RATING_PANEL.RING_SIZE_LARGE; break;
-        case 'medium': this.cachedRingSize = DesignConstants.RATING_PANEL.RING_SIZE_MEDIUM; break;
-        case 'small': this.cachedRingSize = DesignConstants.RATING_PANEL.RING_SIZE_SMALL; break;
-        case 'xsmall': this.cachedRingSize = DesignConstants.RATING_PANEL.RING_SIZE_XSMALL; break;
+        case LayoutMode.XLARGE:
+        case LayoutMode.LARGE: this.cachedRingSize = DesignConstants.RATING_PANEL.RING_SIZE_LARGE; break;
+        case LayoutMode.MEDIUM: this.cachedRingSize = DesignConstants.RATING_PANEL.RING_SIZE_MEDIUM; break;
+        case LayoutMode.SMALL: this.cachedRingSize = DesignConstants.RATING_PANEL.RING_SIZE_SMALL; break;
+        case LayoutMode.XSMALL: this.cachedRingSize = DesignConstants.RATING_PANEL.RING_SIZE_XSMALL; break;
         default: this.cachedRingSize = DesignConstants.RATING_PANEL.RING_SIZE_LARGE;
       }
     }
@@ -305,10 +285,11 @@ export struct RatingPanel {
   private getStrokeWidth(): number {
     if (!this.cachedStrokeWidth) {
       switch (this.layoutMode) {
-        case 'large': this.cachedStrokeWidth = DesignConstants.RATING_PANEL.STROKE_WIDTH_LARGE; break;
-        case 'medium': this.cachedStrokeWidth = DesignConstants.RATING_PANEL.STROKE_WIDTH_MEDIUM; break;
-        case 'small': this.cachedStrokeWidth = DesignConstants.RATING_PANEL.STROKE_WIDTH_SMALL; break;
-        case 'xsmall': this.cachedStrokeWidth = DesignConstants.RATING_PANEL.STROKE_WIDTH_XSMALL; break;
+        case LayoutMode.XLARGE:
+        case LayoutMode.LARGE: this.cachedStrokeWidth = DesignConstants.RATING_PANEL.STROKE_WIDTH_LARGE; break;
+        case LayoutMode.MEDIUM: this.cachedStrokeWidth = DesignConstants.RATING_PANEL.STROKE_WIDTH_MEDIUM; break;
+        case LayoutMode.SMALL: this.cachedStrokeWidth = DesignConstants.RATING_PANEL.STROKE_WIDTH_SMALL; break;
+        case LayoutMode.XSMALL: this.cachedStrokeWidth = DesignConstants.RATING_PANEL.STROKE_WIDTH_XSMALL; break;
         default: this.cachedStrokeWidth = DesignConstants.RATING_PANEL.STROKE_WIDTH_LARGE;
       }
     }
@@ -319,10 +300,11 @@ export struct RatingPanel {
   private getScoreFontSize(): number {
     if (!this.cachedScoreFontSize) {
       switch (this.layoutMode) {
-        case 'large': this.cachedScoreFontSize = DesignConstants.FONT_SIZE_3XL; break;
-        case 'medium': this.cachedScoreFontSize = DesignConstants.FONT_SIZE_2XL; break;
-        case 'small': this.cachedScoreFontSize = DesignConstants.FONT_SIZE_XL; break;
-        case 'xsmall': this.cachedScoreFontSize = DesignConstants.FONT_SIZE_LG; break;
+        case LayoutMode.XLARGE:
+        case LayoutMode.LARGE: this.cachedScoreFontSize = DesignConstants.FONT_SIZE_3XL; break;
+        case LayoutMode.MEDIUM: this.cachedScoreFontSize = DesignConstants.FONT_SIZE_2XL; break;
+        case LayoutMode.SMALL: this.cachedScoreFontSize = DesignConstants.FONT_SIZE_XL; break;
+        case LayoutMode.XSMALL: this.cachedScoreFontSize = DesignConstants.FONT_SIZE_LG; break;
         default: this.cachedScoreFontSize = DesignConstants.FONT_SIZE_3XL;
       }
     }
@@ -333,10 +315,11 @@ export struct RatingPanel {
   private getLabelFontSize(): number {
     if (!this.cachedLabelFontSize) {
       switch (this.layoutMode) {
-        case 'large': this.cachedLabelFontSize = DesignConstants.FONT_SIZE_MD; break;
-        case 'medium': this.cachedLabelFontSize = DesignConstants.FONT_SIZE_SM; break;
-        case 'small': this.cachedLabelFontSize = DesignConstants.FONT_SIZE_SM; break;
-        case 'xsmall': this.cachedLabelFontSize = DesignConstants.FONT_SIZE_XS; break;
+        case LayoutMode.XLARGE:
+        case LayoutMode.LARGE: this.cachedLabelFontSize = DesignConstants.FONT_SIZE_MD; break;
+        case LayoutMode.MEDIUM: this.cachedLabelFontSize = DesignConstants.FONT_SIZE_SM; break;
+        case LayoutMode.SMALL: this.cachedLabelFontSize = DesignConstants.FONT_SIZE_SM; break;
+        case LayoutMode.XSMALL: this.cachedLabelFontSize = DesignConstants.FONT_SIZE_XS; break;
         default: this.cachedLabelFontSize = DesignConstants.FONT_SIZE_MD;
       }
     }

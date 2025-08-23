@@ -9,6 +9,32 @@ import { PreferenceService } from '../../services/PreferenceService';
 import { ScreenshotUtils } from '../../utils/ScreenshotUtils';
 import { emitter } from '@kit.BasicServicesKit';
 import { WeightingType } from '../../constants/WeightingConstants';
+import { ResponsiveLayout, Breakpoint, LayoutMode } from '../../utils/ResponsiveLayout';
+
+// 导航菜单项接口定义
+interface NavigationMenuItem {
+  value: string;
+  icon: Resource;
+  action: () => void;
+}
+
+// 响应式数值接口定义
+interface ResponsiveNumberValues {
+  xsmall: number;
+  small: number;
+  medium: number;
+  large: number;
+  xlarge: number;
+}
+
+// 响应式字符串接口定义
+interface ResponsiveStringValues {
+  xsmall: string;
+  small: string;
+  medium: string;
+  large: string;
+  xlarge: string;
+}
 
 @Builder
 export function NoiseMeterBuilder() {
@@ -22,7 +48,24 @@ export struct MainNoiseMeter {
   @Local meterOn: boolean = true;
   @Local title:string = '检测仪';
   @Local menuItems:Array<NavigationMenuItem> = [];
+  @Local private responsiveLayout: ResponsiveLayout = ResponsiveLayout.getInstance()
+  @Local private currentBreakpoint: Breakpoint = Breakpoint.XS
+  @Local private currentLayoutMode: LayoutMode = LayoutMode.XSMALL
   private preferenceService: PreferenceService = PreferenceService.getInstance();
+  
+  aboutToDisappear(): void {
+    // 移除ResponsiveLayout的监听器
+    this.responsiveLayout.removeChangeListener((width, height, breakpoint, layoutMode) => {
+      this.updateResponsiveLayout(width);
+    });
+  }
+
+  // 更新响应式布局状态
+  private updateResponsiveLayout(width: number): void {
+    this.currentBreakpoint = this.responsiveLayout.getBreakpoint(width);
+    this.currentLayoutMode = this.responsiveLayout.getLayoutMode(this.currentBreakpoint);
+    console.info(`[FREQ_TRACE][Responsive] 导航断点: ${this.currentBreakpoint}, 布局模式: ${this.currentLayoutMode}`);
+  }
 
   aboutToAppear(): void {
     // 初始化加权类型
@@ -32,6 +75,16 @@ export struct MainNoiseMeter {
     this.menuItems = this.noiseMeterMenus;
     this.preferenceService.setBoolean(PreferenceKeyConstants.METER_ON, true);
     this.meterOn = this.preferenceService.getBoolean(PreferenceKeyConstants.METER_ON, true);
+
+    // 使用ResponsiveLayout的统一监听系统
+    this.responsiveLayout.addChangeListener((width, height, breakpoint, layoutMode) => {
+      this.updateResponsiveLayout(width);
+      console.info(`[FREQ_TRACE][Responsive] 导航窗口尺寸变化: ${width}x${height}`);
+    });
+    
+    // 初始化响应式布局状态
+    const screenInfo = this.responsiveLayout.getCurrentScreenInfo();
+    this.updateResponsiveLayout(screenInfo.width);
   }
 
   @Monitor('currentIndex')
@@ -56,13 +109,37 @@ export struct MainNoiseMeter {
   TabBuilder(title: string, icon: Resource, index: number) {
     Column() {
       Image(icon)
-        .width(24)
-        .height(24)
+        .width(this.responsiveLayout.getResponsiveValue<number>({
+          xsmall: 20,
+          small: 22,
+          medium: 24,
+          large: 26,
+          xlarge: 28
+        } as ResponsiveNumberValues))
+        .height(this.responsiveLayout.getResponsiveValue<number>({
+          xsmall: 20,
+          small: 22,
+          medium: 24,
+          large: 26,
+          xlarge: 28
+        } as ResponsiveNumberValues))
         .fillColor(this.currentIndex === index ? $r('app.color.icon_active') : $r('app.color.icon_inactive'))
       Text(title)
-        .fontSize(12)
+        .fontSize(this.responsiveLayout.getResponsiveValue<number>({
+          xsmall: 10,
+          small: 11,
+          medium: 12,
+          large: 13,
+          xlarge: 14
+        } as ResponsiveNumberValues))
         .fontColor(this.currentIndex === index ? $r('app.color.text_primary') : $r('app.color.text_secondary'))
-        .margin({ top: 4 })
+        .margin({ top: this.responsiveLayout.getResponsiveValue<number>({
+          xsmall: 2,
+          small: 3,
+          medium: 4,
+          large: 5,
+          xlarge: 6
+        } as ResponsiveNumberValues) })
     }
     .width('100%')
     .height('100%')
@@ -143,7 +220,13 @@ export struct MainNoiseMeter {
 
             // 噪音检测区域
             DecibelMeter({ meterOn: this.meterOn })
-              .width('92%')
+              .width(this.responsiveLayout.getResponsiveValue<string>({
+                xsmall: '88%',
+                small: '90%',
+                medium: '92%',
+                large: '94%',
+                xlarge: '96%'
+              } as ResponsiveStringValues))
           }
           .id('decibelMeterRoot')
           .width('100%')
@@ -174,7 +257,13 @@ export struct MainNoiseMeter {
       })
       .width('100%')
       .height('100%')
-      .barHeight(56)
+      .barHeight(this.responsiveLayout.getResponsiveValue<number>({
+        xsmall: 48,
+        small: 50,
+        medium: 56,
+        large: 60,
+        xlarge: 64
+      } as ResponsiveNumberValues))
       .barMode(BarMode.Fixed)
       .animationDuration(0)
     }

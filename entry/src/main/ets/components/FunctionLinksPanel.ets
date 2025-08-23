@@ -2,6 +2,7 @@ import { DesignConstants } from "../constants/DesignConstants"
 import display from '@ohos.display';
 import common from '@ohos.app.ability.common';
 import prompt from '@ohos.prompt';
+import { ResponsiveLayout, Breakpoint, LayoutMode, type WindowChangeListener } from "../utils/ResponsiveLayout"
 
 // 功能链接项接口
 interface FunctionLinkItem {
@@ -9,14 +10,6 @@ interface FunctionLinkItem {
   icon: Resource;
   label: Resource;
   uri: string; // 系统设置页面的URI
-}
-
-// 布局模式枚举
-enum LayoutMode {
-  LARGE = 'large',    // 大屏：2x2网格
-  MEDIUM = 'medium',  // 中屏：2x2网格（稍小）
-  SMALL = 'small',    // 小屏：4x1垂直列表
-  XSMALL = 'xsmall'   // 超小屏：4x1垂直列表（更紧凑）
 }
 
 @ComponentV2
@@ -57,68 +50,45 @@ export struct FunctionLinksPanel {
 
   aboutToAppear() {
     this.updateScreenWidth();
-    // 监听屏幕旋转和尺寸变化
-    display.on('change', () => {
-      this.updateScreenWidth();
-    });
+    // 使用统一的ResponsiveLayout监听器
+    ResponsiveLayout.getInstance().addChangeListener(this.layoutChangeCallback);
   }
 
   aboutToDisappear() {
-    // 移除屏幕变化监听器
-    display.off('change');
+    // 移除ResponsiveLayout监听器
+    ResponsiveLayout.getInstance().removeChangeListener(this.layoutChangeCallback);
   }
 
-  // 更新屏幕宽度（带缓存优化）
+  // 布局变化回调函数
+  private layoutChangeCallback: WindowChangeListener = (width: number, height: number, breakpoint: Breakpoint, layoutMode: LayoutMode) => {
+    this.layoutMode = layoutMode;
+    this.cachedLayoutMode = layoutMode;
+    console.debug(`[FunctionLinksPanel] Layout mode changed to: ${layoutMode}`);
+  }
+
+  // 更新屏幕宽度（初始化时使用）
   private updateScreenWidth() {
     try {
       const displayClass = display.getDefaultDisplaySync();
       const newScreenWidth = displayClass.width;
+      this.screenWidth = newScreenWidth;
+      this.cachedScreenWidth = newScreenWidth;
       
-      // 只有当屏幕宽度有显著变化时才更新布局模式
-      if (Math.abs(newScreenWidth - this.cachedScreenWidth) > 20) { // 20px变化阈值
-        this.screenWidth = newScreenWidth;
-        this.cachedScreenWidth = newScreenWidth;
-        this.updateLayoutMode(this.screenWidth);
-      }
+      // 使用ResponsiveLayout的统一布局模式
+      const screenInfo = ResponsiveLayout.getInstance().getCurrentScreenInfo();
+      this.layoutMode = screenInfo.layoutMode;
+      this.cachedLayoutMode = screenInfo.layoutMode;
     } catch (error) {
       console.error('Failed to get display info:', error);
     }
   }
 
-  // 更新布局模式（带滞后阈值防止频繁切换和缓存优化）
-  private updateLayoutMode(width: number) {
-    // 计算各布局模式的最小宽度要求
-    const minWidthForLargeLayout = 400; // 大屏布局最小宽度
-    const minWidthForMediumLayout = 300; // 中屏布局最小宽度
-    const minWidthForSmallLayout = 200; // 小屏布局最小宽度
-    
-    // 添加滞后阈值（15px），防止在边界值附近频繁切换
-    const hysteresis = 15;
-    
-    let newLayoutMode: LayoutMode;
-    
-    if (width >= minWidthForLargeLayout + hysteresis) {
-      newLayoutMode = LayoutMode.LARGE;
-    } else if (width >= minWidthForMediumLayout + hysteresis) {
-      // 如果当前是大屏模式，需要更宽的阈值才能切换到中屏
-      newLayoutMode = (this.cachedLayoutMode === LayoutMode.LARGE && width >= minWidthForLargeLayout - hysteresis) ?
-        LayoutMode.LARGE : LayoutMode.MEDIUM;
-    } else if (width >= minWidthForSmallLayout + hysteresis) {
-      // 如果当前是中屏模式，需要更宽的阈值才能切换到小屏
-      newLayoutMode = (this.cachedLayoutMode === LayoutMode.MEDIUM && width >= minWidthForMediumLayout - hysteresis) ?
-        LayoutMode.MEDIUM : LayoutMode.SMALL;
-    } else {
-      // 如果当前是小屏模式，需要更窄的阈值才能切换到超小屏
-      newLayoutMode = (this.cachedLayoutMode === LayoutMode.SMALL && width >= minWidthForSmallLayout - hysteresis) ?
-        LayoutMode.SMALL : LayoutMode.XSMALL;
-    }
-    
-    // 只有当布局模式真正改变时才更新
-    if (newLayoutMode !== this.cachedLayoutMode) {
-      this.layoutMode = newLayoutMode;
-      this.cachedLayoutMode = newLayoutMode;
-      console.debug(`[FunctionLinksPanel LayoutMode] Screen width: ${width}px, Mode: ${this.layoutMode}`);
-    }
+  // 更新布局模式
+  private updateLayoutMode(width: number): void {
+    const breakpoint = ResponsiveLayout.getInstance().getBreakpoint(width);
+    const layoutMode = ResponsiveLayout.getInstance().getLayoutMode(breakpoint);
+    this.layoutMode = layoutMode;
+    this.cachedLayoutMode = layoutMode;
   }
 
   // 跳转到系统设置页面

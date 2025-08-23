@@ -19,8 +19,10 @@ export struct ActionPanel {
 
   aboutToAppear(): void {
     this.meterOn = this.preferenceService.getBoolean(PreferenceKeyConstants.METER_ON, true);
-    this.preferenceService.addChangeListener(PreferenceKeyConstants.METER_ON, (value: PreferenceValue) => {
-      this.meterOn = value as boolean;
+    this.preferenceService.addChangeListener(PreferenceKeyConstants.METER_ON, (key: string, value: PreferenceValue) => {
+      if (key === PreferenceKeyConstants.METER_ON && typeof value === 'boolean') {
+        this.meterOn = value;
+      }
     })
   }
 
