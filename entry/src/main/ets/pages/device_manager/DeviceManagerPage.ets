@@ -102,7 +102,13 @@ export struct DeviceManagerPage {
   private responsiveLayout: ResponsiveLayout = ResponsiveLayout.getInstance();
 
   aboutToAppear() {
+    // 立即初始化所有设备信息
     this.getSystemMemoryInfo();
+    
+    // 确保存储和温度信息也被初始化
+    this.storageInfo = this.getStorageInfo();
+    this.temperatureInfo = this.getTemperatureInfo();
+    
     setInterval(() => {
       this.getSystemMemoryInfo();
     }, 5000);
@@ -512,6 +518,7 @@ export struct DeviceManagerPage {
         title: this.getRatingLevelInfo(score).label,
         value: score,
         maxValue: 100,
+        unit: '',
         progressType: 'Ring'
       }
     })
@@ -579,21 +586,21 @@ export struct DeviceManagerPage {
         this.buildRatingCard(this.calculateDeviceScore())
       }
       .layoutWeight(1)
-      .margin({ right: this.getResponsiveSpacing(16) })
+      .margin({ right: this.getResponsiveSpacing(8) })
 
       // 中间：可用存储面板
       Column() {
         this.buildStorageCard()
       }
       .layoutWeight(1)
-      .margin({ right: this.getResponsiveSpacing(16), left: this.getResponsiveSpacing(16) })
+      .margin({ right: this.getResponsiveSpacing(8), left: this.getResponsiveSpacing(8) })
 
       // 右侧：手机温度面板
       Column() {
         this.buildTemperatureCard()
       }
       .layoutWeight(1)
-      .margin({ left: this.getResponsiveSpacing(16) })
+      .margin({ left: this.getResponsiveSpacing(8) })
     }
     .width('100%')
     .margin({ bottom: this.getResponsiveSpacing(24) })
@@ -603,7 +610,7 @@ export struct DeviceManagerPage {
   @Builder
   buildGridLayout() {
     Grid() {
-      // 第一行：设备评分和可用存储
+      // 第一行：设备评分
       GridItem() {
         Column() {
           this.buildRatingCard(this.calculateDeviceScore())
@@ -612,10 +619,11 @@ export struct DeviceManagerPage {
         .height('100%')
       }
       .columnStart(0)
-      .columnEnd(1)
+      .columnEnd(0)
       .rowStart(0)
       .rowEnd(0)
 
+      // 第一行：可用存储
       GridItem() {
         Column() {
           this.buildStorageCard()
@@ -624,7 +632,7 @@ export struct DeviceManagerPage {
         .height('100%')
       }
       .columnStart(1)
-      .columnEnd(2)
+      .columnEnd(1)
       .rowStart(0)
       .rowEnd(0)
 
@@ -637,7 +645,7 @@ export struct DeviceManagerPage {
         .height('100%')
       }
       .columnStart(0)
-      .columnEnd(2)
+      .columnEnd(1)
       .rowStart(1)
       .rowEnd(1)
     }
@@ -675,5 +683,6 @@ export struct DeviceManagerPage {
       .margin({ bottom: this.getResponsiveSpacing(24) })
     }
     .width('100%')
+    .alignItems(HorizontalAlign.Center)
   }
 }
