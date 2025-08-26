@@ -127,7 +127,7 @@ export class AudioPlayerService {
           this.updateState(PlayerState.STATE_PREPARED);
           if (this.player) {
             // await audio.getAudioManager().getVolumeManager().setAppVolumePercentage(100);
-            promptAction.openToast({ message: '播放中...请调大音量' });
+            promptAction.showToast({ message: '播放中...请调大音量' });
             await this.player.play(); // 自动开始播放
           }
           break;

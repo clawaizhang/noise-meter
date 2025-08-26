@@ -6,9 +6,11 @@ import { AppStorageV2, promptAction, window } from '@kit.ArkUI';
 import display from '@ohos.display';
 import { taskpool } from '@kit.ArkTS';
 import { concurrentCalculateSpectrum } from '../../concurrent/ConcurrentFftAnalyzer';
-import { formatStartTime,
+import {
+  formatStartTime,
   secondsToHoursMinutesSeconds,
-  secondsToHoursMinutesSecondsWithDecimal } from '../../utils/TimeUtils';
+  secondsToHoursMinutesSecondsWithDecimal
+} from '../../utils/TimeUtils';
 import { ActionPanel } from './ActionPanel';
 import { CalibrationIndicator } from './CalibrationIndicator';
 import { drawSpectrum, getDbSteps, getFrequencySteps } from './DrawSpectrum';
@@ -48,11 +50,21 @@ interface ResponsiveStringValues {
 export struct DecibelMeter {
   // 新增方法：根据分贝值获取对应颜色
   private getDecibelColor(decibel: number): Resource {
-    if (decibel >= 85) return $r('app.color.decibel_unbearable');
-    if (decibel >= 75) return $r('app.color.decibel_very_noisy');
-    if (decibel >= 65) return $r('app.color.decibel_noisy');
-    if (decibel >= 55) return $r('app.color.decibel_normal');
-    if (decibel >= 45) return $r('app.color.decibel_quiet');
+    if (decibel >= 85) {
+      return $r('app.color.decibel_unbearable');
+    }
+    if (decibel >= 75) {
+      return $r('app.color.decibel_very_noisy');
+    }
+    if (decibel >= 65) {
+      return $r('app.color.decibel_noisy');
+    }
+    if (decibel >= 55) {
+      return $r('app.color.decibel_normal');
+    }
+    if (decibel >= 45) {
+      return $r('app.color.decibel_quiet');
+    }
     return $r('app.color.decibel_very_quiet');
   }
 
@@ -126,13 +138,13 @@ export struct DecibelMeter {
       } catch (exception) {
         console.error('Failed to register callback. Code: ' + JSON.stringify(exception));
       }
-      
+
       // 获取实际可用区域
       const availableArea = await display.getDefaultDisplaySync().getAvailableArea();
       this.foldStatus = display.getFoldStatus();
       const availableWidth = availableArea.width < availableArea.height ? availableArea.width : availableArea.height;
       const availableHeight = availableArea.width < availableArea.height ? availableArea.height : availableArea.width;
-      
+
       // 更新响应式布局状态
       const availableWidthVp = px2vp(availableWidth);
       this.updateResponsiveLayout(availableWidthVp);
@@ -157,10 +169,10 @@ export struct DecibelMeter {
       }
 
       // 根据折叠状态进一步调整
-      if(availableWidth / availableHeight < 1 && this.foldStatus === display.FoldStatus.FOLD_STATUS_EXPANDED) {
+      if (availableWidth / availableHeight < 1 && this.foldStatus === display.FoldStatus.FOLD_STATUS_EXPANDED) {
         this.ASPECT_RATIO = 3;
       }
-      if(availableWidth / availableHeight < 1 && this.foldStatus === display.FoldStatus.FOLD_STATUS_FOLDED) {
+      if (availableWidth / availableHeight < 1 && this.foldStatus === display.FoldStatus.FOLD_STATUS_FOLDED) {
         this.ASPECT_RATIO = 3.5;
       }
 
@@ -174,7 +186,7 @@ export struct DecibelMeter {
       } as ResponsiveNumberValues);
       this.canvasWidth = availableWidthVp - (responsiveMargin as number * 2);
       this.canvasHeight = this.canvasWidth / this.ASPECT_RATIO;
-      
+
       console.info(`[FREQ_TRACE][Canvas] 响应式Canvas尺寸: ${this.canvasWidth}x${this.canvasHeight}, 边距: ${responsiveMargin}vp`);
     } catch (error) {
       console.error('[FREQ_TRACE][显示设备信息] 计算Canvas尺寸失败:', error);
@@ -250,7 +262,7 @@ export struct DecibelMeter {
           .onReady(() => {
             // 初始化完成后开始绘制
             const emptySpectrum: Float32Array = new Float32Array(this.currentFftSize * 2);
-            if(this.isDisplayApp) {
+            if (this.isDisplayApp) {
               this.drawSpectrumLocal(emptySpectrum);
             }
             this.recordingTime = new Date().getTime() - this.startTime;
@@ -273,13 +285,15 @@ export struct DecibelMeter {
               large: 18,
               xlarge: 20
             } as ResponsiveNumberValues))
-            .margin({ right: this.responsiveLayout.getResponsiveValue<number>({
-              xsmall: 4,
-              small: 5,
-              medium: 6,
-              large: 7,
-              xlarge: 8
-            } as ResponsiveNumberValues) })
+            .margin({
+              right: this.responsiveLayout.getResponsiveValue<number>({
+                xsmall: 4,
+                small: 5,
+                medium: 6,
+                large: 7,
+                xlarge: 8
+              } as ResponsiveNumberValues)
+            })
             .fillColor(this.getDecibelColor(this.decibelState.currentDecibel))
 
           Text(DecibelService.getDecibelDescription(this.decibelState.currentDecibel))
@@ -329,7 +343,7 @@ export struct DecibelMeter {
     }
     this.audioService.stopProcessing();
     this.audioService.stopCapture();
-    
+
     // 移除ResponsiveLayout的监听器
     if (this.responsiveListener) {
       this.responsiveLayout.removeChangeListener(this.responsiveListener);
@@ -338,7 +352,7 @@ export struct DecibelMeter {
 
   async aboutToAppear() {
     try {
-      let displayManager:DisplayManager  =  DisplayManager.getInstance();
+      let displayManager: DisplayManager = DisplayManager.getInstance();
       displayManager.onDisplay(() => {
         this.isDisplayApp = true;
       });
@@ -432,7 +446,7 @@ export struct DecibelMeter {
 
     // 原有的初始化代码
     // 获取录音开关状态
-    this.isRecordEnabled = this.preferenceService.getBoolean(PreferenceKeyConstants.RECORD,true);
+    this.isRecordEnabled = this.preferenceService.getBoolean(PreferenceKeyConstants.RECORD, true);
 
     // 监听录音开关状态变化
     this.recordListener = (key: string, value: PreferenceValue): void => {
@@ -508,7 +522,7 @@ export struct DecibelMeter {
           console.info('[自动保存] 达到5分钟录音限制，自动保存并开始新录音');
           this.stopRecording('自动保存').then(() => {
             // 延迟100ms确保完全停止后再开始新录音
-            setTimeout(()=> {
+            setTimeout(() => {
               this.startRecording();
             }, 100);
           });
@@ -518,28 +532,28 @@ export struct DecibelMeter {
         taskpool.execute<[string, ArrayBuffer,
           WeightingType, number], Float32Array>(concurrentCalculateSpectrum, this.currentMode,
           buffer, this.weightingType, this.calibrationGain).then(spectrum => {
-        const config = AudioPresets.getConfig(this.currentMode as AudioAnalysisMode);
-        const db: number = new FFTAnalyzer(config.fftSize, config.windowType, config.smoothingFactor,
-          config.overlap).calculateAverageDb(spectrum);
+          const config = AudioPresets.getConfig(this.currentMode as AudioAnalysisMode);
+          const db: number = new FFTAnalyzer(config.fftSize, config.windowType, config.smoothingFactor,
+            config.overlap).calculateAverageDb(spectrum);
 
-        let decibel = Math.round(db);
-        this.values.push(decibel);
-        this.weightingTypes.push(this.weightingType)
-        if (!this.isUILocked && this.isDisplayApp) {
-          this.decibelState.currentDecibel = decibel;
-          this.updateStatistics(this.decibelState.currentDecibel);
-          this.drawSpectrumLocal(spectrum);
-        }
-        // 更新计时器（毫秒级）
-        this.recordingTime = new Date().getTime() - this.startTime;
-      })
-    });
-  } catch (error) {
-    // 如果启动失败，重置状态
-    this.isRecording = false;
-    this.resetData();
+          let decibel = Math.round(db);
+          this.values.push(decibel);
+          this.weightingTypes.push(this.weightingType)
+          if (!this.isUILocked && this.isDisplayApp) {
+            this.decibelState.currentDecibel = decibel;
+            this.updateStatistics(this.decibelState.currentDecibel);
+            this.drawSpectrumLocal(spectrum);
+          }
+          // 更新计时器（毫秒级）
+          this.recordingTime = new Date().getTime() - this.startTime;
+        })
+      });
+    } catch (error) {
+      // 如果启动失败，重置状态
+      this.isRecording = false;
+      this.resetData();
+    }
   }
-}
 
   private drawSpectrumLocal(spectrum: Float32Array) {
     const dbSteps: number[] = getDbSteps();
@@ -615,11 +629,11 @@ export struct DecibelMeter {
     }
   }
 
-  private async stopRecording(comments:string): Promise<void> {
+  private async stopRecording(comments: string): Promise<void> {
     if (this.isRecording) {
       this.isRecording = false;
       console.info("[FREQ_TRACE][Recording] 停止检测 - 开始");
-      
+
       // 如果是自动保存，不显示保存提示
       const isAutoSave = new Date().getTime() - this.startTime >= this.MAX_RECORDING_DURATION;
 
@@ -722,224 +736,169 @@ export struct DecibelMeter {
       this.SpectrumView()
 
       // 分贝显示卡片
-      Stack({ alignContent: Alignment.TopEnd }) {
-
+      Row() {
         Column() {
-          // 分贝值显示
-          Row() {
-            Column() {
-              Text(this.showAvgInsteadOfMin ? '平均' : '最小')
-                .fontSize(this.responsiveLayout.getResponsiveValue<number>({
-                  xsmall: 10,
-                  small: 12,
-                  medium: 14,
-                  large: 16,
-                  xlarge: 18
-                } as ResponsiveNumberValues))
-                .fontColor($r('app.color.text_secondary'))
-                .margin({ bottom: 4 })
-              Text(this.showAvgInsteadOfMin ?
-                (this.avgDecibel === 0 ? '-' : this.avgDecibel.toString()) :
-                (this.minDecibel === 0 ? '-' : this.minDecibel.toString()))
-                .fontSize(this.responsiveLayout.getResponsiveValue<number>({
-                  xsmall: 24,
-                  small: 28,
-                  medium: 32,
-                  large: 36,
-                  xlarge: 40
-                } as ResponsiveNumberValues))
-                .fontWeight(FontWeight.Medium)
-                .fontColor(DecibelService.getDecibelColor(
-                  this.showAvgInsteadOfMin ? this.avgDecibel : this.minDecibel))
-                .onClick(() => {
-                  this.showAvgInsteadOfMin = !this.showAvgInsteadOfMin;
-                })
-            }
-            .alignItems(HorizontalAlign.Center)
-            .margin({ right: this.responsiveLayout.getResponsiveValue<number>({
-              xsmall: 4,
-              small: 6,
-              medium: 8,
-              large: 10,
-              xlarge: 12
-            } as ResponsiveNumberValues) })
-
-            Column() {
-              Text(this.decibelState.currentDecibel === 0 ? '-' : this.decibelState.currentDecibel.toString())
-                .fontSize(this.responsiveLayout.getResponsiveValue<number>({
-                  xsmall: 60,
-                  small: 70,
-                  medium: 80,
-                  large: 90,
-                  xlarge: 100
-                } as ResponsiveNumberValues))
-                .fontWeight(FontWeight.Bold)
-                .fontColor(DecibelService.getDecibelColor(this.decibelState.currentDecibel))
-              Row() {
-                if (this.isRecording) {
-                  Text(`${secondsToHoursMinutesSecondsWithDecimal(this.MAX_RECORDING_DURATION - this.recordingTime)} 后自动保存`)
-                    .fontSize(this.responsiveLayout.getResponsiveValue<number>({
-                      xsmall: 12,
-                      small: 14,
-                      medium: 16,
-                      large: 18,
-                      xlarge: 20
-                    } as ResponsiveNumberValues))
-                    .fontColor($r('app.color.text_secondary'))
-                  Text(' | ')
-                    .fontSize(this.responsiveLayout.getResponsiveValue<number>({
-                      xsmall: 12,
-                      small: 14,
-                      medium: 16,
-                      large: 18,
-                      xlarge: 20
-                    } as ResponsiveNumberValues))
-                    .fontColor($r('app.color.text_secondary'))
-                }
-                Row() {
-                  Image($r('app.media.ic_info'))
-                    .width(this.responsiveLayout.getResponsiveValue<number>({
-                      xsmall: 10,
-                      small: 12,
-                      medium: 14,
-                      large: 16,
-                      xlarge: 18
-                    } as ResponsiveNumberValues))
-                    .height(this.responsiveLayout.getResponsiveValue<number>({
-                      xsmall: 10,
-                      small: 12,
-                      medium: 14,
-                      large: 16,
-                      xlarge: 18
-                    } as ResponsiveNumberValues))
-                    .margin({ right: 4 })
-                    .fillColor(DecibelService.getDecibelColor(this.decibelState.currentDecibel))
-
-                  Text(DecibelService.getDecibelLevel(this.decibelState.currentDecibel))
-                    .fontSize(this.responsiveLayout.getResponsiveValue<number>({
-                      xsmall: 12,
-                      small: 14,
-                      medium: 16,
-                      large: 18,
-                      xlarge: 20
-                    } as ResponsiveNumberValues))
-                    .fontColor(DecibelService.getDecibelColor(this.decibelState.currentDecibel))
-                }
-                .onClick(() => {
-                  this.navStack.pushPathByName("NoiseLevelDialog", null);
-                })
-              }
-              .margin({ top: 4 })
-            }
-            .alignItems(HorizontalAlign.Center)
-
-            Column() {
-              Text('最大')
-                .fontSize(this.responsiveLayout.getResponsiveValue<number>({
-                  xsmall: 10,
-                  small: 12,
-                  medium: 14,
-                  large: 16,
-                  xlarge: 18
-                } as ResponsiveNumberValues))
-                .fontColor($r('app.color.text_secondary'))
-                .margin({ bottom: 4 })
-              Text(this.maxDecibel === 0 ? '-' : this.maxDecibel.toString())
-                .fontSize(this.responsiveLayout.getResponsiveValue<number>({
-                  xsmall: 24,
-                  small: 28,
-                  medium: 32,
-                  large: 36,
-                  xlarge: 40
-                } as ResponsiveNumberValues))
-                .fontWeight(FontWeight.Medium)
-                .fontColor(DecibelService.getDecibelColor(this.maxDecibel))
-            }
-            .alignItems(HorizontalAlign.Center)
-            .margin({ left: this.responsiveLayout.getResponsiveValue<number>({
-              xsmall: 4,
-              small: 6,
-              medium: 8,
-              large: 10,
-              xlarge: 12
-            } as ResponsiveNumberValues) })
-          }
-          .width('100%')
-          .justifyContent(FlexAlign.Center)
-          .alignItems(VerticalAlign.Center)
-          .margin({ bottom: this.responsiveLayout.getResponsiveValue<number>({
-            xsmall: 12,
-            small: 16,
-            medium: 20,
-            large: 24,
-            xlarge: 28
-          } as ResponsiveNumberValues) })
+          Text(this.showAvgInsteadOfMin ? '平均' : '最小')
+            .fontSize(this.responsiveLayout.getResponsiveValue<number>({
+              xsmall: 10,
+              small: 12,
+              medium: 14,
+              large: 16,
+              xlarge: 18
+            } as ResponsiveNumberValues))
+            .fontColor($r('app.color.text_secondary'))
+            .margin({ bottom: 4 })
+          Text(this.showAvgInsteadOfMin ?
+            (this.avgDecibel === 0 ? '-' : this.avgDecibel.toString()) :
+            (this.minDecibel === 0 ? '-' : this.minDecibel.toString()))
+            .fontSize(this.responsiveLayout.getResponsiveValue<number>({
+              xsmall: 24,
+              small: 28,
+              medium: 32,
+              large: 36,
+              xlarge: 40
+            } as ResponsiveNumberValues))
+            .fontWeight(FontWeight.Medium)
+            .fontColor(DecibelService.getDecibelColor(
+              this.showAvgInsteadOfMin ? this.avgDecibel : this.minDecibel))
+            .onClick(() => {
+              this.showAvgInsteadOfMin = !this.showAvgInsteadOfMin;
+            })
         }
-        .width('100%')
-        .padding({
-          top: this.responsiveLayout.getResponsiveValue<number>({
-            xsmall: 16,
-            small: 20,
-            medium: 24,
-            large: 28,
-            xlarge: 32
-          } as ResponsiveNumberValues),
-          bottom: this.responsiveLayout.getResponsiveValue<number>({
-            xsmall: 16,
-            small: 20,
-            medium: 24,
-            large: 28,
-            xlarge: 32
-          } as ResponsiveNumberValues),
-          left: this.responsiveLayout.getResponsiveValue<number>({
-            xsmall: 12,
-            small: 16,
-            medium: 20,
-            large: 24,
-            xlarge: 28
-          } as ResponsiveNumberValues),
+        .alignItems(HorizontalAlign.Center)
+        .margin({
           right: this.responsiveLayout.getResponsiveValue<number>({
-            xsmall: 12,
-            small: 16,
-            medium: 20,
-            large: 24,
-            xlarge: 28
+            xsmall: 8,
+            small: 12,
+            medium: 16,
+            large: 20,
+            xlarge: 24
           } as ResponsiveNumberValues)
         })
-        .backgroundColor($r('app.color.background_secondary'))
-        .borderRadius(12)
-        .borderWidth(2)
-        .borderColor(this.isNoiseAlarm ? DecibelService.getDecibelColor(this.decibelState.currentDecibel) :
-        Color.Transparent)
 
+        Column() {
+          Text(this.decibelState.currentDecibel === 0 ? '-' : this.decibelState.currentDecibel.toString())
+            .fontSize(this.responsiveLayout.getResponsiveValue<number>({
+              xsmall: 60,
+              small: 70,
+              medium: 80,
+              large: 90,
+              xlarge: 100
+            } as ResponsiveNumberValues))
+            .fontWeight(FontWeight.Bold)
+            .fontColor(DecibelService.getDecibelColor(this.decibelState.currentDecibel))
+        }
+        .alignItems(HorizontalAlign.Center)
+
+        Column() {
+          Text('最大')
+            .fontSize(this.responsiveLayout.getResponsiveValue<number>({
+              xsmall: 10,
+              small: 12,
+              medium: 14,
+              large: 16,
+              xlarge: 18
+            } as ResponsiveNumberValues))
+            .fontColor($r('app.color.text_secondary'))
+            .margin({ bottom: 4 })
+          Text(this.maxDecibel === 0 ? '-' : this.maxDecibel.toString())
+            .fontSize(this.responsiveLayout.getResponsiveValue<number>({
+              xsmall: 24,
+              small: 28,
+              medium: 32,
+              large: 36,
+              xlarge: 40
+            } as ResponsiveNumberValues))
+            .fontWeight(FontWeight.Medium)
+            .fontColor(DecibelService.getDecibelColor(this.maxDecibel))
+        }
+        .alignItems(HorizontalAlign.Center)
+        .margin({
+          left: this.responsiveLayout.getResponsiveValue<number>({
+            xsmall: 8,
+            small: 12,
+            medium: 16,
+            large: 20,
+            xlarge: 24
+          } as ResponsiveNumberValues)
+        })
       }
       .width('100%')
+      .justifyContent(FlexAlign.Center)
+      .alignItems(VerticalAlign.Center)
       .margin({
-        left: this.responsiveLayout.getResponsiveValue<number>({
-          xsmall: 12,
-          small: 16,
-          medium: 20,
-          large: 24,
-          xlarge: 28
-        } as ResponsiveNumberValues),
-        right: this.responsiveLayout.getResponsiveValue<number>({
-          xsmall: 12,
-          small: 16,
-          medium: 20,
-          large: 24,
-          xlarge: 28
-        } as ResponsiveNumberValues),
-        top: this.responsiveLayout.getResponsiveValue<number>({
-          xsmall: 12,
-          small: 16,
-          medium: 20,
-          large: 24,
-          xlarge: 28
+        bottom: this.responsiveLayout.getResponsiveValue<number>({
+          xsmall: 3,
+          small: 4,
+          medium: 5,
+          large: 6,
+          xlarge: 7
+        } as ResponsiveNumberValues), top: this.responsiveLayout.getResponsiveValue<number>({
+          xsmall: 6,
+          small: 8,
+          medium: 10,
+          large: 12,
+          xlarge: 14
         } as ResponsiveNumberValues)
       })
-      .backgroundColor($r('app.color.white'))
-      .borderRadius(12)
-      .shadow({ radius: 2, color: '#1A000000', offsetY: 2 })
+      .borderColor(this.isNoiseAlarm ? DecibelService.getDecibelColor(this.decibelState.currentDecibel) :
+      Color.Transparent)
+
+      Row() {
+        if (this.isRecording) {
+          Text(`${secondsToHoursMinutesSecondsWithDecimal(this.MAX_RECORDING_DURATION -
+          this.recordingTime)} 后自动保存`)
+            .fontSize(this.responsiveLayout.getResponsiveValue<number>({
+              xsmall: 12,
+              small: 14,
+              medium: 16,
+              large: 18,
+              xlarge: 20
+            } as ResponsiveNumberValues))
+            .fontColor($r('app.color.text_secondary'))
+          Text(' | ')
+            .fontSize(this.responsiveLayout.getResponsiveValue<number>({
+              xsmall: 12,
+              small: 14,
+              medium: 16,
+              large: 18,
+              xlarge: 20
+            } as ResponsiveNumberValues))
+            .fontColor($r('app.color.text_secondary'))
+        }
+        Row() {
+          Image($r('app.media.ic_info'))
+            .width(this.responsiveLayout.getResponsiveValue<number>({
+              xsmall: 10,
+              small: 12,
+              medium: 14,
+              large: 16,
+              xlarge: 18
+            } as ResponsiveNumberValues))
+            .height(this.responsiveLayout.getResponsiveValue<number>({
+              xsmall: 10,
+              small: 12,
+              medium: 14,
+              large: 16,
+              xlarge: 18
+            } as ResponsiveNumberValues))
+            .margin({ right: 4 })
+            .fillColor(DecibelService.getDecibelColor(this.decibelState.currentDecibel))
+
+          Text(DecibelService.getDecibelLevel(this.decibelState.currentDecibel))
+            .fontSize(this.responsiveLayout.getResponsiveValue<number>({
+              xsmall: 12,
+              small: 14,
+              medium: 16,
+              large: 18,
+              xlarge: 20
+            } as ResponsiveNumberValues))
+            .fontColor(DecibelService.getDecibelColor(this.decibelState.currentDecibel))
+        }
+        .onClick(() => {
+          this.navStack.pushPathByName("NoiseLevelDialog", null);
+        })
+      }
 
       // 位置显示
       Row() {
@@ -980,7 +939,7 @@ export struct DecibelMeter {
           this.stopRecording(comments);
         },
         lockToggle: () => {
-          if(this.isUILocked) {
+          if (this.isUILocked) {
             promptAction.showToast({
               message: '已解锁',
               duration: 2000

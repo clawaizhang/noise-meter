@@ -2,6 +2,7 @@ import { PlayerState } from "../../services/AudioPlayerService"
 import { AudioPlayerService } from "../../services/AudioPlayerService"
 import hilog from '@ohos.hilog'
 import { FileService } from "../../services/FileService";
+import { promptAction } from "@kit.ArkUI";
 
 const TAG = 'AudioPlayer';
 const DOMAIN = 0x0000;
@@ -62,9 +63,11 @@ export struct AudioPlayer {
             await this.audioPlayerService.pause();
           } else {
             if (this.playerState === PlayerState.STATE_PAUSED) {
+              promptAction.showToast({ message: '请调大音量' });
               await this.audioPlayerService.resume();
             } else {
               if (this.audioFilePath) {
+                promptAction.showToast({ message: '请调大音量' });
                 await this.audioPlayerService.playAudioFile(this.audioFilePath);
               }
             }
