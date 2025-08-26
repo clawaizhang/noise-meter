@@ -171,6 +171,10 @@
     {
       "name": "function_links_title",
       "value": "快捷功能入口"
+    },
+    {
+      "name": "wifi_info_reason",
+      "value": "需要获取Wi-Fi信息以支持本地文件传输功能"
     }
   ]
 }

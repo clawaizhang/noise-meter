@@ -9,6 +9,10 @@
       "name": "DeviceManager",
       "pageSourceFile": "src/main/ets/pages/device_manager/MainDeviceManagerNavigation.ets",
       "buildFunction": "DeviceManagerBuilder"
+    },{
+      "name": "LocalSend",
+      "pageSourceFile": "src/main/ets/pages/local_send/LocalSendNavigation.ets",
+      "buildFunction": "LocalSendBuilder"
     },
     {
       "name": "DecibelHistory",

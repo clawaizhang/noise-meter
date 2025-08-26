@@ -25,6 +25,10 @@
       "value": "#666666"
     },
     {
+      "name": "text_tertiary",
+      "value": "#999999"
+    },
+    {
       "name": "text_disabled",
       "value": "#BDBDBD"
     },

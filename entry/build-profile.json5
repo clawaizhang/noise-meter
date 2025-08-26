@@ -56,6 +56,24 @@
           "./src/main/resources"
         ]
       }
+    },
+    {
+      "name": "local_send",
+      "runtimeOS": "HarmonyOS",
+      "source": {
+        "pages": [
+          "pages/Index",
+        ],
+        "sourceRoots": [
+          "./src/local_send_pages"
+        ]
+      },
+      "resource": {
+        "directories": [
+          "./src/main/local_send/resources",
+          "./src/main/resources"
+        ]
+      }
     }
   ]
 }
