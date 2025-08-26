@@ -6,7 +6,7 @@ import { navigationStack } from '../constants/ProviderConstant';
 function itemIcon() {
   .width(24)
   .height(24)
-  .margin({ right: 8 })
+  .margin({ right: 12 })
 }
 
 @Extend(Text)
@@ -21,35 +21,50 @@ function itemDescription() {
   .fontColor($r('app.color.text_secondary'))
   .fontSize(14)
   .textAlign(TextAlign.Start)
-  .width( '100%')
-  .margin({ left: 48 })
+  .width('100%')
+  .margin({ left: 36, top: 4 })
 }
 
 @Extend(Column)
 function listItemStyle() {
   .width('100%')
-  .padding({ left: 16, right: 16 })
+  .padding({ left: 24, right: 24 })
   .backgroundColor($r('app.color.background_secondary'))
 }
 
 @Extend(Row)
 function listItemRow() {
   .width('100%')
-  .height(56)
+  .height(64)
   .alignItems(VerticalAlign.Center)
 }
 
 @Extend(ListItem)
 function dividerStyle() {
   .width('100%')
-  .height(1)
-  .backgroundColor($r('app.color.background_secondary'))
+  .height(0.5)
+  .backgroundColor($r('app.color.divider'))
+  .margin({ left: 24, right: 24 })
 }
 
 @Extend(ListItem)
 function descriptionContainer() {
   .backgroundColor($r('app.color.background_secondary'))
-  .padding({ top: 8, bottom: 12 })
+  .padding({ top: 8, bottom: 16, left: 24, right: 24 })
+}
+
+@Extend(Image)
+function arrowIcon() {
+  .width(20)
+  .height(20)
+  .fillColor($r('app.color.text_tertiary'))
+}
+
+@Extend(Column)
+function listItemWithDescription() {
+  .width('100%')
+  .padding({ left: 24, right: 24, top: 16, bottom: 16 })
+  .backgroundColor($r('app.color.background_secondary'))
 }
 
 @ComponentV2
@@ -102,23 +117,18 @@ export struct Settings {
 
               Blank()
 
-              Image($r('app.media.app_icon_back'))
-                .width(16)
-                .height(16)
-                .fillColor($r('app.color.text_secondary'))
+              Image($r('app.media.ic_arrow_right'))
+                .arrowIcon()
             }
             .listItemRow()
+
+            Text('时间计权模式、频率加权、声级校准等设置')
+              .itemDescription()
           }
-          .listItemStyle()
+          .listItemWithDescription()
         }.onClick(() => {
           this.navigateToAudioAnalysis();
         })
-
-        ListItem() {
-          Text('时间计权模式、频率加权、声级校准等设置')
-            .itemDescription()
-        }
-        .descriptionContainer()
 
         ListItem() {
         }.dividerStyle()
@@ -137,22 +147,18 @@ export struct Settings {
 
               Blank()
 
-              Text('>')
-                .fontSize(18)
-                .fontColor($r('app.color.text_secondary'))
+              Image($r('app.media.ic_arrow_right'))
+                .arrowIcon()
             }
             .listItemRow()
+
+            Text('噪音警报阈值和通知设置')
+              .itemDescription()
           }
-          .listItemStyle()
+          .listItemWithDescription()
         }.onClick(() => {
           this.navigateToAlerts();
         })
-
-        ListItem() {
-          Text('噪音警报阈值和通知设置')
-            .itemDescription()
-        }
-        .descriptionContainer()
 
         ListItem() {
         }.dividerStyle()
@@ -171,22 +177,18 @@ export struct Settings {
 
               Blank()
 
-              Text('>')
-                .fontSize(18)
-                .fontColor($r('app.color.text_secondary'))
+              Image($r('app.media.ic_arrow_right'))
+                .arrowIcon()
             }
             .listItemRow()
+
+            Text('地理位置、音频记录等隐私设置')
+              .itemDescription()
           }
-          .listItemStyle()
+          .listItemWithDescription()
         }.onClick(() => {
           this.navigateToDataPrivacy();
         })
-
-        ListItem() {
-          Text('地理位置、音频记录等隐私设置')
-            .itemDescription()
-        }
-        .descriptionContainer()
 
         ListItem() {
         }.dividerStyle()
@@ -205,22 +207,18 @@ export struct Settings {
 
               Blank()
 
-              Text('>')
-                .fontSize(18)
-                .fontColor($r('app.color.text_secondary'))
+              Image($r('app.media.ic_arrow_right'))
+                .arrowIcon()
             }
             .listItemRow()
+
+            Text('屏幕常亮、后台运行等设备设置')
+              .itemDescription()
           }
-          .listItemStyle()
+          .listItemWithDescription()
         }.onClick(() => {
           this.navigateToDeviceSettings();
         })
-
-        ListItem() {
-          Text('屏幕常亮、后台运行等设备设置')
-            .itemDescription()
-        }
-        .descriptionContainer()
 
         ListItem() {
         }.dividerStyle()
@@ -239,30 +237,26 @@ export struct Settings {
 
               Blank()
 
-              Text('>')
-                .fontSize(18)
-                .fontColor($r('app.color.text_secondary'))
+              Image($r('app.media.ic_arrow_right'))
+                .arrowIcon()
             }
             .listItemRow()
+
+            Text('应用信息、隐私政策和技术支持')
+              .itemDescription()
           }
-          .listItemStyle()
+          .listItemWithDescription()
         }.onClick(() => {
           this.navigateToAbout();
         })
-
-        ListItem() {
-          Text('应用信息、隐私政策和技术支持')
-            .itemDescription()
-        }
-        .descriptionContainer()
       }
       .width('100%')
       .layoutWeight(1)
-      .backgroundColor($r('app.color.background_tertiary'))
-      .margin({ top: 12 })
+      .backgroundColor($r('app.color.background_primary'))
+      .margin({ top: 16 })
     }
     .width('100%')
     .height('100%')
-    .backgroundColor($r('app.color.background_tertiary'))
+    .backgroundColor($r('app.color.background_primary'))
   }
 }
