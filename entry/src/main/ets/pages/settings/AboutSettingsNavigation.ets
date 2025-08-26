@@ -59,16 +59,10 @@ function descriptionContainer() {
 export struct AboutSettings {
   @Consumer(navigationStack) navStack: NavPathStack = new NavPathStack();
 
-  build() {
+  build() {    NavDestination() {
+
     Column() {
-      // 页面标题
-      Text('关于')
-        .fontSize(20)
-        .fontWeight(FontWeight.Bold)
-        .fontColor($r('app.color.text_primary'))
-        .margin({ top: 16, bottom: 16 })
-        .width('100%')
-        .textAlign(TextAlign.Center)
+
 
       List() {
         // 隐私政策
@@ -190,7 +184,7 @@ export struct AboutSettings {
     }
     .width('100%')
     .height('100%')
-    .backgroundColor($r('app.color.background_tertiary'))
+    .backgroundColor($r('app.color.background_tertiary'))}.title('关于')
   }
 }
 

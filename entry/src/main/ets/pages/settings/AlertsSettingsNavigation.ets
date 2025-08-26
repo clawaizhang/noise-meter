@@ -79,15 +79,10 @@ export struct AlertsSettings {
   }
 
   build() {
-    Column() {
-      // 页面标题
-      Text('警报与通知')
-        .fontSize(20)
-        .fontWeight(FontWeight.Bold)
-        .fontColor($r('app.color.text_primary'))
-        .margin({ top: 16, bottom: 16 })
-        .width('100%')
-        .textAlign(TextAlign.Center)
+    NavDestination() {
+
+      Column() {
+
 
       List() {
         // 噪音阈值警报的开关
@@ -189,6 +184,6 @@ export struct AlertsSettings {
     }
     .width('100%')
     .height('100%')
-    .backgroundColor($r('app.color.background_tertiary'))
+    .backgroundColor($r('app.color.background_tertiary'))}.title('警报与通知')
   }
 }

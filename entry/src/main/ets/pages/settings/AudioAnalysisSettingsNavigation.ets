@@ -255,15 +255,9 @@ export struct AudioAnalysisSettings {
   }
 
   build() {
-    Column() {
-      // 页面标题
-      Text('音频分析设置')
-        .fontSize(20)
-        .fontWeight(FontWeight.Bold)
-        .fontColor($r('app.color.text_primary'))
-        .margin({ top: 16, bottom: 16 })
-        .width('100%')
-        .textAlign(TextAlign.Center)
+    NavDestination() {
+
+      Column() {
 
       List() {
         // 时间计权模式
@@ -508,7 +502,7 @@ export struct AudioAnalysisSettings {
     }
     .width('100%')
     .height('100%')
-    .backgroundColor($r('app.color.background_tertiary'))
+    .backgroundColor($r('app.color.background_tertiary'))}.title('音频分析设置')
   }
 }
 

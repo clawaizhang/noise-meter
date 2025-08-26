@@ -65,15 +65,9 @@ export struct DataPrivacySettings {
   }
 
   build() {
-    Column() {
-      // 页面标题
-      Text('数据记录与隐私')
-        .fontSize(20)
-        .fontWeight(FontWeight.Bold)
-        .fontColor($r('app.color.text_primary'))
-        .margin({ top: 16, bottom: 16 })
-        .width('100%')
-        .textAlign(TextAlign.Center)
+    NavDestination() {
+
+      Column() {
 
       List() {
         // 位置开关
@@ -159,7 +153,7 @@ export struct DataPrivacySettings {
     }
     .width('100%')
     .height('100%')
-    .backgroundColor($r('app.color.background_tertiary'))
+    .backgroundColor($r('app.color.background_tertiary'))}.title('数据记录与隐私')
   }
 }
 
