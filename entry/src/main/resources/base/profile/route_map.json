@@ -44,6 +44,31 @@
       "name": "HealthDetailDialog",
       "pageSourceFile": "src/main/ets/components/health-dialogs/HealthDetailDialog.ets",
       "buildFunction": "HealthDetailDialogBuilder"
+    },
+    {
+      "name": "AudioAnalysisSettings",
+      "pageSourceFile": "src/main/ets/pages/settings/AudioAnalysisSettingsNavigation.ets",
+      "buildFunction": "AudioAnalysisSettingsBuilder"
+    },
+    {
+      "name": "AlertsSettings",
+      "pageSourceFile": "src/main/ets/pages/settings/AlertsSettingsNavigation.ets",
+      "buildFunction": "AlertsSettingsBuilder"
+    },
+    {
+      "name": "DataPrivacySettings",
+      "pageSourceFile": "src/main/ets/pages/settings/DataPrivacySettingsNavigation.ets",
+      "buildFunction": "DataPrivacySettingsBuilder"
+    },
+    {
+      "name": "DeviceSettings",
+      "pageSourceFile": "src/main/ets/pages/settings/DeviceSettingsNavigation.ets",
+      "buildFunction": "DeviceSettingsBuilder"
+    },
+    {
+      "name": "AboutSettings",
+      "pageSourceFile": "src/main/ets/pages/settings/AboutSettingsNavigation.ets",
+      "buildFunction": "AboutSettingsBuilder"
     }
   ]
 } 
