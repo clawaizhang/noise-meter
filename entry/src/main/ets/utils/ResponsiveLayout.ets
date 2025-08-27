@@ -49,7 +49,16 @@ interface ScreenInfo {
   height: number;
   breakpoint: Breakpoint;
   layoutMode: LayoutMode;
+  listItemLayoutMode: ListItemLayoutMode; // 新增：列表项布局模式
   isLandscape: boolean; // 新增：是否为横屏模式
+}
+
+// 列表项布局模式枚举
+export enum ListItemLayoutMode {
+  LIST = 'list',           // 列表布局 - 单列垂直排列
+  GRID = 'grid',           // 网格布局 - 多列网格排列
+  DETAIL = 'detail',       // 详情布局 - 大尺寸详情展示
+  COMPACT = 'compact'      // 紧凑布局 - 小尺寸紧凑展示
 }
 
 // 断点到布局模式的映射
@@ -59,6 +68,15 @@ const BREAKPOINT_TO_LAYOUT: Map<Breakpoint, LayoutMode> = new Map([
   [Breakpoint.MD, LayoutMode.MEDIUM],
   [Breakpoint.LG, LayoutMode.LARGE],
   [Breakpoint.XL, LayoutMode.XLARGE]
+]);
+
+// 断点到列表项布局模式的映射
+const BREAKPOINT_TO_LIST_ITEM_LAYOUT: Map<Breakpoint, ListItemLayoutMode> = new Map([
+  [Breakpoint.XS, ListItemLayoutMode.LIST],
+  [Breakpoint.SM, ListItemLayoutMode.LIST],
+  [Breakpoint.MD, ListItemLayoutMode.GRID],
+  [Breakpoint.LG, ListItemLayoutMode.GRID],
+  [Breakpoint.XL, ListItemLayoutMode.DETAIL]
 ]);
 
 // 断点阈值定义（单位：dp）
@@ -72,7 +90,7 @@ const BREAKPOINT_THRESHOLDS: BreakpointThresholds = {
 
 // 窗口变化监听器类型
 export type WindowChangeListener = (width: number, height: number, breakpoint: Breakpoint,
-  layoutMode: LayoutMode, isLandscape: boolean) => void;
+  layoutMode: LayoutMode, listItemLayoutMode: ListItemLayoutMode, isLandscape: boolean) => void;
 
 export class ResponsiveLayout {
   private static instance: ResponsiveLayout;
@@ -80,6 +98,7 @@ export class ResponsiveLayout {
   private currentHeight: number = 0;
   private currentBreakpoint: Breakpoint = Breakpoint.XS;
   private currentLayoutMode: LayoutMode = LayoutMode.XSMALL;
+  private currentListItemLayoutMode: ListItemLayoutMode = ListItemLayoutMode.LIST; // 新增：列表项布局模式
   private isLandscape: boolean = false; // 新增：横屏状态
   private listeners: Set<WindowChangeListener> = new Set();
   private displayChangeCallback: (() => void) | null = null;
@@ -145,14 +164,17 @@ export class ResponsiveLayout {
 
       const newBreakpoint = this.getBreakpoint(vpWidth);
       const newLayoutMode = this.getLayoutMode(newBreakpoint);
+      const newListItemLayoutMode = this.getListItemLayoutMode(newBreakpoint, newIsLandscape);
 
-      // 只有当断点、布局模式或横屏状态变化时才通知监听器
+      // 只有当断点、布局模式、历史布局模式或横屏状态变化时才通知监听器
       if (newBreakpoint !== this.currentBreakpoint ||
           newLayoutMode !== this.currentLayoutMode ||
+          newListItemLayoutMode !== this.currentListItemLayoutMode ||
           newIsLandscape !== this.isLandscape) {
         
         this.currentBreakpoint = newBreakpoint;
         this.currentLayoutMode = newLayoutMode;
+        this.currentListItemLayoutMode = newListItemLayoutMode;
 
         this.notifyListeners(vpWidth, vpHeight, newBreakpoint, newLayoutMode);
       }
@@ -184,6 +206,33 @@ export class ResponsiveLayout {
   public getLayoutMode(breakpoint: Breakpoint): LayoutMode {
     const layoutMode = BREAKPOINT_TO_LAYOUT.get(breakpoint);
     return layoutMode ?? LayoutMode.XSMALL;
+  }
+
+  /**
+   * 根据断点和屏幕方向获取列表项布局模式
+   * @param breakpoint 当前断点
+   * @param isLandscape 是否为横屏模式
+   */
+  public getListItemLayoutMode(breakpoint: Breakpoint, isLandscape: boolean = this.isLandscape): ListItemLayoutMode {
+    // 横屏模式下优先使用网格布局
+    if (isLandscape) {
+      switch (breakpoint) {
+        case Breakpoint.XS:
+        case Breakpoint.SM:
+          return ListItemLayoutMode.GRID;
+        case Breakpoint.MD:
+        case Breakpoint.LG:
+          return ListItemLayoutMode.GRID;
+        case Breakpoint.XL:
+          return ListItemLayoutMode.DETAIL;
+        default:
+          return ListItemLayoutMode.GRID;
+      }
+    }
+
+    // 竖屏模式下根据断点选择布局
+    const listItemLayoutMode = BREAKPOINT_TO_LIST_ITEM_LAYOUT.get(breakpoint);
+    return listItemLayoutMode ?? ListItemLayoutMode.LIST;
   }
 
   /**
@@ -324,7 +373,7 @@ export class ResponsiveLayout {
   private notifyListeners(width: number, height: number, breakpoint: Breakpoint, layoutMode: LayoutMode): void {
     this.listeners.forEach(listener => {
       try {
-        listener(width, height, breakpoint, layoutMode, this.isLandscape);
+        listener(width, height, breakpoint, layoutMode, this.currentListItemLayoutMode, this.isLandscape);
       } catch (error) {
         console.error('[ResponsiveLayout] 监听器执行错误:', error);
       }
@@ -340,6 +389,7 @@ export class ResponsiveLayout {
       height: this.currentHeight,
       breakpoint: this.currentBreakpoint,
       layoutMode: this.currentLayoutMode,
+      listItemLayoutMode: this.currentListItemLayoutMode,
       isLandscape: this.isLandscape
     };
   }
@@ -349,6 +399,85 @@ export class ResponsiveLayout {
    */
   public isLandscapeMode(): boolean {
     return this.isLandscape;
+  }
+
+  /**
+   * 获取响应式列表项宽度
+   * @param baseWidth 基础宽度
+   * @param columns 列数（网格布局时使用）
+   */
+  public responsiveListItemWidth(baseWidth: number = 300, columns: number = 1): number {
+    const widthFactors: Record<ListItemLayoutMode, number> = {
+      [ListItemLayoutMode.LIST]: 1.0,    // 列表布局：全宽
+      [ListItemLayoutMode.GRID]: 0.9,    // 网格布局：90%宽度
+      [ListItemLayoutMode.DETAIL]: 1.2,  // 详情布局：120%宽度
+      [ListItemLayoutMode.COMPACT]: 0.8  // 紧凑布局：80%宽度
+    };
+
+    const factor = widthFactors[this.currentListItemLayoutMode];
+    let calculatedWidth = Math.round(baseWidth * factor);
+
+    // 如果是网格布局，根据列数调整宽度
+    if (this.currentListItemLayoutMode === ListItemLayoutMode.GRID && columns > 1) {
+      calculatedWidth = Math.round(this.currentWidth / columns - this.getSpacing() * 2);
+    }
+
+    return Math.max(calculatedWidth, 100); // 确保最小宽度为100dp
+  }
+
+  /**
+   * 获取响应式列表项间距
+   * @param baseSpacing 基础间距
+   */
+  public responsiveListItemSpacing(baseSpacing: number = DesignConstants.SPACING_MD): number {
+    const spacingFactors: Record<ListItemLayoutMode, number> = {
+      [ListItemLayoutMode.LIST]: 1.0,    // 列表布局：标准间距
+      [ListItemLayoutMode.GRID]: 0.8,    // 网格布局：80%间距
+      [ListItemLayoutMode.DETAIL]: 1.2,  // 详情布局：120%间距
+      [ListItemLayoutMode.COMPACT]: 0.6  // 紧凑布局：60%间距
+    };
+
+    const factor = spacingFactors[this.currentListItemLayoutMode];
+    return Math.round(baseSpacing * factor);
+  }
+
+  /**
+   * 获取响应式列表项内边距
+   * @param basePadding 基础内边距
+   */
+  public responsiveListItemPadding(basePadding: number = DesignConstants.SPACING_MD): number {
+    const paddingFactors: Record<ListItemLayoutMode, number> = {
+      [ListItemLayoutMode.LIST]: 1.0,    // 列表布局：标准内边距
+      [ListItemLayoutMode.GRID]: 0.9,    // 网格布局：90%内边距
+      [ListItemLayoutMode.DETAIL]: 1.3,  // 详情布局：130%内边距
+      [ListItemLayoutMode.COMPACT]: 0.7  // 紧凑布局：70%内边距
+    };
+
+    const factor = paddingFactors[this.currentListItemLayoutMode];
+    return Math.round(basePadding * factor);
+  }
+
+  /**
+   * 获取响应式列表项外边距
+   * @param baseMargin 基础外边距
+   */
+  public responsiveListItemMargin(baseMargin: number = DesignConstants.SPACING_MD): number {
+    const marginFactors: Record<ListItemLayoutMode, number> = {
+      [ListItemLayoutMode.LIST]: 1.0,    // 列表布局：标准外边距
+      [ListItemLayoutMode.GRID]: 0.7,    // 网格布局：70%外边距
+      [ListItemLayoutMode.DETAIL]: 1.1,  // 详情布局：110%外边距
+      [ListItemLayoutMode.COMPACT]: 0.5  // 紧凑布局：50%外边距
+    };
+
+    const factor = marginFactors[this.currentListItemLayoutMode];
+    return Math.round(baseMargin * factor);
+  }
+
+  /**
+   * 获取当前列表项布局模式
+   */
+  public getCurrentListItemLayoutMode(): ListItemLayoutMode {
+    return this.currentListItemLayoutMode;
   }
 
   /**
@@ -406,4 +535,64 @@ export function responsiveMetricWidth(baseWidth: number = DesignConstants.METRIC
  */
 export function responsiveMetricHeight(baseHeight: number = DesignConstants.METRIC_ITEM.HEIGHT): number {
   return responsiveLayout.getMetricItemHeight(baseHeight);
+}
+
+// 列表项布局专用便捷函数
+/**
+ * 响应式列表项宽度构建器
+ */
+export function responsiveListItemWidth(baseWidth: number = 300, columns: number = 1): number {
+  return responsiveLayout.responsiveListItemWidth(baseWidth, columns);
+}
+
+/**
+ * 响应式列表项间距构建器
+ */
+export function responsiveListItemSpacing(baseSpacing: number = DesignConstants.SPACING_MD): number {
+  return responsiveLayout.responsiveListItemSpacing(baseSpacing);
+}
+
+/**
+ * 响应式列表项内边距构建器
+ */
+export function responsiveListItemPadding(basePadding: number = DesignConstants.SPACING_MD): number {
+  return responsiveLayout.responsiveListItemPadding(basePadding);
+}
+
+/**
+ * 响应式列表项外边距构建器
+ */
+export function responsiveListItemMargin(baseMargin: number = DesignConstants.SPACING_MD): number {
+  return responsiveLayout.responsiveListItemMargin(baseMargin);
+}
+
+/**
+ * 获取当前列表项布局模式构建器
+ */
+export function getCurrentListItemLayoutMode(): ListItemLayoutMode {
+  return responsiveLayout.getCurrentListItemLayoutMode();
+}
+
+/**
+ * 列表项布局变化监听器类型
+ */
+export type ListItemLayoutChangeListener = (listItemLayoutMode: ListItemLayoutMode, breakpoint: Breakpoint, isLandscape: boolean) => void;
+
+/**
+ * 添加列表项布局变化监听器
+ */
+export function addListItemLayoutChangeListener(listener: ListItemLayoutChangeListener): void {
+  const wrapperListener: WindowChangeListener = (width, height, breakpoint, layoutMode, listItemLayoutMode, isLandscape) => {
+    listener(listItemLayoutMode, breakpoint, isLandscape);
+  };
+  responsiveLayout.addChangeListener(wrapperListener);
+}
+
+/**
+ * 移除列表项布局变化监听器
+ */
+export function removeListItemLayoutChangeListener(listener: ListItemLayoutChangeListener): void {
+  // 由于监听器是包装的，需要找到对应的包装器并移除
+  // 这里简化处理，实际使用时可能需要更复杂的逻辑来管理监听器映射
+  console.warn('[ResponsiveLayout] removeListItemLayoutChangeListener 需要手动实现监听器映射管理');
 }

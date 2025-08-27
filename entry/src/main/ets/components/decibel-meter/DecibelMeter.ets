@@ -27,7 +27,8 @@ import { PreferenceService, PreferenceChangeListener, PreferenceValue } from '..
 import { FFTAnalyzer } from '../../utils/FFTAnalyzer';
 import { LocationDisplay } from '../business/LocationDisplay';
 import { WeightingType } from '../../constants/WeightingConstants';
-import { ResponsiveLayout, Breakpoint, LayoutMode, type WindowChangeListener } from '../../utils/ResponsiveLayout';
+import { ResponsiveLayout, Breakpoint, LayoutMode, type WindowChangeListener,
+  ListItemLayoutMode } from '../../utils/ResponsiveLayout';
 
 // 响应式数值接口定义
 interface ResponsiveNumberValues {
@@ -379,7 +380,7 @@ export struct DecibelMeter {
 
       // 使用ResponsiveLayout的统一监听系统
       this.responsiveListener =
-        (width: number, height: number, breakpoint: Breakpoint, layoutMode: LayoutMode, isLandscape: boolean) => {
+        (width: number, height: number, breakpoint: Breakpoint, layoutMode: LayoutMode, listItemLayoutMode: ListItemLayoutMode, isLandscape: boolean) => {
           this.updateResponsiveLayout(width);
           this.isLandscape = isLandscape; // 更新横屏状态
           // 重新计算Canvas尺寸
@@ -387,7 +388,7 @@ export struct DecibelMeter {
             console.info(`[FREQ_TRACE][Responsive] 窗口尺寸变化: ${width}x${height}, 横屏: ${isLandscape}, 重新计算Canvas尺寸`);
           });
         };
-      this.responsiveLayout.addChangeListener(this.responsiveListener);
+      this.responsiveLayout.addChangeListener(this.responsiveListener!);
 
       // 初始化位置服务状态
       this.isLocationEnabled = this.preferenceService.getBoolean(PreferenceKeyConstants.LOCATION, true);
