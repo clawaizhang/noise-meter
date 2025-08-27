@@ -49,6 +49,7 @@ interface ScreenInfo {
   height: number;
   breakpoint: Breakpoint;
   layoutMode: LayoutMode;
+  isLandscape: boolean; // 新增：是否为横屏模式
 }
 
 // 断点到布局模式的映射
@@ -71,7 +72,7 @@ const BREAKPOINT_THRESHOLDS: BreakpointThresholds = {
 
 // 窗口变化监听器类型
 export type WindowChangeListener = (width: number, height: number, breakpoint: Breakpoint,
-  layoutMode: LayoutMode) => void;
+  layoutMode: LayoutMode, isLandscape: boolean) => void;
 
 export class ResponsiveLayout {
   private static instance: ResponsiveLayout;
@@ -79,6 +80,7 @@ export class ResponsiveLayout {
   private currentHeight: number = 0;
   private currentBreakpoint: Breakpoint = Breakpoint.XS;
   private currentLayoutMode: LayoutMode = LayoutMode.XSMALL;
+  private isLandscape: boolean = false; // 新增：横屏状态
   private listeners: Set<WindowChangeListener> = new Set();
   private displayChangeCallback: (() => void) | null = null;
 
@@ -129,16 +131,26 @@ export class ResponsiveLayout {
     const vpWidth = px2vp(width);
     const vpHeight = px2vp(height);
 
-    // 只有当尺寸真正变化时才更新
-    if (Math.abs(vpWidth - this.currentWidth) > 1 || Math.abs(vpHeight - this.currentHeight) > 1) {
+    // 检测是否为横屏模式
+    const newIsLandscape = vpWidth > vpHeight;
+
+    // 只有当尺寸真正变化或横屏状态变化时才更新
+    if (Math.abs(vpWidth - this.currentWidth) > 1 ||
+        Math.abs(vpHeight - this.currentHeight) > 1 ||
+        newIsLandscape !== this.isLandscape) {
+      
       this.currentWidth = vpWidth;
       this.currentHeight = vpHeight;
+      this.isLandscape = newIsLandscape;
 
       const newBreakpoint = this.getBreakpoint(vpWidth);
       const newLayoutMode = this.getLayoutMode(newBreakpoint);
 
-      // 只有当断点或布局模式变化时才通知监听器
-      if (newBreakpoint !== this.currentBreakpoint || newLayoutMode !== this.currentLayoutMode) {
+      // 只有当断点、布局模式或横屏状态变化时才通知监听器
+      if (newBreakpoint !== this.currentBreakpoint ||
+          newLayoutMode !== this.currentLayoutMode ||
+          newIsLandscape !== this.isLandscape) {
+        
         this.currentBreakpoint = newBreakpoint;
         this.currentLayoutMode = newLayoutMode;
 
@@ -312,7 +324,7 @@ export class ResponsiveLayout {
   private notifyListeners(width: number, height: number, breakpoint: Breakpoint, layoutMode: LayoutMode): void {
     this.listeners.forEach(listener => {
       try {
-        listener(width, height, breakpoint, layoutMode);
+        listener(width, height, breakpoint, layoutMode, this.isLandscape);
       } catch (error) {
         console.error('[ResponsiveLayout] 监听器执行错误:', error);
       }
@@ -327,8 +339,16 @@ export class ResponsiveLayout {
       width: this.currentWidth,
       height: this.currentHeight,
       breakpoint: this.currentBreakpoint,
-      layoutMode: this.currentLayoutMode
+      layoutMode: this.currentLayoutMode,
+      isLandscape: this.isLandscape
     };
+  }
+
+  /**
+   * 判断当前是否为横屏模式
+   */
+  public isLandscapeMode(): boolean {
+    return this.isLandscape;
   }
 
   /**
