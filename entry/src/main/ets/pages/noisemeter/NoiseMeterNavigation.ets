@@ -51,6 +51,7 @@ export struct MainNoiseMeter {
   @Local private responsiveLayout: ResponsiveLayout = ResponsiveLayout.getInstance()
   @Local private currentBreakpoint: Breakpoint = Breakpoint.XS
   @Local private currentLayoutMode: LayoutMode = LayoutMode.XSMALL
+  @Local private isLandscape: boolean = false // 新增：横屏状态
   private preferenceService: PreferenceService = PreferenceService.getInstance();
   
   aboutToDisappear(): void {
@@ -64,7 +65,10 @@ export struct MainNoiseMeter {
   private updateResponsiveLayout(width: number): void {
     this.currentBreakpoint = this.responsiveLayout.getBreakpoint(width);
     this.currentLayoutMode = this.responsiveLayout.getLayoutMode(this.currentBreakpoint);
-    console.info(`[FREQ_TRACE][Responsive] 导航断点: ${this.currentBreakpoint}, 布局模式: ${this.currentLayoutMode}`);
+    // 获取当前屏幕信息来判断是否为横屏
+    const screenInfo = this.responsiveLayout.getCurrentScreenInfo();
+    this.isLandscape = screenInfo.isLandscape;
+    console.info(`[FREQ_TRACE][Responsive] 导航断点: ${this.currentBreakpoint}, 布局模式: ${this.currentLayoutMode}, 横屏: ${this.isLandscape}`);
   }
 
   aboutToAppear(): void {
@@ -107,43 +111,88 @@ export struct MainNoiseMeter {
 
   @Builder
   TabBuilder(title: string, icon: Resource, index: number) {
-    Column() {
-      Image(icon)
-        .width(this.responsiveLayout.getResponsiveValue<number>({
-          xsmall: 20,
-          small: 22,
-          medium: 24,
-          large: 26,
-          xlarge: 28
-        } as ResponsiveNumberValues))
-        .height(this.responsiveLayout.getResponsiveValue<number>({
-          xsmall: 20,
-          small: 22,
-          medium: 24,
-          large: 26,
-          xlarge: 28
-        } as ResponsiveNumberValues))
-        .fillColor(this.currentIndex === index ? $r('app.color.icon_active') : $r('app.color.icon_inactive'))
-      Text(title)
-        .fontSize(this.responsiveLayout.getResponsiveValue<number>({
-          xsmall: 10,
-          small: 11,
-          medium: 12,
-          large: 13,
-          xlarge: 14
-        } as ResponsiveNumberValues))
-        .fontColor(this.currentIndex === index ? $r('app.color.text_primary') : $r('app.color.text_secondary'))
-        .margin({ top: this.responsiveLayout.getResponsiveValue<number>({
-          xsmall: 2,
-          small: 3,
-          medium: 4,
-          large: 5,
-          xlarge: 6
-        } as ResponsiveNumberValues) })
+    // 横屏时使用纵向布局，竖屏时使用横向布局
+    if (this.isLandscape) {
+      // 横屏纵向布局
+      Row() {
+        Image(icon)
+          .width(this.responsiveLayout.getResponsiveValue<number>({
+            xsmall: 20,
+            small: 22,
+            medium: 24,
+            large: 26,
+            xlarge: 28
+          } as ResponsiveNumberValues))
+          .height(this.responsiveLayout.getResponsiveValue<number>({
+            xsmall: 20,
+            small: 22,
+            medium: 24,
+            large: 26,
+            xlarge: 28
+          } as ResponsiveNumberValues))
+          .fillColor(this.currentIndex === index ? $r('app.color.icon_active') : $r('app.color.icon_inactive'))
+          .margin({ right: 8 })
+        Text(title)
+          .fontSize(this.responsiveLayout.getResponsiveValue<number>({
+            xsmall: 10,
+            small: 11,
+            medium: 12,
+            large: 13,
+            xlarge: 14
+          } as ResponsiveNumberValues))
+          .fontColor(this.currentIndex === index ? $r('app.color.text_primary') : $r('app.color.text_secondary'))
+      }
+      .width('100%')
+      .height(this.responsiveLayout.getResponsiveValue<number>({
+        xsmall: 48,
+        small: 52,
+        medium: 56,
+        large: 60,
+        xlarge: 64
+      } as ResponsiveNumberValues))
+      .justifyContent(FlexAlign.Start)
+      .alignItems(VerticalAlign.Center)
+      .padding({ left: 12 })
+    } else {
+      // 竖屏横向布局
+      Column() {
+        Image(icon)
+          .width(this.responsiveLayout.getResponsiveValue<number>({
+            xsmall: 20,
+            small: 22,
+            medium: 24,
+            large: 26,
+            xlarge: 28
+          } as ResponsiveNumberValues))
+          .height(this.responsiveLayout.getResponsiveValue<number>({
+            xsmall: 20,
+            small: 22,
+            medium: 24,
+            large: 26,
+            xlarge: 28
+          } as ResponsiveNumberValues))
+          .fillColor(this.currentIndex === index ? $r('app.color.icon_active') : $r('app.color.icon_inactive'))
+        Text(title)
+          .fontSize(this.responsiveLayout.getResponsiveValue<number>({
+            xsmall: 10,
+            small: 11,
+            medium: 12,
+            large: 13,
+            xlarge: 14
+          } as ResponsiveNumberValues))
+          .fontColor(this.currentIndex === index ? $r('app.color.text_primary') : $r('app.color.text_secondary'))
+          .margin({ top: this.responsiveLayout.getResponsiveValue<number>({
+            xsmall: 2,
+            small: 3,
+            medium: 4,
+            large: 5,
+            xlarge: 6
+          } as ResponsiveNumberValues) })
+      }
+      .width('100%')
+      .height('100%')
+      .justifyContent(FlexAlign.Center)
     }
-    .width('100%')
-    .height('100%')
-    .justifyContent(FlexAlign.Center)
   }
 
   private noiseMeterMenus: Array<NavigationMenuItem> = [
@@ -214,7 +263,10 @@ export struct MainNoiseMeter {
 
   build() {
     NavDestination() {
-      Tabs({ barPosition: BarPosition.End, index: this.currentIndex }) {
+      Tabs({
+        barPosition: BarPosition.End, // 横屏时tab在左侧，竖屏时在底部
+        index: this.currentIndex
+      }) {
         TabContent() {
           Column() {
 
@@ -257,14 +309,32 @@ export struct MainNoiseMeter {
       })
       .width('100%')
       .height('100%')
-      .barHeight(this.responsiveLayout.getResponsiveValue<number>({
-        xsmall: 48,
-        small: 50,
-        medium: 56,
-        large: 60,
-        xlarge: 64
-      } as ResponsiveNumberValues))
+      .barHeight(this.isLandscape ?
+        // 横屏时tab栏高度自适应
+        '100%' :
+        // 竖屏时使用响应式高度
+        this.responsiveLayout.getResponsiveValue<number>({
+          xsmall: 48,
+          small: 50,
+          medium: 56,
+          large: 60,
+          xlarge: 64
+        } as ResponsiveNumberValues)
+      )
+      .barWidth(this.isLandscape ?
+        // 横屏时tab栏宽度使用响应式值
+        this.responsiveLayout.getResponsiveValue<number>({
+          xsmall: 80,
+          small: 90,
+          medium: 100,
+          large: 110,
+          xlarge: 120
+        } as ResponsiveNumberValues) :
+        // 竖屏时宽度自适应
+        '100%'
+      )
       .barMode(BarMode.Fixed)
+      .vertical(this.isLandscape)
       .animationDuration(0)
     }
     .title(this.title, { mainTitleModifier: new MyTextModifier() })

@@ -12,6 +12,7 @@ import {
   secondsToHoursMinutesSecondsWithDecimal
 } from '../../utils/TimeUtils';
 import { ActionPanel } from './ActionPanel';
+import { VerticalActionPanel } from './VerticalActionPanel';
 import { CalibrationIndicator } from './CalibrationIndicator';
 import { drawSpectrum, getDbSteps, getFrequencySteps } from './DrawSpectrum';
 import { DecibelState } from '../../types/DecibelState';
@@ -148,30 +149,41 @@ export struct DecibelMeter {
 
       // 更新响应式布局状态
       const availableWidthVp = px2vp(availableWidth);
+      const availableHeightVp = px2vp(availableHeight);
       this.updateResponsiveLayout(availableWidthVp);
 
-      // 根据布局模式和横屏状态调整宽高比
+      // 使用响应式边距
+      const responsiveMargin = this.responsiveLayout.getResponsiveValue<number>({
+        xsmall: 16,
+        small: 20,
+        medium: 24,
+        large: 28,
+        xlarge: 32
+      } as ResponsiveNumberValues);
+
       if (this.isLandscape) {
-        // 横屏模式：使用更宽的宽高比
-        switch (this.currentLayoutMode) {
-          case LayoutMode.XSMALL:
-            this.ASPECT_RATIO = 2.0;
-            break;
-          case LayoutMode.SMALL:
-            this.ASPECT_RATIO = 2.5;
-            break;
-          case LayoutMode.MEDIUM:
-            this.ASPECT_RATIO = 3.0;
-            break;
-          case LayoutMode.LARGE:
-            this.ASPECT_RATIO = 3.5;
-            break;
-          case LayoutMode.XLARGE:
-            this.ASPECT_RATIO = 4.0;
-            break;
+        // 横屏模式：频谱图占据屏幕大部分高度
+        // 计算可用高度（减去边距）
+        const availableHeightWithMargin = availableHeightVp - (responsiveMargin as number * 2);
+        
+        // 横屏模式下频谱图高度应该更大，接近屏幕高度
+        this.canvasHeight = availableHeightWithMargin * 0.8; // 占据80%的可用高度
+        
+        // 根据宽高比计算宽度
+        const aspectRatio = 1.5; // 横屏模式下使用更合适的宽高比
+        this.canvasWidth = this.canvasHeight * aspectRatio;
+        
+        // 确保宽度不超过可用宽度
+        const maxWidth = availableWidthVp - (responsiveMargin as number * 2);
+        if (this.canvasWidth > maxWidth) {
+          this.canvasWidth = maxWidth;
+          this.canvasHeight = this.canvasWidth / aspectRatio;
         }
       } else {
-        // 竖屏模式：保持原有宽高比
+        // 竖屏模式：保持原有宽高比计算
+        this.canvasWidth = availableWidthVp - (responsiveMargin as number * 2);
+        
+        // 根据布局模式调整宽高比
         switch (this.currentLayoutMode) {
           case LayoutMode.XSMALL:
             this.ASPECT_RATIO = 1.2; // 小屏幕使用更紧凑的比例
@@ -189,28 +201,10 @@ export struct DecibelMeter {
             this.ASPECT_RATIO = 2.2; // 大屏幕使用更宽的比例
             break;
         }
+        this.canvasHeight = this.canvasWidth / this.ASPECT_RATIO;
       }
 
-      // 根据折叠状态进一步调整
-      if (availableWidth / availableHeight < 1 && this.foldStatus === display.FoldStatus.FOLD_STATUS_EXPANDED) {
-        this.ASPECT_RATIO = 3;
-      }
-      if (availableWidth / availableHeight < 1 && this.foldStatus === display.FoldStatus.FOLD_STATUS_FOLDED) {
-        this.ASPECT_RATIO = 3.5;
-      }
-
-      // 使用响应式边距
-      const responsiveMargin = this.responsiveLayout.getResponsiveValue<number>({
-        xsmall: 16,
-        small: 20,
-        medium: 24,
-        large: 28,
-        xlarge: 32
-      } as ResponsiveNumberValues);
-      this.canvasWidth = availableWidthVp - (responsiveMargin as number * 2);
-      this.canvasHeight = this.canvasWidth / this.ASPECT_RATIO;
-
-      console.info(`[FREQ_TRACE][Canvas] 响应式Canvas尺寸: ${this.canvasWidth}x${this.canvasHeight}, 边距: ${responsiveMargin}vp`);
+      console.info(`[FREQ_TRACE][Canvas] 响应式Canvas尺寸: ${this.canvasWidth}x${this.canvasHeight}, 横屏: ${this.isLandscape}`);
     } catch (error) {
       console.error('[FREQ_TRACE][显示设备信息] 计算Canvas尺寸失败:', error);
     }
@@ -966,13 +960,13 @@ export struct DecibelMeter {
           } as ResponsiveNumberValues)
         })
       }
-      .width('40%')
+      .width('40%')  // 恢复中间区域宽度
       .height('100%')
       .justifyContent(FlexAlign.Center)
 
-      // 右侧：操作按钮
+      // 右侧：操作按钮 - 横屏模式下使用竖排一列布局
       Column() {
-        ActionPanel({
+        VerticalActionPanel({
           isUILocked: this.isUILocked,
           weightingType: this.weightingType,
           onReset: () => {
