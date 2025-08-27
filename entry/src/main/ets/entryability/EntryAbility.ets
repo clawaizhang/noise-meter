@@ -1,6 +1,8 @@
 import UIAbility from '@ohos.app.ability.UIAbility';
 import window from '@ohos.window';
 import { AbilityConstant, Want, common } from '@kit.AbilityKit';
+import { BusinessError } from '@kit.BasicServicesKit';
+import { deviceInfo } from '@kit.BasicServicesKit';
 import hilog from '@ohos.hilog';
 import backgroundTaskManager from '@ohos.resourceschedule.backgroundTaskManager';
 import wantAgent from '@ohos.app.ability.wantAgent';
@@ -69,7 +71,40 @@ export default class EntryAbility extends UIAbility {
     windowManager.registerWindowStage(windowStage);
     windowManager.loadContent('pages/Index');
     windowManager.setKeepScreenOn(this.keepScreenOn);
-    windowStage.getMainWindowSync().setPreferredOrientation(window.Orientation.PORTRAIT);
+    
+    // 获取设备类型并设置窗口方向
+    let windowClass: window.Window | undefined = undefined;
+    windowStage.getMainWindow((err: BusinessError, data) => {
+      const errCode: number = err.code;
+      if (errCode) {
+        hilog.error(DOMAIN, TAG, `Failed to obtain the main window. Cause code: ${err.code}, message: ${err.message}`);
+        return;
+      }
+      windowClass = data;
+      // 获取设备类型
+      let deviceTypeInfo: string = deviceInfo.deviceType;
+      hilog.info(DOMAIN, TAG, `the value of the deviceType is:${deviceTypeInfo}`);
+      let orientation = window.Orientation.AUTO_ROTATION;
+      // 判断设备是手机or平板，来设置窗口显示方向
+      // if (deviceTypeInfo == 'phone') {
+      //   orientation = window.Orientation.PORTRAIT;
+      // } else if (deviceTypeInfo == 'tablet') {
+      //   orientation = window.Orientation.LANDSCAPE;
+      // }
+      try {
+        windowClass.setPreferredOrientation(orientation, (err: BusinessError) => {
+          const errCode: number = err.code;
+          if (errCode) {
+            hilog.error(DOMAIN, TAG, `Failed to set window orientation. Cause code: ${err.code}, message: ${err.message}`);
+            return;
+          }
+          hilog.info(DOMAIN, TAG, 'Succeeded in setting window orientation.');
+        });
+      } catch (exception) {
+        hilog.error(DOMAIN, TAG, `Failed to set window orientation. Cause code: ${exception.code}, message: ${exception.message}`);
+      }
+    });
+
     // audio.getAudioManager().getVolumeManager().getAppVolumePercentage().then((volume) => {
     //   PreferenceService.getInstance().setNumber(PreferenceKeyConstants.VOLUME, volume);
     // });
