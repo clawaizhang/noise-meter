@@ -761,7 +761,7 @@ export struct DecibelMeter {
       Column() {
         this.SpectrumView()
       }
-      .width('40%')
+      .width('50%')
       .height('100%')
       .justifyContent(FlexAlign.Center)
 
@@ -960,7 +960,7 @@ export struct DecibelMeter {
           } as ResponsiveNumberValues)
         })
       }
-      .width('40%')  // 恢复中间区域宽度
+      .width('38%')  // 恢复中间区域宽度
       .height('100%')
       .justifyContent(FlexAlign.Center)
 
@@ -1003,7 +1003,7 @@ export struct DecibelMeter {
           }
         })
       }
-      .width('20%')
+      .width('12%')
       .height('100%')
       .justifyContent(FlexAlign.Center)
     }
