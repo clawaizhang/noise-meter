@@ -118,7 +118,7 @@ export struct AboutSettings {
         }
 
         ListItem() {
-          Text('止喧噪音检测仪 - 专业的噪音检测工具')
+          Text('噪音分贝仪pro - 专业的噪音检测工具')
             .itemDescription()
         }
         .descriptionContainer()
@@ -163,7 +163,7 @@ export struct AboutSettings {
           const context = getContext(this) as common.UIAbilityContext;
           const want: Want = {
             action: 'ohos.want.action.appdetail',
-            uri: 'store://appgallery.huawei.com/app/detail?id=yu.zhang.myapplication.noise_meter&action=write-review'
+            uri: 'store://appgallery.huawei.com/app/detail?id=yu.zhang.myapplication.noise_meter_pro&action=write-review'
           };
           context.startAbility(want).then(() => {
             console.info('Succeeded in starting Ability successfully.');

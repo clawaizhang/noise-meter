@@ -197,7 +197,7 @@ export struct MainNoiseMeter {
           uiContext,
           'decibelMeterRoot',
           `noise_meter_screenshot_${timestamp}.jpg`,
-          '止喧噪音检测截图',
+          '噪音分贝仪截图',
           '当前噪音检测结果截图'
         );
       }

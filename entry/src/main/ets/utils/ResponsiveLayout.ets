@@ -126,8 +126,8 @@ export class ResponsiveLayout {
    * 更新屏幕尺寸并通知监听器
    */
   private updateScreenSize(width: number, height: number): void {
-    const vpWidth = this.pxToVp(width);
-    const vpHeight = this.pxToVp(height);
+    const vpWidth = px2vp(width);
+    const vpHeight = px2vp(height);
 
     // 只有当尺寸真正变化时才更新
     if (Math.abs(vpWidth - this.currentWidth) > 1 || Math.abs(vpHeight - this.currentHeight) > 1) {
@@ -317,15 +317,6 @@ export class ResponsiveLayout {
         console.error('[ResponsiveLayout] 监听器执行错误:', error);
       }
     });
-  }
-
-  /**
-   * 像素转虚拟像素（vp）
-   */
-  private pxToVp(px: number): number {
-    // 假设标准DPI为160，1vp = 1px
-    // 在实际项目中可能需要根据设备DPI进行调整
-    return px;
   }
 
   /**
