@@ -3,7 +3,7 @@
  */
 export class PreferenceStoreConstants {
   /**
-   * 噪音检测仪首选项存储名称
+   * 噪音仪表盘首选项存储名称
    */
   static readonly NOISE_METER = 'noise_meter_preferences';
 } 

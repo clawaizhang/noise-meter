@@ -23,19 +23,36 @@ export struct NoiseStandardDialog {
         .margin({ bottom: 8 })
         .width('100%')
         .textAlign(TextAlign.Center)
-        
+
       Text('（白天：6:00-22:00，夜间：22:00-6:00）')
         .fontSize(14)
         .fontColor($r('app.color.text_secondary'))
         .margin({ bottom: 16 })
         .width('100%')
         .textAlign(TextAlign.Center)
-        
-      ForEach(NoiseStandards, (standard: NoiseStandard, index: number) => {
-        NoiseStandardCardBuilder(standard, getContext(this) as common.UIAbilityContext)
-      }
-      )
-    }.margin({ bottom: 16 })
+      Scroll() {
+        GridRow({
+          columns: {
+            xs: 1,
+            sm: 1,
+            md: 2,
+            lg: 2,
+            xl: 3,
+            xxl: 3
+          }, breakpoints: { reference: BreakpointsReference.WindowSize }
+        }) {
+          ForEach(NoiseStandards, (standard: NoiseStandard, index: number) => {
+            GridCol({ span: 1 }) {
+              NoiseStandardCardBuilder(standard, getContext(this) as common.UIAbilityContext)
+            }
+          }
+          )
+        }.margin({ bottom: 16 })
+      }.scrollable(ScrollDirection.Vertical)
+      .scrollBar(BarState.Auto)
+      .edgeEffect(EdgeEffect.Spring)
+      .width('100%')
+    }
   }
 }
 

@@ -46,7 +46,7 @@ export struct MainNoiseMeter {
   @Consumer(navigationStack) navStack: NavPathStack = new NavPathStack()
   @Local currentIndex: number = 0
   @Local meterOn: boolean = true;
-  @Local title:string = '检测仪';
+  @Local title:string = '仪表盘';
   @Local menuItems:Array<NavigationMenuItem> = [];
   @Local private responsiveLayout: ResponsiveLayout = ResponsiveLayout.getInstance()
   @Local private currentBreakpoint: Breakpoint = Breakpoint.XS
@@ -95,7 +95,7 @@ export struct MainNoiseMeter {
   onTabIndexChange(monitor: IMonitor) {
     const currentValue = monitor.value<number>()?.now;
     if (currentValue === 0) {
-      this.title  = '检测仪';
+      this.title  = '仪表盘';
       this.menuItems = this.noiseMeterMenus;
     }
     if (currentValue === 1) {
@@ -203,7 +203,7 @@ export struct MainNoiseMeter {
         if (this.meterOn) {
           promptAction.showDialog({
             title: '确认关机',
-            message: '确认要关闭检测仪吗？',
+            message: '确认要关闭仪表盘吗？',
             buttons: [
               {
                 text: '取消',
@@ -286,7 +286,7 @@ export struct MainNoiseMeter {
           .backgroundColor($r('app.color.background_secondary'))
           .alignItems(HorizontalAlign.Center)
         }
-        .tabBar(this.TabBuilder('检测仪', $r('app.media.ic_meter'), 0))
+        .tabBar(this.TabBuilder('仪表盘', $r('app.media.ic_meter'), 0))
 
         TabContent() {
           DecibelHistory({ currentTabIndex: this.currentIndex })

@@ -21,29 +21,40 @@ export struct NoiseDescriptionDialog {
         .margin({ bottom: 16 })
 
       // 噪音等级列表
-      Column() {
+      GridRow({
+        columns: {
+          xs: 1,
+          sm: 1,
+          md: 3,
+          lg: 3,
+          xl: 4,
+          xxl: 4
+        }, breakpoints: { reference: BreakpointsReference.WindowSize },gutter: 8
+      }) {
         ForEach([110, 100, 90, 80, 70, 60, 50, 40, 30, 20, 10], (db: number) => {
-          Row() {
-            Text(`${db} dB`)
-              .fontSize(16)
-              .fontWeight(FontWeight.Medium)
-              .fontColor(DecibelService.getDecibelColor(db - 1))
-              .width('25%')
+          GridCol({ span: 1 }) {
+            Row() {
+              Text(`${db} dB`)
+                .fontSize(16)
+                .fontWeight(FontWeight.Medium)
+                .fontColor(DecibelService.getDecibelColor(db - 1))
+                .width('25%')
 
-            Text(DecibelService.getDecibelDescription(db - 1))
-              .fontSize(14)
-              .fontColor($r('app.color.text_secondary'))
-              .width('75%')
+              Text(DecibelService.getDecibelDescription(db - 1))
+                .fontSize(14)
+                .fontColor($r('app.color.text_secondary'))
+                .width('75%')
+            }
+            .justifyContent(FlexAlign.SpaceBetween)
+            .padding({
+              top: 8,
+              bottom: 8,
+              left: 12,
+              right: 12
+            })
+            .backgroundColor($r('app.color.background_secondary'))
+            .margin({ bottom: 2 })
           }
-          .justifyContent(FlexAlign.SpaceBetween)
-          .padding({
-            top: 8,
-            bottom: 8,
-            left: 12,
-            right: 12
-          })
-          .backgroundColor($r('app.color.background_secondary'))
-          .margin({ bottom: 2 })
         })
       }
     }
