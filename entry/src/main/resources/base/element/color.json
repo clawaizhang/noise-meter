@@ -77,12 +77,20 @@
       "value": "#FFD700"
     },
     {
+      "name": "icon_secondary",
+      "value": "#999999"
+    },
+    {
       "name": "divider",
       "value": "#33000000"
     },
     {
       "name": "divider_primary",
       "value": "#616161"
+    },
+    {
+      "name": "divider_secondary",
+      "value": "#BDBDBD"
     },
     {
       "name": "decibel_safe",

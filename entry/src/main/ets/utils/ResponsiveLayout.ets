@@ -76,7 +76,7 @@ const BREAKPOINT_TO_LIST_ITEM_LAYOUT: Map<Breakpoint, ListItemLayoutMode> = new 
   [Breakpoint.SM, ListItemLayoutMode.LIST],
   [Breakpoint.MD, ListItemLayoutMode.GRID],
   [Breakpoint.LG, ListItemLayoutMode.GRID],
-  [Breakpoint.XL, ListItemLayoutMode.DETAIL]
+  [Breakpoint.XL, ListItemLayoutMode.GRID]  // 修改为GRID，保持一致性
 ]);
 
 // 断点阈值定义（单位：dp）
@@ -214,17 +214,19 @@ export class ResponsiveLayout {
    * @param isLandscape 是否为横屏模式
    */
   public getListItemLayoutMode(breakpoint: Breakpoint, isLandscape: boolean = this.isLandscape): ListItemLayoutMode {
-    // 横屏模式下优先使用网格布局
+    // 横屏模式下优先使用网格布局，提供更好的空间利用率
     if (isLandscape) {
       switch (breakpoint) {
         case Breakpoint.XS:
+          return ListItemLayoutMode.GRID; // 横屏超小屏也使用网格
         case Breakpoint.SM:
-          return ListItemLayoutMode.GRID;
+          return ListItemLayoutMode.GRID; // 横屏小屏使用网格
         case Breakpoint.MD:
+          return ListItemLayoutMode.GRID; // 横屏中屏使用网格
         case Breakpoint.LG:
-          return ListItemLayoutMode.GRID;
+          return ListItemLayoutMode.GRID; // 横屏大屏使用网格
         case Breakpoint.XL:
-          return ListItemLayoutMode.DETAIL;
+          return ListItemLayoutMode.GRID; // 横屏超大屏使用网格
         default:
           return ListItemLayoutMode.GRID;
       }

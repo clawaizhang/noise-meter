@@ -203,8 +203,11 @@ export struct DecibelHistory {
 
   /**
    * 根据断点和屏幕方向更新网格列数
+   * 注意：现在使用GridRow组件自动处理列数，此方法主要用于兼容性
    */
   private updateGridColumns(breakpoint: Breakpoint, isLandscape: boolean): void {
+    // 使用GridRow组件后，列数由GridRow的columns属性自动管理
+    // 这里保持原有逻辑用于其他可能需要的地方
     if (this.currentListItemLayoutMode === ListItemLayoutMode.GRID) {
       if (isLandscape) {
         // 横屏模式下增加列数
@@ -250,6 +253,33 @@ export struct DecibelHistory {
     } else {
       // 非网格布局时使用单列
       this.gridColumns = 1;
+    }
+  }
+
+  /**
+   * 横屏模式下更新网格列数 - 减少列数以增加每列宽度
+   */
+  private updateGridColumnsForLandscape(breakpoint: Breakpoint): void {
+    if (this.currentListItemLayoutMode === ListItemLayoutMode.GRID) {
+      // 横屏模式下减少列数，确保内容有足够空间显示
+      switch (breakpoint) {
+        case Breakpoint.XS:
+        case Breakpoint.SM:
+          this.gridColumns = 1; // 横屏小屏：1列
+          break;
+        case Breakpoint.MD:
+          this.gridColumns = 2; // 横屏中屏：2列
+          break;
+        case Breakpoint.LG:
+          this.gridColumns = 3; // 横屏大屏：3列
+          break;
+        case Breakpoint.XL:
+          this.gridColumns = 4; // 横屏超大屏：4列
+          break;
+        default:
+          this.gridColumns = 2;
+      }
+      this.dataSource.notifyDataReload(); // 重新渲染列表
     }
   }
 
@@ -813,135 +843,265 @@ export struct DecibelHistory {
   }
 
   /**
-   * 网格布局视图
+   * 网格布局视图 - 使用GridRow和GridCol实现响应式栅格布局
    */
   @Builder
   GridLayoutView() {
-
-    Grid() {
-      LazyForEach(this.dataSource, (record: DecibelRecord) => {
-        GridItem() {
-          Column() {
-            this.GridRecordItem(record)
-          }
-          .width(responsiveListItemWidth(300, this.gridColumns))
-          .margin({
-            left: responsiveListItemSpacing() / 2,
-            right: responsiveListItemSpacing() / 2,
-            top: responsiveListItemSpacing() / 2,
-            bottom: responsiveListItemSpacing() / 2
-          })
-        }
-      }, (record: DecibelRecord) => record.id)
-    }
-    .columnsTemplate(`1fr `.repeat(this.gridColumns))
-    .rowsTemplate('auto')
-    .columnsGap(responsiveListItemSpacing())
-    .rowsGap(responsiveListItemSpacing())
-    .width('100%')
-    .layoutWeight(1)
-    .padding({
-      left: responsiveListItemPadding(),
-      right: responsiveListItemPadding(),
-      top: responsiveListItemPadding(),
-      bottom: responsiveListItemPadding()
-    })
-    .backgroundColor($r('app.color.background_secondary'))
-    .scrollBar(BarState.Auto)
-    .edgeEffect(EdgeEffect.Spring)
-
-    // 总记录数显示（网格布局下显示在底部）
     Column() {
-      Text(`共 ${this.records.length} 条记录`)
-        .fontSize(responsiveFontSize(DesignConstants.FONT_SIZE_MD))
-        .fontColor('#666666')
-        .textAlign(TextAlign.Center)
+      // 使用Scroll包裹GridRow以实现滚动功能
+      Scroll() {
+        // 使用GridRow和GridCol实现响应式栅格布局
+        GridRow({
+          columns: {
+            xs: 1,    // 超小屏：1列
+            sm: 2,    // 小屏：2列
+            md: 3,    // 中屏：3列
+            lg: 4,    // 大屏：4列
+            xl: 5     // 超大屏：5列
+          },
+          gutter: {
+            x: {
+              xs: responsiveListItemSpacing(DesignConstants.SPACING_SM),
+              sm: responsiveListItemSpacing(DesignConstants.SPACING_MD),
+              md: responsiveListItemSpacing(DesignConstants.SPACING_MD),
+              lg: responsiveListItemSpacing(DesignConstants.SPACING_MD),  // 减少大屏间距
+              xl: responsiveListItemSpacing(DesignConstants.SPACING_MD)   // 减少超大屏间距
+            },
+            y: {
+              xs: responsiveListItemSpacing(DesignConstants.SPACING_SM),
+              sm: responsiveListItemSpacing(DesignConstants.SPACING_MD),
+              md: responsiveListItemSpacing(DesignConstants.SPACING_MD),
+              lg: responsiveListItemSpacing(DesignConstants.SPACING_MD),  // 减少大屏间距
+              xl: responsiveListItemSpacing(DesignConstants.SPACING_MD)   // 减少超大屏间距
+            }
+          },
+          breakpoints: {
+            value: ['320vp', '600vp', '840vp', '1080vp', '1320vp']
+          }
+        }) {
+          LazyForEach(this.dataSource, (record: DecibelRecord) => {
+            GridCol({
+              span: {
+                xs: 1,
+                sm: 1,
+                md: 1,
+                lg: 1,
+                xl: 1
+              }
+            }) {
+              Column() {
+                this.GridRecordItem(record)
+              }
+              .width('100%')
+              .margin({
+                bottom: responsiveListItemSpacing(DesignConstants.SPACING_MD)
+              })
+            }
+          }, (record: DecibelRecord) => record.id)
+        }
         .width('100%')
-        .padding(responsiveListItemPadding())
+        .padding({
+          left: responsiveListItemPadding(DesignConstants.SPACING_SM),  // 减少内边距
+          right: responsiveListItemPadding(DesignConstants.SPACING_SM),
+          top: responsiveListItemPadding(DesignConstants.SPACING_MD),
+          bottom: responsiveListItemPadding(DesignConstants.SPACING_MD)
+        })
+        .backgroundColor($r('app.color.background_secondary'))
+        .onBreakpointChange((breakpoint: string) => {
+          // 监听断点变化，可以在这里更新布局状态
+          console.log(`Grid breakpoint changed to: ${breakpoint}`);
+          // 横屏模式下自动调整列数
+          const screenInfo = responsiveLayout.getCurrentScreenInfo();
+          if (screenInfo.isLandscape) {
+            // 横屏模式下减少列数，增加每列宽度
+            this.updateGridColumnsForLandscape(screenInfo.breakpoint);
+          }
+        })
+      }
+      .scrollable(ScrollDirection.Vertical)
+      .scrollBar(BarState.Auto)
+      .edgeEffect(EdgeEffect.Spring)
+      .width('100%')
+      .layoutWeight(1)
+
+      // 总记录数显示（网格布局下显示在底部）
+      Column() {
+        Text(`共 ${this.records.length} 条记录`)
+          .fontSize(responsiveFontSize(DesignConstants.FONT_SIZE_MD))
+          .fontColor('#666666')
+          .textAlign(TextAlign.Center)
+          .width('100%')
+          .padding(responsiveListItemPadding(DesignConstants.SPACING_MD))
+      }
+      .width('100%')
     }
-    .width('100%')
   }
 
   /**
-   * 网格布局下的记录项组件
+   * 网格布局下的记录项组件 - 优化为适合栅格布局的紧凑显示
+   * 修复横屏模式下显示不完整的问题
    */
   @Builder
   GridRecordItem(record: DecibelRecord) {
     Column() {
-      // 网格布局下的简化显示
+      // 顶部区域：统计信息（最小值、平均值、最大值）
       Row() {
-        // 左侧信息区域
+        // 最小值
         Column() {
-          // 位置信息
-          Text(record.location || '未获取位置信息')
-            .fontSize(responsiveFontSize(DesignConstants.FONT_SIZE_SM))
-            .fontColor(record.location ? $r('app.color.text_secondary') : $r('app.color.text_disabled'))
-            .maxLines(1)
-            .textOverflow({ overflow: TextOverflow.Ellipsis })
-            .width('100%')
+          Text('最小')
+            .fontSize(responsiveFontSize(DesignConstants.FONT_SIZE_XS))
+            .fontColor($r('app.color.text_secondary'))
+            .margin({ bottom: responsiveListItemSpacing(DesignConstants.SPACING_XS) })
+          Text(record.minDecibel.toString())
+            .fontSize(responsiveFontSize(DesignConstants.FONT_SIZE_MD))
+            .fontWeight(FontWeight.Medium)
+            .fontColor(DecibelService.getDecibelColor(record.minDecibel))
+        }
+        .height(responsiveListItemSpacing(40))
 
-          // 时间信息
+        // 平均值
+        Column() {
+          Text('平均')
+            .fontSize(responsiveFontSize(DesignConstants.FONT_SIZE_XS))
+            .fontColor($r('app.color.text_secondary'))
+            .margin({ bottom: responsiveListItemSpacing(DesignConstants.SPACING_XS) })
+          Text(record.avgDecibel.toString())
+            .fontSize(responsiveFontSize(DesignConstants.FONT_SIZE_MD))
+            .fontWeight(FontWeight.Medium)
+            .fontColor(DecibelService.getDecibelColor(record.avgDecibel))
+        }
+        .height(responsiveListItemSpacing(40))
+        .margin({ left: responsiveListItemSpacing(12), right: responsiveListItemSpacing(12) })
+
+        // 最大值
+        Column() {
+          Text('最大')
+            .fontSize(responsiveFontSize(DesignConstants.FONT_SIZE_XS))
+            .fontColor($r('app.color.text_secondary'))
+            .margin({ bottom: responsiveListItemSpacing(DesignConstants.SPACING_XS) })
+          Text(record.maxDecibel.toString())
+            .fontSize(responsiveFontSize(DesignConstants.FONT_SIZE_MD))
+            .fontWeight(FontWeight.Medium)
+            .fontColor(DecibelService.getDecibelColor(record.maxDecibel))
+        }
+        .height(responsiveListItemSpacing(40))
+
+        // 收藏图标
+        if (record.isFavorite) {
+          Image($r('app.media.ic_favorite'))
+            .width(responsiveIconSize(DesignConstants.ICON_SIZE_SM))
+            .height(responsiveIconSize(DesignConstants.ICON_SIZE_SM))
+            .fillColor($r('app.color.icon_favorite'))
+            .margin({ left: responsiveListItemSpacing(12) })
+        }
+      }
+      .width('100%')
+      .padding({
+        top: responsiveListItemPadding(DesignConstants.SPACING_MD),
+        left: responsiveListItemPadding(DesignConstants.SPACING_MD),
+        right: responsiveListItemPadding(DesignConstants.SPACING_MD)
+      })
+      .justifyContent(FlexAlign.SpaceBetween)
+
+      Divider()
+        .width('90%')
+        .color($r('app.color.divider_secondary'))
+        .margin({
+          top: responsiveListItemSpacing(DesignConstants.SPACING_SM),
+          bottom: responsiveListItemSpacing(DesignConstants.SPACING_SM)
+        })
+
+      // 中部区域：位置、备注和时间信息
+      Column() {
+        // 位置信息 - 修复截断问题，增加行数限制
+        if (record.location) {
+          Row() {
+            Image($r('app.media.ic_location'))
+              .width(responsiveIconSize(DesignConstants.ICON_SIZE_XS))
+              .height(responsiveIconSize(DesignConstants.ICON_SIZE_XS))
+              .fillColor($r('app.color.icon_secondary'))
+              .margin({ right: responsiveListItemSpacing(DesignConstants.SPACING_XS) })
+            
+            Text(record.location)
+              .fontSize(responsiveFontSize(DesignConstants.FONT_SIZE_XS))
+              .fontColor($r('app.color.text_secondary'))
+              .maxLines(2) // 增加行数限制，避免截断
+              .textOverflow({ overflow: TextOverflow.Ellipsis })
+              .layoutWeight(1)
+          }
+          .width('100%')
+          .margin({ bottom: responsiveListItemSpacing(DesignConstants.SPACING_XS) })
+        }
+
+        // 备注信息 - 添加备注显示
+        if (record.comment && record.comment !== '无备注') {
+          Row() {
+            Text(record.comment)
+              .fontSize(responsiveFontSize(DesignConstants.FONT_SIZE_XS))
+              .fontColor($r('app.color.text_secondary'))
+              .maxLines(2) // 允许显示多行备注
+              .textOverflow({ overflow: TextOverflow.Ellipsis })
+          }
+          .width('100%')
+          .margin({ bottom: responsiveListItemSpacing(DesignConstants.SPACING_XS) })
+        }
+
+        // 时间信息和时长合并到同一行
+        Row() {
           Text(new Date(record.timestamp).toLocaleString('zh-CN', {
-            year: 'numeric',
             month: '2-digit',
             day: '2-digit',
             hour: '2-digit',
             minute: '2-digit',
             hour12: false
           }))
-            .fontSize(responsiveFontSize(DesignConstants.FONT_SIZE_SM))
-            .fontColor($r('app.color.text_secondary'))
-            .margin({ top: responsiveListItemSpacing(DesignConstants.SPACING_XS) })
-            .maxLines(1)
-            .textOverflow({ overflow: TextOverflow.Ellipsis })
-
-          // 收藏状态
-          if (record.isFavorite) {
-            Image($r('app.media.ic_favorite'))
-              .width(responsiveIconSize(DesignConstants.ICON_SIZE_XS))
-              .height(responsiveIconSize(DesignConstants.ICON_SIZE_XS))
-              .fillColor($r('app.color.icon_favorite'))
-              .margin({ top: responsiveListItemSpacing(DesignConstants.SPACING_XS) })
-          }
-        }
-        .layoutWeight(1)
-        .alignItems(HorizontalAlign.Start)
-
-        // 右侧分贝值区域
-        Column() {
-          // 平均值（主要显示）
-          Text(record.avgDecibel.toString())
-            .fontSize(responsiveFontSize(DesignConstants.FONT_SIZE_LG))
-            .fontWeight(FontWeight.Medium)
-            .fontColor(DecibelService.getDecibelColor(record.avgDecibel))
-            .textAlign(TextAlign.End)
-
-          Text('平均值')
             .fontSize(responsiveFontSize(DesignConstants.FONT_SIZE_XS))
             .fontColor($r('app.color.text_secondary'))
-            .margin({ top: responsiveListItemSpacing(DesignConstants.SPACING_XS / 2) })
-            .textAlign(TextAlign.End)
+            .maxLines(1)
+            .textOverflow({ overflow: TextOverflow.Ellipsis })
+            .layoutWeight(1)
+          
+          Text(`${Math.round(record.duration / 1000)}秒`)
+            .fontSize(responsiveFontSize(DesignConstants.FONT_SIZE_XS))
+            .fontColor($r('app.color.text_secondary'))
         }
-        .alignItems(HorizontalAlign.End)
+        .width('100%')
+        .margin({ bottom: responsiveListItemSpacing(DesignConstants.SPACING_XS) })
+        .justifyContent(FlexAlign.SpaceBetween)
       }
       .width('100%')
-      .padding(responsiveListItemPadding(DesignConstants.SPACING_MD) / 2)
+      .padding({
+        left: responsiveListItemPadding(DesignConstants.SPACING_MD),
+        right: responsiveListItemPadding(DesignConstants.SPACING_MD)
+      })
 
-      // 音频播放器（如果有音频文件）
+      // 底部区域：音频播放器（如果有音频文件）
       if (record.audioFilePath) {
+        Divider()
+          .width('90%')
+          .color($r('app.color.divider_secondary'))
+          .margin({
+            top: responsiveListItemSpacing(DesignConstants.SPACING_SM),
+            bottom: responsiveListItemSpacing(DesignConstants.SPACING_SM)
+          })
+        
         AudioPlayer({
           audioFilePath: record.audioFilePath,
         })
-        .width('100%')
-        .padding({
-          left: responsiveListItemPadding(DesignConstants.SPACING_MD) / 2,
-          right: responsiveListItemPadding(DesignConstants.SPACING_MD) / 2,
-          bottom: responsiveListItemPadding(DesignConstants.SPACING_MD) / 2
+        .width('90%')
+        .margin({
+          bottom: responsiveListItemPadding(DesignConstants.SPACING_MD)
         })
       }
     }
     .backgroundColor($r('app.color.background_primary'))
-    .borderRadius(12)
+    .borderRadius(16)
+    .shadow({
+      radius: 8,
+      color: '#19000000',
+      offsetX: 0,
+      offsetY: 2
+    })
     .onClick(() => {
       this.selectedRecord = record;
       this.showDetailDialog();
