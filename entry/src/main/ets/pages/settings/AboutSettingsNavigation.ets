@@ -136,7 +136,7 @@ export struct AboutSettings {
     // 获取当前屏幕宽度
     const screenInfo = responsiveLayout.getCurrentScreenInfo();
     const screenWidth = screenInfo.width;
-    
+
     switch (this.currentListItemLayoutMode) {
       case ListItemLayoutMode.GRID:
         // 根据屏幕宽度动态计算列数
@@ -169,7 +169,6 @@ export struct AboutSettings {
     }
   }
 
-
   /**
    * 根据列数生成网格模板字符串
    */
@@ -181,244 +180,242 @@ export struct AboutSettings {
     NavDestination() {
       Scroll() {
 
-        Column() {
 
-          // 根据布局模式选择不同的容器
-          if (this.currentListItemLayoutMode === ListItemLayoutMode.GRID) {
-            // 网格布局 - 使用 GridRow 和 GridCol
-            GridRow({
-              columns: {
+        // 根据布局模式选择不同的容器
+        if (this.currentListItemLayoutMode === ListItemLayoutMode.GRID) {
+          // 网格布局 - 使用 GridRow 和 GridCol
+          GridRow({
+            columns: {
+              xs: 1,
+              sm: 2,
+              md: 3,
+              lg: 4,
+              xl: 5
+            },
+            gutter: {
+              x: {
+                xs: responsiveListItemSpacing(DesignConstants.SPACING_SM),
+                sm: responsiveListItemSpacing(DesignConstants.SPACING_MD),
+                md: responsiveListItemSpacing(DesignConstants.SPACING_MD),
+                lg: responsiveListItemSpacing(DesignConstants.SPACING_MD),
+                xl: responsiveListItemSpacing(DesignConstants.SPACING_MD)
+              },
+              y: {
+                xs: responsiveListItemSpacing(DesignConstants.SPACING_SM),
+                sm: responsiveListItemSpacing(DesignConstants.SPACING_MD),
+                md: responsiveListItemSpacing(DesignConstants.SPACING_MD),
+                lg: responsiveListItemSpacing(DesignConstants.SPACING_MD),
+                xl: responsiveListItemSpacing(DesignConstants.SPACING_MD)
+              }
+            },
+            breakpoints: {
+              value: ['320vp', '600vp', '840vp', '1080vp', '1320vp']
+            }
+          }) {
+            // 隐私政策
+            GridCol({
+              span: {
                 xs: 1,
-                sm: 2,
-                md: 3,
-                lg: 4,
-                xl: 5
-              },
-              gutter: {
-                x: {
-                  xs: responsiveListItemSpacing(DesignConstants.SPACING_SM),
-                  sm: responsiveListItemSpacing(DesignConstants.SPACING_MD),
-                  md: responsiveListItemSpacing(DesignConstants.SPACING_MD),
-                  lg: responsiveListItemSpacing(DesignConstants.SPACING_MD),
-                  xl: responsiveListItemSpacing(DesignConstants.SPACING_MD)
-                },
-                y: {
-                  xs: responsiveListItemSpacing(DesignConstants.SPACING_SM),
-                  sm: responsiveListItemSpacing(DesignConstants.SPACING_MD),
-                  md: responsiveListItemSpacing(DesignConstants.SPACING_MD),
-                  lg: responsiveListItemSpacing(DesignConstants.SPACING_MD),
-                  xl: responsiveListItemSpacing(DesignConstants.SPACING_MD)
-                }
-              },
-              breakpoints: {
-                value: ['320vp', '600vp', '840vp', '1080vp', '1320vp']
+                sm: 1,
+                md: 1,
+                lg: 1,
+                xl: 1
               }
             }) {
-              // 隐私政策
-              GridCol({
-                span: {
-                  xs: 1,
-                  sm: 1,
-                  md: 1,
-                  lg: 1,
-                  xl: 1
-                }
-              }) {
-                Column() {
+              Column() {
+                Row() {
                   Row() {
-                    Row() {
-                      Image($r('app.media.ic_info'))
-                        .itemIcon()
+                    Image($r('app.media.ic_info'))
+                      .itemIcon()
 
-                      Text('隐私政策')
-                        .itemTitle()
-                    }
-
-                    Blank()
+                    Text('隐私政策')
+                      .itemTitle()
                   }
-                  .listItemRow()
 
-                  // 描述信息
-                  Text('查看应用的隐私政策')
-                    .itemDescription()
-                    .margin({ top: responsiveListItemSpacing(DesignConstants.SPACING_MD) })
+                  Blank()
                 }
-                .cardStyle()
-                .width('100%')
-                .onClick(async () => {
-                  // 这里添加打开隐私政策的逻辑
-                  const uiContext = getContext(this) as common.UIAbilityContext;
-                  await privacyManager.requestAppPrivacyConsent(uiContext);
-                })
+                .listItemRow()
+
+                // 描述信息
+                Text('查看应用的隐私政策')
+                  .itemDescription()
+                  .margin({ top: responsiveListItemSpacing(DesignConstants.SPACING_MD) })
               }
-
-              // 应用信息
-              GridCol({
-                span: {
-                  xs: 1,
-                  sm: 1,
-                  md: 1,
-                  lg: 1,
-                  xl: 1
-                }
-              }) {
-                Column() {
-                  Row() {
-                    Row() {
-                      Image($r('app.media.ic_info'))
-                        .itemIcon()
-
-                      Text('应用信息')
-                        .itemTitle()
-                    }
-
-                    Blank()
-
-                    Text('v1.0.0')
-                      .fontSize(responsiveFontSize(DesignConstants.FONT_SIZE_MD))
-                      .fontColor($r('app.color.text_secondary'))
-                  }
-                  .listItemRow()
-
-                  // 描述信息
-                  Text('噪音分贝仪pro - 专业的噪音检测工具')
-                    .itemDescription()
-                    .margin({ top: responsiveListItemSpacing(DesignConstants.SPACING_MD) })
-                }
-                .cardStyle()
-                .width('100%')
-              }
-
-              // 技术支持
-              GridCol({
-                span: {
-                  xs: 1,
-                  sm: 1,
-                  md: 1,
-                  lg: 1,
-                  xl: 1
-                }
-              }) {
-                Column() {
-                  Row() {
-                    Row() {
-                      Image($r('app.media.ic_info'))
-                        .itemIcon()
-
-                      Text('技术支持')
-                        .itemTitle()
-                    }
-
-                    Blank()
-                  }
-                  .listItemRow()
-
-                  // 描述信息
-                  Text('如有问题请联系技术支持团队')
-                    .itemDescription()
-                    .margin({ top: responsiveListItemSpacing(DesignConstants.SPACING_MD) })
-                }
-                .cardStyle()
-                .width('100%')
-              }
-            }
-            .width('100%')
-            .padding({
-              left: responsiveListItemPadding(DesignConstants.SPACING_MD),
-              right: responsiveListItemPadding(DesignConstants.SPACING_MD),
-              top: responsiveListItemPadding(DesignConstants.SPACING_MD),
-              bottom: responsiveListItemPadding(DesignConstants.SPACING_MD)
-            })
-          } else {
-            // 列表布局（保持原有代码）
-            List() {
-              // 隐私政策
-              ListItem() {
-                Column() {
-                  Row() {
-                    Row() {
-                      Image($r('app.media.ic_info'))
-                        .itemIcon()
-
-                      Text('隐私政策')
-                        .itemTitle()
-                    }
-
-                    Blank()
-                  }
-                  .listItemRow()
-                }
-                .cardStyle()
-              }.onClick(async () => {
+              .cardStyle()
+              .width('100%')
+              .onClick(async () => {
                 // 这里添加打开隐私政策的逻辑
                 const uiContext = getContext(this) as common.UIAbilityContext;
                 await privacyManager.requestAppPrivacyConsent(uiContext);
               })
+            }
 
-              ListItem() {
-                Text('查看应用的隐私政策')
-                  .itemDescription()
+            // 应用信息
+            GridCol({
+              span: {
+                xs: 1,
+                sm: 1,
+                md: 1,
+                lg: 1,
+                xl: 1
               }
-              .descriptionContainer()
-
-              // 应用信息
-              ListItem() {
-                Column() {
+            }) {
+              Column() {
+                Row() {
                   Row() {
-                    Row() {
-                      Image($r('app.media.ic_info'))
-                        .itemIcon()
+                    Image($r('app.media.ic_info'))
+                      .itemIcon()
 
-                      Text('应用信息')
-                        .itemTitle()
-                    }
-
-                    Blank()
-
-                    Text('v1.0.0')
-                      .fontSize(responsiveFontSize(DesignConstants.FONT_SIZE_MD))
-                      .fontColor($r('app.color.text_secondary'))
+                    Text('应用信息')
+                      .itemTitle()
                   }
-                  .listItemRow()
-                }
-                .cardStyle()
-              }
 
-              ListItem() {
+                  Blank()
+
+                  Text('v1.0.0')
+                    .fontSize(responsiveFontSize(DesignConstants.FONT_SIZE_MD))
+                    .fontColor($r('app.color.text_secondary'))
+                }
+                .listItemRow()
+
+                // 描述信息
                 Text('噪音分贝仪pro - 专业的噪音检测工具')
                   .itemDescription()
+                  .margin({ top: responsiveListItemSpacing(DesignConstants.SPACING_MD) })
               }
-              .descriptionContainer()
+              .cardStyle()
+              .width('100%')
+            }
 
-              // 技术支持
-              ListItem() {
-                Column() {
+            // 技术支持
+            GridCol({
+              span: {
+                xs: 1,
+                sm: 1,
+                md: 1,
+                lg: 1,
+                xl: 1
+              }
+            }) {
+              Column() {
+                Row() {
                   Row() {
-                    Row() {
-                      Image($r('app.media.ic_info'))
-                        .itemIcon()
+                    Image($r('app.media.ic_info'))
+                      .itemIcon()
 
-                      Text('技术支持')
-                        .itemTitle()
-                    }
-
-                    Blank()
+                    Text('技术支持')
+                      .itemTitle()
                   }
-                  .listItemRow()
-                }
-                .cardStyle()
-              }
 
-              ListItem() {
+                  Blank()
+                }
+                .listItemRow()
+
+                // 描述信息
                 Text('如有问题请联系技术支持团队')
                   .itemDescription()
+                  .margin({ top: responsiveListItemSpacing(DesignConstants.SPACING_MD) })
               }
-              .descriptionContainer()
+              .cardStyle()
+              .width('100%')
             }
-            .width('100%')
-            .layoutWeight(1)
-            .backgroundColor('transparent')
           }
+          .width('100%')
+          .padding({
+            left: responsiveListItemPadding(DesignConstants.SPACING_MD),
+            right: responsiveListItemPadding(DesignConstants.SPACING_MD),
+            top: responsiveListItemPadding(DesignConstants.SPACING_MD),
+            bottom: responsiveListItemPadding(DesignConstants.SPACING_MD)
+          })
+        } else {
+          // 列表布局（保持原有代码）
+          List() {
+            // 隐私政策
+            ListItem() {
+              Column() {
+                Row() {
+                  Row() {
+                    Image($r('app.media.ic_info'))
+                      .itemIcon()
+
+                    Text('隐私政策')
+                      .itemTitle()
+                  }
+
+                  Blank()
+                }
+                .listItemRow()
+              }
+              .cardStyle()
+            }.onClick(async () => {
+              // 这里添加打开隐私政策的逻辑
+              const uiContext = getContext(this) as common.UIAbilityContext;
+              await privacyManager.requestAppPrivacyConsent(uiContext);
+            })
+
+            ListItem() {
+              Text('查看应用的隐私政策')
+                .itemDescription()
+            }
+            .descriptionContainer()
+
+            // 应用信息
+            ListItem() {
+              Column() {
+                Row() {
+                  Row() {
+                    Image($r('app.media.ic_info'))
+                      .itemIcon()
+
+                    Text('应用信息')
+                      .itemTitle()
+                  }
+
+                  Blank()
+
+                  Text('v1.0.0')
+                    .fontSize(responsiveFontSize(DesignConstants.FONT_SIZE_MD))
+                    .fontColor($r('app.color.text_secondary'))
+                }
+                .listItemRow()
+              }
+              .cardStyle()
+            }
+
+            ListItem() {
+              Text('噪音分贝仪pro - 专业的噪音检测工具')
+                .itemDescription()
+            }
+            .descriptionContainer()
+
+            // 技术支持
+            ListItem() {
+              Column() {
+                Row() {
+                  Row() {
+                    Image($r('app.media.ic_info'))
+                      .itemIcon()
+
+                    Text('技术支持')
+                      .itemTitle()
+                  }
+
+                  Blank()
+                }
+                .listItemRow()
+              }
+              .cardStyle()
+            }
+
+            ListItem() {
+              Text('如有问题请联系技术支持团队')
+                .itemDescription()
+            }
+            .descriptionContainer()
+          }
+          .width('100%')
+          .layoutWeight(1)
+          .backgroundColor('transparent')
         }
       }
       .scrollable(ScrollDirection.Vertical)

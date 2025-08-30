@@ -147,7 +147,7 @@ export struct AlertsSettings {
     // 获取当前屏幕宽度
     const screenInfo = responsiveLayout.getCurrentScreenInfo();
     const screenWidth = screenInfo.width;
-    
+
     switch (this.currentListItemLayoutMode) {
       case ListItemLayoutMode.GRID:
         // 根据屏幕宽度动态计算列数
@@ -180,7 +180,6 @@ export struct AlertsSettings {
     }
   }
 
-
   /**
    * 根据列数生成网格模板字符串
    */
@@ -197,250 +196,246 @@ export struct AlertsSettings {
   build() {
     NavDestination() {
 
-      Column() {
-        // 添加Scroll组件包裹主要内容
-        Scroll() {
-          Column() {
-            // 根据布局模式选择不同的容器
-            if (this.currentListItemLayoutMode === ListItemLayoutMode.GRID) {
-              // 网格布局 - 使用 GridRow 和 GridCol
-              GridRow({
-                columns: {
-                  xs: 1,
-                  sm: 2,
-                  md: 3,
-                  lg: 4,
-                  xl: 5
-                },
-                gutter: {
-                  x: {
-                    xs: responsiveListItemSpacing(DesignConstants.SPACING_SM),
-                    sm: responsiveListItemSpacing(DesignConstants.SPACING_MD),
-                    md: responsiveListItemSpacing(DesignConstants.SPACING_MD),
-                    lg: responsiveListItemSpacing(DesignConstants.SPACING_MD),
-                    xl: responsiveListItemSpacing(DesignConstants.SPACING_MD)
-                  },
-                  y: {
-                    xs: responsiveListItemSpacing(DesignConstants.SPACING_SM),
-                    sm: responsiveListItemSpacing(DesignConstants.SPACING_MD),
-                    md: responsiveListItemSpacing(DesignConstants.SPACING_MD),
-                    lg: responsiveListItemSpacing(DesignConstants.SPACING_MD),
-                    xl: responsiveListItemSpacing(DesignConstants.SPACING_MD)
-                  }
-                },
-                breakpoints: {
-                  value: ['320vp', '600vp', '840vp', '1080vp', '1320vp']
-                }
-              }) {
-                // 噪音警报开关
-                GridCol({
-                  span: {
-                    xs: 1,
-                    sm: 1,
-                    md: 1,
-                    lg: 1,
-                    xl: 1
-                  }
-                }) {
-                  Column() {
-                    Row() {
-                      Row() {
-                        Image($r('app.media.ic_alarm'))
-                          .itemIcon()
-
-                        Text('噪音警报')
-                          .itemTitle()
-                      }
-
-                      Blank()
-
-                      Toggle({ type: ToggleType.Switch, isOn: this.isNoiseAlarmEnabled })
-                        .selectedColor($r('app.color.primary'))
-                        .switchPointColor($r('app.color.background_primary'))
-                        .onChange((isOn: boolean) => {
-                          void this.preferenceService.setBoolean(PreferenceKeyConstants.NOISE_ALARM_ENABLED, isOn);
-                          this.isNoiseAlarmEnabled = isOn;
-                          this.updateNoiseAlarmDescription();
-                        })
-                    }
-                    .listItemRow()
-
-                    // 描述信息
-                    Text(this.noiseAlarmDescription)
-                      .itemDescription()
-                      .margin({ top: responsiveListItemSpacing(DesignConstants.SPACING_MD) })
-                  }
-                  .cardStyle()
-                  .width('100%')
-                }
-
-                // 噪音阈值设置
-                GridCol({
-                  span: {
-                    xs: 1,
-                    sm: 1,
-                    md: 1,
-                    lg: 1,
-                    xl: 1
-                  }
-                }) {
-                  Column() {
-                    Row() {
-                      Row() {
-                        Image($r('app.media.ic_threshold'))
-                          .itemIcon()
-
-                        Text('噪音警报阈值')
-                          .itemTitle()
-                      }
-
-                      Blank()
-
-                      Text(`${this.noiseThreshold}dB`)
-                        .fontSize(responsiveFontSize(DesignConstants.FONT_SIZE_MD))
-                        .fontColor($r('app.color.text_secondary'))
-                        .margin({ right: responsiveListItemSpacing(DesignConstants.SPACING_MD) })
-                    }
-                    .listItemRow()
-
-                    Slider({
-                      value: this.noiseThreshold,
-                      min: 30,
-                      max: 120,
-                      style: SliderStyle.InSet
-                    })
-                      .blockColor($r('app.color.primary'))
-                      .trackColor($r('app.color.background_secondary'))
-                      .selectedColor($r('app.color.primary'))
-                      .onChange((value: number) => {
-                        this.noiseThreshold = value;
-                        void this.preferenceService.setNumber(PreferenceKeyConstants.NOISE_THRESHOLD, value);
-                      })
-                      .margin({
-                        top: responsiveListItemSpacing(DesignConstants.SPACING_MD),
-                        bottom: responsiveListItemSpacing(DesignConstants.SPACING_MD)
-                      })
-                      .height(responsiveListItemSpacing(24))
-                      .trackThickness(responsiveListItemSpacing(24))
-                      .blockSize({ width: responsiveListItemSpacing(24), height: responsiveListItemSpacing(24) })
-
-                    // 描述信息
-                    Text('环境噪音超过设定阈值时，系统将发出警报提示')
-                      .itemDescription()
-                      .margin({ top: responsiveListItemSpacing(DesignConstants.SPACING_MD) })
-                  }
-                  .cardStyle()
-                  .width('100%')
-                }
+      // 添加Scroll组件包裹主要内容
+      Scroll() {
+        // 根据布局模式选择不同的容器
+        if (this.currentListItemLayoutMode === ListItemLayoutMode.GRID) {
+          // 网格布局 - 使用 GridRow 和 GridCol
+          GridRow({
+            columns: {
+              xs: 1,
+              sm: 2,
+              md: 3,
+              lg: 4,
+              xl: 5
+            },
+            gutter: {
+              x: {
+                xs: responsiveListItemSpacing(DesignConstants.SPACING_SM),
+                sm: responsiveListItemSpacing(DesignConstants.SPACING_MD),
+                md: responsiveListItemSpacing(DesignConstants.SPACING_MD),
+                lg: responsiveListItemSpacing(DesignConstants.SPACING_MD),
+                xl: responsiveListItemSpacing(DesignConstants.SPACING_MD)
+              },
+              y: {
+                xs: responsiveListItemSpacing(DesignConstants.SPACING_SM),
+                sm: responsiveListItemSpacing(DesignConstants.SPACING_MD),
+                md: responsiveListItemSpacing(DesignConstants.SPACING_MD),
+                lg: responsiveListItemSpacing(DesignConstants.SPACING_MD),
+                xl: responsiveListItemSpacing(DesignConstants.SPACING_MD)
               }
-              .width('100%')
-              .padding({
-                left: responsiveListItemPadding(DesignConstants.SPACING_MD),
-                right: responsiveListItemPadding(DesignConstants.SPACING_MD),
-                top: responsiveListItemPadding(DesignConstants.SPACING_MD),
-                bottom: responsiveListItemPadding(DesignConstants.SPACING_MD)
-              })
-            } else {
-              // 列表布局（保持原有代码）
-              List() {
-                // 噪音阈值警报的开关
-                ListItem() {
-                  Column() {
-                    Row() {
-                      Row() {
-                        Image($r('app.media.ic_alarm'))
-                          .itemIcon()
-
-                        Text('噪音警报')
-                          .itemTitle()
-                      }
-
-                      Blank()
-
-                      Toggle({ type: ToggleType.Switch, isOn: this.isNoiseAlarmEnabled })
-                        .selectedColor($r('app.color.primary'))
-                        .switchPointColor($r('app.color.background_primary'))
-                        .onChange((isOn: boolean) => {
-                          void this.preferenceService.setBoolean(PreferenceKeyConstants.NOISE_ALARM_ENABLED, isOn);
-                          this.isNoiseAlarmEnabled = isOn;
-                          this.updateNoiseAlarmDescription();
-                        })
-                    }
-                    .listItemRow()
-                  }
-                  .cardStyle()
-                }
-
-                ListItem() {
-                  Text(this.noiseAlarmDescription)
-                    .itemDescription()
-                }
-                .descriptionContainer()
-
-                // 噪音阈值的设置
-                ListItem() {
-                  Column() {
-                    Row() {
-                      Row() {
-                        Image($r('app.media.ic_threshold'))
-                          .itemIcon()
-
-                        Text('噪音警报阈值')
-                          .itemTitle()
-                      }
-
-                      Blank()
-
-                      Text(`${this.noiseThreshold}dB`)
-                        .fontSize(responsiveFontSize(DesignConstants.FONT_SIZE_MD))
-                        .fontColor($r('app.color.text_secondary'))
-                        .margin({ right: responsiveListItemSpacing(DesignConstants.SPACING_MD) })
-                    }
-                    .listItemRow()
-
-                    Slider({
-                      value: this.noiseThreshold,
-                      min: 30,
-                      max: 120,
-                      style: SliderStyle.InSet
-                    })
-                      .blockColor($r('app.color.primary'))
-                      .trackColor($r('app.color.background_secondary'))
-                      .selectedColor($r('app.color.primary'))
-                      .onChange((value: number) => {
-                        this.noiseThreshold = value;
-                        void this.preferenceService.setNumber(PreferenceKeyConstants.NOISE_THRESHOLD, value);
-                      })
-                      .margin({
-                        top: responsiveListItemSpacing(DesignConstants.SPACING_MD),
-                        bottom: responsiveListItemSpacing(DesignConstants.SPACING_MD)
-                      })
-                      .height(responsiveListItemSpacing(24))
-                      .trackThickness(responsiveListItemSpacing(24))
-                      .blockSize({ width: responsiveListItemSpacing(24), height: responsiveListItemSpacing(24) })
-                  }
-                  .cardStyle()
-                }
-
-                ListItem() {
-                  Text('环境噪音超过设定阈值时，系统将发出警报提示')
-                    .itemDescription()
-                }
-                .descriptionContainer()
+            },
+            breakpoints: {
+              value: ['320vp', '600vp', '840vp', '1080vp', '1320vp']
+            }
+          }) {
+            // 噪音警报开关
+            GridCol({
+              span: {
+                xs: 1,
+                sm: 1,
+                md: 1,
+                lg: 1,
+                xl: 1
               }
+            }) {
+              Column() {
+                Row() {
+                  Row() {
+                    Image($r('app.media.ic_alarm'))
+                      .itemIcon()
+
+                    Text('噪音警报')
+                      .itemTitle()
+                  }
+
+                  Blank()
+
+                  Toggle({ type: ToggleType.Switch, isOn: this.isNoiseAlarmEnabled })
+                    .selectedColor($r('app.color.primary'))
+                    .switchPointColor($r('app.color.background_primary'))
+                    .onChange((isOn: boolean) => {
+                      void this.preferenceService.setBoolean(PreferenceKeyConstants.NOISE_ALARM_ENABLED, isOn);
+                      this.isNoiseAlarmEnabled = isOn;
+                      this.updateNoiseAlarmDescription();
+                    })
+                }
+                .listItemRow()
+
+                // 描述信息
+                Text(this.noiseAlarmDescription)
+                  .itemDescription()
+                  .margin({ top: responsiveListItemSpacing(DesignConstants.SPACING_MD) })
+              }
+              .cardStyle()
               .width('100%')
-              .layoutWeight(1)
-              .backgroundColor('transparent')
+            }
+
+            // 噪音阈值设置
+            GridCol({
+              span: {
+                xs: 1,
+                sm: 1,
+                md: 1,
+                lg: 1,
+                xl: 1
+              }
+            }) {
+              Column() {
+                Row() {
+                  Row() {
+                    Image($r('app.media.ic_threshold'))
+                      .itemIcon()
+
+                    Text('噪音警报阈值')
+                      .itemTitle()
+                  }
+
+                  Blank()
+
+                  Text(`${this.noiseThreshold}dB`)
+                    .fontSize(responsiveFontSize(DesignConstants.FONT_SIZE_MD))
+                    .fontColor($r('app.color.text_secondary'))
+                    .margin({ right: responsiveListItemSpacing(DesignConstants.SPACING_MD) })
+                }
+                .listItemRow()
+
+                Slider({
+                  value: this.noiseThreshold,
+                  min: 30,
+                  max: 120,
+                  style: SliderStyle.InSet
+                })
+                  .blockColor($r('app.color.primary'))
+                  .trackColor($r('app.color.background_secondary'))
+                  .selectedColor($r('app.color.primary'))
+                  .onChange((value: number) => {
+                    this.noiseThreshold = value;
+                    void this.preferenceService.setNumber(PreferenceKeyConstants.NOISE_THRESHOLD, value);
+                  })
+                  .margin({
+                    top: responsiveListItemSpacing(DesignConstants.SPACING_MD),
+                    bottom: responsiveListItemSpacing(DesignConstants.SPACING_MD)
+                  })
+                  .height(responsiveListItemSpacing(24))
+                  .trackThickness(responsiveListItemSpacing(24))
+                  .blockSize({ width: responsiveListItemSpacing(24), height: responsiveListItemSpacing(24) })
+
+                // 描述信息
+                Text('环境噪音超过设定阈值时，系统将发出警报提示')
+                  .itemDescription()
+                  .margin({ top: responsiveListItemSpacing(DesignConstants.SPACING_MD) })
+              }
+              .cardStyle()
+              .width('100%')
             }
           }
-        }
-        .scrollable(ScrollDirection.Vertical)
-        .scrollBar(BarState.On)
-        .scrollBarWidth(responsiveListItemSpacing(4))
-        .edgeEffect(EdgeEffect.Spring)
-        .layoutWeight(1)
+          .width('100%')
+          .padding({
+            left: responsiveListItemPadding(DesignConstants.SPACING_MD),
+            right: responsiveListItemPadding(DesignConstants.SPACING_MD),
+            top: responsiveListItemPadding(DesignConstants.SPACING_MD),
+            bottom: responsiveListItemPadding(DesignConstants.SPACING_MD)
+          })
+        } else {
+          // 列表布局（保持原有代码）
+          List() {
+            // 噪音阈值警报的开关
+            ListItem() {
+              Column() {
+                Row() {
+                  Row() {
+                    Image($r('app.media.ic_alarm'))
+                      .itemIcon()
 
+                    Text('噪音警报')
+                      .itemTitle()
+                  }
+
+                  Blank()
+
+                  Toggle({ type: ToggleType.Switch, isOn: this.isNoiseAlarmEnabled })
+                    .selectedColor($r('app.color.primary'))
+                    .switchPointColor($r('app.color.background_primary'))
+                    .onChange((isOn: boolean) => {
+                      void this.preferenceService.setBoolean(PreferenceKeyConstants.NOISE_ALARM_ENABLED, isOn);
+                      this.isNoiseAlarmEnabled = isOn;
+                      this.updateNoiseAlarmDescription();
+                    })
+                }
+                .listItemRow()
+              }
+              .cardStyle()
+            }
+
+            ListItem() {
+              Text(this.noiseAlarmDescription)
+                .itemDescription()
+            }
+            .descriptionContainer()
+
+            // 噪音阈值的设置
+            ListItem() {
+              Column() {
+                Row() {
+                  Row() {
+                    Image($r('app.media.ic_threshold'))
+                      .itemIcon()
+
+                    Text('噪音警报阈值')
+                      .itemTitle()
+                  }
+
+                  Blank()
+
+                  Text(`${this.noiseThreshold}dB`)
+                    .fontSize(responsiveFontSize(DesignConstants.FONT_SIZE_MD))
+                    .fontColor($r('app.color.text_secondary'))
+                    .margin({ right: responsiveListItemSpacing(DesignConstants.SPACING_MD) })
+                }
+                .listItemRow()
+
+                Slider({
+                  value: this.noiseThreshold,
+                  min: 30,
+                  max: 120,
+                  style: SliderStyle.InSet
+                })
+                  .blockColor($r('app.color.primary'))
+                  .trackColor($r('app.color.background_secondary'))
+                  .selectedColor($r('app.color.primary'))
+                  .onChange((value: number) => {
+                    this.noiseThreshold = value;
+                    void this.preferenceService.setNumber(PreferenceKeyConstants.NOISE_THRESHOLD, value);
+                  })
+                  .margin({
+                    top: responsiveListItemSpacing(DesignConstants.SPACING_MD),
+                    bottom: responsiveListItemSpacing(DesignConstants.SPACING_MD)
+                  })
+                  .height(responsiveListItemSpacing(24))
+                  .trackThickness(responsiveListItemSpacing(24))
+                  .blockSize({ width: responsiveListItemSpacing(24), height: responsiveListItemSpacing(24) })
+              }
+              .cardStyle()
+            }
+
+            ListItem() {
+              Text('环境噪音超过设定阈值时，系统将发出警报提示')
+                .itemDescription()
+            }
+            .descriptionContainer()
+          }
+          .width('100%')
+          .layoutWeight(1)
+          .backgroundColor('transparent')
+        }
       }
+      .scrollable(ScrollDirection.Vertical)
+      .scrollBar(BarState.On)
+      .scrollBarWidth(responsiveListItemSpacing(4))
+      .edgeEffect(EdgeEffect.Spring)
+      .layoutWeight(1)
+
       .width('100%')
       .height('100%')
       .backgroundColor($r('app.color.background_tertiary'))

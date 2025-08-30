@@ -204,26 +204,6 @@ export struct Settings {
 
   build() {
     Column() {
-      // 横屏模式下的标题区域
-      if (this.isLandscape) {
-        Row() {
-          Text('设置')
-            .fontSize(responsiveFontSize(DesignConstants.FONT_SIZE_2XL))
-            .fontWeight(FontWeight.Bold)
-            .fontColor($r('app.color.text_primary'))
-            .layoutWeight(1)
-            .textAlign(TextAlign.Center)
-        }
-        .width('100%')
-        .height(responsiveListItemSpacing(56))
-        .padding({
-          left: responsiveListItemPadding(DesignConstants.SPACING_LG),
-          right: responsiveListItemPadding(DesignConstants.SPACING_LG)
-        })
-        .backgroundColor($r('app.color.background_secondary'))
-        .margin({ bottom: responsiveListItemSpacing(DesignConstants.SPACING_MD) })
-      }
-
       // 根据布局模式选择不同的渲染方式
       if (this.currentListItemLayoutMode === ListItemLayoutMode.GRID && this.isLandscape) {
         this.GridLayoutView()
