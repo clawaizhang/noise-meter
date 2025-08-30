@@ -133,26 +133,51 @@ export struct DataPrivacySettings {
   }
 
   /**
-   * 根据布局模式更新网格列数
+   * 根据布局模式和屏幕宽度更新网格列数
    */
   private updateGridColumns(): void {
+    // 获取当前屏幕宽度
+    const screenInfo = responsiveLayout.getCurrentScreenInfo();
+    const screenWidth = screenInfo.width;
+    
     switch (this.currentListItemLayoutMode) {
       case ListItemLayoutMode.GRID:
-        if (this.isLandscape) {
-          this.gridColumns = 2; // 横屏网格布局使用2列
-        } else {
-          this.gridColumns = 2; // 竖屏网格布局也使用2列
+        // 根据屏幕宽度动态计算列数
+        if (screenWidth >= 1200) { // XL断点及以上
+          this.gridColumns = this.isLandscape ? 4 : 3;
+        } else if (screenWidth >= 840) { // LG断点
+          this.gridColumns = this.isLandscape ? 3 : 2;
+        } else if (screenWidth >= 600) { // MD断点
+          this.gridColumns = this.isLandscape ? 2 : 2;
+        } else { // SM和XS断点
+          this.gridColumns = 1; // 小屏幕使用单列
         }
+
         break;
       case ListItemLayoutMode.DETAIL:
         this.gridColumns = 1; // 详情布局使用1列
         break;
       case ListItemLayoutMode.COMPACT:
-        this.gridColumns = 3; // 紧凑布局使用3列
+        // 紧凑模式下根据屏幕宽度调整列数
+        if (screenWidth >= 840) {
+          this.gridColumns = 4;
+        } else if (screenWidth >= 600) {
+          this.gridColumns = 3;
+        } else {
+          this.gridColumns = 2;
+        }
         break;
       default:
         this.gridColumns = 1; // 列表布局使用1列
     }
+  }
+
+
+  /**
+   * 根据列数生成网格模板字符串
+   */
+  private getGridColumnsTemplate(): string {
+    return Array(this.gridColumns).fill('1fr').join(' ');
   }
 
   build() {
@@ -164,10 +189,45 @@ export struct DataPrivacySettings {
           Column() {
             // 根据布局模式选择不同的容器
             if (this.currentListItemLayoutMode === ListItemLayoutMode.GRID) {
-              // 网格布局
-              Grid() {
+              // 网格布局 - 使用 GridRow 和 GridCol
+              GridRow({
+                columns: {
+                  xs: 1,
+                  sm: 2,
+                  md: 3,
+                  lg: 4,
+                  xl: 5
+                },
+                gutter: {
+                  x: {
+                    xs: responsiveListItemSpacing(DesignConstants.SPACING_SM),
+                    sm: responsiveListItemSpacing(DesignConstants.SPACING_MD),
+                    md: responsiveListItemSpacing(DesignConstants.SPACING_MD),
+                    lg: responsiveListItemSpacing(DesignConstants.SPACING_MD),
+                    xl: responsiveListItemSpacing(DesignConstants.SPACING_MD)
+                  },
+                  y: {
+                    xs: responsiveListItemSpacing(DesignConstants.SPACING_SM),
+                    sm: responsiveListItemSpacing(DesignConstants.SPACING_MD),
+                    md: responsiveListItemSpacing(DesignConstants.SPACING_MD),
+                    lg: responsiveListItemSpacing(DesignConstants.SPACING_MD),
+                    xl: responsiveListItemSpacing(DesignConstants.SPACING_MD)
+                  }
+                },
+                breakpoints: {
+                  value: ['320vp', '600vp', '840vp', '1080vp', '1320vp']
+                }
+              }) {
                 // 位置开关
-                GridItem() {
+                GridCol({
+                  span: {
+                    xs: 1,
+                    sm: 1,
+                    md: 1,
+                    lg: 1,
+                    xl: 1
+                  }
+                }) {
                   Column() {
                     Row() {
                       Row() {
@@ -196,11 +256,19 @@ export struct DataPrivacySettings {
                       .margin({ top: responsiveListItemSpacing(DesignConstants.SPACING_MD) })
                   }
                   .cardStyle()
-                  .width(responsiveListItemWidth(300, this.gridColumns))
+                  .width('100%')
                 }
 
                 // 录音开关
-                GridItem() {
+                GridCol({
+                  span: {
+                    xs: 1,
+                    sm: 1,
+                    md: 1,
+                    lg: 1,
+                    xl: 1
+                  }
+                }) {
                   Column() {
                     Row() {
                       Row() {
@@ -229,15 +297,16 @@ export struct DataPrivacySettings {
                       .margin({ top: responsiveListItemSpacing(DesignConstants.SPACING_MD) })
                   }
                   .cardStyle()
-                  .width(responsiveListItemWidth(300, this.gridColumns))
+                  .width('100%')
                 }
               }
-              .columnsTemplate('1fr 1fr')
-              .rowsTemplate('auto')
-              .columnsGap(responsiveListItemSpacing(DesignConstants.SPACING_MD))
-              .rowsGap(responsiveListItemSpacing(DesignConstants.SPACING_MD))
-              .layoutWeight(1)
-              .backgroundColor('transparent')
+              .width('100%')
+              .padding({
+                left: responsiveListItemPadding(DesignConstants.SPACING_MD),
+                right: responsiveListItemPadding(DesignConstants.SPACING_MD),
+                top: responsiveListItemPadding(DesignConstants.SPACING_MD),
+                bottom: responsiveListItemPadding(DesignConstants.SPACING_MD)
+              })
             } else {
               // 列表布局（保持原有代码）
               List() {
@@ -319,27 +388,6 @@ export struct DataPrivacySettings {
         .edgeEffect(EdgeEffect.Spring)
         .layoutWeight(1)
 
-        // 返回按钮
-        Button('返回')
-          .width(responsiveListItemWidth(300, 1))
-          .height(responsiveListItemSpacing(40))
-          .margin({
-            bottom: responsiveListItemSpacing(30),
-            top: responsiveListItemSpacing(DesignConstants.SPACING_MD),
-            left: responsiveListItemMargin(DesignConstants.SPACING_MD),
-            right: responsiveListItemMargin(DesignConstants.SPACING_MD)
-          })
-          .backgroundColor($r('app.color.toggle_active'))
-          .borderRadius(responsiveListItemSpacing(8))
-          .shadow({
-            radius: responsiveListItemSpacing(4),
-            color: $r('app.color.shadow_medium'),
-            offsetX: 0,
-            offsetY: responsiveListItemSpacing(1)
-          })
-          .onClick(() => {
-            this.navStack.pop();
-          })
       }
       .width('100%')
       .height('100%')
