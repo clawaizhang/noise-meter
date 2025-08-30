@@ -898,6 +898,24 @@ export struct DecibelHistory {
               })
             }
           }, (record: DecibelRecord) => record.id)
+          // 总记录数显示（网格布局下显示在底部）
+          GridCol({
+            span: {
+              xs: 1,
+              sm: 1,
+              md: 1,
+              lg: 1,
+              xl: 1
+            }
+          }) {
+            Text(`共 ${this.records.length} 条记录`)
+              .fontSize(responsiveFontSize(DesignConstants.FONT_SIZE_MD))
+              .fontColor('#666666')
+              .textAlign(TextAlign.Center)
+              .width('100%')
+              .padding(responsiveListItemPadding(DesignConstants.SPACING_MD))
+          }
+          .width('100%')
         }
         .width('100%')
         .padding({
@@ -924,16 +942,6 @@ export struct DecibelHistory {
       .width('100%')
       .layoutWeight(1)
 
-      // 总记录数显示（网格布局下显示在底部）
-      Column() {
-        Text(`共 ${this.records.length} 条记录`)
-          .fontSize(responsiveFontSize(DesignConstants.FONT_SIZE_MD))
-          .fontColor('#666666')
-          .textAlign(TextAlign.Center)
-          .width('100%')
-          .padding(responsiveListItemPadding(DesignConstants.SPACING_MD))
-      }
-      .width('100%')
     }
   }
 
