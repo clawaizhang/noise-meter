@@ -9,7 +9,7 @@
     },
       {
         "name": "appgallery_privacy_link_privacy_statement",
-        "value": "https://agreement-drcn.hispace.dbankcloud.cn/index.html?lang=zh&agreementId=1603946590609908800" // 必须是https网址
+        "value": "https://agreement-drcn.hispace.dbankcloud.cn/index.html?lang=zh&agreementId=1764078440182486976" // 必须是https网址
       }],
     "mainElement": "EntryAbility",
     "deviceTypes": [
