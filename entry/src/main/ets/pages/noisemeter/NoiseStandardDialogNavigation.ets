@@ -16,20 +16,24 @@ export struct NoiseStandardDialog {
 
   @Builder
   StandardCardBuilder() {
-    Column() {
-      Text('噪音参考标准')
-        .fontSize(20)
-        .fontWeight(FontWeight.Bold)
-        .margin({ bottom: 8 })
-        .width('100%')
-        .textAlign(TextAlign.Center)
+    Column({space: 8}) {
+      Flex({
+        direction: FlexDirection.Row,
+        wrap: FlexWrap.Wrap,
+        justifyContent: FlexAlign.Center,
+        alignContent: FlexAlign.Center
+      }) {
+        Text('噪音参考标准')
+          .fontSize(20)
+          .fontWeight(FontWeight.Bold)
+          .textAlign(TextAlign.Center)
 
-      Text('（白天：6:00-22:00，夜间：22:00-6:00）')
-        .fontSize(14)
-        .fontColor($r('app.color.text_secondary'))
-        .margin({ bottom: 16 })
-        .width('100%')
-        .textAlign(TextAlign.Center)
+        Text('（白天：6:00-22:00，夜间：22:00-6:00）')
+          .fontSize(14)
+          .fontColor($r('app.color.text_secondary'))
+          .textAlign(TextAlign.Center)
+      }
+
       Scroll() {
         GridRow({
           columns: {
@@ -39,7 +43,7 @@ export struct NoiseStandardDialog {
             lg: 2,
             xl: 3,
             xxl: 3
-          }, breakpoints: { reference: BreakpointsReference.WindowSize }
+          }, breakpoints: { reference: BreakpointsReference.WindowSize }, gutter: 16
         }) {
           ForEach(NoiseStandards, (standard: NoiseStandard, index: number) => {
             GridCol({ span: 1 }) {
