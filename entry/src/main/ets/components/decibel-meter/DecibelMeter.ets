@@ -29,6 +29,8 @@ import { LocationDisplay } from '../business/LocationDisplay';
 import { WeightingType } from '../../constants/WeightingConstants';
 import { ResponsiveLayout, Breakpoint, LayoutMode, type WindowChangeListener,
   ListItemLayoutMode } from '../../utils/ResponsiveLayout';
+import { call } from '@kit.TelephonyKit';
+import { BusinessError } from '@kit.BasicServicesKit';
 
 // 响应式数值接口定义
 interface ResponsiveNumberValues {
@@ -91,6 +93,7 @@ export struct DecibelMeter {
   @Local private currentFftSize: number = 2048 // 当前FFT大小
   @Local private noiseAlarmEnabled: boolean = true; // 是否启用噪音阈值警报
   @Local private noiseThreshold: number = 80; // 设置噪音阈值为80分贝
+  @Local private touShu: boolean = false;
   @Local private isNoiseAlarm: boolean = false // 是否触发噪音报警
   @Local private isDisplayApp: boolean = true
   @Local startTime: number = 0
@@ -254,98 +257,149 @@ export struct DecibelMeter {
   private SpectrumView() {
     Column() {
       // Canvas频谱显示
-      Stack({ alignContent: Alignment.TopEnd }) {
-        Canvas(this.canvasContext)
-          .width(this.canvasWidth)
-          .height(this.canvasHeight)
-          .backgroundColor($r('app.color.background_primary'))
-          .borderRadius(12)
-          .shadow({
-            radius: 8,
-            color: $r('app.color.shadow_medium'),
-            offsetX: 2,
-            offsetY: 2
-          })
+      Stack({ alignContent: Alignment.BottomEnd }) {
+        Stack({ alignContent: Alignment.TopEnd }) {
+          Canvas(this.canvasContext)
+            .width(this.canvasWidth)
+            .height(this.canvasHeight)
+            .backgroundColor($r('app.color.background_primary'))
+            .borderRadius(12)
+            .shadow({
+              radius: 8,
+              color: $r('app.color.shadow_medium'),
+              offsetX: 2,
+              offsetY: 2
+            })
+            .border({
+              width: 1,
+              color: $r('app.color.divider_primary')
+            })
+            .onAreaChange((oldArea: Area, newArea: Area) => {
+              console.info(`[FREQ_TRACE][Canvas] Canvas区域变化: 旧尺寸=${oldArea.width}x${oldArea.height}, 新尺寸=${newArea.width}x${newArea.height}`);
+              this.canvasWidth = newArea.width as number;
+              this.canvasHeight = newArea.height as number;
+              console.info(`[FREQ_TRACE][Canvas] 更新后的Canvas尺寸: ${this.canvasWidth}x${this.canvasHeight}, 宽高比: ${(this.canvasWidth /
+              this.canvasHeight).toFixed(2)}`);
+            })
+            .onReady(() => {
+              // 初始化完成后开始绘制
+              const emptySpectrum: Float32Array = new Float32Array(this.currentFftSize * 2);
+              if (this.isDisplayApp) {
+                this.drawSpectrumLocal(emptySpectrum);
+              }
+              this.recordingTime = new Date().getTime() - this.startTime;
+            })
+
+          // 优化信息标签显示（响应式版本）
+          Row() {
+            Image($r('app.media.ic_info'))
+              .width(this.responsiveLayout.getResponsiveValue<number>({
+                xsmall: 12,
+                small: 14,
+                medium: 16,
+                large: 18,
+                xlarge: 20
+              } as ResponsiveNumberValues))
+              .height(this.responsiveLayout.getResponsiveValue<number>({
+                xsmall: 12,
+                small: 14,
+                medium: 16,
+                large: 18,
+                xlarge: 20
+              } as ResponsiveNumberValues))
+              .margin({
+                right: this.responsiveLayout.getResponsiveValue<number>({
+                  xsmall: 4,
+                  small: 5,
+                  medium: 6,
+                  large: 7,
+                  xlarge: 8
+                } as ResponsiveNumberValues)
+              })
+              .fillColor(this.getDecibelColor(this.decibelState.currentDecibel))
+
+            Text(DecibelService.getDecibelDescription(this.decibelState.currentDecibel))
+              .fontSize(this.responsiveLayout.getResponsiveValue<number>({
+                xsmall: 12,
+                small: 13,
+                medium: 14,
+                large: 15,
+                xlarge: 16
+              } as ResponsiveNumberValues))
+              .fontColor(this.getDecibelColor(this.decibelState.currentDecibel))
+              .fontWeight(FontWeight.Medium)
+          }
+          .padding(this.responsiveLayout.getResponsiveValue<number>({
+            xsmall: 6,
+            small: 7,
+            medium: 8,
+            large: 9,
+            xlarge: 10
+          } as ResponsiveNumberValues))
+          .backgroundColor($r('app.color.transparent_white_90'))
+          .borderRadius(8)
           .border({
             width: 1,
-            color: $r('app.color.divider_primary')
+            color: this.getDecibelColor(this.decibelState.currentDecibel)
           })
-          .onAreaChange((oldArea: Area, newArea: Area) => {
-            console.info(`[FREQ_TRACE][Canvas] Canvas区域变化: 旧尺寸=${oldArea.width}x${oldArea.height}, 新尺寸=${newArea.width}x${newArea.height}`);
-            this.canvasWidth = newArea.width as number;
-            this.canvasHeight = newArea.height as number;
-            console.info(`[FREQ_TRACE][Canvas] 更新后的Canvas尺寸: ${this.canvasWidth}x${this.canvasHeight}, 宽高比: ${(this.canvasWidth /
-            this.canvasHeight).toFixed(2)}`);
-          })
-          .onReady(() => {
-            // 初始化完成后开始绘制
-            const emptySpectrum: Float32Array = new Float32Array(this.currentFftSize * 2);
-            if (this.isDisplayApp) {
-              this.drawSpectrumLocal(emptySpectrum);
-            }
-            this.recordingTime = new Date().getTime() - this.startTime;
+          .position({ x: '5%', y: '3%' })
+          .onClick(() => {
+            this.navStack.pushDestinationByName('NoiseDescriptionDialog', null);
           })
 
-        // 优化信息标签显示（响应式版本）
-        Row() {
-          Image($r('app.media.ic_info'))
-            .width(this.responsiveLayout.getResponsiveValue<number>({
-              xsmall: 12,
-              small: 14,
-              medium: 16,
-              large: 18,
-              xlarge: 20
-            } as ResponsiveNumberValues))
-            .height(this.responsiveLayout.getResponsiveValue<number>({
-              xsmall: 12,
-              small: 14,
-              medium: 16,
-              large: 18,
-              xlarge: 20
-            } as ResponsiveNumberValues))
-            .margin({
-              right: this.responsiveLayout.getResponsiveValue<number>({
-                xsmall: 4,
-                small: 5,
-                medium: 6,
-                large: 7,
-                xlarge: 8
-              } as ResponsiveNumberValues)
-            })
-            .fillColor(this.getDecibelColor(this.decibelState.currentDecibel))
+          // 校准指示器
+          CalibrationIndicator({ gain: this.calibrationGain, weightingType: this.weightingType })
 
-          Text(DecibelService.getDecibelDescription(this.decibelState.currentDecibel))
-            .fontSize(this.responsiveLayout.getResponsiveValue<number>({
-              xsmall: 12,
-              small: 13,
-              medium: 14,
-              large: 15,
-              xlarge: 16
-            } as ResponsiveNumberValues))
-            .fontColor(this.getDecibelColor(this.decibelState.currentDecibel))
-            .fontWeight(FontWeight.Medium)
         }
-        .padding(this.responsiveLayout.getResponsiveValue<number>({
-          xsmall: 6,
-          small: 7,
-          medium: 8,
-          large: 9,
-          xlarge: 10
-        } as ResponsiveNumberValues))
-        .backgroundColor($r('app.color.transparent_white_90'))
-        .borderRadius(8)
-        .border({
-          width: 1,
-          color: this.getDecibelColor(this.decibelState.currentDecibel)
-        })
-        .position({ x: '5%', y: '3%' })
-        .onClick(() => {
-          this.navStack.pushDestinationByName('NoiseDescriptionDialog', null);
-        })
 
-        // 校准指示器
-        CalibrationIndicator({ gain: this.calibrationGain, weightingType: this.weightingType })
-
+        if (canIUse('SystemCapability.Applications.Contacts') && this.touShu) {
+          Button('一键投诉', { type: ButtonType.Capsule }).margin(4).onClick(() => {
+            AlertDialog.show(
+              {
+                title: '拨打电话,立即投诉',
+                subtitle: '政务服务便民热线',
+                message: '准备拨打12345进行投诉',
+                autoCancel: true,
+                alignment: DialogAlignment.Center,
+                offset: { dx: 0, dy: -20 },
+                buttonDirection: DialogButtonDirection.HORIZONTAL,
+                buttons: [
+                  {
+                    value: '不投诉了',
+                    action: () => {
+                      try {
+                        promptAction.showToast({
+                          message: '小事一桩,今天就算了',
+                          duration: 2000
+                        });
+                      } catch (err) {
+                        const error: BusinessError = err as BusinessError;
+                        console.error(`Show toast error, the code is ${error.code}, the message is ${error.message}`);
+                      }
+                    }
+                  },
+                  {
+                    value: '立即打电话',
+                    fontColor: $r('app.color.button_red'),
+                    action: () => {
+                      call.makeCall('12345');
+                    }
+                  }
+                ],
+                cancel: () => {
+                  console.log('Closed callbacks');
+                },
+                onWillDismiss: (dismissDialogAction: DismissDialogAction) => {
+                  if (dismissDialogAction.reason === DismissReason.PRESS_BACK) {
+                    dismissDialogAction.dismiss();
+                  }
+                  if (dismissDialogAction.reason === DismissReason.TOUCH_OUTSIDE) {
+                    dismissDialogAction.dismiss();
+                  }
+                }
+              })
+          })
+        }
       }
     }
   }
@@ -640,6 +694,11 @@ export struct DecibelMeter {
       this.avgDecibel = Math.round(this.dbSum / this.dbCount);
 
       // 判断是否超过噪音阈值
+      if (value > 80) {
+        this.touShu = true;
+      } else {
+        this.touShu = false;
+      }
       if (value > this.noiseThreshold && this.noiseAlarmEnabled) {
         if (this.noiseAlarmTimer === -1) {
           this.noiseAlarmTimer = setInterval(() => {
