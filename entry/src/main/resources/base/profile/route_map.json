@@ -14,6 +14,10 @@
       "name": "DecibelHistory",
       "pageSourceFile": "src/main/ets/pages/noisemeter/DecibelHistoryNavigation.ets",
       "buildFunction": "DecibelHistoryBuilder"
+    },{
+      "name": "Settings",
+      "pageSourceFile": "src/main/ets/pages/noisemeter/SettingsNavigation.ets",
+      "buildFunction": "SettingsBuilder"
     },
     {
       "name": "NoiseInfoDialog",

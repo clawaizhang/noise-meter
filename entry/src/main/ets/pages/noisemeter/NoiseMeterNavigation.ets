@@ -1,7 +1,7 @@
 import { DecibelMeter } from '../../components/decibel-meter/DecibelMeter';
 import { navigationStack } from '../../constants/ProviderConstant';
 import { DecibelHistory } from './DecibelHistoryNavigation';
-import { Settings } from '../../components/Settings';
+import { Settings } from './SettingsNavigation';
 import { common } from '@kit.AbilityKit';
 import promptAction from '@ohos.promptAction';
 import { PreferenceKeyConstants } from '../../constants/PreferenceKeyConstants';
@@ -50,7 +50,7 @@ export struct MainNoiseMeter {
   @Local currentIndex: number = 0
   @Local meterOn: boolean = true;
   @Local touchOn: boolean = false;
-  @Local title: string = '仪表盘';
+  @Local title: string = '静喵';
   @Local menuItems: Array<NavigationMenuItem> = [];
   @Local private responsiveLayout: ResponsiveLayout = ResponsiveLayout.getInstance()
   @Local private currentBreakpoint: Breakpoint = Breakpoint.XS
@@ -102,11 +102,11 @@ export struct MainNoiseMeter {
   onTabIndexChange(monitor: IMonitor) {
     const currentValue = monitor.value<number>()?.now;
     if (currentValue === 0) {
-      this.title = '仪表盘';
+      this.title = '静喵';
       this.menuItems = this.noiseMeterMenus;
     }
     if (currentValue === 1) {
-      this.title = '检测记录';
+      this.title = 'AR Sound';
       this.menuItems = this.decibelHistoryMenus;
     }
     if (currentValue === 2) {
@@ -205,28 +205,17 @@ export struct MainNoiseMeter {
 
   private noiseMeterMenus: Array<NavigationMenuItem> = [
     {
-      value: '参考标准',
-      icon: $r('app.media.ic_info'),
+      value: '检测记录',
+      icon: $r('app.media.ic_history'),
       action: () => {
-        this.navStack.pushPathByName('NoiseStandardDialog', null);
+        this.navStack.pushPathByName('DecibelHistory', null);
       }
     },
     {
-      value: '分享',
-      icon: $r('app.media.ic_share'),
+      value: '设置',
+      icon: $r('app.media.ic_settings'),
       action: () => {
-        const context = getContext(this) as common.UIAbilityContext;
-        const uiContext = this.getUIContext();
-        const now = new Date();
-        const timestamp = now.toISOString().replace(/[:.]/g, '-').slice(0, 19);
-        ScreenshotUtils.captureAndShare(
-          context,
-          uiContext,
-          'decibelMeterRoot',
-          `noise_meter_screenshot_${timestamp}.jpg`,
-          '噪音分贝仪截图',
-          '当前噪音检测结果截图'
-        );
+        this.navStack.pushPathByName('Settings', null);
       }
     }
   ]
@@ -234,7 +223,7 @@ export struct MainNoiseMeter {
     value: '清空记录',
     icon: $r('app.media.ic_delete'),
     action: () => {
-      emitter.emit({ eventId: 101 })
+
     }
   }]
 
@@ -263,22 +252,13 @@ export struct MainNoiseMeter {
           .backgroundColor($r('app.color.background_secondary'))
           .alignItems(HorizontalAlign.Center)
         }
-        .tabBar(this.TabBuilder('仪表盘', $r('app.media.ic_meter'), 0))
+        .tabBar(this.TabBuilder('静喵', $r('app.media.ic_meter'), 0))
 
         TabContent() {
-          DecibelHistory({ currentTabIndex: this.currentIndex })
+          DecibelHistory()
         }
         .tabBar(this.TabBuilder('检测记录', $r('app.media.ic_history'), 1))
 
-        // TabContent() {
-        //   LeqStatistics()
-        // }
-        // .tabBar(this.TabBuilder('统计', $r('app.media.ic_stats'), 2))
-
-        TabContent() {
-          Settings()
-        }
-        .tabBar(this.TabBuilder('设置', $r('app.media.ic_settings'), 2))
       }
       .scrollable(false)
       .onChange((index: number) => {

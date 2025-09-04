@@ -1,6 +1,6 @@
-import { PreferenceService, PreferenceValue } from '../services/PreferenceService';
-import { PreferenceKeyConstants } from '../constants/PreferenceKeyConstants';
-import { navigationStack } from '../constants/ProviderConstant';
+import { PreferenceService, PreferenceValue } from '../../services/PreferenceService';
+import { PreferenceKeyConstants } from '../../constants/PreferenceKeyConstants';
+import { navigationStack } from '../../constants/ProviderConstant';
 import {
   responsiveLayout,
   responsiveFontSize,
@@ -11,8 +11,8 @@ import {
   Breakpoint,
   LayoutMode,
   ListItemLayoutMode
-} from '../utils/ResponsiveLayout';
-import { DesignConstants } from '../constants/DesignConstants';
+} from '../../utils/ResponsiveLayout';
+import { DesignConstants } from '../../constants/DesignConstants';
 
 @Extend(Image)
 function itemIcon() {
@@ -96,6 +96,11 @@ function listItemWithDescription() {
     bottom: responsiveListItemPadding(DesignConstants.SPACING_LG)
   })
   .backgroundColor($r('app.color.background_secondary'))
+}
+
+@Builder
+function SettingsBuilder() {
+  Settings()
 }
 
 @ComponentV2
@@ -203,17 +208,19 @@ export struct Settings {
   }
 
   build() {
-    Column() {
-      // 根据布局模式选择不同的渲染方式
-      if (this.currentListItemLayoutMode === ListItemLayoutMode.GRID && this.isLandscape) {
-        this.GridLayoutView()
-      } else {
-        this.ListLayoutView()
+    NavDestination() {
+      Column() {
+        // 根据布局模式选择不同的渲染方式
+        if (this.currentListItemLayoutMode === ListItemLayoutMode.GRID && this.isLandscape) {
+          this.GridLayoutView()
+        } else {
+          this.ListLayoutView()
+        }
       }
-    }
-    .width('100%')
-    .height('100%')
-    .backgroundColor($r('app.color.background_primary'))
+      .width('100%')
+      .height('100%')
+      .backgroundColor($r('app.color.background_primary'))
+    }.title('设置')
   }
 
   /**

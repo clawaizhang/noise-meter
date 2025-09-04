@@ -77,7 +77,6 @@ function DecibelHistoryBuilder() {
 @ComponentV2
 export struct DecibelHistory {
   @Consumer(navigationStack) navStack: NavPathStack = new NavPathStack()
-  @Param currentTabIndex: number = 0
   @Local records: DecibelRecord[] = [];
   @Local dataSource: DecibelRecordDataSource = new DecibelRecordDataSource([]);
   @Local selectedRecord: DecibelRecord | null = null;
@@ -94,16 +93,9 @@ export struct DecibelHistory {
   private promptAction: PromptAction = this.getUIContext().getPromptAction();
   private fileService: FileService = new FileService(this.context)
   private pendingHideButtonId: string = ''; // 当前正在隐藏按钮的记录ID
-  private listItemLayoutChangeListener: (listItemLayoutMode: ListItemLayoutMode, breakpoint: Breakpoint, isLandscape: boolean) => void = () => {};
-
-  @Monitor('currentTabIndex')
-  onTabIndexChange(monitor: IMonitor) {
-    const currentValue = monitor.value<number>()?.now;
-    if (currentValue === 1) {
-      this.loadRecords();
-      this.dataSource.notifyDataReload();
-    }
-  }
+  private listItemLayoutChangeListener: (listItemLayoutMode: ListItemLayoutMode, breakpoint: Breakpoint,
+    isLandscape: boolean) => void = () => {
+  };
 
   onPageShow() {
     this.loadRecords();
@@ -164,8 +156,10 @@ export struct DecibelHistory {
 
     // 初始化响应式布局监听
     this.initializeResponsiveLayout();
-    
+
     this.loadRecords();
+
+    this.dataSource.notifyDataReload();
   }
 
   async loadRecords() {
@@ -192,11 +186,12 @@ export struct DecibelHistory {
     this.updateGridColumns(screenInfo.breakpoint, screenInfo.isLandscape);
 
     // 注册布局变化监听器
-    this.listItemLayoutChangeListener = (listItemLayoutMode: ListItemLayoutMode, breakpoint: Breakpoint, isLandscape: boolean) => {
-      this.currentListItemLayoutMode = listItemLayoutMode;
-      this.updateGridColumns(breakpoint, isLandscape);
-      this.dataSource.notifyDataReload(); // 重新渲染列表
-    };
+    this.listItemLayoutChangeListener =
+      (listItemLayoutMode: ListItemLayoutMode, breakpoint: Breakpoint, isLandscape: boolean) => {
+        this.currentListItemLayoutMode = listItemLayoutMode;
+        this.updateGridColumns(breakpoint, isLandscape);
+        this.dataSource.notifyDataReload(); // 重新渲染列表
+      };
 
     addListItemLayoutChangeListener(this.listItemLayoutChangeListener);
   }
@@ -367,7 +362,10 @@ export struct DecibelHistory {
     .height(responsiveListItemSpacing(32))
     .width(responsiveListItemSpacing(56))
     .backgroundColor($r('app.color.button_secondary'))
-    .padding({ left: responsiveListItemPadding(DesignConstants.SPACING_MD), right: responsiveListItemPadding(DesignConstants.SPACING_MD) })
+    .padding({
+      left: responsiveListItemPadding(DesignConstants.SPACING_MD),
+      right: responsiveListItemPadding(DesignConstants.SPACING_MD)
+    })
     .borderRadius(responsiveListItemSpacing(16))
     .onClick(this.emptyAll)
   }
@@ -605,7 +603,8 @@ export struct DecibelHistory {
                     this.pendingDeleteId = ''; // 重置删除确认状态
                   }
                 }
-                this.currentSlideOffset = this.showingDeleteButtonId === record.id ? -responsiveListItemSpacing(160) : 0;
+                this.currentSlideOffset =
+                  this.showingDeleteButtonId === record.id ? -responsiveListItemSpacing(160) : 0;
                 this.currentSlidingId = '';
               })
             }
@@ -624,7 +623,10 @@ export struct DecibelHistory {
                 .fontColor(Color.White)
                 .textAlign(TextAlign.Center)
                 .width('100%')
-                .padding({ left: responsiveListItemSpacing(DesignConstants.SPACING_SM), right: responsiveListItemSpacing(DesignConstants.SPACING_SM) })
+                .padding({
+                  left: responsiveListItemSpacing(DesignConstants.SPACING_SM),
+                  right: responsiveListItemSpacing(DesignConstants.SPACING_SM)
+                })
             }
             .width(responsiveListItemSpacing(160))
             .height(responsiveListItemSpacing(96))
@@ -675,7 +677,10 @@ export struct DecibelHistory {
                   .fontColor(Color.White)
                   .textAlign(TextAlign.Center)
                   .width('100%')
-                  .padding({ left: responsiveListItemSpacing(DesignConstants.SPACING_SM), right: responsiveListItemSpacing(DesignConstants.SPACING_SM) })
+                  .padding({
+                    left: responsiveListItemSpacing(DesignConstants.SPACING_SM),
+                    right: responsiveListItemSpacing(DesignConstants.SPACING_SM)
+                  })
               }
               .width(responsiveListItemSpacing(80))
               .height(responsiveListItemSpacing(96))
@@ -755,22 +760,30 @@ export struct DecibelHistory {
   }
 
   build() {
-    Column() {
-      // 内容区域
-      if (this.records.length === 0) {
-        this.EmptyStateView()
-      } else {
-        // 根据布局模式选择不同的渲染方式
-        if (this.currentListItemLayoutMode === ListItemLayoutMode.GRID) {
-          this.GridLayoutView()
+    NavDestination() {
+      Column() {
+        // 内容区域
+        if (this.records.length === 0) {
+          this.EmptyStateView()
         } else {
-          this.ListLayoutView()
+          // 根据布局模式选择不同的渲染方式
+          if (this.currentListItemLayoutMode === ListItemLayoutMode.GRID) {
+            this.GridLayoutView()
+          } else {
+            this.ListLayoutView()
+          }
         }
       }
-    }
-    .width('100%')
-    .height('100%')
-    .backgroundColor($r('app.color.background_secondary'))
+      .width('100%')
+      .height('100%')
+      .backgroundColor($r('app.color.background_secondary'))
+    }.title('历史记录').menus([{
+      value: '清空记录',
+      icon: $r('app.media.ic_delete'),
+      action: () => {
+        this.emptyAll();
+      }
+    }])
   }
 
   /**
@@ -853,10 +866,10 @@ export struct DecibelHistory {
         // 使用GridRow和GridCol实现响应式栅格布局
         GridRow({
           columns: {
-            xs: 1,    // 超小屏：1列
-            sm: 2,    // 小屏：2列
-            md: 3,    // 中屏：3列
-            lg: 4,    // 大屏：4列
+            xs: 1, // 超小屏：1列
+            sm: 2, // 小屏：2列
+            md: 3, // 中屏：3列
+            lg: 4, // 大屏：4列
             xl: 5     // 超大屏：5列
           },
           gutter: {
@@ -864,14 +877,14 @@ export struct DecibelHistory {
               xs: responsiveListItemSpacing(DesignConstants.SPACING_SM),
               sm: responsiveListItemSpacing(DesignConstants.SPACING_MD),
               md: responsiveListItemSpacing(DesignConstants.SPACING_MD),
-              lg: responsiveListItemSpacing(DesignConstants.SPACING_MD),  // 减少大屏间距
+              lg: responsiveListItemSpacing(DesignConstants.SPACING_MD), // 减少大屏间距
               xl: responsiveListItemSpacing(DesignConstants.SPACING_MD)   // 减少超大屏间距
             },
             y: {
               xs: responsiveListItemSpacing(DesignConstants.SPACING_SM),
               sm: responsiveListItemSpacing(DesignConstants.SPACING_MD),
               md: responsiveListItemSpacing(DesignConstants.SPACING_MD),
-              lg: responsiveListItemSpacing(DesignConstants.SPACING_MD),  // 减少大屏间距
+              lg: responsiveListItemSpacing(DesignConstants.SPACING_MD), // 减少大屏间距
               xl: responsiveListItemSpacing(DesignConstants.SPACING_MD)   // 减少超大屏间距
             }
           },
@@ -919,7 +932,7 @@ export struct DecibelHistory {
         }
         .width('100%')
         .padding({
-          left: responsiveListItemPadding(DesignConstants.SPACING_SM),  // 减少内边距
+          left: responsiveListItemPadding(DesignConstants.SPACING_SM), // 减少内边距
           right: responsiveListItemPadding(DesignConstants.SPACING_SM),
           top: responsiveListItemPadding(DesignConstants.SPACING_MD),
           bottom: responsiveListItemPadding(DesignConstants.SPACING_MD)
@@ -1029,7 +1042,7 @@ export struct DecibelHistory {
               .height(responsiveIconSize(DesignConstants.ICON_SIZE_XS))
               .fillColor($r('app.color.icon_secondary'))
               .margin({ right: responsiveListItemSpacing(DesignConstants.SPACING_XS) })
-            
+
             Text(record.location)
               .fontSize(responsiveFontSize(DesignConstants.FONT_SIZE_XS))
               .fontColor($r('app.color.text_secondary'))
@@ -1068,7 +1081,7 @@ export struct DecibelHistory {
             .maxLines(1)
             .textOverflow({ overflow: TextOverflow.Ellipsis })
             .layoutWeight(1)
-          
+
           Text(`${Math.round(record.duration / 1000)}秒`)
             .fontSize(responsiveFontSize(DesignConstants.FONT_SIZE_XS))
             .fontColor($r('app.color.text_secondary'))
@@ -1092,14 +1105,14 @@ export struct DecibelHistory {
             top: responsiveListItemSpacing(DesignConstants.SPACING_SM),
             bottom: responsiveListItemSpacing(DesignConstants.SPACING_SM)
           })
-        
+
         AudioPlayer({
           audioFilePath: record.audioFilePath,
         })
-        .width('90%')
-        .margin({
-          bottom: responsiveListItemPadding(DesignConstants.SPACING_MD)
-        })
+          .width('90%')
+          .margin({
+            bottom: responsiveListItemPadding(DesignConstants.SPACING_MD)
+          })
       }
     }
     .backgroundColor($r('app.color.background_primary'))
