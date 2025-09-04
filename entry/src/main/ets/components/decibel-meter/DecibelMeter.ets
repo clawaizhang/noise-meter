@@ -31,6 +31,8 @@ import { ResponsiveLayout, Breakpoint, LayoutMode, type WindowChangeListener,
   ListItemLayoutMode } from '../../utils/ResponsiveLayout';
 import { call } from '@kit.TelephonyKit';
 import { BusinessError } from '@kit.BasicServicesKit';
+import { PermissionUtil } from '@pura/harmony-utils';
+import { camera } from '@kit.CameraKit';
 
 // 响应式数值接口定义
 interface ResponsiveNumberValues {
@@ -83,7 +85,7 @@ export struct DecibelMeter {
   @Local private showStats: boolean = false
   @Local private recordingTime: number = 0
   @Local private isRecordEnabled: boolean = false
-  @Local private isUILocked: boolean = false // 新增UI锁定状态
+  @Local private torchOn: boolean = false
   @Local private isLocationEnabled: boolean = false // 位置服务状态
   @Local private canvasWidth: number = 0 // Canvas宽度
   @Local private canvasHeight: number = 0 // Canvas高度
@@ -618,7 +620,7 @@ export struct DecibelMeter {
           let decibel = Math.round(db);
           this.values.push(decibel);
           this.weightingTypes.push(this.weightingType)
-          if (!this.isUILocked && this.isDisplayApp) {
+          if (this.isDisplayApp) {
             this.decibelState.currentDecibel = decibel;
             this.updateStatistics(this.decibelState.currentDecibel);
             this.drawSpectrumLocal(spectrum);
@@ -1027,7 +1029,7 @@ export struct DecibelMeter {
       // 右侧：操作按钮 - 横屏模式下使用竖排一列布局
       Column() {
         VerticalActionPanel({
-          isUILocked: this.isUILocked,
+          isUILocked: this.torchOn,
           weightingType: this.weightingType,
           onReset: () => {
             this.audioService.resetData();
@@ -1037,18 +1039,25 @@ export struct DecibelMeter {
             this.stopRecording(comments);
           },
           lockToggle: () => {
-            if (this.isUILocked) {
-              promptAction.showToast({
-                message: '已解锁',
-                duration: 2000
-              });
-            } else {
-              promptAction.showToast({
-                message: '已锁定,持续检测中...',
-                duration: 2000
-              });
-            }
-            this.isUILocked = !this.isUILocked;
+            PermissionUtil.checkPermissions('ohos.permission.CAMERA').then((result) => {
+              if (result) {
+                let cameraManager: camera.CameraManager = camera.getCameraManager(getContext(this));
+                if (cameraManager.isTorchSupported()) {
+                  cameraManager.setTorchMode(this.torchOn ? camera.TorchMode.OFF : camera.TorchMode.ON);
+                  promptAction.showToast({message: '手电筒已' + (this.torchOn ? '关闭' : '打开')})
+                  this.torchOn = !this.torchOn;
+                }
+              } else {
+                PermissionUtil.requestPermissions('ohos.permission.CAMERA').then(() => {
+                  let cameraManager: camera.CameraManager = camera.getCameraManager(getContext(this));
+                  if (cameraManager.isTorchSupported()) {
+                    cameraManager.setTorchMode(this.torchOn ? camera.TorchMode.OFF : camera.TorchMode.ON);
+                    promptAction.showToast({message: '手电筒已' + (this.torchOn ? '关闭' : '打开')})
+                    this.torchOn = !this.torchOn;
+                  }
+                });
+              }
+            })
           },
           // 修改：将onToggleWeighting的参数类型改为WeightingType
           onToggleWeighting: (weightingType: WeightingType) => {
@@ -1275,7 +1284,7 @@ export struct DecibelMeter {
         })
 
         ActionPanel({
-          isUILocked: this.isUILocked,
+          isUILocked: this.torchOn,
           weightingType: this.weightingType,
           onReset: () => {
             this.audioService.resetData();
@@ -1285,18 +1294,25 @@ export struct DecibelMeter {
             this.stopRecording(comments);
           },
           lockToggle: () => {
-            if (this.isUILocked) {
-              promptAction.showToast({
-                message: '已解锁',
-                duration: 2000
-              });
-            } else {
-              promptAction.showToast({
-                message: '已锁定,持续检测中...',
-                duration: 2000
-              });
-            }
-            this.isUILocked = !this.isUILocked;
+            PermissionUtil.checkPermissions('ohos.permission.CAMERA').then((result) => {
+              if (result) {
+                let cameraManager: camera.CameraManager = camera.getCameraManager(getContext(this));
+                if (cameraManager.isTorchSupported()) {
+                  cameraManager.setTorchMode(this.torchOn ? camera.TorchMode.OFF : camera.TorchMode.ON);
+                  promptAction.showToast({message: '手电筒已' + (this.torchOn ? '关闭' : '打开')})
+                  this.torchOn = !this.torchOn;
+                }
+              } else {
+                PermissionUtil.requestPermissions('ohos.permission.CAMERA').then(() => {
+                  let cameraManager: camera.CameraManager = camera.getCameraManager(getContext(this));
+                  if (cameraManager.isTorchSupported()) {
+                    cameraManager.setTorchMode(this.torchOn ? camera.TorchMode.OFF : camera.TorchMode.ON);
+                    promptAction.showToast({message: '手电筒已' + (this.torchOn ? '关闭' : '打开')})
+                    this.torchOn = !this.torchOn;
+                  }
+                });
+              }
+            })
           },
           // 修改：将onToggleWeighting的参数类型改为WeightingType
           onToggleWeighting: (weightingType: WeightingType) => {

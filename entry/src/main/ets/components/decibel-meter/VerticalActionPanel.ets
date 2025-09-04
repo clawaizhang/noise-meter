@@ -66,7 +66,7 @@ export struct VerticalActionPanel {
 
         // 锁定按钮
         Button({ type: ButtonType.Circle }) {
-          Image($r('app.media.ic_lock'))
+          Image($r('app.media.ic_power_on'))
             .width(24)
             .height(24)
             .fillColor(this.isUILocked ? $r('app.color.white') : $r('app.color.text_secondary'))

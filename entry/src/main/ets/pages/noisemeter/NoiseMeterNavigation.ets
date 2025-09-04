@@ -10,6 +10,9 @@ import { ScreenshotUtils } from '../../utils/ScreenshotUtils';
 import { emitter } from '@kit.BasicServicesKit';
 import { WeightingType } from '../../constants/WeightingConstants';
 import { ResponsiveLayout, Breakpoint, LayoutMode } from '../../utils/ResponsiveLayout';
+import { PermissionUtil } from '@pura/harmony-utils';
+import { camera } from '@kit.CameraKit';
+import { media } from '@kit.MediaKit';
 
 // 导航菜单项接口定义
 interface NavigationMenuItem {
@@ -46,14 +49,18 @@ export struct MainNoiseMeter {
   @Consumer(navigationStack) navStack: NavPathStack = new NavPathStack()
   @Local currentIndex: number = 0
   @Local meterOn: boolean = true;
-  @Local title:string = '仪表盘';
-  @Local menuItems:Array<NavigationMenuItem> = [];
+  @Local touchOn: boolean = false;
+  @Local title: string = '仪表盘';
+  @Local menuItems: Array<NavigationMenuItem> = [];
   @Local private responsiveLayout: ResponsiveLayout = ResponsiveLayout.getInstance()
   @Local private currentBreakpoint: Breakpoint = Breakpoint.XS
   @Local private currentLayoutMode: LayoutMode = LayoutMode.XSMALL
   @Local private isLandscape: boolean = false // 新增：横屏状态
   private preferenceService: PreferenceService = PreferenceService.getInstance();
-  
+  // 创建录像实例
+  private cameraManager: camera.CameraManager | null = null;
+  private surfaceId: string | null = null;
+
   aboutToDisappear(): void {
     // 移除ResponsiveLayout的监听器
     this.responsiveLayout.removeChangeListener((width, height, breakpoint, layoutMode) => {
@@ -85,7 +92,7 @@ export struct MainNoiseMeter {
       this.updateResponsiveLayout(width);
       console.info(`[FREQ_TRACE][Responsive] 导航窗口尺寸变化: ${width}x${height}`);
     });
-    
+
     // 初始化响应式布局状态
     const screenInfo = this.responsiveLayout.getCurrentScreenInfo();
     this.updateResponsiveLayout(screenInfo.width);
@@ -95,7 +102,7 @@ export struct MainNoiseMeter {
   onTabIndexChange(monitor: IMonitor) {
     const currentValue = monitor.value<number>()?.now;
     if (currentValue === 0) {
-      this.title  = '仪表盘';
+      this.title = '仪表盘';
       this.menuItems = this.noiseMeterMenus;
     }
     if (currentValue === 1) {
@@ -107,7 +114,6 @@ export struct MainNoiseMeter {
       this.menuItems = [];
     }
   }
-
 
   @Builder
   TabBuilder(title: string, icon: Resource, index: number) {
@@ -181,13 +187,15 @@ export struct MainNoiseMeter {
             xlarge: 14
           } as ResponsiveNumberValues))
           .fontColor(this.currentIndex === index ? $r('app.color.text_primary') : $r('app.color.text_secondary'))
-          .margin({ top: this.responsiveLayout.getResponsiveValue<number>({
-            xsmall: 2,
-            small: 3,
-            medium: 4,
-            large: 5,
-            xlarge: 6
-          } as ResponsiveNumberValues) })
+          .margin({
+            top: this.responsiveLayout.getResponsiveValue<number>({
+              xsmall: 2,
+              small: 3,
+              medium: 4,
+              large: 5,
+              xlarge: 6
+            } as ResponsiveNumberValues)
+          })
       }
       .width('100%')
       .height('100%')
@@ -196,36 +204,6 @@ export struct MainNoiseMeter {
   }
 
   private noiseMeterMenus: Array<NavigationMenuItem> = [
-    {
-      value: this.meterOn ? '关机' : '开机',
-      icon: this.meterOn ? $r("app.media.ic_power_off") : $r('app.media.ic_power_on'),
-      action: () => {
-        if (this.meterOn) {
-          promptAction.showDialog({
-            title: '确认关机',
-            message: '确认要关闭仪表盘吗？',
-            buttons: [
-              {
-                text: '取消',
-                color: $r('app.color.text_secondary')
-              },
-              {
-                text: '确认',
-                color: $r('app.color.button_danger')
-              }
-            ]
-          }).then((result) => {
-            if (result.index === 1) { // 1 表示确定按钮
-              this.meterOn = false;
-              this.preferenceService.setBoolean(PreferenceKeyConstants.METER_ON, false);
-            }
-          });
-        } else {
-          this.meterOn = true;
-          this.preferenceService.setBoolean(PreferenceKeyConstants.METER_ON, true);
-        }
-      }
-    },
     {
       value: '参考标准',
       icon: $r('app.media.ic_info'),
@@ -252,7 +230,6 @@ export struct MainNoiseMeter {
       }
     }
   ]
-
   private decibelHistoryMenus: Array<NavigationMenuItem> = [{
     value: '清空记录',
     icon: $r('app.media.ic_delete'),
@@ -313,23 +290,23 @@ export struct MainNoiseMeter {
         // 横屏时tab栏高度自适应
         '100%' :
         // 竖屏时使用响应式高度
-        this.responsiveLayout.getResponsiveValue<number>({
-          xsmall: 48,
-          small: 50,
-          medium: 56,
-          large: 60,
-          xlarge: 64
-        } as ResponsiveNumberValues)
+      this.responsiveLayout.getResponsiveValue<number>({
+        xsmall: 48,
+        small: 50,
+        medium: 56,
+        large: 60,
+        xlarge: 64
+      } as ResponsiveNumberValues)
       )
       .barWidth(this.isLandscape ?
         // 横屏时tab栏宽度使用响应式值
-        this.responsiveLayout.getResponsiveValue<number>({
-          xsmall: 80,
-          small: 90,
-          medium: 100,
-          large: 110,
-          xlarge: 120
-        } as ResponsiveNumberValues) :
+      this.responsiveLayout.getResponsiveValue<number>({
+        xsmall: 80,
+        small: 90,
+        medium: 100,
+        large: 110,
+        xlarge: 120
+      } as ResponsiveNumberValues) :
         // 竖屏时宽度自适应
         '100%'
       )

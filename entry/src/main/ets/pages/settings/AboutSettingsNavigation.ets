@@ -279,7 +279,7 @@ export struct AboutSettings {
                 .listItemRow()
 
                 // 描述信息
-                Text('噪音分贝仪pro - 专业的噪音检测工具')
+                Text('静喵AR Sound - 专业的噪音检测工具')
                   .itemDescription()
                   .margin({ top: responsiveListItemSpacing(DesignConstants.SPACING_MD) })
               }
@@ -383,7 +383,7 @@ export struct AboutSettings {
             }
 
             ListItem() {
-              Text('噪音分贝仪pro - 专业的噪音检测工具')
+              Text('静喵AR Sound - 专业的噪音检测工具')
                 .itemDescription()
             }
             .descriptionContainer()

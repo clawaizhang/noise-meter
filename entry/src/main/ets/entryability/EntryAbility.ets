@@ -12,6 +12,8 @@ import { NotificationHelper } from '../utils/NotificationHelper';
 import { PreferenceService, PreferenceValue } from '../services/PreferenceService';
 import { PreferenceKeyConstants } from '../constants/PreferenceKeyConstants';
 import audio from '@ohos.multimedia.audio';
+import { PermissionUtil } from '@pura/harmony-utils';
+import { camera } from '@kit.CameraKit';
 
 const TAG = 'EntryAbility';
 const DOMAIN = 0x0000;
@@ -21,6 +23,8 @@ export default class EntryAbility extends UIAbility {
   private backgroundRunningEnabled: boolean = false;
   private meterOn: boolean = false;
   private backgroundRunningRequested: boolean = false;
+  private  cameraManager: camera.CameraManager = camera.getCameraManager(getContext(this));
+
 
   async onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): Promise<void> {
     hilog.info(DOMAIN, TAG, 'Ability onCreate');
@@ -62,6 +66,13 @@ export default class EntryAbility extends UIAbility {
 
   onDestroy(): void {
     hilog.info(DOMAIN, TAG, 'Ability onDestroy');
+    PermissionUtil.checkPermissions('ohos.permission.CAMERA').then((result) => {
+      if (result) {
+        if (this.cameraManager.isTorchSupported()) {
+          this.cameraManager.setTorchMode(camera.TorchMode.OFF);
+        }
+      }
+    })
   }
 
   onWindowStageCreate(windowStage: window.WindowStage): void {
@@ -119,6 +130,7 @@ export default class EntryAbility extends UIAbility {
     const windowManager = WindowManager.getInstance();
     windowManager.setKeepScreenOn(this.keepScreenOn);
     hilog.info(DOMAIN, TAG, 'Ability onWindowStageDestroy');
+
   }
 
   onForeground(): void {

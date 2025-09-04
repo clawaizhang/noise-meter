@@ -64,7 +64,7 @@ export struct ActionPanel {
 
         // 锁定按钮
         Button({ type: ButtonType.Circle }) {
-          Image($r('app.media.ic_lock'))
+          Image($r('app.media.ic_power_on'))
             .width(20)
             .height(20)
             .fillColor(this.isUILocked ? $r('app.color.white') : $r('app.color.text_secondary'))

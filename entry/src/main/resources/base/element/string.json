@@ -10,7 +10,7 @@
     },
     {
       "name": "EntryAbility_label",
-      "value": "噪音分贝仪pro"
+      "value": "静喵AR Sound"
     },
     {
       "name": "microphone_permission_reason",
@@ -27,6 +27,10 @@
     {
       "name": "internet_reason",
       "value": "需要访问网络以获取位置信息"
+    },
+    {
+      "name": "camera_reason",
+      "value": "需要访问相机以开启手电筒"
     },
     {
       "name": "bundle_reason",
