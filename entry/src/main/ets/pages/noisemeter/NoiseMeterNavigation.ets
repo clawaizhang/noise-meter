@@ -50,7 +50,7 @@ export struct MainNoiseMeter {
   @Local currentIndex: number = 0
   @Local meterOn: boolean = true;
   @Local touchOn: boolean = false;
-  @Local title: string = '静喵';
+  @Local title: string = '静喵Sound';
   @Local menuItems: Array<NavigationMenuItem> = [];
   @Local private responsiveLayout: ResponsiveLayout = ResponsiveLayout.getInstance()
   @Local private currentBreakpoint: Breakpoint = Breakpoint.XS
@@ -102,7 +102,7 @@ export struct MainNoiseMeter {
   onTabIndexChange(monitor: IMonitor) {
     const currentValue = monitor.value<number>()?.now;
     if (currentValue === 0) {
-      this.title = '静喵';
+      this.title = '静喵Sound';
       this.menuItems = this.noiseMeterMenus;
     }
     if (currentValue === 1) {
@@ -252,7 +252,7 @@ export struct MainNoiseMeter {
           .backgroundColor($r('app.color.background_secondary'))
           .alignItems(HorizontalAlign.Center)
         }
-        .tabBar(this.TabBuilder('静喵', $r('app.media.ic_meter'), 0))
+        .tabBar(this.TabBuilder('静喵Sound', $r('app.media.ic_meter'), 0))
 
         TabContent() {
           DecibelHistory()

@@ -27,12 +27,18 @@ import { PreferenceService, PreferenceChangeListener, PreferenceValue } from '..
 import { FFTAnalyzer } from '../../utils/FFTAnalyzer';
 import { LocationDisplay } from '../business/LocationDisplay';
 import { WeightingType } from '../../constants/WeightingConstants';
-import { ResponsiveLayout, Breakpoint, LayoutMode, type WindowChangeListener,
-  ListItemLayoutMode } from '../../utils/ResponsiveLayout';
+import {
+  ResponsiveLayout,
+  Breakpoint,
+  LayoutMode,
+  type WindowChangeListener,
+  ListItemLayoutMode
+} from '../../utils/ResponsiveLayout';
 import { call } from '@kit.TelephonyKit';
 import { BusinessError } from '@kit.BasicServicesKit';
 import { PermissionUtil } from '@pura/harmony-utils';
 import { camera } from '@kit.CameraKit';
+import lottie, { AnimationItem } from '@ohos/lottie';
 
 // 响应式数值接口定义
 interface ResponsiveNumberValues {
@@ -126,6 +132,9 @@ export struct DecibelMeter {
   private canvasSettings: RenderingContextSettings = new RenderingContextSettings(true) // Canvas设置
   private canvasContext: CanvasRenderingContext2D = new CanvasRenderingContext2D(this.canvasSettings) // Canvas上下文
   private noiseAlarmTimer: number = -1 // 定时器ID用于控制闪烁
+  mainCatRenderingSettings: RenderingContextSettings = new RenderingContextSettings(true)
+  mainCatCanvasRenderingContext: CanvasRenderingContext2D = new CanvasRenderingContext2D(this.mainCatRenderingSettings)
+  animationCatItem!: AnimationItem
 
   // 更新响应式布局状态
   private updateResponsiveLayout(width: number): void {
@@ -171,14 +180,14 @@ export struct DecibelMeter {
         // 横屏模式：频谱图占据屏幕大部分高度
         // 计算可用高度（减去边距）
         const availableHeightWithMargin = availableHeightVp - (responsiveMargin as number * 2);
-        
+
         // 横屏模式下频谱图高度应该更大，接近屏幕高度
         this.canvasHeight = availableHeightWithMargin * 0.8; // 占据80%的可用高度
-        
+
         // 根据宽高比计算宽度
         const aspectRatio = 1.5; // 横屏模式下使用更合适的宽高比
         this.canvasWidth = this.canvasHeight * aspectRatio;
-        
+
         // 确保宽度不超过可用宽度
         const maxWidth = availableWidthVp - (responsiveMargin as number * 2);
         if (this.canvasWidth > maxWidth) {
@@ -188,7 +197,7 @@ export struct DecibelMeter {
       } else {
         // 竖屏模式：保持原有宽高比计算
         this.canvasWidth = availableWidthVp - (responsiveMargin as number * 2);
-        
+
         // 根据布局模式调整宽高比
         switch (this.currentLayoutMode) {
           case LayoutMode.XSMALL:
@@ -407,6 +416,9 @@ export struct DecibelMeter {
   }
 
   aboutToDisappear() {
+    lottie.destroy('cat')
+    this.animationCatItem.removeEventListener('DOMLoaded');
+    lottie.destroy('cat');
     // 原有的清理代码
     if (this.recordListener) {
       this.preferenceService.removeChangeListener(PreferenceKeyConstants.RECORD, this.recordListener);
@@ -436,7 +448,8 @@ export struct DecibelMeter {
 
       // 使用ResponsiveLayout的统一监听系统
       this.responsiveListener =
-        (width: number, height: number, breakpoint: Breakpoint, layoutMode: LayoutMode, listItemLayoutMode: ListItemLayoutMode, isLandscape: boolean) => {
+        (width: number, height: number, breakpoint: Breakpoint, layoutMode: LayoutMode,
+          listItemLayoutMode: ListItemLayoutMode, isLandscape: boolean) => {
           this.updateResponsiveLayout(width);
           this.isLandscape = isLandscape; // 更新横屏状态
           // 重新计算Canvas尺寸
@@ -818,267 +831,301 @@ export struct DecibelMeter {
 
   @Builder
   private LandscapeLayout() {
-    Row() {
-      // 左侧：频谱图
-      Column() {
-        this.SpectrumView()
-      }
-      .width('50%')
-      .height('100%')
-      .justifyContent(FlexAlign.Center)
-
-      // 中间：分贝显示和位置信息
-      Column() {
-        // 分贝显示卡片
-        Row() {
-          Column() {
-            Text(this.showAvgInsteadOfMin ? '平均' : '最小')
-              .fontSize(this.responsiveLayout.getResponsiveValue<number>({
-                xsmall: 10,
-                small: 12,
-                medium: 14,
-                large: 16,
-                xlarge: 18
-              } as ResponsiveNumberValues))
-              .fontColor($r('app.color.text_secondary'))
-              .margin({ bottom: 4 })
-            Text(this.showAvgInsteadOfMin ?
-              (this.avgDecibel === 0 ? '-' : this.avgDecibel.toString()) :
-              (this.minDecibel === 0 ? '-' : this.minDecibel.toString()))
-              .fontSize(this.responsiveLayout.getResponsiveValue<number>({
-                xsmall: 24,
-                small: 28,
-                medium: 32,
-                large: 36,
-                xlarge: 40
-              } as ResponsiveNumberValues))
-              .fontWeight(FontWeight.Medium)
-              .fontColor(DecibelService.getDecibelColor(
-                this.showAvgInsteadOfMin ? this.avgDecibel : this.minDecibel))
-              .onClick(() => {
-                this.showAvgInsteadOfMin = !this.showAvgInsteadOfMin;
-              })
-          }
-          .alignItems(HorizontalAlign.Center)
-          .margin({
-            right: this.responsiveLayout.getResponsiveValue<number>({
-              xsmall: 8,
-              small: 12,
-              medium: 16,
-              large: 20,
-              xlarge: 24
-            } as ResponsiveNumberValues)
-          })
-
-          Column() {
-            Text(this.decibelState.currentDecibel === 0 ? '-' : this.decibelState.currentDecibel.toString())
-              .fontSize(this.responsiveLayout.getResponsiveValue<number>({
-                xsmall: 60,
-                small: 70,
-                medium: 80,
-                large: 90,
-                xlarge: 100
-              } as ResponsiveNumberValues))
-              .fontWeight(FontWeight.Bold)
-              .fontColor(DecibelService.getDecibelColor(this.decibelState.currentDecibel))
-          }
-          .alignItems(HorizontalAlign.Center)
-
-          Column() {
-            Text('最大')
-              .fontSize(this.responsiveLayout.getResponsiveValue<number>({
-                xsmall: 10,
-                small: 12,
-                medium: 14,
-                large: 16,
-                xlarge: 18
-              } as ResponsiveNumberValues))
-              .fontColor($r('app.color.text_secondary'))
-              .margin({ bottom: 4 })
-            Text(this.maxDecibel === 0 ? '-' : this.maxDecibel.toString())
-              .fontSize(this.responsiveLayout.getResponsiveValue<number>({
-                xsmall: 24,
-                small: 28,
-                medium: 32,
-                large: 36,
-                xlarge: 40
-              } as ResponsiveNumberValues))
-              .fontWeight(FontWeight.Medium)
-              .fontColor(DecibelService.getDecibelColor(this.maxDecibel))
-          }
-          .alignItems(HorizontalAlign.Center)
-          .margin({
-            left: this.responsiveLayout.getResponsiveValue<number>({
-              xsmall: 8,
-              small: 12,
-              medium: 16,
-              large: 20,
-              xlarge: 24
-            } as ResponsiveNumberValues)
-          })
+    Scroll(){
+      Row() {
+        // 左侧：频谱图
+        Column() {
+          this.SpectrumView()
         }
-        .width('100%')
+        .height('100%')
         .justifyContent(FlexAlign.Center)
-        .alignItems(VerticalAlign.Center)
-        .margin({
-          bottom: this.responsiveLayout.getResponsiveValue<number>({
-            xsmall: 3,
-            small: 4,
-            medium: 5,
-            large: 6,
-            xlarge: 7
-          } as ResponsiveNumberValues), top: this.responsiveLayout.getResponsiveValue<number>({
-            xsmall: 6,
-            small: 8,
-            medium: 10,
-            large: 12,
-            xlarge: 14
-          } as ResponsiveNumberValues)
-        })
-        .borderColor(this.isNoiseAlarm ? DecibelService.getDecibelColor(this.decibelState.currentDecibel) :
-        Color.Transparent)
 
-        Row() {
-          if (this.isRecording) {
-            Text(`${secondsToHoursMinutesSecondsWithDecimal(this.MAX_RECORDING_DURATION -
-            this.recordingTime)} 后自动保存`)
-              .fontSize(this.responsiveLayout.getResponsiveValue<number>({
-                xsmall: 12,
-                small: 14,
-                medium: 16,
-                large: 18,
-                xlarge: 20
-              } as ResponsiveNumberValues))
-              .fontColor($r('app.color.text_secondary'))
-            Text(' | ')
-              .fontSize(this.responsiveLayout.getResponsiveValue<number>({
-                xsmall: 12,
-                small: 14,
-                medium: 16,
-                large: 18,
-                xlarge: 20
-              } as ResponsiveNumberValues))
-              .fontColor($r('app.color.text_secondary'))
-          }
+        // 中间：分贝显示和位置信息
+        Column() {
+          // 分贝显示卡片
           Row() {
-            Image($r('app.media.ic_info'))
-              .width(this.responsiveLayout.getResponsiveValue<number>({
-                xsmall: 10,
+            Column() {
+              Text(this.showAvgInsteadOfMin ? '平均' : '最小')
+                .fontSize(this.responsiveLayout.getResponsiveValue<number>({
+                  xsmall: 10,
+                  small: 12,
+                  medium: 14,
+                  large: 16,
+                  xlarge: 18
+                } as ResponsiveNumberValues))
+                .fontColor($r('app.color.text_secondary'))
+                .margin({ bottom: 4 })
+              Text(this.showAvgInsteadOfMin ?
+                (this.avgDecibel === 0 ? '-' : this.avgDecibel.toString()) :
+                (this.minDecibel === 0 ? '-' : this.minDecibel.toString()))
+                .fontSize(this.responsiveLayout.getResponsiveValue<number>({
+                  xsmall: 24,
+                  small: 28,
+                  medium: 32,
+                  large: 36,
+                  xlarge: 40
+                } as ResponsiveNumberValues))
+                .fontWeight(FontWeight.Medium)
+                .fontColor(DecibelService.getDecibelColor(
+                  this.showAvgInsteadOfMin ? this.avgDecibel : this.minDecibel))
+                .onClick(() => {
+                  this.showAvgInsteadOfMin = !this.showAvgInsteadOfMin;
+                })
+            }
+            .alignItems(HorizontalAlign.Center)
+            .margin({
+              right: this.responsiveLayout.getResponsiveValue<number>({
+                xsmall: 8,
                 small: 12,
-                medium: 14,
-                large: 16,
-                xlarge: 18
-              } as ResponsiveNumberValues))
-              .height(this.responsiveLayout.getResponsiveValue<number>({
-                xsmall: 10,
-                small: 12,
-                medium: 14,
-                large: 16,
-                xlarge: 18
-              } as ResponsiveNumberValues))
-              .margin({ right: 4 })
-              .fillColor(DecibelService.getDecibelColor(this.decibelState.currentDecibel))
-
-            Text(DecibelService.getDecibelLevel(this.decibelState.currentDecibel))
-              .fontSize(this.responsiveLayout.getResponsiveValue<number>({
-                xsmall: 12,
-                small: 14,
                 medium: 16,
-                large: 18,
-                xlarge: 20
-              } as ResponsiveNumberValues))
-              .fontColor(DecibelService.getDecibelColor(this.decibelState.currentDecibel))
+                large: 20,
+                xlarge: 24
+              } as ResponsiveNumberValues)
+            })
+
+            Stack({ alignContent: Alignment.Bottom }) {
+              Canvas(this.mainCatCanvasRenderingContext)
+                .width('50%')
+                .height('65%')
+                .onReady(() => {
+                  //抗锯齿的设置
+                  this.mainCatCanvasRenderingContext.imageSmoothingEnabled = true;
+                  this.mainCatCanvasRenderingContext.imageSmoothingQuality = 'medium'
+                  lottie.destroy('cat')
+                  this.animationCatItem = lottie.loadAnimation({
+                    container: this.mainCatCanvasRenderingContext, // 渲染上下文
+                    renderer: 'canvas', // 渲染方式
+                    loop: true, // 是否循环播放,默认true
+                    autoplay: true, // 是否自动播放，默认true
+                    name: 'cat', // 动画名称
+                    contentMode: 'Contain', // 填充的模式
+                    frameRate: 30, //设置animator的刷帧率为30
+                    // imagePath: 'lottie/images/',                 // 加载读取指定路径下的图片资源
+                    path: 'common/lottie/lovely_cat.json', // json路径
+                    // initialSegment: [10,50]                      // 播放的动画片段
+                  })
+                  // 因为动画是异步加载，所以对animateItem的操作需要放在动画加载完成回调里操作
+                  this.animationCatItem.addEventListener('DOMLoaded', (args: Object): void => {
+                    this.animationCatItem.play();
+                  });
+                })
+              Column() {
+                Text(this.decibelState.currentDecibel === 0 ? '-' : this.decibelState.currentDecibel.toString())
+                  .fontSize(this.responsiveLayout.getResponsiveValue<number>({
+                    xsmall: 60,
+                    small: 70,
+                    medium: 80,
+                    large: 90,
+                    xlarge: 100
+                  } as ResponsiveNumberValues))
+                  .textShadow({
+                    radius: 2,
+                    color: Color.White,
+                    offsetX: 0,
+                    offsetY: 0
+                  })
+                  .fontWeight(FontWeight.Bold)
+                  .fontColor(DecibelService.getDecibelColor(this.decibelState.currentDecibel))
+              }.backgroundColor('#00000000')
+              .alignItems(HorizontalAlign.Center)
+            }
+
+
+            Column() {
+              Text('最大')
+                .fontSize(this.responsiveLayout.getResponsiveValue<number>({
+                  xsmall: 10,
+                  small: 12,
+                  medium: 14,
+                  large: 16,
+                  xlarge: 18
+                } as ResponsiveNumberValues))
+                .fontColor($r('app.color.text_secondary'))
+                .margin({ bottom: 4 })
+              Text(this.maxDecibel === 0 ? '-' : this.maxDecibel.toString())
+                .fontSize(this.responsiveLayout.getResponsiveValue<number>({
+                  xsmall: 24,
+                  small: 28,
+                  medium: 32,
+                  large: 36,
+                  xlarge: 40
+                } as ResponsiveNumberValues))
+                .fontWeight(FontWeight.Medium)
+                .fontColor(DecibelService.getDecibelColor(this.maxDecibel))
+            }
+            .alignItems(HorizontalAlign.Center)
+            .margin({
+              left: this.responsiveLayout.getResponsiveValue<number>({
+                xsmall: 8,
+                small: 12,
+                medium: 16,
+                large: 20,
+                xlarge: 24
+              } as ResponsiveNumberValues)
+            })
           }
-          .onClick(() => {
-            this.navStack.pushPathByName("NoiseLevelDialog", null);
+          .width('100%')
+          .justifyContent(FlexAlign.Center)
+          .alignItems(VerticalAlign.Bottom)
+          .margin({
+            bottom: this.responsiveLayout.getResponsiveValue<number>({
+              xsmall: 3,
+              small: 4,
+              medium: 5,
+              large: 6,
+              xlarge: 7
+            } as ResponsiveNumberValues), top: this.responsiveLayout.getResponsiveValue<number>({
+              xsmall: 6,
+              small: 8,
+              medium: 10,
+              large: 12,
+              xlarge: 14
+            } as ResponsiveNumberValues)
+          })
+          .borderColor(this.isNoiseAlarm ? DecibelService.getDecibelColor(this.decibelState.currentDecibel) :
+          Color.Transparent)
+
+          Row() {
+            if (this.isRecording) {
+              Text(`${secondsToHoursMinutesSecondsWithDecimal(this.MAX_RECORDING_DURATION -
+              this.recordingTime)} 后自动保存`)
+                .fontSize(this.responsiveLayout.getResponsiveValue<number>({
+                  xsmall: 12,
+                  small: 14,
+                  medium: 16,
+                  large: 18,
+                  xlarge: 20
+                } as ResponsiveNumberValues))
+                .fontColor($r('app.color.text_secondary'))
+              Text(' | ')
+                .fontSize(this.responsiveLayout.getResponsiveValue<number>({
+                  xsmall: 12,
+                  small: 14,
+                  medium: 16,
+                  large: 18,
+                  xlarge: 20
+                } as ResponsiveNumberValues))
+                .fontColor($r('app.color.text_secondary'))
+            }
+            Row() {
+              Image($r('app.media.ic_info'))
+                .width(this.responsiveLayout.getResponsiveValue<number>({
+                  xsmall: 10,
+                  small: 12,
+                  medium: 14,
+                  large: 16,
+                  xlarge: 18
+                } as ResponsiveNumberValues))
+                .height(this.responsiveLayout.getResponsiveValue<number>({
+                  xsmall: 10,
+                  small: 12,
+                  medium: 14,
+                  large: 16,
+                  xlarge: 18
+                } as ResponsiveNumberValues))
+                .margin({ right: 4 })
+                .fillColor(DecibelService.getDecibelColor(this.decibelState.currentDecibel))
+
+              Text(DecibelService.getDecibelLevel(this.decibelState.currentDecibel))
+                .fontSize(this.responsiveLayout.getResponsiveValue<number>({
+                  xsmall: 12,
+                  small: 14,
+                  medium: 16,
+                  large: 18,
+                  xlarge: 20
+                } as ResponsiveNumberValues))
+                .fontColor(DecibelService.getDecibelColor(this.decibelState.currentDecibel))
+            }
+            .onClick(() => {
+              this.navStack.pushPathByName("NoiseLevelDialog", null);
+            })
+          }
+
+          // 位置显示
+          Row() {
+            LocationDisplay()
+          }
+          .width(this.responsiveLayout.getResponsiveValue<string>({
+            xsmall: '88%',
+            small: '90%',
+            medium: '92%',
+            large: '94%',
+            xlarge: '96%'
+          } as ResponsiveStringValues))
+          .margin({
+            top: this.responsiveLayout.getResponsiveValue<number>({
+              xsmall: 8,
+              small: 10,
+              medium: 12,
+              large: 14,
+              xlarge: 16
+            } as ResponsiveNumberValues),
+            bottom: this.responsiveLayout.getResponsiveValue<number>({
+              xsmall: 8,
+              small: 10,
+              medium: 12,
+              large: 14,
+              xlarge: 16
+            } as ResponsiveNumberValues)
           })
         }
+        .height('100%')
+        .width(this.canvasWidth * 0.8)
+        .justifyContent(FlexAlign.Center)
 
-        // 位置显示
-        Row() {
-          LocationDisplay()
-        }
-        .width(this.responsiveLayout.getResponsiveValue<string>({
-          xsmall: '88%',
-          small: '90%',
-          medium: '92%',
-          large: '94%',
-          xlarge: '96%'
-        } as ResponsiveStringValues))
-        .margin({
-          top: this.responsiveLayout.getResponsiveValue<number>({
-            xsmall: 8,
-            small: 10,
-            medium: 12,
-            large: 14,
-            xlarge: 16
-          } as ResponsiveNumberValues),
-          bottom: this.responsiveLayout.getResponsiveValue<number>({
-            xsmall: 8,
-            small: 10,
-            medium: 12,
-            large: 14,
-            xlarge: 16
-          } as ResponsiveNumberValues)
-        })
-      }
-      .width('38%')  // 恢复中间区域宽度
-      .height('100%')
-      .justifyContent(FlexAlign.Center)
-
-      // 右侧：操作按钮 - 横屏模式下使用竖排一列布局
-      Column() {
-        VerticalActionPanel({
-          isUILocked: this.torchOn,
-          weightingType: this.weightingType,
-          onReset: () => {
-            this.audioService.resetData();
-            this.resetData();
-          },
-          onSave: (comments) => {
-            this.stopRecording(comments);
-          },
-          lockToggle: () => {
-            PermissionUtil.checkPermissions('ohos.permission.CAMERA').then((result) => {
-              if (result) {
-                let cameraManager: camera.CameraManager = camera.getCameraManager(getContext(this));
-                if (cameraManager.isTorchSupported()) {
-                  cameraManager.setTorchMode(this.torchOn ? camera.TorchMode.OFF : camera.TorchMode.ON);
-                  promptAction.showToast({message: '手电筒已' + (this.torchOn ? '关闭' : '打开')})
-                  this.torchOn = !this.torchOn;
-                }
-              } else {
-                PermissionUtil.requestPermissions('ohos.permission.CAMERA').then(() => {
+        // 右侧：操作按钮 - 横屏模式下使用竖排一列布局
+        Column() {
+          VerticalActionPanel({
+            isUILocked: this.torchOn,
+            weightingType: this.weightingType,
+            onReset: () => {
+              this.audioService.resetData();
+              this.resetData();
+            },
+            onSave: (comments) => {
+              this.stopRecording(comments);
+            },
+            lockToggle: () => {
+              PermissionUtil.checkPermissions('ohos.permission.CAMERA').then((result) => {
+                if (result) {
                   let cameraManager: camera.CameraManager = camera.getCameraManager(getContext(this));
                   if (cameraManager.isTorchSupported()) {
                     cameraManager.setTorchMode(this.torchOn ? camera.TorchMode.OFF : camera.TorchMode.ON);
-                    promptAction.showToast({message: '手电筒已' + (this.torchOn ? '关闭' : '打开')})
+                    promptAction.showToast({ message: '手电筒已' + (this.torchOn ? '关闭' : '打开') })
                     this.torchOn = !this.torchOn;
                   }
-                });
-              }
-            })
-          },
-          // 修改：将onToggleWeighting的参数类型改为WeightingType
-          onToggleWeighting: (weightingType: WeightingType) => {
-            this.weightingType = weightingType;
-            // 弹出提示框显示当前频率加权方式
-            promptAction.showToast({
-              bottom: '53%',
-              message: `频率加权: ${this.weightingType} 计权`,
-              duration: 2000
-            });
-            this.preferenceService.setString(PreferenceKeyConstants.WEIGHTING, this.weightingType);
-          }
-        })
+                } else {
+                  PermissionUtil.requestPermissions('ohos.permission.CAMERA').then(() => {
+                    let cameraManager: camera.CameraManager = camera.getCameraManager(getContext(this));
+                    if (cameraManager.isTorchSupported()) {
+                      cameraManager.setTorchMode(this.torchOn ? camera.TorchMode.OFF : camera.TorchMode.ON);
+                      promptAction.showToast({ message: '手电筒已' + (this.torchOn ? '关闭' : '打开') })
+                      this.torchOn = !this.torchOn;
+                    }
+                  });
+                }
+              })
+            },
+            // 修改：将onToggleWeighting的参数类型改为WeightingType
+            onToggleWeighting: (weightingType: WeightingType) => {
+              this.weightingType = weightingType;
+              // 弹出提示框显示当前频率加权方式
+              promptAction.showToast({
+                bottom: '53%',
+                message: `频率加权: ${this.weightingType} 计权`,
+                duration: 2000
+              });
+              this.preferenceService.setString(PreferenceKeyConstants.WEIGHTING, this.weightingType);
+            }
+          })
+        }
+        .width(72)
+        .height('100%')
+        .justifyContent(FlexAlign.Center)
       }
-      .width('12%')
       .height('100%')
-      .justifyContent(FlexAlign.Center)
-    }
-    .width('100%')
-    .height('100%')
-    .justifyContent(FlexAlign.SpaceBetween)
+      .justifyContent(FlexAlign.SpaceBetween)
+    }.scrollable(ScrollDirection.Horizontal).scrollBar(BarState.Off)
   }
 
   build() {
@@ -1086,187 +1133,285 @@ export struct DecibelMeter {
     if (this.isLandscape) {
       this.LandscapeLayout()
     } else {
-      Column() {
-        // 频谱显示
-        this.SpectrumView()
+      Scroll(){
+        Column() {
+          // 频谱显示
+          this.SpectrumView()
 
-        // 分贝显示卡片
-        Row() {
-          Column() {
-            Text(this.showAvgInsteadOfMin ? '平均' : '最小')
-              .fontSize(this.responsiveLayout.getResponsiveValue<number>({
-                xsmall: 10,
+          // 分贝显示卡片
+          Row() {
+            Column() {
+              Text(this.showAvgInsteadOfMin ? '平均' : '最小')
+                .fontSize(this.responsiveLayout.getResponsiveValue<number>({
+                  xsmall: 10,
+                  small: 12,
+                  medium: 14,
+                  large: 16,
+                  xlarge: 18
+                } as ResponsiveNumberValues))
+                .fontColor($r('app.color.text_secondary'))
+                .margin({ bottom: 4 })
+              Text(this.showAvgInsteadOfMin ?
+                (this.avgDecibel === 0 ? '-' : this.avgDecibel.toString()) :
+                (this.minDecibel === 0 ? '-' : this.minDecibel.toString()))
+                .fontSize(this.responsiveLayout.getResponsiveValue<number>({
+                  xsmall: 24,
+                  small: 28,
+                  medium: 32,
+                  large: 36,
+                  xlarge: 40
+                } as ResponsiveNumberValues))
+                .fontWeight(FontWeight.Medium)
+                .fontColor(DecibelService.getDecibelColor(
+                  this.showAvgInsteadOfMin ? this.avgDecibel : this.minDecibel))
+                .onClick(() => {
+                  this.showAvgInsteadOfMin = !this.showAvgInsteadOfMin;
+                })
+            }
+            .alignItems(HorizontalAlign.Center)
+            .margin({
+              right: this.responsiveLayout.getResponsiveValue<number>({
+                xsmall: 8,
                 small: 12,
-                medium: 14,
-                large: 16,
-                xlarge: 18
-              } as ResponsiveNumberValues))
-              .fontColor($r('app.color.text_secondary'))
-              .margin({ bottom: 4 })
-            Text(this.showAvgInsteadOfMin ?
-              (this.avgDecibel === 0 ? '-' : this.avgDecibel.toString()) :
-              (this.minDecibel === 0 ? '-' : this.minDecibel.toString()))
-              .fontSize(this.responsiveLayout.getResponsiveValue<number>({
-                xsmall: 24,
-                small: 28,
-                medium: 32,
-                large: 36,
-                xlarge: 40
-              } as ResponsiveNumberValues))
-              .fontWeight(FontWeight.Medium)
-              .fontColor(DecibelService.getDecibelColor(
-                this.showAvgInsteadOfMin ? this.avgDecibel : this.minDecibel))
-              .onClick(() => {
-                this.showAvgInsteadOfMin = !this.showAvgInsteadOfMin;
-              })
+                medium: 16,
+                large: 20,
+                xlarge: 24
+              } as ResponsiveNumberValues)
+            })
+
+            Stack({ alignContent: Alignment.Bottom }) {
+
+              Canvas(this.mainCatCanvasRenderingContext)
+                .width('40%')
+                .height('27%')
+                .onReady(() => {
+                  //抗锯齿的设置
+                  this.mainCatCanvasRenderingContext.imageSmoothingEnabled = true;
+                  this.mainCatCanvasRenderingContext.imageSmoothingQuality = 'medium'
+                  lottie.destroy('cat')
+                  this.animationCatItem = lottie.loadAnimation({
+                    container: this.mainCatCanvasRenderingContext, // 渲染上下文
+                    renderer: 'canvas', // 渲染方式
+                    loop: true, // 是否循环播放,默认true
+                    autoplay: true, // 是否自动播放，默认true
+                    name: 'cat', // 动画名称
+                    contentMode: 'Contain', // 填充的模式
+                    frameRate: 30, //设置animator的刷帧率为30
+                    // imagePath: 'lottie/images/',                 // 加载读取指定路径下的图片资源
+                    path: 'common/lottie/lovely_cat.json', // json路径
+                    // initialSegment: [10,50]                      // 播放的动画片段
+                  })
+                  // 因为动画是异步加载，所以对animateItem的操作需要放在动画加载完成回调里操作
+                  this.animationCatItem.addEventListener('DOMLoaded', (args: Object): void => {
+                    this.animationCatItem.play();
+                  });
+                })
+              Column() {
+                Text(this.decibelState.currentDecibel === 0 ? '-' : this.decibelState.currentDecibel.toString())
+                  .fontSize(this.responsiveLayout.getResponsiveValue<number>({
+                    xsmall: 60,
+                    small: 70,
+                    medium: 80,
+                    large: 90,
+                    xlarge: 100
+                  } as ResponsiveNumberValues))
+                  .textShadow({
+                    radius: 2,
+                    color: Color.White,
+                    offsetX: 0,
+                    offsetY: 0
+                  })
+                  .fontWeight(FontWeight.Bold)
+                  .fontColor(DecibelService.getDecibelColor(this.decibelState.currentDecibel))
+              }
+              .backgroundColor('#00000000')
+              .alignItems(HorizontalAlign.Center)
+            }
+
+            Column() {
+              Text('最大')
+                .fontSize(this.responsiveLayout.getResponsiveValue<number>({
+                  xsmall: 10,
+                  small: 12,
+                  medium: 14,
+                  large: 16,
+                  xlarge: 18
+                } as ResponsiveNumberValues))
+                .fontColor($r('app.color.text_secondary'))
+                .margin({ bottom: 4 })
+              Text(this.maxDecibel === 0 ? '-' : this.maxDecibel.toString())
+                .fontSize(this.responsiveLayout.getResponsiveValue<number>({
+                  xsmall: 24,
+                  small: 28,
+                  medium: 32,
+                  large: 36,
+                  xlarge: 40
+                } as ResponsiveNumberValues))
+                .fontWeight(FontWeight.Medium)
+                .fontColor(DecibelService.getDecibelColor(this.maxDecibel))
+            }
+            .alignItems(HorizontalAlign.Center)
+            .margin({
+              left: this.responsiveLayout.getResponsiveValue<number>({
+                xsmall: 8,
+                small: 12,
+                medium: 16,
+                large: 20,
+                xlarge: 24
+              } as ResponsiveNumberValues)
+            })
           }
-          .alignItems(HorizontalAlign.Center)
+          .width('100%')
+          .justifyContent(FlexAlign.Center)
+          .alignItems(VerticalAlign.Bottom)
           .margin({
-            right: this.responsiveLayout.getResponsiveValue<number>({
+            bottom: this.responsiveLayout.getResponsiveValue<number>({
+              xsmall: 3,
+              small: 4,
+              medium: 5,
+              large: 6,
+              xlarge: 7
+            } as ResponsiveNumberValues), top: this.responsiveLayout.getResponsiveValue<number>({
+              xsmall: 6,
+              small: 8,
+              medium: 10,
+              large: 12,
+              xlarge: 14
+            } as ResponsiveNumberValues)
+          })
+          .borderColor(this.isNoiseAlarm ? DecibelService.getDecibelColor(this.decibelState.currentDecibel) :
+          Color.Transparent)
+
+          Row() {
+            if (this.isRecording) {
+              Text(`${secondsToHoursMinutesSecondsWithDecimal(this.MAX_RECORDING_DURATION -
+              this.recordingTime)} 后自动保存`)
+                .fontSize(this.responsiveLayout.getResponsiveValue<number>({
+                  xsmall: 12,
+                  small: 14,
+                  medium: 16,
+                  large: 18,
+                  xlarge: 20
+                } as ResponsiveNumberValues))
+                .fontColor($r('app.color.text_secondary'))
+              Text(' | ')
+                .fontSize(this.responsiveLayout.getResponsiveValue<number>({
+                  xsmall: 12,
+                  small: 14,
+                  medium: 16,
+                  large: 18,
+                  xlarge: 20
+                } as ResponsiveNumberValues))
+                .fontColor($r('app.color.text_secondary'))
+            }
+            Row() {
+              Image($r('app.media.ic_info'))
+                .width(this.responsiveLayout.getResponsiveValue<number>({
+                  xsmall: 10,
+                  small: 12,
+                  medium: 14,
+                  large: 16,
+                  xlarge: 18
+                } as ResponsiveNumberValues))
+                .height(this.responsiveLayout.getResponsiveValue<number>({
+                  xsmall: 10,
+                  small: 12,
+                  medium: 14,
+                  large: 16,
+                  xlarge: 18
+                } as ResponsiveNumberValues))
+                .margin({ right: 4 })
+                .fillColor(DecibelService.getDecibelColor(this.decibelState.currentDecibel))
+
+              Text(DecibelService.getDecibelLevel(this.decibelState.currentDecibel))
+                .fontSize(this.responsiveLayout.getResponsiveValue<number>({
+                  xsmall: 12,
+                  small: 14,
+                  medium: 16,
+                  large: 18,
+                  xlarge: 20
+                } as ResponsiveNumberValues))
+                .fontColor(DecibelService.getDecibelColor(this.decibelState.currentDecibel))
+            }
+            .onClick(() => {
+              this.navStack.pushPathByName("NoiseLevelDialog", null);
+            })
+          }
+
+          // 位置显示
+          Row() {
+            LocationDisplay()
+          }
+          .width(this.responsiveLayout.getResponsiveValue<string>({
+            xsmall: '88%',
+            small: '90%',
+            medium: '92%',
+            large: '94%',
+            xlarge: '96%'
+          } as ResponsiveStringValues))
+          .margin({
+            top: this.responsiveLayout.getResponsiveValue<number>({
               xsmall: 8,
-              small: 12,
-              medium: 16,
-              large: 20,
-              xlarge: 24
+              small: 10,
+              medium: 12,
+              large: 14,
+              xlarge: 16
+            } as ResponsiveNumberValues),
+            bottom: this.responsiveLayout.getResponsiveValue<number>({
+              xsmall: 8,
+              small: 10,
+              medium: 12,
+              large: 14,
+              xlarge: 16
             } as ResponsiveNumberValues)
           })
 
-          Column() {
-            Text(this.decibelState.currentDecibel === 0 ? '-' : this.decibelState.currentDecibel.toString())
-              .fontSize(this.responsiveLayout.getResponsiveValue<number>({
-                xsmall: 60,
-                small: 70,
-                medium: 80,
-                large: 90,
-                xlarge: 100
-              } as ResponsiveNumberValues))
-              .fontWeight(FontWeight.Bold)
-              .fontColor(DecibelService.getDecibelColor(this.decibelState.currentDecibel))
-          }
-          .alignItems(HorizontalAlign.Center)
-
-          Column() {
-            Text('最大')
-              .fontSize(this.responsiveLayout.getResponsiveValue<number>({
-                xsmall: 10,
-                small: 12,
-                medium: 14,
-                large: 16,
-                xlarge: 18
-              } as ResponsiveNumberValues))
-              .fontColor($r('app.color.text_secondary'))
-              .margin({ bottom: 4 })
-            Text(this.maxDecibel === 0 ? '-' : this.maxDecibel.toString())
-              .fontSize(this.responsiveLayout.getResponsiveValue<number>({
-                xsmall: 24,
-                small: 28,
-                medium: 32,
-                large: 36,
-                xlarge: 40
-              } as ResponsiveNumberValues))
-              .fontWeight(FontWeight.Medium)
-              .fontColor(DecibelService.getDecibelColor(this.maxDecibel))
-          }
-          .alignItems(HorizontalAlign.Center)
-          .margin({
-            left: this.responsiveLayout.getResponsiveValue<number>({
-              xsmall: 8,
-              small: 12,
-              medium: 16,
-              large: 20,
-              xlarge: 24
-            } as ResponsiveNumberValues)
+          ActionPanel({
+            isUILocked: this.torchOn,
+            weightingType: this.weightingType,
+            onReset: () => {
+              this.audioService.resetData();
+              this.resetData();
+            },
+            onSave: (comments) => {
+              this.stopRecording(comments);
+            },
+            lockToggle: () => {
+              PermissionUtil.checkPermissions('ohos.permission.CAMERA').then((result) => {
+                if (result) {
+                  let cameraManager: camera.CameraManager = camera.getCameraManager(getContext(this));
+                  if (cameraManager.isTorchSupported()) {
+                    cameraManager.setTorchMode(this.torchOn ? camera.TorchMode.OFF : camera.TorchMode.ON);
+                    promptAction.showToast({ message: '手电筒已' + (this.torchOn ? '关闭' : '打开') })
+                    this.torchOn = !this.torchOn;
+                  }
+                } else {
+                  PermissionUtil.requestPermissions('ohos.permission.CAMERA').then(() => {
+                    let cameraManager: camera.CameraManager = camera.getCameraManager(getContext(this));
+                    if (cameraManager.isTorchSupported()) {
+                      cameraManager.setTorchMode(this.torchOn ? camera.TorchMode.OFF : camera.TorchMode.ON);
+                      promptAction.showToast({ message: '手电筒已' + (this.torchOn ? '关闭' : '打开') })
+                      this.torchOn = !this.torchOn;
+                    }
+                  });
+                }
+              })
+            },
+            // 修改：将onToggleWeighting的参数类型改为WeightingType
+            onToggleWeighting: (weightingType: WeightingType) => {
+              this.weightingType = weightingType;
+              // 弹出提示框显示当前频率加权方式
+              promptAction.showToast({
+                bottom: '53%',
+                message: `频率加权: ${this.weightingType} 计权`,
+                duration: 2000
+              });
+              this.preferenceService.setString(PreferenceKeyConstants.WEIGHTING, this.weightingType);
+            }
           })
         }
         .width('100%')
-        .justifyContent(FlexAlign.Center)
-        .alignItems(VerticalAlign.Center)
-        .margin({
-          bottom: this.responsiveLayout.getResponsiveValue<number>({
-            xsmall: 3,
-            small: 4,
-            medium: 5,
-            large: 6,
-            xlarge: 7
-          } as ResponsiveNumberValues), top: this.responsiveLayout.getResponsiveValue<number>({
-            xsmall: 6,
-            small: 8,
-            medium: 10,
-            large: 12,
-            xlarge: 14
-          } as ResponsiveNumberValues)
-        })
-        .borderColor(this.isNoiseAlarm ? DecibelService.getDecibelColor(this.decibelState.currentDecibel) :
-        Color.Transparent)
-
-        Row() {
-          if (this.isRecording) {
-            Text(`${secondsToHoursMinutesSecondsWithDecimal(this.MAX_RECORDING_DURATION -
-            this.recordingTime)} 后自动保存`)
-              .fontSize(this.responsiveLayout.getResponsiveValue<number>({
-                xsmall: 12,
-                small: 14,
-                medium: 16,
-                large: 18,
-                xlarge: 20
-              } as ResponsiveNumberValues))
-              .fontColor($r('app.color.text_secondary'))
-            Text(' | ')
-              .fontSize(this.responsiveLayout.getResponsiveValue<number>({
-                xsmall: 12,
-                small: 14,
-                medium: 16,
-                large: 18,
-                xlarge: 20
-              } as ResponsiveNumberValues))
-              .fontColor($r('app.color.text_secondary'))
-          }
-          Row() {
-            Image($r('app.media.ic_info'))
-              .width(this.responsiveLayout.getResponsiveValue<number>({
-                xsmall: 10,
-                small: 12,
-                medium: 14,
-                large: 16,
-                xlarge: 18
-              } as ResponsiveNumberValues))
-              .height(this.responsiveLayout.getResponsiveValue<number>({
-                xsmall: 10,
-                small: 12,
-                medium: 14,
-                large: 16,
-                xlarge: 18
-              } as ResponsiveNumberValues))
-              .margin({ right: 4 })
-              .fillColor(DecibelService.getDecibelColor(this.decibelState.currentDecibel))
-
-            Text(DecibelService.getDecibelLevel(this.decibelState.currentDecibel))
-              .fontSize(this.responsiveLayout.getResponsiveValue<number>({
-                xsmall: 12,
-                small: 14,
-                medium: 16,
-                large: 18,
-                xlarge: 20
-              } as ResponsiveNumberValues))
-              .fontColor(DecibelService.getDecibelColor(this.decibelState.currentDecibel))
-          }
-          .onClick(() => {
-            this.navStack.pushPathByName("NoiseLevelDialog", null);
-          })
-        }
-
-        // 位置显示
-        Row() {
-          LocationDisplay()
-        }
-        .width(this.responsiveLayout.getResponsiveValue<string>({
-          xsmall: '88%',
-          small: '90%',
-          medium: '92%',
-          large: '94%',
-          xlarge: '96%'
-        } as ResponsiveStringValues))
-        .margin({
+        .padding({
           top: this.responsiveLayout.getResponsiveValue<number>({
             xsmall: 8,
             small: 10,
@@ -1282,69 +1427,8 @@ export struct DecibelMeter {
             xlarge: 16
           } as ResponsiveNumberValues)
         })
-
-        ActionPanel({
-          isUILocked: this.torchOn,
-          weightingType: this.weightingType,
-          onReset: () => {
-            this.audioService.resetData();
-            this.resetData();
-          },
-          onSave: (comments) => {
-            this.stopRecording(comments);
-          },
-          lockToggle: () => {
-            PermissionUtil.checkPermissions('ohos.permission.CAMERA').then((result) => {
-              if (result) {
-                let cameraManager: camera.CameraManager = camera.getCameraManager(getContext(this));
-                if (cameraManager.isTorchSupported()) {
-                  cameraManager.setTorchMode(this.torchOn ? camera.TorchMode.OFF : camera.TorchMode.ON);
-                  promptAction.showToast({message: '手电筒已' + (this.torchOn ? '关闭' : '打开')})
-                  this.torchOn = !this.torchOn;
-                }
-              } else {
-                PermissionUtil.requestPermissions('ohos.permission.CAMERA').then(() => {
-                  let cameraManager: camera.CameraManager = camera.getCameraManager(getContext(this));
-                  if (cameraManager.isTorchSupported()) {
-                    cameraManager.setTorchMode(this.torchOn ? camera.TorchMode.OFF : camera.TorchMode.ON);
-                    promptAction.showToast({message: '手电筒已' + (this.torchOn ? '关闭' : '打开')})
-                    this.torchOn = !this.torchOn;
-                  }
-                });
-              }
-            })
-          },
-          // 修改：将onToggleWeighting的参数类型改为WeightingType
-          onToggleWeighting: (weightingType: WeightingType) => {
-            this.weightingType = weightingType;
-            // 弹出提示框显示当前频率加权方式
-            promptAction.showToast({
-              bottom: '53%',
-              message: `频率加权: ${this.weightingType} 计权`,
-              duration: 2000
-            });
-            this.preferenceService.setString(PreferenceKeyConstants.WEIGHTING, this.weightingType);
-          }
-        })
-      }
-      .width('100%')
-      .padding({
-        top: this.responsiveLayout.getResponsiveValue<number>({
-          xsmall: 8,
-          small: 10,
-          medium: 12,
-          large: 14,
-          xlarge: 16
-        } as ResponsiveNumberValues),
-        bottom: this.responsiveLayout.getResponsiveValue<number>({
-          xsmall: 8,
-          small: 10,
-          medium: 12,
-          large: 14,
-          xlarge: 16
-        } as ResponsiveNumberValues)
-      })
-      .alignItems(HorizontalAlign.Center)
+        .alignItems(HorizontalAlign.Center)
+      }.scrollable(ScrollDirection.Vertical).scrollBar(BarState.Off)
     }
   }
 }
