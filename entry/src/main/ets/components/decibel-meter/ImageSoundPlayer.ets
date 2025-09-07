@@ -22,7 +22,7 @@ export struct ImageSoundPlayer {
   }
 
   build() {
-    Stack({ alignContent: Alignment.Center }) {
+    Stack({ alignContent: Alignment.BottomStart }) {
       ImageRaw({ image: this.image })
       if (this.rawFileDescriptor) {
         Button() {
@@ -31,8 +31,9 @@ export struct ImageSoundPlayer {
             .fillColor(Color.White)
             .opacity(0.9)
         }
-        .width('50%')
-        .height('50%')
+        .width('25%')
+        .height('25%')
+        .margin({ left: 8, bottom: 8 })
         .type(ButtonType.Circle)
         .backgroundColor(Color.Transparent)
         .onClick(async () => {
