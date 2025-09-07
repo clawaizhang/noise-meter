@@ -1,19 +1,17 @@
 import { PlayerState } from "../../services/AudioPlayerService"
 import { AudioPlayerService } from "../../services/AudioPlayerService"
 import hilog from '@ohos.hilog'
-import { FileService } from "../../services/FileService";
-import { promptAction } from "@kit.ArkUI";
+import resourceManager from "@ohos.resourceManager";
 
 const TAG = 'AudioPlayer';
 const DOMAIN = 0x0000;
 
 @ComponentV2
 export struct AudioPlayer {
-  @Param audioFilePath: string | null = null;
+  @Param audioFilePath?: string | null = null;
+  @Param fileDescriptor?: resourceManager.RawFileDescriptor | null = null;
   @Local playerState: PlayerState = PlayerState.STATE_NOT_INIT;
-  private context: Context = getContext(this)
-  private fileService: FileService = new FileService(this.context)
-  private audioPlayerService: AudioPlayerService = new AudioPlayerService(this.context, this.fileService);
+  private audioPlayerService: AudioPlayerService = new AudioPlayerService();
 
   build() {
     Row() {
@@ -63,12 +61,13 @@ export struct AudioPlayer {
             await this.audioPlayerService.pause();
           } else {
             if (this.playerState === PlayerState.STATE_PAUSED) {
-              promptAction.showToast({ message: '请调大音量' });
               await this.audioPlayerService.resume();
             } else {
               if (this.audioFilePath) {
-                promptAction.showToast({ message: '请调大音量' });
                 await this.audioPlayerService.playAudioFile(this.audioFilePath);
+              }
+              if (this.fileDescriptor) {
+                await this.audioPlayerService.playAudioFileByFd(this.fileDescriptor);
               }
             }
           }

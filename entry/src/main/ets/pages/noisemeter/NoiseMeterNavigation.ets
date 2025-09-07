@@ -1,18 +1,11 @@
 import { DecibelMeter } from '../../components/decibel-meter/DecibelMeter';
 import { navigationStack } from '../../constants/ProviderConstant';
-import { DecibelHistory } from './DecibelHistoryNavigation';
-import { Settings } from './SettingsNavigation';
-import { common } from '@kit.AbilityKit';
-import promptAction from '@ohos.promptAction';
 import { PreferenceKeyConstants } from '../../constants/PreferenceKeyConstants';
 import { PreferenceService } from '../../services/PreferenceService';
-import { ScreenshotUtils } from '../../utils/ScreenshotUtils';
-import { emitter } from '@kit.BasicServicesKit';
 import { WeightingType } from '../../constants/WeightingConstants';
 import { ResponsiveLayout, Breakpoint, LayoutMode } from '../../utils/ResponsiveLayout';
-import { PermissionUtil } from '@pura/harmony-utils';
 import { camera } from '@kit.CameraKit';
-import { media } from '@kit.MediaKit';
+import { PressureSounds } from '../../components/decibel-meter/PressureSounds';
 
 // 导航菜单项接口定义
 interface NavigationMenuItem {
@@ -255,7 +248,7 @@ export struct MainNoiseMeter {
         .tabBar(this.TabBuilder('静喵Sound', $r('app.media.ic_meter'), 0))
 
         TabContent() {
-          DecibelHistory()
+          PressureSounds()
         }
         .tabBar(this.TabBuilder('检测记录', $r('app.media.ic_history'), 1))
 

@@ -1,6 +1,5 @@
 import common from '@ohos.app.ability.common';
 import { BusinessError } from '@ohos.base';
-import { FileService } from './FileService';
 import media from '@ohos.multimedia.media';
 import audio from '@ohos.multimedia.audio';
 import hilog from '@ohos.hilog';
@@ -8,6 +7,7 @@ import fs from '@ohos.file.fs';
 import { promptAction } from '@kit.ArkUI';
 import { PreferenceService } from './PreferenceService';
 import { PreferenceKeyConstants } from '../constants/PreferenceKeyConstants';
+import resourceManager from '@ohos.resourceManager';
 
 const TAG = 'AudioPlayerService';
 const DOMAIN = 0x0000;
@@ -34,17 +34,14 @@ export enum PlayerState {
  */
 export class AudioPlayerService {
   private player: media.AVPlayer | null = null;
-  private fileService: FileService;
-  private context: common.Context;
   private currentState: PlayerState = PlayerState.STATE_NOT_INIT;
   private onProgressListener?: (duration: number) => void;
   private onStateChangeListener?: (state: PlayerState) => void;
   private progressTimer: number | null = null;
   private currentFile: fs.File | null = null;
+  private currentFd: number | null = null;
 
-  constructor(context: common.Context, fileService: FileService) {
-    this.context = context;
-    this.fileService = fileService;
+  constructor() {
     try {
       this.initPlayer();
     } catch (error) {
@@ -127,7 +124,6 @@ export class AudioPlayerService {
           this.updateState(PlayerState.STATE_PREPARED);
           if (this.player) {
             // await audio.getAudioManager().getVolumeManager().setAppVolumePercentage(100);
-            promptAction.showToast({ message: '播放中...请调大音量' });
             await this.player.play(); // 自动开始播放
           }
           break;
@@ -179,6 +175,55 @@ export class AudioPlayerService {
       }
     });
   }
+
+  /**
+   * 播放音频文件
+   * @param fd - 音频文件fd
+   */
+  async playAudioFileByFd(fd: resourceManager.RawFileDescriptor): Promise<void> {
+    try {
+      if (!this.player) {
+        throw new Error('播放器未初始化');
+      }
+      // 如果正在播放或已完成播放，先重置播放器
+      if (this.isPlaying() || this.currentState === PlayerState.STATE_COMPLETED) {
+        await this.player.reset();
+        this.updateState(PlayerState.STATE_IDLE);
+      }
+
+      // 关闭之前的文件描述符
+      if (this.currentFd) {
+        try {
+          fs.closeSync(this.currentFd);
+          this.currentFd = null;
+        } catch (e) {
+          hilog.error(DOMAIN, TAG, '关闭文件描述符失败: %{public}s', e instanceof Error ? e.message : String(e));
+        }
+      }
+
+      let avFileDescriptor: media.AVFileDescriptor =
+        { fd: fd.fd, offset: fd.offset, length: fd.length };
+      // 为fdSrc赋值触发initialized状态机上报。
+      this.player.fdSrc = avFileDescriptor;
+
+      this.updateState(PlayerState.STATE_PREPARING);
+
+      hilog.info(DOMAIN, TAG, '开始播放音频');
+    } catch (error) {
+      hilog.error(DOMAIN, TAG, '播放音频失败: %{public}s', error instanceof Error ? error.message : String(error));
+      // 尝试重置播放器
+      if (this.player) {
+        try {
+          await this.player.reset();
+          this.updateState(PlayerState.STATE_IDLE);
+        } catch (e) {
+          hilog.error(DOMAIN, TAG, '重置播放器失败: %{public}s', e instanceof Error ? e.message : String(e));
+        }
+      }
+      throw new Error(error instanceof Error ? error.message : String(error));
+    }
+  }
+
 
   /**
    * 播放音频文件
