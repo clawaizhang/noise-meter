@@ -2,6 +2,7 @@ import hilog from '@ohos.hilog'
 import { navigationStack } from '../../constants/ProviderConstant';
 import { DesignConstants } from '../../constants/DesignConstants';
 import { DialogConstants } from '../../constants/DialogConstants';
+import { ImageSoundPlayerState } from '../decibel-meter/PressureSounds';
 
 const TAG = 'DialogContainer';
 const DOMAIN = 0x0000;
@@ -78,7 +79,8 @@ export struct DialogContainer {
               .height(DialogConstants.HANDLE_BAR.HEIGHT)
               .borderRadius(DialogConstants.HANDLE_BAR.BORDER_RADIUS)
               .backgroundColor($r('app.color.divider'))
-              .opacity(DialogConstants.HANDLE_BAR.OPACITY + this.dragProgress * DialogConstants.GESTURE.DRAG_PROGRESS_FACTOR)
+              .opacity(DialogConstants.HANDLE_BAR.OPACITY +
+                this.dragProgress * DialogConstants.GESTURE.DRAG_PROGRESS_FACTOR)
           }
           .width('100%')
           .height(28)
@@ -87,7 +89,7 @@ export struct DialogContainer {
 
           // 内容区域
           Column() {
-            this.ContentBuilder()
+            this.ContentBuilder(this.contentParam)
           }
           .width('100%')
           .padding({
@@ -166,10 +168,12 @@ export struct DialogContainer {
   }
 
   @BuilderParam
-  ContentBuilder: () => void
+  ContentBuilder: (contentParam: Array<ImageSoundPlayerState>) => void
+  @BuilderParam
+  contentParam: Array<ImageSoundPlayerState>
 }
 
 @Builder
-export function DialogContainerBuilder(contentBuilder: () => void) {
-  DialogContainer({ ContentBuilder: contentBuilder })
+export function DialogContainerBuilder(contentBuilder: () => void, contentParam: Array<ImageSoundPlayerState>) {
+  DialogContainer({ ContentBuilder: contentBuilder, contentParam: contentParam })
 }

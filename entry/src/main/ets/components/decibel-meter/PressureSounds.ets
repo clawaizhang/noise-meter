@@ -1,37 +1,92 @@
-import { ImageRaw } from "../common/ImageRaw";
 import { ImageSoundPlayer } from "./ImageSoundPlayer";
-import { LengthMetrics } from "@kit.ArkUI";
+import { AudioPlayerService, PlayerState } from "../../services/AudioPlayerService";
+import { ImageRaw } from "../common/ImageRaw";
+import { ImageSoundPlayingService } from "../../services/ImageSoundPlayingService";
+import { navigationStack } from "../../constants/ProviderConstant";
 
-interface ImageSound {
+export interface ImageSound {
   name: string;
   image: string;
   sound: string;
 }
 
+export interface ImageSoundPlayerState extends ImageSound {
+  playerState: PlayerState;
+  playerService: AudioPlayerService;
+}
+
 @Preview
 @ComponentV2
 export struct PressureSounds {
-  build() {
-    WaterFlow() {
-      ForEach(this.imageSounds, (item: ImageSound, index) => {
-        FlowItem() {
-          Flex({ wrap: FlexWrap.Wrap }) {
-            ImageSoundPlayer({ image: item.image, file: item.sound }).width(100).height(100)
-            Text(item.name).width(100)
-              .fontSize(12)
-          }
-        }
-      })
+  @Consumer(navigationStack) navStack: NavPathStack = new NavPathStack();
+
+  @Computed
+  get unionImagePath(): string {
+    if (this.playingList.length > 0) {
+      return this.playingList[this.playingList.length - 1].image;
     }
-    .columnsTemplate('repeat(auto-fill,100)')
-    .rowsTemplate('1fr 1fr 1fr')
-    .width('100%')
-    .height('100%')
-    .rowsGap(16)
-    .columnsGap(16)
-    .margin({ left: 16 })
+    return '';
   }
 
+  build() {
+    Stack({ alignContent: Alignment.BottomEnd }) {
+      WaterFlow() {
+        ForEach(this.imageSounds, (item: ImageSound, index) => {
+          FlowItem() {
+            Flex({ wrap: FlexWrap.Wrap }) {
+              ImageSoundPlayer({
+                image: item.image,
+                file: item.sound,
+                onPlayStateChange: (state: PlayerState, playerService: AudioPlayerService) => {
+                  this.updateUnionPlayerState(state, playerService, item);
+                }
+              }).width(100).height(100)
+              Text(item.name).width(100)
+                .fontSize(12)
+            }
+          }
+        }, (item: ImageSound, index) => item.name)
+        FlowItem().height(200)
+      }
+      .columnsTemplate('repeat(auto-fill,100)')
+      .rowsTemplate('1fr 1fr 1fr')
+      .width('100%')
+      .height('100%')
+      .rowsGap(16)
+      .columnsGap(16)
+      .padding({ left: 16 })
+
+      if (this.playingList.length > 0) {
+        Stack({ alignContent: Alignment.Start }) {
+          ImageRaw({ image: this.unionImagePath, fit: ImageFit.Auto })
+            .onClick(() => {
+              this.navStack.pushPathByName('PlayingItemsDialog', undefined)
+            })
+            .width('100%')
+            .height(50)
+          Button() {
+            Image(this.unionPlayerState === PlayerState.STATE_PLAYING ? $r('app.media.ic_pause') :
+            $r('app.media.ic_play'))
+              .fillColor(Color.White)
+              .width('100%')
+              .height('100%')
+          }
+          .backgroundColor(Color.Transparent)
+          .width(32)
+          .height(32)
+          .margin({ left: 8 })
+          .type(ButtonType.Circle)
+        }
+        .width('100%')
+        .height(50)
+        .padding({ left: 16, right: 16, bottom: 16 })
+        .borderRadius(12)
+      }
+    }
+  }
+
+  @Local unionPlayerState: PlayerState = PlayerState.STATE_NOT_INIT;
+  @Local playingList: Array<ImageSoundPlayerState> = ImageSoundPlayingService.getInstance().imageSoundPlayingList;
   private imageSounds: Array<ImageSound> = [
   // 动物类
     {
@@ -263,4 +318,43 @@ export struct PressureSounds {
       sound: 'sounds/whitenoise/【异质白噪】立体声场的奇特声波体验.ogg'
     },
   ]
+
+  private updateUnionPlayerState(state: PlayerState, playerService: AudioPlayerService, currentItem: ImageSound) {
+    if (state === PlayerState.STATE_PLAYING) {
+      this.unionPlayerState = state;
+      let addedImageSound =
+        this.playingList.find((playingItem: ImageSoundPlayerState) => playingItem.name === currentItem.name);
+      if (addedImageSound) {
+        addedImageSound.playerState = state;
+      } else {
+        this.playingList.push({
+          name: currentItem.name,
+          image: currentItem.image,
+          sound: currentItem.sound,
+          playerState: state,
+          playerService: playerService
+        });
+      }
+    }
+    if (state === PlayerState.STATE_STOPPED || state === PlayerState.STATE_COMPLETED) {
+      let removedImageSound =
+        this.playingList.find((playingItem: ImageSoundPlayerState) => playingItem.name === currentItem.name);
+      if (removedImageSound) {
+        this.playingList.splice(this.playingList.indexOf(removedImageSound), 1);
+      }
+    }
+    if (state === PlayerState.STATE_PAUSED) {
+      let playingItem =
+        this.playingList.filter((playingItem: ImageSoundPlayerState) => playingItem.name !== currentItem.name)
+          .find((playingItem: ImageSoundPlayerState) => playingItem.playerState === PlayerState.STATE_PLAYING);
+      if (!playingItem) {
+        this.unionPlayerState = state;
+      }
+      let currentItems =
+        this.playingList.find((playingItem: ImageSoundPlayerState) => playingItem.name === currentItem.name);
+      if (currentItems) {
+        currentItems.playerState = state;
+      }
+    }
+  }
 }

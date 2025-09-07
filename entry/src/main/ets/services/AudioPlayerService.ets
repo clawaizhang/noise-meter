@@ -36,7 +36,7 @@ export class AudioPlayerService {
   private player: media.AVPlayer | null = null;
   private currentState: PlayerState = PlayerState.STATE_NOT_INIT;
   private onProgressListener?: (duration: number) => void;
-  private onStateChangeListener?: (state: PlayerState) => void;
+  private onStateChangeListener: Array<(state: PlayerState) => void> = [];
   private progressTimer: number | null = null;
   private currentFile: fs.File | null = null;
   private currentFd: number | null = null;
@@ -323,8 +323,8 @@ export class AudioPlayerService {
    */
   private updateState(state: PlayerState): void {
     this.currentState = state;
-    if (this.onStateChangeListener) {
-      this.onStateChangeListener(state);
+    if (this.onStateChangeListener?.length > 0) {
+      this.onStateChangeListener.forEach(listener => listener(state));
     }
   }
 
@@ -482,7 +482,7 @@ export class AudioPlayerService {
   /**
    * 设置状态变化监听器
    */
-  setOnStateChangeListener(listener: (state: PlayerState) => void): void {
-    this.onStateChangeListener = listener;
+  addOnStateChangeListener(listener: (state: PlayerState) => void): void {
+    this.onStateChangeListener?.push(listener);
   }
 } 

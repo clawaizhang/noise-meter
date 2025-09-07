@@ -81,7 +81,7 @@ export struct AudioPlayer {
 
   aboutToAppear() {
     this.audioPlayerService.setVolume(1);
-    this.audioPlayerService.setOnStateChangeListener((state: PlayerState) => {
+    this.audioPlayerService.addOnStateChangeListener((state: PlayerState) => {
       this.playerState = state;
     });
   }

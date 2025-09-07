@@ -43,7 +43,7 @@ export struct MainNoiseMeter {
   @Local currentIndex: number = 0
   @Local meterOn: boolean = true;
   @Local touchOn: boolean = false;
-  @Local title: string = '静喵Sound';
+  @Local title: string = '静喵';
   @Local menuItems: Array<NavigationMenuItem> = [];
   @Local private responsiveLayout: ResponsiveLayout = ResponsiveLayout.getInstance()
   @Local private currentBreakpoint: Breakpoint = Breakpoint.XS
@@ -95,11 +95,11 @@ export struct MainNoiseMeter {
   onTabIndexChange(monitor: IMonitor) {
     const currentValue = monitor.value<number>()?.now;
     if (currentValue === 0) {
-      this.title = '静喵Sound';
+      this.title = '静喵';
       this.menuItems = this.noiseMeterMenus;
     }
     if (currentValue === 1) {
-      this.title = 'AR Sound';
+      this.title = '';
       this.menuItems = this.decibelHistoryMenus;
     }
     if (currentValue === 2) {
@@ -212,13 +212,7 @@ export struct MainNoiseMeter {
       }
     }
   ]
-  private decibelHistoryMenus: Array<NavigationMenuItem> = [{
-    value: '清空记录',
-    icon: $r('app.media.ic_delete'),
-    action: () => {
-
-    }
-  }]
+  private decibelHistoryMenus: Array<NavigationMenuItem> = []
 
   build() {
     NavDestination() {
@@ -245,12 +239,12 @@ export struct MainNoiseMeter {
           .backgroundColor($r('app.color.background_secondary'))
           .alignItems(HorizontalAlign.Center)
         }
-        .tabBar(this.TabBuilder('静喵Sound', $r('app.media.ic_meter'), 0))
+        .tabBar(this.TabBuilder('静喵', $r('app.media.ic_meter'), 0))
 
         TabContent() {
           PressureSounds()
         }
-        .tabBar(this.TabBuilder('检测记录', $r('app.media.ic_history'), 1))
+        .tabBar(this.TabBuilder('Sound', $r('app.media.ic_play'), 1))
 
       }
       .scrollable(false)
@@ -291,6 +285,7 @@ export struct MainNoiseMeter {
     .menus(this.menuItems)
     .backgroundColor($r('app.color.background_secondary'))
     .hideToolBar(true)
+    .systemTransition(NavigationSystemTransitionType.FADE)
     .mode(NavDestinationMode.STANDARD)
   }
 }

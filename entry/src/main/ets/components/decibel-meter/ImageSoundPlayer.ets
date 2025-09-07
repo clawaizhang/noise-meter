@@ -7,6 +7,7 @@ import { AudioPlayerService, PlayerState } from "../../services/AudioPlayerServi
 export struct ImageSoundPlayer {
   @Param @Require image: string;
   @Param @Require file: string;
+  @Event onPlayStateChange: (state: PlayerState, playerService: AudioPlayerService) => void;
   @Local rawFileDescriptor: resourceManager.RawFileDescriptor | undefined = undefined;
   @Local playerState: PlayerState = PlayerState.STATE_NOT_INIT;
   private context = getContext(this);
@@ -16,8 +17,9 @@ export struct ImageSoundPlayer {
   aboutToAppear(): void {
     this.rawFileDescriptor = this.context.resourceManager.getRawFdSync(this.file);
     this.audioPlayerService.setVolume(1);
-    this.audioPlayerService.setOnStateChangeListener((state: PlayerState) => {
+    this.audioPlayerService.addOnStateChangeListener((state: PlayerState) => {
       this.playerState = state;
+      this.onPlayStateChange(state, this.audioPlayerService);
     });
   }
 
