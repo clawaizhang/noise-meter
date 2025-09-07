@@ -76,6 +76,10 @@ export struct PressureSounds {
           .height(32)
           .margin({ left: 8 })
           .type(ButtonType.Circle)
+          .onClick(() => {
+            this.playingList.forEach((pItem) => this.unionPlayerState === PlayerState.STATE_PLAYING ?
+            pItem.playerService.pause() : pItem.playerService.resume());
+          })
         }
         .width('100%')
         .height(50)
