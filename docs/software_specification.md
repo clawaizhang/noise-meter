@@ -609,7 +609,7 @@
              .fontSize(20)
              .fontWeight(FontWeight.Medium)
          }
-         .width('100%')
+         
          .padding(16)
          
          // 分贝显示
@@ -621,7 +621,7 @@
              .fontSize(24)
              .fontColor('#666666')
          }
-         .width('100%')
+         
          .margin(24)
          
          // 控制按钮
@@ -637,8 +637,8 @@
            this.toggleRecording();
          })
        }
-       .width('100%')
-       .height('100%')
+       
+       
      }
    }
    ```
@@ -669,7 +669,7 @@
                  .fontSize(16)
                  .fontWeight(FontWeight.Medium)
              }
-             .width('100%')
+             
              .padding(16)
            }
            .onClick(() => {
@@ -677,8 +677,8 @@
            })
          })
        }
-       .width('100%')
-       .height('100%')
+       
+       
      }
    }
    ```
@@ -708,7 +708,7 @@
              this.settings.sampleRate = parseInt(value);
            })
          }
-         .width('100%')
+         
          .padding(16)
          
          // 缓冲区设置
@@ -724,7 +724,7 @@
              this.settings.bufferSize = parseInt(value);
            })
          }
-         .width('100%')
+         
          .padding(16)
          
          // 自动保存设置
@@ -736,11 +736,11 @@
                this.settings.autoSave = isOn;
              })
          }
-         .width('100%')
+         
          .padding(16)
        }
-       .width('100%')
-       .height('100%')
+       
+       
      }
    }
    ```

@@ -29,8 +29,8 @@ struct TestFunctionLinksPage {
         .width('80%')
         .margin({ top: DesignConstants.SPACING_LG })
     }
-    .width('100%')
-    .height('100%')
+
+
     .justifyContent(FlexAlign.Start)
     .alignItems(HorizontalAlign.Center)
     .backgroundColor($r('app.color.background_primary'))

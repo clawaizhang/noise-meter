@@ -50,8 +50,8 @@ export struct PressureSounds {
       }
       .columnsTemplate('repeat(auto-fill,100)')
       .rowsTemplate('1fr 1fr 1fr')
-      .width('100%')
-      .height('100%')
+
+
       .rowsGap(16)
       .columnsGap(16)
       .padding({ left: 16 })
@@ -62,14 +62,14 @@ export struct PressureSounds {
             .onClick(() => {
               this.navStack.pushPathByName('PlayingItemsDialog', undefined)
             })
-            .width('100%')
+
             .height(50)
           Button() {
             Image(this.unionPlayerState === PlayerState.STATE_PLAYING ? $r('app.media.ic_pause') :
             $r('app.media.ic_play'))
               .fillColor(Color.White)
-              .width('100%')
-              .height('100%')
+
+
           }
           .backgroundColor(Color.Transparent)
           .width(32)
@@ -81,7 +81,7 @@ export struct PressureSounds {
             pItem.playerService.pause() : pItem.playerService.resume());
           })
         }
-        .width('100%')
+
         .height(50)
         .padding({ left: 16, right: 16, bottom: 100 })
         .borderRadius(12)

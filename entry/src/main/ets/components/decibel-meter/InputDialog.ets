@@ -30,7 +30,7 @@ export struct InputDialog {
             .margin({ bottom: 16 })
 
           TextArea({ placeholder: '请输入备注(最多64字)', text: this.default })
-            .width('100%')
+
             .height(80)
             .maxLength(140)
             .defaultFocus(true)
@@ -54,7 +54,7 @@ export struct InputDialog {
               Text('取消')
                 .fontSize(16)
             }
-            .width('100%')
+
             .height(40)
             .backgroundColor($r('app.color.transparent_white_90'))
             .onClick(() => {
@@ -68,7 +68,7 @@ export struct InputDialog {
                 .fontSize(16)
                 .fontColor($r('app.color.white'))
             }
-            .width('100%')
+
             .height(40)
             .backgroundColor($r('app.color.button_primary'))
             .margin({ left: 24 })
@@ -79,7 +79,7 @@ export struct InputDialog {
           }.padding({bottom: 16})
         }
       }
-      .width('100%')
+
       .margin({ top: 16 })
     }
     .width('90%')

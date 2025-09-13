@@ -72,8 +72,7 @@ export struct MainNoiseMeter {
         .fontColor(this.currentIndex === index ? $r('app.color.text_primary') : $r('app.color.text_secondary'))
         .margin({ top: 4 })
     }
-    .width('100%')
-    .height('100%')
+
     .justifyContent(FlexAlign.Center)
 
   }
@@ -104,15 +103,11 @@ export struct MainNoiseMeter {
       }) {
         TabContent() {
           Column() {
-
             // 噪音检测区域
             DecibelMeter({ meterOn: this.meterOn })
               .width('92%')
           }
           .id('decibelMeterRoot')
-          .width('100%')
-          .height('100%')
-          .backgroundColor($r('app.color.background_secondary'))
           .alignItems(HorizontalAlign.Center)
         }
         .tabBar(this.TabBuilder('', $r('app.media.ic_meter'), 0))
@@ -127,29 +122,20 @@ export struct MainNoiseMeter {
       .onChange((index: number) => {
         this.currentIndex = index;
       })
-      .width('100%')
-      .height('100%')
+
       .barOverlap(true)
       .barBackgroundBlurStyle(BlurStyle.BACKGROUND_REGULAR)
       .barMode(BarMode.Fixed)
       .animationDuration(0)
     }
     .title(this.title, {
-      mainTitleModifier: new MyTextModifier(),
       barStyle: this.currentIndex == 1 ? BarStyle.STACK : BarStyle.STANDARD,
       backgroundBlurStyle: BlurStyle.BACKGROUND_REGULAR
     })
     .menus(this.menuItems)
     .hideTitleBar(false)
-    .backgroundColor($r('app.color.background_secondary'))
     .hideToolBar(true)
     .mode(NavDestinationMode.STANDARD)
     .animation({ duration: 200, curve: Curve.Linear })
-  }
-}
-
-class MyTextModifier implements AttributeModifier<TextAttribute> {
-  applyNormalAttribute(instance: TextAttribute): void {
-    instance.fontColor($r('app.color.text_primary'));
   }
 }

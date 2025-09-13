@@ -31,24 +31,8 @@ import { BusinessError } from '@kit.BasicServicesKit';
 import { PermissionUtil } from '@pura/harmony-utils';
 import { camera } from '@kit.CameraKit';
 import lottie, { AnimationItem } from '@ohos/lottie';
-
-// 响应式数值接口定义
-interface ResponsiveNumberValues {
-  xsmall: number;
-  small: number;
-  medium: number;
-  large: number;
-  xlarge: number;
-}
-
-// 响应式字符串接口定义
-interface ResponsiveStringValues {
-  xsmall: string;
-  small: string;
-  medium: string;
-  large: string;
-  xlarge: string;
-}
+import { DialogHub, InfSheet } from '@hadss/dialoghub';
+import { NoiseLevelDialogBuilder } from '../../pages/noisemeter/NoiseLevelDialogNavigation';
 
 @ComponentV2
 export struct DecibelMeter {
@@ -110,6 +94,7 @@ export struct DecibelMeter {
   private releaseTimer: number = -1
   private currentRecord?: DecibelRecord
   private recordListener?: PreferenceChangeListener
+  noiseInfoDialog: InfSheet | undefined
   // Canvas相关属性
 
   private ASPECT_RATIO: number = 1.5 // 宽高比改为3:2
@@ -207,7 +192,6 @@ export struct DecibelMeter {
         Canvas(this.canvasContext)
           .width(this.canvasWidth)
           .height(this.canvasHeight)
-          .backgroundColor($r('app.color.background_primary'))
           .borderRadius(12)
           .shadow({
             radius: 8,
@@ -249,7 +233,6 @@ export struct DecibelMeter {
               .fontWeight(FontWeight.Medium)
           }
           .padding(8)
-          .backgroundColor($r('app.color.transparent_white_90'))
           .borderRadius(8)
           .border({
             width: 1,
@@ -754,7 +737,7 @@ export struct DecibelMeter {
 
             this.max()
           }
-          .width('100%')
+
           .justifyContent(FlexAlign.Center)
           .alignItems(VerticalAlign.Bottom)
           .borderColor(this.isNoiseAlarm ? DecibelService.getDecibelColor(this.decibelState.currentDecibel) :
@@ -765,10 +748,8 @@ export struct DecibelMeter {
               Text(`${secondsToHoursMinutesSecondsWithDecimal(this.MAX_RECORDING_DURATION -
               this.recordingTime)} 后自动保存`)
 
-                .fontColor($r('app.color.text_secondary'))
               Text(' | ')
 
-                .fontColor($r('app.color.text_secondary'))
             }
             Row() {
               Image($r('app.media.ic_info'))
@@ -781,7 +762,12 @@ export struct DecibelMeter {
                 .fontColor(DecibelService.getDecibelColor(this.decibelState.currentDecibel))
             }
             .onClick(() => {
-              this.navStack.pushPathByName("NoiseLevelDialog", null);
+              this.noiseInfoDialog = this.noiseInfoDialog ?? DialogHub.getSheet()
+                .setContent(wrapBuilder(NoiseLevelDialogBuilder))
+                .setConfig({ enableOutsideInteractive: false, scrollSizeMode: ScrollSizeMode.CONTINUOUS })
+                .setComponentTargetId('decibelMeterRoot')
+                .build();
+              this.noiseInfoDialog.show();
             })
           }
 
@@ -833,7 +819,6 @@ export struct DecibelMeter {
     Column() {
       Text('最大')
 
-        .fontColor($r('app.color.text_secondary'))
         .margin({ bottom: 4 });
       Text(this.maxDecibel === 0 ? '-' : this.maxDecibel.toString())
         .fontSize(32)
@@ -852,7 +837,6 @@ export struct DecibelMeter {
     Column() {
       Text(this.showAvgInsteadOfMin ? '平均' : '最小')
 
-        .fontColor($r('app.color.text_secondary'));
       Text(this.showAvgInsteadOfMin ?
         (this.avgDecibel === 0 ? '-' : this.avgDecibel.toString()) :
         (this.minDecibel === 0 ? '-' : this.minDecibel.toString()))

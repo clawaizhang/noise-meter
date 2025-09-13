@@ -64,7 +64,7 @@ export struct DialogContainer {
         this.ContentBuilder(this.contentParam)
       }
       .id("dialogRoot")
-      .width('100%')
+
       .height(DialogConstants.DIALOG.MAX_HEIGHT)
       .backgroundColor($r('app.color.background_primary'))
       .borderRadius({
@@ -112,7 +112,7 @@ export struct DialogContainer {
         curve: Curve.EaseOut
       })
     }
-    .width('100%')
+
     .hideBackButton(true)
     .backgroundBlurStyle(BlurStyle.BACKGROUND_REGULAR)
     .animation({

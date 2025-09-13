@@ -144,8 +144,7 @@ struct Index {
               }
             })
         }
-        .width('100%')
-        .height('100%')
+
         .justifyContent(FlexAlign.Center)
       } else {
         // 显示正常内容
@@ -159,15 +158,12 @@ struct Index {
             }.justifyContent(FlexAlign.Center)
           }
         }
-        .size({ width: '100%', height: '100%' })
+        .size({ width: '100%' })
         .hideTitleBar(true)
         .titleMode(NavigationTitleMode.Mini)
         .mode(NavigationMode.Stack)
-        .backgroundColor($r('app.color.background_primary'))
       }
     }
-    .width('100%')
-    .height('100%')
-    .backgroundColor($r('app.color.background_primary'))
+
   }
 }

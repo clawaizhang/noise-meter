@@ -163,7 +163,7 @@ export struct DecibelHistory {
       Text('检测记录')
         .fontSize(DesignConstants.FONT_SIZE_XL)
         .fontWeight(FontWeight.Medium)
-        .width('100%')
+
         .textAlign(TextAlign.Center)
 
       Row() {
@@ -183,11 +183,11 @@ export struct DecibelHistory {
         }
         .width(56)
       }
-      .width('100%')
+
       .height(56)
       .padding({ left: 16, right: 16 })
     }
-    .width('100%')
+
     .height(56)
     .backgroundColor($r('app.color.background_secondary'))
   }
@@ -264,9 +264,9 @@ export struct DecibelHistory {
                 .fontColor(record.location ? $r('app.color.text_secondary') : $r('app.color.text_disabled'))
                 .maxLines(3)
                 .textOverflow({ overflow: TextOverflow.Ellipsis })
-                .width('100%')
+
             }
-            .width('100%')
+
 
             Row() {
               Text(record.comment || '无备注')
@@ -316,7 +316,7 @@ export struct DecibelHistory {
                   })
               }
             }
-            .width('100%')
+
             .height(DesignConstants.ICON_SIZE_SM)
             .margin({ top: DesignConstants.SPACING_XS })
           }
@@ -380,7 +380,7 @@ export struct DecibelHistory {
           .flexShrink(0) // 禁止收缩
 
         }
-        .width('100%')
+
         .padding({
           left: 16,
           right: 16,
@@ -501,7 +501,7 @@ export struct DecibelHistory {
                 .fontSize(DesignConstants.FONT_SIZE_MD)
                 .fontColor(Color.White)
                 .textAlign(TextAlign.Center)
-                .width('100%')
+
                 .padding({
                   left: DesignConstants.SPACING_SM,
                   right: DesignConstants.SPACING_SM
@@ -555,7 +555,7 @@ export struct DecibelHistory {
                   .fontSize(DesignConstants.FONT_SIZE_MD)
                   .fontColor(Color.White)
                   .textAlign(TextAlign.Center)
-                  .width('100%')
+
                   .padding({
                     left: DesignConstants.SPACING_SM,
                     right: DesignConstants.SPACING_SM
@@ -648,8 +648,8 @@ export struct DecibelHistory {
           this.ListLayoutView()
         }
       }
-      .width('100%')
-      .height('100%')
+
+
       .backgroundColor($r('app.color.background_secondary'))
     }.title('历史记录').menus([{
       value: '清空记录',
@@ -679,7 +679,7 @@ export struct DecibelHistory {
         .fontColor('#999999')
         .margin({ top: DesignConstants.SPACING_SM })
     }
-    .width('100%')
+
     .layoutWeight(1)
     .backgroundColor($r('app.color.background_secondary'))
     .justifyContent(FlexAlign.Center)
@@ -696,7 +696,7 @@ export struct DecibelHistory {
           Column() {
             this.RecordItem(record)
             Divider()
-              .width('100%')
+
               .height(DesignConstants.SPACING_SM)
               .color($r('app.color.background_secondary'))
           }
@@ -710,17 +710,17 @@ export struct DecibelHistory {
             .fontSize(DesignConstants.FONT_SIZE_MD)
             .fontColor('#666666')
             .textAlign(TextAlign.Center)
-            .width('100%')
+
             .padding(16)
 
           Divider()
-            .width('100%')
+
             .height(DesignConstants.SPACING_SM)
             .color($r('app.color.background_secondary'))
         }
       }
     }
-    .width('100%')
+
     .layoutWeight(1)
     .backgroundColor($r('app.color.background_secondary'))
     .scrollBar(BarState.Auto)

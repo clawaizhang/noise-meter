@@ -142,8 +142,8 @@ struct Index {
         }
       }
     }
-    .width('100%')
-    .height('100%')
+    
+    
   }
 }
 ```
@@ -347,8 +347,8 @@ struct DecibelHistory {
             .fontSize(16)
             .margin({ top: 16 })
         }
-        .width('100%')
-        .height('100%')
+        
+        
         .justifyContent(FlexAlign.Center)
       } else {
         List() {
@@ -362,13 +362,13 @@ struct DecibelHistory {
             .padding({ horizontal: 16, vertical: 8 })
           })
         }
-        .width('100%')
-        .height('100%')
+        
+        
         .layoutWeight(1)
       }
     }
-    .width('100%')
-    .height('100%')
+    
+    
     .backgroundColor('#F5F5F5')
   }
 
@@ -937,7 +937,7 @@ export struct DetailDialog {
       .backgroundColor(Color.Transparent)
       .onClick(this.closeDialog)
     }
-    .width('100%')
+    
     .height(56)
     .padding({ left: 20, right: 12 })
   }
@@ -967,7 +967,7 @@ export struct DetailDialog {
           
           .fontColor('#333333')
       }
-      .width('100%')
+      
       .justifyContent(FlexAlign.SpaceBetween)
       .margin({ bottom: 8 })
 
@@ -979,7 +979,7 @@ export struct DetailDialog {
           
           .fontColor('#333333')
       }
-      .width('100%')
+      
       .justifyContent(FlexAlign.SpaceBetween)
       .margin({ bottom: 8 })
 
@@ -995,12 +995,12 @@ export struct DetailDialog {
             .textOverflow({ overflow: TextOverflow.None })
             .width('70%')
         }
-        .width('100%')
+        
         .justifyContent(FlexAlign.SpaceBetween)
         .margin({ bottom: 8 })
       }
     }
-    .width('100%')
+    
     .padding({ left: 16, right: 16, top: 12, bottom: 12 })
     .backgroundColor(Color.White)
     .borderRadius(12)
@@ -1027,7 +1027,7 @@ export struct DetailDialog {
             
             .fontColor('#999999')
         }
-        .width('100%')
+        
         .justifyContent(FlexAlign.Center)
         .margin({ top: 20, bottom: 20 })
       } else {
@@ -1066,7 +1066,7 @@ export struct DetailDialog {
                   .fontColor('#333333')
                   .margin({ left: 8 })
               }
-              .width('100%')
+              
               .margin({ bottom: 8 })
               .alignItems(VerticalAlign.Center)
             })
@@ -1075,7 +1075,7 @@ export struct DetailDialog {
         }
       }
     }
-    .width('100%')
+    
     .padding(16)
     .backgroundColor(Color.White)
     .borderRadius(12)
@@ -1111,7 +1111,7 @@ export struct DetailDialog {
                     .fontColor(Color.White)
                 }
               }
-              .width('100%')
+              
               .height(48)
               .type(ButtonType.Normal)
               .backgroundColor('#2196F3')
@@ -1130,20 +1130,20 @@ export struct DetailDialog {
                 }
               })
             }
-            .width('100%')
+            
             .padding(16)
             .backgroundColor(Color.White)
             .borderRadius(12)
             .margin({ bottom: 12 })
           }
         }
-        .width('100%')
+        
         .padding({ left: 16, right: 16, bottom: 16 })
       }
       .layoutWeight(1)
       .scrollBar(BarState.Off)
     }
-    .width('100%')
+    
     .height('60%')
     .backgroundColor('#F5F5F5')
     .borderRadius({ topLeft: 24, topRight: 24 })
@@ -1387,7 +1387,7 @@ export struct AudioRecordDisplay {
             this.onRecordEnabledChange(isOn);
           })
       }
-      .width('100%')
+      
       .height(40)
       .alignItems(VerticalAlign.Center)
 
@@ -1397,17 +1397,17 @@ export struct AudioRecordDisplay {
           .fontColor('#666666')
           .margin({ left: 4, top: 2 })
           .textAlign(TextAlign.Start)
-          .width('100%')
+          
       } else {
         Text('开启后将自动保存检测音频')
           
           .fontColor('#999999')
           .margin({ left: 4, top: 2 })
           .textAlign(TextAlign.Start)
-          .width('100%')
+          
       }
     }
-    .width('100%')
+    
     .padding({
       left: 16,
       right: 16,
@@ -1522,7 +1522,7 @@ export struct BannerCard {
       })
         .height(57)
     }
-    .width('100%')
+    
     .height(57)
     .backgroundColor(Color.White)
     .borderRadius(24)
@@ -2050,7 +2050,7 @@ export struct DecibelMeter {
         .textAlign(TextAlign.Center)
         .margin({ horizontal: 24 })
     }
-    .width('100%')
+    
     .alignItems(HorizontalAlign.Center)
     .padding(24)
   }
@@ -2103,7 +2103,7 @@ export struct DecibelMeter {
       .layoutWeight(1)
       .alignItems(HorizontalAlign.Center)
     }
-    .width('100%')
+    
     .padding(16)
     .backgroundColor('#F5F5F5')
     .borderRadius(20)
@@ -2144,7 +2144,7 @@ export struct DecibelMeter {
         }
       })
     }
-    .width('100%')
+    
     .alignItems(HorizontalAlign.Center)
     .padding({ vertical: 24 })
   }
@@ -2175,8 +2175,8 @@ export struct DecibelMeter {
         })
       }
     }
-    .width('100%')
-    .height('100%')
+    
+    
     .backgroundColor('#FFFFFF')
     .padding({ top: 16, bottom: 24 })
   }
@@ -2329,7 +2329,7 @@ export struct DecibelHistory {
                 .margin({ left: 8 })
             }
           }
-          .width('100%')
+          
 
           if (record.location) {
             Text(record.location)
@@ -2354,7 +2354,7 @@ export struct DecibelHistory {
         }
         .alignItems(HorizontalAlign.Center)
       }
-      .width('100%')
+      
       .justifyContent(FlexAlign.SpaceBetween)
       .alignItems(VerticalAlign.Center)
       .padding(16)
@@ -2444,7 +2444,7 @@ export struct DecibelHistory {
           this.clearNonFavoriteRecords();
         })
       }
-      .width('100%')
+      
       .padding({ left: 20, right: 12, top: 16, bottom: 16 })
 
       Tabs({
@@ -2467,8 +2467,8 @@ export struct DecibelHistory {
                 .fontSize(16)
                 .fontColor('#666666')
             }
-            .width('100%')
-            .height('100%')
+            
+            
             .justifyContent(FlexAlign.Center)
           } else if (this.records.length === 0) {
             Column() {
@@ -2480,8 +2480,8 @@ export struct DecibelHistory {
                 .fontSize(16)
                 .fontColor('#666666')
             }
-            .width('100%')
-            .height('100%')
+            
+            
             .justifyContent(FlexAlign.Center)
           } else {
             List() {
@@ -2491,8 +2491,8 @@ export struct DecibelHistory {
                 }
               })
             }
-            .width('100%')
-            .height('100%')
+            
+            
             .layoutWeight(1)
           }
         }
@@ -2513,8 +2513,8 @@ export struct DecibelHistory {
                 }
               })
             }
-            .width('100%')
-            .height('100%')
+            
+            
             .layoutWeight(1)
           }
         }
@@ -2524,7 +2524,7 @@ export struct DecibelHistory {
       .onChange((index: number) => {
         this.selectedTab = index;
       })
-      .width('100%')
+      
       .layoutWeight(1)
       .barMode(BarMode.Fixed)
       .barWidth('100%')
@@ -2537,8 +2537,8 @@ export struct DecibelHistory {
       })
         .margin({ top: 16 })
     }
-    .width('100%')
-    .height('100%')
+    
+    
     .backgroundColor('#F5F5F5')
   }
 }
@@ -2741,13 +2741,13 @@ export struct FileVault {
           this.deleteFile(file.name);
         })
       }
-      .width('100%')
+      
       .padding(16)
       .borderRadius(12)
       .backgroundColor(Color.White)
       .shadow({ radius: 1, color: '#1A000000', offsetY: 2 })
     }
-    .width('100%')
+    
     .padding({ left: 16, right: 16, bottom: 12 })
   }
 
@@ -2773,7 +2773,7 @@ export struct FileVault {
           this.loadFiles();
         })
       }
-      .width('100%')
+      
       .padding({ left: 20, right: 12, top: 16, bottom: 16 })
 
       if (this.isLoading) {
@@ -2791,8 +2791,8 @@ export struct FileVault {
             .fontSize(16)
             .fontColor('#666666')
         }
-        .width('100%')
-        .height('100%')
+        
+        
         .justifyContent(FlexAlign.Center)
       } else if (this.files.length === 0) {
         Column() {
@@ -2804,8 +2804,8 @@ export struct FileVault {
             .fontSize(16)
             .fontColor('#666666')
         }
-        .width('100%')
-        .height('100%')
+        
+        
         .justifyContent(FlexAlign.Center)
       } else {
         List() {
@@ -2815,8 +2815,8 @@ export struct FileVault {
             }
           })
         }
-        .width('100%')
-        .height('100%')
+        
+        
         .layoutWeight(1)
       }
 
@@ -2826,8 +2826,8 @@ export struct FileVault {
       })
         .margin({ top: 16 })
     }
-    .width('100%')
-    .height('100%')
+    
+    
     .backgroundColor('#F5F5F5')
   }
 }
@@ -2954,7 +2954,7 @@ export struct DetailDialog {
       .backgroundColor(Color.Transparent)
       .onClick(this.closeDialog)
     }
-    .width('100%')
+    
     .height(56)
     .padding({ left: 20, right: 12 })
   }
@@ -2984,7 +2984,7 @@ export struct DetailDialog {
           
           .fontColor('#333333')
       }
-      .width('100%')
+      
       .justifyContent(FlexAlign.SpaceBetween)
       .margin({ bottom: 8 })
 
@@ -2996,7 +2996,7 @@ export struct DetailDialog {
           
           .fontColor('#333333')
       }
-      .width('100%')
+      
       .justifyContent(FlexAlign.SpaceBetween)
       .margin({ bottom: 8 })
 
@@ -3012,12 +3012,12 @@ export struct DetailDialog {
             .textOverflow({ overflow: TextOverflow.None })
             .width('70%')
         }
-        .width('100%')
+        
         .justifyContent(FlexAlign.SpaceBetween)
         .margin({ bottom: 8 })
       }
     }
-    .width('100%')
+    
     .padding({ left: 16, right: 16, top: 12, bottom: 12 })
     .backgroundColor(Color.White)
     .borderRadius(12)
@@ -3044,7 +3044,7 @@ export struct DetailDialog {
             
             .fontColor('#999999')
         }
-        .width('100%')
+        
         .justifyContent(FlexAlign.Center)
         .margin({ top: 20, bottom: 20 })
       } else {
@@ -3083,7 +3083,7 @@ export struct DetailDialog {
                   .fontColor('#333333')
                   .margin({ left: 8 })
               }
-              .width('100%')
+              
               .margin({ bottom: 8 })
               .alignItems(VerticalAlign.Center)
             })
@@ -3092,7 +3092,7 @@ export struct DetailDialog {
         }
       }
     }
-    .width('100%')
+    
     .padding(16)
     .backgroundColor(Color.White)
     .borderRadius(12)
@@ -3128,7 +3128,7 @@ export struct DetailDialog {
                     .fontColor(Color.White)
                 }
               }
-              .width('100%')
+              
               .height(48)
               .type(ButtonType.Normal)
               .backgroundColor('#2196F3')
@@ -3147,20 +3147,20 @@ export struct DetailDialog {
                 }
               })
             }
-            .width('100%')
+            
             .padding(16)
             .backgroundColor(Color.White)
             .borderRadius(12)
             .margin({ bottom: 12 })
           }
         }
-        .width('100%')
+        
         .padding({ left: 16, right: 16, bottom: 16 })
       }
       .layoutWeight(1)
       .scrollBar(BarState.Off)
     }
-    .width('100%')
+    
     .height('60%')
     .backgroundColor('#F5F5F5')
     .borderRadius({ topLeft: 24, topRight: 24 })

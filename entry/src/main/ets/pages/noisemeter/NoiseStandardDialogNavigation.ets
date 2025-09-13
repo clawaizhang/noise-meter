@@ -55,7 +55,7 @@ export struct NoiseStandardDialog {
       }.scrollable(ScrollDirection.Vertical)
       .scrollBar(BarState.Auto)
       .edgeEffect(EdgeEffect.Spring)
-      .width('100%')
+
     }
   }
 }

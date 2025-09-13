@@ -91,7 +91,7 @@ export struct DetailDialog {
               .backgroundColor($r('app.color.divider_primary'))
               .hitTestBehavior(HitTestMode.Block) // 扩大触摸区域
           }
-          .width('100%')
+
           .height(20)
           .justifyContent(FlexAlign.Center)
 
@@ -138,7 +138,7 @@ export struct DetailDialog {
                   NoiseChart({ playAudio: true, selectedRecord: this.selectedRecord })
                 }
               }
-              .width('100%')
+
               .padding({
                 left: '4%',
                 right: '4%',
@@ -150,10 +150,10 @@ export struct DetailDialog {
               })
             }
           }
-          .width('100%')
+
         }
         .id("detailDialogRoot")
-        .width('100%')
+
         .backgroundColor($r('app.color.background_primary'))
         .borderRadius({ topLeft: 16, topRight: 16 })
         .translate({ y: this.translateY })
@@ -188,8 +188,8 @@ export struct DetailDialog {
           curve: Curve.Smooth
         })
       }
-      .height('100%')
-      .width('100%')
+
+
     }
     .backgroundColor($r('app.color.background_primary'))
     .animation({

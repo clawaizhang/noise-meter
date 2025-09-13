@@ -57,9 +57,9 @@ export struct NoiseStandardCard {
           Text(this.standard.description)
             .fontSize(12)
             .fontColor($r('app.color.text_secondary'))
-            .width('100%')
+
         }.flexGrow(1)
-      }.width('100%')
+      }
 
     }
     .padding(16)

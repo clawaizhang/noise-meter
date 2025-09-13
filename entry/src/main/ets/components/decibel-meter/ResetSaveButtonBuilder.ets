@@ -113,7 +113,7 @@ export struct ResetSaveButton {
         }
       })
     }
-    .width('100%')
+
     .justifyContent(FlexAlign.SpaceBetween)
   }
 }

@@ -25,13 +25,13 @@ function itemDescription() {
   .fontColor($r('app.color.text_secondary'))
   .fontSize(DesignConstants.FONT_SIZE_MD)
   .textAlign(TextAlign.Start)
-  .width('100%')
+
   .margin({ left: DesignConstants.SPACING_XL })
 }
 
 @Extend(Column)
 function listItemStyle() {
-  .width('100%')
+
   .padding({
     left: DesignConstants.SPACING_LG,
     right: DesignConstants.SPACING_LG
@@ -65,14 +65,14 @@ function cardStyle() {
 
 @Extend(Row)
 function listItemRow() {
-  .width('100%')
+
   .height(56)
   .alignItems(VerticalAlign.Center)
 }
 
 @Extend(ListItem)
 function dividerStyle() {
-  .width('100%')
+
   .height(1)
   .backgroundColor($r('app.color.background_secondary'))
 }
@@ -185,7 +185,7 @@ export struct AboutSettings {
           }
           .descriptionContainer()
         }
-        .width('100%')
+
         .lanes({ minLength: 350, maxLength: 350 }, 8)
         .layoutWeight(1)
         .backgroundColor('transparent')
@@ -228,8 +228,8 @@ export struct AboutSettings {
         })
 
     }
-    .width('100%')
-    .height('100%')
+
+
     .backgroundColor($r('app.color.background_tertiary')).title('关于')
   }
 }

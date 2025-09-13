@@ -27,14 +27,14 @@ function itemDescription() {
 
 @Extend(Column)
 function listItemStyle() {
-  .width('100%')
+
   .padding({ left: 16, right: 16 })
   .backgroundColor($r('app.color.background_secondary'))
 }
 
 @Extend(Row)
 function listItemRow() {
-  .width('100%')
+
   .height(56)
   .alignItems(VerticalAlign.Center)
 }
@@ -48,7 +48,7 @@ function detailText() {
 
 @Extend(ListItem)
 function dividerStyle() {
-  .width('100%')
+
   .height(1)
   .backgroundColor($r('app.color.background_secondary'))
 }
@@ -129,7 +129,7 @@ export struct SettingsDeviceManager {
           .descriptionContainer()
         }
       }
-      .width('100%')
+
       .layoutWeight(1)
       .backgroundColor($r('app.color.background_tertiary'))
       .margin({ top: 12 })
@@ -153,8 +153,8 @@ export struct SettingsDeviceManager {
           });
         })
     }
-    .width('100%')
-    .height('100%')
+
+
     .backgroundColor($r('app.color.background_tertiary'))
   }
 }

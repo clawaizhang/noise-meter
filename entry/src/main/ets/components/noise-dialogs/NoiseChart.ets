@@ -52,7 +52,7 @@ export struct NoiseChart {
           }
         }
       }
-      .width('100%')
+
       .margin({ bottom: 12 })
       .alignItems(VerticalAlign.Center)
 
@@ -67,7 +67,7 @@ export struct NoiseChart {
 
             .fontColor($r('app.color.text_secondary'))
         }
-        .width('100%')
+
         .justifyContent(FlexAlign.Center)
         .margin({ top: 20, bottom: 20 })
       } else {
@@ -225,7 +225,7 @@ export struct NoiseChart {
               const xScale = (chartWidth - margin.left - margin.right) / totalSeconds;
               const yScale = chartHeight / (maxValue - minValue);
               const timeInterval = totalSeconds / (values.length - 1);
-              const colorCache = new Map<number, string>();
+              const colorCache = new Map<number, Resource>();
               const weightingTypes = this.selectedRecord!.weightingTypes;
 
               // 获取加权类型及其颜色
@@ -267,7 +267,8 @@ export struct NoiseChart {
                   color = DecibelService.getDecibelColor(value);
                   colorCache.set(value, color);
                 }
-                this.canvasContext.fillStyle = color;
+
+                this.canvasContext.fillStyle = resourceManager.getSystemResourceManager().getStringSync(color);
                 this.canvasContext.beginPath();
                 this.canvasContext.arc(x, y, 1.5, 0, Math.PI * 2);
                 this.canvasContext.fill();
@@ -282,7 +283,7 @@ export struct NoiseChart {
               this.canvasContext.stroke();
             })
         }
-        .width('100%')
+
         .height(200)
 
         if (this.uniqueWeightingTypes!.length > 0) {
@@ -302,7 +303,7 @@ export struct NoiseChart {
         }
       }
     }
-    .width('100%')
+
     .padding({
       left: 16,
       right: 16,

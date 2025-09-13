@@ -27,8 +27,8 @@ export struct PlayingItemsDialog {
     }
     .columnsTemplate('repeat(auto-fill,100)')
     .rowsTemplate('1fr 1fr 1fr')
-    .width('100%')
-    .height('100%')
+
+
     .rowsGap(16)
     .columnsGap(16)
     .padding({ left: 16 })

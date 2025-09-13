@@ -80,7 +80,7 @@ export struct LandscapeActionPanel {
             this.lockToggle();
           })
         }
-        .width('100%')
+
         .justifyContent(FlexAlign.SpaceAround)
         .padding({ bottom: 12 })
 
@@ -130,17 +130,17 @@ export struct LandscapeActionPanel {
             dialogController.open();
           })
         }
-        .width('100%')
+
         .justifyContent(FlexAlign.SpaceAround)
       }
-      .width('100%')
+
       .padding({
         top: 16,
         bottom: 16
       })
     }
-    .width('100%')
-    .height('100%')
+
+
     .backgroundColor($r('app.color.background_tertiary'))
     .borderRadius(12)
     .shadow({ radius: 2, color: '#1A000000', offsetY: 1 })

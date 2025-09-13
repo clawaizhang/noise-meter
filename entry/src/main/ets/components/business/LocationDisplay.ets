@@ -121,11 +121,9 @@ export struct LocationDisplay {
       }
 
       Text(this.isEnabled ? (this.address || '点击刷新按钮获取位置') : '开启位置服务可记录噪音检测位置')
-
-        .fontColor($r('app.color.text_secondary'))
         .textAlign(TextAlign.Center)
     }
-    .width('100%')
+
     .height(40)
     .alignItems(VerticalAlign.Center)
     .justifyContent(FlexAlign.Center)
@@ -137,7 +135,7 @@ export struct LocationDisplay {
       Image($r('app.media.ic_refresh'))
         .width(16)
         .height(16)
-        .fillColor($r('app.color.text_secondary'))
+        .fillColor($r('sys.color.icon_secondary'))
         .rotate({
           angle: this.isRefreshing ? 360 : 0,
           centerX: '50%',
@@ -151,7 +149,7 @@ export struct LocationDisplay {
     }
     .width(20)
     .height(20)
-    .backgroundColor($r('app.color.background_tertiary'))
+    .backgroundColor($r('sys.color.background_fourth'))
     .enabled(!this.isRefreshing)
     .onClick(() => {
       this.startSingleLocation();

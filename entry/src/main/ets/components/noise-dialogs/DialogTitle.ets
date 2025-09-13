@@ -45,7 +45,7 @@ export function DialogTitleBuilder(
     .backgroundColor(Color.Transparent)
     .onClick(closeDialog)
   }
-  .width('100%')
+
   .height(56)
   .padding({ left: 20, right: 12 })
 }

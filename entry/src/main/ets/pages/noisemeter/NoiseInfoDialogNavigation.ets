@@ -16,7 +16,7 @@ export struct NoiseInfoDialog {
           Text('【噪音级别定义】')
             .fontSize(16)
             .fontWeight(FontWeight.Medium)
-            .width('100%')
+
             .margin({ bottom: 16 })
 
           Row() {
@@ -39,10 +39,10 @@ export struct NoiseInfoDialog {
             }
             .alignItems(HorizontalAlign.End)
           }
-          .width('100%')
+
           .padding({ bottom: 12 })
 
-          Divider().color($r('app.color.text_secondary')).width('100%')
+          Divider().color($r('app.color.text_secondary'))
 
           Row() {
             Column() {
@@ -64,10 +64,10 @@ export struct NoiseInfoDialog {
             }
             .alignItems(HorizontalAlign.End)
           }
-          .width('100%')
+
           .padding({ top: 12, bottom: 12 })
 
-          Divider().color($r('app.color.text_secondary')).width('100%')
+          Divider().color($r('app.color.text_secondary'))
 
           Row() {
             Column() {
@@ -89,10 +89,10 @@ export struct NoiseInfoDialog {
             }
             .alignItems(HorizontalAlign.End)
           }
-          .width('100%')
+
           .padding({ top: 12, bottom: 12 })
 
-          Divider().color($r('app.color.text_secondary')).width('100%')
+          Divider().color($r('app.color.text_secondary'))
 
           Row() {
             Column() {
@@ -114,10 +114,10 @@ export struct NoiseInfoDialog {
             }
             .alignItems(HorizontalAlign.End)
           }
-          .width('100%')
+
           .padding({ top: 12, bottom: 12 })
 
-          Divider().color($r('app.color.text_secondary')).width('100%')
+          Divider().color($r('app.color.text_secondary'))
 
           Row() {
             Column() {
@@ -139,10 +139,10 @@ export struct NoiseInfoDialog {
             }
             .alignItems(HorizontalAlign.End)
           }
-          .width('100%')
+
           .padding({ top: 12, bottom: 12 })
 
-          Divider().color($r('app.color.text_secondary')).width('100%')
+          Divider().color($r('app.color.text_secondary'))
 
           Row() {
             Column() {
@@ -164,10 +164,10 @@ export struct NoiseInfoDialog {
             }
             .alignItems(HorizontalAlign.End)
           }
-          .width('100%')
+
           .padding({ top: 12, bottom: 12 })
 
-          Divider().color($r('app.color.text_secondary')).width('100%')
+          Divider().color($r('app.color.text_secondary'))
 
           Row() {
             Column() {
@@ -189,15 +189,15 @@ export struct NoiseInfoDialog {
             }
             .alignItems(HorizontalAlign.End)
           }
-          .width('100%')
+
           .padding({ top: 12, bottom: 12 })
 
-          Divider().color($r('app.color.text_secondary')).width('100%').margin({ bottom: 16 })
+          Divider().color($r('app.color.text_secondary')).margin({ bottom: 16 })
 
           Text('【噪音影响】')
             .fontSize(16)
             .fontWeight(FontWeight.Medium)
-            .width('100%')
+
             .margin({ top: 8, bottom: 16 })
 
           Row() {
@@ -211,12 +211,12 @@ export struct NoiseInfoDialog {
                 .margin({ top: 4 })
             }
             .alignItems(HorizontalAlign.Start)
-            .width('100%')
+
           }
-          .width('100%')
+
           .padding({ bottom: 12 })
 
-          Divider().color($r('app.color.text_secondary')).width('100%')
+          Divider().color($r('app.color.text_secondary'))
 
           Row() {
             Column() {
@@ -229,12 +229,12 @@ export struct NoiseInfoDialog {
                 .margin({ top: 4 })
             }
             .alignItems(HorizontalAlign.Start)
-            .width('100%')
+
           }
-          .width('100%')
+
           .padding({ top: 12, bottom: 12 })
 
-          Divider().color($r('app.color.text_secondary')).width('100%')
+          Divider().color($r('app.color.text_secondary'))
 
           Row() {
             Column() {
@@ -247,12 +247,12 @@ export struct NoiseInfoDialog {
                 .margin({ top: 4 })
             }
             .alignItems(HorizontalAlign.Start)
-            .width('100%')
+
           }
-          .width('100%')
+
           .padding({ top: 12, bottom: 12 })
 
-          Divider().color($r('app.color.text_secondary')).width('100%')
+          Divider().color($r('app.color.text_secondary'))
 
           Row() {
             Column() {
@@ -265,13 +265,13 @@ export struct NoiseInfoDialog {
                 .margin({ top: 4 })
             }
             .alignItems(HorizontalAlign.Start)
-            .width('100%')
+
           }
-          .width('100%')
+
           .padding({ top: 12, bottom: 12 })
 
           Button('我知道了')
-            .width('100%')
+
             .height(40)
             .backgroundColor($r('app.color.primary'))
             .fontColor($r('app.color.white'))
@@ -285,8 +285,7 @@ export struct NoiseInfoDialog {
         .borderRadius(16)
         .width('90%')
       }
-      .height('100%')
-      .width('100%')
+
     }
     .backgroundColor('rgba(0,0,0,0.7)')
     .hideTitleBar(true)

@@ -212,7 +212,7 @@ export struct HealthDetailDialog {
               .fontWeight(FontWeight.Medium)
               .fontColor($r('app.color.text_primary'))
           }
-          .width('100%')
+
           .padding({
             left: DesignConstants.DETAIL_MODAL.PADDING,
             right: DesignConstants.DETAIL_MODAL.PADDING
@@ -229,7 +229,7 @@ export struct HealthDetailDialog {
           }
         })
       }
-      .width('100%')
+
     }
     .padding(16)
   }

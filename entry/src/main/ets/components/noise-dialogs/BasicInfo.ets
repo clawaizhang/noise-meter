@@ -35,7 +35,7 @@ export struct BasicInfo {
           .fontColor($r('app.color.text_primary'))
           .width('20%')
       }
-      .width('100%')
+
       .margin({ bottom: 8 })
 
       if (this.selectedRecord!.location) {
@@ -50,7 +50,7 @@ export struct BasicInfo {
             .width('70%')
             .textOverflow({ overflow: TextOverflow.None })
         }
-        .width('100%')
+
         .margin({ bottom: 8 })
       }
 
@@ -104,11 +104,11 @@ export struct BasicInfo {
             dialogController.open();
           })
       }
-      .width('100%')
+
       .margin({ bottom: 8 })
 
     }
-    .width('100%')
+
     .padding({
       left: 16,
       right: 16,

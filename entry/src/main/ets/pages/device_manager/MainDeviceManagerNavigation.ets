@@ -53,8 +53,8 @@ export struct MainDeviceManager {
         .fontColor(this.currentIndex === index ? $r('app.color.text_primary') : $r('app.color.text_secondary'))
         .margin({ top: 4 })
     }
-    .width('100%')
-    .height('100%')
+
+
     .justifyContent(FlexAlign.Center)
   }
 
@@ -89,8 +89,8 @@ export struct MainDeviceManager {
             DeviceManagerPage()
           }
           .id('deviceManagerRoot')
-          .width('100%')
-          .height('100%')
+
+
           .backgroundColor($r('app.color.background_secondary'))
           .alignItems(HorizontalAlign.Center)
         }
@@ -112,8 +112,8 @@ export struct MainDeviceManager {
       .onChange((index: number) => {
         this.currentIndex = index;
       })
-      .width('100%')
-      .height('100%')
+
+
       .barHeight(56)
       .barMode(BarMode.Fixed)
       .animationDuration(0)

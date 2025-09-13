@@ -4,7 +4,7 @@ import { DecibelService } from "../../services/DecibelService"
 interface NoiseSegment {
   name: string;
   value: number;
-  color: string;
+  color: Resource;
 }
 
 interface NoiseDistribution {
@@ -216,7 +216,7 @@ export struct Statistics {
         .fontColor($r('app.color.text_secondary'))
         .margin({ bottom: 16 })
         .textAlign(TextAlign.Start)
-        .width('100%')
+
 
       Row() {
         Column() {
@@ -294,10 +294,10 @@ export struct Statistics {
         .alignItems(HorizontalAlign.Center)
         .height(90)
       }
-      .width('100%')
+
 
       Divider()
-        .width('100%')
+
         .height(1)
         .backgroundColor($r('app.color.divider'))
         .margin({ top: 12, bottom: 16 })
@@ -323,16 +323,16 @@ export struct Statistics {
                 .fontSize(12)
                 .fontColor($r('app.color.text_secondary'))
             }
-            .width('100%')
+
             .margin({ bottom: 8 })
             .alignItems(VerticalAlign.Center)
           })
         }
-        .width('100%')
+
         .padding({ left: 16, right: 16 })
       }
     }
-    .width('100%')
+
     .padding({
       left: 16,
       right: 16,

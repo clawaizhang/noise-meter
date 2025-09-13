@@ -1,6 +1,7 @@
 import window from '@ohos.window';
 import { BusinessError } from '@kit.BasicServicesKit';
 import hilog from '@ohos.hilog';
+import { DialogHub } from '@hadss/dialoghub';
 
 const TAG = 'WindowManager';
 const DOMAIN = 0x0000;
@@ -9,7 +10,8 @@ export class WindowManager {
   private static instance: WindowManager;
   private windowStage: window.WindowStage | null = null;
 
-  private constructor() {}
+  private constructor() {
+  }
 
   // 获取单例实例
   public static getInstance(): WindowManager {
@@ -37,6 +39,9 @@ export class WindowManager {
         hilog.error(DOMAIN, TAG, 'Failed to load the content. Cause: %{public}s', JSON.stringify(err) ?? '');
         return;
       }
+      this.windowStage?.getMainWindow().then(windowObj => {
+        DialogHub.init(windowObj.getUIContext());
+      })
       hilog.info(DOMAIN, TAG, 'Succeeded in loading the content.');
     });
   }

@@ -40,13 +40,14 @@ export struct ActionPanel {
       Button({ type: ButtonType.Circle }) {
         Image($r('app.media.ic_reset'))
           .width(20)
-          .height(20)
-          .fillColor($r('app.color.text_secondary'))
+          .height(20).fillColor($r('sys.color.icon_secondary'))
+
       }
       .width(40)
       .height(40)
       .enabled(this.meterOn)
-      .backgroundColor($r('app.color.button_background'))
+      .backgroundColor($r('sys.color.background_fourth'))
+
       .accessibilityDescription('重置当前数据')
       .onClick(async () => {
         await this.onResetButtonClicked();
@@ -56,13 +57,14 @@ export struct ActionPanel {
       Button({ type: ButtonType.Circle }) {
         Image($r('app.media.ic_power_on'))
           .width(20)
-          .height(20)
-          .fillColor(this.isTorchOn ? $r('app.color.white') : $r('app.color.text_secondary'))
+          .height(20).fillColor($r('sys.color.icon_secondary'))
+
       }
       .width(40)
       .height(40)
       .enabled(this.meterOn)
-      .backgroundColor(this.isTorchOn ? $r('app.color.button_red') : $r('app.color.button_background'))
+      .backgroundColor(this.isTorchOn ? $r('sys.color.warning') : $r('sys.color.background_fourth'))
+
       .accessibilityDescription(this.isTorchOn ? '解锁界面' : '锁定界面')
       .onClick(() => {
         this.torchToggle();
@@ -72,7 +74,6 @@ export struct ActionPanel {
       Select(this.weightingTypes)
         .width(40)
         .height(40)
-        .backgroundColor($r('app.color.button_background'))
         .enabled(this.meterOn)
         .selected(this.getSelectedIndex())
         .value(this.weightingType)
@@ -85,13 +86,13 @@ export struct ActionPanel {
       Button({ type: ButtonType.Circle }) {
         Image($r('app.media.ic_save'))
           .width(20)
-          .height(20)
-          .fillColor($r('app.color.text_secondary'))
+          .height(20).fillColor($r('sys.color.icon_secondary'))
+
       }
       .width(40)
       .height(40)
       .enabled(this.meterOn)
-      .backgroundColor($r('app.color.button_background'))
+      .backgroundColor($r('sys.color.background_fourth'))
       .accessibilityDescription('保存当前数据')
       .onClick(async () => {
         const dialogController = new CustomDialogController({
@@ -112,8 +113,7 @@ export struct ActionPanel {
         dialogController.open();
       })
     }
-    .width('100%')
-    .backgroundColor($r('app.color.background_tertiary'))
+    .backgroundColor($r('sys.color.background_fourth'))
     .borderRadius(12)
     .padding(8)
     .shadow({ radius: 2, color: '#1A000000', offsetY: 1 })

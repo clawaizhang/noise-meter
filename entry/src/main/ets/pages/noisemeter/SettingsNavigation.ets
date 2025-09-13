@@ -20,7 +20,7 @@ function itemDescription() {
   .fontColor($r('app.color.text_secondary'))
   .fontSize(DesignConstants.FONT_SIZE_MD)
   .textAlign(TextAlign.Start)
-  .width('100%')
+
   .margin({
     left: DesignConstants.SPACING_XL,
     top: DesignConstants.SPACING_XS
@@ -29,7 +29,7 @@ function itemDescription() {
 
 @Extend(Column)
 function listItemStyle() {
-  .width('100%')
+
   .padding({
     left: DesignConstants.SPACING_LG,
     right: DesignConstants.SPACING_LG
@@ -39,14 +39,14 @@ function listItemStyle() {
 
 @Extend(Row)
 function listItemRow() {
-  .width('100%')
+
   .height(64)
   .alignItems(VerticalAlign.Center)
 }
 
 @Extend(ListItem)
 function dividerStyle() {
-  .width('100%')
+
   .height(0.5)
   .backgroundColor($r('app.color.divider'))
   .margin({
@@ -75,7 +75,7 @@ function arrowIcon() {
 
 @Extend(Column)
 function listItemWithDescription() {
-  .width('100%')
+
   .padding({
     left: DesignConstants.SPACING_LG,
     right: DesignConstants.SPACING_LG,
@@ -125,8 +125,8 @@ export struct Settings {
       Column() {
           this.ListLayoutView()
       }
-      .width('100%')
-      .height('100%')
+
+
       .backgroundColor($r('app.color.background_primary'))
     }.title('设置')
   }
@@ -284,7 +284,7 @@ export struct Settings {
         this.navigateToAbout();
       })
     }
-    .width('100%')
+
     .layoutWeight(1)
     .backgroundColor($r('app.color.background_primary'))
     .margin({ top: DesignConstants.SPACING_LG })

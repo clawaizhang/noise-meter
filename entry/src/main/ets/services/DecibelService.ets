@@ -4,7 +4,7 @@ import { BasicStats, HealthStats } from "../types/NoiseStats";
 export interface NoiseLevel {
   range: string;
   level: string;
-  color: string;
+  color: Resource;
   description: string;
 }
 
@@ -90,13 +90,13 @@ export class DecibelService {
    * @param value - 分贝值
    * @returns string - 颜色值（十六进制）
    */
-  static getDecibelColor(value: number): string {
-    if (value < 20) return '#3EA665';  // 非常安静 - 绿色
-    if (value < 40) return '#4CAF50';      // 安静 - 浅绿色
-    if (value < 60) return '#FFC107';     // 一般 - 黄色
-    if (value < 80) return '#FF9800';      // 吵闹 - 橙色
-    if (value < 100) return '#F44336'; // 非常吵闹 - 红色
-    return '#8B0000';                 // 难以忍受 - 深红色
+  static getDecibelColor(value: number): Resource {
+    if (value < 20) return $r('sys.color.confirm');  // 非常安静 - 绿色
+    if (value < 40) return $r('sys.color.confirm');      // 安静 - 浅绿色
+    if (value < 60) return $r('sys.color.warning');     // 一般 - 黄色
+    if (value < 80) return $r('sys.color.warning');      // 吵闹 - 橙色
+    if (value < 100) return $r('sys.color.alert'); // 非常吵闹 - 红色
+    return $r('sys.color.alert');                 // 难以忍受 - 深红色
   }
 
   /**

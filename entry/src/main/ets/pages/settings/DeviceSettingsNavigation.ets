@@ -23,13 +23,13 @@ function itemDescription() {
   .fontColor($r('app.color.text_secondary'))
   .fontSize(DesignConstants.FONT_SIZE_MD)
   .textAlign(TextAlign.Start)
-  .width('100%')
+
   .margin({ left: DesignConstants.SPACING_XL })
 }
 
 @Extend(Column)
 function listItemStyle() {
-  .width('100%')
+
   .padding({
     left: DesignConstants.SPACING_LG,
     right: DesignConstants.SPACING_LG
@@ -63,14 +63,14 @@ function cardStyle() {
 
 @Extend(Row)
 function listItemRow() {
-  .width('100%')
+
   .height(56)
   .alignItems(VerticalAlign.Center)
 }
 
 @Extend(ListItem)
 function dividerStyle() {
-  .width('100%')
+
   .height(1)
   .backgroundColor($r('app.color.background_secondary'))
 }
@@ -167,12 +167,12 @@ export struct DeviceSettings {
         }
         .descriptionContainer()
       }
-      .width('100%')
+
       .layoutWeight(1)
       .backgroundColor('transparent')
     }
-    .width('100%')
-    .height('100%').title('设备设置')
+
+    .title('设备设置')
   }
 }
 
