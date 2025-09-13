@@ -12,19 +12,21 @@ export function getFrequencySteps(): number[] {
 // 绘制频谱的方法
 export function drawSpectrum(canvasContext: CanvasRenderingContext2D, canvasWidth: number, canvasHeight: number,
   rawSpectrum: Float32Array, dbSteps: number[], frequencySteps: number[], fftSize: number, sampleRate: number,
-  lineColor: Resource, fontSize: number = 12): void {
+  sysResourceManager: resourceManager.ResourceManager,
+  fontSize: number = 12): void {
   console.info(`[频谱绘制] 开始绘制频谱，数据长度=${rawSpectrum.length}`);
   if (canvasContext) {
+    let lineColor = sysResourceManager.getColorSync($r('sys.color.font_on_secondary').id);
     // 清除画布
     const frequencyHigh: number = frequencySteps[frequencySteps.length - 1];
     console.info(`[频谱绘制] 频率步进点=${frequencySteps.join(', ')}`);
     canvasContext.clearRect(0, 0, canvasWidth, canvasHeight);
     // 绘制分贝刻度
-    canvasContext.strokeStyle = lineColor.toString();
+    canvasContext.strokeStyle = lineColor;
     canvasContext.lineWidth = 1;
     canvasContext.textAlign = 'right';
     canvasContext.font = `${vp2px(fontSize)}px sans-serif`;
-    canvasContext.fillStyle = lineColor.toString();
+    canvasContext.fillStyle = lineColor;
 
     let minDb = dbSteps[0];
     let maxDb = dbSteps[dbSteps.length -1];
@@ -37,7 +39,7 @@ export function drawSpectrum(canvasContext: CanvasRenderingContext2D, canvasWidt
       if (db === minDb || db === maxDb) {
         // 但是仍然绘制最顶部的标签
         if (db === maxDb) {
-          canvasContext.fillStyle = lineColor.toString();
+          canvasContext.fillStyle = lineColor;
           canvasContext.font = `${vp2px(fontSize)}px sans-serif`;
           canvasContext.textAlign = 'right';
           canvasContext.fillText(
@@ -49,15 +51,9 @@ export function drawSpectrum(canvasContext: CanvasRenderingContext2D, canvasWidt
         continue;
       }
 
-      // 绘制水平网格线（从画布左侧到右侧）
-      canvasContext.beginPath();
-      canvasContext.moveTo(0, y);
-      canvasContext.lineTo(canvasWidth, y);
-      canvasContext.stroke();
-
       // 只为特定分贝值显示标签
       if (dbSteps.includes(db)) {
-        canvasContext.fillStyle = lineColor.toString();
+        canvasContext.fillStyle = lineColor;
         canvasContext.font = `${vp2px(fontSize)}px sans-serif`;
         canvasContext.textAlign = 'right';
         canvasContext.fillText(
@@ -68,10 +64,30 @@ export function drawSpectrum(canvasContext: CanvasRenderingContext2D, canvasWidt
       }
     }
 
+    for (const db of dbSteps) {
+      // 重新计算Y坐标，确保分贝均匀分布并填满画布高度
+      const normalizedValue: number = (db - minDb) / (maxDb - minDb);
+      const y: number = canvasHeight * (1 - normalizedValue);
+
+      // 跳过最顶部和最底部的水平网格线
+      if (db === minDb || db === maxDb) {
+        continue;
+      }
+
+      // 绘制水平网格线（从画布左侧到右侧）
+      sysResourceManager.getColorSync($r('sys.color.font_on_tertiary').id)
+      canvasContext.lineWidth = 0.5
+      canvasContext.beginPath();
+      canvasContext.moveTo(0, y);
+      canvasContext.lineTo(canvasWidth, y);
+      canvasContext.stroke();
+
+    }
+
     // 绘制频率刻度
     canvasContext.textAlign = 'left';
     canvasContext.font = `${vp2px(fontSize)}px sans-serif`;
-    canvasContext.fillStyle = lineColor.toString();
+    canvasContext.fillStyle = lineColor;
 
     // 计算对数坐标映射的常量
     const logMin: number = Math.log10(16);
@@ -96,9 +112,8 @@ export function drawSpectrum(canvasContext: CanvasRenderingContext2D, canvasWidt
       if (i === 0 || i === frequencySteps.length - 1) {
         // 绘制第一个频率标签
         if (i === 0) {
-          resourceManager.getSystemResourceManager().getStringValue($r('app.color.text_secondary')).then((value) => {
-            canvasContext.fillStyle = value;
-          });
+          canvasContext.fillStyle =
+            sysResourceManager.getColorSync($r('sys.color.font_on_secondary').id);
           canvasContext.font = `${vp2px(fontSize)}px sans-serif`;
           canvasContext.textAlign = 'left';
           canvasContext.fillText(
@@ -112,9 +127,8 @@ export function drawSpectrum(canvasContext: CanvasRenderingContext2D, canvasWidt
 
       // 绘制垂直网格线
       canvasContext.beginPath();
-      resourceManager.getSystemResourceManager().getStringValue($r('app.color.divider')).then((value) => {
-        canvasContext.strokeStyle = value;
-      });
+      canvasContext.strokeStyle =
+        sysResourceManager.getColorSync($r('sys.color.font_on_tertiary').id);
       canvasContext.lineWidth = 0.5;
       canvasContext.moveTo(x, 0);
       canvasContext.lineTo(x, canvasHeight);
@@ -124,9 +138,8 @@ export function drawSpectrum(canvasContext: CanvasRenderingContext2D, canvasWidt
       const label: string = freq >= 1000 ?
         (freq === 1000 ? '1k' : `${freq / 1000}k`) :
       freq.toString();
-      resourceManager.getSystemResourceManager().getStringValue($r('app.color.text_secondary')).then((value) => {
-        canvasContext.fillStyle = value;
-      });
+      canvasContext.fillStyle =
+        sysResourceManager.getColorSync($r('sys.color.font_on_secondary').id);
       canvasContext.font = `${vp2px(fontSize)}px sans-serif`;
       canvasContext.textAlign = 'left';
       canvasContext.fillText(
@@ -191,9 +204,8 @@ export function drawSpectrum(canvasContext: CanvasRenderingContext2D, canvasWidt
 
     // 绘制主频谱折线
     const spectrumPath = new Path2D(); // 创建新的Path2D对象
-    resourceManager.getSystemResourceManager().getStringValue($r('app.color.button_confirm')).then((value) => {
-      canvasContext.strokeStyle = value;
-    });
+    canvasContext.strokeStyle =
+      sysResourceManager.getColorSync($r('sys.color.font_on_primary').id);
     canvasContext.lineWidth = 0.5;
 
     // 标记是否找到第一个有效点
@@ -258,12 +270,10 @@ export function drawSpectrum(canvasContext: CanvasRenderingContext2D, canvasWidt
       const logMax: number = Math.log10(frequencyHigh);
       const peakX: number = ((logPeakFreq - logMin) / (logMax - logMin)) * canvasWidth;
 
-      // 计算Y坐标的替代方案
       const peakFreqY: number = canvasHeight -
         (maxValue / (maxDb - minDb)) * canvasHeight;
-      resourceManager.getSystemResourceManager().getStringValue($r('app.color.text_secondary')).then((value) => {
-        canvasContext.fillStyle = value;
-      });
+      canvasContext.fillStyle =
+        sysResourceManager.getColorSync($r('sys.color.font_on_primary').id);
       canvasContext.textAlign = 'center';
       canvasContext.font = `bold ${vp2px(fontSize)}px sans-serif`;
       canvasContext.fillText(

@@ -33,29 +33,11 @@ import { camera } from '@kit.CameraKit';
 import lottie, { AnimationItem } from '@ohos/lottie';
 import { DialogHub, InfSheet } from '@hadss/dialoghub';
 import { NoiseLevelDialogBuilder } from '../../pages/noisemeter/NoiseLevelDialogNavigation';
+import { resourceManager } from '@kit.LocalizationKit';
+import { AbilityConstant, Configuration, ConfigurationConstant, EnvironmentCallback } from '@kit.AbilityKit';
 
 @ComponentV2
 export struct DecibelMeter {
-  // 新增方法：根据分贝值获取对应颜色
-  private getDecibelColor(decibel: number): Resource {
-    if (decibel >= 85) {
-      return $r('app.color.decibel_unbearable');
-    }
-    if (decibel >= 75) {
-      return $r('app.color.decibel_very_noisy');
-    }
-    if (decibel >= 65) {
-      return $r('app.color.decibel_noisy');
-    }
-    if (decibel >= 55) {
-      return $r('app.color.decibel_normal');
-    }
-    if (decibel >= 45) {
-      return $r('app.color.decibel_quiet');
-    }
-    return $r('app.color.decibel_very_quiet');
-  }
-
   @Param @Require meterOn: boolean = true;
   @Local private decibelState: DecibelState =
     AppStorageV2.connect(DecibelState, 'DecibelState', () => new DecibelState())!;
@@ -95,6 +77,8 @@ export struct DecibelMeter {
   private currentRecord?: DecibelRecord
   private recordListener?: PreferenceChangeListener
   noiseInfoDialog: InfSheet | undefined
+  sysResourceManager: resourceManager.ResourceManager = resourceManager.getSystemResourceManager();
+  private context = this.getUIContext().getHostContext() as common.UIAbilityContext;
   // Canvas相关属性
 
   private ASPECT_RATIO: number = 1.5 // 宽高比改为3:2
@@ -193,15 +177,16 @@ export struct DecibelMeter {
           .width(this.canvasWidth)
           .height(this.canvasHeight)
           .borderRadius(12)
+          .backgroundColor('#ff000000')
           .shadow({
             radius: 8,
-            color: $r('app.color.shadow_medium'),
+            color: $r('sys.color.comp_divider'),
             offsetX: 2,
             offsetY: 2
           })
           .border({
             width: 1,
-            color: $r('app.color.divider_primary')
+            color: $r('sys.color.comp_divider')
           })
           .onAreaChange((oldArea: Area, newArea: Area) => {
             console.info(`[FREQ_TRACE][Canvas] Canvas区域变化: 旧尺寸=${oldArea.width}x${oldArea.height}, 新尺寸=${newArea.width}x${newArea.height}`);
@@ -223,20 +208,20 @@ export struct DecibelMeter {
         Flex({ justifyContent: FlexAlign.SpaceBetween, alignItems: ItemAlign.Baseline }) {
           Row() {
             Image($r('app.media.ic_info'))
-              .width(16)
-              .height(16)
-              .fillColor(this.getDecibelColor(this.decibelState.currentDecibel))
+              .width(12)
+              .height(12)
+              .fillColor(DecibelService.getDecibelColor(this.decibelState.currentDecibel))
 
             Text(DecibelService.getDecibelDescription(this.decibelState.currentDecibel))
-
-              .fontColor(this.getDecibelColor(this.decibelState.currentDecibel))
+              .fontSize(12)
+              .fontColor(DecibelService.getDecibelColor(this.decibelState.currentDecibel))
               .fontWeight(FontWeight.Medium)
           }
           .padding(8)
           .borderRadius(8)
           .border({
             width: 1,
-            color: this.getDecibelColor(this.decibelState.currentDecibel)
+            color: DecibelService.getDecibelColor(this.decibelState.currentDecibel)
           })
           .onClick(() => {
             this.navStack.pushDestinationByName('NoiseDescriptionDialog', null);
@@ -248,12 +233,12 @@ export struct DecibelMeter {
           Row({ space: 4 }) {
             Text('声级校准:')
               .fontSize(12)
-              .fontColor($r('app.color.text_disabled'))
+              .fontColor('#ffffff')
 
             Text(`${this.calibrationGain} ${this.weightingType === WeightingType.A ? 'dB(A)' :
               this.weightingType === WeightingType.C ? 'dB(C)' : 'dB'}`)
               .fontSize(12)
-              .fontColor($r('app.color.text_disabled'))
+              .fontColor('#ffffff')
           }
           .opacity(0.7)
         }.margin(16)
@@ -530,7 +515,7 @@ export struct DecibelMeter {
     const dbSteps: number[] = getDbSteps();
     const frequencySteps: number[] = getFrequencySteps();
     drawSpectrum(this.canvasContext, this.canvasWidth, this.canvasHeight, spectrum, dbSteps, frequencySteps,
-      this.currentFftSize, this.sampleRate, this.getDecibelColor(this.decibelState.currentDecibel));
+      this.currentFftSize, this.sampleRate, this.sysResourceManager);
   }
 
   private resetData() {
@@ -743,32 +728,9 @@ export struct DecibelMeter {
           .borderColor(this.isNoiseAlarm ? DecibelService.getDecibelColor(this.decibelState.currentDecibel) :
           Color.Transparent)
 
-          Row() {
-            if (this.isRecording) {
-              Text(`${secondsToHoursMinutesSecondsWithDecimal(this.MAX_RECORDING_DURATION -
-              this.recordingTime)} 后自动保存`)
-
-              Text(' | ')
-
-            }
-            Row() {
-              Image($r('app.media.ic_info'))
-                .width(14)
-                .height(14)
-                .fillColor(DecibelService.getDecibelColor(this.decibelState.currentDecibel))
-
-              Text(DecibelService.getDecibelLevel(this.decibelState.currentDecibel))
-
-                .fontColor(DecibelService.getDecibelColor(this.decibelState.currentDecibel))
-            }
-            .onClick(() => {
-              this.noiseInfoDialog = this.noiseInfoDialog ?? DialogHub.getSheet()
-                .setContent(wrapBuilder(NoiseLevelDialogBuilder))
-                .setConfig({ enableOutsideInteractive: false, scrollSizeMode: ScrollSizeMode.CONTINUOUS })
-                .setComponentTargetId('decibelMeterRoot')
-                .build();
-              this.noiseInfoDialog.show();
-            })
+          if (this.isRecording) {
+            Text(`${secondsToHoursMinutesSecondsWithDecimal(this.MAX_RECORDING_DURATION -
+            this.recordingTime)} 后自动保存`).fontSize(14)
           }
 
           // 位置显示
@@ -897,24 +859,11 @@ export struct DecibelMeter {
   }
 
   private toggleTorch() {
-    PermissionUtil.checkPermissions('ohos.permission.CAMERA').then((result) => {
-      if (result) {
-        let cameraManager: camera.CameraManager = camera.getCameraManager(getContext(this));
-        if (cameraManager.isTorchSupported()) {
-          cameraManager.setTorchMode(this.torchOn ? camera.TorchMode.OFF : camera.TorchMode.ON);
-          promptAction.showToast({ message: '手电筒已' + (this.torchOn ? '关闭' : '打开') });
-          this.torchOn = !this.torchOn;
-        }
-      } else {
-        PermissionUtil.requestPermissions('ohos.permission.CAMERA').then(() => {
-          let cameraManager: camera.CameraManager = camera.getCameraManager(getContext(this));
-          if (cameraManager.isTorchSupported()) {
-            cameraManager.setTorchMode(this.torchOn ? camera.TorchMode.OFF : camera.TorchMode.ON);
-            promptAction.showToast({ message: '手电筒已' + (this.torchOn ? '关闭' : '打开') });
-            this.torchOn = !this.torchOn;
-          }
-        });
-      }
-    });
+    let cameraManager: camera.CameraManager = camera.getCameraManager(getContext(this));
+    if (cameraManager.isTorchSupported()) {
+      cameraManager.setTorchMode(this.torchOn ? camera.TorchMode.OFF : camera.TorchMode.ON);
+      promptAction.showToast({ message: '手电筒已' + (this.torchOn ? '关闭' : '打开') });
+      this.torchOn = !this.torchOn;
+    }
   }
 }

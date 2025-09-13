@@ -25,8 +25,10 @@ export class DecibelService {
    * @returns number - 计算得到的Leq值
    */
   static calculateLeq(samples: number[]): number {
-    if (samples.length === 0) return 0
-    const sum = samples.reduce((a, v) => a + v ** 2, 0)
+    if (samples.length === 0) {
+      return 0
+    }
+    const sum = samples.reduce((a, v) => a + v**2, 0)
     return 10 * Math.log10(sum / samples.length)
   }
 
@@ -77,11 +79,21 @@ export class DecibelService {
    * @returns string - 级别描述
    */
   static getDecibelLevel(value: number): string {
-    if (value < 20) return '非常安静';
-    if (value < 40) return '安静';
-    if (value < 60) return '一般';
-    if (value < 80) return '吵闹';
-    if (value < 100) return '非常吵闹';
+    if (value < 20) {
+      return '非常安静';
+    }
+    if (value < 40) {
+      return '安静';
+    }
+    if (value < 60) {
+      return '一般';
+    }
+    if (value < 80) {
+      return '吵闹';
+    }
+    if (value < 100) {
+      return '非常吵闹';
+    }
     return '难以忍受';
   }
 
@@ -91,12 +103,22 @@ export class DecibelService {
    * @returns string - 颜色值（十六进制）
    */
   static getDecibelColor(value: number): Resource {
-    if (value < 20) return $r('sys.color.confirm');  // 非常安静 - 绿色
-    if (value < 40) return $r('sys.color.confirm');      // 安静 - 浅绿色
-    if (value < 60) return $r('sys.color.warning');     // 一般 - 黄色
-    if (value < 80) return $r('sys.color.warning');      // 吵闹 - 橙色
-    if (value < 100) return $r('sys.color.alert'); // 非常吵闹 - 红色
-    return $r('sys.color.alert');                 // 难以忍受 - 深红色
+    if (value < 20) {
+      return $r('sys.color.confirm');
+    } // 非常安静 - 绿色
+    if (value < 40) {
+      return $r('sys.color.confirm');
+    } // 安静 - 浅绿色
+    if (value < 60) {
+      return $r('sys.color.alert');
+    } // 一般 - 黄色
+    if (value < 80) {
+      return $r('sys.color.alert');
+    } // 吵闹 - 橙色
+    if (value < 100) {
+      return $r('sys.color.warning');
+    } // 非常吵闹 - 红色
+    return $r('sys.color.warning'); // 难以忍受 - 深红色
   }
 
   /**
@@ -105,32 +127,76 @@ export class DecibelService {
    * @returns string - 具体描述
    */
   static getDecibelDescription(value: number): string {
-    if (value < 10) return '几乎无声';
-    if (value < 20) return '安静的录音室';
-    if (value < 30) return '耳语声';
-    if (value < 40) return '安静的图书馆';
-    if (value < 50) return '安静的办公室';
-    if (value < 60) return '普通对话';
-    if (value < 70) return '繁忙的餐厅';
-    if (value < 80) return '繁忙的街道';
-    if (value < 90) return '重型卡车';
-    if (value < 100) return '地铁列车';
-    if (value < 110) return '摇滚音乐会';
+    if (value < 10) {
+      return '几乎无声';
+    }
+    if (value < 20) {
+      return '安静的录音室';
+    }
+    if (value < 30) {
+      return '耳语声';
+    }
+    if (value < 40) {
+      return '安静的图书馆';
+    }
+    if (value < 50) {
+      return '安静的办公室';
+    }
+    if (value < 60) {
+      return '普通对话';
+    }
+    if (value < 70) {
+      return '繁忙的餐厅';
+    }
+    if (value < 80) {
+      return '繁忙的街道';
+    }
+    if (value < 90) {
+      return '重型卡车';
+    }
+    if (value < 100) {
+      return '地铁列车';
+    }
+    if (value < 110) {
+      return '摇滚音乐会';
+    }
     return '喷气发动机';
   }
 
   static getDetailedDecibelDescription(value: number): string {
-    if (value < 10) return '人类听觉阈值下限，几乎完全无声的环境，如隔音室或太空舱内';
-    if (value < 20) return '极其安静的环境，适合录制高质量音频，如专业录音棚';
-    if (value < 30) return '适合私人交谈的安静环境，如深夜的卧室或图书馆的安静角落';
-    if (value < 40) return '适合专注学习的安静环境，如图书馆或安静的办公室';
-    if (value < 50) return '适合日常工作的环境，如普通办公室或安静的咖啡厅';
-    if (value < 60) return '正常交流音量，如普通对话或小型会议';
-    if (value < 70) return '可能影响交流的嘈杂环境，如繁忙的餐厅或商场';
-    if (value < 80) return '长期暴露可能影响听力的环境，如繁忙的城市街道或地铁站';
-    if (value < 90) return '需要采取听力保护措施的环境，如建筑工地或重型机械附近';
-    if (value < 100) return '短期暴露即可能损伤听力的环境，如地铁列车内部或摇滚音乐会前排';
-    if (value < 110) return '需要专业听力保护的环境，如飞机引擎附近或大型演唱会现场';
+    if (value < 10) {
+      return '人类听觉阈值下限，几乎完全无声的环境，如隔音室或太空舱内';
+    }
+    if (value < 20) {
+      return '极其安静的环境，适合录制高质量音频，如专业录音棚';
+    }
+    if (value < 30) {
+      return '适合私人交谈的安静环境，如深夜的卧室或图书馆的安静角落';
+    }
+    if (value < 40) {
+      return '适合专注学习的安静环境，如图书馆或安静的办公室';
+    }
+    if (value < 50) {
+      return '适合日常工作的环境，如普通办公室或安静的咖啡厅';
+    }
+    if (value < 60) {
+      return '正常交流音量，如普通对话或小型会议';
+    }
+    if (value < 70) {
+      return '可能影响交流的嘈杂环境，如繁忙的餐厅或商场';
+    }
+    if (value < 80) {
+      return '长期暴露可能影响听力的环境，如繁忙的城市街道或地铁站';
+    }
+    if (value < 90) {
+      return '需要采取听力保护措施的环境，如建筑工地或重型机械附近';
+    }
+    if (value < 100) {
+      return '短期暴露即可能损伤听力的环境，如地铁列车内部或摇滚音乐会前排';
+    }
+    if (value < 110) {
+      return '需要专业听力保护的环境，如飞机引擎附近或大型演唱会现场';
+    }
     return '立即损伤听力的危险水平，如喷气发动机附近或爆炸现场';
   }
 
@@ -165,13 +231,17 @@ export class DecibelService {
   }
 
   private static calculateDailyDose(leqValues: number[]): number {
-    if (leqValues.length === 0) return 0;
+    if (leqValues.length === 0) {
+      return 0;
+    }
     const avgLeq = leqValues.reduce((a, b) => a + b, 0) / leqValues.length;
     return Math.min(avgLeq / 85 * 100, 100); // 85dB为安全阈值
   }
 
   private static calculateWeeklyAverage(leqValues: number[]): number {
-    if (leqValues.length === 0) return 0;
+    if (leqValues.length === 0) {
+      return 0;
+    }
     return leqValues.reduce((a, b) => a + b, 0) / leqValues.length;
   }
 
@@ -198,7 +268,9 @@ export class DecibelService {
   }
 
   private static calculatePercentile(values: number[], percentile: number): number {
-    if (values.length === 0) return 0;
+    if (values.length === 0) {
+      return 0;
+    }
     const sorted = [...values].sort((a, b) => a - b);
     const index = Math.floor(sorted.length * percentile);
     return sorted[index];

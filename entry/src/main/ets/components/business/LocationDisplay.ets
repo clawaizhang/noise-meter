@@ -149,7 +149,7 @@ export struct LocationDisplay {
     }
     .width(20)
     .height(20)
-    .backgroundColor($r('sys.color.background_fourth'))
+    .backgroundColor($r('sys.color.background_secondary'))
     .enabled(!this.isRefreshing)
     .onClick(() => {
       this.startSingleLocation();

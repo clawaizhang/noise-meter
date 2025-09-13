@@ -46,24 +46,23 @@ export struct ActionPanel {
       .width(40)
       .height(40)
       .enabled(this.meterOn)
-      .backgroundColor($r('sys.color.background_fourth'))
+      .backgroundColor($r('sys.color.background_secondary'))
 
       .accessibilityDescription('重置当前数据')
       .onClick(async () => {
         await this.onResetButtonClicked();
       })
 
-      // 锁定按钮
       Button({ type: ButtonType.Circle }) {
-        Image($r('app.media.ic_power_on'))
+        Image($r('sys.media.light_flashlight_on_fill'))
           .width(20)
-          .height(20).fillColor($r('sys.color.icon_secondary'))
+          .height(20).fillColor(this.isTorchOn ? '#ffffffff' :$r('sys.color.icon_secondary'))
 
       }
       .width(40)
       .height(40)
       .enabled(this.meterOn)
-      .backgroundColor(this.isTorchOn ? $r('sys.color.warning') : $r('sys.color.background_fourth'))
+      .backgroundColor(this.isTorchOn ? $r('sys.color.warning') : $r('sys.color.background_secondary'))
 
       .accessibilityDescription(this.isTorchOn ? '解锁界面' : '锁定界面')
       .onClick(() => {
@@ -92,7 +91,7 @@ export struct ActionPanel {
       .width(40)
       .height(40)
       .enabled(this.meterOn)
-      .backgroundColor($r('sys.color.background_fourth'))
+      .backgroundColor($r('sys.color.background_secondary'))
       .accessibilityDescription('保存当前数据')
       .onClick(async () => {
         const dialogController = new CustomDialogController({
@@ -113,10 +112,9 @@ export struct ActionPanel {
         dialogController.open();
       })
     }
-    .backgroundColor($r('sys.color.background_fourth'))
+    .backgroundColor($r('sys.color.background_primary'))
     .borderRadius(12)
     .padding(8)
-    .shadow({ radius: 2, color: '#1A000000', offsetY: 1 })
     .animation({ curve: Curve.EaseOut })
 
   }
