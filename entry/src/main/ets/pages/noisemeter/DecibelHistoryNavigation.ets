@@ -7,18 +7,6 @@ import { emitter } from '@kit.BasicServicesKit';
 import { AudioPlayer } from '../../components/business/AudioPlayer';
 import { DecibelRecord } from '../../models/DecibelRecord';
 import { FileService } from '../../services/FileService';
-import {
-  responsiveLayout,
-  ListItemLayoutMode,
-  addListItemLayoutChangeListener,
-  responsiveListItemWidth,
-  responsiveListItemSpacing,
-  responsiveListItemPadding,
-  responsiveListItemMargin,
-  responsiveFontSize,
-  responsiveIconSize,
-  Breakpoint
-} from '../../utils/ResponsiveLayout';
 import { DesignConstants } from '../../constants/DesignConstants';
 
 class DecibelRecordDataSource implements IDataSource {
@@ -84,7 +72,6 @@ export struct DecibelHistory {
   @Local currentSlidingId: string = ''; // 当前正在滑动的记录ID
   @Local currentSlideOffset: number = 0; // 当前滑动的偏移量
   @Local pendingDeleteId: string = ''; // 当前正在删除的记录ID
-  @Local currentListItemLayoutMode: ListItemLayoutMode = ListItemLayoutMode.LIST; // 当前列表项布局模式
   @Local gridColumns: number = 1; // 网格布局列数
   private startX: number = 0;
   private hasDeleteButtonOnStart: boolean = false; // 滑动开始时是否有删除按钮示
@@ -93,9 +80,6 @@ export struct DecibelHistory {
   private promptAction: PromptAction = this.getUIContext().getPromptAction();
   private fileService: FileService = new FileService(this.context)
   private pendingHideButtonId: string = ''; // 当前正在隐藏按钮的记录ID
-  private listItemLayoutChangeListener: (listItemLayoutMode: ListItemLayoutMode, breakpoint: Breakpoint,
-    isLandscape: boolean) => void = () => {
-  };
 
   onPageShow() {
     this.loadRecords();
@@ -154,9 +138,6 @@ export struct DecibelHistory {
       this.emptyAll()
     })
 
-    // 初始化响应式布局监听
-    this.initializeResponsiveLayout();
-
     this.loadRecords();
 
     this.dataSource.notifyDataReload();
@@ -176,121 +157,19 @@ export struct DecibelHistory {
     }
   }
 
-  /**
-   * 初始化响应式布局监听
-   */
-  private initializeResponsiveLayout(): void {
-    // 获取初始布局模式
-    const screenInfo = responsiveLayout.getCurrentScreenInfo();
-    this.currentListItemLayoutMode = screenInfo.listItemLayoutMode;
-    this.updateGridColumns(screenInfo.breakpoint, screenInfo.isLandscape);
-
-    // 注册布局变化监听器
-    this.listItemLayoutChangeListener =
-      (listItemLayoutMode: ListItemLayoutMode, breakpoint: Breakpoint, isLandscape: boolean) => {
-        this.currentListItemLayoutMode = listItemLayoutMode;
-        this.updateGridColumns(breakpoint, isLandscape);
-        this.dataSource.notifyDataReload(); // 重新渲染列表
-      };
-
-    addListItemLayoutChangeListener(this.listItemLayoutChangeListener);
-  }
-
-  /**
-   * 根据断点和屏幕方向更新网格列数
-   * 注意：现在使用GridRow组件自动处理列数，此方法主要用于兼容性
-   */
-  private updateGridColumns(breakpoint: Breakpoint, isLandscape: boolean): void {
-    // 使用GridRow组件后，列数由GridRow的columns属性自动管理
-    // 这里保持原有逻辑用于其他可能需要的地方
-    if (this.currentListItemLayoutMode === ListItemLayoutMode.GRID) {
-      if (isLandscape) {
-        // 横屏模式下增加列数
-        switch (breakpoint) {
-          case Breakpoint.XS:
-          case Breakpoint.SM:
-            this.gridColumns = 2;
-            break;
-          case Breakpoint.MD:
-            this.gridColumns = 3;
-            break;
-          case Breakpoint.LG:
-            this.gridColumns = 4;
-            break;
-          case Breakpoint.XL:
-            this.gridColumns = 5;
-            break;
-          default:
-            this.gridColumns = 2;
-        }
-      } else {
-        // 竖屏模式下
-        switch (breakpoint) {
-          case Breakpoint.XS:
-            this.gridColumns = 1; // 超小屏保持单列
-            break;
-          case Breakpoint.SM:
-            this.gridColumns = 2;
-            break;
-          case Breakpoint.MD:
-            this.gridColumns = 2;
-            break;
-          case Breakpoint.LG:
-            this.gridColumns = 3;
-            break;
-          case Breakpoint.XL:
-            this.gridColumns = 4;
-            break;
-          default:
-            this.gridColumns = 2;
-        }
-      }
-    } else {
-      // 非网格布局时使用单列
-      this.gridColumns = 1;
-    }
-  }
-
-  /**
-   * 横屏模式下更新网格列数 - 减少列数以增加每列宽度
-   */
-  private updateGridColumnsForLandscape(breakpoint: Breakpoint): void {
-    if (this.currentListItemLayoutMode === ListItemLayoutMode.GRID) {
-      // 横屏模式下减少列数，确保内容有足够空间显示
-      switch (breakpoint) {
-        case Breakpoint.XS:
-        case Breakpoint.SM:
-          this.gridColumns = 1; // 横屏小屏：1列
-          break;
-        case Breakpoint.MD:
-          this.gridColumns = 2; // 横屏中屏：2列
-          break;
-        case Breakpoint.LG:
-          this.gridColumns = 3; // 横屏大屏：3列
-          break;
-        case Breakpoint.XL:
-          this.gridColumns = 4; // 横屏超大屏：4列
-          break;
-        default:
-          this.gridColumns = 2;
-      }
-      this.dataSource.notifyDataReload(); // 重新渲染列表
-    }
-  }
-
   @Builder
   HistoryTitle() {
     Stack() {
       Text('检测记录')
-        .fontSize(responsiveFontSize(DesignConstants.FONT_SIZE_XL))
+        .fontSize(DesignConstants.FONT_SIZE_XL)
         .fontWeight(FontWeight.Medium)
         .width('100%')
         .textAlign(TextAlign.Center)
 
       Row() {
         Image($r('app.media.ic_back'))
-          .width(responsiveIconSize(DesignConstants.ICON_SIZE_LG))
-          .height(responsiveIconSize(DesignConstants.ICON_SIZE_LG))
+          .width(DesignConstants.ICON_SIZE_LG)
+          .height(DesignConstants.ICON_SIZE_LG)
           .fillColor($r('app.color.icon_primary'))
           .onClick(() => {
             this.navStack.pop()
@@ -302,14 +181,14 @@ export struct DecibelHistory {
         Row() {
           this.EmptyButton()
         }
-        .width(responsiveListItemSpacing(56))
+        .width(56)
       }
       .width('100%')
-      .height(responsiveListItemSpacing(56))
-      .padding({ left: responsiveListItemPadding(), right: responsiveListItemPadding() })
+      .height(56)
+      .padding({ left: 16, right: 16 })
     }
     .width('100%')
-    .height(responsiveListItemSpacing(56))
+    .height(56)
     .backgroundColor($r('app.color.background_secondary'))
   }
 
@@ -355,18 +234,18 @@ export struct DecibelHistory {
   EmptyButton() {
     Button() {
       Text('清空')
-        .fontSize(responsiveFontSize(DesignConstants.FONT_SIZE_MD))
+        .fontSize(DesignConstants.FONT_SIZE_MD)
         .fontColor($r('app.color.text_secondary'))
         .textAlign(TextAlign.Center)
     }
-    .height(responsiveListItemSpacing(32))
-    .width(responsiveListItemSpacing(56))
+    .height(32)
+    .width(56)
     .backgroundColor($r('app.color.button_secondary'))
     .padding({
-      left: responsiveListItemPadding(DesignConstants.SPACING_MD),
-      right: responsiveListItemPadding(DesignConstants.SPACING_MD)
+      left: DesignConstants.SPACING_MD,
+      right: DesignConstants.SPACING_MD
     })
-    .borderRadius(responsiveListItemSpacing(16))
+    .borderRadius(16)
     .onClick(this.emptyAll)
   }
 
@@ -381,7 +260,7 @@ export struct DecibelHistory {
             Row() {
               // 位置信息显示
               Text(record.location || '未获取位置信息')
-                .fontSize(responsiveFontSize(DesignConstants.FONT_SIZE_SM))
+                .fontSize(DesignConstants.FONT_SIZE_SM)
                 .fontColor(record.location ? $r('app.color.text_secondary') : $r('app.color.text_disabled'))
                 .maxLines(3)
                 .textOverflow({ overflow: TextOverflow.Ellipsis })
@@ -391,11 +270,11 @@ export struct DecibelHistory {
 
             Row() {
               Text(record.comment || '无备注')
-                .fontSize(responsiveFontSize(DesignConstants.FONT_SIZE_SM))
+                .fontSize(DesignConstants.FONT_SIZE_SM)
                 .fontColor($r('app.color.text_secondary'))
                 .maxLines(3)
                 .textOverflow({ overflow: TextOverflow.Ellipsis })
-                .margin({ top: responsiveListItemSpacing(DesignConstants.SPACING_SM) })
+                .margin({ top: DesignConstants.SPACING_SM })
             }
 
             Row() {
@@ -408,17 +287,17 @@ export struct DecibelHistory {
                 minute: '2-digit',
                 hour12: false
               }))
-                .fontSize(responsiveFontSize(DesignConstants.FONT_SIZE_MD))
+                .fontSize(DesignConstants.FONT_SIZE_MD)
                 .fontColor($r('app.color.text_secondary'))
-                .margin({ top: responsiveListItemSpacing(DesignConstants.SPACING_SM) }) // 减小间距
+                .margin({ top: DesignConstants.SPACING_SM }) // 减小间距
             }
 
             Row() {
               // 检测时长
               Text(`时长: ${Math.round(record.duration / 1000)}秒`)
-                .fontSize(responsiveFontSize(DesignConstants.FONT_SIZE_MD))
+                .fontSize(DesignConstants.FONT_SIZE_MD)
                 .fontColor($r('app.color.text_secondary'))
-                .margin({ top: responsiveListItemSpacing(DesignConstants.SPACING_SM) })
+                .margin({ top: DesignConstants.SPACING_SM })
             }
 
 
@@ -426,8 +305,8 @@ export struct DecibelHistory {
             Row() {
               if (record.isFavorite) {
                 Image($r('app.media.ic_favorite'))
-                  .width(responsiveIconSize(DesignConstants.ICON_SIZE_SM))
-                  .height(responsiveIconSize(DesignConstants.ICON_SIZE_SM))
+                  .width(DesignConstants.ICON_SIZE_SM)
+                  .height(DesignConstants.ICON_SIZE_SM)
                   .fillColor($r('app.color.icon_favorite'))
                   .animation({
                     duration: 450,
@@ -438,8 +317,8 @@ export struct DecibelHistory {
               }
             }
             .width('100%')
-            .height(responsiveIconSize(DesignConstants.ICON_SIZE_SM))
-            .margin({ top: responsiveListItemSpacing(DesignConstants.SPACING_XS) })
+            .height(DesignConstants.ICON_SIZE_SM)
+            .margin({ top: DesignConstants.SPACING_XS })
           }
           .alignItems(HorizontalAlign.Start)
           .layoutWeight(1).flexShrink(1) // 添加弹性收缩
@@ -450,40 +329,40 @@ export struct DecibelHistory {
             Row() {
               Column() {
                 Text('最小值')
-                  .fontSize(responsiveFontSize(DesignConstants.FONT_SIZE_SM))
+                  .fontSize(DesignConstants.FONT_SIZE_SM)
                   .fontColor($r('app.color.text_secondary'))
-                  .margin({ bottom: responsiveListItemSpacing(DesignConstants.SPACING_XS) })
+                  .margin({ bottom: DesignConstants.SPACING_XS })
                 Text(record.minDecibel.toString())
-                  .fontSize(responsiveFontSize(DesignConstants.FONT_SIZE_LG))
+                  .fontSize(DesignConstants.FONT_SIZE_LG)
                   .fontWeight(FontWeight.Medium)
                   .fontColor(DecibelService.getDecibelColor(record.minDecibel))
               }
-              .height(responsiveListItemSpacing(40)) // 固定高度确保对齐
+              .height(40) // 固定高度确保对齐
 
               Column() {
                 Text('平均值')
-                  .fontSize(responsiveFontSize(DesignConstants.FONT_SIZE_SM))
+                  .fontSize(DesignConstants.FONT_SIZE_SM)
                   .fontColor($r('app.color.text_secondary'))
-                  .margin({ bottom: responsiveListItemSpacing(DesignConstants.SPACING_XS) })
+                  .margin({ bottom: DesignConstants.SPACING_XS })
                 Text(record.avgDecibel.toString())
-                  .fontSize(responsiveFontSize(DesignConstants.FONT_SIZE_LG))
+                  .fontSize(DesignConstants.FONT_SIZE_LG)
                   .fontWeight(FontWeight.Medium)
                   .fontColor(DecibelService.getDecibelColor(record.avgDecibel))
               }
-              .height(responsiveListItemSpacing(40)) // 固定高度确保对齐
-              .margin({ left: responsiveListItemSpacing(24), right: responsiveListItemSpacing(24) })
+              .height(40) // 固定高度确保对齐
+              .margin({ left: 24, right: 24 })
 
               Column() {
                 Text('最大值')
-                  .fontSize(responsiveFontSize(DesignConstants.FONT_SIZE_SM))
+                  .fontSize(DesignConstants.FONT_SIZE_SM)
                   .fontColor($r('app.color.text_secondary'))
-                  .margin({ bottom: responsiveListItemSpacing(DesignConstants.SPACING_XS) })
+                  .margin({ bottom: DesignConstants.SPACING_XS })
                 Text(record.maxDecibel.toString())
-                  .fontSize(responsiveFontSize(DesignConstants.FONT_SIZE_LG))
+                  .fontSize(DesignConstants.FONT_SIZE_LG)
                   .fontWeight(FontWeight.Medium)
                   .fontColor(DecibelService.getDecibelColor(record.maxDecibel))
               }
-              .height(responsiveListItemSpacing(40)) // 固定高度确保对齐
+              .height(40) // 固定高度确保对齐
             }
 
             Row() {
@@ -492,7 +371,7 @@ export struct DecibelHistory {
                   audioFilePath: record!.audioFilePath,
                 })
               }
-            }.margin({ top: responsiveListItemSpacing(DesignConstants.SPACING_SM) })
+            }.margin({ top: DesignConstants.SPACING_SM })
           }
           .layoutWeight(1)
           .justifyContent(FlexAlign.SpaceBetween)
@@ -503,9 +382,9 @@ export struct DecibelHistory {
         }
         .width('100%')
         .padding({
-          left: responsiveListItemPadding(),
-          right: responsiveListItemPadding(),
-          top: responsiveListItemPadding()
+          left: 16,
+          right: 16,
+          top: 16
         })
         .onClick(() => {
           if (this.showingDeleteButtonId === record.id) {
@@ -531,18 +410,18 @@ export struct DecibelHistory {
           .color($r('app.color.divider_primary'))
       }
       .backgroundColor($r('app.color.background_primary'))
-      .borderRadius(responsiveListItemSpacing(16))
-      .margin({ left: responsiveListItemMargin(), right: responsiveListItemMargin() })
+      .borderRadius(16)
+      .margin({ left: 8, right: 8 })
       .translate({
         x: record.id === this.currentSlidingId ?
         this.currentSlideOffset : // 直接使用滑动偏移量
-          (this.showingDeleteButtonId === record.id ? -responsiveListItemSpacing(160) : 0)
+          (this.showingDeleteButtonId === record.id ? -160 : 0)
       })
       .scale({
         x: record.id === this.currentSlidingId && this.currentSlideOffset > 0 ?
-          0.98 + (responsiveListItemSpacing(80) - this.currentSlideOffset) / 800 : 1,
+          0.98 + (80 - this.currentSlideOffset) / 800 : 1,
         y: record.id === this.currentSlidingId && this.currentSlideOffset > 0 ?
-          0.98 + (responsiveListItemSpacing(80) - this.currentSlideOffset) / 800 : 1
+          0.98 + (80 - this.currentSlideOffset) / 800 : 1
       })
       .animation({
         duration: 300,
@@ -554,25 +433,25 @@ export struct DecibelHistory {
             this.startX = event.offsetX;
             this.currentSlidingId = record.id;
             this.hasDeleteButtonOnStart = this.showingDeleteButtonId === record.id;
-            this.currentSlideOffset = this.hasDeleteButtonOnStart ? -responsiveListItemSpacing(160) : 0;
+            this.currentSlideOffset = this.hasDeleteButtonOnStart ? -160 : 0;
           })
           .onActionUpdate((event: GestureEvent) => {
             if (this.currentSlidingId === record.id) {
               const deltaX = event.offsetX - this.startX;
               if (this.hasDeleteButtonOnStart) {
                 // 如果开始时有按钮，则只处理右滑隐藏
-                this.currentSlideOffset = -responsiveListItemSpacing(160) + deltaX; // 直接使用偏移量
-                if (deltaX > responsiveListItemSpacing(20)) { // 降低右滑关闭阈值
+                this.currentSlideOffset = -160 + deltaX; // 直接使用偏移量
+                if (deltaX > 20) { // 降低右滑关闭阈值
                   this.pendingHideButtonId = record.id;
                   this.pendingDeleteId = ''; // 重置删除确认状态
                 }
               } else {
                 // 允许左滑显示按钮和右滑回弹
                 this.currentSlideOffset = deltaX; // 直接使用偏移量
-                if (deltaX > responsiveListItemSpacing(20)) { // 右滑时关闭所有按钮
+                if (deltaX > 20) { // 右滑时关闭所有按钮
                   this.pendingHideButtonId = record.id;
                   this.pendingDeleteId = ''; // 重置删除确认状态
-                } else if (deltaX < -responsiveListItemSpacing(80)) { // 左滑超过一半距离时显示按钮
+                } else if (deltaX < -80) { // 左滑超过一半距离时显示按钮
                   this.showingDeleteButtonId = record.id;
                 }
               }
@@ -587,24 +466,24 @@ export struct DecibelHistory {
               }, () => {
                 if (this.hasDeleteButtonOnStart) {
                   // 如果开始时有按钮，则处理隐藏按钮的操作
-                  if (this.currentSlideOffset > -responsiveListItemSpacing(140)) { // 降低右滑关闭阈值
+                  if (this.currentSlideOffset > -140) { // 降低右滑关闭阈值
                     this.showingDeleteButtonId = '';
                     this.pendingHideButtonId = '';
                     this.pendingDeleteId = ''; // 重置删除确认状态
                   }
                 } else {
                   // 如果开始时没有按钮，处理显示按钮
-                  if (this.currentSlideOffset < -responsiveListItemSpacing(80)) { // 左滑超过一半距离时显示按钮
+                  if (this.currentSlideOffset < -80) { // 左滑超过一半距离时显示按钮
                     this.showingDeleteButtonId = record.id;
                     this.pendingHideButtonId = '';
-                  } else if (this.currentSlideOffset > responsiveListItemSpacing(20)) { // 右滑时关闭所有按钮
+                  } else if (this.currentSlideOffset > 20) { // 右滑时关闭所有按钮
                     this.showingDeleteButtonId = '';
                     this.pendingHideButtonId = '';
                     this.pendingDeleteId = ''; // 重置删除确认状态
                   }
                 }
                 this.currentSlideOffset =
-                  this.showingDeleteButtonId === record.id ? -responsiveListItemSpacing(160) : 0;
+                  this.showingDeleteButtonId === record.id ? -160 : 0;
                 this.currentSlidingId = '';
               })
             }
@@ -619,17 +498,17 @@ export struct DecibelHistory {
             // 删除确认按钮
             Button() {
               Text('删除并清空检测报告')
-                .fontSize(responsiveFontSize(DesignConstants.FONT_SIZE_MD))
+                .fontSize(DesignConstants.FONT_SIZE_MD)
                 .fontColor(Color.White)
                 .textAlign(TextAlign.Center)
                 .width('100%')
                 .padding({
-                  left: responsiveListItemSpacing(DesignConstants.SPACING_SM),
-                  right: responsiveListItemSpacing(DesignConstants.SPACING_SM)
+                  left: DesignConstants.SPACING_SM,
+                  right: DesignConstants.SPACING_SM
                 })
             }
-            .width(responsiveListItemSpacing(160))
-            .height(responsiveListItemSpacing(96))
+            .width(160)
+            .height(96)
             .type(ButtonType.Normal)
             .backgroundColor($r('app.color.button_danger'))
             .onClick(() => {
@@ -641,11 +520,11 @@ export struct DecibelHistory {
               // 收藏按钮
               Button() {
                 Text(record.isFavorite ? '取消收藏' : '收藏')
-                  .fontSize(responsiveFontSize(DesignConstants.FONT_SIZE_MD))
+                  .fontSize(DesignConstants.FONT_SIZE_MD)
                   .fontColor(record.isFavorite ? '#FF4081' : Color.White)
               }
-              .width(responsiveListItemSpacing(80))
-              .height(responsiveListItemSpacing(96))
+              .width(80)
+              .height(96)
               .type(ButtonType.Normal)
               .backgroundColor(record.isFavorite ? '#FFE0EB' : '#FF4081')
               .onClick(async () => {
@@ -673,38 +552,38 @@ export struct DecibelHistory {
               // 删除按钮
               Button() {
                 Text('删除')
-                  .fontSize(responsiveFontSize(DesignConstants.FONT_SIZE_MD))
+                  .fontSize(DesignConstants.FONT_SIZE_MD)
                   .fontColor(Color.White)
                   .textAlign(TextAlign.Center)
                   .width('100%')
                   .padding({
-                    left: responsiveListItemSpacing(DesignConstants.SPACING_SM),
-                    right: responsiveListItemSpacing(DesignConstants.SPACING_SM)
+                    left: DesignConstants.SPACING_SM,
+                    right: DesignConstants.SPACING_SM
                   })
               }
-              .width(responsiveListItemSpacing(80))
-              .height(responsiveListItemSpacing(96))
+              .width(80)
+              .height(96)
               .type(ButtonType.Normal)
               .backgroundColor('#666666')
               .onClick(() => {
                 this.pendingDeleteId = record.id;
                 this.showingDeleteButtonId = '';
-                this.currentSlideOffset = -responsiveListItemSpacing(160);
+                this.currentSlideOffset = -160;
                 this.currentSlidingId = record.id;
               })
             }.justifyContent(FlexAlign.Center)
             .alignItems(VerticalAlign.Center)
           }
         }
-        .width(responsiveListItemSpacing(160))
-        .height(responsiveListItemSpacing(96))
+        .width(160)
+        .height(96)
         .justifyContent(FlexAlign.Center)
         .alignItems(VerticalAlign.Center)
         .position({ x: '100%', y: 0 })
         .translate({
           x: record.id === this.currentSlidingId ?
           this.currentSlideOffset : // 直接使用滑动偏移量
-            (this.showingDeleteButtonId === record.id ? -responsiveListItemSpacing(160) : 0)
+            (this.showingDeleteButtonId === record.id ? -160 : 0)
         })
         .animation({
           duration: 300,
@@ -766,12 +645,7 @@ export struct DecibelHistory {
         if (this.records.length === 0) {
           this.EmptyStateView()
         } else {
-          // 根据布局模式选择不同的渲染方式
-          if (this.currentListItemLayoutMode === ListItemLayoutMode.GRID) {
-            this.GridLayoutView()
-          } else {
-            this.ListLayoutView()
-          }
+          this.ListLayoutView()
         }
       }
       .width('100%')
@@ -793,17 +667,17 @@ export struct DecibelHistory {
   EmptyStateView() {
     Column() {
       Image($r('app.media.ic_empty'))
-        .width(responsiveIconSize(120))
-        .height(responsiveIconSize(120))
+        .width(120)
+        .height(120)
         .fillColor('#CCCCCC')
-        .margin({ bottom: responsiveListItemSpacing(DesignConstants.SPACING_LG) })
+        .margin({ bottom: DesignConstants.SPACING_LG })
       Text('暂无检测记录')
-        .fontSize(responsiveFontSize(DesignConstants.FONT_SIZE_LG))
+        .fontSize(DesignConstants.FONT_SIZE_LG)
         .fontColor('#999999')
       Text('完成一次检测后即可查看记录')
-        .fontSize(responsiveFontSize(DesignConstants.FONT_SIZE_MD))
+        .fontSize(DesignConstants.FONT_SIZE_MD)
         .fontColor('#999999')
-        .margin({ top: responsiveListItemSpacing(DesignConstants.SPACING_SM) })
+        .margin({ top: DesignConstants.SPACING_SM })
     }
     .width('100%')
     .layoutWeight(1)
@@ -823,7 +697,7 @@ export struct DecibelHistory {
             this.RecordItem(record)
             Divider()
               .width('100%')
-              .height(responsiveListItemSpacing(DesignConstants.SPACING_SM))
+              .height(DesignConstants.SPACING_SM)
               .color($r('app.color.background_secondary'))
           }
         }
@@ -833,15 +707,15 @@ export struct DecibelHistory {
       ListItem() {
         Column() {
           Text(`共 ${this.records.length} 条记录`)
-            .fontSize(responsiveFontSize(DesignConstants.FONT_SIZE_MD))
+            .fontSize(DesignConstants.FONT_SIZE_MD)
             .fontColor('#666666')
             .textAlign(TextAlign.Center)
             .width('100%')
-            .padding(responsiveListItemPadding())
+            .padding(16)
 
           Divider()
             .width('100%')
-            .height(responsiveListItemSpacing(DesignConstants.SPACING_SM))
+            .height(DesignConstants.SPACING_SM)
             .color($r('app.color.background_secondary'))
         }
       }
@@ -853,279 +727,5 @@ export struct DecibelHistory {
     .edgeEffect(EdgeEffect.Spring)
     .listDirection(Axis.Vertical)
     .alignListItem(ListItemAlign.Start)
-  }
-
-  /**
-   * 网格布局视图 - 使用GridRow和GridCol实现响应式栅格布局
-   */
-  @Builder
-  GridLayoutView() {
-    Column() {
-      // 使用Scroll包裹GridRow以实现滚动功能
-      Scroll() {
-        // 使用GridRow和GridCol实现响应式栅格布局
-        GridRow({
-          columns: {
-            xs: 1, // 超小屏：1列
-            sm: 2, // 小屏：2列
-            md: 3, // 中屏：3列
-            lg: 4, // 大屏：4列
-            xl: 5     // 超大屏：5列
-          },
-          gutter: {
-            x: {
-              xs: responsiveListItemSpacing(DesignConstants.SPACING_SM),
-              sm: responsiveListItemSpacing(DesignConstants.SPACING_MD),
-              md: responsiveListItemSpacing(DesignConstants.SPACING_MD),
-              lg: responsiveListItemSpacing(DesignConstants.SPACING_MD), // 减少大屏间距
-              xl: responsiveListItemSpacing(DesignConstants.SPACING_MD)   // 减少超大屏间距
-            },
-            y: {
-              xs: responsiveListItemSpacing(DesignConstants.SPACING_SM),
-              sm: responsiveListItemSpacing(DesignConstants.SPACING_MD),
-              md: responsiveListItemSpacing(DesignConstants.SPACING_MD),
-              lg: responsiveListItemSpacing(DesignConstants.SPACING_MD), // 减少大屏间距
-              xl: responsiveListItemSpacing(DesignConstants.SPACING_MD)   // 减少超大屏间距
-            }
-          },
-          breakpoints: {
-            value: ['320vp', '600vp', '840vp', '1080vp', '1320vp']
-          }
-        }) {
-          LazyForEach(this.dataSource, (record: DecibelRecord) => {
-            GridCol({
-              span: {
-                xs: 1,
-                sm: 1,
-                md: 1,
-                lg: 1,
-                xl: 1
-              }
-            }) {
-              Column() {
-                this.GridRecordItem(record)
-              }
-              .width('100%')
-              .margin({
-                bottom: responsiveListItemSpacing(DesignConstants.SPACING_MD)
-              })
-            }
-          }, (record: DecibelRecord) => record.id)
-          // 总记录数显示（网格布局下显示在底部）
-          GridCol({
-            span: {
-              xs: 1,
-              sm: 1,
-              md: 1,
-              lg: 1,
-              xl: 1
-            }
-          }) {
-            Text(`共 ${this.records.length} 条记录`)
-              .fontSize(responsiveFontSize(DesignConstants.FONT_SIZE_MD))
-              .fontColor('#666666')
-              .textAlign(TextAlign.Center)
-              .width('100%')
-              .padding(responsiveListItemPadding(DesignConstants.SPACING_MD))
-          }
-          .width('100%')
-        }
-        .width('100%')
-        .padding({
-          left: responsiveListItemPadding(DesignConstants.SPACING_SM), // 减少内边距
-          right: responsiveListItemPadding(DesignConstants.SPACING_SM),
-          top: responsiveListItemPadding(DesignConstants.SPACING_MD),
-          bottom: responsiveListItemPadding(DesignConstants.SPACING_MD)
-        })
-        .backgroundColor($r('app.color.background_secondary'))
-        .onBreakpointChange((breakpoint: string) => {
-          // 监听断点变化，可以在这里更新布局状态
-          console.log(`Grid breakpoint changed to: ${breakpoint}`);
-          // 横屏模式下自动调整列数
-          const screenInfo = responsiveLayout.getCurrentScreenInfo();
-          if (screenInfo.isLandscape) {
-            // 横屏模式下减少列数，增加每列宽度
-            this.updateGridColumnsForLandscape(screenInfo.breakpoint);
-          }
-        })
-      }
-      .scrollable(ScrollDirection.Vertical)
-      .scrollBar(BarState.Auto)
-      .edgeEffect(EdgeEffect.Spring)
-      .width('100%')
-      .layoutWeight(1)
-
-    }
-  }
-
-  /**
-   * 网格布局下的记录项组件 - 优化为适合栅格布局的紧凑显示
-   * 修复横屏模式下显示不完整的问题
-   */
-  @Builder
-  GridRecordItem(record: DecibelRecord) {
-    Column() {
-      // 顶部区域：统计信息（最小值、平均值、最大值）
-      Row() {
-        // 最小值
-        Column() {
-          Text('最小')
-            .fontSize(responsiveFontSize(DesignConstants.FONT_SIZE_XS))
-            .fontColor($r('app.color.text_secondary'))
-            .margin({ bottom: responsiveListItemSpacing(DesignConstants.SPACING_XS) })
-          Text(record.minDecibel.toString())
-            .fontSize(responsiveFontSize(DesignConstants.FONT_SIZE_MD))
-            .fontWeight(FontWeight.Medium)
-            .fontColor(DecibelService.getDecibelColor(record.minDecibel))
-        }
-        .height(responsiveListItemSpacing(40))
-
-        // 平均值
-        Column() {
-          Text('平均')
-            .fontSize(responsiveFontSize(DesignConstants.FONT_SIZE_XS))
-            .fontColor($r('app.color.text_secondary'))
-            .margin({ bottom: responsiveListItemSpacing(DesignConstants.SPACING_XS) })
-          Text(record.avgDecibel.toString())
-            .fontSize(responsiveFontSize(DesignConstants.FONT_SIZE_MD))
-            .fontWeight(FontWeight.Medium)
-            .fontColor(DecibelService.getDecibelColor(record.avgDecibel))
-        }
-        .height(responsiveListItemSpacing(40))
-        .margin({ left: responsiveListItemSpacing(12), right: responsiveListItemSpacing(12) })
-
-        // 最大值
-        Column() {
-          Text('最大')
-            .fontSize(responsiveFontSize(DesignConstants.FONT_SIZE_XS))
-            .fontColor($r('app.color.text_secondary'))
-            .margin({ bottom: responsiveListItemSpacing(DesignConstants.SPACING_XS) })
-          Text(record.maxDecibel.toString())
-            .fontSize(responsiveFontSize(DesignConstants.FONT_SIZE_MD))
-            .fontWeight(FontWeight.Medium)
-            .fontColor(DecibelService.getDecibelColor(record.maxDecibel))
-        }
-        .height(responsiveListItemSpacing(40))
-
-        // 收藏图标
-        if (record.isFavorite) {
-          Image($r('app.media.ic_favorite'))
-            .width(responsiveIconSize(DesignConstants.ICON_SIZE_SM))
-            .height(responsiveIconSize(DesignConstants.ICON_SIZE_SM))
-            .fillColor($r('app.color.icon_favorite'))
-            .margin({ left: responsiveListItemSpacing(12) })
-        }
-      }
-      .width('100%')
-      .padding({
-        top: responsiveListItemPadding(DesignConstants.SPACING_MD),
-        left: responsiveListItemPadding(DesignConstants.SPACING_MD),
-        right: responsiveListItemPadding(DesignConstants.SPACING_MD)
-      })
-      .justifyContent(FlexAlign.SpaceBetween)
-
-      Divider()
-        .width('90%')
-        .color($r('app.color.divider_secondary'))
-        .margin({
-          top: responsiveListItemSpacing(DesignConstants.SPACING_SM),
-          bottom: responsiveListItemSpacing(DesignConstants.SPACING_SM)
-        })
-
-      // 中部区域：位置、备注和时间信息
-      Column() {
-        // 位置信息 - 修复截断问题，增加行数限制
-        if (record.location) {
-          Row() {
-            Image($r('app.media.ic_location'))
-              .width(responsiveIconSize(DesignConstants.ICON_SIZE_XS))
-              .height(responsiveIconSize(DesignConstants.ICON_SIZE_XS))
-              .fillColor($r('app.color.icon_secondary'))
-              .margin({ right: responsiveListItemSpacing(DesignConstants.SPACING_XS) })
-
-            Text(record.location)
-              .fontSize(responsiveFontSize(DesignConstants.FONT_SIZE_XS))
-              .fontColor($r('app.color.text_secondary'))
-              .maxLines(2) // 增加行数限制，避免截断
-              .textOverflow({ overflow: TextOverflow.Ellipsis })
-              .layoutWeight(1)
-          }
-          .width('100%')
-          .margin({ bottom: responsiveListItemSpacing(DesignConstants.SPACING_XS) })
-        }
-
-        // 备注信息 - 添加备注显示
-        if (record.comment && record.comment !== '无备注') {
-          Row() {
-            Text(record.comment)
-              .fontSize(responsiveFontSize(DesignConstants.FONT_SIZE_XS))
-              .fontColor($r('app.color.text_secondary'))
-              .maxLines(2) // 允许显示多行备注
-              .textOverflow({ overflow: TextOverflow.Ellipsis })
-          }
-          .width('100%')
-          .margin({ bottom: responsiveListItemSpacing(DesignConstants.SPACING_XS) })
-        }
-
-        // 时间信息和时长合并到同一行
-        Row() {
-          Text(new Date(record.timestamp).toLocaleString('zh-CN', {
-            month: '2-digit',
-            day: '2-digit',
-            hour: '2-digit',
-            minute: '2-digit',
-            hour12: false
-          }))
-            .fontSize(responsiveFontSize(DesignConstants.FONT_SIZE_XS))
-            .fontColor($r('app.color.text_secondary'))
-            .maxLines(1)
-            .textOverflow({ overflow: TextOverflow.Ellipsis })
-            .layoutWeight(1)
-
-          Text(`${Math.round(record.duration / 1000)}秒`)
-            .fontSize(responsiveFontSize(DesignConstants.FONT_SIZE_XS))
-            .fontColor($r('app.color.text_secondary'))
-        }
-        .width('100%')
-        .margin({ bottom: responsiveListItemSpacing(DesignConstants.SPACING_XS) })
-        .justifyContent(FlexAlign.SpaceBetween)
-      }
-      .width('100%')
-      .padding({
-        left: responsiveListItemPadding(DesignConstants.SPACING_MD),
-        right: responsiveListItemPadding(DesignConstants.SPACING_MD)
-      })
-
-      // 底部区域：音频播放器（如果有音频文件）
-      if (record.audioFilePath) {
-        Divider()
-          .width('90%')
-          .color($r('app.color.divider_secondary'))
-          .margin({
-            top: responsiveListItemSpacing(DesignConstants.SPACING_SM),
-            bottom: responsiveListItemSpacing(DesignConstants.SPACING_SM)
-          })
-
-        AudioPlayer({
-          audioFilePath: record.audioFilePath,
-        })
-          .width('90%')
-          .margin({
-            bottom: responsiveListItemPadding(DesignConstants.SPACING_MD)
-          })
-      }
-    }
-    .backgroundColor($r('app.color.background_primary'))
-    .borderRadius(16)
-    .shadow({
-      radius: 8,
-      color: '#19000000',
-      offsetX: 0,
-      offsetY: 2
-    })
-    .onClick(() => {
-      this.selectedRecord = record;
-      this.showDetailDialog();
-    })
   }
 }

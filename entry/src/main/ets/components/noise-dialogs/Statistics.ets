@@ -212,7 +212,7 @@ export struct Statistics {
   build() {
     Column() {
       Text(this.getOverallNoiseDescription())
-        .fontSize(14)
+
         .fontColor($r('app.color.text_secondary'))
         .margin({ bottom: 16 })
         .textAlign(TextAlign.Start)

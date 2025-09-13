@@ -953,7 +953,7 @@ export struct DetailDialog {
 
       Row() {
         Text('检测时间')
-          .fontSize(14)
+          
           .fontColor('#666666')
         Text(new Date(this.selectedRecord!.timestamp).toLocaleString('zh-CN', {
           year: 'numeric',
@@ -964,7 +964,7 @@ export struct DetailDialog {
           second: '2-digit',
           hour12: false
         }))
-          .fontSize(14)
+          
           .fontColor('#333333')
       }
       .width('100%')
@@ -973,10 +973,10 @@ export struct DetailDialog {
 
       Row() {
         Text('检测时长')
-          .fontSize(14)
+          
           .fontColor('#666666')
         Text(`${Math.round(this.selectedRecord!.duration / 1000)}秒`)
-          .fontSize(14)
+          
           .fontColor('#333333')
       }
       .width('100%')
@@ -986,10 +986,10 @@ export struct DetailDialog {
       if (this.selectedRecord!.location) {
         Row() {
           Text('检测位置')
-            .fontSize(14)
+            
             .fontColor('#666666')
           Text(this.selectedRecord!.location)
-            .fontSize(14)
+            
             .fontColor('#333333')
             .textAlign(TextAlign.End)
             .textOverflow({ overflow: TextOverflow.None })
@@ -1024,7 +1024,7 @@ export struct DetailDialog {
             .fillColor('#999999')
             .margin({ bottom: 8 })
           Text('暂无噪音级别分布数据')
-            .fontSize(14)
+            
             .fontColor('#999999')
         }
         .width('100%')
@@ -1058,11 +1058,11 @@ export struct DetailDialog {
                   .margin({ right: 8 })
 
                 Text(segment.name)
-                  .fontSize(14)
+                  
                   .fontColor('#666666')
 
                 Text(`${segment.value}%`)
-                  .fontSize(14)
+                  
                   .fontColor('#333333')
                   .margin({ left: 8 })
               }
@@ -1374,7 +1374,7 @@ export struct AudioRecordDisplay {
             .fontColor($r('sys.color.black'))
 
           Text(this.isRecordEnabled ? ' 已开启' : ' 已关闭')
-            .fontSize(14)
+            
             .fontColor(this.isRecordEnabled ? '#0091FF' : '#666666')
         }
 
@@ -1393,14 +1393,14 @@ export struct AudioRecordDisplay {
 
       if (this.isRecordEnabled) {
         Text('检测结束后自动保存音频')
-          .fontSize(14)
+          
           .fontColor('#666666')
           .margin({ left: 4, top: 2 })
           .textAlign(TextAlign.Start)
           .width('100%')
       } else {
         Text('开启后将自动保存检测音频')
-          .fontSize(14)
+          
           .fontColor('#999999')
           .margin({ left: 4, top: 2 })
           .textAlign(TextAlign.Start)
@@ -2045,7 +2045,7 @@ export struct DecibelMeter {
         .margin({ bottom: 8 })
 
       Text(this.decibelService.getDecibelDescription(this.currentDecibel))
-        .fontSize(14)
+        
         .fontColor('#666666')
         .textAlign(TextAlign.Center)
         .margin({ horizontal: 24 })
@@ -2060,7 +2060,7 @@ export struct DecibelMeter {
     Row() {
       Column() {
         Text('最小')
-          .fontSize(14)
+          
           .fontColor('#666666')
         Text(this.minDecibel.toString())
           .fontSize(24)
@@ -2075,7 +2075,7 @@ export struct DecibelMeter {
 
       Column() {
         Text('平均')
-          .fontSize(14)
+          
           .fontColor('#666666')
         Text(this.avgDecibel.toString())
           .fontSize(24)
@@ -2090,7 +2090,7 @@ export struct DecibelMeter {
 
       Column() {
         Text('最大')
-          .fontSize(14)
+          
           .fontColor('#666666')
         Text(this.maxDecibel.toString())
           .fontSize(24)
@@ -2318,7 +2318,7 @@ export struct DecibelHistory {
               second: '2-digit',
               hour12: false
             }))
-              .fontSize(14)
+              
               .fontColor('#666666')
 
             if (record.isFavorite) {
@@ -2333,7 +2333,7 @@ export struct DecibelHistory {
 
           if (record.location) {
             Text(record.location)
-              .fontSize(14)
+              
               .fontColor('#999999')
               .margin({ top: 4 })
               .textOverflow({ overflow: TextOverflow.Ellipsis })
@@ -2709,7 +2709,7 @@ export struct FileVault {
             .maxLines(1)
 
           Text(this.formatFileSize(file.size))
-            .fontSize(14)
+            
             .fontColor('#999999')
             .margin({ top: 4 })
         }
@@ -2970,7 +2970,7 @@ export struct DetailDialog {
 
       Row() {
         Text('检测时间')
-          .fontSize(14)
+          
           .fontColor('#666666')
         Text(new Date(this.selectedRecord!.timestamp).toLocaleString('zh-CN', {
           year: 'numeric',
@@ -2981,7 +2981,7 @@ export struct DetailDialog {
           second: '2-digit',
           hour12: false
         }))
-          .fontSize(14)
+          
           .fontColor('#333333')
       }
       .width('100%')
@@ -2990,10 +2990,10 @@ export struct DetailDialog {
 
       Row() {
         Text('检测时长')
-          .fontSize(14)
+          
           .fontColor('#666666')
         Text(`${Math.round(this.selectedRecord!.duration / 1000)}秒`)
-          .fontSize(14)
+          
           .fontColor('#333333')
       }
       .width('100%')
@@ -3003,10 +3003,10 @@ export struct DetailDialog {
       if (this.selectedRecord!.location) {
         Row() {
           Text('检测位置')
-            .fontSize(14)
+            
             .fontColor('#666666')
           Text(this.selectedRecord!.location)
-            .fontSize(14)
+            
             .fontColor('#333333')
             .textAlign(TextAlign.End)
             .textOverflow({ overflow: TextOverflow.None })
@@ -3041,7 +3041,7 @@ export struct DetailDialog {
             .fillColor('#999999')
             .margin({ bottom: 8 })
           Text('暂无噪音级别分布数据')
-            .fontSize(14)
+            
             .fontColor('#999999')
         }
         .width('100%')
@@ -3075,11 +3075,11 @@ export struct DetailDialog {
                   .margin({ right: 8 })
 
                 Text(segment.name)
-                  .fontSize(14)
+                  
                   .fontColor('#666666')
 
                 Text(`${segment.value}%`)
-                  .fontSize(14)
+                  
                   .fontColor('#333333')
                   .margin({ left: 8 })
               }

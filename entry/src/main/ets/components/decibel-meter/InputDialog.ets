@@ -36,7 +36,7 @@ export struct InputDialog {
             .defaultFocus(true)
             .enableKeyboardOnFocus(true)
             .enterKeyType(EnterKeyType.Go)
-            .fontSize(14)
+
             .fontColor((this.comment.length > 64) ? $r('app.color.error') : $r('app.color.text_primary'))
             .onChange((value: string) => {
               this.comment = value;

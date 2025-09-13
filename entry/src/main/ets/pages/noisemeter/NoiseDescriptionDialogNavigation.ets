@@ -41,7 +41,7 @@ export struct NoiseDescriptionDialog {
                 .width('25%')
 
               Text(DecibelService.getDecibelDescription(db - 1))
-                .fontSize(14)
+
                 .fontColor($r('app.color.text_secondary'))
                 .width('75%')
             }

@@ -19,7 +19,7 @@ function itemTitle() {
 @Extend(Text)
 function itemDescription() {
   .fontColor($r('app.color.text_secondary'))
-  .fontSize(14)
+
   .textAlign(TextAlign.Start)
   .width( '100%')
   .margin({ left: 48 })
@@ -42,7 +42,7 @@ function listItemRow() {
 @Extend(Text)
 function detailText() {
   .fontColor($r('app.color.text_secondary'))
-  .fontSize(14)
+
   .margin({ top: 4, left: 48 })
 }
 

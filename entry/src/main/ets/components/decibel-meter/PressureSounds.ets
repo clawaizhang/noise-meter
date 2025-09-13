@@ -44,11 +44,10 @@ export struct PressureSounds {
               Text(item.name).width(100)
                 .fontSize(12).animation({ duration: 200, curve: Curve.EaseOut })
             }
-          }.expandSafeArea([SafeAreaType.SYSTEM], [SafeAreaEdge.TOP])
+          }
         }, (item: ImageSound, index) => item.name)
         FlowItem().height(200)
       }
-      .expandSafeArea([SafeAreaType.SYSTEM], [SafeAreaEdge.TOP])
       .columnsTemplate('repeat(auto-fill,100)')
       .rowsTemplate('1fr 1fr 1fr')
       .width('100%')

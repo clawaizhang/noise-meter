@@ -35,7 +35,7 @@ export struct NoiseLevelDialog {
                   .margin({ right: 8 });
 
                 Text(item.level)
-                  .fontSize(14)
+
                   .fontColor($r('app.color.text_secondary'))
                   .margin({ right: 8 });
 

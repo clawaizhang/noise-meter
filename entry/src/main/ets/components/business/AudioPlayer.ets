@@ -45,7 +45,7 @@ export struct AudioPlayer {
             .margin({ right: 8 })
           Text(this.playerState === PlayerState.STATE_PLAYING ? '暂停播放' :
             this.playerState === PlayerState.STATE_PAUSED ? '继续播放' : '播放录音')
-            .fontSize(14)
+
             .fontColor($r('app.color.text_secondary'))
         }
         .alignItems(VerticalAlign.Center)

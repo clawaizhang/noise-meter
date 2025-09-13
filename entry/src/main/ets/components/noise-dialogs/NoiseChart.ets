@@ -64,7 +64,7 @@ export struct NoiseChart {
             .fillColor($r('app.color.text_secondary'))
             .margin({ bottom: 8 })
           Text('暂无分贝值变化数据')
-            .fontSize(14)
+
             .fontColor($r('app.color.text_secondary'))
         }
         .width('100%')

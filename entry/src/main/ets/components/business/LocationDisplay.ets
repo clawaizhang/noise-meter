@@ -15,10 +15,10 @@ export struct LocationDisplay {
 
   async aboutToAppear() {
     this.preferenceService = PreferenceService.getInstance();
-    
+
     // 获取位置开关状态
     this.isEnabled = this.preferenceService.getBoolean(PreferenceKeyConstants.LOCATION, true);
-    
+
     // 如果位置开关是打开的,自动获取位置信息
     if (this.isEnabled) {
       this.startSingleLocation();
@@ -41,7 +41,7 @@ export struct LocationDisplay {
         }
       }
     };
-    
+
     this.preferenceService.addChangeListener(PreferenceKeyConstants.LOCATION, this.locationListener);
   }
 
@@ -117,43 +117,44 @@ export struct LocationDisplay {
   build() {
     Row() {
       if (this.isEnabled) {
-        Button({ type: ButtonType.Circle, stateEffect: true }) {
-          Row() {
-            Image($r('app.media.ic_refresh'))
-              .width(16)
-              .height(16)
-              .fillColor($r('app.color.text_secondary'))
-              .rotate({
-                angle: this.isRefreshing ? 360 : 0,
-                centerX: '50%',
-                centerY: '50%'
-              })
-              .animation({
-                duration: this.isRefreshing ? 1000 : 0,
-                iterations: this.isRefreshing ? -1 : 0,
-                curve: Curve.Linear
-              })
-          }
-        }
-        .width(20)
-        .height(20)
-        .backgroundColor($r('app.color.background_tertiary'))
-        .enabled(!this.isRefreshing)
-        .onClick(() => {
-          this.startSingleLocation();
-        })
-        .margin({ right: 8 })
+        this.refreshButton()
       }
 
       Text(this.isEnabled ? (this.address || '点击刷新按钮获取位置') : '开启位置服务可记录噪音检测位置')
-        .fontSize(14)
+
         .fontColor($r('app.color.text_secondary'))
         .textAlign(TextAlign.Center)
-        .layoutWeight(1)
     }
     .width('100%')
     .height(40)
     .alignItems(VerticalAlign.Center)
     .justifyContent(FlexAlign.Center)
   }
-} 
+
+  @Builder
+  refreshButton() {
+    Button({ type: ButtonType.Circle, stateEffect: true }) {
+      Image($r('app.media.ic_refresh'))
+        .width(16)
+        .height(16)
+        .fillColor($r('app.color.text_secondary'))
+        .rotate({
+          angle: this.isRefreshing ? 360 : 0,
+          centerX: '50%',
+          centerY: '50%'
+        })
+        .animation({
+          duration: this.isRefreshing ? 1000 : 0,
+          iterations: this.isRefreshing ? -1 : 0,
+          curve: Curve.Linear
+        });
+    }
+    .width(20)
+    .height(20)
+    .backgroundColor($r('app.color.background_tertiary'))
+    .enabled(!this.isRefreshing)
+    .onClick(() => {
+      this.startSingleLocation();
+    })
+  }
+}

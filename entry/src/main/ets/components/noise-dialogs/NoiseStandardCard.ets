@@ -34,7 +34,7 @@ export struct NoiseStandardCard {
               .fontSize(16)
               .fontColor($r('app.color.text_secondary'))
             Text(`${this.standard.dayLimit} dB`)
-              .fontSize(14)
+
               .fontColor(DecibelService.getDecibelColor(this.standard.dayLimit))
               .fontWeight(FontWeight.Bold)
               .margin({ left: 8 })
@@ -46,7 +46,7 @@ export struct NoiseStandardCard {
               .fontSize(16)
               .fontColor($r('app.color.text_secondary'))
             Text(`${this.standard.nightLimit} dB`)
-              .fontSize(14)
+
               .fontColor(DecibelService.getDecibelColor(this.standard.nightLimit))
               .fontWeight(FontWeight.Bold)
               .margin({ left: 8 })

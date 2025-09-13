@@ -15,7 +15,7 @@ export struct BasicInfo {
     Column() {
       Row() {
         Text('检测时间')
-          .fontSize(14)
+
           .fontColor($r('app.color.text_secondary'))
           .width('30%')
         Text(new Date(this.selectedRecord!.timestamp).toLocaleString('zh-CN', {
@@ -27,11 +27,11 @@ export struct BasicInfo {
           second: '2-digit',
           hour12: false
         }))
-          .fontSize(14)
+
           .fontColor($r('app.color.text_primary'))
           .width('50%')
         Text(`共${(this.selectedRecord!.duration / 1000).toFixed(1)}秒`)
-          .fontSize(14)
+
           .fontColor($r('app.color.text_primary'))
           .width('20%')
       }
@@ -41,11 +41,11 @@ export struct BasicInfo {
       if (this.selectedRecord!.location) {
         Row() {
           Text('检测位置')
-            .fontSize(14)
+
             .fontColor($r('app.color.text_secondary'))
             .width('30%')
           Text(this.selectedRecord!.location)
-            .fontSize(14)
+
             .fontColor($r('app.color.text_primary'))
             .width('70%')
             .textOverflow({ overflow: TextOverflow.None })
@@ -57,11 +57,11 @@ export struct BasicInfo {
       // 添加备注显示区域
       Row() {
         Text('备注')
-          .fontSize(14)
+
           .fontColor($r('app.color.text_secondary'))
           .width('30%')
         Text(this.comment === '' ? '点击添加备注' : this.comment)
-          .fontSize(14)
+
           .fontColor($r('app.color.text_secondary'))
           .width('70%')
           .textOverflow({ overflow: TextOverflow.None })

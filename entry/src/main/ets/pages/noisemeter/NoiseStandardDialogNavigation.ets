@@ -29,7 +29,7 @@ export struct NoiseStandardDialog {
           .textAlign(TextAlign.Center)
 
         Text('（白天：6:00-22:00，夜间：22:00-6:00）')
-          .fontSize(14)
+
           .fontColor($r('app.color.text_secondary'))
           .textAlign(TextAlign.Center)
       }

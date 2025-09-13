@@ -7,20 +7,5 @@ interface CalibrationConfig {
 
 @Builder
 export function CalibrationIndicator(config: CalibrationConfig) {
-  Row() {
-    Text('声级校准:')
-      .fontSize(12)
-      .fontColor($r('app.color.text_disabled'))
 
-    Text(`${config.gain} ${config.weightingType === WeightingType.A ? 'dB(A)' : config.weightingType === WeightingType.C ? 'dB(C)' : 'dB'}`)
-      .fontSize(12)
-      .fontColor($r('app.color.text_disabled'))
-      .margin({ left: 5 })
-  }
-  .position({
-    x: '65%', // 调整到右侧
-    y: '2%'    // 调整到顶部
-  })
-  .margin({ right: 8 })
-  .opacity(0.7)
 }

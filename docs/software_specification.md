@@ -658,7 +658,7 @@
                Column() {
                  Text(new Date(record.timestamp)
                    .toLocaleString())
-                   .fontSize(14)
+                   
                  Text(record.location || '未知位置')
                    .fontSize(12)
                    .fontColor('#666666')
