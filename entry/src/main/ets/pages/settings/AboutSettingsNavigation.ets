@@ -272,7 +272,7 @@ export struct AboutSettings {
 
                   Blank()
 
-                  Text('v1.0.0')
+                  Text('v1.0.9')
                     .fontSize(responsiveFontSize(DesignConstants.FONT_SIZE_MD))
                     .fontColor($r('app.color.text_secondary'))
                 }
@@ -312,7 +312,8 @@ export struct AboutSettings {
                 .listItemRow()
 
                 // 描述信息
-                Text('如有问题请联系技术支持团队')
+                Text('QQ群: 还没创建')
+                  .copyOption(CopyOptions.LocalDevice)
                   .itemDescription()
                   .margin({ top: responsiveListItemSpacing(DesignConstants.SPACING_MD) })
               }

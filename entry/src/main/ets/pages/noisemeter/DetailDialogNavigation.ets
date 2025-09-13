@@ -120,15 +120,23 @@ export struct DetailDialog {
               })
 
               // 内容区域 - 添加组件间距和响应式padding
-              Column() {
-                BasicInfo({  selectedRecord: this.selectedRecord,commentChange: (comment: string) => {
-                  this.selectedRecord!.comment = comment;
-                  this.recordService.updateRecord(this.selectedRecord!);
-                }})
+              GridRow({ columns: 12, breakpoints: { reference: BreakpointsReference.WindowSize } }) {
+                GridCol({span:{xs:12,sm:12,md:4,lg:3}}){
+                  BasicInfo({
+                    selectedRecord: this.selectedRecord, commentChange: (comment: string) => {
+                      this.selectedRecord!.comment = comment;
+                      this.recordService.updateRecord(this.selectedRecord!);
+                    }
+                  })
+                }
 
-                Statistics({ selectedRecord: this.selectedRecord })
+                GridCol({span:{xs:12,sm:12,md:4,lg:3}}){
+                  Statistics({ selectedRecord: this.selectedRecord })
+                }
 
-                NoiseChart({ playAudio: true, selectedRecord: this.selectedRecord })
+                GridCol({span:{xs:12,sm:12,md:4,lg:3}}){
+                  NoiseChart({ playAudio: true, selectedRecord: this.selectedRecord })
+                }
               }
               .width('100%')
               .padding({

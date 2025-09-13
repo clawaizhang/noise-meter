@@ -58,8 +58,7 @@ export struct ImageRaw {
 
   build() {
     Image(this.pixelMapImg)
-      .alt($r('app.media.ic_video'))
       .objectFit(this.fit)
-      .borderRadius(12)
+      .borderRadius(12).animation({ duration: 200, curve: Curve.EaseOut })
   }
 }

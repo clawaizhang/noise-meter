@@ -239,12 +239,12 @@ export struct MainNoiseMeter {
           .backgroundColor($r('app.color.background_secondary'))
           .alignItems(HorizontalAlign.Center)
         }
-        .tabBar(this.TabBuilder('静喵', $r('app.media.ic_meter'), 0))
+        .tabBar(this.TabBuilder('', $r('app.media.ic_meter'), 0))
 
         TabContent() {
           PressureSounds()
         }
-        .tabBar(this.TabBuilder('Sound', $r('app.media.ic_play'), 1))
+        .tabBar(this.TabBuilder('', $r('app.media.ic_play'), 1))
 
       }
       .scrollable(false)
@@ -253,40 +253,20 @@ export struct MainNoiseMeter {
       })
       .width('100%')
       .height('100%')
-      .barHeight(this.isLandscape ?
-        // 横屏时tab栏高度自适应
-        '100%' :
-        // 竖屏时使用响应式高度
-      this.responsiveLayout.getResponsiveValue<number>({
-        xsmall: 48,
-        small: 50,
-        medium: 56,
-        large: 60,
-        xlarge: 64
-      } as ResponsiveNumberValues)
-      )
-      .barWidth(this.isLandscape ?
-        // 横屏时tab栏宽度使用响应式值
-      this.responsiveLayout.getResponsiveValue<number>({
-        xsmall: 80,
-        small: 90,
-        medium: 100,
-        large: 110,
-        xlarge: 120
-      } as ResponsiveNumberValues) :
-        // 竖屏时宽度自适应
-        '100%'
-      )
+      .barOverlap(this.currentIndex == 1)
+      .barBackgroundBlurStyle(BlurStyle.Thin)
       .barMode(BarMode.Fixed)
       .vertical(this.isLandscape)
       .animationDuration(0)
     }
     .title(this.title, { mainTitleModifier: new MyTextModifier() })
     .menus(this.menuItems)
+    .hideTitleBar(this.currentIndex === 1)
     .backgroundColor($r('app.color.background_secondary'))
     .hideToolBar(true)
     .systemTransition(NavigationSystemTransitionType.FADE)
     .mode(NavDestinationMode.STANDARD)
+    .animation({ duration: 200, curve: Curve.Linear })
   }
 }
 

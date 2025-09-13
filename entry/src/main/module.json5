@@ -9,13 +9,14 @@
     },
       {
         "name": "appgallery_privacy_link_privacy_statement",
-        "value": "https://agreement-drcn.hispace.dbankcloud.cn/index.html?lang=zh&agreementId=1764078440182486976" // 必须是https网址
+        "value": "https://agreement-drcn.hispace.dbankcloud.cn/index.html?lang=zh&agreementId=1772080835588051136" // 必须是https网址
       }],
     "mainElement": "EntryAbility",
     "deviceTypes": [
       "phone",
       "tablet",
       "car",
+      "2in1"
     ],
     "deliveryWithInstall": true,
     "installationFree": false,

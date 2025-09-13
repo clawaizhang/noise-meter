@@ -7,6 +7,7 @@ import { PreferenceKeyConstants } from '../constants/PreferenceKeyConstants'
 import { DatabaseUpgradeConfig, DbConfig } from '../interfaces/DatabaseInterfaces'
 import hilog from '@ohos.hilog'
 import { MainPage, dbConfig } from 'entry/MainPage'
+import { common, Want } from '@kit.AbilityKit'
 
 const TAG = 'Index';
 const DOMAIN = 0x0000;
@@ -23,7 +24,9 @@ struct Index {
   @Local isInitialized: boolean = false;
   @Local isLoading: boolean = true;
   @Local privacyAgreed: boolean = false;
+  usePrivacy: boolean = true;
   private relationalStoreService: RelationalStoreService = RelationalStoreService.getInstance();
+  private context = this.getUIContext().getHostContext() as common.UIAbilityContext;
   private readonly eventId = 'usual.event.PRIVACY_STATE_CHANGED';
   // 订阅者信息, 用于保存创建成功的订阅者对象，后续使用其完成订阅及退订的动作
   private subscriber: commonEventManager.CommonEventSubscriber | undefined = undefined;
@@ -41,8 +44,16 @@ struct Index {
 
   private async initialize() {
     try {
-      let appPrivacyResults: privacyManager.AppPrivacyResult[] = privacyManager.getAppPrivacyResult();
-      this.privacyAgreed = appPrivacyResults[0]?.result === 1;
+      if (canIUse('SystemCapability.AppGalleryService.PrivacyManager') && this.usePrivacy) {
+        if(privacyManager.getAppPrivacyMgmtInfo().type == privacyManager.AppPrivacyMgmtType.FULL_MODE){
+          let appPrivacyResults: privacyManager.AppPrivacyResult[] = privacyManager.getAppPrivacyResult();
+          this.privacyAgreed = appPrivacyResults[0]?.result === 1;
+        } else {
+          this.privacyAgreed = true;
+        }
+      } else {
+        this.privacyAgreed = true;
+      }
       PreferenceService.getInstance().setBoolean(PreferenceKeyConstants.PRIVACY_AGREED, this.privacyAgreed);
       // 初始化数据库
       const upgradeConfigs: DatabaseUpgradeConfig[] = dbConfig.upgradeConfigs;
@@ -66,29 +77,33 @@ struct Index {
   public subscribe(): void {
     hilog.info(0, TAG, "subscribe");
     // 创建订阅者
-    commonEventManager.createSubscriber(this.subscribeInfo).then((commonEventSubscriber) => {
-      hilog.info(0, TAG, "createSubscriber");
-      this.subscriber = commonEventSubscriber;
+    if (canIUse('SystemCapability.Notification.CommonEvent') && this.usePrivacy) {
 
-      // 订阅公共事件
-      try {
-        commonEventManager.subscribe(this.subscriber, (err, data) => {
-          if (err) {
-            hilog.error(0, TAG, `subscribe failed, code is ${err?.code}, message is ${err?.message}`);
-            return;
-          }
+      commonEventManager.createSubscriber(this.subscribeInfo).then((commonEventSubscriber) => {
+        hilog.info(0, TAG, "createSubscriber");
+        this.subscriber = commonEventSubscriber;
 
-          let result = JSON.parse(data?.data ?? '{}')?.resultType as number;
-          if (result === 1) {
-            // 隐私同意处理
-            this.privacyAgreed = true;
-          }
-        });
-      } catch (error) {
-        hilog.error(0, TAG,
-          "init createSubscriber failed, exception code: " + error.code + ", exception message: " + error.message);
-      }
-    });
+        // 订阅公共事件
+        try {
+          commonEventManager.subscribe(this.subscriber, (err, data) => {
+            if (err) {
+              hilog.error(0, TAG, `subscribe failed, code is ${err?.code}, message is ${err?.message}`);
+              return;
+            }
+
+            let result = JSON.parse(data?.data ?? '{}')?.resultType as number;
+            if (result === 1) {
+              // 隐私同意处理
+              this.privacyAgreed = true;
+            }
+          });
+        } catch (error) {
+          hilog.error(0, TAG,
+            "init createSubscriber failed, exception code: " + error.code + ", exception message: " + error.message);
+        }
+      });
+    }
+
   }
 
   build() {
@@ -108,14 +123,25 @@ struct Index {
       } else if (!this.isInitialized) {
         // 显示错误状态
         Column() {
-          Text('数据加载中...')
+          Text('数据加载完成...')
             .fontSize(16)
             .margin({ top: 12 })
-          Button('立即加载')
+          Button('立即重启')
             .margin({ top: 24 })
-            .onClick(() => {
+            .onClick(async () => {
               this.isLoading = true;
-              this.initialize();
+              await this.initialize();
+              let applicationContext = this.context.getApplicationContext();
+              let want: Want = {
+                bundleName: 'yu.zhang.myapplication.noise_meter_pro',
+                abilityName: 'EntryAbility'
+              };
+              try {
+                applicationContext.restartApp(want);
+                hilog.info(0x0000, 'testTag', '%{public}s', 'applicationContext.restartApp');
+              } catch (error) {
+                console.error(`restartApp fail, error: ${JSON.stringify(error)}`);
+              }
             })
         }
         .width('100%')

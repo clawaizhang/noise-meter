@@ -92,6 +92,7 @@ export struct LocationDisplay {
       const hasPermission = await this.locationService.requestLocationPermission();
       if (!hasPermission) {
         this.address = '授予位置权限可获取位置信息';
+        PreferenceService.getInstance().setBoolean(PreferenceKeyConstants.LOCATION, false);
         return;
       }
 

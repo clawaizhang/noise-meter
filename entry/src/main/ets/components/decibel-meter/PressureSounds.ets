@@ -40,14 +40,15 @@ export struct PressureSounds {
                 onPlayStateChange: (state: PlayerState, playerService: AudioPlayerService) => {
                   this.updateUnionPlayerState(state, playerService, item);
                 }
-              }).width(100).height(100)
+              }).width(100).height(100).animation({ duration: 200, curve: Curve.EaseOut })
               Text(item.name).width(100)
-                .fontSize(12)
+                .fontSize(12).animation({ duration: 200, curve: Curve.EaseOut })
             }
-          }
+          }.expandSafeArea([SafeAreaType.SYSTEM], [SafeAreaEdge.TOP])
         }, (item: ImageSound, index) => item.name)
         FlowItem().height(200)
       }
+      .expandSafeArea([SafeAreaType.SYSTEM], [SafeAreaEdge.TOP])
       .columnsTemplate('repeat(auto-fill,100)')
       .rowsTemplate('1fr 1fr 1fr')
       .width('100%')
@@ -83,8 +84,9 @@ export struct PressureSounds {
         }
         .width('100%')
         .height(50)
-        .padding({ left: 16, right: 16, bottom: 16 })
+        .padding({ left: 16, right: 16, bottom: 100 })
         .borderRadius(12)
+        .animation({})
       }
     }
   }
