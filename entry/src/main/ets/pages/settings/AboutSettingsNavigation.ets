@@ -1,168 +1,119 @@
 import { privacyManager } from '@kit.StoreKit';
 import { common } from '@kit.AbilityKit';
 import { BusinessError } from '@kit.BasicServicesKit';
-import { commonEventManager } from '@kit.BasicServicesKit';
 import { Want } from '@kit.AbilityKit';
 import { navigationStack } from '../../constants/ProviderConstant';
 import { DesignConstants } from '../../constants/DesignConstants';
+import { curves } from '@kit.ArkUI';
 
 @Extend(Image)
 function itemIcon() {
   .width(DesignConstants.ICON_SIZE_MD)
   .height(DesignConstants.ICON_SIZE_MD)
-  .margin({ right: DesignConstants.SPACING_MD })
+  .fillColor($r('sys.color.background_secondary'))
 }
 
 @Extend(Text)
 function itemTitle() {
   .fontWeight(FontWeight.Medium)
-  .fontColor($r('app.color.text_primary'))
-  .fontSize(DesignConstants.FONT_SIZE_LG)
 }
 
 @Extend(Text)
 function itemDescription() {
-  .fontColor($r('app.color.text_secondary'))
+  .fontColor($r('sys.color.font_secondary'))
   .fontSize(DesignConstants.FONT_SIZE_MD)
   .textAlign(TextAlign.Start)
-
-  .margin({ left: DesignConstants.SPACING_XL })
-}
-
-@Extend(Column)
-function listItemStyle() {
-
-  .padding({
-    left: DesignConstants.SPACING_LG,
-    right: DesignConstants.SPACING_LG
-  })
-  .backgroundColor($r('app.color.background_secondary'))
+  .alignSelf(ItemAlign.Start)
 }
 
 @Extend(Column)
 function cardStyle() {
-  .backgroundColor($r('app.color.background_secondary'))
-  .borderRadius(12)
-  .shadow({
-    radius: 8,
-    color: $r('app.color.shadow_medium'),
-    offsetX: 0,
-    offsetY: 2
-  })
-  .padding({
-    top: DesignConstants.SPACING_MD,
-    bottom: DesignConstants.SPACING_MD,
-    left: DesignConstants.SPACING_LG,
-    right: DesignConstants.SPACING_LG
-  })
-  .margin({
-    top: DesignConstants.SPACING_MD,
-    bottom: DesignConstants.SPACING_MD,
-    left: DesignConstants.SPACING_MD,
-    right: DesignConstants.SPACING_MD
-  })
+  .backgroundColor($r('sys.color.background_secondary'))
+  .justifyContent(FlexAlign.Start)
+  .alignItems(HorizontalAlign.Start)
+  .borderRadius(16)
+  .padding(16)
+  .transition(TransitionEffect.OPACITY.animation({ curve: curves.springMotion(0.6, 0.8) }) // 透明度动画，使用springMotion曲线
+    .combine(TransitionEffect.scale({ x: 0, y: 0 })) // 组合缩放效果（从0放大到1）
+    .combine(TransitionEffect.translate({ y: 150 }).animation({ curve: curves.springMotion() })))
 }
 
 @Extend(Row)
 function listItemRow() {
-
-  .height(56)
   .alignItems(VerticalAlign.Center)
-}
-
-@Extend(ListItem)
-function dividerStyle() {
-
-  .height(1)
-  .backgroundColor($r('app.color.background_secondary'))
-}
-
-@Extend(ListItem)
-function descriptionContainer() {
-  .backgroundColor($r('app.color.background_secondary'))
-  .padding({
-    top: DesignConstants.SPACING_SM,
-    bottom: DesignConstants.SPACING_MD
-  })
+  .justifyContent(FlexAlign.Start)
 }
 
 @ComponentV2
 export struct AboutSettings {
-  @Local isLandscape: boolean = false;
-  @Local gridColumns: number = 1;
   @Consumer(navigationStack) navStack: NavPathStack = new NavPathStack();
-
-  aboutToAppear() {
-  }
 
   build() {
     NavDestination() {
       Scroll() {
-
-
-        // 列表布局（保持原有代码）
-        List() {
+        GridRow({
+          columns:
+          {
+            sm: 1,
+            md: 2,
+            lg: 2,
+            xl: 3
+          },
+          breakpoints: { reference: BreakpointsReference.WindowSize }
+        , gutter: 16
+        }) {
           // 隐私政策
-          ListItem() {
-            Column() {
-              Row() {
+          GridCol({ span: 1 }) {
+            Column({ space: 8 }) {
+              Row({ space: 8 }) {
                 Row() {
                   Image($r('app.media.ic_info'))
                     .itemIcon()
-
                   Text('隐私政策')
                     .itemTitle()
-                }
+                }.layoutWeight(1)
 
                 Blank()
               }
               .listItemRow()
+
+              Text('查看应用的隐私政策')
+                .itemDescription()
             }
             .cardStyle()
-          }.onClick(async () => {
+          }.width('100%').onClick(async () => {
             // 这里添加打开隐私政策的逻辑
             const uiContext = getContext(this) as common.UIAbilityContext;
             await privacyManager.requestAppPrivacyConsent(uiContext);
           })
 
-          ListItem() {
-            Text('查看应用的隐私政策')
-              .itemDescription()
-          }
-          .descriptionContainer()
-
           // 应用信息
-          ListItem() {
-            Column() {
-              Row() {
+          GridCol({ span: 1 }) {
+            Column({ space: 8 }) {
+              Row({ space: 8 }) {
                 Row() {
                   Image($r('app.media.ic_info'))
                     .itemIcon()
-
                   Text('应用信息')
                     .itemTitle()
-                }
+                }.layoutWeight(1)
 
                 Blank()
-
-                Text('v1.0.0')
+                Text('v1.0.9')
                   .fontSize(DesignConstants.FONT_SIZE_MD)
-                  .fontColor($r('app.color.text_secondary'))
+                  .fontColor($r('sys.color.font_secondary'))
               }
               .listItemRow()
+
+              Text('静喵Sound - 专业的噪音检测工具')
+                .itemDescription()
             }
             .cardStyle()
-          }
-
-          ListItem() {
-            Text('静喵Sound - 专业的噪音检测工具')
-              .itemDescription()
-          }
-          .descriptionContainer()
+          }.width('100%')
 
           // 技术支持
-          ListItem() {
-            Column() {
+          GridCol({ span: 1 }) {
+            Column({ space: 8 }) {
               Row() {
                 Row() {
                   Image($r('app.media.ic_info'))
@@ -171,30 +122,23 @@ export struct AboutSettings {
                   Text('技术支持')
                     .itemTitle()
                 }
+                .layoutWeight(1)
 
                 Blank()
               }
               .listItemRow()
+
+              Text('如有问题请联系技术支持团队')
+                .itemDescription()
             }
             .cardStyle()
           }
-
-          ListItem() {
-            Text('如有问题请联系技术支持团队')
-              .itemDescription()
-          }
-          .descriptionContainer()
         }
-
-        .lanes({ minLength: 350, maxLength: 350 }, 8)
-        .layoutWeight(1)
         .backgroundColor('transparent')
       }
       .scrollable(ScrollDirection.Vertical)
-      .scrollBar(BarState.On)
-      .scrollBarWidth(4)
+      .scrollBar(BarState.Off)
       .edgeEffect(EdgeEffect.Spring)
-      .layoutWeight(1)
 
       // 给作者留言按钮
       Button('给作者留言')
@@ -227,10 +171,8 @@ export struct AboutSettings {
           });
         })
 
-    }
-
-
-    .backgroundColor($r('app.color.background_tertiary')).title('关于')
+    }.padding(16)
+    .backgroundColor($r('sys.color.background_primary')).title('关于')
   }
 }
 

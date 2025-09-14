@@ -7,7 +7,7 @@ import { AudioPlayer } from '../../components/business/AudioPlayer';
 import { DecibelRecord } from '../../models/DecibelRecord';
 import { FileService } from '../../services/FileService';
 import { DesignConstants } from '../../constants/DesignConstants';
-import { SymbolGlyphModifier } from '@kit.ArkUI';
+import { curves, SymbolGlyphModifier } from '@kit.ArkUI';
 import { DialogHub } from '@hadss/dialoghub';
 
 class DecibelRecordDataSource implements IDataSource {
@@ -179,6 +179,9 @@ export struct DecibelHistory {
     .onClick(() => {
       this.showNoiseDetails(record);
     })
+    .transition(TransitionEffect.OPACITY.animation({ curve: curves.springMotion(0.6, 0.8) }) // 透明度动画，使用springMotion曲线
+      .combine(TransitionEffect.scale({ x: 0, y: 0 })) // 组合缩放效果（从0放大到1）
+      .combine(TransitionEffect.translate({ y: 150 }).animation({ curve: curves.springMotion() })))
     .animation({
       duration: 300,
       curve: Curve.EaseOut

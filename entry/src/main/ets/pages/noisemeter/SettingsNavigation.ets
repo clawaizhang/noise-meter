@@ -1,100 +1,21 @@
 import { navigationStack } from '../../constants/ProviderConstant';
-import { DesignConstants } from '../../constants/DesignConstants';
-
-@Extend(Image)
-function itemIcon() {
-  .width(DesignConstants.ICON_SIZE_MD)
-  .height(DesignConstants.ICON_SIZE_MD)
-  .margin({ right: DesignConstants.SPACING_MD })
-}
-
-@Extend(Text)
-function itemTitle() {
-  .fontWeight(FontWeight.Medium)
-  .fontColor($r('app.color.text_primary'))
-  .fontSize(DesignConstants.FONT_SIZE_LG)
-}
-
-@Extend(Text)
-function itemDescription() {
-  .fontColor($r('app.color.text_secondary'))
-  .fontSize(DesignConstants.FONT_SIZE_MD)
-  .textAlign(TextAlign.Start)
-
-  .margin({
-    left: DesignConstants.SPACING_XL,
-    top: DesignConstants.SPACING_XS
-  })
-}
-
-@Extend(Column)
-function listItemStyle() {
-
-  .padding({
-    left: DesignConstants.SPACING_LG,
-    right: DesignConstants.SPACING_LG
-  })
-  .backgroundColor($r('app.color.background_secondary'))
-}
-
-@Extend(Row)
-function listItemRow() {
-
-  .height(64)
-  .alignItems(VerticalAlign.Center)
-}
-
-@Extend(ListItem)
-function dividerStyle() {
-
-  .height(0.5)
-  .backgroundColor($r('app.color.divider'))
-  .margin({
-    left: DesignConstants.SPACING_LG,
-    right: DesignConstants.SPACING_LG
-  })
-}
-
-@Extend(ListItem)
-function descriptionContainer() {
-  .backgroundColor($r('app.color.background_secondary'))
-  .padding({
-    top: DesignConstants.SPACING_SM,
-    bottom: DesignConstants.SPACING_LG,
-    left: DesignConstants.SPACING_LG,
-    right: DesignConstants.SPACING_LG
-  })
-}
-
-@Extend(Image)
-function arrowIcon() {
-  .width(DesignConstants.ICON_SIZE_SM)
-  .height(DesignConstants.ICON_SIZE_SM)
-  .fillColor($r('app.color.text_tertiary'))
-}
-
-@Extend(Column)
-function listItemWithDescription() {
-
-  .padding({
-    left: DesignConstants.SPACING_LG,
-    right: DesignConstants.SPACING_LG,
-    top: DesignConstants.SPACING_LG,
-    bottom: DesignConstants.SPACING_LG
-  })
-  .backgroundColor($r('app.color.background_secondary'))
-}
+import { curves } from '@kit.ArkUI';
 
 @Builder
 function SettingsBuilder() {
   Settings()
 }
 
+interface ListItemParam {
+  icon: Resource;
+  title: string;
+  desc: string;
+  action: () => void;
+}
+
 @ComponentV2
 export struct Settings {
   @Consumer(navigationStack) navStack: NavPathStack = new NavPathStack();
-  @Local isLandscape: boolean = false;
-  @Local gridColumns: number = 1;
 
   aboutToAppear() {
   }
@@ -122,172 +43,99 @@ export struct Settings {
 
   build() {
     NavDestination() {
-      Column() {
-          this.ListLayoutView()
-      }
+      Scroll() {
+        GridRow({
+          columns:
+          {
+            sm: 1,
+            md: 2,
+            lg: 2,
+            xl: 3
+          },
+          breakpoints: { reference: BreakpointsReference.WindowSize }
+        , gutter: 16
+        }) {
+          // 音频分析设置
+          this.buildListItem({
+            icon: $r('app.media.ic_audio_analysis'),
+            title: '音频分析设置',
+            desc: '时间计权模式、频率加权、声级校准等设置',
+            action: () => {
+              this.navigateToAudioAnalysis();
+            }
+          })
 
+          this.buildListItem({
+            icon: $r('app.media.ic_alarm'),
+            title: '警报与通知',
+            desc: '噪音警报阈值和通知设置',
+            action: () => {
+              this.navigateToAlerts();
+            }
+          })
 
-      .backgroundColor($r('app.color.background_primary'))
+          this.buildListItem({
+            icon: $r('app.media.ic_security'),
+            title: '数据记录与隐私',
+            desc: '地理位置、音频记录等隐私设置',
+            action: () => {
+              this.navigateToDataPrivacy();
+            }
+          })
+
+          this.buildListItem({
+            icon: $r('app.media.ic_settings'),
+            title: '设备设置',
+            desc: '屏幕常亮、后台运行等设备设置',
+            action: () => {
+              this.navigateToDeviceSettings();
+            }
+          })
+
+          this.buildListItem({
+            icon: $r('app.media.ic_info'),
+            title: '关于',
+            desc: '应用信息、隐私政策和技术支持',
+            action: () => {
+              this.navigateToAbout();
+            }
+          })
+        }.padding(16).backgroundColor($r('sys.color.background_primary'))
+      }.scrollBar(BarState.Off).edgeEffect(EdgeEffect.Spring)
+
     }.title('设置')
   }
 
-  /**
-   * 列表布局视图
-   */
   @Builder
-  ListLayoutView() {
-    List() {
-      // 音频分析设置
-      ListItem() {
-        Column() {
+  buildListItem(param: ListItemParam) {
+    GridCol({ span: 1 }) {
+      Column({ space: 8 }) {
+        Row() {
           Row() {
-            Row() {
-              Image($r('app.media.ic_audio_analysis'))
-                .itemIcon()
+            Image(param.icon)
+              .height(20)
+              .width(20)
+              .fillColor($r('sys.color.font_primary'));
+            Text(param.title);
+          }.layoutWeight(1);
 
-              Text('音频分析设置')
-                .itemTitle()
-            }
+          Image($r('app.media.ic_arrow_right'))
+            .fillColor($r('sys.color.font_primary'))
+            .height(24)
+            .width(24);
+        }.justifyContent(FlexAlign.End);
 
-            Blank()
-
-            Image($r('app.media.ic_arrow_right'))
-              .arrowIcon()
-          }
-          .listItemRow()
-
-          Text('时间计权模式、频率加权、声级校准等设置')
-            .itemDescription()
-        }
-        .listItemWithDescription()
-      }.onClick(() => {
-        this.navigateToAudioAnalysis();
-      })
-
-      ListItem() {
-      }.dividerStyle()
-
-      // 警报与通知
-      ListItem() {
-        Column() {
-          Row() {
-            Row() {
-              Image($r('app.media.ic_alarm'))
-                .itemIcon()
-
-              Text('警报与通知')
-                .itemTitle()
-            }
-
-            Blank()
-
-            Image($r('app.media.ic_arrow_right'))
-              .arrowIcon()
-          }
-          .listItemRow()
-
-          Text('噪音警报阈值和通知设置')
-            .itemDescription()
-        }
-        .listItemWithDescription()
-      }.onClick(() => {
-        this.navigateToAlerts();
-      })
-
-      ListItem() {
-      }.dividerStyle()
-
-      // 数据记录与隐私
-      ListItem() {
-        Column() {
-          Row() {
-            Row() {
-              Image($r('app.media.ic_security'))
-                .itemIcon()
-
-              Text('数据记录与隐私')
-                .itemTitle()
-            }
-
-            Blank()
-
-            Image($r('app.media.ic_arrow_right'))
-              .arrowIcon()
-          }
-          .listItemRow()
-
-          Text('地理位置、音频记录等隐私设置')
-            .itemDescription()
-        }
-        .listItemWithDescription()
-      }.onClick(() => {
-        this.navigateToDataPrivacy();
-      })
-
-      ListItem() {
-      }.dividerStyle()
-
-      // 设备设置
-      ListItem() {
-        Column() {
-          Row() {
-            Row() {
-              Image($r('app.media.ic_settings'))
-                .itemIcon()
-
-              Text('设备设置')
-                .itemTitle()
-            }
-
-            Blank()
-
-            Image($r('app.media.ic_arrow_right'))
-              .arrowIcon()
-          }
-          .listItemRow()
-
-          Text('屏幕常亮、后台运行等设备设置')
-            .itemDescription()
-        }
-        .listItemWithDescription()
-      }.onClick(() => {
-        this.navigateToDeviceSettings();
-      })
-
-      ListItem() {
-      }.dividerStyle()
-
-      // 关于
-      ListItem() {
-        Column() {
-          Row() {
-            Row() {
-              Image($r('app.media.ic_info'))
-                .itemIcon()
-
-              Text('关于')
-                .itemTitle()
-            }
-
-            Blank()
-
-            Image($r('app.media.ic_arrow_right'))
-              .arrowIcon()
-          }
-          .listItemRow()
-
-          Text('应用信息、隐私政策和技术支持')
-            .itemDescription()
-        }
-        .listItemWithDescription()
-      }.onClick(() => {
-        this.navigateToAbout();
-      })
+        Text(param.desc)
+          .fontSize(14)
+          .fontColor($r('sys.color.font_secondary'));
+      }.alignItems(HorizontalAlign.Start);
     }
-
-    .layoutWeight(1)
-    .backgroundColor($r('app.color.background_primary'))
-    .margin({ top: DesignConstants.SPACING_LG })
+    .backgroundColor($r('sys.color.background_secondary'))
+    .onClick(param.action)
+    .padding(16)
+    .borderRadius(16)
+    .transition(TransitionEffect.OPACITY.animation({ curve: curves.springMotion(0.6, 0.8) }) // 透明度动画，使用springMotion曲线
+      .combine(TransitionEffect.scale({ x: 0, y: 0 })) // 组合缩放效果（从0放大到1）
+      .combine(TransitionEffect.translate({ y: 150 }).animation({ curve: curves.springMotion() })))
   }
-
 }

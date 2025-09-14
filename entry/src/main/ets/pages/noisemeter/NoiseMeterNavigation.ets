@@ -136,6 +136,7 @@ export struct MainNoiseMeter {
     .hideTitleBar(false)
     .hideToolBar(true)
     .mode(NavDestinationMode.STANDARD)
+    .backgroundColor($r('sys.color.background_primary'))
     .animation({ duration: 200, curve: Curve.Linear })
   }
 }

@@ -45,7 +45,7 @@ struct Index {
   private async initialize() {
     try {
       if (canIUse('SystemCapability.AppGalleryService.PrivacyManager') && this.usePrivacy) {
-        if(privacyManager.getAppPrivacyMgmtInfo().type == privacyManager.AppPrivacyMgmtType.FULL_MODE){
+        if (privacyManager.getAppPrivacyMgmtInfo().type == privacyManager.AppPrivacyMgmtType.FULL_MODE) {
           let appPrivacyResults: privacyManager.AppPrivacyResult[] = privacyManager.getAppPrivacyResult();
           this.privacyAgreed = appPrivacyResults[0]?.result === 1;
         } else {
@@ -161,9 +161,9 @@ struct Index {
         .size({ width: '100%' })
         .hideTitleBar(true)
         .titleMode(NavigationTitleMode.Free)
+        .backgroundColor($r('sys.color.background_primary'))
         .mode(NavigationMode.Stack)
       }
     }
-
   }
 }

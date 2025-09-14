@@ -1,4 +1,4 @@
-import { AppStorageV2, promptAction } from '@kit.ArkUI';
+import { AppStorageV2, curves, promptAction } from '@kit.ArkUI';
 import { DecibelState } from '../../types/DecibelState';
 import { PreferenceService, PreferenceValue } from '../../services/PreferenceService';
 import { getWeightingDescription, WeightingType } from '../../constants/WeightingConstants';
@@ -11,130 +11,53 @@ import { DesignConstants } from '../../constants/DesignConstants';
 function itemIcon() {
   .width(DesignConstants.ICON_SIZE_MD)
   .height(DesignConstants.ICON_SIZE_MD)
-  .margin({ right: DesignConstants.SPACING_MD })
+  .fillColor($r('sys.color.background_secondary'))
 }
 
 @Extend(Text)
 function itemTitle() {
   .fontWeight(FontWeight.Medium)
-  .fontColor($r('app.color.text_primary'))
-  .fontSize(DesignConstants.FONT_SIZE_LG)
 }
 
 @Extend(Text)
 function itemDescription() {
-  .fontColor($r('app.color.text_secondary'))
+  .fontColor($r('sys.color.font_secondary'))
   .fontSize(DesignConstants.FONT_SIZE_MD)
   .textAlign(TextAlign.Start)
-
-  .margin({ left: DesignConstants.SPACING_XL })
-}
-
-@Extend(Select)
-function selectStyle() {
-  .backgroundColor($r('app.color.background_secondary'))
-  .borderRadius(DesignConstants.BORDER_RADIUS_LG)
-  .padding({
-    left: DesignConstants.SPACING_MD,
-    right: DesignConstants.SPACING_MD
-  })
-  .font({
-    size: DesignConstants.FONT_SIZE_MD,
-    weight: FontWeight.Normal,
-    family: 'HarmonyHeiTi'
-  })
-  .selectedOptionFont({
-    size: DesignConstants.FONT_SIZE_MD,
-    weight: FontWeight.Normal,
-    family: 'HarmonyHeiTi'
-  })
-  .optionFont({
-    size: DesignConstants.FONT_SIZE_MD,
-    weight: FontWeight.Normal,
-    family: 'HarmonyHeiTi'
-  })
+  .alignSelf(ItemAlign.Start)
 }
 
 @Extend(Column)
 function cardStyle() {
-  .backgroundColor($r('app.color.background_secondary'))
-  .borderRadius(12)
-  .shadow({
-    radius: 8,
-    color: $r('app.color.shadow_medium'),
-    offsetX: 0,
-    offsetY: 2
-  })
-  .padding({
-    top: DesignConstants.SPACING_MD,
-    bottom: DesignConstants.SPACING_MD,
-    left: DesignConstants.SPACING_LG,
-    right: DesignConstants.SPACING_LG
-  })
-  .margin({
-    top: DesignConstants.SPACING_MD,
-    bottom: DesignConstants.SPACING_MD,
-    left: DesignConstants.SPACING_MD,
-    right: DesignConstants.SPACING_MD
-  })
-}
-
-@Extend(Column)
-function listItemStyle() {
-
-  .padding({
-    left: DesignConstants.SPACING_LG,
-    right: DesignConstants.SPACING_LG
-  })
-  .backgroundColor($r('app.color.background_secondary'))
+  .backgroundColor($r('sys.color.background_secondary'))
+  .justifyContent(FlexAlign.Start)
+  .alignItems(HorizontalAlign.Start)
+  .borderRadius(16)
+  .padding(16)    .transition(TransitionEffect.OPACITY.animation({ curve: curves.springMotion(0.6, 0.8) }) // 透明度动画，使用springMotion曲线
+    .combine(TransitionEffect.scale({ x: 0, y: 0 })) // 组合缩放效果（从0放大到1）
+    .combine(TransitionEffect.translate({ y: 150 }).animation({ curve: curves.springMotion() })))
 }
 
 @Extend(Row)
 function listItemRow() {
-
-  .height(56)
   .alignItems(VerticalAlign.Center)
-}
-
-@Extend(Text)
-function detailText() {
-  .fontColor($r('app.color.text_secondary'))
-  .fontSize(DesignConstants.FONT_SIZE_MD)
-  .margin({
-    top: DesignConstants.SPACING_XS,
-    left: DesignConstants.SPACING_XL
-  })
-}
-
-@Extend(ListItem)
-function dividerStyle() {
-
-  .height(1)
-  .backgroundColor($r('app.color.background_secondary'))
-}
-
-@Extend(ListItem)
-function descriptionContainer() {
-  .backgroundColor($r('app.color.background_secondary'))
-  .padding({
-    top: DesignConstants.SPACING_SM,
-    bottom: DesignConstants.SPACING_MD
-  })
+  .justifyContent(FlexAlign.Start)
 }
 
 @Extend(Text)
 function analysisDescription() {
-  .fontColor($r('app.color.text_secondary'))
+  .fontColor($r('sys.color.font_secondary'))
   .fontSize(DesignConstants.FONT_SIZE_MD)
   .textAlign(TextAlign.Start)
+  .alignSelf(ItemAlign.Start)
 }
 
 @Extend(Text)
 function analysisDetail() {
-  .fontColor($r('app.color.text_secondary'))
+  .fontColor($r('sys.color.font_secondary'))
   .fontSize(DesignConstants.FONT_SIZE_MD)
   .textAlign(TextAlign.Start)
-  .margin({ top: DesignConstants.SPACING_SM })
+  .alignSelf(ItemAlign.Start)
 }
 
 @ComponentV2
@@ -245,6 +168,8 @@ export struct AudioAnalysisSettings {
       (key: string, value: PreferenceValue) => {
         this.selectedWeighting = value as WeightingType;
       })
+
+    this.updateAnalysisModeCache();
   }
 
   private updateAnalysisModeCache() {
@@ -305,246 +230,222 @@ export struct AudioAnalysisSettings {
 
   build() {
     NavDestination() {
-      List() {
-        // 时间计权模式
-        ListItem() {
-          Column() {
-            Row() {
+      Scroll(){
+        GridRow({
+          columns:
+          {
+            sm: 1,
+            md: 2,
+            lg: 2,
+            xl: 3
+          },
+          breakpoints: { reference: BreakpointsReference.WindowSize }
+        , gutter: 16
+        }) {
+          // 时间计权模式
+          GridCol() {
+            Column() {
               Row() {
-                Image($r('app.media.ic_time_weighting'))
-                  .itemIcon()
+                Row({ space: 8 }) {
+                  Image($r('app.media.ic_time_weighting'))
+                    .itemIcon()
+                  Text('时间计权模式')
+                    .itemTitle()
+                }.layoutWeight(1)
 
-                Text('时间计权模式')
-                  .itemTitle()
+                Row() {
+                  Text(this.remainingTime > 0 ? `${(this.remainingTime / 1000).toFixed(1)}秒` : '')
+                    .fontSize(DesignConstants.FONT_SIZE_MD)
+                    .fontColor($r('sys.color.font_secondary'))
+                    .margin({ right: DesignConstants.SPACING_XS })
+                  Select([
+                    { value: '快速(F)' },
+                    { value: '慢速(S)' },
+                    { value: '脉冲(I)' }
+                  ])
+                    .selected(this.getAnalysisModeIndex(this.selectedAnalysisMode))
+                    .value(this.getAnalysisModeDisplayName(this.selectedAnalysisMode))
+                    .onSelect((index: number) => {
+                      if (!this.isModeChangeEnabled) {
+                        return;
+                      }
+
+                      // 禁用切换
+                      this.isModeChangeEnabled = false;
+                      const mode = this.getAnalysisModeFromIndex(index);
+                      void this.preferenceService.setString(PreferenceKeyConstants.ANALYSIS_MODE, mode);
+                      this.selectedAnalysisMode = mode;
+                      this.updateAnalysisModeCache();
+
+                      // 启动冷却计时器
+                      this.remainingTime = this.COOLDOWN_DURATION;
+                      const interval = setInterval(() => {
+                        this.remainingTime -= 100;
+                        if (this.remainingTime <= 0) {
+                          clearInterval(interval);
+                          this.isModeChangeEnabled = true;
+                          this.remainingTime = 0;
+                        }
+                      }, 100);
+                    })
+                    .enabled(this.isModeChangeEnabled)
+                }
               }
+              .listItemRow()
 
-              Blank()
+              Column() {
+                Text(this.analysisModeDescription)
+                  .analysisDescription()
+                ForEach(this.analysisModeDetails, (detail: string) => {
+                  Text(detail)
+                    .analysisDetail()
+                })
+              }.justifyContent(FlexAlign.Start)
+            }
+            .cardStyle()
+          }
 
+          // 分贝计权设置
+          GridCol() {
+            Column({ space: 8 }) {
               Row() {
-                Text(this.remainingTime > 0 ? `${(this.remainingTime / 1000).toFixed(1)}秒` : '')
-                  .fontSize(DesignConstants.FONT_SIZE_MD)
-                  .fontColor($r('app.color.text_secondary'))
-                  .margin({ right: DesignConstants.SPACING_XS })
+                Row({ space: 8 }) {
+                  Image($r('app.media.ic_frequency_weighting'))
+                    .itemIcon()
+                  Text('频率加权')
+                    .itemTitle()
+                }.layoutWeight(1)
 
                 Select([
-                  { value: '快速(F)' },
-                  { value: '慢速(S)' },
-                  { value: '脉冲(I)' }
+                  { value: 'A计权' },
+                  { value: 'C计权' },
+                  { value: 'Z计权' }
                 ])
-                  .selected(this.getAnalysisModeIndex(this.selectedAnalysisMode))
-                  .value(this.getAnalysisModeDisplayName(this.selectedAnalysisMode))
-                  .selectStyle()
-
+                  .selected(this.getWeightingIndex(this.selectedWeighting))
+                  .value(this.selectedWeighting + '计权')
                   .onSelect((index: number) => {
-                    if (!this.isModeChangeEnabled) {
-                      return;
-                    }
-
-                    // 禁用切换
-                    this.isModeChangeEnabled = false;
-
-                    const mode = this.getAnalysisModeFromIndex(index);
-                    void this.preferenceService.setString(PreferenceKeyConstants.ANALYSIS_MODE, mode);
-                    this.selectedAnalysisMode = mode;
-                    this.updateAnalysisModeCache();
-
-                    // 启动冷却计时器
-                    this.remainingTime = this.COOLDOWN_DURATION;
-                    const interval = setInterval(() => {
-                      this.remainingTime -= 100;
-                      if (this.remainingTime <= 0) {
-                        clearInterval(interval);
-                        this.isModeChangeEnabled = true;
-                        this.remainingTime = 0;
-                      }
-                    }, 100);
+                    const weightingType = this.getWeightingType(index);
+                    void this.preferenceService.setString(PreferenceKeyConstants.WEIGHTING, weightingType);
+                    this.selectedWeighting = weightingType;
                   })
-                  .enabled(this.isModeChangeEnabled)
               }
+              .listItemRow()
+
+              Text(getWeightingDescription(this.selectedWeighting))
+                .itemDescription()
             }
-            .listItemRow()
-          }
-          .cardStyle()
-        }
-
-        ListItem() {
-          Column() {
-            Text(this.analysisModeDescription)
-              .analysisDescription()
-            ForEach(this.analysisModeDetails, (detail: string) => {
-              Text(detail)
-                .analysisDetail()
-            })
+            .cardStyle()
           }
 
-          .alignItems(HorizontalAlign.Start)
-          .padding({ left: DesignConstants.SPACING_XL })
-        }
-        .descriptionContainer()
+          // 声级校准设置
+          GridCol() {
+            Column({ space: 8 }) {
+              Row({ space: 8 }) {
+                Row() {
+                  Image($r('app.media.ic_calibration'))
+                    .itemIcon()
+                  Text('声级校准')
+                    .itemTitle()
+                }.layoutWeight(1)
 
-        // 分贝计权设置
-        ListItem() {
-          Column() {
-            Row() {
-              Row() {
-                Image($r('app.media.ic_frequency_weighting'))
-                  .itemIcon()
-
-                Text('频率加权')
-                  .itemTitle()
-              }
-
-              Blank()
-
-              Select([
-                { value: 'A计权' },
-                { value: 'C计权' },
-                { value: 'Z计权' }
-              ])
-                .selected(this.getWeightingIndex(this.selectedWeighting))
-                .value(this.selectedWeighting + '计权')
-                .selectStyle()
-                .onSelect((index: number) => {
-                  const weightingType = this.getWeightingType(index);
-                  void this.preferenceService.setString(PreferenceKeyConstants.WEIGHTING, weightingType);
-                  this.selectedWeighting = weightingType;
-                })
-            }
-            .listItemRow()
-          }
-          .cardStyle()
-        }
-
-        ListItem() {
-          Text(getWeightingDescription(this.selectedWeighting))
-            .itemDescription()
-        }
-        .descriptionContainer()
-
-        // 声级校准设置
-        ListItem() {
-          Column() {
-            Row() {
-              Row() {
-                Image($r('app.media.ic_calibration'))
-                  .itemIcon()
-
-                Text('声级校准')
-                  .itemTitle()
-              }
-
-              Blank()
-
-              Text(`${this.calibrationValue}dB`)
-                .fontSize(DesignConstants.FONT_SIZE_MD)
-                .fontColor($r('app.color.text_secondary'))
-                .margin({ right: DesignConstants.SPACING_SM })
-            }
-            .listItemRow()
-
-            Slider({
-              value: this.calibrationValue,
-              min: -30,
-              max: 30,
-              style: SliderStyle.InSet
-            })
-              .blockColor($r('app.color.primary'))
-              .trackColor($r('app.color.background_secondary'))
-              .selectedColor($r('app.color.primary'))
-              .showTips(true, `${this.decibelState.currentDecibel}dB`)
-              .onChange((value: number) => {
-                this.calibrationValue = value;
-                void this.preferenceService.setNumber(PreferenceKeyConstants.CALIBRATION, value);
-              })
-              .margin({
-                top: DesignConstants.SPACING_MD,
-                bottom: DesignConstants.SPACING_MD
-              })
-              .height(24)
-              .trackThickness(24)
-              .blockSize({
-                width: 24,
-                height: 24
-              })
-          }
-          .cardStyle()
-        }
-
-        ListItem() {
-          Text('手动校准麦克风灵敏度，确保测量精度')
-            .itemDescription()
-        }
-        .descriptionContainer()
-
-        // 自动校准按钮
-        ListItem() {
-          Column() {
-            Row() {
-              Row() {
-                Image($r('app.media.ic_calibration'))
-                  .itemIcon()
-
-                Text('自动校准')
-                  .itemTitle()
-              }
-
-              Blank()
-
-              if (this.isAutoCalibrating) {
-                Text(this.countdown > 0 ? `${this.countdown}秒后开始校准` :
-                  `校准中,请保持安静...${8 - this.calibrationProgress}秒`)
+                Text(`${this.calibrationValue}dB`)
                   .fontSize(DesignConstants.FONT_SIZE_MD)
-                  .fontColor($r('app.color.text_secondary'))
+                  .fontColor($r('sys.color.font_secondary'))
                   .margin({ right: DesignConstants.SPACING_SM })
-              } else {
-                Button('开始校准')
-                  .type(ButtonType.Normal)
-                  .fontSize(DesignConstants.FONT_SIZE_MD)
-                  .backgroundColor($r('app.color.primary'))
-                  .borderRadius(DesignConstants.BORDER_RADIUS_LG)
-                  .height(32)
-                  .width(90)
-                  .onClick(async () => {
-                    const result = await promptAction.showDialog({
-                      title: '自动校准提示',
-                      message: '请在非常安静的房间中进行自动校准，特别是夜间效果最佳',
-                      buttons: [
-                        {
-                          text: '取消',
-                          color: $r('app.color.text_disabled')
-                        },
-                        {
-                          text: '确认',
-                          color: $r('app.color.primary')
-                        }
-                      ]
-                    });
-
-                    // 根据用户选择处理
-                    if (result.index === 1) { // 确认按钮
-                      this.startAutoCalibration();
-                    }
-                  })
               }
+              .listItemRow()
+
+              Slider({
+                value: this.calibrationValue,
+                min: -30,
+                max: 30,
+                style: SliderStyle.InSet
+              })
+                .blockColor($r('sys.color.font_emphasize'))
+                .trackColor($r('sys.color.background_secondary'))
+                .selectedColor($r('sys.color.font_emphasize'))
+                .showTips(true, `${this.decibelState.currentDecibel}dB`)
+                .onChange((value: number) => {
+                  this.calibrationValue = value;
+                  void this.preferenceService.setNumber(PreferenceKeyConstants.CALIBRATION, value);
+                })
+                .margin({
+                  top: DesignConstants.SPACING_MD,
+                  bottom: DesignConstants.SPACING_MD
+                })
+                .height(24)
+                .trackThickness(24)
+                .blockSize({
+                  width: 24,
+                  height: 24
+                })
+
+              Text('手动校准麦克风灵敏度，确保测量精度')
+                .itemDescription()
             }
-            .listItemRow()
+            .cardStyle()
+
           }
-          .cardStyle()
+
+          // 自动校准按钮
+          GridCol() {
+            Column({ space: 8 }) {
+              Row({ space: 8 }) {
+                Row() {
+                  Image($r('app.media.ic_calibration'))
+                    .itemIcon()
+                  Text('自动校准')
+                    .itemTitle()
+                }.layoutWeight(1)
+
+                if (this.isAutoCalibrating) {
+                  Text(this.countdown > 0 ? `${this.countdown}秒后开始校准` :
+                    `校准中,请保持安静...${8 - this.calibrationProgress}秒`)
+                    .fontSize(DesignConstants.FONT_SIZE_MD)
+                    .fontColor($r('sys.color.font_secondary'))
+                    .margin({ right: DesignConstants.SPACING_SM })
+                } else {
+                  Button('开始校准')
+                    .type(ButtonType.Normal)
+                    .fontSize(DesignConstants.FONT_SIZE_MD)
+                    .backgroundColor($r('sys.color.background_emphasize'))
+                    .borderRadius(DesignConstants.BORDER_RADIUS_LG)
+                    .height(32)
+                    .onClick(async () => {
+                      const result = await promptAction.showDialog({
+                        title: '自动校准提示',
+                        message: '请在非常安静的房间中进行自动校准，特别是夜间效果最佳',
+                        buttons: [
+                          {
+                            text: '取消',
+                            color: $r('app.color.text_disabled')
+                          },
+                          {
+                            text: '确认',
+                            color: $r('app.color.primary')
+                          }
+                        ]
+                      });
+
+                      // 根据用户选择处理
+                      if (result.index === 1) { // 确认按钮
+                        this.startAutoCalibration();
+                      }
+                    })
+                }
+              }
+              .listItemRow()
+
+              Text('自动计算并设置校准值')
+                .itemDescription()
+            }
+            .cardStyle()
+          }
         }
+      }.scrollBar(BarState.Off)      .edgeEffect(EdgeEffect.Spring)
 
-        ListItem() {
-          Text('自动计算并设置校准值')
-            .itemDescription()
-        }
-        .descriptionContainer()
-      }
-
-      .layoutWeight(1)
-      .backgroundColor('transparent')
-    }
-
-    .backgroundColor($r('app.color.background_tertiary')).title('音频分析设置')
-
+    }.padding(16)
+    .backgroundColor($r('sys.color.background_primary')).title('音频分析设置')
   }
 }
 

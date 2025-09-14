@@ -2,87 +2,45 @@ import { PreferenceService } from '../../services/PreferenceService';
 import { PreferenceKeyConstants } from '../../constants/PreferenceKeyConstants';
 import { navigationStack } from '../../constants/ProviderConstant';
 import { DesignConstants } from '../../constants/DesignConstants';
+import { curves } from '@kit.ArkUI';
+
 
 @Extend(Image)
 function itemIcon() {
   .width(DesignConstants.ICON_SIZE_MD)
   .height(DesignConstants.ICON_SIZE_MD)
-  .margin({ right: DesignConstants.SPACING_MD })
+  .fillColor($r('sys.color.background_secondary'))
 }
 
 @Extend(Text)
 function itemTitle() {
   .fontWeight(FontWeight.Medium)
-  .fontColor($r('app.color.text_primary'))
-  .fontSize(DesignConstants.FONT_SIZE_LG)
 }
 
 @Extend(Text)
 function itemDescription() {
-  .fontColor($r('app.color.text_secondary'))
+  .fontColor($r('sys.color.font_secondary'))
   .fontSize(DesignConstants.FONT_SIZE_MD)
   .textAlign(TextAlign.Start)
-
-  .margin({ left: DesignConstants.SPACING_XL })
-}
-
-@Extend(Column)
-function listItemStyle() {
-
-  .padding({
-    left: DesignConstants.SPACING_LG,
-    right: DesignConstants.SPACING_LG
-  })
-  .backgroundColor($r('app.color.background_secondary'))
+  .alignSelf(ItemAlign.Start)
 }
 
 @Extend(Column)
 function cardStyle() {
-  .backgroundColor($r('app.color.background_secondary'))
-  .borderRadius(12)
-  .shadow({
-    radius: 8,
-    color: $r('app.color.shadow_medium'),
-    offsetX: 0,
-    offsetY: 2
-  })
-  .padding({
-    top: DesignConstants.SPACING_MD,
-    bottom: DesignConstants.SPACING_MD,
-    left: DesignConstants.SPACING_LG,
-    right: DesignConstants.SPACING_LG
-  })
-  .margin({
-    top: DesignConstants.SPACING_MD,
-    bottom: DesignConstants.SPACING_MD,
-    left: DesignConstants.SPACING_MD,
-    right: DesignConstants.SPACING_MD
-  })
+  .backgroundColor($r('sys.color.background_secondary'))
+  .justifyContent(FlexAlign.Start)
+  .alignItems(HorizontalAlign.Start)
+  .borderRadius(16)
+  .padding(16)    .transition(TransitionEffect.OPACITY.animation({ curve: curves.springMotion(0.6, 0.8) }) // 透明度动画，使用springMotion曲线
+    .combine(TransitionEffect.scale({ x: 0, y: 0 })) // 组合缩放效果（从0放大到1）
+    .combine(TransitionEffect.translate({ y: 150 }).animation({ curve: curves.springMotion() })))
 }
 
 @Extend(Row)
 function listItemRow() {
-
-  .height(56)
   .alignItems(VerticalAlign.Center)
+  .justifyContent(FlexAlign.Start)
 }
-
-@Extend(ListItem)
-function dividerStyle() {
-
-  .height(1)
-  .backgroundColor($r('app.color.background_secondary'))
-}
-
-@Extend(ListItem)
-function descriptionContainer() {
-  .backgroundColor($r('app.color.background_secondary'))
-  .padding({
-    top: DesignConstants.SPACING_SM,
-    bottom: DesignConstants.SPACING_MD
-  })
-}
-
 
 @Builder
 export function AlertsSettingsBuilder() {
@@ -111,96 +69,91 @@ export struct AlertsSettings {
 
   build() {
     NavDestination() {
-      // 列表布局（保持原有代码）
-      List() {
-        // 噪音阈值警报的开关
-        ListItem() {
-          Column() {
-            Row() {
-              Row() {
-                Image($r('app.media.ic_alarm'))
-                  .itemIcon()
+      Scroll(){
+        // 列表布局（保持原有代码）
+        GridRow({
+          columns:
+          {
+            sm: 1,
+            md: 2,
+            lg:2,
+            xl:3
+          },
+          breakpoints: { reference: BreakpointsReference.WindowSize }
+        , gutter: 16
+        }) {
+          // 噪音阈值警报的开关
+          GridCol() {
+            Column({ space: 8 }) {
+              Row({ space: 8 }) {
+                Row() {
+                  Image($r('app.media.ic_alarm'))
+                    .itemIcon()
 
-                Text('噪音警报')
-                  .itemTitle()
+                  Text('噪音警报')
+                    .itemTitle()
+                }.layoutWeight(1)
+
+                Toggle({ type: ToggleType.Switch, isOn: this.isNoiseAlarmEnabled })
+                  .onChange((isOn: boolean) => {
+                    void this.preferenceService.setBoolean(PreferenceKeyConstants.NOISE_ALARM_ENABLED, isOn);
+                    this.isNoiseAlarmEnabled = isOn;
+                    this.updateNoiseAlarmDescription();
+                  })
               }
+              .listItemRow()
 
-              Blank()
+              Text(this.noiseAlarmDescription)
+                .itemDescription()
+            }
+            .cardStyle()
+          }
 
-              Toggle({ type: ToggleType.Switch, isOn: this.isNoiseAlarmEnabled })
+          // 噪音阈值的设置
+          GridCol() {
+            Column({ space: 8 }) {
+              Row({ space: 8 }) {
+                Row() {
+                  Image($r('app.media.ic_threshold'))
+                    .itemIcon()
+                  Text('噪音警报阈值')
+                    .itemTitle()
+                }.layoutWeight(1)
+
+                Text(`${this.noiseThreshold}dB`)
+                  .fontSize(DesignConstants.FONT_SIZE_MD)
+              }
+              .listItemRow()
+
+              Slider({
+                value: this.noiseThreshold,
+                min: 30,
+                max: 120,
+                style: SliderStyle.InSet
+              })
+                .blockColor($r('app.color.primary'))
+                .trackColor($r('app.color.background_secondary'))
                 .selectedColor($r('app.color.primary'))
-                .switchPointColor($r('app.color.background_primary'))
-                .onChange((isOn: boolean) => {
-                  void this.preferenceService.setBoolean(PreferenceKeyConstants.NOISE_ALARM_ENABLED, isOn);
-                  this.isNoiseAlarmEnabled = isOn;
-                  this.updateNoiseAlarmDescription();
+                .onChange((value: number) => {
+                  this.noiseThreshold = value;
+                  void this.preferenceService.setNumber(PreferenceKeyConstants.NOISE_THRESHOLD, value);
                 })
+                .margin({
+                  top: DesignConstants.SPACING_MD,
+                  bottom: DesignConstants.SPACING_MD
+                })
+                .height(24)
+                .trackThickness(24)
+                .blockSize({ width: 24, height: 24 })
+              Text('环境噪音超过设定阈值时，系统将发出警报提示')
+                .itemDescription()
             }
-            .listItemRow()
+            .cardStyle()
           }
-          .cardStyle()
+
         }
+      }.scrollBar(BarState.Off)      .edgeEffect(EdgeEffect.Spring)
 
-        ListItem() {
-          Text(this.noiseAlarmDescription)
-            .itemDescription()
-        }
-        .descriptionContainer()
-
-        // 噪音阈值的设置
-        ListItem() {
-          Column() {
-            Row() {
-              Row() {
-                Image($r('app.media.ic_threshold'))
-                  .itemIcon()
-
-                Text('噪音警报阈值')
-                  .itemTitle()
-              }
-
-              Blank()
-
-              Text(`${this.noiseThreshold}dB`)
-                .fontSize(DesignConstants.FONT_SIZE_MD)
-                .fontColor($r('app.color.text_secondary'))
-                .margin({ right: DesignConstants.SPACING_MD })
-            }
-            .listItemRow()
-
-            Slider({
-              value: this.noiseThreshold,
-              min: 30,
-              max: 120,
-              style: SliderStyle.InSet
-            })
-              .blockColor($r('app.color.primary'))
-              .trackColor($r('app.color.background_secondary'))
-              .selectedColor($r('app.color.primary'))
-              .onChange((value: number) => {
-                this.noiseThreshold = value;
-                void this.preferenceService.setNumber(PreferenceKeyConstants.NOISE_THRESHOLD, value);
-              })
-              .margin({
-                top: DesignConstants.SPACING_MD,
-                bottom: DesignConstants.SPACING_MD
-              })
-              .height(24)
-              .trackThickness(24)
-              .blockSize({ width: 24, height: 24 })
-          }
-          .cardStyle()
-        }
-
-        ListItem() {
-          Text('环境噪音超过设定阈值时，系统将发出警报提示')
-            .itemDescription()
-        }
-        .descriptionContainer()
-      }
-
-      .layoutWeight(1)
-      .backgroundColor('transparent')
-    }.title('警报与通知')
+    }.padding(16).backgroundColor($r('sys.color.background_primary')).title('警报与通知')
   }
 }
