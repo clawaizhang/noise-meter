@@ -62,7 +62,7 @@ export struct ActionPanel {
       .width(40)
       .height(40)
       .enabled(this.meterOn)
-      .backgroundColor(this.isTorchOn ? $r('sys.color.warning') : $r('sys.color.background_secondary'))
+      .backgroundColor(this.isTorchOn ? $r('sys.color.background_emphasize') : $r('sys.color.background_secondary'))
 
       .accessibilityDescription(this.isTorchOn ? '解锁界面' : '锁定界面')
       .onClick(() => {
