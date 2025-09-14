@@ -22,22 +22,18 @@ export struct InputDialog {
       gutter: 8
     }) {
       GridCol({ span: 1 }) {
-        Column() {
+        Column({ space: 8 }) {
           Text(this.title)
             .fontSize(18)
             .fontWeight(FontWeight.Medium)
-            .fontColor($r('app.color.icon_active'))
-            .margin({ bottom: 16 })
+            .fontColor($r('sys.color.font_emphasize'))
 
           TextArea({ placeholder: '请输入备注(最多64字)', text: this.default })
-
-            .height(80)
             .maxLength(140)
             .defaultFocus(true)
             .enableKeyboardOnFocus(true)
             .enterKeyType(EnterKeyType.Go)
-
-            .fontColor((this.comment.length > 64) ? $r('app.color.error') : $r('app.color.text_primary'))
+            .fontColor((this.comment.length > 64) ? $r('sys.color.alert') : $r('sys.color.font_primary'))
             .onChange((value: string) => {
               this.comment = value;
               if (value.length > 64) {
@@ -48,41 +44,29 @@ export struct InputDialog {
       }
 
       GridCol({ span: 1 }) {
-        GridRow({ columns: 2 }) {
+        GridRow({ columns: { xs: 2, sm: 2, md: 1 }, gutter: 8 }) {
           GridCol({ span: 1 }) {
-            Button() {
-              Text('取消')
-                .fontSize(16)
-            }
-
-            .height(40)
-            .backgroundColor($r('app.color.transparent_white_90'))
-            .onClick(() => {
-              this.onClose();
-            })
-          }.padding({bottom: 16})
+            Button('取消')
+              .height(36)
+              .fontColor($r('sys.color.font_secondary'))
+              .backgroundColor($r('sys.color.background_tertiary'))
+              .onClick(() => {
+                this.onClose();
+              })
+          }
 
           GridCol({ span: 1 }) {
-            Button() {
-              Text('保存')
-                .fontSize(16)
-                .fontColor($r('app.color.white'))
-            }
-
-            .height(40)
-            .backgroundColor($r('app.color.button_primary'))
-            .margin({ left: 24 })
-            .onClick(() => {
-              this.onClose();
-              this.onConfirm?.(this.comment);
-            })
-          }.padding({bottom: 16})
+            Button('保存')
+              .height(36)
+              .fontColor(Color.White)
+              .backgroundColor($r('sys.color.font_emphasize'))
+              .onClick(() => {
+                this.onClose();
+                this.onConfirm?.(this.comment);
+              })
+          }
         }
       }
-
-      .margin({ top: 16 })
-    }
-    .width('90%')
-    .padding(16)
+    }.padding(16)
   }
 }

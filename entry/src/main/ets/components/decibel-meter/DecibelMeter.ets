@@ -28,13 +28,12 @@ import { LocationDisplay } from '../business/LocationDisplay';
 import { WeightingType } from '../../constants/WeightingConstants';
 import { call } from '@kit.TelephonyKit';
 import { BusinessError } from '@kit.BasicServicesKit';
-import { PermissionUtil } from '@pura/harmony-utils';
 import { camera } from '@kit.CameraKit';
 import lottie, { AnimationItem } from '@ohos/lottie';
-import { DialogHub, InfSheet } from '@hadss/dialoghub';
+import { DialogHub, InfCustomDialog, InfSheet } from '@hadss/dialoghub';
 import { NoiseLevelDialogBuilder } from '../../pages/noisemeter/NoiseLevelDialogNavigation';
 import { resourceManager } from '@kit.LocalizationKit';
-import { AbilityConstant, Configuration, ConfigurationConstant, EnvironmentCallback } from '@kit.AbilityKit';
+import { NoiseDescriptionDialogBuilder } from '../../pages/noisemeter/NoiseDescriptionDialogNavigation';
 
 @ComponentV2
 export struct DecibelMeter {
@@ -78,12 +77,9 @@ export struct DecibelMeter {
   private recordListener?: PreferenceChangeListener
   noiseInfoDialog: InfSheet | undefined
   sysResourceManager: resourceManager.ResourceManager = resourceManager.getSystemResourceManager();
-  private context = this.getUIContext().getHostContext() as common.UIAbilityContext;
   // Canvas相关属性
 
   private ASPECT_RATIO: number = 1.5 // 宽高比改为3:2
-  private foldStatus: display.FoldStatus = display.FoldStatus.FOLD_STATUS_UNKNOWN;
-  private readonly SIDE_MARGIN: number = 16 // 左右边距各16vp
   private readonly sampleRate: number = 44100 // 采样率
   private canvasSettings: RenderingContextSettings = new RenderingContextSettings(true) // Canvas设置
   private canvasContext: CanvasRenderingContext2D = new CanvasRenderingContext2D(this.canvasSettings) // Canvas上下文
@@ -95,19 +91,9 @@ export struct DecibelMeter {
   // 计算Canvas尺寸（响应式版本）
   private async calculateCanvasDimensions(): Promise<void> {
     try {
-      // 获取屏幕信息
-      let callback: Callback<display.FoldStatus> = (foldStatus: display.FoldStatus) => {
-        this.foldStatus = foldStatus;
-      };
-      try {
-        display.on('foldStatusChange', callback);
-      } catch (exception) {
-        console.error('Failed to register callback. Code: ' + JSON.stringify(exception));
-      }
 
       // 获取实际可用区域
       const availableArea = await display.getDefaultDisplaySync().getAvailableArea();
-      this.foldStatus = display.getFoldStatus();
       const availableWidth = availableArea.width < availableArea.height ? availableArea.width : availableArea.height;
       const availableHeight = availableArea.width < availableArea.height ? availableArea.height : availableArea.width;
 
@@ -173,78 +159,95 @@ export struct DecibelMeter {
     Column() {
       // Canvas频谱显示
       Stack({ alignContent: Alignment.Top }) {
-        Canvas(this.canvasContext)
-          .width(this.canvasWidth)
-          .height(this.canvasHeight)
-          .borderRadius(12)
-          .backgroundColor('#ff000000')
-          .shadow({
-            radius: 8,
-            color: $r('sys.color.comp_divider'),
-            offsetX: 2,
-            offsetY: 2
-          })
-          .border({
-            width: 1,
-            color: $r('sys.color.comp_divider')
-          })
-          .onAreaChange((oldArea: Area, newArea: Area) => {
-            console.info(`[FREQ_TRACE][Canvas] Canvas区域变化: 旧尺寸=${oldArea.width}x${oldArea.height}, 新尺寸=${newArea.width}x${newArea.height}`);
-            this.canvasWidth = newArea.width as number;
-            this.canvasHeight = newArea.height as number;
-            console.info(`[FREQ_TRACE][Canvas] 更新后的Canvas尺寸: ${this.canvasWidth}x${this.canvasHeight}, 宽高比: ${(this.canvasWidth /
-            this.canvasHeight).toFixed(2)}`);
-          })
-          .animation({ curve: Curve.EaseOut })
-          .onReady(() => {
-            // 初始化完成后开始绘制
-            const emptySpectrum: Float32Array = new Float32Array(this.currentFftSize * 2);
-            if (this.isDisplayApp) {
-              this.drawSpectrumLocal(emptySpectrum);
-            }
-            this.recordingTime = new Date().getTime() - this.startTime;
-          })
-
+        this.SpectrumChart()
         Flex({ justifyContent: FlexAlign.SpaceBetween, alignItems: ItemAlign.Baseline }) {
-          Row() {
-            Image($r('app.media.ic_info'))
-              .width(12)
-              .height(12)
-              .fillColor(DecibelService.getDecibelColor(this.decibelState.currentDecibel))
-
-            Text(DecibelService.getDecibelDescription(this.decibelState.currentDecibel))
-              .fontSize(12)
-              .fontColor(DecibelService.getDecibelColor(this.decibelState.currentDecibel))
-              .fontWeight(FontWeight.Medium)
-          }
-          .padding(8)
-          .borderRadius(8)
-          .border({
-            width: 1,
-            color: DecibelService.getDecibelColor(this.decibelState.currentDecibel)
-          })
-          .onClick(() => {
-            this.navStack.pushDestinationByName('NoiseDescriptionDialog', null);
-          })
-
-
+          this.noiseDescriptions()
           this.toushu()
-
-          Row({ space: 4 }) {
-            Text('声级校准:')
-              .fontSize(12)
-              .fontColor('#ffffff')
-
-            Text(`${this.calibrationGain} ${this.weightingType === WeightingType.A ? 'dB(A)' :
-              this.weightingType === WeightingType.C ? 'dB(C)' : 'dB'}`)
-              .fontSize(12)
-              .fontColor('#ffffff')
-          }
-          .opacity(0.7)
+          this.noiseCalibration()
         }.margin(16)
 
       }
     }
+  }
+
+  @Builder
+  SpectrumChart() {
+    Canvas(this.canvasContext)
+      .width(this.canvasWidth)
+      .height(this.canvasHeight)
+      .borderRadius(12)
+      .backgroundColor('#ff000000')
+      .shadow({
+        radius: 8,
+        color: $r('sys.color.comp_divider'),
+        offsetX: 2,
+        offsetY: 2
+      })
+      .border({
+        width: 1,
+        color: $r('sys.color.comp_divider')
+      })
+      .onAreaChange((oldArea: Area, newArea: Area) => {
+        console.info(`[FREQ_TRACE][Canvas] Canvas区域变化: 旧尺寸=${oldArea.width}x${oldArea.height}, 新尺寸=${newArea.width}x${newArea.height}`);
+        this.canvasWidth = newArea.width as number;
+        this.canvasHeight = newArea.height as number;
+        console.info(`[FREQ_TRACE][Canvas] 更新后的Canvas尺寸: ${this.canvasWidth}x${this.canvasHeight}, 宽高比: ${(this.canvasWidth /
+        this.canvasHeight).toFixed(2)}`);
+      })
+      .animation({ curve: Curve.EaseOut })
+      .onReady(() => {
+        // 初始化完成后开始绘制
+        const emptySpectrum: Float32Array = new Float32Array(this.currentFftSize * 2);
+        if (this.isDisplayApp) {
+          this.drawSpectrumLocal(emptySpectrum);
+        }
+        this.recordingTime = new Date().getTime() - this.startTime;
+      })
+  }
+
+  @Builder
+  noiseCalibration() {
+    Row({ space: 4 }) {
+      Text('声级校准:')
+        .fontSize(12)
+        .fontColor('#ffffff');
+
+      Text(`${this.calibrationGain} ${this.weightingType === WeightingType.A ? 'dB(A)' :
+        this.weightingType === WeightingType.C ? 'dB(C)' : 'dB'}`)
+        .fontSize(12)
+        .fontColor('#ffffff');
+    }
+    .opacity(0.7)
+  }
+
+  @Builder
+  noiseDescriptions() {
+    Row() {
+      Image($r('app.media.ic_info'))
+        .width(12)
+        .height(12)
+        .fillColor(DecibelService.getDecibelColor(this.decibelState.currentDecibel));
+
+      Text(DecibelService.getDecibelDescription(this.decibelState.currentDecibel))
+        .fontSize(12)
+        .fontColor(DecibelService.getDecibelColor(this.decibelState.currentDecibel))
+        .fontWeight(FontWeight.Medium);
+    }
+    .padding(8)
+    .borderRadius(8)
+    .border({
+      width: 1,
+      color: DecibelService.getDecibelColor(this.decibelState.currentDecibel)
+    })
+    .id('noiseDescriptionButtonId')
+    .onClick(() => {
+      DialogHub.getSheet()
+        .setContent(wrapBuilder(NoiseDescriptionDialogBuilder))
+        .setConfig({ enableOutsideInteractive: false, scrollSizeMode: ScrollSizeMode.CONTINUOUS })
+        .setComponentTargetId('noiseDescriptionButtonId')
+        .build()
+        .show();
+    })
   }
 
   @Builder

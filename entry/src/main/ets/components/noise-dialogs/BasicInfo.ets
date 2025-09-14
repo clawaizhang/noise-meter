@@ -1,3 +1,4 @@
+import { DialogHub } from "@hadss/dialoghub";
 import { DecibelRecord } from "../../models/DecibelRecord";
 import { InputDialog } from "../decibel-meter/InputDialog"
 
@@ -83,6 +84,7 @@ export struct BasicInfo {
             duration: 200,
             curve: Curve.EaseOut
           })
+          .id('pleaseEditTheComments')
           .onClick(() => {
             const dialogController = new CustomDialogController({
               builder: InputDialog({

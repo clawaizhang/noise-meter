@@ -61,11 +61,9 @@ export struct NoiseChart {
           Image($r('app.media.ic_empty'))
             .width(32)
             .height(32)
-            .fillColor($r('app.color.text_secondary'))
+            .fillColor($r('sys.color.font_normal'))
             .margin({ bottom: 8 })
           Text('暂无分贝值变化数据')
-
-            .fontColor($r('app.color.text_secondary'))
         }
 
         .justifyContent(FlexAlign.Center)
@@ -268,7 +266,7 @@ export struct NoiseChart {
                   colorCache.set(value, color);
                 }
 
-                this.canvasContext.fillStyle = resourceManager.getSystemResourceManager().getStringSync(color);
+                this.canvasContext.fillStyle = resourceManager.getSystemResourceManager().getColorSync(color.id);
                 this.canvasContext.beginPath();
                 this.canvasContext.arc(x, y, 1.5, 0, Math.PI * 2);
                 this.canvasContext.fill();
@@ -296,7 +294,6 @@ export struct NoiseChart {
                 .borderRadius(8) // 新增: 设置边框半径为8以形成圆形
               Text(`${type}计权`)
                 .fontSize(12)
-                .fontColor($r('app.color.text_primary'))
                 .margin({ left: 4, right: 8 })
             })
           }.margin({ top: -30 })
@@ -310,7 +307,6 @@ export struct NoiseChart {
       top: 12,
       bottom: 12
     })
-    .backgroundColor($r('app.color.background_primary'))
     .borderRadius(12)
     .margin({ bottom: 12 })
   }
