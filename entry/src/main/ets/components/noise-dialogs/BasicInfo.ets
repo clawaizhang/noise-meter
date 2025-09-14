@@ -1,24 +1,22 @@
-import { DialogHub } from "@hadss/dialoghub";
 import { DecibelRecord } from "../../models/DecibelRecord";
 import { InputDialog } from "../decibel-meter/InputDialog"
 
 @ComponentV2
 export struct BasicInfo {
   @Param selectedRecord: DecibelRecord | null = null
-  @Event commentChange: (comment:string)=>void = ()=>{}; //正确用法
-  @Local comment:string=''
+  @Event commentChange: (comment: string) => void = () => {
+  }; //正确用法
+  @Local comment: string = ''
 
   aboutToAppear(): void {
     this.comment = this.selectedRecord!.comment
   }
 
   build() {
-    Column() {
+    Column({ space: 8 }) {
       Row() {
         Text('检测时间')
-
-          .fontColor($r('app.color.text_secondary'))
-          .width('30%')
+          .layoutWeight(3)
         Text(new Date(this.selectedRecord!.timestamp).toLocaleString('zh-CN', {
           year: 'numeric',
           month: '2-digit',
@@ -28,62 +26,36 @@ export struct BasicInfo {
           second: '2-digit',
           hour12: false
         }))
-
-          .fontColor($r('app.color.text_primary'))
-          .width('50%')
+          .layoutWeight(5)
         Text(`共${(this.selectedRecord!.duration / 1000).toFixed(1)}秒`)
-
-          .fontColor($r('app.color.text_primary'))
-          .width('20%')
+          .layoutWeight(2)
       }
-
-      .margin({ bottom: 8 })
 
       if (this.selectedRecord!.location) {
         Row() {
           Text('检测位置')
-
-            .fontColor($r('app.color.text_secondary'))
-            .width('30%')
+            .layoutWeight(3)
           Text(this.selectedRecord!.location)
-
-            .fontColor($r('app.color.text_primary'))
-            .width('70%')
+            .layoutWeight(7)
             .textOverflow({ overflow: TextOverflow.None })
         }
-
-        .margin({ bottom: 8 })
       }
 
       // 添加备注显示区域
       Row() {
         Text('备注')
-
-          .fontColor($r('app.color.text_secondary'))
-          .width('30%')
+          .layoutWeight(3)
         Text(this.comment === '' ? '点击添加备注' : this.comment)
-
-          .fontColor($r('app.color.text_secondary'))
-          .width('70%')
+          .layoutWeight(7)
           .textOverflow({ overflow: TextOverflow.None })
           .focusable(true)
           .accessibilityDescription('备注输入区域')
-          .stateStyles({
-            normal: {
-              .backgroundColor($r('app.color.background_secondary'))
-            },
-            pressed: {
-              .backgroundColor($r('app.color.primary_active'))
-              .scale({ x: 0.98, y: 0.98 })
-            },
-            focused: {
-              .backgroundColor($r('app.color.primary_active'))
-            }
-          })
           .animation({
-            duration: 200,
             curve: Curve.EaseOut
           })
+          .backgroundColor($r('sys.color.background_tertiary'))
+          .borderRadius(4)
+          .padding(4)
           .id('pleaseEditTheComments')
           .onClick(() => {
             const dialogController = new CustomDialogController({
@@ -106,18 +78,9 @@ export struct BasicInfo {
             dialogController.open();
           })
       }
-
-      .margin({ bottom: 8 })
-
     }
-
-    .padding({
-      left: 16,
-      right: 16,
-      top: 12,
-      bottom: 12
-    })
-    .backgroundColor($r('app.color.background_primary'))
-    .borderRadius(12)
+    .padding(16)
+    .backgroundColor($r('sys.color.background_secondary'))
+    .borderRadius(16)
   }
 }

@@ -88,6 +88,7 @@ export struct ActionPanel {
           .height(20).fillColor($r('sys.color.icon_secondary'))
 
       }
+      .id('showNoiseDetailDialogFromActionPanels')
       .width(40)
       .height(40)
       .enabled(this.meterOn)

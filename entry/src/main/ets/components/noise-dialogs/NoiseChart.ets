@@ -39,11 +39,11 @@ export struct NoiseChart {
   }
 
   build() {
-    Column() {
-      Row() {
-        if (this.playAudio && this.selectedRecord!.audioFilePath) {
-          Blank()
-          Row() {
+    Column({ space: 8 }) {
+      if (this.playAudio && this.selectedRecord!.audioFilePath) {
+        Row({ space: 8 }) {
+          Blank().layoutWeight(1)
+          Column() {
             if (this.selectedRecord!.audioFilePath) {
               AudioPlayer({
                 audioFilePath: this.selectedRecord!.audioFilePath,
@@ -51,23 +51,18 @@ export struct NoiseChart {
             }
           }
         }
+        .justifyContent(FlexAlign.End)
       }
 
-      .margin({ bottom: 12 })
-      .alignItems(VerticalAlign.Center)
-
       if (this.selectedRecord!.decibelValues.length === 0) {
-        Column() {
+        Column({ space: 8 }) {
           Image($r('app.media.ic_empty'))
             .width(32)
             .height(32)
-            .fillColor($r('sys.color.font_normal'))
-            .margin({ bottom: 8 })
+            .fillColor($r('sys.color.font_primary'))
           Text('暂无分贝值变化数据')
         }
-
         .justifyContent(FlexAlign.Center)
-        .margin({ top: 20, bottom: 20 })
       } else {
         Column() {
           Canvas(this.canvasContext)
@@ -92,7 +87,7 @@ export struct NoiseChart {
               this.canvasContext.clearRect(0, 0, this.canvasContext.width, this.canvasContext.height);
 
               // 绘制背景
-              this.canvasContext.fillStyle = "#fff1f3f5";
+              this.canvasContext.fillStyle = "#000000";
               this.canvasContext.fillRect(margin.left, margin.top, chartWidth, chartHeight);
 
               // 设置字体样式
@@ -100,8 +95,8 @@ export struct NoiseChart {
               this.canvasContext.textBaseline = 'middle';
 
               // 绘制网格线
-              this.canvasContext.strokeStyle = '#33000000';
-              this.canvasContext.lineWidth = 1;
+              this.canvasContext.strokeStyle = '#f0f0f0';
+              this.canvasContext.lineWidth = 0.5;
 
               // 计算Y轴刻度
               const yMin = Math.floor(minValue);
@@ -155,7 +150,7 @@ export struct NoiseChart {
               }
 
               // 绘制Y轴刻度
-              this.canvasContext.fillStyle = '#33000000';
+              this.canvasContext.fillStyle = '#f0f0f0';
               this.canvasContext.textAlign = 'right';
               for (let i = 0; i < ticks.length; i++) {
                 const y = margin.top + chartHeight - ((ticks[i] - yMin) / (yMax - yMin)) * chartHeight;
@@ -172,7 +167,7 @@ export struct NoiseChart {
                   this.canvasContext.beginPath();
                   this.canvasContext.moveTo(margin.left, y);
                   this.canvasContext.lineTo(margin.left + chartWidth, y);
-                  this.canvasContext.strokeStyle = '#616161'; // 主要网格线颜色
+                  this.canvasContext.strokeStyle = '#f0f0f0'; // 主要网格线颜色
                   this.canvasContext.stroke();
                 }
               }
@@ -210,8 +205,8 @@ export struct NoiseChart {
                 const x = margin.left + i * xStep;
                 const seconds = i * xInterval;
                 this.canvasContext.fillText(formatTime(seconds), x, margin.top + chartHeight + vp2px(2));
-                this.canvasContext.strokeStyle = '#33000000'; // 辅助网格线颜色
-                this.canvasContext.lineWidth = 1; // 更细的线条
+                this.canvasContext.strokeStyle = '#f0f0f0'; // 辅助网格线颜色
+                this.canvasContext.lineWidth = 0.5; // 更细的线条
                 // 绘制垂直网格线
                 this.canvasContext.beginPath();
                 this.canvasContext.moveTo(x, margin.top);
@@ -281,11 +276,14 @@ export struct NoiseChart {
               this.canvasContext.stroke();
             })
         }
-
-        .height(200)
+        .backgroundColor('#000000')
+        .height(186)
+        .borderRadius(16)
+        .padding(16)
 
         if (this.uniqueWeightingTypes!.length > 0) {
-          Row() {
+          Row({ space: 4 }) {
+            Blank().layoutWeight(1)
             ForEach(this.uniqueWeightingTypes, (type: WeightingType, index) => {
               Column()
                 .width(16)
@@ -293,21 +291,11 @@ export struct NoiseChart {
                 .backgroundColor(this.uniqueWeightingColors![index])
                 .borderRadius(8) // 新增: 设置边框半径为8以形成圆形
               Text(`${type}计权`)
-                .fontSize(12)
-                .margin({ left: 4, right: 8 })
             })
-          }.margin({ top: -30 })
+          }.justifyContent(FlexAlign.End)
         }
       }
     }
-
-    .padding({
-      left: 16,
-      right: 16,
-      top: 12,
-      bottom: 12
-    })
-    .borderRadius(12)
-    .margin({ bottom: 12 })
+    .borderRadius(16)
   }
 }

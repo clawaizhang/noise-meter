@@ -34,6 +34,7 @@ import { DialogHub, InfCustomDialog, InfSheet } from '@hadss/dialoghub';
 import { NoiseLevelDialogBuilder } from '../../pages/noisemeter/NoiseLevelDialogNavigation';
 import { resourceManager } from '@kit.LocalizationKit';
 import { NoiseDescriptionDialogBuilder } from '../../pages/noisemeter/NoiseDescriptionDialogNavigation';
+import { DetailDialogBuilder, DetailDialogParams } from '../../pages/noisemeter/DetailDialogNavigation';
 
 @ComponentV2
 export struct DecibelMeter {
@@ -243,7 +244,7 @@ export struct DecibelMeter {
     .onClick(() => {
       DialogHub.getSheet()
         .setContent(wrapBuilder(NoiseDescriptionDialogBuilder))
-        .setConfig({ enableOutsideInteractive: false, scrollSizeMode: ScrollSizeMode.CONTINUOUS })
+        .setConfig({ enableOutsideInteractive: false, scrollSizeMode: ScrollSizeMode.FOLLOW_DETENT })
         .setComponentTargetId('noiseDescriptionButtonId')
         .build()
         .show();
@@ -655,11 +656,18 @@ export struct DecibelMeter {
               duration: 3000
             });
           } else {
-            this.navStack.pushDestinationByName('DetailDialog', {
+            const params: DetailDialogParams = {
               selectedRecord: this.currentRecord,
               context: getContext(this),
               fileService: this.fileService
-            });
+            };
+            DialogHub.getSheet()
+              .setComponentTargetId('showNoiseDetailDialogFromActionPanels')
+              .setStyle({ showClose: false })
+              .setConfig({ enableOutsideInteractive: false, scrollSizeMode: ScrollSizeMode.CONTINUOUS })
+              .setContent(wrapBuilder(DetailDialogBuilder), params)
+              .build()
+              .show();
           }
 
         }

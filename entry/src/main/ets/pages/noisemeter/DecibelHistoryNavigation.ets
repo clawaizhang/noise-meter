@@ -1,14 +1,14 @@
-import { DetailDialogParams } from './DetailDialogNavigation';
+import { DetailDialogBuilder, DetailDialogParams } from './DetailDialogNavigation';
 import { PromptAction } from '@ohos.arkui.UIContext';
 import { DecibelService } from '../../services/DecibelService';
 import { DecibelRecordService } from '../../services/DecibelRecordService';
 import { navigationStack } from '../../constants/ProviderConstant';
-import { emitter } from '@kit.BasicServicesKit';
 import { AudioPlayer } from '../../components/business/AudioPlayer';
 import { DecibelRecord } from '../../models/DecibelRecord';
 import { FileService } from '../../services/FileService';
 import { DesignConstants } from '../../constants/DesignConstants';
 import { SymbolGlyphModifier } from '@kit.ArkUI';
+import { DialogHub } from '@hadss/dialoghub';
 
 class DecibelRecordDataSource implements IDataSource {
   private records: DecibelRecord[];
@@ -175,6 +175,7 @@ export struct DecibelHistory {
     .justifyContent(FlexAlign.SpaceBetween)
     .padding(16)
     .borderRadius(16)
+    .id("showNoiseDetailDialogFromHistory")
     .onClick(() => {
       this.showNoiseDetails(record);
     })
@@ -187,15 +188,6 @@ export struct DecibelHistory {
   private showNoiseDetails(record: DecibelRecord) {
     this.selectedRecord = record;
     this.showDetailDialog();
-    const DETAIL_DIALOG_CLOSED_EVENT = 100101;
-    emitter.on({ eventId: DETAIL_DIALOG_CLOSED_EVENT }, (data: emitter.EventData) => {
-      let id = data?.data?.id as string;
-      if (id) {
-        this.recordService.getRecordById(id).then((newRecord) => {
-          record!.comment = newRecord!.comment;
-        });
-      }
-    });
   }
 
   @Builder
@@ -373,10 +365,13 @@ export struct DecibelHistory {
         context: getContext(this),
         fileService: this.fileService
       };
-      // 使用 NavPathInfo 创建导航信息
-      const pathInfo = new NavPathInfo('DetailDialog', params);
-      // 使用 pushPath 进行导航
-      await this.navStack.pushPath(pathInfo);
+      DialogHub.getSheet()
+        .setComponentTargetId('showNoiseDetailDialogFromHistory')
+        .setStyle({ showClose: false })
+        .setConfig({ enableOutsideInteractive: false, scrollSizeMode: ScrollSizeMode.CONTINUOUS })
+        .setContent(wrapBuilder(DetailDialogBuilder), params)
+        .build()
+        .show();
     } catch (error) {
       console.error('导航到详情页失败:', error);
     }

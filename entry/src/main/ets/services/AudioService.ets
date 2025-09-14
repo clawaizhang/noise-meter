@@ -220,14 +220,14 @@ export class AudioService {
             // 创建副本以避免引用问题
             const bufferCopy = buffer.slice(0);
             // remove enhancer
-            // const enhancer = new AudioEnhancer();
+            const enhancer = new AudioEnhancer();
             // // 自定义参数（根据实际环境调整）
-            // enhancer.setGainParams(200);
-            // enhancer.setNoiseParams(0.03, 0.35);
+            enhancer.setGainParams(200);
+            enhancer.setNoiseParams(0.03, 0.35);
             // // 处理音频数据
-            // const processedBuffer = enhancer.processAudio(bufferCopy);
+            const processedBuffer = enhancer.processAudio(bufferCopy);
             // 保存调整后的副本到 audioBuffers
-            this.audioBuffers.push(bufferCopy);
+            this.audioBuffers.push(processedBuffer);
           }
 
           // 处理音频数据
