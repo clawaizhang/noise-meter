@@ -3,6 +3,8 @@ import { AudioPlayerService, PlayerState } from "../../services/AudioPlayerServi
 import { ImageRaw } from "../common/ImageRaw";
 import { ImageSoundPlayingService } from "../../services/ImageSoundPlayingService";
 import { navigationStack } from "../../constants/ProviderConstant";
+import { DialogHub } from "@hadss/dialoghub";
+import { PlayingItemsDialogBuilder } from "../../pages/noisemeter/PlayingItemsDialogNavigation";
 
 export interface ImageSound {
   name: string;
@@ -59,8 +61,14 @@ export struct PressureSounds {
       if (this.playingList.length > 0) {
         Stack({ alignContent: Alignment.Start }) {
           ImageRaw({ image: this.unionImagePath, fit: ImageFit.Auto })
+            .id('imageRawToPlayingImagesId')
             .onClick(() => {
-              this.navStack.pushPathByName('PlayingItemsDialog', undefined)
+              DialogHub.getSheet()
+                .setComponentTargetId('imageRawToPlayingImagesId')
+                .setStyle({ showClose: false })
+                .setContent(wrapBuilder(PlayingItemsDialogBuilder))
+                .build()
+                .show();
             })
 
             .height(50)
@@ -68,8 +76,6 @@ export struct PressureSounds {
             Image(this.unionPlayerState === PlayerState.STATE_PLAYING ? $r('app.media.ic_pause') :
             $r('app.media.ic_play'))
               .fillColor(Color.White)
-
-
           }
           .backgroundColor(Color.Transparent)
           .width(32)

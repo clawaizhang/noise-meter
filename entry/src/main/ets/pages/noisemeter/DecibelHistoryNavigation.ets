@@ -179,13 +179,8 @@ export struct DecibelHistory {
     .onClick(() => {
       this.showNoiseDetails(record);
     })
-    .transition(TransitionEffect.OPACITY.animation({ curve: curves.springMotion(0.6, 0.8) }) // 透明度动画，使用springMotion曲线
-      .combine(TransitionEffect.scale({ x: 0, y: 0 })) // 组合缩放效果（从0放大到1）
+    .transition(TransitionEffect.scale({ x: 0, y: 0 })
       .combine(TransitionEffect.translate({ y: 150 }).animation({ curve: curves.springMotion() })))
-    .animation({
-      duration: 300,
-      curve: Curve.EaseOut
-    })
   }
 
   private showNoiseDetails(record: DecibelRecord) {
@@ -428,7 +423,10 @@ export struct DecibelHistory {
           LazyForEach(this.dataSource, (record: DecibelRecord) => {
             GridCol({ span: 1 }) {
               this.RecordItem(record)
-            }
+            }.animation({
+              duration: 300,
+              curve: Curve.EaseOut
+            })
           }, (record: DecibelRecord) => record.id)
         }
       }.margin({ left: 16, right: 16 })

@@ -7,10 +7,9 @@ import { ImageSoundPlayingService } from '../../services/ImageSoundPlayingServic
 export struct PlayingItemsDialog {
   @Local contentParams: Array<ImageSoundPlayerState> = ImageSoundPlayingService.getInstance().imageSoundPlayingList;
 
-  @Builder
-  ContentBuilder(contentParam: Array<ImageSoundPlayerState>) {
+  build() {
     WaterFlow() {
-      ForEach(contentParam, (item: ImageSoundPlayerState, index) => {
+      ForEach(this.contentParams, (item: ImageSoundPlayerState, index) => {
         FlowItem() {
           Flex({ wrap: FlexWrap.Wrap }) {
             ImageSoundPlayer2({
@@ -27,19 +26,9 @@ export struct PlayingItemsDialog {
     }
     .columnsTemplate('repeat(auto-fill,100)')
     .rowsTemplate('1fr 1fr 1fr')
-
-
     .rowsGap(16)
     .columnsGap(16)
-    .padding({ left: 16 })
-  }
-
-  build() {
-    DialogContainer({
-      ContentBuilder: this.ContentBuilder,
-      contentParam: this.contentParams
-    }
-    )
+    .padding({ top: 16, left: 16 })
   }
 }
 

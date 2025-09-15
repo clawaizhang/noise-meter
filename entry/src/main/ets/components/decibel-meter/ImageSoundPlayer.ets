@@ -1,7 +1,7 @@
-import { AudioPlayer } from "../business/AudioPlayer";
 import { ImageRaw } from "../common/ImageRaw";
 import resourceManager from "@ohos.resourceManager";
 import { AudioPlayerService, PlayerState } from "../../services/AudioPlayerService";
+import { curves } from "@kit.ArkUI";
 
 @ComponentV2
 export struct ImageSoundPlayer {
@@ -61,7 +61,9 @@ export struct ImageSoundPlayer {
           }
         })
       }
-    }
+    }.transition(TransitionEffect.OPACITY.animation({ curve: curves.springMotion(0.6, 0.8) }) // 透明度动画，使用springMotion曲线
+      .combine(TransitionEffect.scale({ x: 0, y: 0 })) // 组合缩放效果（从0放大到1）
+      .combine(TransitionEffect.translate({ y: 150 }).animation({ curve: curves.springMotion() })))
   }
 
   aboutToDisappear(): void {

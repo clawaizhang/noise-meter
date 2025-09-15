@@ -703,17 +703,7 @@ export struct DecibelMeter {
   }
 
   build() {
-    GridRow({ columns: 12, breakpoints: { reference: BreakpointsReference.WindowSize }, gutter: 8 }) {
-      // 频谱图
-      GridCol({
-        span: {
-          xs: 12,
-          sm: 12,
-          md: 5,
-        }
-      }) {
-        this.SpectrumView()
-      }
+    GridRow({ columns: 12, breakpoints: { reference: BreakpointsReference.WindowSize }, gutter: 16 }) {
 
       GridCol({
         span: {
@@ -750,6 +740,17 @@ export struct DecibelMeter {
           }
         }
         .justifyContent(FlexAlign.Center)
+      }
+
+      // 频谱图
+      GridCol({
+        span: {
+          xs: 12,
+          sm: 12,
+          md: 5,
+        }
+      }) {
+        this.SpectrumView()
       }
 
       GridCol({
@@ -855,7 +856,7 @@ export struct DecibelMeter {
         });
       Column() {
         Text(this.decibelState.currentDecibel === 0 ? '-' : this.decibelState.currentDecibel.toString())
-          .fontSize(80)
+          .fontSize(100)
           .textShadow({
             radius: 2,
             color: Color.White,
