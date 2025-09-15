@@ -35,6 +35,7 @@ import { NoiseLevelDialogBuilder } from '../../pages/noisemeter/NoiseLevelDialog
 import { resourceManager } from '@kit.LocalizationKit';
 import { NoiseDescriptionDialogBuilder } from '../../pages/noisemeter/NoiseDescriptionDialogNavigation';
 import { DetailDialogBuilder, DetailDialogParams } from '../../pages/noisemeter/DetailDialogNavigation';
+import { PressureSounds } from './PressureSounds';
 
 @ComponentV2
 export struct DecibelMeter {
@@ -712,34 +713,39 @@ export struct DecibelMeter {
           md: 5,
         }
       }) {
-        // 分贝显示和位置信息
-        Column() {
-          // 分贝显示卡片
-          Row() {
-            this.averageMin()
+        Stack() {
+          // 分贝显示和位置信息
+          Column() {
+            // 分贝显示卡片
+            Row() {
+              this.averageMin()
 
-            this.CurrentDecibel()
+              this.CurrentDecibel()
 
 
-            this.max()
-          }
+              this.max()
+            }
 
+            .justifyContent(FlexAlign.Center)
+            .alignItems(VerticalAlign.Bottom)
+            .borderColor(this.isNoiseAlarm ? DecibelService.getDecibelColor(this.decibelState.currentDecibel) :
+            Color.Transparent)
+
+            if (this.isRecording) {
+              Text(`${secondsToHoursMinutesSecondsWithDecimal(this.MAX_RECORDING_DURATION -
+              this.recordingTime)} 后自动保存`).fontSize(14)
+            }
+
+            // 位置显示
+            Row() {
+              LocationDisplay()
+            }
+          }.margin({ top: -40 })
           .justifyContent(FlexAlign.Center)
-          .alignItems(VerticalAlign.Bottom)
-          .borderColor(this.isNoiseAlarm ? DecibelService.getDecibelColor(this.decibelState.currentDecibel) :
-          Color.Transparent)
-
-          if (this.isRecording) {
-            Text(`${secondsToHoursMinutesSecondsWithDecimal(this.MAX_RECORDING_DURATION -
-            this.recordingTime)} 后自动保存`).fontSize(14)
-          }
-
-          // 位置显示
-          Row() {
-            LocationDisplay()
-          }
         }
-        .justifyContent(FlexAlign.Center)
+        .width('100%')
+        .height('100% - 30vp')
+        .clip(true)
       }
 
       // 频谱图
@@ -784,6 +790,16 @@ export struct DecibelMeter {
             this.preferenceService.setString(PreferenceKeyConstants.WEIGHTING, this.weightingType);
           }
         })
+      }
+
+      GridCol({
+        span: {
+          xs: 12,
+          sm: 12,
+          md: 1,
+        }
+      }) {
+        PressureSounds({ cardDirection: FlexDirection.Row, hideDesc: true })
       }
     }.padding({ top: 16, bottom: 16 })
   }
@@ -865,7 +881,7 @@ export struct DecibelMeter {
           })
           .fontWeight(FontWeight.Bold)
           .fontColor(DecibelService.getDecibelColor(this.decibelState.currentDecibel));
-      }.backgroundColor('#00000000')
+      }.backgroundColor('#00000000').margin({ bottom: -20, right: -20 })
       .alignItems(HorizontalAlign.Center);
     }
   }

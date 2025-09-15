@@ -29,6 +29,9 @@ export enum PlayerState {
   STATE_ERROR = 'STATE_ERROR'
 }
 
+export const endState: PlayerState[] =
+  [PlayerState.STATE_STOPPED, PlayerState.STATE_COMPLETED, PlayerState.STATE_RELEASED, PlayerState.STATE_ERROR];
+
 /**
  * 音频播放服务
  */
@@ -40,13 +43,19 @@ export class AudioPlayerService {
   private progressTimer: number | null = null;
   private currentFile: fs.File | null = null;
   private currentFd: number | null = null;
+  public id:string = '';
 
-  constructor() {
+  constructor(id:string) {
+    this.id = id;
     try {
       this.initPlayer();
     } catch (error) {
       hilog.error(DOMAIN, TAG, '初始化播放器失败: %{public}s', error instanceof Error ? error.message : String(error));
     }
+  }
+
+  getInstance(id: string) {
+
   }
 
   /**

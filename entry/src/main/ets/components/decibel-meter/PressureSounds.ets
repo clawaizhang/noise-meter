@@ -3,7 +3,7 @@ import { AudioPlayerService, PlayerState } from "../../services/AudioPlayerServi
 import { ImageRaw } from "../common/ImageRaw";
 import { ImageSoundPlayingService } from "../../services/ImageSoundPlayingService";
 import { navigationStack } from "../../constants/ProviderConstant";
-import { DialogHub } from "@hadss/dialoghub";
+import { DialogHub, InfSheet } from "@hadss/dialoghub";
 import { PlayingItemsDialogBuilder } from "../../pages/noisemeter/PlayingItemsDialogNavigation";
 
 export interface ImageSound {
@@ -17,10 +17,18 @@ export interface ImageSoundPlayerState extends ImageSound {
   playerService: AudioPlayerService;
 }
 
+@Builder
+function PressureSoundsBuilder() {
+  PressureSounds()
+}
+
 @Preview
 @ComponentV2
 export struct PressureSounds {
+  @Param cardDirection: FlexDirection = FlexDirection.Column;
+  @Param hideDesc: boolean = false;
   @Consumer(navigationStack) navStack: NavPathStack = new NavPathStack();
+  private dialog: InfSheet | undefined
 
   @Computed
   get unionImagePath(): string {
@@ -35,28 +43,32 @@ export struct PressureSounds {
       WaterFlow() {
         ForEach(this.imageSounds, (item: ImageSound, index) => {
           FlowItem() {
-            Flex({ wrap: FlexWrap.Wrap }) {
-              ImageSoundPlayer({
-                image: item.image,
-                file: item.sound,
-                onPlayStateChange: (state: PlayerState, playerService: AudioPlayerService) => {
-                  this.updateUnionPlayerState(state, playerService, item);
-                }
-              }).width(100).height(100).animation({ duration: 200, curve: Curve.EaseOut })
-              Text(item.name).width(100)
-                .fontSize(12).animation({ duration: 200, curve: Curve.EaseOut })
+            if (this.hideDesc) {
+              Column() {
+                this.imageSoundBuilder(item)
+              }.onClick(() => {
+                this.dialog = this.dialog ?? DialogHub.getSheet()
+                  .setComponentTargetId('decibelMeterRoot')
+                  .setContent(wrapBuilder(PressureSoundsBuilder))
+                  .build();
+                this.dialog.show();
+              })
+            } else {
+              Flex({ wrap: FlexWrap.Wrap }) {
+                this.imageSoundBuilder(item)
+                Text(item.name).width(100)
+                  .fontSize(12).animation({ duration: 200, curve: Curve.EaseOut })
+              }
             }
           }
         }, (item: ImageSound, index) => item.name)
-        FlowItem().height(200)
       }
+      .layoutDirection(this.cardDirection)
       .columnsTemplate('repeat(auto-fill,100)')
-      .rowsTemplate('1fr 1fr 1fr')
-
-
-      .rowsGap(16)
-      .columnsGap(16)
-      .padding({ left: 16 })
+      .rowsTemplate('1fr')
+      .rowsGap(this.hideDesc ? 8 : 16)
+      .columnsGap(this.hideDesc ? 8 : 16)
+      .padding({ left: this.hideDesc ? 0 : 16, top: this.hideDesc ? 0 : 16 })
 
       if (this.playingList.length > 0) {
         Stack({ alignContent: Alignment.Start }) {
@@ -87,11 +99,9 @@ export struct PressureSounds {
             pItem.playerService.pause() : pItem.playerService.resume());
           })
         }
-
         .height(50)
-        .padding({ left: 16, right: 16, bottom: 100 })
+        .padding({ bottom: -16 })
         .borderRadius(12)
-        .animation({})
       }
     }
   }
@@ -329,6 +339,20 @@ export struct PressureSounds {
       sound: 'sounds/whitenoise/【异质白噪】立体声场的奇特声波体验.ogg'
     },
   ]
+
+  @Builder
+  imageSoundBuilder(item: ImageSound) {
+    ImageSoundPlayer({
+      image: item.image,
+      file: item.sound,
+      onPlayStateChange: (state: PlayerState, playerService: AudioPlayerService) => {
+        this.updateUnionPlayerState(state, playerService, item);
+      }
+    })
+      .width(this.hideDesc ? 75 : 100)
+      .height(this.hideDesc ? 75 : 100)
+      .animation({ duration: 200, curve: Curve.EaseOut })
+  }
 
   private updateUnionPlayerState(state: PlayerState, playerService: AudioPlayerService, currentItem: ImageSound) {
     if (state === PlayerState.STATE_PLAYING) {

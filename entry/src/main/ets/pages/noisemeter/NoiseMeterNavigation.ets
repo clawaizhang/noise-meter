@@ -72,7 +72,6 @@ export struct MainNoiseMeter {
         .fontColor(this.currentIndex === index ? $r('app.color.text_primary') : $r('app.color.text_secondary'))
         .margin({ top: 4 })
     }
-
     .justifyContent(FlexAlign.Center)
 
   }
@@ -97,36 +96,13 @@ export struct MainNoiseMeter {
 
   build() {
     NavDestination() {
-      Tabs({
-        barPosition: BarPosition.End,
-        index: this.currentIndex
-      }) {
-        TabContent() {
-          Column() {
-            // 噪音检测区域
-            DecibelMeter({ meterOn: this.meterOn })
-              .width('92%')
-          }
-          .id('decibelMeterRoot')
-          .alignItems(HorizontalAlign.Center)
-        }
-        .tabBar(this.TabBuilder('', $r('app.media.ic_meter'), 0))
-
-        TabContent() {
-          PressureSounds()
-        }
-        .tabBar(this.TabBuilder('', $r('app.media.ic_play'), 1))
-
+      Column() {
+        // 噪音检测区域
+        DecibelMeter({ meterOn: this.meterOn })
+          .width('92%')
       }
-      .scrollable(false)
-      .onChange((index: number) => {
-        this.currentIndex = index;
-      })
-
-      .barOverlap(true)
-      .barBackgroundBlurStyle(BlurStyle.BACKGROUND_REGULAR)
-      .barMode(BarMode.Fixed)
-      .animationDuration(0)
+      .id('decibelMeterRoot')
+      .alignItems(HorizontalAlign.Center)
     }
     .title(this.title, {
       barStyle: this.currentIndex == 1 ? BarStyle.STACK : BarStyle.STANDARD,

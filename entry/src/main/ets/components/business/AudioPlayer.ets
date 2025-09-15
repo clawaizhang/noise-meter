@@ -2,16 +2,17 @@ import { PlayerState } from "../../services/AudioPlayerService"
 import { AudioPlayerService } from "../../services/AudioPlayerService"
 import hilog from '@ohos.hilog'
 import resourceManager from "@ohos.resourceManager";
+import { AudioPlayerGroupService } from "../../services/AudioPlayerGroupService";
 
 const TAG = 'AudioPlayer';
 const DOMAIN = 0x0000;
 
 @ComponentV2
 export struct AudioPlayer {
-  @Param audioFilePath?: string | null = null;
-  @Param fileDescriptor?: resourceManager.RawFileDescriptor | null = null;
+  @Param @Require audioFilePath: string;
+  @Param fileDescriptor: resourceManager.RawFileDescriptor | undefined = undefined;
   @Local playerState: PlayerState = PlayerState.STATE_NOT_INIT;
-  private audioPlayerService: AudioPlayerService = new AudioPlayerService();
+  private audioPlayerService: AudioPlayerService = AudioPlayerGroupService.getPlayerInstance(this.audioFilePath);
 
   build() {
     Row() {

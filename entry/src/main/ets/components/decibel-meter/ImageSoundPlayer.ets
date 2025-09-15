@@ -2,6 +2,7 @@ import { ImageRaw } from "../common/ImageRaw";
 import resourceManager from "@ohos.resourceManager";
 import { AudioPlayerService, PlayerState } from "../../services/AudioPlayerService";
 import { curves } from "@kit.ArkUI";
+import { AudioPlayerGroupService } from "../../services/AudioPlayerGroupService";
 
 @ComponentV2
 export struct ImageSoundPlayer {
@@ -11,7 +12,7 @@ export struct ImageSoundPlayer {
   @Local rawFileDescriptor: resourceManager.RawFileDescriptor | undefined = undefined;
   @Local playerState: PlayerState = PlayerState.STATE_NOT_INIT;
   private context = getContext(this);
-  private audioPlayerService: AudioPlayerService = new AudioPlayerService();
+  private audioPlayerService: AudioPlayerService = AudioPlayerGroupService.getPlayerInstance(this.file);
   private autoStopTimeOutId: number | undefined;
 
   aboutToAppear(): void {
