@@ -64,6 +64,7 @@ export struct DecibelMeter {
   @Local private isNoiseAlarm: boolean = false // 是否触发噪音报警
   @Local private isDisplayApp: boolean = true
   @Local startTime: number = 0
+  @Local breakPoint: string = '';
   @Consumer(navigationStack) navStack: NavPathStack = new NavPathStack()
   private audioService: AudioService = AudioService.getInstance(getContext() as common.UIAbilityContext)
   private locationService: LocationService = LocationService.getInstance()
@@ -713,39 +714,43 @@ export struct DecibelMeter {
           md: 5,
         }
       }) {
-        Stack() {
-          // 分贝显示和位置信息
-          Column() {
-            // 分贝显示卡片
-            Row() {
-              this.averageMin()
+        Column() {
+          Stack() {
+            // 分贝显示和位置信息
+            Column() {
+              // 分贝显示卡片
+              Row() {
+                this.averageMin()
 
-              this.CurrentDecibel()
+                this.CurrentDecibel()
 
+                this.max()
+              }
 
-              this.max()
-            }
+              .justifyContent(FlexAlign.Center)
+              .alignItems(VerticalAlign.Bottom)
+              .borderColor(this.isNoiseAlarm ? DecibelService.getDecibelColor(this.decibelState.currentDecibel) :
+              Color.Transparent)
 
+              if (this.isRecording) {
+                Text(`${secondsToHoursMinutesSecondsWithDecimal(this.MAX_RECORDING_DURATION -
+                this.recordingTime)} 后自动保存`).fontSize(14)
+              }
+
+              // 位置显示
+              Row() {
+                LocationDisplay()
+              }
+            }.margin({ top: -40 })
             .justifyContent(FlexAlign.Center)
-            .alignItems(VerticalAlign.Bottom)
-            .borderColor(this.isNoiseAlarm ? DecibelService.getDecibelColor(this.decibelState.currentDecibel) :
-            Color.Transparent)
+          }
+          .height('100% - 30vp')
+          .clip(true)
 
-            if (this.isRecording) {
-              Text(`${secondsToHoursMinutesSecondsWithDecimal(this.MAX_RECORDING_DURATION -
-              this.recordingTime)} 后自动保存`).fontSize(14)
-            }
-
-            // 位置显示
-            Row() {
-              LocationDisplay()
-            }
-          }.margin({ top: -40 })
-          .justifyContent(FlexAlign.Center)
+          if (["md", "lg", "xl", "xxl"].includes(this.breakPoint)) {
+            this.actionPanel()
+          }
         }
-        .width('100%')
-        .height('100% - 30vp')
-        .clip(true)
       }
 
       // 频谱图
@@ -763,45 +768,52 @@ export struct DecibelMeter {
         span: {
           xs: 12,
           sm: 12,
-          md: 1,
+          md: 0,
         }
       }) {
-        ActionPanel({
-          isTorchOn: this.torchOn,
-          weightingType: this.weightingType,
-          onReset: () => {
-            this.audioService.resetData();
-            this.resetData();
-          },
-          onSave: (comments) => {
-            this.stopRecording(comments);
-          },
-          torchToggle: () => {
-            this.toggleTorch();
-          },
-          // 修改：将onToggleWeighting的参数类型改为WeightingType
-          onToggleWeighting: (weightingType: WeightingType) => {
-            this.weightingType = weightingType;
-            // 弹出提示框显示当前频率加权方式
-            promptAction.showToast({
-              message: `已切换为: ${this.weightingType} 计权`,
-              duration: 2000
-            });
-            this.preferenceService.setString(PreferenceKeyConstants.WEIGHTING, this.weightingType);
-          }
-        })
-      }
+        this.actionPanel()
+      }.visibility(["md", "lg", "xl", "xxl"].includes(this.breakPoint) ? Visibility.Hidden : Visibility.Visible)
 
       GridCol({
         span: {
           xs: 12,
           sm: 12,
-          md: 1,
+          md: 2,
         }
       }) {
         PressureSounds({ cardDirection: FlexDirection.Row, hideDesc: true })
       }
-    }.padding({ top: 16, bottom: 16 })
+    }.padding({ top: 16, bottom: 16 }).onBreakpointChange(breakPoints => {
+      this.breakPoint = breakPoints;
+    })
+  }
+
+  @Builder
+  actionPanel() {
+    ActionPanel({
+      isTorchOn: this.torchOn,
+      weightingType: this.weightingType,
+      onReset: () => {
+        this.audioService.resetData();
+        this.resetData();
+      },
+      onSave: (comments) => {
+        this.stopRecording(comments);
+      },
+      torchToggle: () => {
+        this.toggleTorch();
+      },
+      // 修改：将onToggleWeighting的参数类型改为WeightingType
+      onToggleWeighting: (weightingType: WeightingType) => {
+        this.weightingType = weightingType;
+        // 弹出提示框显示当前频率加权方式
+        promptAction.showToast({
+          message: `已切换为: ${this.weightingType} 计权`,
+          duration: 2000
+        });
+        this.preferenceService.setString(PreferenceKeyConstants.WEIGHTING, this.weightingType);
+      }
+    })
   }
 
   @Builder
