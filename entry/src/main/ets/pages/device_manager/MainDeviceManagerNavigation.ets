@@ -1,5 +1,4 @@
 import { navigationStack } from '../../constants/ProviderConstant'
-import { PreferenceService } from '../../services/PreferenceService'
 import { DeviceManagerPage } from './DeviceManagerPage'
 import { ScreenshotUtils } from '../../utils/ScreenshotUtils'
 import { common } from '@kit.AbilityKit'
@@ -17,7 +16,6 @@ export struct MainDeviceManager {
   @Local meterOn: boolean = true;
   @Local title:string = '手机管家';
   @Local menuItems:Array<NavigationMenuItem> = [];
-  private preferenceService: PreferenceService = PreferenceService.getInstance();
 
   aboutToAppear(): void {
     this.menuItems = this.deviceManagerMenus;

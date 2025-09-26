@@ -2,6 +2,8 @@ import window from '@ohos.window';
 import { BusinessError } from '@kit.BasicServicesKit';
 import hilog from '@ohos.hilog';
 import { DialogHub } from '@hadss/dialoghub';
+import { PersistenceV2 } from '@kit.ArkUI';
+import { PreferenceKeys } from '../models/PreferenceKeys';
 
 const TAG = 'WindowManager';
 const DOMAIN = 0x0000;
@@ -28,7 +30,7 @@ export class WindowManager {
   }
 
   // 加载页面内容
-  public loadContent(pagePath: string): void {
+  public loadContent(pagePath: string, then: () => void): void {
     if (!this.windowStage) {
       hilog.error(DOMAIN, TAG, 'WindowStage is null');
       return;
@@ -42,6 +44,7 @@ export class WindowManager {
       this.windowStage?.getMainWindow().then(windowObj => {
         DialogHub.init(windowObj.getUIContext());
       })
+      then();
       hilog.info(DOMAIN, TAG, 'Succeeded in loading the content.');
     });
   }

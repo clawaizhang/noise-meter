@@ -91,7 +91,3 @@ export class AudioPresets {
     return config;
   }
 }
-
-// 配置相关的首选项键名
-export const PREF_ANALYSIS_MODE = 'audio_analysis_mode';
-export const PREF_CUSTOM_CONFIG = 'audio_custom_config';

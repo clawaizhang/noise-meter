@@ -1,10 +1,9 @@
 import { DecibelMeter } from '../../components/decibel-meter/DecibelMeter';
 import { navigationStack } from '../../constants/ProviderConstant';
-import { PreferenceKeyConstants } from '../../constants/PreferenceKeyConstants';
-import { PreferenceService } from '../../services/PreferenceService';
-import { WeightingType } from '../../constants/WeightingConstants';
-import { camera } from '@kit.CameraKit';
-import { PressureSounds } from '../../components/decibel-meter/PressureSounds';
+import { PreferenceKeys } from '../../models/PreferenceKeys';
+import { DialogHub } from '@hadss/dialoghub';
+import { SettingsBuilder } from './SettingsNavigation';
+import { PersistenceV2 } from '@kit.ArkUI';
 
 // 导航菜单项接口定义
 interface NavigationMenuItem {
@@ -23,31 +22,23 @@ export function NoiseMeterBuilder() {
 export struct MainNoiseMeter {
   @Consumer(navigationStack) navStack: NavPathStack = new NavPathStack()
   @Local currentIndex: number = 0
-  @Local meterOn: boolean = true;
   @Local touchOn: boolean = false;
-  @Local title: string = '静喵';
+  @Local title: string = '静喵Sound';
+  @Local pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys)!;
   @Local menuItems: Array<NavigationMenuItem> = [];
-  private preferenceService: PreferenceService = PreferenceService.getInstance();
 
   aboutToDisappear(): void {
   }
 
   aboutToAppear(): void {
-    // 初始化加权类型
-    if (!this.preferenceService.getString(PreferenceKeyConstants.WEIGHTING)) {
-      this.preferenceService.setString(PreferenceKeyConstants.WEIGHTING, WeightingType.A);
-    }
     this.menuItems = this.noiseMeterMenus;
-    this.preferenceService.setBoolean(PreferenceKeyConstants.METER_ON, true);
-    this.meterOn = this.preferenceService.getBoolean(PreferenceKeyConstants.METER_ON, true);
-
   }
 
   @Monitor('currentIndex')
   onTabIndexChange(monitor: IMonitor) {
     const currentValue = monitor.value<number>()?.now;
     if (currentValue === 0) {
-      this.title = '静喵';
+      this.title = '静喵Sound';
       this.menuItems = this.noiseMeterMenus;
     }
     if (currentValue === 1) {
@@ -78,7 +69,7 @@ export struct MainNoiseMeter {
 
   private noiseMeterMenus: Array<NavigationMenuItem> = [
     {
-      value: '检测记录',
+      value: '历史记录',
       icon: $r('app.media.ic_history'),
       action: () => {
         this.navStack.pushPathByName('DecibelHistory', null);
@@ -88,7 +79,13 @@ export struct MainNoiseMeter {
       value: '设置',
       icon: $r('app.media.ic_settings'),
       action: () => {
-        this.navStack.pushPathByName('Settings', null);
+        DialogHub.getSheet()
+          .setStyle({ title: { title: '设置' }, backgroundColor: $r('sys.color.background_primary') })
+          .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS })
+          .setComponentTargetId('decibelMeterId')
+          .setContent(wrapBuilder(SettingsBuilder))
+          .build()
+          .show();
       }
     }
   ]
@@ -98,7 +95,8 @@ export struct MainNoiseMeter {
     NavDestination() {
       Column() {
         // 噪音检测区域
-        DecibelMeter({ meterOn: this.meterOn })
+        DecibelMeter({ meterOn: true })
+          .id('decibelMeterId')
           .width('92%')
       }
       .id('decibelMeterRoot')
@@ -112,7 +110,7 @@ export struct MainNoiseMeter {
     .hideTitleBar(false)
     .hideToolBar(true)
     .mode(NavDestinationMode.STANDARD)
-    .backgroundColor($r('sys.color.background_primary'))
+    .backgroundColor($r('sys.color.background_secondary'))
     .animation({ duration: 200, curve: Curve.Linear })
   }
 }

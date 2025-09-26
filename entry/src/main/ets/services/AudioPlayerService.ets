@@ -4,9 +4,6 @@ import media from '@ohos.multimedia.media';
 import audio from '@ohos.multimedia.audio';
 import hilog from '@ohos.hilog';
 import fs from '@ohos.file.fs';
-import { promptAction } from '@kit.ArkUI';
-import { PreferenceService } from './PreferenceService';
-import { PreferenceKeyConstants } from '../constants/PreferenceKeyConstants';
 import resourceManager from '@ohos.resourceManager';
 
 const TAG = 'AudioPlayerService';

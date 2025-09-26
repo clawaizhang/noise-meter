@@ -3,19 +3,17 @@ import { PermissionUtil } from '@pura/harmony-utils';
 import common from '@ohos.app.ability.common';
 import promptAction from '@ohos.promptAction';
 import { WavFileGenerator } from '../utils/WavFileGenerator';
-import { PreferenceService, PreferenceValue } from './PreferenceService';
-import { AudioAnalysisMode, AudioPresets, PREF_ANALYSIS_MODE } from '../common/AudioConfig';
+import { AudioAnalysisMode, AudioPresets } from '../common/AudioConfig';
 import { FileService } from './FileService';
 import { AudioEnhancer } from './AudioEnhancer';
+import { PersistenceV2 } from '@kit.ArkUI';
+import { PreferenceKeys } from '../models/PreferenceKeys';
 
 /**
  * 音频服务类
  * 提供音频采集功能
  */
 
-// 音频配置键名
-const PREF_TARGET_SAMPLES = 'audio_target_samples';
-const PREF_PROCESS_INTERVAL = 'audio_process_interval';
 
 /**
  * 音频服务状态
@@ -74,27 +72,18 @@ export class AudioService {
   private currentConfig = AudioPresets.getConfig(AudioAnalysisMode.FAST_TIME_WEIGHTING);
   private onAudioData: ((buffer: ArrayBuffer) => void) | null = null;
   private context: common.UIAbilityContext;
-  private preferenceService: PreferenceService;
   // 状态变更回调类型
   private stateChangeCallbacks: ((state: AudioServiceState) => void)[] = [];
 
   constructor(context: common.UIAbilityContext) {
     this.context = context;
-    this.preferenceService = PreferenceService.getInstance();
 
     // 从首选项加载分析模式
-    const savedMode: string =
-      this.preferenceService.getString(PREF_ANALYSIS_MODE, AudioAnalysisMode.FAST_TIME_WEIGHTING);
-    this.currentConfig = AudioPresets.getConfig(savedMode as AudioAnalysisMode);
+    const savedMode: AudioAnalysisMode = PersistenceV2.connect(PreferenceKeys)!.audio_analysis_mode!;
+    this.currentConfig = AudioPresets.getConfig(savedMode);
     console.info(`[音频采集] 加载配置: 模式=${savedMode}, FFT大小=${this.currentConfig.fftSize}, ` +
       `处理间隔=${this.currentConfig.updateInterval}ms, 重叠率=${this.currentConfig.overlap}`);
 
-    // 添加配置变更监听
-    this.preferenceService.addChangeListener(PREF_ANALYSIS_MODE, (key: string, value: PreferenceValue) => {
-      if (key === PREF_ANALYSIS_MODE && typeof value === 'string') {
-        void this.handleModeChange(value);
-      }
-    });
   }
 
   /**
@@ -423,11 +412,11 @@ export class AudioService {
   /**
    * 处理音频分析模式变更
    */
-  private handleModeChange(value: string): void {
+  handleModeChange(value: AudioAnalysisMode): void {
     void Promise.resolve().then(async () => {
       try {
         // 验证并转换模式
-        if (!Object.values(AudioAnalysisMode).includes(value as AudioAnalysisMode)) {
+        if (!Object.values(AudioAnalysisMode).includes(value)) {
           throw new Error(`无效的音频分析模式: ${value}`);
         }
         const mode = value as AudioAnalysisMode;
@@ -449,8 +438,6 @@ export class AudioService {
    * 销毁服务
    */
   public destroy(): void {
-    // 移除监听器
-    this.preferenceService.removeChangeListener(PREF_ANALYSIS_MODE, this.handleModeChange);
 
     // 停止采集
     if (this.state === AudioServiceState.CAPTURING) {
@@ -463,8 +450,6 @@ export class AudioService {
    * @param mode 分析模式
    */
   public async setAnalysisMode(mode: AudioAnalysisMode): Promise<void> {
-    // 保存到首选项
-    await this.preferenceService.setString(PREF_ANALYSIS_MODE, mode);
 
     // 更新配置
     this.currentConfig = AudioPresets.getConfig(mode);
@@ -589,9 +574,6 @@ export class AudioService {
       throw new Error('处理间隔必须在20到200毫秒之间');
     }
 
-    // 保存到首选项
-    await this.preferenceService.setNumber(PREF_TARGET_SAMPLES, targetSamples);
-    await this.preferenceService.setNumber(PREF_PROCESS_INTERVAL, processInterval);
 
     console.info(`[音频采集] 更新配置: 目标样本数=${targetSamples}, 处理间隔=${processInterval}ms`);
   }

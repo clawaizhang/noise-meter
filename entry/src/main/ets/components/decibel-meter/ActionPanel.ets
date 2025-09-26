@@ -1,30 +1,22 @@
 import promptAction from '@ohos.promptAction';
-import { PreferenceKeyConstants } from '../../constants/PreferenceKeyConstants';
+import { PreferenceKeys } from '../../models/PreferenceKeys';
 import { WeightingType } from '../../constants/WeightingConstants';
-import { PreferenceService, PreferenceValue } from '../../services/PreferenceService';
 import { InputDialog } from './InputDialog';
-import { LengthMetrics } from '@kit.ArkUI';
+import { LengthMetrics, PersistenceV2 } from '@kit.ArkUI';
 
 @ComponentV2
 export struct ActionPanel {
+  @Local pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys)!;
   @Param isTorchOn: boolean = false;
   @Param @Require weightingType: WeightingType;
   @Event onReset: () => void;
   @Event onSave: (comment: string) => void;
   @Event torchToggle: () => void;
   @Event onToggleWeighting: (weightingType: WeightingType) => void;
-  @Local meterOn: boolean = false;
-  private preferenceService: PreferenceService = PreferenceService.getInstance();
   private weightingTypes: Array<SelectOption> =
     [{ value: WeightingType.A }, { value: WeightingType.C }, { value: WeightingType.Z }];
 
   aboutToAppear(): void {
-    this.meterOn = this.preferenceService.getBoolean(PreferenceKeyConstants.METER_ON, true);
-    this.preferenceService.addChangeListener(PreferenceKeyConstants.METER_ON, (key: string, value: PreferenceValue) => {
-      if (key === PreferenceKeyConstants.METER_ON && typeof value === 'boolean') {
-        this.meterOn = value;
-      }
-    })
   }
 
   build() {
@@ -45,7 +37,6 @@ export struct ActionPanel {
       }
       .width(40)
       .height(40)
-      .enabled(this.meterOn)
       .backgroundColor($r('sys.color.background_secondary'))
 
       .accessibilityDescription('重置当前数据')
@@ -61,7 +52,6 @@ export struct ActionPanel {
       }
       .width(40)
       .height(40)
-      .enabled(this.meterOn)
       .backgroundColor(this.isTorchOn ? $r('sys.color.background_emphasize') : $r('sys.color.background_secondary'))
 
       .accessibilityDescription(this.isTorchOn ? '解锁界面' : '锁定界面')
@@ -73,7 +63,6 @@ export struct ActionPanel {
       Select(this.weightingTypes)
         .width(40)
         .height(40)
-        .enabled(this.meterOn)
         .selected(this.getSelectedIndex())
         .value(this.weightingType)
         .accessibilityDescription('切换频率加权方式')
@@ -91,7 +80,6 @@ export struct ActionPanel {
       .id('showNoiseDetailDialogFromActionPanels')
       .width(40)
       .height(40)
-      .enabled(this.meterOn)
       .backgroundColor($r('sys.color.background_secondary'))
       .accessibilityDescription('保存当前数据')
       .onClick(async () => {

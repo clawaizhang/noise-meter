@@ -1,13 +1,17 @@
 import { navigationStack } from '../constants/ProviderConstant'
-import { PreferenceService } from '../services/PreferenceService'
 import { RelationalStoreService } from '../services/RelationalStoreService'
 import { commonEventManager } from '@kit.BasicServicesKit'
 import { privacyManager } from '@kit.StoreKit'
-import { PreferenceKeyConstants } from '../constants/PreferenceKeyConstants'
+import { PreferenceKeys } from '../models/PreferenceKeys'
 import { DatabaseUpgradeConfig, DbConfig } from '../interfaces/DatabaseInterfaces'
 import hilog from '@ohos.hilog'
 import { MainPage, dbConfig } from 'entry/MainPage'
-import { common, Want } from '@kit.AbilityKit'
+import { common, ConfigurationConstant, Want } from '@kit.AbilityKit'
+import { PersistenceV2 } from '@kit.ArkUI'
+import { WindowManager } from '../utils/WindowManager'
+import { AudioAnalysisMode } from '../common/AudioConfig'
+import { AudioService } from '../services/AudioService'
+import { NotificationHelper } from '../utils/NotificationHelper'
 
 const TAG = 'Index';
 const DOMAIN = 0x0000;
@@ -23,11 +27,12 @@ struct Index {
   @Provider(navigationStack) navStack: NavPathStack = new NavPathStack()
   @Local isInitialized: boolean = false;
   @Local isLoading: boolean = true;
-  @Local privacyAgreed: boolean = false;
+  @Local pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys,() => new PreferenceKeys())!;
   usePrivacy: boolean = true;
   private relationalStoreService: RelationalStoreService = RelationalStoreService.getInstance();
   private context = this.getUIContext().getHostContext() as common.UIAbilityContext;
   private readonly eventId = 'usual.event.PRIVACY_STATE_CHANGED';
+  private audioService: AudioService = AudioService.getInstance(getContext() as common.UIAbilityContext)
   // 订阅者信息, 用于保存创建成功的订阅者对象，后续使用其完成订阅及退订的动作
   private subscriber: commonEventManager.CommonEventSubscriber | undefined = undefined;
   // 事件列表
@@ -35,11 +40,59 @@ struct Index {
     events: [this.eventId]
   };
 
+  @Monitor('pk.display_mode')
+  displayModeChange(monitor: IMonitor) {
+    let mode = monitor.value<string>()?.now!;
+    this.setDisplayMode(mode);
+  } // 初始化首选项默认值
+
+  @Monitor('pk.audio_analysis_mode')
+  audioAnalysisModeChange(monitor: IMonitor) {
+    let mode = monitor.value<AudioAnalysisMode>()?.now!;
+    this.audioService.handleModeChange(mode)
+  }
+
+  @Monitor('pk.keep_screen_on')
+  keepScreenOnChange(monitor: IMonitor) {
+    let keepScreenOn = monitor.value<boolean>()?.now!;
+    const windowManager = WindowManager.getInstance();
+    windowManager.setKeepScreenOn(keepScreenOn);
+  }
+
+  @Monitor('pk.privacy_agreed')
+  privacy_agreedChange(monitor: IMonitor) {
+    let privacy_agreed = monitor.value<boolean>()?.now!;
+    if (privacy_agreed) {
+      // 请求通知权限
+      const notificationHelper = NotificationHelper.getInstance(this.context);
+      notificationHelper.checkAndRequestPermission();
+    }
+  }
+
   async aboutToAppear() {
-    if (!this.privacyAgreed) {
+    this.setDisplayMode(this.pk.display_mode);
+    if (!this.pk.privacy_agreed) {
       this.subscribe();
     }
     this.initialize();
+  }
+
+  aboutToDisappear(): void {
+    const windowManager = WindowManager.getInstance();
+    windowManager.setKeepScreenOn(false);
+  }
+
+  private setDisplayMode(displayMode: string) {
+    let applicationContext = this.context.getApplicationContext();
+    if (displayMode == 'default') {
+      applicationContext.setColorMode(ConfigurationConstant.ColorMode.COLOR_MODE_NOT_SET)
+    }
+    if (displayMode == 'light') {
+      applicationContext.setColorMode(ConfigurationConstant.ColorMode.COLOR_MODE_LIGHT)
+    }
+    if (displayMode == 'dark') {
+      applicationContext.setColorMode(ConfigurationConstant.ColorMode.COLOR_MODE_DARK)
+    }
   }
 
   private async initialize() {
@@ -47,14 +100,13 @@ struct Index {
       if (canIUse('SystemCapability.AppGalleryService.PrivacyManager') && this.usePrivacy) {
         if (privacyManager.getAppPrivacyMgmtInfo().type == privacyManager.AppPrivacyMgmtType.FULL_MODE) {
           let appPrivacyResults: privacyManager.AppPrivacyResult[] = privacyManager.getAppPrivacyResult();
-          this.privacyAgreed = appPrivacyResults[0]?.result === 1;
+          this.pk.privacy_agreed = appPrivacyResults[0]?.result === 1;
         } else {
-          this.privacyAgreed = true;
+          this.pk.privacy_agreed = true;
         }
       } else {
-        this.privacyAgreed = true;
+        this.pk.privacy_agreed = true;
       }
-      PreferenceService.getInstance().setBoolean(PreferenceKeyConstants.PRIVACY_AGREED, this.privacyAgreed);
       // 初始化数据库
       const upgradeConfigs: DatabaseUpgradeConfig[] = dbConfig.upgradeConfigs;
 
@@ -94,7 +146,7 @@ struct Index {
             let result = JSON.parse(data?.data ?? '{}')?.resultType as number;
             if (result === 1) {
               // 隐私同意处理
-              this.privacyAgreed = true;
+              this.pk.privacy_agreed = true;
             }
           });
         } catch (error) {
@@ -149,7 +201,7 @@ struct Index {
       } else {
         // 显示正常内容
         Navigation(this.navStack) {
-          if (this.privacyAgreed) {
+          if (this.pk.privacy_agreed) {
             MainPage()
           } else {
             Column() {

@@ -59,7 +59,7 @@ class DecibelRecordDataSource implements IDataSource {
 }
 
 @Builder
-function DecibelHistoryBuilder() {
+export function DecibelHistoryBuilder() {
   DecibelHistory()
 }
 
@@ -84,7 +84,7 @@ export struct DecibelHistory {
   build() {
     NavDestination() {
       // 内容区域
-      if (this.records.length === 0) {
+      if (this.records.length == 0) {
         this.EmptyStateView()
       } else {
         this.ListLayoutView()
@@ -171,7 +171,7 @@ export struct DecibelHistory {
       // 右侧区域：分贝值信息
       this.decibelInfoPlayer(record) // 禁止收缩
     }
-    .backgroundColor($r('sys.color.background_secondary'))
+    .backgroundColor($r('sys.color.comp_background_secondary'))
     .justifyContent(FlexAlign.SpaceBetween)
     .padding(16)
     .borderRadius(16)

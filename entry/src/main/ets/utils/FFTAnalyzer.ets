@@ -1,8 +1,5 @@
 import { WeightingType } from '../constants/WeightingConstants';
-import { PreferenceService } from '../services/PreferenceService';
-import { PreferenceKeyConstants } from '../constants/PreferenceKeyConstants';
 import { WindowType } from '../common/AudioConfig';
-import { audio } from '@kit.AudioKit';
 
 /**
  * 复数类型接口
@@ -66,7 +63,7 @@ export class FFTAnalyzer {
   private readonly windowType: WindowType; // 窗函数类型
   private readonly overlap: number; // 重叠率
   private readonly WINDOW_CORRECTION: number; // 窗函数能量校正因子
-  private readonly MIC_SENSITIVITY: number = -40; // 典型的手机麦克风灵敏度（dBV/Pa）
+  private readonly MIC_SENSITIVITY: number = -25; // 典型的手机麦克风灵敏度（dBV/Pa）
   private systemGain: number = 0; // 系统增益校正（dB）
 
   /**

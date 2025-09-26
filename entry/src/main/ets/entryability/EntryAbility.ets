@@ -9,59 +9,22 @@ import wantAgent from '@ohos.app.ability.wantAgent';
 import { WindowManager } from '../utils/WindowManager';
 import { DisplayManager } from '../utils/DisplayManager';
 import { NotificationHelper } from '../utils/NotificationHelper';
-import { PreferenceService, PreferenceValue } from '../services/PreferenceService';
-import { PreferenceKeyConstants } from '../constants/PreferenceKeyConstants';
-import audio from '@ohos.multimedia.audio';
-import { PermissionUtil } from '@pura/harmony-utils';
+import { PreferenceKeys } from '../models/PreferenceKeys';
+import { PermissionUtil, PreferencesUtil } from '@pura/harmony-utils';
 import { camera } from '@kit.CameraKit';
+import { PersistenceV2 } from '@kit.ArkUI';
 
 const TAG = 'EntryAbility';
 const DOMAIN = 0x0000;
 const NOTIFICATION_ID = 1;
-export default class EntryAbility extends UIAbility {
-  private keepScreenOn: boolean = false;
-  private backgroundRunningEnabled: boolean = false;
-  private meterOn: boolean = false;
-  private backgroundRunningRequested: boolean = false;
-  private  cameraManager: camera.CameraManager = camera.getCameraManager(getContext(this));
 
+export default class EntryAbility extends UIAbility {
+  private backgroundRunningRequested: boolean = false;
+  private cameraManager: camera.CameraManager = camera.getCameraManager(getContext(this));
 
   async onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): Promise<void> {
     hilog.info(DOMAIN, TAG, 'Ability onCreate');
 
-    // 初始化首选项默认值
-    const preferenceService = PreferenceService.getInstance();
-    preferenceService.init(this.context);
-    // 获取初始值
-    this.keepScreenOn = preferenceService.getBoolean(PreferenceKeyConstants.KEEP_SCREEN_ON, false);
-    this.backgroundRunningEnabled = preferenceService.getBoolean(PreferenceKeyConstants.BACKGROUND_RUNNING, false);
-    this.meterOn = preferenceService.getBoolean(PreferenceKeyConstants.METER_ON, false);
-
-    // 注册监听器
-    preferenceService.addChangeListener(PreferenceKeyConstants.KEEP_SCREEN_ON,
-      (key: string, newValue: PreferenceValue) => {
-        this.keepScreenOn = newValue as boolean;
-        const windowManager = WindowManager.getInstance();
-        windowManager.setKeepScreenOn(this.keepScreenOn);
-      });
-
-    preferenceService.addChangeListener(PreferenceKeyConstants.BACKGROUND_RUNNING,
-      (key: string, newValue: PreferenceValue) => {
-        this.backgroundRunningEnabled = newValue as boolean;
-      });
-
-    preferenceService.addChangeListener(PreferenceKeyConstants.PRIVACY_AGREED,
-      (key: string, newValue: PreferenceValue) => {
-        if (newValue) {
-          // 请求通知权限
-          const notificationHelper = NotificationHelper.getInstance(this.context);
-          notificationHelper.checkAndRequestPermission();
-        }
-      });
-    preferenceService.addChangeListener(PreferenceKeyConstants.METER_ON,
-      (key: string, newValue: PreferenceValue) => {
-        this.meterOn = newValue as boolean;
-      });
   }
 
   onDestroy(): void {
@@ -80,9 +43,12 @@ export default class EntryAbility extends UIAbility {
     // 注册窗口并加载内容
     const windowManager = WindowManager.getInstance();
     windowManager.registerWindowStage(windowStage);
-    windowManager.loadContent('pages/Index');
-    windowManager.setKeepScreenOn(this.keepScreenOn);
-    
+    windowManager.loadContent('pages/Index', () => {
+      PersistenceV2.notifyOnError((key: string, reason: string, msg: string) => {
+        console.error(`error key: ${key}, reason: ${reason}, message: ${msg}`);
+      });
+    });
+
     // 获取设备类型并设置窗口方向
     let windowClass: window.Window | undefined = undefined;
     windowStage.getMainWindow((err: BusinessError, data) => {
@@ -106,13 +72,15 @@ export default class EntryAbility extends UIAbility {
         windowClass.setPreferredOrientation(orientation, (err: BusinessError) => {
           const errCode: number = err.code;
           if (errCode) {
-            hilog.error(DOMAIN, TAG, `Failed to set window orientation. Cause code: ${err.code}, message: ${err.message}`);
+            hilog.error(DOMAIN, TAG,
+              `Failed to set window orientation. Cause code: ${err.code}, message: ${err.message}`);
             return;
           }
           hilog.info(DOMAIN, TAG, 'Succeeded in setting window orientation.');
         });
       } catch (exception) {
-        hilog.error(DOMAIN, TAG, `Failed to set window orientation. Cause code: ${exception.code}, message: ${exception.message}`);
+        hilog.error(DOMAIN, TAG,
+          `Failed to set window orientation. Cause code: ${exception.code}, message: ${exception.message}`);
       }
     });
 
@@ -127,15 +95,11 @@ export default class EntryAbility extends UIAbility {
   }
 
   onWindowStageDestroy(): void {
-    const windowManager = WindowManager.getInstance();
-    windowManager.setKeepScreenOn(this.keepScreenOn);
     hilog.info(DOMAIN, TAG, 'Ability onWindowStageDestroy');
 
   }
 
   onForeground(): void {
-    const windowManager = WindowManager.getInstance();
-    windowManager.setKeepScreenOn(this.keepScreenOn);
     DisplayManager.getInstance().onForeground();
     if (this.backgroundRunningRequested) {
       // 取消后台通知
@@ -149,10 +113,10 @@ export default class EntryAbility extends UIAbility {
 
   onBackground(): void {
     const windowManager = WindowManager.getInstance();
-    windowManager.setKeepScreenOn(this.keepScreenOn);
+    windowManager.setKeepScreenOn(false);
     DisplayManager.getInstance().onBackground();
 
-    if (this.backgroundRunningEnabled && this.meterOn) {
+    if (PersistenceV2.connect(PreferenceKeys)!.background_running) {
       this.startBackgroundRunning();
     }
 

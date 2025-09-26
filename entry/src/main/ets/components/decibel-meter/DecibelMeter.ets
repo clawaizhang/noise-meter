@@ -2,7 +2,7 @@ import { DecibelService } from '../../services/DecibelService';
 import { DecibelRecordService } from '../../services/DecibelRecordService';
 import common from '@ohos.app.ability.common';
 import { navigationStack } from '../../constants/ProviderConstant';
-import { AppStorageV2, promptAction, window } from '@kit.ArkUI';
+import { AppStorageV2, LevelMode, PersistenceV2, promptAction, window } from '@kit.ArkUI';
 import display from '@ohos.display';
 import { taskpool } from '@kit.ArkTS';
 import { concurrentCalculateSpectrum } from '../../concurrent/ConcurrentFftAnalyzer';
@@ -12,17 +12,15 @@ import {
   secondsToHoursMinutesSecondsWithDecimal
 } from '../../utils/TimeUtils';
 import { ActionPanel } from './ActionPanel';
-import { CalibrationIndicator } from './CalibrationIndicator';
 import { drawSpectrum, getDbSteps, getFrequencySteps } from './DrawSpectrum';
 import { DecibelState } from '../../types/DecibelState';
 import { DisplayManager } from '../../../../main/ets/utils/DisplayManager';
-import { AudioAnalysisMode, PREF_ANALYSIS_MODE, AudioPresets } from '../../common/AudioConfig';
-import { PreferenceKeyConstants } from '../../constants/PreferenceKeyConstants';
+import { AudioAnalysisMode, AudioPresets } from '../../common/AudioConfig';
+import { PreferenceKeys } from '../../models/PreferenceKeys';
 import { DecibelRecord } from '../../models/DecibelRecord';
 import { AudioService } from '../../services/AudioService';
 import { FileService } from '../../services/FileService';
 import { LocationService, LocationInfo } from '../../services/LocationService';
-import { PreferenceService, PreferenceChangeListener, PreferenceValue } from '../../services/PreferenceService';
 import { FFTAnalyzer } from '../../utils/FFTAnalyzer';
 import { LocationDisplay } from '../business/LocationDisplay';
 import { WeightingType } from '../../constants/WeightingConstants';
@@ -31,7 +29,6 @@ import { BusinessError } from '@kit.BasicServicesKit';
 import { camera } from '@kit.CameraKit';
 import lottie, { AnimationItem } from '@ohos/lottie';
 import { DialogHub, InfCustomDialog, InfSheet } from '@hadss/dialoghub';
-import { NoiseLevelDialogBuilder } from '../../pages/noisemeter/NoiseLevelDialogNavigation';
 import { resourceManager } from '@kit.LocalizationKit';
 import { NoiseDescriptionDialogBuilder } from '../../pages/noisemeter/NoiseDescriptionDialogNavigation';
 import { DetailDialogBuilder, DetailDialogParams } from '../../pages/noisemeter/DetailDialogNavigation';
@@ -49,20 +46,14 @@ export struct DecibelMeter {
   @Local private isRecording: boolean = false
   @Local private showStats: boolean = false
   @Local private recordingTime: number = 0
-  @Local private isRecordEnabled: boolean = false
   @Local private torchOn: boolean = false
   @Local private isLocationEnabled: boolean = false // 位置服务状态
   @Local private canvasWidth: number = 0 // Canvas宽度
   @Local private canvasHeight: number = 0 // Canvas高度
-  @Local private calibrationGain: number = 0 // gain
-  @Local private weightingType: WeightingType = WeightingType.A // 当前FFT大小
-  @Local private currentMode: AudioAnalysisMode = AudioAnalysisMode.FAST_TIME_WEIGHTING // 当前模式
-  @Local private currentFftSize: number = 2048 // 当前FFT大小
-  @Local private noiseAlarmEnabled: boolean = true; // 是否启用噪音阈值警报
-  @Local private noiseThreshold: number = 80; // 设置噪音阈值为80分贝
   @Local private touShu: boolean = false;
   @Local private isNoiseAlarm: boolean = false // 是否触发噪音报警
   @Local private isDisplayApp: boolean = true
+  @Local pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys)!;
   @Local startTime: number = 0
   @Local breakPoint: string = '';
   @Consumer(navigationStack) navStack: NavPathStack = new NavPathStack()
@@ -70,14 +61,12 @@ export struct DecibelMeter {
   private locationService: LocationService = LocationService.getInstance()
   private recordService: DecibelRecordService = new DecibelRecordService(getContext() as common.UIAbilityContext)
   private fileService: FileService = new FileService(getContext() as common.Context)
-  private preferenceService: PreferenceService = PreferenceService.getInstance()
   private dbCount: number = 0
   private dbSum: number = 0
   private values: number[] = []
   private weightingTypes: WeightingType[] = []
   private releaseTimer: number = -1
   private currentRecord?: DecibelRecord
-  private recordListener?: PreferenceChangeListener
   noiseInfoDialog: InfSheet | undefined
   sysResourceManager: resourceManager.ResourceManager = resourceManager.getSystemResourceManager();
   // Canvas相关属性
@@ -116,6 +105,11 @@ export struct DecibelMeter {
     } catch (error) {
       console.error('[FREQ_TRACE][显示设备信息] 计算Canvas尺寸失败:', error);
     }
+  }
+
+  @Computed
+  get fft_size() {
+    return AudioPresets.getConfig(this.pk.audio_analysis_mode).fftSize;
   }
 
   @Monitor('meterOn')
@@ -200,7 +194,7 @@ export struct DecibelMeter {
       .animation({ curve: Curve.EaseOut })
       .onReady(() => {
         // 初始化完成后开始绘制
-        const emptySpectrum: Float32Array = new Float32Array(this.currentFftSize * 2);
+        const emptySpectrum: Float32Array = new Float32Array(this.fft_size * 2);
         if (this.isDisplayApp) {
           this.drawSpectrumLocal(emptySpectrum);
         }
@@ -215,8 +209,8 @@ export struct DecibelMeter {
         .fontSize(12)
         .fontColor('#ffffff');
 
-      Text(`${this.calibrationGain} ${this.weightingType === WeightingType.A ? 'dB(A)' :
-        this.weightingType === WeightingType.C ? 'dB(C)' : 'dB'}`)
+      Text(`${this.pk.calibration_value} ${this.pk.weighting_type === WeightingType.A ? 'dB(A)' :
+        this.pk.weighting_type === WeightingType.C ? 'dB(C)' : 'dB'}`)
         .fontSize(12)
         .fontColor('#ffffff');
     }
@@ -307,14 +301,24 @@ export struct DecibelMeter {
     }
   }
 
+  @Monitor('pk.location_enabled')
+  onLocationEnabledChange(monitor: IMonitor) {
+    const beforeEnabled = monitor.value<boolean>()?.before;
+    const newEnabled = monitor.value<boolean>()?.now;
+    if (newEnabled !== beforeEnabled) {
+      const newEnabled = monitor.value<boolean>()?.now;
+      if (!newEnabled) {
+        this.locationService.clearCache();
+      } else {
+        this.locationService.requestSingleLocation();
+      }
+    }
+  }
+
   aboutToDisappear() {
     lottie.destroy('cat')
     this.animationCatItem.removeEventListener('DOMLoaded');
     lottie.destroy('cat');
-    // 原有的清理代码
-    if (this.recordListener) {
-      this.preferenceService.removeChangeListener(PreferenceKeyConstants.RECORD, this.recordListener);
-    }
     if (this.releaseTimer !== -1) {
       clearTimeout(this.releaseTimer);
       this.releaseTimer = -1;
@@ -333,90 +337,19 @@ export struct DecibelMeter {
       displayManager.onHidden(() => {
         this.isDisplayApp = false;
       });
-      // 初始化位置服务状态
-      this.isLocationEnabled = this.preferenceService.getBoolean(PreferenceKeyConstants.LOCATION, true);
-      if (!this.isLocationEnabled) {
+      if (!this.pk.location_enabled) {
         this.locationService.clearCache();
       } else {
         // 初始化位置信息
         this.locationService.requestSingleLocation();
       }
-      this.preferenceService.addChangeListener(PreferenceKeyConstants.LOCATION,
-        (key: string, value: PreferenceValue) => {
-          if (key === PreferenceKeyConstants.LOCATION && typeof value === 'boolean') {
-            this.isLocationEnabled = value;
-            if (!value) {
-              this.locationService.clearCache();
-            } else {
-              this.locationService.requestSingleLocation();
-            }
-          }
-        });
 
-      // 获取当前的增益
-      this.calibrationGain =
-        this.preferenceService.getNumber(PreferenceKeyConstants.CALIBRATION, 0);
-      this.preferenceService.addChangeListener(PreferenceKeyConstants.CALIBRATION,
-        (key: string, value: PreferenceValue) => {
-          if (key === PreferenceKeyConstants.CALIBRATION && typeof value === 'number') {
-            this.calibrationGain = value;
-          }
-        });
-      // 获取当前的计权类型
-      this.weightingType =
-        this.preferenceService.getString(PreferenceKeyConstants.WEIGHTING, WeightingType.A) as WeightingType;
-      console.debug('[DecibelService] 当前计权类型:', this.weightingType);
-      this.preferenceService.addChangeListener(PreferenceKeyConstants.WEIGHTING,
-        (key: string, value: PreferenceValue) => {
-          if (key === PreferenceKeyConstants.WEIGHTING && typeof value === 'string') {
-            this.weightingType = value as WeightingType;
-          }
-        });
-      //获取fftSize
-      // 获取当前分析模式和FFT大小
-      this.currentMode = this.preferenceService.getString(PREF_ANALYSIS_MODE, 'default') as AudioAnalysisMode;
-      this.currentFftSize = AudioPresets.getConfig(this.currentMode).fftSize;
-      console.info(`[FREQ_TRACE][FFT] 当前模式: ${this.currentMode}, FFT大小: ${this.currentFftSize}`);
-      this.preferenceService.addChangeListener(PREF_ANALYSIS_MODE, (key: string, value: PreferenceValue) => {
-        if (key === PREF_ANALYSIS_MODE && typeof value === 'string') {
-          this.currentMode = value as AudioAnalysisMode;
-          this.currentFftSize = AudioPresets.getConfig(this.currentMode).fftSize;
-        }
-      });
       // 获取屏幕信息并初始化Canvas尺寸
       await this.calculateCanvasDimensions();
-
-      // 读取噪音阈值警报的开关和阈值设置
-      this.noiseAlarmEnabled = this.preferenceService.getBoolean(PreferenceKeyConstants.NOISE_ALARM_ENABLED, true);
-      this.noiseThreshold = this.preferenceService.getNumber(PreferenceKeyConstants.NOISE_THRESHOLD, 80);
-      this.preferenceService.addChangeListener(PreferenceKeyConstants.NOISE_ALARM_ENABLED,
-        (key: string, value: PreferenceValue) => {
-          if (key === PreferenceKeyConstants.NOISE_ALARM_ENABLED && typeof value === 'boolean') {
-            this.noiseAlarmEnabled = value;
-          }
-        });
-      this.preferenceService.addChangeListener(PreferenceKeyConstants.NOISE_THRESHOLD,
-        (key: string, value: PreferenceValue) => {
-          if (key === PreferenceKeyConstants.NOISE_THRESHOLD && typeof value === 'number') {
-            this.noiseThreshold = value;
-          }
-        });
 
     } catch (error) {
       console.error('[FREQ_TRACE][Screen] 初始化失败:', error);
     }
-
-    // 原有的初始化代码
-    // 获取录音开关状态
-    this.isRecordEnabled = this.preferenceService.getBoolean(PreferenceKeyConstants.RECORD, true);
-
-    // 监听录音开关状态变化
-    this.recordListener = (key: string, value: PreferenceValue): void => {
-      if (key === PreferenceKeyConstants.RECORD) {
-        this.isRecordEnabled = value as boolean;
-      }
-    };
-    this.preferenceService.addChangeListener(PreferenceKeyConstants.RECORD, this.recordListener);
 
     // 启动音频采集，带重试机制
     const maxRetries = 3;
@@ -472,7 +405,7 @@ export struct DecibelMeter {
       this.weightingTypes = [];
 
       // 如果启用了录音功能，开始录音
-      if (this.isRecordEnabled) {
+      if (this.pk.record_enabled) {
         this.audioService.startRecording();
       }
 
@@ -492,15 +425,15 @@ export struct DecibelMeter {
         }
 
         taskpool.execute<[string, ArrayBuffer,
-          WeightingType, number], Float32Array>(concurrentCalculateSpectrum, this.currentMode,
-          buffer, this.weightingType, this.calibrationGain).then(spectrum => {
-          const config = AudioPresets.getConfig(this.currentMode as AudioAnalysisMode);
+          WeightingType, number], Float32Array>(concurrentCalculateSpectrum, this.pk.audio_analysis_mode,
+          buffer, this.pk.weighting_type, this.pk.calibration_value).then(spectrum => {
+          const config = AudioPresets.getConfig(this.pk.audio_analysis_mode);
           const db: number = new FFTAnalyzer(config.fftSize, config.windowType, config.smoothingFactor,
             config.overlap).calculateAverageDb(spectrum);
 
           let decibel = Math.round(db);
           this.values.push(decibel);
-          this.weightingTypes.push(this.weightingType)
+          this.weightingTypes.push(this.pk.weighting_type)
           if (this.isDisplayApp) {
             this.decibelState.currentDecibel = decibel;
             this.updateStatistics(this.decibelState.currentDecibel);
@@ -521,7 +454,7 @@ export struct DecibelMeter {
     const dbSteps: number[] = getDbSteps();
     const frequencySteps: number[] = getFrequencySteps();
     drawSpectrum(this.canvasContext, this.canvasWidth, this.canvasHeight, spectrum, dbSteps, frequencySteps,
-      this.currentFftSize, this.sampleRate, this.sysResourceManager);
+      this.fft_size, this.sampleRate, this.sysResourceManager);
   }
 
   private resetData() {
@@ -561,12 +494,12 @@ export struct DecibelMeter {
           this.maxDecibel = value;
         }
       }
-      if (this.dbCount <= 5 && this.currentMode == AudioAnalysisMode.FAST_TIME_WEIGHTING) {
+      if (this.dbCount <= 5 && this.pk.audio_analysis_mode == AudioAnalysisMode.FAST_TIME_WEIGHTING) {
         this.maxDecibel = this.minDecibel;
         this.values.shift();
         this.values.unshift(this.minDecibel);
       }
-      if (this.dbCount <= 10 && this.currentMode == AudioAnalysisMode.IMPULSE_TIME_WEIGHTING) {
+      if (this.dbCount <= 10 && this.pk.audio_analysis_mode == AudioAnalysisMode.IMPULSE_TIME_WEIGHTING) {
         this.maxDecibel = this.minDecibel;
         this.values.shift();
         this.values.unshift(this.minDecibel);
@@ -582,7 +515,7 @@ export struct DecibelMeter {
       } else {
         this.touShu = false;
       }
-      if (value > this.noiseThreshold && this.noiseAlarmEnabled) {
+      if (value > this.pk.noise_threshold && this.pk.noise_alarm_enabled) {
         if (this.noiseAlarmTimer === -1) {
           this.noiseAlarmTimer = setInterval(() => {
             this.isNoiseAlarm = !this.isNoiseAlarm;
@@ -626,7 +559,7 @@ export struct DecibelMeter {
         // 如果启用了录音功能，获取并保存音频文件
         let currentAudioFilePath: string = '';
 
-        if (this.isRecordEnabled) {
+        if (this.pk.record_enabled) {
           try {
             currentAudioFilePath = await this.audioService.stopRecordingAndGetWavData(this.fileService);
           } catch (error) {
@@ -792,7 +725,7 @@ export struct DecibelMeter {
   actionPanel() {
     ActionPanel({
       isTorchOn: this.torchOn,
-      weightingType: this.weightingType,
+      weightingType: this.pk.weighting_type,
       onReset: () => {
         this.audioService.resetData();
         this.resetData();
@@ -805,13 +738,12 @@ export struct DecibelMeter {
       },
       // 修改：将onToggleWeighting的参数类型改为WeightingType
       onToggleWeighting: (weightingType: WeightingType) => {
-        this.weightingType = weightingType;
+        this.pk.weighting_type = weightingType;
         // 弹出提示框显示当前频率加权方式
         promptAction.showToast({
-          message: `已切换为: ${this.weightingType} 计权`,
+          message: `已切换为: ${weightingType} 计权`,
           duration: 2000
         });
-        this.preferenceService.setString(PreferenceKeyConstants.WEIGHTING, this.weightingType);
       }
     })
   }
@@ -893,7 +825,27 @@ export struct DecibelMeter {
           })
           .fontWeight(FontWeight.Bold)
           .fontColor(DecibelService.getDecibelColor(this.decibelState.currentDecibel));
-      }.backgroundColor('#00000000').margin({ bottom: -20, right: -20 })
+      }
+      .backgroundColor('#00000000')
+      .margin({ bottom: -20, right: -20 })
+      .id('currentDbComp')
+      .onTouch(() => {
+        DialogHub.getPopup()
+          .setTextContent('当前分贝值')
+          .setComponentTargetId('currentDbComp')
+          .setStyle({
+            radius: $r('sys.float.chip_small_radius'),
+            maskColor:'#00000000',
+          })
+          .setConfig({
+            dialogPosition: {
+              preferPlacement: Placement.Top
+            },
+            dialogBehavior: { isModal: true, autoDismiss: true }
+          })
+          .build()
+          .show();
+      })
       .alignItems(HorizontalAlign.Center);
     }
   }
