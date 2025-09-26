@@ -70,6 +70,7 @@ export struct DecibelHistory {
   @Local dataSource: DecibelRecordDataSource = new DecibelRecordDataSource([]);
   @Local selectedRecord: DecibelRecord | null = null;
   @Local pendingDeleteId: string = ''; // 当前正在删除的记录ID
+  @Local pendingDeleteAudioId: string = '';
   @Local shouChangMode: boolean = false;
   @Local deleteMode: boolean = false;
   private context: Context = getContext(this)
@@ -105,6 +106,9 @@ export struct DecibelHistory {
         this.deleteMode = !this.deleteMode;
         if (this.deleteMode) {
           this.shouChangMode = false;
+        } else {
+          this.pendingDeleteId = undefined;
+          this.pendingDeleteAudioId = undefined;
         }
       }
     }])
@@ -173,6 +177,7 @@ export struct DecibelHistory {
     }
     .backgroundColor($r('sys.color.comp_background_primary'))
     .justifyContent(FlexAlign.SpaceBetween)
+    .alignItems(VerticalAlign.Top)
     .padding(16)
     .borderRadius(16)
     .id("showNoiseDetailDialogFromHistory")
@@ -191,49 +196,88 @@ export struct DecibelHistory {
   @Builder
   shouChangShanChuButton(record: DecibelRecord) {
     // 右侧按钮组
-    if (this.deleteMode && record.id === this.pendingDeleteId) {
-      // 删除确认按钮
-      Button('删除并清空检测报告')
-        .height(36)
-        .type(ButtonType.Capsule)
-        .backgroundColor($r('sys.color.warning'))
-        .animation({ curve: Curve.EaseInOut })
-        .onClick(() => {
-          this.deleteRecord(record);
-        });
-    } else {
-      // 收藏按钮
-      if (this.shouChangMode) {
-        Button(record.isFavorite ? '取消收藏' : '收藏')
-          .fontColor(record.isFavorite ? '#FF4081' : Color.White)
-          .type(ButtonType.Capsule)
-          .height(36)
-          .backgroundColor(record.isFavorite ? '#FFE0EB' : '#FF4081')
-          .animation({ curve: Curve.EaseOut })
-          .onClick(async () => {
-            record.isFavorite = !record.isFavorite;
-            await this.recordService.updateRecord(record);
-            // 显示操作提示
-            this.promptAction.showToast({
-              message: record.isFavorite ? '已添加到收藏' : '已取消收藏',
-              duration: 2000,
-              bottom: '50%'
-            });
-          });
-      }
-
-      // 删除按钮
+    Column({ space: 8 }) {
       if (this.deleteMode) {
-        Button('删除')
-          .height(36)
-          .type(ButtonType.Capsule)
-          .backgroundColor($r('sys.color.alert'))
-          .animation({ curve: Curve.EaseInOut })
-          .onClick(() => {
-            this.pendingDeleteId = record.id;
-          });
+        // 删除确认按钮
+        if (record.id === this.pendingDeleteId) {
+          Button('删除并清空检测报告')
+            .height(36)
+            .type(ButtonType.Capsule)
+            .backgroundColor($r('sys.color.warning'))
+            .animation({ curve: Curve.EaseInOut })
+            .transition(TransitionEffect.scale({ x: 0, y: 0 })
+              .combine(TransitionEffect.opacity(1))
+              .animation({ curve: curves.springMotion(0.6, 0.8) }))
+            .onClick(() => {
+              this.deleteRecord(record);
+            });
+        } else {
+          Button('删除')
+            .height(36)
+            .type(ButtonType.Capsule)
+            .backgroundColor($r('sys.color.alert'))
+            .animation({ curve: Curve.EaseInOut })
+            .transition(TransitionEffect.scale({ x: 0, y: 0 })
+              .combine(TransitionEffect.opacity(1))
+              .animation({ curve: curves.springMotion(0.6, 0.8) }))
+            .onClick(() => {
+              this.pendingDeleteId = record.id;
+            });
+        }
+        if (record.id === this.pendingDeleteAudioId) {
+          Button('确认删除音频文件')
+            .height(36)
+            .type(ButtonType.Capsule)
+            .backgroundColor($r('sys.color.warning'))
+            .animation({ curve: Curve.EaseInOut })
+            .transition(TransitionEffect.scale({ x: 0, y: 0 })
+              .combine(TransitionEffect.opacity(1))
+              .animation({ curve: curves.springMotion(0.6, 0.8) }))
+            .onClick(() => {
+              this.deleteRecordAudio(record);
+            });
+        } else {
+          if (record.audioFilePath) {
+            Button('删除音频文件')
+              .height(36)
+              .type(ButtonType.Capsule)
+              .backgroundColor($r('sys.color.alert'))
+              .animation({ curve: Curve.EaseInOut })
+              .transition(TransitionEffect.scale({ x: 0, y: 0 })
+                .combine(TransitionEffect.opacity(1))
+                .animation({ curve: curves.springMotion(0.6, 0.8) }))
+              .onClick(() => {
+                this.pendingDeleteAudioId = record.id;
+              });
+          }
+        }
+
+      } else {
+        // 收藏按钮
+        if (this.shouChangMode) {
+          Button(record.isFavorite ? '取消收藏' : '收藏')
+            .fontColor(record.isFavorite ? '#FF4081' : Color.White)
+            .type(ButtonType.Capsule)
+            .height(36)
+            .backgroundColor(record.isFavorite ? '#FFE0EB' : '#FF4081')
+            .animation({ curve: Curve.EaseOut })
+            .transition(TransitionEffect.scale({ x: 0, y: 0 })
+              .combine(TransitionEffect.opacity(1))
+              .animation({ curve: curves.springMotion(0.6, 0.8) }))
+            .onClick(async () => {
+              record.isFavorite = !record.isFavorite;
+              await this.recordService.updateRecord(record);
+              // 显示操作提示
+              this.promptAction.showToast({
+                message: record.isFavorite ? '已添加到收藏' : '已取消收藏',
+                duration: 2000,
+                bottom: '50%'
+              });
+            });
+        }
       }
-    }
+    }.justifyContent(FlexAlign.End).alignItems(HorizontalAlign.End).transition(TransitionEffect.opacity(1)
+      .animation({ curve: curves.springMotion(0.6, 0.8) }))
   }
 
   @Builder
@@ -256,7 +300,7 @@ export struct DecibelHistory {
         this.shouChangShanChuButton(record)
       }
     }
-    .alignItems(HorizontalAlign.End)
+    .alignItems(HorizontalAlign.End).justifyContent(FlexAlign.Start)
   }
 
   @Builder
@@ -335,7 +379,9 @@ export struct DecibelHistory {
   }
 
   private formatBytes(bytes: number): string {
-    if (bytes === 0) return '0 B'
+    if (bytes === 0) {
+      return '0 B'
+    }
     const k = 1024
     const sizes = ['B', 'KB', 'MB', 'GB', 'TB']
     const i = Math.floor(Math.log(bytes) / Math.log(k))
@@ -354,6 +400,26 @@ export struct DecibelHistory {
       // 隐藏删除按钮
       this.pendingDeleteId = '';
       this.dataSource.notifyDataDelete(index);
+      // 显示删除成功提示
+      this.promptAction.showToast({
+        message: '删除成功',
+        duration: 2000,
+        bottom: '50%'
+      });
+    } catch (error) {
+      console.error('删除记录失败:', error);
+    }
+  }
+
+  private async deleteRecordAudio(record: DecibelRecord) {
+    try {
+      record.audioFilePath = '';
+      this.recordService.updateRecord(record).then(() => {
+        this.fileService.deleteFile(record.audioFilePath!.replace(this.fileService.getBasePath(), '')).then(() => {
+        })
+      });
+      // 隐藏删除按钮
+      this.pendingDeleteAudioId = '';
       // 显示删除成功提示
       this.promptAction.showToast({
         message: '删除成功',

@@ -38,6 +38,8 @@ export class DecibelRecord {
   duration: number;
   decibelValues: number[];
   location?: string;
+
+  @Trace
   audioFilePath?: string;
   @Trace
   isFavorite: boolean;
