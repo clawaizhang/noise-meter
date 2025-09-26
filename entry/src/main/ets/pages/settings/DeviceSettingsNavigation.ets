@@ -25,7 +25,7 @@ function itemDescription() {
 
 @Extend(Column)
 function cardStyle() {
-  .backgroundColor($r('sys.color.comp_background_secondary'))
+  .backgroundColor($r('sys.color.comp_background_primary'))
   .justifyContent(FlexAlign.Start)
   .alignItems(HorizontalAlign.Start)
   .borderRadius(16)
@@ -86,32 +86,32 @@ export struct DeviceSettings {
       }
 
       // 屏幕常亮设置
-      GridCol() {
-        Column({ space: 8 }) {
-          Row({ space: 8 }) {
-            Row() {
-              Image($r('app.media.ic_keep_screen_on'))
-                .itemIcon()
-
-              Text('屏幕常亮')
-                .itemTitle()
-            }.layoutWeight(1)
-
-            Toggle({ type: ToggleType.Switch, isOn: this.pk.keep_screen_on })
-              .selectedColor($r('app.color.toggle_active'))
-              .switchPointColor($r('app.color.background_primary'))
-              .onChange((isOn: boolean) => {
-                this.pk.keep_screen_on = isOn;
-              })
-          }
-          .listItemRow()
-
-          Text(this.pk.keep_screen_on ? '屏幕将保持常亮状态' : '屏幕会根据系统设置自动休眠')
-            .itemDescription()
-        }
-        .cardStyle()
-      }
-    }.backgroundColor($r('sys.color.background_primary')).padding(16)
+      // GridCol() {
+      //   Column({ space: 8 }) {
+      //     Row({ space: 8 }) {
+      //       Row() {
+      //         Image($r('app.media.ic_keep_screen_on'))
+      //           .itemIcon()
+      //
+      //         Text('屏幕常亮')
+      //           .itemTitle()
+      //       }.layoutWeight(1)
+      //
+      //       Toggle({ type: ToggleType.Switch, isOn: this.pk.keep_screen_on })
+      //         .selectedColor($r('app.color.toggle_active'))
+      //         .switchPointColor($r('app.color.background_primary'))
+      //         .onChange((isOn: boolean) => {
+      //           this.pk.keep_screen_on = isOn;
+      //         })
+      //     }
+      //     .listItemRow()
+      //
+      //     Text(this.pk.keep_screen_on ? '屏幕将保持常亮状态' : '屏幕会根据系统设置自动休眠')
+      //       .itemDescription()
+      //   }
+      //   .cardStyle()
+      // }
+    }.backgroundColor($r('sys.color.background_secondary')).padding(16)
   }
 }
 

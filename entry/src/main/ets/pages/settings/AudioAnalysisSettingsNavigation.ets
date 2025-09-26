@@ -28,7 +28,7 @@ function itemDescription() {
 
 @Extend(Column)
 function cardStyle() {
-  .backgroundColor($r('sys.color.comp_background_secondary'))
+  .backgroundColor($r('sys.color.comp_background_primary'))
   .justifyContent(FlexAlign.Start)
   .alignItems(HorizontalAlign.Start)
   .borderRadius(16)
@@ -44,129 +44,18 @@ function listItemRow() {
   .justifyContent(FlexAlign.Start)
 }
 
-@Extend(Text)
-function analysisDescription() {
-  .fontColor($r('sys.color.font_secondary'))
-  .fontSize(DesignConstants.FONT_SIZE_MD)
-  .textAlign(TextAlign.Start)
-  .alignSelf(ItemAlign.Start)
-}
-
-@Extend(Text)
-function analysisDetail() {
-  .fontColor($r('sys.color.font_secondary'))
-  .fontSize(DesignConstants.FONT_SIZE_MD)
-  .textAlign(TextAlign.Start)
-  .alignSelf(ItemAlign.Start)
-}
 
 @ComponentV2
 export struct AudioAnalysisSettings {
   @Local pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys)!;
-  @Local analysisModeDescription: string = '';
-  @Local analysisModeDetails: string[] = [];
-  @Local isModeChangeEnabled: boolean = true;
-  @Local remainingTime: number = 0;
   @Local isAutoCalibrating: boolean = false;
   @Local countdown: number = 0;
   @Local calibrationProgress: number = 0;
   @Local decibelState: DecibelState = AppStorageV2.connect(DecibelState, 'DecibelState', () => new DecibelState())!;
   @Local gridColumns: number = 1;
   @Consumer(navigationStack) navStack: NavPathStack = new NavPathStack();
-  private readonly COOLDOWN_DURATION: number = 500; // 0.5秒冷却时间
-
-  // 工具方法
-  private getWeightingIndex(type: WeightingType): number {
-    switch (type) {
-      case WeightingType.A:
-        return 0;
-      case WeightingType.C:
-        return 1;
-      case WeightingType.Z:
-        return 2;
-      default:
-        return 0;
-    }
-  }
-
-  private getWeightingType(index: number): WeightingType {
-    switch (index) {
-      case 0:
-        return WeightingType.A;
-      case 1:
-        return WeightingType.C;
-      case 2:
-        return WeightingType.Z;
-      default:
-        return WeightingType.A;
-    }
-  }
-
-  private getAnalysisModeIndex(mode: AudioAnalysisMode): number {
-    switch (mode) {
-      case AudioAnalysisMode.FAST_TIME_WEIGHTING:
-        return 0;
-      case AudioAnalysisMode.SLOW_TIME_WEIGHTING:
-        return 1;
-      case AudioAnalysisMode.IMPULSE_TIME_WEIGHTING:
-        return 2;
-      default:
-        return 0;
-    }
-  }
-
-  private getAnalysisModeFromIndex(index: number): AudioAnalysisMode {
-    switch (index) {
-      case 0:
-        return AudioAnalysisMode.FAST_TIME_WEIGHTING;
-      case 1:
-        return AudioAnalysisMode.SLOW_TIME_WEIGHTING;
-      case 2:
-        return AudioAnalysisMode.IMPULSE_TIME_WEIGHTING;
-      default:
-        return AudioAnalysisMode.FAST_TIME_WEIGHTING;
-    }
-  }
-
-  private getAnalysisModeDisplayName(mode: AudioAnalysisMode): string {
-    switch (mode) {
-      case AudioAnalysisMode.FAST_TIME_WEIGHTING:
-        return '快速(F)';
-      case AudioAnalysisMode.SLOW_TIME_WEIGHTING:
-        return '慢速(S)';
-      case AudioAnalysisMode.IMPULSE_TIME_WEIGHTING:
-        return '脉冲(I)';
-      default:
-        return '快速(F)';
-    }
-  }
-
-  private getAnalysisModeDescription(mode: AudioAnalysisMode): string {
-    switch (mode) {
-      case AudioAnalysisMode.FAST_TIME_WEIGHTING:
-        return '时间常数200ms，适合测量快速变化的噪声';
-      case AudioAnalysisMode.SLOW_TIME_WEIGHTING:
-        return '时间常数500ms，适合测量稳态噪声';
-      case AudioAnalysisMode.IMPULSE_TIME_WEIGHTING:
-        return '时间常数35ms，适合测量脉冲噪声';
-      default:
-        return '时间常数200ms，适合测量快速变化的噪声';
-    }
-  }
 
   aboutToAppear() {
-    this.updateAnalysisModeCache();
-  }
-
-  private updateAnalysisModeCache() {
-    this.analysisModeDescription = this.getAnalysisModeDescription(this.pk.audio_analysis_mode);
-    const config = AudioPresets.getConfig(this.pk.audio_analysis_mode);
-    this.analysisModeDetails = [
-      `FFT大小: ${config.fftSize}`,
-      `频率分辨率: ${(44100 / config.fftSize).toFixed(1)}Hz`,
-      `时间分辨率: ${(config.fftSize / 44100 * 1000).toFixed(1)}ms`,
-      `更新间隔: ${config.updateInterval}ms`
-    ];
   }
 
   private startAutoCalibration() {
@@ -221,98 +110,6 @@ export struct AudioAnalysisSettings {
       breakpoints: { reference: BreakpointsReference.WindowSize }
     , gutter: 16
     }) {
-      // 时间计权模式
-      GridCol() {
-        Column() {
-          Row() {
-            Row({ space: 8 }) {
-              Image($r('app.media.ic_time_weighting'))
-                .itemIcon()
-              Text('时间计权模式')
-                .itemTitle()
-            }.layoutWeight(1)
-
-            Row() {
-              Text(this.remainingTime > 0 ? `${(this.remainingTime / 1000).toFixed(1)}秒` : '')
-                .fontSize(DesignConstants.FONT_SIZE_MD)
-                .fontColor($r('sys.color.font_secondary'))
-                .margin({ right: DesignConstants.SPACING_XS })
-              Select([
-                { value: '快速(F)' },
-                { value: '慢速(S)' },
-                { value: '脉冲(I)' }
-              ])
-                .selected(this.getAnalysisModeIndex(this.pk.audio_analysis_mode))
-                .value(this.getAnalysisModeDisplayName(this.pk.audio_analysis_mode))
-                .onSelect((index: number) => {
-                  if (!this.isModeChangeEnabled) {
-                    return;
-                  }
-
-                  // 禁用切换
-                  this.isModeChangeEnabled = false;
-                  const mode = this.getAnalysisModeFromIndex(index);
-                  this.pk.audio_analysis_mode = mode;
-                  this.updateAnalysisModeCache();
-
-                  // 启动冷却计时器
-                  this.remainingTime = this.COOLDOWN_DURATION;
-                  const interval = setInterval(() => {
-                    this.remainingTime -= 100;
-                    if (this.remainingTime <= 0) {
-                      clearInterval(interval);
-                      this.isModeChangeEnabled = true;
-                      this.remainingTime = 0;
-                    }
-                  }, 100);
-                })
-                .enabled(this.isModeChangeEnabled)
-            }
-          }
-          .listItemRow()
-
-          Column() {
-            Text(this.analysisModeDescription)
-              .analysisDescription()
-            ForEach(this.analysisModeDetails, (detail: string) => {
-              Text(detail)
-                .analysisDetail()
-            })
-          }.justifyContent(FlexAlign.Start)
-        }
-        .cardStyle()
-      }
-
-      // 分贝计权设置
-      GridCol() {
-        Column({ space: 8 }) {
-          Row() {
-            Row({ space: 8 }) {
-              Image($r('app.media.ic_frequency_weighting'))
-                .itemIcon()
-              Text('频率加权')
-                .itemTitle()
-            }.layoutWeight(1)
-
-            Select([
-              { value: 'A计权' },
-              { value: 'C计权' },
-              { value: 'Z计权' }
-            ])
-              .selected(this.getWeightingIndex(this.pk.weighting_type))
-              .value(this.pk.weighting_type + '计权')
-              .onSelect((index: number) => {
-                const weightingType = this.getWeightingType(index);
-                this.pk.weighting_type = weightingType;
-              })
-          }
-          .listItemRow()
-
-          Text(getWeightingDescription(this.pk.weighting_type))
-            .itemDescription()
-        }
-        .cardStyle()
-      }
 
       // 声级校准设置
       GridCol() {
@@ -419,7 +216,7 @@ export struct AudioAnalysisSettings {
       }
     }
     .padding(16)
-    .backgroundColor($r('sys.color.background_primary'))
+    .backgroundColor($r('sys.color.background_secondary'))
   }
 }
 

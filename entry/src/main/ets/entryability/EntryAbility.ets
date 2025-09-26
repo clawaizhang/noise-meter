@@ -10,7 +10,7 @@ import { WindowManager } from '../utils/WindowManager';
 import { DisplayManager } from '../utils/DisplayManager';
 import { NotificationHelper } from '../utils/NotificationHelper';
 import { PreferenceKeys } from '../models/PreferenceKeys';
-import { PermissionUtil, PreferencesUtil } from '@pura/harmony-utils';
+import { AppUtil, PermissionUtil, PreferencesUtil } from '@pura/harmony-utils';
 import { camera } from '@kit.CameraKit';
 import { PersistenceV2 } from '@kit.ArkUI';
 
@@ -44,6 +44,7 @@ export default class EntryAbility extends UIAbility {
     const windowManager = WindowManager.getInstance();
     windowManager.registerWindowStage(windowStage);
     windowManager.loadContent('pages/Index', () => {
+      AppUtil.init(this.context);
       PersistenceV2.notifyOnError((key: string, reason: string, msg: string) => {
         console.error(`error key: ${key}, reason: ${reason}, message: ${msg}`);
       });

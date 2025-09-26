@@ -2,7 +2,7 @@ import { DecibelService } from '../../services/DecibelService';
 import { DecibelRecordService } from '../../services/DecibelRecordService';
 import common from '@ohos.app.ability.common';
 import { navigationStack } from '../../constants/ProviderConstant';
-import { AppStorageV2, LevelMode, PersistenceV2, promptAction, window } from '@kit.ArkUI';
+import { AppStorageV2, curves, LevelMode, PersistenceV2, promptAction, window } from '@kit.ArkUI';
 import display from '@ohos.display';
 import { taskpool } from '@kit.ArkTS';
 import { concurrentCalculateSpectrum } from '../../concurrent/ConcurrentFftAnalyzer';
@@ -44,10 +44,8 @@ export struct DecibelMeter {
   @Local private avgDecibel: number = 0
   @Local private showAvgInsteadOfMin: boolean = true
   @Local private isRecording: boolean = false
-  @Local private showStats: boolean = false
   @Local private recordingTime: number = 0
   @Local private torchOn: boolean = false
-  @Local private isLocationEnabled: boolean = false // 位置服务状态
   @Local private canvasWidth: number = 0 // Canvas宽度
   @Local private canvasHeight: number = 0 // Canvas高度
   @Local private touShu: boolean = false;
@@ -79,6 +77,26 @@ export struct DecibelMeter {
   mainCatRenderingSettings: RenderingContextSettings = new RenderingContextSettings(true)
   mainCatCanvasRenderingContext: CanvasRenderingContext2D = new CanvasRenderingContext2D(this.mainCatRenderingSettings)
   animationCatItem!: AnimationItem
+
+  @Monitor('pk.audio_analysis_mode')
+  analysisModeChange(monitor:IMonitor){
+    if (this.animationCatItem) {
+      let mode = monitor.value<AudioAnalysisMode>()?.now;
+      this.setPlaySpeed(mode);
+    }
+  }
+
+  private setPlaySpeed(mode: AudioAnalysisMode | undefined) {
+    if (mode == AudioAnalysisMode.SLOW_TIME_WEIGHTING) {
+      this.animationCatItem.setSpeed(1);
+    }
+    if (mode == AudioAnalysisMode.FAST_TIME_WEIGHTING) {
+      this.animationCatItem.setSpeed(1.5);
+    }
+    if (mode == AudioAnalysisMode.IMPULSE_TIME_WEIGHTING) {
+      this.animationCatItem.setSpeed(2);
+    }
+  }
 
   // 计算Canvas尺寸（响应式版本）
   private async calculateCanvasDimensions(): Promise<void> {
@@ -480,10 +498,6 @@ export struct DecibelMeter {
         this.minDecibel = value;
         this.maxDecibel = value;
         this.avgDecibel = value;
-        // 延迟显示统计区域，添加动画效果
-        animateTo({ duration: 300, curve: Curve.EaseOut }, () => {
-          this.showStats = true;
-        })
       } else {
         // 更新最小值
         if (value < this.minDecibel) {
@@ -540,7 +554,7 @@ export struct DecibelMeter {
       try {
         let locationInfo: LocationInfo | null = null;
 
-        if (this.isLocationEnabled) {
+        if (this.pk.location_enabled) {
           locationInfo = this.locationService.getCachedLocation();
           console.info('[FREQ_TRACE][Location] 位置信息:', locationInfo);
         } else {
@@ -652,7 +666,7 @@ export struct DecibelMeter {
             // 分贝显示和位置信息
             Column() {
               // 分贝显示卡片
-              Row() {
+              Row({ space: 8 }) {
                 this.averageMin()
 
                 this.CurrentDecibel()
@@ -674,17 +688,17 @@ export struct DecibelMeter {
               Row() {
                 LocationDisplay()
               }
-            }.margin({ top: -40 })
+            }.margin({ top: this.pk.cat_enabled ? -35 : 0 })
             .justifyContent(FlexAlign.Center)
           }
-          .height('100% - 30vp')
+          .height(this.pk.cat_enabled ? '100% - 30vp' : '')
           .clip(true)
 
           if (["md", "lg", "xl", "xxl"].includes(this.breakPoint)) {
             this.actionPanel()
           }
         }
-      }
+      }.backgroundColor($r('sys.color.comp_background_primary')).borderRadius(16)
 
       // 频谱图
       GridCol({
@@ -707,14 +721,16 @@ export struct DecibelMeter {
         this.actionPanel()
       }.visibility(["md", "lg", "xl", "xxl"].includes(this.breakPoint) ? Visibility.Hidden : Visibility.Visible)
 
-      GridCol({
-        span: {
-          xs: 12,
-          sm: 12,
-          md: 2,
+      if (this.pk.nature_sound_enabled) {
+        GridCol({
+          span: {
+            xs: 12,
+            sm: 12,
+            md: 2,
+          }
+        }) {
+          PressureSounds({ cardDirection: FlexDirection.Row, hideDesc: true })
         }
-      }) {
-        PressureSounds({ cardDirection: FlexDirection.Row, hideDesc: true })
       }
     }.padding({ top: 16, bottom: 16 }).onBreakpointChange(breakPoints => {
       this.breakPoint = breakPoints;
@@ -788,54 +804,73 @@ export struct DecibelMeter {
   @Builder
   CurrentDecibel() {
     Stack({ alignContent: Alignment.Bottom }) {
-      Canvas(this.mainCatCanvasRenderingContext)
-        .width(180)
-        .height(180)
-        .onReady(() => {
-          //抗锯齿的设置
-          this.mainCatCanvasRenderingContext.imageSmoothingEnabled = true;
-          this.mainCatCanvasRenderingContext.imageSmoothingQuality = 'medium';
-          lottie.destroy('cat');
-          this.animationCatItem = lottie.loadAnimation({
-            container: this.mainCatCanvasRenderingContext,
-            renderer: 'canvas',
-            loop: true,
-            autoplay: true,
-            name: 'cat',
-            contentMode: 'Contain',
-            frameRate: 30,
+      if (this.pk.cat_enabled && this.isDisplayApp) {
+        Canvas(this.mainCatCanvasRenderingContext)
+          .width(180)
+          .height(180)
+          .onReady(() => {
+            //抗锯齿的设置
+            this.mainCatCanvasRenderingContext.imageSmoothingEnabled = true;
+            this.mainCatCanvasRenderingContext.imageSmoothingQuality = 'medium';
+            lottie.destroy('cat');
+            this.animationCatItem = lottie.loadAnimation({
+              container: this.mainCatCanvasRenderingContext,
+              renderer: 'canvas',
+              loop: true,
+              autoplay: true,
+              name: 'cat',
+              contentMode: 'Contain',
+              frameRate: 30,
 
-            // imagePath: 'lottie/images/',                 // 加载读取指定路径下的图片资源
-            path: 'common/lottie/lovely_cat.json', // json路径
-            // initialSegment: [10,50]                      // 播放的动画片段
+              // imagePath: 'lottie/images/',                 // 加载读取指定路径下的图片资源
+              path: 'common/lottie/lovely_cat.json', // json路径
+              // initialSegment: [10,50]                      // 播放的动画片段
+            });
+            this.setPlaySpeed(this.pk.audio_analysis_mode);
+            // 因为动画是异步加载，所以对animateItem的操作需要放在动画加载完成回调里操作
+            this.animationCatItem.addEventListener('DOMLoaded', (args: Object): void => {
+              this.animationCatItem.play();
+            });
           });
-          // 因为动画是异步加载，所以对animateItem的操作需要放在动画加载完成回调里操作
-          this.animationCatItem.addEventListener('DOMLoaded', (args: Object): void => {
-            this.animationCatItem.play();
-          });
-        });
+      }
       Column() {
-        Text(this.decibelState.currentDecibel === 0 ? '-' : this.decibelState.currentDecibel.toString())
-          .fontSize(100)
-          .textShadow({
-            radius: 2,
-            color: Color.White,
-            offsetX: 0,
-            offsetY: 0
-          })
-          .fontWeight(FontWeight.Bold)
-          .fontColor(DecibelService.getDecibelColor(this.decibelState.currentDecibel));
+        if (this.decibelState.currentDecibel === 0) {
+          Text('-')
+            .fontSize(100)
+            .textShadow({
+              radius: 2,
+              color: Color.White,
+              offsetX: 0,
+              offsetY: 0
+            })
+            .transition(TransitionEffect.scale({ x: 0, y: 0 }).animation({ curve: curves.springMotion() }))
+            .fontWeight(FontWeight.Bold)
+            .fontColor(DecibelService.getDecibelColor(this.decibelState.currentDecibel));
+        } else {
+          Text(this.decibelState.currentDecibel.toString())
+            .fontSize(100)
+            .textShadow({
+              radius: 2,
+              color: Color.White,
+              offsetX: 0,
+              offsetY: 0
+            })
+            .transition(TransitionEffect.scale({ x: 0, y: 0 }).animation({ curve: curves.springMotion() }))
+            .fontWeight(FontWeight.Bold)
+            .fontColor(DecibelService.getDecibelColor(this.decibelState.currentDecibel));
+        }
+
       }
       .backgroundColor('#00000000')
       .margin({ bottom: -20, right: -20 })
       .id('currentDbComp')
-      .onTouch(() => {
+      .onClick(() => {
         DialogHub.getPopup()
           .setTextContent('当前分贝值')
           .setComponentTargetId('currentDbComp')
           .setStyle({
             radius: $r('sys.float.chip_small_radius'),
-            maskColor:'#00000000',
+            maskColor: '#00000000',
           })
           .setConfig({
             dialogPosition: {

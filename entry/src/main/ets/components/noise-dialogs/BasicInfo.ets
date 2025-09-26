@@ -53,7 +53,7 @@ export struct BasicInfo {
           .animation({
             curve: Curve.EaseOut
           })
-          .backgroundColor($r('sys.color.background_tertiary'))
+          .backgroundColor($r('sys.color.comp_background_secondary'))
           .borderRadius(4)
           .padding(4)
           .id('pleaseEditTheComments')
@@ -80,7 +80,7 @@ export struct BasicInfo {
       }
     }
     .padding(16)
-    .backgroundColor($r('sys.color.background_secondary'))
+    .backgroundColor($r('sys.color.comp_background_primary'))
     .borderRadius(16)
   }
 }

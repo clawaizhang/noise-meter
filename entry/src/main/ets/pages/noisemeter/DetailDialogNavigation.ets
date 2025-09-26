@@ -116,7 +116,7 @@ export struct DetailDialog {
       }
     }])
     .padding(16)
-    .backgroundColor($r('sys.color.background_primary'))
+    .backgroundColor($r('sys.color.background_secondary'))
   }
 }
 

@@ -24,7 +24,7 @@ export struct AudioPlayer {
             .fillColor($r('sys.color.font_primary'))
         }
         .type(ButtonType.Normal)
-        .backgroundColor($r('sys.color.background_tertiary'))
+        .backgroundColor($r('sys.color.comp_background_secondary'))
         .margin({ right: 8 })
         .onClick(async () => {
           try {
@@ -51,7 +51,7 @@ export struct AudioPlayer {
         .justifyContent(FlexAlign.Center)
       }
       .type(ButtonType.Capsule)
-      .backgroundColor($r('sys.color.background_tertiary'))
+      .backgroundColor($r('sys.color.comp_background_secondary'))
       .height(36)
       .padding({ left: 16, right: 16 })
       .onClick(async () => {

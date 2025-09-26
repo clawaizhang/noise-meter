@@ -89,7 +89,7 @@ export struct DecibelHistory {
       } else {
         this.ListLayoutView()
       }
-    }.title('历史记录').menus([{
+    }.title('历史记录').backgroundColor($r('sys.color.background_secondary')).menus([{
       value: '收藏',
       symbolIcon: new SymbolGlyphModifier($r("sys.symbol.heart")),
       action: () => {
@@ -171,7 +171,7 @@ export struct DecibelHistory {
       // 右侧区域：分贝值信息
       this.decibelInfoPlayer(record) // 禁止收缩
     }
-    .backgroundColor($r('sys.color.comp_background_secondary'))
+    .backgroundColor($r('sys.color.comp_background_primary'))
     .justifyContent(FlexAlign.SpaceBetween)
     .padding(16)
     .borderRadius(16)
@@ -430,6 +430,6 @@ export struct DecibelHistory {
           }, (record: DecibelRecord) => record.id)
         }
       }.margin({ left: 16, right: 16 })
-    }.scrollBar(BarState.Off).edgeEffect(EdgeEffect.Spring)
+    }.scrollBar(BarState.Off).edgeEffect(EdgeEffect.Spring).height('100%').align(Alignment.Top)
   }
 }

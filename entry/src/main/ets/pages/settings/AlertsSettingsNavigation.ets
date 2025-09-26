@@ -26,7 +26,7 @@ function itemDescription() {
 
 @Extend(Column)
 function cardStyle() {
-  .backgroundColor($r('sys.color.comp_background_secondary'))
+  .backgroundColor($r('sys.color.comp_background_primary'))
   .justifyContent(FlexAlign.Start)
   .alignItems(HorizontalAlign.Start)
   .borderRadius(16)
@@ -139,6 +139,6 @@ export struct AlertsSettings {
         .cardStyle()
       }
     }
-    .padding(16).backgroundColor($r('sys.color.background_primary'))
+    .padding(16).backgroundColor($r('sys.color.background_secondary'))
   }
 }

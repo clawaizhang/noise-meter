@@ -28,10 +28,9 @@ export struct InputDialog {
             .fontWeight(FontWeight.Medium)
             .fontColor($r('sys.color.font_emphasize'))
 
-          TextArea({ placeholder: '请输入备注(最多64字)', text: this.default })
+          TextArea({ placeholder: '可选备注(最多64字)', text: this.default })
             .maxLength(140)
             .defaultFocus(true)
-            .enableKeyboardOnFocus(true)
             .enterKeyType(EnterKeyType.Go)
             .fontColor((this.comment.length > 64) ? $r('sys.color.alert') : $r('sys.color.font_primary'))
             .onChange((value: string) => {

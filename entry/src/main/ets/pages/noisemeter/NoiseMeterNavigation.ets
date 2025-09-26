@@ -80,7 +80,7 @@ export struct MainNoiseMeter {
       icon: $r('app.media.ic_settings'),
       action: () => {
         DialogHub.getSheet()
-          .setStyle({ title: { title: '设置' }, backgroundColor: $r('sys.color.background_primary') })
+          .setStyle({ title: { title: '设置' }, backgroundColor: $r('sys.color.background_secondary') })
           .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS })
           .setComponentTargetId('decibelMeterId')
           .setContent(wrapBuilder(SettingsBuilder))

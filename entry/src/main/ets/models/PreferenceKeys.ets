@@ -17,6 +17,13 @@ export class PreferenceKeys {
    */
   @Trace
   record_enabled: boolean = PreferencesUtil.getBooleanSync('record_enabled',true);
+
+
+  @Trace
+  cat_enabled: boolean = true;
+
+  @Trace
+  nature_sound_enabled: boolean = true;
   /**
    * 分贝加权类型
    */
