@@ -54,6 +54,10 @@ export struct DecibelMeter {
   @Local pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys)!;
   @Local startTime: number = 0
   @Local breakPoint: string = '';
+  @Local dScale: number = 1; // 页面缩放比例
+  @Local translateX: number = 0; // X轴位移
+  @Local translateY: number = 0; // Y轴位移
+  @Local dOpacity: number = 1; // 页面透明度
   @Consumer(navigationStack) navStack: NavPathStack = new NavPathStack()
   private audioService: AudioService = AudioService.getInstance(getContext() as common.UIAbilityContext)
   private locationService: LocationService = LocationService.getInstance()
@@ -79,7 +83,7 @@ export struct DecibelMeter {
   animationCatItem!: AnimationItem
 
   @Monitor('pk.audio_analysis_mode')
-  analysisModeChange(monitor:IMonitor){
+  analysisModeChange(monitor: IMonitor) {
     if (this.animationCatItem) {
       let mode = monitor.value<AudioAnalysisMode>()?.now;
       this.setPlaySpeed(mode);
@@ -258,7 +262,7 @@ export struct DecibelMeter {
     .onClick(() => {
       DialogHub.getSheet()
         .setContent(wrapBuilder(NoiseDescriptionDialogBuilder))
-        .setStyle({backgroundColor:$r('sys.color.background_secondary')})
+        .setStyle({ backgroundColor: $r('sys.color.background_secondary') })
         .setConfig({ enableOutsideInteractive: false, scrollSizeMode: ScrollSizeMode.FOLLOW_DETENT })
         .setComponentTargetId('noiseDescriptionButtonId')
         .build()
@@ -606,18 +610,18 @@ export struct DecibelMeter {
               duration: 3000
             });
           } else {
-            const params: DetailDialogParams = {
-              selectedRecord: this.currentRecord,
-              context: getContext(this),
-              fileService: this.fileService
-            };
-            DialogHub.getSheet()
-              .setComponentTargetId('showNoiseDetailDialogFromActionPanels')
-              .setStyle({ showClose: false })
-              .setConfig({ enableOutsideInteractive: false, scrollSizeMode: ScrollSizeMode.CONTINUOUS })
-              .setContent(wrapBuilder(DetailDialogBuilder), params)
-              .build()
-              .show();
+            // const params: DetailDialogParams = {
+            //   selectedRecord: this.currentRecord,
+            //   context: getContext(this),
+            //   fileService: this.fileService
+            // };
+            // DialogHub.getSheet()
+            //   .setComponentTargetId('showNoiseDetailDialogFromActionPanels')
+            //   .setStyle({ showClose: false })
+            //   .setConfig({ enableOutsideInteractive: false, scrollSizeMode: ScrollSizeMode.CONTINUOUS })
+            //   .setContent(wrapBuilder(DetailDialogBuilder), params)
+            //   .build()
+            //   .show();
           }
 
         }
@@ -733,7 +737,12 @@ export struct DecibelMeter {
           PressureSounds({ cardDirection: FlexDirection.Row, hideDesc: true })
         }
       }
-    }.padding({ top: 16, bottom: 16 }).onBreakpointChange(breakPoints => {
+    }
+    .padding({ top: 16, bottom: 16 })
+    .opacity(this.dOpacity)
+    .scale({ x: this.dScale, y: this.dScale })
+    .translate({ x: this.translateX, y: this.translateY })
+    .onBreakpointChange(breakPoints => {
       this.breakPoint = breakPoints;
     })
   }
@@ -749,6 +758,7 @@ export struct DecibelMeter {
       },
       onSave: (comments) => {
         this.stopRecording(comments);
+        this.startCollapseAnimation();
       },
       torchToggle: () => {
         this.toggleTorch();
@@ -763,6 +773,37 @@ export struct DecibelMeter {
         });
       }
     })
+  }
+
+  // 启动折叠动画
+  startCollapseAnimation() {
+    // 获取屏幕尺寸
+    const displayClass = display.getDefaultDisplaySync();
+    // 页面内容动画
+    animateTo({
+      duration: 800,
+      curve: curves.cubicBezier(0.4, 0.0, 0.2, 1.0)
+    }, () => {
+      this.dScale = 0.05;
+      this.translateX = px2vp(displayClass.width) / 2 - 80;
+      this.translateY = -px2vp(displayClass.height) / 2 + 20;
+      this.dOpacity = 0;
+    });
+
+    setTimeout(() => {
+      this.dScale = 0;
+      this.translateX = 0;
+      this.translateY = 0;
+      this.dOpacity = 0;
+      // 页面内容动画
+      animateTo({
+        duration: 800,
+        curve: curves.cubicBezier(0.4, 0.0, 0.2, 1.0)
+      }, () => {
+        this.dScale = 1;
+        this.dOpacity = 1;
+      });
+    }, 800)
   }
 
   @Builder
