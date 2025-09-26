@@ -36,9 +36,9 @@ export function NoiseDescriptionDialogBuilder() {
             left: 12,
             right: 12
           })
-          .backgroundColor($r('sys.color.background_secondary'))
           .margin({ bottom: 2 })
-        }
+        }          .backgroundColor($r('sys.color.comp_background_primary'))
+
       })
     }
   }

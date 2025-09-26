@@ -49,6 +49,7 @@ export struct PressureSounds {
               }.onClick(() => {
                 this.dialog = this.dialog ?? DialogHub.getSheet()
                   .setComponentTargetId('decibelMeterRoot')
+                  .setStyle({backgroundColor:$r('sys.color.background_secondary')})
                   .setContent(wrapBuilder(PressureSoundsBuilder))
                   .build();
                 this.dialog.show();

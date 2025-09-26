@@ -123,10 +123,10 @@ export class FileService {
    * @param fileName - 文件名
    * @returns Promise<fs.Stat>
    */
-  async getFileInfo(fileName: string): Promise<fs.Stat> {
+  getFileInfoSync(fileName: string): fs.Stat {
     try {
       const filePath = `${this.filesDir}/${fileName}`;
-      return await fs.stat(filePath);
+      return fs.statSync(filePath);
     } catch (error) {
       const businessError = error as BusinessError;
       console.error(`获取文件信息失败: ${businessError.message}`);

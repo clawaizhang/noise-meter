@@ -30,7 +30,6 @@ export struct InputDialog {
 
           TextArea({ placeholder: '可选备注(最多64字)', text: this.default })
             .maxLength(140)
-            .defaultFocus(true)
             .enterKeyType(EnterKeyType.Go)
             .fontColor((this.comment.length > 64) ? $r('sys.color.alert') : $r('sys.color.font_primary'))
             .onChange((value: string) => {
@@ -48,7 +47,7 @@ export struct InputDialog {
             Button('取消')
               .height(36)
               .fontColor($r('sys.color.font_secondary'))
-              .backgroundColor($r('sys.color.background_tertiary'))
+              .backgroundColor($r('sys.color.comp_background_secondary'))
               .onClick(() => {
                 this.onClose();
               })

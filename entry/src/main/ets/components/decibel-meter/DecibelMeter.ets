@@ -258,6 +258,7 @@ export struct DecibelMeter {
     .onClick(() => {
       DialogHub.getSheet()
         .setContent(wrapBuilder(NoiseDescriptionDialogBuilder))
+        .setStyle({backgroundColor:$r('sys.color.background_secondary')})
         .setConfig({ enableOutsideInteractive: false, scrollSizeMode: ScrollSizeMode.FOLLOW_DETENT })
         .setComponentTargetId('noiseDescriptionButtonId')
         .build()

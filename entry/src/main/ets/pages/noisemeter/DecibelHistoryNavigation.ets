@@ -323,9 +323,23 @@ export struct DecibelHistory {
       // 检测时长
       Text(`时长: ${Math.round(record.duration / 1000)}秒`)
         .fontSize(14)
+
+      if (record.audioFilePath) {
+        Text(`音频大小: ${this.formatBytes(this.fileService.getFileInfoSync(record.audioFilePath.replace(this.fileService.getBasePath(),
+          '')).size)}`)
+          .fontSize(14)
+      }
     }
     .layoutWeight(1)
     .alignItems(HorizontalAlign.Start).animation({ curve: Curve.EaseOut })
+  }
+
+  private formatBytes(bytes: number): string {
+    if (bytes === 0) return '0 B'
+    const k = 1024
+    const sizes = ['B', 'KB', 'MB', 'GB', 'TB']
+    const i = Math.floor(Math.log(bytes) / Math.log(k))
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
   }
 
   private async deleteRecord(record: DecibelRecord) {

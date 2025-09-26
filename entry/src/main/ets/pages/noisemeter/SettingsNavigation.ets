@@ -504,7 +504,7 @@ export struct Settings {
               })
           }
           .listItemRow()
-          Text(this.pk.cat_enabled ? '和小猫咪🐱一起测分贝' : '小猫咪走啦')
+          Text(this.pk.cat_enabled ? '和小猫咪🐱一起测分贝, 设备可能发热' : '小猫咪走啦')
             .itemDescription()
         }
         .cardStyle()
