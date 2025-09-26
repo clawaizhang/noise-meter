@@ -790,7 +790,7 @@ export struct DecibelMeter {
     this.dWidthHeight = '100%';
     // 页面内容动画
     this.getUIContext().animateTo({
-      duration: 1500,
+      duration: 800,
       curve: curves.cubicBezier(0.4, 0.0, 0.2, 1.0),
       onFinish: () => {
         this.dScale = 1;
@@ -798,7 +798,7 @@ export struct DecibelMeter {
         this.translateY = 0;
         this.bgImage = undefined;
         this.dWidthHeight = '';
-        let dialog = DialogHub.getToast()
+        DialogHub.getToast()
           .setTextContent('已保存')
           .setAnimation({
             dialogAnimation: TransitionEffect.scale({ x: 0, y: 0 })

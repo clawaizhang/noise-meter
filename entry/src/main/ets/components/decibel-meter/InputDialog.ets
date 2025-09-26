@@ -1,3 +1,5 @@
+import curves from "@ohos.curves";
+
 @CustomDialog
 export struct InputDialog {
   comment: string = '';
@@ -65,6 +67,6 @@ export struct InputDialog {
           }
         }
       }
-    }.padding(16)
+    }.padding(16).transition(TransitionEffect.scale({ x: 0, y: 0 }).animation({ curve: curves.springMotion() }))
   }
 }

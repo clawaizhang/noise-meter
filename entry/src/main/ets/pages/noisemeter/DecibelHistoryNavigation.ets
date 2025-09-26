@@ -185,7 +185,7 @@ export struct DecibelHistory {
       this.showNoiseDetails(record);
     })
     .transition(TransitionEffect.scale({ x: 0, y: 0 })
-      .combine(TransitionEffect.translate({ y: 150 }).animation({ curve: curves.springMotion() })))
+      .combine(TransitionEffect.translate({ x: 150 }).animation({ curve: curves.springMotion() })))
   }
 
   private showNoiseDetails(record: DecibelRecord) {
