@@ -28,11 +28,11 @@ import { call } from '@kit.TelephonyKit';
 import { BusinessError } from '@kit.BasicServicesKit';
 import { camera } from '@kit.CameraKit';
 import lottie, { AnimationItem } from '@ohos/lottie';
-import { DialogHub, InfCustomDialog, InfSheet } from '@hadss/dialoghub';
+import { DialogHub, InfSheet } from '@hadss/dialoghub';
 import { resourceManager } from '@kit.LocalizationKit';
 import { NoiseDescriptionDialogBuilder } from '../../pages/noisemeter/NoiseDescriptionDialogNavigation';
-import { DetailDialogBuilder, DetailDialogParams } from '../../pages/noisemeter/DetailDialogNavigation';
 import { PressureSounds } from './PressureSounds';
+import { image } from '@kit.ImageKit';
 
 @ComponentV2
 export struct DecibelMeter {
@@ -58,6 +58,8 @@ export struct DecibelMeter {
   @Local translateX: number = 0; // X轴位移
   @Local translateY: number = 0; // Y轴位移
   @Local dOpacity: number = 1; // 页面透明度
+  @Local dWidthHeight: string = ''; // 页面透明度
+  @Local bgImage: image.PixelMap | undefined = undefined; // 页面透明度
   @Consumer(navigationStack) navStack: NavPathStack = new NavPathStack()
   private audioService: AudioService = AudioService.getInstance(getContext() as common.UIAbilityContext)
   private locationService: LocationService = LocationService.getInstance()
@@ -657,94 +659,99 @@ export struct DecibelMeter {
   }
 
   build() {
-    GridRow({ columns: 12, breakpoints: { reference: BreakpointsReference.WindowSize }, gutter: 16 }) {
+    Stack() {
+      GridRow({ columns: 12, breakpoints: { reference: BreakpointsReference.WindowSize }, gutter: 16 }) {
 
-      GridCol({
-        span: {
-          xs: 12,
-          sm: 12,
-          md: 5,
-        }
-      }) {
-        Column() {
-          Stack() {
-            // 分贝显示和位置信息
-            Column() {
-              // 分贝显示卡片
-              Row({ space: 8 }) {
-                this.averageMin()
-
-                this.CurrentDecibel()
-
-                this.max()
-              }
-
-              .justifyContent(FlexAlign.Center)
-              .alignItems(VerticalAlign.Bottom)
-              .borderColor(this.isNoiseAlarm ? DecibelService.getDecibelColor(this.decibelState.currentDecibel) :
-              Color.Transparent)
-
-              if (this.isRecording) {
-                Text(`${secondsToHoursMinutesSecondsWithDecimal(this.MAX_RECORDING_DURATION -
-                this.recordingTime)} 后自动保存`).fontSize(14)
-              }
-
-              // 位置显示
-              Row() {
-                LocationDisplay()
-              }
-            }.margin({ top: this.pk.cat_enabled ? -35 : 0 })
-            .justifyContent(FlexAlign.Center)
-          }
-          .height(this.pk.cat_enabled ? '100% - 30vp' : '')
-          .clip(true)
-
-          if (["md", "lg", "xl", "xxl"].includes(this.breakPoint)) {
-            this.actionPanel()
-          }
-        }
-      }.backgroundColor($r('sys.color.comp_background_primary')).borderRadius(16)
-
-      // 频谱图
-      GridCol({
-        span: {
-          xs: 12,
-          sm: 12,
-          md: 5,
-        }
-      }) {
-        this.SpectrumView()
-      }
-
-      GridCol({
-        span: {
-          xs: 12,
-          sm: 12,
-          md: 0,
-        }
-      }) {
-        this.actionPanel()
-      }.visibility(["md", "lg", "xl", "xxl"].includes(this.breakPoint) ? Visibility.Hidden : Visibility.Visible)
-
-      if (this.pk.nature_sound_enabled) {
         GridCol({
           span: {
             xs: 12,
             sm: 12,
-            md: 2,
+            md: 5,
           }
         }) {
-          PressureSounds({ cardDirection: FlexDirection.Row, hideDesc: true })
+          Column() {
+            Stack() {
+              // 分贝显示和位置信息
+              Column() {
+                // 分贝显示卡片
+                Row({ space: 8 }) {
+                  this.averageMin()
+
+                  this.CurrentDecibel()
+
+                  this.max()
+                }
+
+                .justifyContent(FlexAlign.Center)
+                .alignItems(VerticalAlign.Bottom)
+                .borderColor(this.isNoiseAlarm ? DecibelService.getDecibelColor(this.decibelState.currentDecibel) :
+                Color.Transparent)
+
+                Text(`${secondsToHoursMinutesSecondsWithDecimal(this.MAX_RECORDING_DURATION -
+                this.recordingTime)} 后自动保存`).fontSize(14)
+
+                // 位置显示
+                Row() {
+                  LocationDisplay()
+                }
+              }.margin({ top: this.pk.cat_enabled ? -35 : 0 })
+              .justifyContent(FlexAlign.Center)
+            }
+            .height(this.pk.cat_enabled ? '100% - 30vp' : '')
+            .clip(true)
+
+            if (["md", "lg", "xl", "xxl"].includes(this.breakPoint)) {
+              this.actionPanel()
+            }
+          }
+        }.backgroundColor($r('sys.color.comp_background_primary')).borderRadius(16)
+
+        // 频谱图
+        GridCol({
+          span: {
+            xs: 12,
+            sm: 12,
+            md: 5,
+          }
+        }) {
+          this.SpectrumView()
+        }
+
+        GridCol({
+          span: {
+            xs: 12,
+            sm: 12,
+            md: 0,
+          }
+        }) {
+          this.actionPanel()
+        }.visibility(["md", "lg", "xl", "xxl"].includes(this.breakPoint) ? Visibility.Hidden : Visibility.Visible)
+
+        if (this.pk.nature_sound_enabled) {
+          GridCol({
+            span: {
+              xs: 12,
+              sm: 12,
+              md: 2,
+            }
+          }) {
+            PressureSounds({ cardDirection: FlexDirection.Row, hideDesc: true })
+          }
         }
       }
+      .padding({ top: 16, bottom: 16 })
+      .id('mainNoiseMeterDisplayId')
+      .onBreakpointChange(breakPoints => {
+        this.breakPoint = breakPoints;
+      })
+
+      Column()
+        .width(this.dWidthHeight)
+        .height(this.dWidthHeight)
+        .backgroundImage(this.bgImage)
+        .scale({ x: this.dScale, y: this.dScale })
+        .translate({ x: this.translateX, y: this.translateY })
     }
-    .padding({ top: 16, bottom: 16 })
-    .opacity(this.dOpacity)
-    .scale({ x: this.dScale, y: this.dScale })
-    .translate({ x: this.translateX, y: this.translateY })
-    .onBreakpointChange(breakPoints => {
-      this.breakPoint = breakPoints;
-    })
   }
 
   @Builder
@@ -757,6 +764,7 @@ export struct DecibelMeter {
         this.resetData();
       },
       onSave: (comments) => {
+        this.bgImage = this.getUIContext().getComponentSnapshot().getSync('mainNoiseMeterDisplayId');
         this.stopRecording(comments);
         this.startCollapseAnimation();
       },
@@ -779,31 +787,44 @@ export struct DecibelMeter {
   startCollapseAnimation() {
     // 获取屏幕尺寸
     const displayClass = display.getDefaultDisplaySync();
+    this.dWidthHeight = '100%';
     // 页面内容动画
-    animateTo({
-      duration: 800,
-      curve: curves.cubicBezier(0.4, 0.0, 0.2, 1.0)
+    this.getUIContext().animateTo({
+      duration: 1500,
+      curve: curves.cubicBezier(0.4, 0.0, 0.2, 1.0),
+      onFinish: () => {
+        this.dScale = 1;
+        this.translateX = 0;
+        this.translateY = 0;
+        this.bgImage = undefined;
+        this.dWidthHeight = '';
+        let dialog = DialogHub.getToast()
+          .setTextContent('已保存')
+          .setAnimation({
+            dialogAnimation: TransitionEffect.scale({ x: 0, y: 0 })
+              .combine(TransitionEffect.OPACITY)
+              .animation({
+                curve: curves.springMotion()
+              })
+          })
+          .setConfig({
+            dialogBehavior: { levelMode: LevelMode.EMBEDDED },
+            dialogPosition: {
+              offset: {
+                dx: this.getUIContext().px2vp(displayClass.width) / 2 - 85,
+                dy: -this.getUIContext().px2vp(displayClass.height) / 2 + 120
+              }
+            }
+          })
+          .build()
+          .show();
+      }
     }, () => {
       this.dScale = 0.05;
-      this.translateX = px2vp(displayClass.width) / 2 - 80;
-      this.translateY = -px2vp(displayClass.height) / 2 + 20;
-      this.dOpacity = 0;
+      this.translateX = this.getUIContext().px2vp(displayClass.width) / 2 - 80;
+      this.translateY = -this.getUIContext().px2vp(displayClass.height) / 2 + 20;
     });
 
-    setTimeout(() => {
-      this.dScale = 0;
-      this.translateX = 0;
-      this.translateY = 0;
-      this.dOpacity = 0;
-      // 页面内容动画
-      animateTo({
-        duration: 800,
-        curve: curves.cubicBezier(0.4, 0.0, 0.2, 1.0)
-      }, () => {
-        this.dScale = 1;
-        this.dOpacity = 1;
-      });
-    }, 800)
   }
 
   @Builder
