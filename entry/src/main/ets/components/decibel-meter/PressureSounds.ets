@@ -15,6 +15,7 @@ export interface ImageSound {
   image: string;
   sound: string;
   imageContent?: PixelMap;
+  duration?: number;
 }
 
 @ObservedV2
@@ -402,6 +403,7 @@ export struct PressureSounds {
             };
             this.avSession.setAVMetadata(metadata);
           } else {
+            item.duration = playerService.getPlayer().duration;
             this.createAvSession(context, type, item);
           }
         }
@@ -426,9 +428,9 @@ export struct PressureSounds {
       let playbackState: avSession.AVPlaybackState = {
         state: avSession.PlaybackState.PLAYBACK_STATE_PLAY,
         speed: 1.0,
-        position: { elapsedTime: 0, updateTime: 0 },
-        bufferedTime: 12_000_000_000,
-        duration: 12_000_000_000,
+        position: { elapsedTime: 0, updateTime: Date.now() },
+        bufferedTime: item.duration,
+        duration: item.duration,
         loopMode: avSession.LoopMode.LOOP_MODE_SINGLE,
         isFavorite: false, // 是否收藏
       };
@@ -445,7 +447,19 @@ export struct PressureSounds {
         itemId: 1,
         description: queueItemDescription_1
       };
-      let queueItemsArray = [queueItem_1];
+      let queueItemDescription_2: avSession.AVMediaDescription = {
+        assetId: item.sound,
+        title: item.name,
+        subtitle: item.name,
+        description: item.name,
+        mediaImage: item.imageContent,
+        extras: { 'extras': 'any' }
+      };
+      let queueItem_2: avSession.AVQueueItem = {
+        itemId: 2,
+        description: queueItemDescription_2
+      };
+      let queueItemsArray = [queueItem_1, queueItem_2];
       session.setAVQueueItems(queueItemsArray)
       this.avSession.on('play', () => {
         this.playingList.forEach((pItem) => pItem.playerService!.resume());
