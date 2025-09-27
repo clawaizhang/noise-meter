@@ -21,7 +21,7 @@ export class AudioPlayerGroupService {
     if (AudioPlayerGroupService.players.has(id)) {
       return AudioPlayerGroupService.players.get(id) as AudioPlayerService;
     } else {
-      let newPlayer = new AudioPlayerService(id, true);
+      let newPlayer = new AudioPlayerService(id);
       newPlayer.addOnStateChangeListener((state: media.AVPlayerState) => {
         if (endState.includes(state)) {
           AudioPlayerGroupService.players.delete(newPlayer.id);

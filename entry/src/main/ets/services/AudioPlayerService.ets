@@ -16,21 +16,16 @@ export const endState: media.AVPlayerState[] =
  * 音频播放服务
  */
 export class AudioPlayerService {
-  private player: (media.AVPlayer | null)[] = [];
+  private player: media.AVPlayer | null = null;
   private onProgressListener?: (duration: number) => void;
   private onStateChangeListener: Array<(state: media.AVPlayerState) => void> = [];
   private progressTimer: number | null = null;
   private currentFile: fs.File | null = null;
   private currentFd: number | null = null;
-  private audioFilePath!: string;
   public id: string = '';
-  private paraPlay: boolean = false;
 
-  constructor(id: string, paraPlay?: boolean) {
+  constructor(id: string) {
     this.id = id;
-    if (paraPlay) {
-      this.paraPlay = true;
-    }
     try {
       this.initPlayer();
     } catch (error) {
@@ -39,7 +34,7 @@ export class AudioPlayerService {
   }
 
   getPlayer(): media.AVPlayer {
-    return this.player[0] as media.AVPlayer;
+    return this.player as media.AVPlayer;
   }
 
   /**
@@ -48,16 +43,11 @@ export class AudioPlayerService {
   private async initPlayer(): Promise<void> {
     try {
       hilog.info(DOMAIN, TAG, '开始初始化播放器');
-      this.player[0] = await media.createAVPlayer();
-      this.setupPlayerListeners(this.player[0]);
-      // 创建播放器实例
-      if (this.paraPlay) {
-        this.player[1] = await media.createAVPlayer();
-        this.setupPlayerListeners(this.player[1]);
-      }
+      this.player = await media.createAVPlayer();
+      this.setupPlayerListeners(this.player);
       hilog.info(DOMAIN, TAG, '播放器实例创建成功');
 
-      if (!this.player[0]) {
+      if (!this.player) {
         throw new Error('播放器创建失败');
       }
 
@@ -179,12 +169,12 @@ export class AudioPlayerService {
    */
   async playAudioFileByFd(fd: resourceManager.RawFileDescriptor): Promise<void> {
     try {
-      if (!this.player[0]) {
+      if (!this.player) {
         throw new Error('播放器未初始化');
       }
       // 如果正在播放或已完成播放，先重置播放器
-      if (this.isPlaying() || this.player[0].state == 'completed') {
-        await this.player[0].reset();
+      if (this.isPlaying() || this.player.state == 'completed') {
+        await this.player.reset();
         this.updateState();
       }
 
@@ -201,7 +191,7 @@ export class AudioPlayerService {
       let avFileDescriptor: media.AVFileDescriptor =
         { fd: fd.fd, offset: fd.offset, length: fd.length };
       // 为fdSrc赋值触发initialized状态机上报。
-      this.player[0].fdSrc = avFileDescriptor;
+      this.player.fdSrc = avFileDescriptor;
 
       this.updateState();
 
@@ -209,9 +199,9 @@ export class AudioPlayerService {
     } catch (error) {
       hilog.error(DOMAIN, TAG, '播放音频失败: %{public}s', error instanceof Error ? error.message : String(error));
       // 尝试重置播放器
-      if (this.player[0]) {
+      if (this.player) {
         try {
-          await this.player[0].reset();
+          await this.player.reset();
           this.updateState();
         } catch (e) {
           hilog.error(DOMAIN, TAG, '重置播放器失败: %{public}s', e instanceof Error ? e.message : String(e));
@@ -228,13 +218,13 @@ export class AudioPlayerService {
    */
   async playAudioFile(audioFilePath: string): Promise<void> {
     try {
-      if (!this.player[0]) {
+      if (!this.player) {
         throw new Error('播放器未初始化');
       }
 
       // 如果正在播放或已完成播放，先重置播放器
-      if (this.isPlaying() || this.player[0].state === 'completed') {
-        await this.player[0].reset();
+      if (this.isPlaying() || this.player.state === 'completed') {
+        await this.player.reset();
         this.updateState();
       }
 
@@ -253,19 +243,18 @@ export class AudioPlayerService {
       // 打开文件获取文件描述符
       this.currentFile = await fs.open(audioFilePath);
       const fdPath = `fd://${this.currentFile.fd}`;
-      this.audioFilePath = audioFilePath;
 
       // 设置音频源
-      this.player[0].url = fdPath;
+      this.player.url = fdPath;
       this.updateState();
 
       hilog.info(DOMAIN, TAG, '开始播放音频');
     } catch (error) {
       hilog.error(DOMAIN, TAG, '播放音频失败: %{public}s', error instanceof Error ? error.message : String(error));
       // 尝试重置播放器
-      if (this.player[0]) {
+      if (this.player) {
         try {
-          await this.player[0].reset();
+          await this.player.reset();
           this.updateState();
         } catch (e) {
           hilog.error(DOMAIN, TAG, '重置播放器失败: %{public}s', e instanceof Error ? e.message : String(e));
@@ -279,7 +268,7 @@ export class AudioPlayerService {
    * 释放播放器资源
    */
   async release(): Promise<void> {
-    if (this.player[0]) {
+    if (this.player) {
       try {
         // 先停止播放
         if (this.isPlaying()) {
@@ -290,8 +279,8 @@ export class AudioPlayerService {
         this.stopProgressTimer();
 
         // 取消事件监听
-        this.player[0].off('error');
-        this.player[0].off('stateChange');
+        this.player.off('error');
+        this.player.off('stateChange');
 
         // 关闭文件描述符
         if (this.currentFile) {
@@ -304,8 +293,8 @@ export class AudioPlayerService {
         }
 
         // 释放播放器资源
-        await this.player[0].release();
-        this.player[0] = null;
+        await this.player.release();
+        this.player = null;
         this.updateState();
         hilog.info(DOMAIN, TAG, '播放器资源释放成功');
       } catch (error) {
@@ -321,7 +310,7 @@ export class AudioPlayerService {
    */
   private updateState(): void {
     if (this.onStateChangeListener?.length > 0) {
-      this.onStateChangeListener.forEach(listener => listener(this.player[0]!.state));
+      this.onStateChangeListener.forEach(listener => listener(this.player!.state));
     }
   }
 
@@ -331,7 +320,7 @@ export class AudioPlayerService {
   private startProgressTimer(): void {
     this.stopProgressTimer();
     this.progressTimer = setInterval(async () => {
-      if (this.onProgressListener && this.player[0]) {
+      if (this.onProgressListener && this.player) {
         const position = await this.getCurrentPosition();
         this.onProgressListener(position);
       }
@@ -352,9 +341,9 @@ export class AudioPlayerService {
    * 暂停播放
    */
   async pause(): Promise<void> {
-    if (this.player[0] && this.isPlaying()) {
+    if (this.player && this.isPlaying()) {
       try {
-        await this.player[0].pause();
+        await this.player.pause();
         this.updateState();
         hilog.info(DOMAIN, TAG, '暂停播放成功');
       } catch (error) {
@@ -368,9 +357,9 @@ export class AudioPlayerService {
    * 恢复播放
    */
   async resume(): Promise<void> {
-    if (this.player[0] && this.player[0].state === 'paused') {
+    if (this.player && this.player.state === 'paused') {
       try {
-        await this.player[0].play();
+        await this.player.play();
         this.updateState();
         hilog.info(DOMAIN, TAG, '恢复播放成功');
       } catch (error) {
@@ -384,9 +373,9 @@ export class AudioPlayerService {
    * 停止播放
    */
   async stop(): Promise<void> {
-    if (this.player[0]) {
+    if (this.player) {
       try {
-        await this.player[0].stop();
+        await this.player.stop();
         this.updateState();
         hilog.info(DOMAIN, TAG, '停止播放成功');
       } catch (error) {
@@ -401,10 +390,10 @@ export class AudioPlayerService {
    * @param volume - 音量值，范围 0.0-1.0
    */
   async setVolume(volume: number): Promise<void> {
-    if (this.player[0]) {
+    if (this.player) {
       try {
         const normalizedVolume = Math.max(0, Math.min(1, volume));
-        this.player[0].setVolume(normalizedVolume);
+        this.player.setVolume(normalizedVolume);
       } catch (error) {
         hilog.error(DOMAIN, TAG, '设置音量失败: %{public}s', error instanceof Error ? error.message : String(error));
       }
@@ -416,9 +405,9 @@ export class AudioPlayerService {
    * @param position - 目标位置（毫秒）
    */
   async seekTo(position: number): Promise<void> {
-    if (this.player[0]) {
+    if (this.player) {
       try {
-        this.player[0].seek(position);
+        this.player.seek(position);
       } catch (error) {
         hilog.error(DOMAIN, TAG, '跳转失败: %{public}s', error instanceof Error ? error.message : String(error));
         throw new Error(error instanceof Error ? error.message : String(error));
@@ -430,11 +419,11 @@ export class AudioPlayerService {
    * 获取当前播放位置
    */
   async getCurrentPosition(): Promise<number> {
-    if (!this.player[0]) {
+    if (!this.player) {
       return 0;
     }
     try {
-      return this.player[0].currentTime;
+      return this.player.currentTime;
     } catch (error) {
       hilog.error(DOMAIN, TAG, '获取当前播放位置失败: %{public}s',
         error instanceof Error ? error.message : String(error));
@@ -446,11 +435,11 @@ export class AudioPlayerService {
    * 获取音频总时长
    */
   async getDuration(): Promise<number> {
-    if (!this.player[0]) {
+    if (!this.player) {
       return 0;
     }
     try {
-      return this.player[0].duration;
+      return this.player.duration;
     } catch (error) {
       hilog.error(DOMAIN, TAG, '获取音频总时长失败: %{public}s',
         error instanceof Error ? error.message : String(error));
@@ -462,15 +451,15 @@ export class AudioPlayerService {
    * 检查是否正在播放
    */
   isPlaying(): boolean {
-    return this.player[0]?.state == 'playing' || this.player[0]?.state == 'prepared' ||
-      this.player[0]?.state == 'initialized';
+    return this.player?.state == 'playing' || this.player?.state == 'prepared' ||
+      this.player?.state == 'initialized';
   }
 
   /**
    * 获取当前播放状态
    */
   getPlayerState(): media.AVPlayerState {
-    return this.player[0]!.state;
+    return this.player!.state;
   }
 
   /**

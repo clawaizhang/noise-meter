@@ -124,6 +124,7 @@ export default class EntryAbility extends UIAbility {
   }
 
   private startBackgroundRunning(): void {
+    let isPlaying = AudioPlayerGroupService.isPlaying();
     // 创建WantAgent参数
     const wantAgentInfo: wantAgent.WantAgentInfo = {
       wants: [
@@ -143,17 +144,19 @@ export default class EntryAbility extends UIAbility {
           hilog.error(DOMAIN, TAG, `Get wantAgent failed, error: ${JSON.stringify(err)}`);
           return;
         }
-        backgroundTaskManager.startBackgroundRunning(this.context,
-          backgroundTaskManager.BackgroundMode.AUDIO_PLAYBACK,
-          agent,
-          (err) => {
-            if (err) {
-              hilog.error(DOMAIN, TAG, `Start background running failed, error: ${JSON.stringify(err)}`);
-              return;
-            }
-            this.backgroundRunningRequested = true;
-            hilog.info(DOMAIN, TAG, 'Start background running successfully');
-          });
+        if (isPlaying) {
+          backgroundTaskManager.startBackgroundRunning(this.context,
+            backgroundTaskManager.BackgroundMode.AUDIO_PLAYBACK,
+            agent,
+            (err) => {
+              if (err) {
+                hilog.error(DOMAIN, TAG, `Start background running failed, error: ${JSON.stringify(err)}`);
+                return;
+              }
+              this.backgroundRunningRequested = true;
+              hilog.info(DOMAIN, TAG, 'Start background running successfully');
+            });
+        }
         if (PersistenceV2.connect(PreferenceKeys)!.background_running) {
           backgroundTaskManager.startBackgroundRunning(this.context,
             backgroundTaskManager.BackgroundMode.AUDIO_RECORDING,
