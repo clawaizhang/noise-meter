@@ -8,6 +8,7 @@ import { AudioPlayerGroupService } from "../../services/AudioPlayerGroupService"
 export struct ImageSoundPlayer {
   @Param @Require image: string;
   @Param @Require file: string;
+  @Event imagePrepared: (image:PixelMap) => void = (image:PixelMap) => {};
   @Event onPlayStateChange: (state: PlayerState, playerService: AudioPlayerService) => void;
   @Local rawFileDescriptor: resourceManager.RawFileDescriptor | undefined = undefined;
   @Local playerState: PlayerState = PlayerState.STATE_NOT_INIT;
@@ -26,7 +27,7 @@ export struct ImageSoundPlayer {
 
   build() {
     Stack({ alignContent: Alignment.BottomStart }) {
-      ImageRaw({ image: this.image })
+      ImageRaw({ image: this.image,imagePrepared:this.imagePrepared })
       if (this.rawFileDescriptor) {
         Button() {
           Image(this.playerState === PlayerState.STATE_PLAYING ? $r('app.media.ic_pause') :

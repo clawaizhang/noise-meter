@@ -5,6 +5,7 @@ export struct ImageRaw {
   @Param @Require image: string;
   @Param fit: ImageFit = ImageFit.Contain;
   @Local pixelMapImg: PixelMap | undefined = undefined;
+  @Event imagePrepared:(image:PixelMap) => void = (image) => {};
   private context = getContext(this);
   private lastImage: string | undefined = undefined;
 
@@ -49,6 +50,7 @@ export struct ImageRaw {
       imgSource.createPixelMap(options).then((pixelMap: PixelMap) => {
         console.error('image createPixelMap success');
         this.pixelMapImg = pixelMap;
+        this.imagePrepared(this.pixelMapImg);
         imgSource.release();
       }).catch(() => {
         imgSource.release();

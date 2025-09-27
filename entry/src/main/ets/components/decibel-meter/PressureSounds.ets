@@ -5,11 +5,14 @@ import { ImageSoundPlayingService } from "../../services/ImageSoundPlayingServic
 import { navigationStack } from "../../constants/ProviderConstant";
 import { DialogHub, InfSheet } from "@hadss/dialoghub";
 import { PlayingItemsDialogBuilder } from "../../pages/noisemeter/PlayingItemsDialogNavigation";
+import { avSession } from "@kit.AVSessionKit";
+import { wantAgent } from "@kit.AbilityKit";
 
 export interface ImageSound {
   name: string;
   image: string;
   sound: string;
+  imageContent?: PixelMap;
 }
 
 export interface ImageSoundPlayerState extends ImageSound {
@@ -27,6 +30,7 @@ function PressureSoundsBuilder() {
 export struct PressureSounds {
   @Param cardDirection: FlexDirection = FlexDirection.Column;
   @Param hideDesc: boolean = false;
+  avSession?: avSession.AVSession
   @Consumer(navigationStack) navStack: NavPathStack = new NavPathStack();
   private dialog: InfSheet | undefined
 
@@ -49,7 +53,7 @@ export struct PressureSounds {
               }.onClick(() => {
                 this.dialog = this.dialog ?? DialogHub.getSheet()
                   .setComponentTargetId('decibelMeterRoot')
-                  .setStyle({backgroundColor:$r('sys.color.background_secondary')})
+                  .setStyle({ backgroundColor: $r('sys.color.background_secondary') })
                   .setContent(wrapBuilder(PressureSoundsBuilder))
                   .build();
                 this.dialog.show();
@@ -346,13 +350,72 @@ export struct PressureSounds {
     ImageSoundPlayer({
       image: item.image,
       file: item.sound,
+      imagePrepared: (image: PixelMap) => {
+        item.imageContent = image;
+      },
       onPlayStateChange: (state: PlayerState, playerService: AudioPlayerService) => {
+        if (state == PlayerState.STATE_PLAYING) {
+          let context = this.getUIContext().getHostContext() as Context;
+          let type: avSession.AVSessionType = 'audio';
+          if (this.avSession) {
+            this.avSession.destroy(() => {
+              this.createAvSession(context, type, item);
+            })
+          } else {
+            this.createAvSession(context, type, item);
+          }
+        }
         this.updateUnionPlayerState(state, playerService, item);
       }
     })
       .width(this.hideDesc ? 75 : 100)
       .height(this.hideDesc ? 75 : 100)
       .animation({ duration: 200, curve: Curve.EaseOut })
+  }
+
+  private createAvSession(context: Context, type: avSession.AVSessionType, item: ImageSound) {
+    avSession.createAVSession(context, '静喵Sound', type).then(session => {
+      this.avSession = session;
+      let metadata: avSession.AVMetadata = {
+        assetId: item.sound,
+        title: item.name,
+        mediaImage: item.imageContent,
+        artist: '静喵Sound'
+      };
+      this.avSession.setAVMetadata(metadata);
+      let playbackState: avSession.AVPlaybackState = {
+        state: avSession.PlaybackState.PLAYBACK_STATE_PLAY,
+        speed: 1.0,
+        position: { elapsedTime: 0, updateTime: 0 },
+        bufferedTime: 120000,
+        loopMode: avSession.LoopMode.LOOP_MODE_SINGLE,
+        isFavorite: false, // 是否收藏
+      };
+      this.avSession.setAVPlaybackState(playbackState);
+      this.avSession.on('play', () => {
+        this.playingList.forEach((pItem) => pItem.playerService.resume());
+      });
+
+      this.avSession.on('pause', () => {
+        this.playingList.forEach((pItem) => pItem.playerService.pause());
+      });
+      let wantAgentInfo: wantAgent.WantAgentInfo = {
+        wants: [
+          {
+            bundleName: 'yu.zhang.myapplication.noise_meter_pro',
+            abilityName: 'EntryAbility'
+          }
+        ],
+        // OperationType.START_ABILITIES
+        operationType: 2,
+        requestCode: 0,
+        wantAgentFlags: [wantAgent.WantAgentFlags.UPDATE_PRESENT_FLAG]
+      };
+      wantAgent.getWantAgent(wantAgentInfo).then((agent) => {
+        this.avSession?.setLaunchAbility(agent);
+      });
+      this.avSession.activate();
+    });
   }
 
   private updateUnionPlayerState(state: PlayerState, playerService: AudioPlayerService, currentItem: ImageSound) {

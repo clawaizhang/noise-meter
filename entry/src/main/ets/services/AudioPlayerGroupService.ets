@@ -6,6 +6,16 @@ export class AudioPlayerGroupService {
   private constructor() {
   }
 
+  static isPlaying(){
+    let isPlaying = false;
+    for (let valuesElement of AudioPlayerGroupService.players.values()) {
+      if (valuesElement.isPlaying()) {
+        isPlaying = true;
+      }
+    }
+    return isPlaying;
+  }
+
   static getPlayerInstance(id: string): AudioPlayerService {
     if (AudioPlayerGroupService.players.has(id)) {
       return AudioPlayerGroupService.players.get(id) as AudioPlayerService;

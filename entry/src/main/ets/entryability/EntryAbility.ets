@@ -13,6 +13,7 @@ import { PreferenceKeys } from '../models/PreferenceKeys';
 import { AppUtil, PermissionUtil, PreferencesUtil } from '@pura/harmony-utils';
 import { camera } from '@kit.CameraKit';
 import { PersistenceV2 } from '@kit.ArkUI';
+import { AudioPlayerGroupService } from '../services/AudioPlayerGroupService';
 
 const TAG = 'EntryAbility';
 const DOMAIN = 0x0000;
@@ -117,9 +118,7 @@ export default class EntryAbility extends UIAbility {
     windowManager.setKeepScreenOn(false);
     DisplayManager.getInstance().onBackground();
 
-    if (PersistenceV2.connect(PreferenceKeys)!.background_running) {
-      this.startBackgroundRunning();
-    }
+    this.startBackgroundRunning();
 
     hilog.info(DOMAIN, TAG, 'Ability onBackground');
   }
@@ -145,7 +144,7 @@ export default class EntryAbility extends UIAbility {
           return;
         }
         backgroundTaskManager.startBackgroundRunning(this.context,
-          backgroundTaskManager.BackgroundMode.AUDIO_RECORDING,
+          backgroundTaskManager.BackgroundMode.AUDIO_PLAYBACK,
           agent,
           (err) => {
             if (err) {
@@ -153,16 +152,29 @@ export default class EntryAbility extends UIAbility {
               return;
             }
             this.backgroundRunningRequested = true;
-            // 发布后台通知
-            const notificationHelper = NotificationHelper.getInstance(this.context);
-            notificationHelper.showNotification(
-              NOTIFICATION_ID,
-              '噪音监测中',
-              '应用已转入后台持续监测环境噪音',
-              '点击返回应用查看实时数据'
-            );
             hilog.info(DOMAIN, TAG, 'Start background running successfully');
           });
+        if (PersistenceV2.connect(PreferenceKeys)!.background_running) {
+          backgroundTaskManager.startBackgroundRunning(this.context,
+            backgroundTaskManager.BackgroundMode.AUDIO_RECORDING,
+            agent,
+            (err) => {
+              if (err) {
+                hilog.error(DOMAIN, TAG, `Start background running failed, error: ${JSON.stringify(err)}`);
+                return;
+              }
+              this.backgroundRunningRequested = true;
+              // 发布后台通知
+              const notificationHelper = NotificationHelper.getInstance(this.context);
+              notificationHelper.showNotification(
+                NOTIFICATION_ID,
+                '噪音监测中',
+                '应用已转入后台持续监测环境噪音',
+                '点击返回应用查看实时数据'
+              );
+              hilog.info(DOMAIN, TAG, 'Start background running successfully');
+            });
+        }
       });
     } catch (err) {
       hilog.error(DOMAIN, TAG, `Start background running failed, error: ${JSON.stringify(err)}`);

@@ -238,12 +238,7 @@ export struct Settings {
   build() {
     GridRow({
       columns:
-      {
-        sm: 1,
-        md: 2,
-        lg: 2,
-        xl: 3
-      },
+      1,
       breakpoints: { reference: BreakpointsReference.WindowSize }
     , gutter: 16
     }) {
