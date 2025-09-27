@@ -342,7 +342,7 @@ export struct DecibelMeter {
 
   aboutToDisappear() {
     lottie.destroy('cat')
-    this.animationCatItem.removeEventListener('DOMLoaded');
+    this.animationCatItem?.removeEventListener('DOMLoaded');
     lottie.destroy('cat');
     if (this.releaseTimer !== -1) {
       clearTimeout(this.releaseTimer);

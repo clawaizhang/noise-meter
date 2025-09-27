@@ -1,5 +1,5 @@
 import { ImageSoundPlayer } from "./ImageSoundPlayer";
-import { AudioPlayerService, PlayerState } from "../../services/AudioPlayerService";
+import { AudioPlayerService } from "../../services/AudioPlayerService";
 import { ImageRaw } from "../common/ImageRaw";
 import { ImageSoundPlayingService } from "../../services/ImageSoundPlayingService";
 import { navigationStack } from "../../constants/ProviderConstant";
@@ -7,17 +7,32 @@ import { DialogHub, InfSheet } from "@hadss/dialoghub";
 import { PlayingItemsDialogBuilder } from "../../pages/noisemeter/PlayingItemsDialogNavigation";
 import { avSession } from "@kit.AVSessionKit";
 import { wantAgent } from "@kit.AbilityKit";
+import image from "@ohos.multimedia.image";
+import { media } from "@kit.MediaKit";
 
 export interface ImageSound {
   name: string;
   image: string;
   sound: string;
   imageContent?: PixelMap;
+  duration?: number;
 }
 
-export interface ImageSoundPlayerState extends ImageSound {
-  playerState: PlayerState;
-  playerService: AudioPlayerService;
+@ObservedV2
+export class ImageSoundPlayerState implements ImageSound {
+  name: string;
+  image: string;
+  sound: string;
+  imageContent?: image.PixelMap | undefined;
+  @Trace
+  playerState?: media.AVPlayerState;
+  playerService?: AudioPlayerService;
+
+  constructor(name: string, image: string, sound: string) {
+    this.name = name;
+    this.image = image;
+    this.sound = sound;
+  }
 }
 
 @Builder
@@ -29,6 +44,7 @@ function PressureSoundsBuilder() {
 @ComponentV2
 export struct PressureSounds {
   @Param cardDirection: FlexDirection = FlexDirection.Column;
+  @Local flexCardDirection?: FlexDirection;
   @Param hideDesc: boolean = false;
   avSession?: avSession.AVSession
   @Consumer(navigationStack) navStack: NavPathStack = new NavPathStack();
@@ -44,6 +60,14 @@ export struct PressureSounds {
 
   build() {
     Stack({ alignContent: Alignment.BottomEnd }) {
+      GridRow().onBreakpointChange((b: string) => {
+        let breakPoint = this.getUIContext().getWindowWidthBreakpoint();
+        if (breakPoint >= WidthBreakpoint.WIDTH_MD) {
+          this.flexCardDirection = FlexDirection.Column;
+        } else {
+          this.flexCardDirection = undefined;
+        }
+      })
       WaterFlow() {
         ForEach(this.imageSounds, (item: ImageSound, index) => {
           FlowItem() {
@@ -68,21 +92,21 @@ export struct PressureSounds {
           }
         }, (item: ImageSound, index) => item.name)
       }
-      .layoutDirection(this.cardDirection)
+      .layoutDirection(this.flexCardDirection ? this.flexCardDirection : this.cardDirection)
       .columnsTemplate('repeat(auto-fill,100)')
       .rowsTemplate('1fr')
       .rowsGap(this.hideDesc ? 8 : 16)
       .columnsGap(this.hideDesc ? 8 : 16)
       .padding({ left: this.hideDesc ? 0 : 16, top: this.hideDesc ? 0 : 16 })
 
-      if (this.playingList.length > 0) {
+      if (this.playingList.length > 0 && this.hideDesc) {
         Stack({ alignContent: Alignment.Start }) {
           ImageRaw({ image: this.unionImagePath, fit: ImageFit.Auto })
             .id('imageRawToPlayingImagesId')
             .onClick(() => {
               DialogHub.getSheet()
                 .setComponentTargetId('imageRawToPlayingImagesId')
-                .setStyle({ showClose: false })
+                .setStyle({ showClose: false, backgroundColor: $r('sys.color.background_secondary') })
                 .setContent(wrapBuilder(PlayingItemsDialogBuilder))
                 .build()
                 .show();
@@ -90,9 +114,14 @@ export struct PressureSounds {
 
             .height(50)
           Button() {
-            Image(this.unionPlayerState === PlayerState.STATE_PLAYING ? $r('app.media.ic_pause') :
-            $r('app.media.ic_play'))
-              .fillColor(Color.White)
+            if (this.unionPlayerState == 'playing') {
+              Image($r('app.media.ic_pause'))
+                .fillColor(Color.White)
+            } else if (this.unionPlayerState === 'paused') {
+              Image(
+                $r('app.media.ic_play'))
+                .fillColor(Color.White)
+            }
           }
           .backgroundColor(Color.Transparent)
           .width(32)
@@ -100,8 +129,12 @@ export struct PressureSounds {
           .margin({ left: 8 })
           .type(ButtonType.Circle)
           .onClick(() => {
-            this.playingList.forEach((pItem) => this.unionPlayerState === PlayerState.STATE_PLAYING ?
-            pItem.playerService.pause() : pItem.playerService.resume());
+            if (this.unionPlayerState == 'playing') {
+              this.playingList.forEach((pItem) => pItem.playerService!.pause());
+            }
+            if (this.unionPlayerState == 'paused') {
+              this.playingList.forEach((pItem) => pItem.playerService!.resume());
+            }
           })
         }
         .height(50)
@@ -111,8 +144,8 @@ export struct PressureSounds {
     }
   }
 
-  @Local unionPlayerState: PlayerState = PlayerState.STATE_NOT_INIT;
   @Local playingList: Array<ImageSoundPlayerState> = ImageSoundPlayingService.getInstance().imageSoundPlayingList;
+  @Local unionPlayerState: media.AVPlayerState = 'idle';
   private imageSounds: Array<ImageSound> = [
   // 动物类
     {
@@ -353,19 +386,28 @@ export struct PressureSounds {
       imagePrepared: (image: PixelMap) => {
         item.imageContent = image;
       },
-      onPlayStateChange: (state: PlayerState, playerService: AudioPlayerService) => {
-        if (state == PlayerState.STATE_PLAYING) {
+      onPlayStateChange: (state: media.AVPlayerState, playerService: AudioPlayerService) => {
+        playerService.getPlayer().on('timeUpdate',(d:number) => {
+
+        })
+        if (state == 'playing') {
           let context = this.getUIContext().getHostContext() as Context;
           let type: avSession.AVSessionType = 'audio';
           if (this.avSession) {
-            this.avSession.destroy(() => {
-              this.createAvSession(context, type, item);
-            })
+            let metadata: avSession.AVMetadata = {
+              assetId: item.sound,
+              title: item.name,
+              mediaImage: item.imageContent,
+              artist: '静喵Sound',
+              duration: playerService.getPlayer().duration
+            };
+            this.avSession.setAVMetadata(metadata);
           } else {
+            item.duration = playerService.getPlayer().duration;
             this.createAvSession(context, type, item);
           }
         }
-        this.updateUnionPlayerState(state, playerService, item);
+        this.updatePlayerList(state, playerService, item);
       }
     })
       .width(this.hideDesc ? 75 : 100)
@@ -386,18 +428,49 @@ export struct PressureSounds {
       let playbackState: avSession.AVPlaybackState = {
         state: avSession.PlaybackState.PLAYBACK_STATE_PLAY,
         speed: 1.0,
-        position: { elapsedTime: 0, updateTime: 0 },
-        bufferedTime: 120000,
+        position: { elapsedTime: 0, updateTime: Date.now() },
+        bufferedTime: item.duration,
+        duration: item.duration,
         loopMode: avSession.LoopMode.LOOP_MODE_SINGLE,
         isFavorite: false, // 是否收藏
       };
       this.avSession.setAVPlaybackState(playbackState);
+      let queueItemDescription_1: avSession.AVMediaDescription = {
+        assetId: item.sound,
+        title: item.name,
+        subtitle: item.name,
+        description: item.name,
+        mediaImage: item.imageContent,
+        extras: { 'extras': 'any' }
+      };
+      let queueItem_1: avSession.AVQueueItem = {
+        itemId: 1,
+        description: queueItemDescription_1
+      };
+      let queueItemDescription_2: avSession.AVMediaDescription = {
+        assetId: item.sound,
+        title: item.name,
+        subtitle: item.name,
+        description: item.name,
+        mediaImage: item.imageContent,
+        extras: { 'extras': 'any' }
+      };
+      let queueItem_2: avSession.AVQueueItem = {
+        itemId: 2,
+        description: queueItemDescription_2
+      };
+      let queueItemsArray = [queueItem_1, queueItem_2];
+      session.setAVQueueItems(queueItemsArray)
       this.avSession.on('play', () => {
-        this.playingList.forEach((pItem) => pItem.playerService.resume());
+        this.playingList.forEach((pItem) => pItem.playerService!.resume());
+        playbackState.state = avSession.PlaybackState.PLAYBACK_STATE_PLAY;
+        this.avSession?.setAVPlaybackState(playbackState);
       });
 
       this.avSession.on('pause', () => {
-        this.playingList.forEach((pItem) => pItem.playerService.pause());
+        this.playingList.forEach((pItem) => pItem.playerService!.pause());
+        playbackState.state = avSession.PlaybackState.PLAYBACK_STATE_PAUSE;
+        this.avSession?.setAVPlaybackState(playbackState);
       });
       let wantAgentInfo: wantAgent.WantAgentInfo = {
         wants: [
@@ -418,42 +491,30 @@ export struct PressureSounds {
     });
   }
 
-  private updateUnionPlayerState(state: PlayerState, playerService: AudioPlayerService, currentItem: ImageSound) {
-    if (state === PlayerState.STATE_PLAYING) {
-      this.unionPlayerState = state;
-      let addedImageSound =
-        this.playingList.find((playingItem: ImageSoundPlayerState) => playingItem.name === currentItem.name);
-      if (addedImageSound) {
-        addedImageSound.playerState = state;
-      } else {
-        this.playingList.push({
-          name: currentItem.name,
-          image: currentItem.image,
-          sound: currentItem.sound,
-          playerState: state,
-          playerService: playerService
-        });
+  private updatePlayerList(state: media.AVPlayerState, playerService: AudioPlayerService, currentItem: ImageSound) {
+    let addedImageSound =
+      this.playingList.find((playingItem: ImageSoundPlayerState) => playingItem.name === currentItem.name);
+    if (addedImageSound) {
+      addedImageSound.playerState = state;
+    }
+    if (state === 'playing') {
+      if (!addedImageSound) {
+        let playItem = new ImageSoundPlayerState(currentItem.name, currentItem.image, currentItem.sound);
+        playItem.playerState = state;
+        playItem.playerService = playerService;
+        this.playingList.push(playItem);
       }
     }
-    if (state === PlayerState.STATE_STOPPED || state === PlayerState.STATE_COMPLETED) {
+    if (state === 'stopped' || state === 'completed') {
       let removedImageSound =
         this.playingList.find((playingItem: ImageSoundPlayerState) => playingItem.name === currentItem.name);
       if (removedImageSound) {
         this.playingList.splice(this.playingList.indexOf(removedImageSound), 1);
       }
     }
-    if (state === PlayerState.STATE_PAUSED) {
-      let playingItem =
-        this.playingList.filter((playingItem: ImageSoundPlayerState) => playingItem.name !== currentItem.name)
-          .find((playingItem: ImageSoundPlayerState) => playingItem.playerState === PlayerState.STATE_PLAYING);
-      if (!playingItem) {
-        this.unionPlayerState = state;
-      }
-      let currentItems =
-        this.playingList.find((playingItem: ImageSoundPlayerState) => playingItem.name === currentItem.name);
-      if (currentItems) {
-        currentItems.playerState = state;
-      }
-    }
+    this.unionPlayerState =
+      this.playingList.find(p => p.playerState == 'paused')?.playerState ?? 'playing';
+    this.unionPlayerState =
+      this.playingList.find(p => p.playerState == 'playing')?.playerState ?? 'paused';
   }
 }

@@ -1,17 +1,18 @@
 import { ImageRaw } from "../common/ImageRaw";
 import resourceManager from "@ohos.resourceManager";
-import { AudioPlayerService, PlayerState } from "../../services/AudioPlayerService";
+import { AudioPlayerService } from "../../services/AudioPlayerService";
 import { curves } from "@kit.ArkUI";
 import { AudioPlayerGroupService } from "../../services/AudioPlayerGroupService";
+import { media } from "@kit.MediaKit";
 
 @ComponentV2
 export struct ImageSoundPlayer {
   @Param @Require image: string;
   @Param @Require file: string;
   @Event imagePrepared: (image:PixelMap) => void = (image:PixelMap) => {};
-  @Event onPlayStateChange: (state: PlayerState, playerService: AudioPlayerService) => void;
+  @Event onPlayStateChange: (state: media.AVPlayerState, playerService: AudioPlayerService) => void;
   @Local rawFileDescriptor: resourceManager.RawFileDescriptor | undefined = undefined;
-  @Local playerState: PlayerState = PlayerState.STATE_NOT_INIT;
+  @Local playerState: media.AVPlayerState = 'idle';
   private context = getContext(this);
   private audioPlayerService: AudioPlayerService = AudioPlayerGroupService.getPlayerInstance(this.file);
   private autoStopTimeOutId: number | undefined;
@@ -19,9 +20,12 @@ export struct ImageSoundPlayer {
   aboutToAppear(): void {
     this.rawFileDescriptor = this.context.resourceManager.getRawFdSync(this.file);
     this.audioPlayerService.setVolume(1);
-    this.audioPlayerService.addOnStateChangeListener((state: PlayerState) => {
+    this.audioPlayerService.addOnStateChangeListener((state: media.AVPlayerState) => {
       this.playerState = state;
       this.onPlayStateChange(state, this.audioPlayerService);
+      if (this.playerState == 'completed' && this.rawFileDescriptor) {
+        this.audioPlayerService.playAudioFileByFd(this.rawFileDescriptor)
+      }
     });
   }
 
@@ -30,7 +34,7 @@ export struct ImageSoundPlayer {
       ImageRaw({ image: this.image,imagePrepared:this.imagePrepared })
       if (this.rawFileDescriptor) {
         Button() {
-          Image(this.playerState === PlayerState.STATE_PLAYING ? $r('app.media.ic_pause') :
+          Image(this.playerState === 'playing' ? $r('app.media.ic_pause') :
           $r('app.media.ic_play'))
             .fillColor(Color.White)
             .opacity(0.9)
@@ -42,14 +46,14 @@ export struct ImageSoundPlayer {
         .backgroundColor(Color.Transparent)
         .onClick(async () => {
           try {
-            if (this.playerState === PlayerState.STATE_PLAYING) {
+            if (this.playerState === 'playing') {
               await this.audioPlayerService.pause();
               this.autoStopTimeOutId = setTimeout(() => {
                 this.audioPlayerService.stop();
               }, 10_000);
             } else {
               clearTimeout(this.autoStopTimeOutId);
-              if (this.playerState === PlayerState.STATE_PAUSED) {
+              if (this.playerState === 'paused') {
                 await this.audioPlayerService.resume();
               } else {
                 if (this.rawFileDescriptor) {
@@ -69,7 +73,7 @@ export struct ImageSoundPlayer {
   }
 
   aboutToDisappear(): void {
-    if (this.playerState === PlayerState.STATE_PLAYING || this.playerState === PlayerState.STATE_PAUSED) {
+    if (this.playerState === 'playing' || this.playerState === 'paused') {
       this.audioPlayerService.stop();
     }
   }

@@ -1,8 +1,8 @@
-import { PlayerState } from "../../services/AudioPlayerService"
 import { AudioPlayerService } from "../../services/AudioPlayerService"
 import hilog from '@ohos.hilog'
 import resourceManager from "@ohos.resourceManager";
 import { AudioPlayerGroupService } from "../../services/AudioPlayerGroupService";
+import media from "@ohos.multimedia.media";
 
 const TAG = 'AudioPlayer';
 const DOMAIN = 0x0000;
@@ -11,12 +11,12 @@ const DOMAIN = 0x0000;
 export struct AudioPlayer {
   @Param @Require audioFilePath: string;
   @Param fileDescriptor: resourceManager.RawFileDescriptor | undefined = undefined;
-  @Local playerState: PlayerState = PlayerState.STATE_NOT_INIT;
+  @Local playerState: media.AVPlayerState = 'idle';
   private audioPlayerService: AudioPlayerService = AudioPlayerGroupService.getPlayerInstance(this.audioFilePath);
 
   build() {
     Row() {
-      if (this.playerState === PlayerState.STATE_PLAYING || this.playerState === PlayerState.STATE_PAUSED) {
+      if (this.playerState === 'playing' || this.playerState === 'paused') {
         Button() {
           Image($r('app.media.ic_stop'))
             .width(20)
@@ -38,14 +38,14 @@ export struct AudioPlayer {
 
       Button() {
         Row() {
-          Image(this.playerState === PlayerState.STATE_PLAYING ? $r('app.media.ic_pause') :
+          Image(this.playerState === 'playing' ? $r('app.media.ic_pause') :
           $r('app.media.ic_play'))
             .width(20)
             .height(20)
             .fillColor($r('sys.color.font_primary'))
             .margin({ right: 8 })
-          Text(this.playerState === PlayerState.STATE_PLAYING ? '暂停播放' :
-            this.playerState === PlayerState.STATE_PAUSED ? '继续播放' : '播放录音')
+          Text(this.playerState === 'playing' ? '暂停播放' :
+            this.playerState === 'paused' ? '继续播放' : '播放录音')
         }
         .alignItems(VerticalAlign.Center)
         .justifyContent(FlexAlign.Center)
@@ -56,10 +56,10 @@ export struct AudioPlayer {
       .padding({ left: 16, right: 16 })
       .onClick(async () => {
         try {
-          if (this.playerState === PlayerState.STATE_PLAYING) {
+          if (this.playerState === 'playing') {
             await this.audioPlayerService.pause();
           } else {
-            if (this.playerState === PlayerState.STATE_PAUSED) {
+            if (this.playerState === 'paused') {
               await this.audioPlayerService.resume();
             } else {
               if (this.audioFilePath) {
@@ -80,13 +80,13 @@ export struct AudioPlayer {
 
   aboutToAppear() {
     this.audioPlayerService.setVolume(1);
-    this.audioPlayerService.addOnStateChangeListener((state: PlayerState) => {
+    this.audioPlayerService.addOnStateChangeListener((state: media.AVPlayerState) => {
       this.playerState = state;
     });
   }
 
   aboutToDisappear(): void {
-    if (this.playerState === PlayerState.STATE_PLAYING || this.playerState === PlayerState.STATE_PAUSED) {
+    if (this.playerState === 'playing' || this.playerState === 'paused') {
       this.audioPlayerService.stop();
     }
   }

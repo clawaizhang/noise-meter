@@ -1,19 +1,18 @@
-import { AudioPlayer } from "../business/AudioPlayer";
 import { ImageRaw } from "../common/ImageRaw";
-import resourceManager from "@ohos.resourceManager";
-import { AudioPlayerService, PlayerState } from "../../services/AudioPlayerService";
+import { AudioPlayerService } from "../../services/AudioPlayerService";
+import { media } from "@kit.MediaKit";
 
 @ComponentV2
 export struct ImageSoundPlayer2 {
   @Param @Require image: string;
-  @Param @Require initState: PlayerState;
+  @Param @Require initState: media.AVPlayerState;
   @Param @Require audioPlayerService: AudioPlayerService;
-  @Local playerState: PlayerState = PlayerState.STATE_PLAYING;
+  @Local playerState: media.AVPlayerState = 'playing';
 
   aboutToAppear(): void {
     this.playerState = this.initState;
     this.audioPlayerService.setVolume(1);
-    this.audioPlayerService.addOnStateChangeListener((state: PlayerState) => {
+    this.audioPlayerService.addOnStateChangeListener((state: media.AVPlayerState) => {
       this.playerState = state;
     });
   }
@@ -22,7 +21,7 @@ export struct ImageSoundPlayer2 {
     Stack({ alignContent: Alignment.BottomStart }) {
       ImageRaw({ image: this.image })
       Button() {
-        Image(this.playerState === PlayerState.STATE_PLAYING ? $r('app.media.ic_pause') :
+        Image(this.playerState === 'playing' ? $r('app.media.ic_pause') :
         $r('app.media.ic_play'))
           .fillColor(Color.White)
           .opacity(0.9)
@@ -34,10 +33,10 @@ export struct ImageSoundPlayer2 {
       .backgroundColor(Color.Transparent)
       .onClick(async () => {
         try {
-          if (this.playerState === PlayerState.STATE_PLAYING) {
+          if (this.playerState === 'playing') {
             await this.audioPlayerService.pause();
           } else {
-            if (this.playerState === PlayerState.STATE_PAUSED) {
+            if (this.playerState === 'paused') {
               await this.audioPlayerService.resume();
             }
           }

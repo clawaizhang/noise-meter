@@ -1746,7 +1746,7 @@ export class AudioPlayerService {
   private fileService: FileService;
   private context: common.Context;
   private onProgressListener?: (duration: number) => void;
-  private onStateChangeListener?: (state: PlayerState) => void;
+  private onStateChangeListener?: (state: media.AVPlayerState) => void;
 
   constructor(context: common.Context, fileService: FileService) {
     this.context = context;
@@ -1770,13 +1770,13 @@ export class AudioPlayerService {
 
       this.player.addOnCompletionListener(() => {
         if (this.onStateChangeListener) {
-          this.onStateChangeListener(PlayerState.STATE_COMPLETED);
+          this.onStateChangeListener(media.AVPlayerState.STATE_COMPLETED);
         }
       });
 
       this.player.addOnErrorListener((code: number, message: string) => {
         if (this.onStateChangeListener) {
-          this.onStateChangeListener(PlayerState.STATE_ERROR);
+          this.onStateChangeListener(media.AVPlayerState.STATE_ERROR);
         }
       });
 
@@ -1868,15 +1868,15 @@ export class AudioPlayerService {
     return this.player?.isPlaying() ?? false;
   }
 
-  getPlayerState(): PlayerState {
-    return this.player?.getPlayerState() ?? PlayerState.STATE_NOT_INIT;
+  getmedia.AVPlayerState(): media.AVPlayerState {
+    return this.player?.getmedia.AVPlayerState() ?? media.AVPlayerState.STATE_NOT_INIT;
   }
 
   setOnProgressListener(listener: (duration: number) => void): void {
     this.onProgressListener = listener;
   }
 
-  setOnStateChangeListener(listener: (state: PlayerState) => void): void {
+  setOnStateChangeListener(listener: (state: media.AVPlayerState) => void): void {
     this.onStateChangeListener = listener;
   }
 
