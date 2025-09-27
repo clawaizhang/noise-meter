@@ -13,7 +13,6 @@ import {
 } from '../../utils/TimeUtils';
 import { ActionPanel } from './ActionPanel';
 import { drawSpectrum, getDbSteps, getFrequencySteps } from './DrawSpectrum';
-import { DecibelState } from '../../types/DecibelState';
 import { DisplayManager } from '../../../../main/ets/utils/DisplayManager';
 import { AudioAnalysisMode, AudioPresets } from '../../common/AudioConfig';
 import { PreferenceKeys } from '../../models/PreferenceKeys';
@@ -33,12 +32,11 @@ import { resourceManager } from '@kit.LocalizationKit';
 import { NoiseDescriptionDialogBuilder } from '../../pages/noisemeter/NoiseDescriptionDialogNavigation';
 import { PressureSounds } from './PressureSounds';
 import { image } from '@kit.ImageKit';
+import { AppKeys } from '../../models/AppKeys';
 
 @ComponentV2
 export struct DecibelMeter {
   @Param @Require meterOn: boolean = true;
-  @Local private decibelState: DecibelState =
-    AppStorageV2.connect(DecibelState, 'DecibelState', () => new DecibelState())!;
   @Local private minDecibel: number = 0
   @Local private maxDecibel: number = 0
   @Local private avgDecibel: number = 0
@@ -60,6 +58,7 @@ export struct DecibelMeter {
   @Local dOpacity: number = 1; // 页面透明度
   @Local dWidthHeight: string = ''; // 页面透明度
   @Local bgImage: image.PixelMap | undefined = undefined; // 页面透明度
+  @Local as: AppKeys = AppStorageV2.connect(AppKeys)!;
   @Consumer(navigationStack) navStack: NavPathStack = new NavPathStack()
   private audioService: AudioService = AudioService.getInstance(getContext() as common.UIAbilityContext)
   private locationService: LocationService = LocationService.getInstance()
@@ -247,28 +246,31 @@ export struct DecibelMeter {
       Image($r('app.media.ic_info'))
         .width(12)
         .height(12)
-        .fillColor(DecibelService.getDecibelColor(this.decibelState.currentDecibel));
+        .fillColor(DecibelService.getDecibelColor(this.as.db));
 
-      Text(DecibelService.getDecibelDescription(this.decibelState.currentDecibel))
+      Text(DecibelService.getDecibelDescription(this.as.db))
         .fontSize(12)
-        .fontColor(DecibelService.getDecibelColor(this.decibelState.currentDecibel))
+        .fontColor(DecibelService.getDecibelColor(this.as.db))
         .fontWeight(FontWeight.Medium);
     }
     .padding(8)
     .borderRadius(8)
     .border({
       width: 1,
-      color: DecibelService.getDecibelColor(this.decibelState.currentDecibel)
+      color: DecibelService.getDecibelColor(this.as.db)
     })
     .id('noiseDescriptionButtonId')
     .onClick(() => {
-      DialogHub.getSheet()
-        .setContent(wrapBuilder(NoiseDescriptionDialogBuilder))
-        .setStyle({ backgroundColor: $r('sys.color.background_secondary') })
-        .setConfig({ enableOutsideInteractive: false, scrollSizeMode: ScrollSizeMode.FOLLOW_DETENT })
+      let dialog = DialogHub.getSheet()
+        .setContent(wrapBuilder(NoiseDescriptionDialogBuilder), this.as)
+        .setStyle({ backgroundColor: $r('sys.color.background_secondary'), showClose: false })
+        .setConfig({ enableOutsideInteractive: false, scrollSizeMode: ScrollSizeMode.CONTINUOUS })
         .setComponentTargetId('noiseDescriptionButtonId')
-        .build()
-        .show();
+        .build();
+      dialog.show();
+      setInterval(() => {
+        dialog.updateContent(this.as);
+      }, 100)
     })
   }
 
@@ -460,8 +462,8 @@ export struct DecibelMeter {
           this.values.push(decibel);
           this.weightingTypes.push(this.pk.weighting_type)
           if (this.isDisplayApp) {
-            this.decibelState.currentDecibel = decibel;
-            this.updateStatistics(this.decibelState.currentDecibel);
+            this.as.db = decibel;
+            this.updateStatistics(this.as.db);
             this.drawSpectrumLocal(spectrum);
           }
           // 更新计时器（毫秒级）
@@ -484,7 +486,7 @@ export struct DecibelMeter {
 
   private resetData() {
     // 重置状态
-    this.decibelState.currentDecibel = 0;
+    this.as.db = 0;
     this.minDecibel = 0;
     this.maxDecibel = 0;
     this.avgDecibel = 0;
@@ -611,21 +613,7 @@ export struct DecibelMeter {
               message: '自动保存记录成功',
               duration: 3000
             });
-          } else {
-            // const params: DetailDialogParams = {
-            //   selectedRecord: this.currentRecord,
-            //   context: getContext(this),
-            //   fileService: this.fileService
-            // };
-            // DialogHub.getSheet()
-            //   .setComponentTargetId('showNoiseDetailDialogFromActionPanels')
-            //   .setStyle({ showClose: false })
-            //   .setConfig({ enableOutsideInteractive: false, scrollSizeMode: ScrollSizeMode.CONTINUOUS })
-            //   .setContent(wrapBuilder(DetailDialogBuilder), params)
-            //   .build()
-            //   .show();
           }
-
         }
 
         // 重置状态
@@ -684,7 +672,7 @@ export struct DecibelMeter {
 
                 .justifyContent(FlexAlign.Center)
                 .alignItems(VerticalAlign.Bottom)
-                .borderColor(this.isNoiseAlarm ? DecibelService.getDecibelColor(this.decibelState.currentDecibel) :
+                .borderColor(this.isNoiseAlarm ? DecibelService.getDecibelColor(this.as.db) :
                 Color.Transparent)
 
                 Text(`${secondsToHoursMinutesSecondsWithDecimal(this.MAX_RECORDING_DURATION -
@@ -897,7 +885,7 @@ export struct DecibelMeter {
           });
       }
       Column() {
-        if (this.decibelState.currentDecibel === 0) {
+        if (this.as.db === 0) {
           Text('-')
             .fontSize(100)
             .textShadow({
@@ -908,9 +896,9 @@ export struct DecibelMeter {
             })
             .transition(TransitionEffect.scale({ x: 0, y: 0 }).animation({ curve: curves.springMotion() }))
             .fontWeight(FontWeight.Bold)
-            .fontColor(DecibelService.getDecibelColor(this.decibelState.currentDecibel));
+            .fontColor(DecibelService.getDecibelColor(this.as.db));
         } else {
-          Text(this.decibelState.currentDecibel.toString())
+          Text(this.as.db.toString())
             .fontSize(100)
             .textShadow({
               radius: 2,
@@ -920,7 +908,7 @@ export struct DecibelMeter {
             })
             .transition(TransitionEffect.scale({ x: 0, y: 0 }).animation({ curve: curves.springMotion() }))
             .fontWeight(FontWeight.Bold)
-            .fontColor(DecibelService.getDecibelColor(this.decibelState.currentDecibel));
+            .fontColor(DecibelService.getDecibelColor(this.as.db));
         }
 
       }

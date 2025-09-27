@@ -1,10 +1,8 @@
 import { AppStorageV2, curves, PersistenceV2, promptAction } from '@kit.ArkUI';
-import { DecibelState } from '../../types/DecibelState';
-import { getWeightingDescription, WeightingType } from '../../constants/WeightingConstants';
-import { AudioAnalysisMode, AudioPresets } from '../../common/AudioConfig';
-import { PreferenceKeys } from '../../models/PreferenceKeys';
 import { navigationStack } from '../../constants/ProviderConstant';
 import { DesignConstants } from '../../constants/DesignConstants';
+import { PreferenceKeys } from '../../models/PreferenceKeys';
+import { AppKeys } from '../../models/AppKeys';
 
 @Extend(Image)
 function itemIcon() {
@@ -51,7 +49,7 @@ export struct AudioAnalysisSettings {
   @Local isAutoCalibrating: boolean = false;
   @Local countdown: number = 0;
   @Local calibrationProgress: number = 0;
-  @Local decibelState: DecibelState = AppStorageV2.connect(DecibelState, 'DecibelState', () => new DecibelState())!;
+  @Local as: AppKeys = AppStorageV2.connect(AppKeys)!;
   @Local gridColumns: number = 1;
   @Consumer(navigationStack) navStack: NavPathStack = new NavPathStack();
 
@@ -81,7 +79,7 @@ export struct AudioAnalysisSettings {
     // 开始校准
     const calibrationInterval = setInterval(() => {
       this.calibrationProgress += 1;
-      totalDecibel += this.decibelState.currentDecibel;
+      totalDecibel += this.as.db;
       sampleCount += 1;
 
       if (this.calibrationProgress >= calibrationDuration) {
@@ -138,7 +136,7 @@ export struct AudioAnalysisSettings {
             .blockColor($r('sys.color.font_emphasize'))
             .trackColor($r('sys.color.background_secondary'))
             .selectedColor($r('sys.color.font_emphasize'))
-            .showTips(true, `${this.decibelState.currentDecibel}dB`)
+            .showTips(true, `${this.as.db}dB`)
             .onChange((value: number) => {
               this.pk.calibration_value = value;
             })

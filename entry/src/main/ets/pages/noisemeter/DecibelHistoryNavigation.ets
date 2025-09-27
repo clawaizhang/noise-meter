@@ -7,8 +7,10 @@ import { AudioPlayer } from '../../components/business/AudioPlayer';
 import { DecibelRecord } from '../../models/DecibelRecord';
 import { FileService } from '../../services/FileService';
 import { DesignConstants } from '../../constants/DesignConstants';
-import { curves, SymbolGlyphModifier } from '@kit.ArkUI';
+import { AppStorageV2, curves, SymbolGlyphModifier } from '@kit.ArkUI';
 import { DialogHub } from '@hadss/dialoghub';
+import { NoiseStandardDialogBuilder } from './NoiseStandardDialogNavigation';
+import { AppKeys } from '../../models/AppKeys';
 
 class DecibelRecordDataSource implements IDataSource {
   private records: DecibelRecord[];
@@ -73,6 +75,7 @@ export struct DecibelHistory {
   @Local pendingDeleteAudioId: string = '';
   @Local shouChangMode: boolean = false;
   @Local deleteMode: boolean = false;
+  @Local as: AppKeys = AppStorageV2.connect(AppKeys)!;
   private context: Context = getContext(this)
   private recordService: DecibelRecordService = new DecibelRecordService(this.context);
   private promptAction: PromptAction = this.getUIContext().getPromptAction();
@@ -90,7 +93,20 @@ export struct DecibelHistory {
       } else {
         this.ListLayoutView()
       }
-    }.title('历史记录').backgroundColor($r('sys.color.background_secondary')).menus([{
+    }.id('rbgnolqiwuejrbgvwoi').title('历史记录').backgroundColor($r('sys.color.background_secondary')).menus([{
+      value: '噪音参考标准', icon: $r('sys.media.ohos_ic_public_more'), action: () => {
+        let dialog = DialogHub.getSheet()
+          .setStyle({ backgroundColor: $r('sys.color.background_secondary'), showClose: false })
+          .setComponentTargetId('rbgnolqiwuejrbgvwoi')
+          .setConfig({ enableOutsideInteractive: false, scrollSizeMode: ScrollSizeMode.CONTINUOUS })
+          .setContent(wrapBuilder(NoiseStandardDialogBuilder), this.as)
+          .build();
+        dialog.show();
+        setInterval(() => {
+          dialog.updateContent(this.as);
+        }, 100)
+      }
+    }, {
       value: '收藏',
       symbolIcon: new SymbolGlyphModifier($r("sys.symbol.heart")),
       action: () => {
@@ -509,7 +525,7 @@ export struct DecibelHistory {
             })
           }, (record: DecibelRecord) => record.id)
         }
-      }.margin({ left: 16, right: 16 })
+      }.margin({ left: 16, right: 16 }).id('noiseHistoryMainId')
     }.scrollBar(BarState.Off).edgeEffect(EdgeEffect.Spring).height('100%').align(Alignment.Top)
   }
 }

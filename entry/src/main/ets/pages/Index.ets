@@ -7,11 +7,12 @@ import { DatabaseUpgradeConfig, DbConfig } from '../interfaces/DatabaseInterface
 import hilog from '@ohos.hilog'
 import { MainPage, dbConfig } from 'entry/MainPage'
 import { common, ConfigurationConstant, Want } from '@kit.AbilityKit'
-import { PersistenceV2 } from '@kit.ArkUI'
+import { AppStorageV2, PersistenceV2 } from '@kit.ArkUI'
 import { WindowManager } from '../utils/WindowManager'
 import { AudioAnalysisMode } from '../common/AudioConfig'
 import { AudioService } from '../services/AudioService'
 import { NotificationHelper } from '../utils/NotificationHelper'
+import { AppKeys } from '../models/AppKeys'
 
 const TAG = 'Index';
 const DOMAIN = 0x0000;
@@ -28,6 +29,7 @@ struct Index {
   @Local isInitialized: boolean = false;
   @Local isLoading: boolean = true;
   @Local pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys,() => new PreferenceKeys())!;
+  @Local as: AppKeys = AppStorageV2.connect(AppKeys, () => new AppKeys())!;
   usePrivacy: boolean = true;
   private relationalStoreService: RelationalStoreService = RelationalStoreService.getInstance();
   private context = this.getUIContext().getHostContext() as common.UIAbilityContext;
