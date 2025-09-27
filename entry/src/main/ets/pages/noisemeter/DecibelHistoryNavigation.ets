@@ -94,7 +94,7 @@ export struct DecibelHistory {
         this.ListLayoutView()
       }
     }.id('rbgnolqiwuejrbgvwoi').title('历史记录').backgroundColor($r('sys.color.background_secondary')).menus([{
-      value: '噪音参考标准', icon: $r('sys.media.ohos_ic_public_more'), action: () => {
+      value: '噪音参考标准', icon: $r('app.media.ic_info'), action: () => {
         let dialog = DialogHub.getSheet()
           .setStyle({ backgroundColor: $r('sys.color.background_secondary'), showClose: false })
           .setComponentTargetId('rbgnolqiwuejrbgvwoi')

@@ -223,6 +223,22 @@ export struct DecibelMeter {
         }
         this.recordingTime = new Date().getTime() - this.startTime;
       })
+      .id('ashkjlgfshgal')
+      .onClick(() => {
+        let dialog = DialogHub.getSheet()
+          .setStyle({
+            detents: [SheetSize.FIT_CONTENT],
+            backgroundColor: $r('sys.color.background_secondary'),
+            title: { title: '频谱图', subtitle: '横坐标: 频率(Hz), 纵坐标: 分贝值(dB)' }
+          })
+          .setComponentTargetId('ashkjlgfshgal')
+          .setContent(wrapBuilder(peakExp), this.as)
+          .build();
+        dialog.show();
+        setInterval(() => {
+          dialog.updateContent(this.as);
+        }, 100)
+      })
   }
 
   @Builder
@@ -944,4 +960,19 @@ export struct DecibelMeter {
       this.torchOn = !this.torchOn;
     }
   }
+}
+
+@Builder
+function peakExp(ak: AppKeys) {
+  Column({ space: 16 }) {
+    Text('峰值频率').fontSize(36)
+
+    Text(`${ak.peakFreq.toFixed(0)}Hz`).fontSize(36)
+
+    Text('峰值频率反映了噪音中“最响”的那个音高。是的，它可以理解为当前噪音中能量最高的频率，帮助我们快速定位噪音的主要特征和可能来源，为降噪提供关键依据。')
+
+  }.backgroundColor($r('sys.color.comp_background_primary'))
+  .padding(16)
+  .borderRadius(16)
+  .alignItems(HorizontalAlign.Center)
 }

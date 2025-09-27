@@ -1,4 +1,6 @@
 import { resourceManager } from "@kit.LocalizationKit";
+import { AppStorageV2 } from "@kit.ArkUI";
+import { AppKeys } from "../../models/AppKeys";
 
 export function getDbSteps(): number[] {
   return [-20, 0, 20, 40, 60, 80, 100, 120, 140];
@@ -265,6 +267,7 @@ export function drawSpectrum(canvasContext: CanvasRenderingContext2D, canvasWidt
 
     // 显示峰值频率
     if (peakFreq > 0) {
+      AppStorageV2.connect(AppKeys)!.peakFreq = peakFreq;
       const logPeakFreq: number = Math.log10(peakFreq);
       const logMin: number = Math.log10(16);
       const logMax: number = Math.log10(frequencyHigh);
