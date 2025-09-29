@@ -3,7 +3,7 @@
   "description": "Please describe the basic information.",
   "dependencies": {
     "@pura/harmony-utils": "^1.0.0",
-    "@ohos/lottie": "^2.0.23",
+    "@ohos/lottie-turbo": "^1.0.2-rc.1",
     "@hadss/dialoghub": "^1.1.0",
   },
   "devDependencies": {

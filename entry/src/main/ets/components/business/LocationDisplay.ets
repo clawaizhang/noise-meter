@@ -109,7 +109,7 @@ export struct LocationDisplay {
       }
 
       Text(this.pk.location_enabled ? (this.address || '点击刷新按钮获取位置') : '开启位置服务可记录噪音检测位置')
-        .textAlign(TextAlign.Center)
+        .textAlign(TextAlign.Center).textOverflow({ overflow: TextOverflow.MARQUEE })
     }
 
     .height(40)

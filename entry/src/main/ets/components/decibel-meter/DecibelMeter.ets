@@ -26,7 +26,7 @@ import { WeightingType } from '../../constants/WeightingConstants';
 import { call } from '@kit.TelephonyKit';
 import { BusinessError } from '@kit.BasicServicesKit';
 import { camera } from '@kit.CameraKit';
-import lottie, { AnimationItem } from '@ohos/lottie';
+import { LottieController, LottieView } from '@ohos/lottie-turbo';
 import { DialogHub, InfSheet } from '@hadss/dialoghub';
 import { resourceManager } from '@kit.LocalizationKit';
 import { NoiseDescriptionDialogBuilder } from '../../pages/noisemeter/NoiseDescriptionDialogNavigation';
@@ -79,27 +79,23 @@ export struct DecibelMeter {
   private canvasSettings: RenderingContextSettings = new RenderingContextSettings(true) // Canvas设置
   private canvasContext: CanvasRenderingContext2D = new CanvasRenderingContext2D(this.canvasSettings) // Canvas上下文
   private noiseAlarmTimer: number = -1 // 定时器ID用于控制闪烁
-  mainCatRenderingSettings: RenderingContextSettings = new RenderingContextSettings(true)
-  mainCatCanvasRenderingContext: CanvasRenderingContext2D = new CanvasRenderingContext2D(this.mainCatRenderingSettings)
-  animationCatItem!: AnimationItem
+  lottieController: LottieController = new LottieController()
 
   @Monitor('pk.audio_analysis_mode')
   analysisModeChange(monitor: IMonitor) {
-    if (this.animationCatItem) {
-      let mode = monitor.value<AudioAnalysisMode>()?.now;
-      this.setPlaySpeed(mode);
-    }
+    let mode = monitor.value<AudioAnalysisMode>()?.now;
+    this.setPlaySpeed(mode);
   }
 
   private setPlaySpeed(mode: AudioAnalysisMode | undefined) {
     if (mode == AudioAnalysisMode.SLOW_TIME_WEIGHTING) {
-      this.animationCatItem.setSpeed(1);
+      this.lottieController.setSpeed(1);
     }
     if (mode == AudioAnalysisMode.FAST_TIME_WEIGHTING) {
-      this.animationCatItem.setSpeed(1.5);
+      this.lottieController.setSpeed(1.5);
     }
     if (mode == AudioAnalysisMode.IMPULSE_TIME_WEIGHTING) {
-      this.animationCatItem.setSpeed(2);
+      this.lottieController.setSpeed(2);
     }
   }
 
@@ -359,16 +355,12 @@ export struct DecibelMeter {
   }
 
   aboutToDisappear() {
-    lottie.destroy('cat')
-    this.animationCatItem?.removeEventListener('DOMLoaded');
-    lottie.destroy('cat');
     if (this.releaseTimer !== -1) {
       clearTimeout(this.releaseTimer);
       this.releaseTimer = -1;
     }
     this.audioService.stopProcessing();
     this.audioService.stopCapture();
-
   }
 
   async aboutToAppear() {
@@ -872,33 +864,16 @@ export struct DecibelMeter {
   CurrentDecibel() {
     Stack({ alignContent: Alignment.Bottom }) {
       if (this.pk.cat_enabled && this.isDisplayApp) {
-        Canvas(this.mainCatCanvasRenderingContext)
+        LottieView({
+          controller: this.lottieController,
+          path: $rawfile('anima/lottie/lovely_cat.json'),
+          loop: true,
+          autoplay: true,
+          contentMode: 'Contain',
+          frameRate: 30,
+        })
           .width(180)
           .height(180)
-          .onReady(() => {
-            //抗锯齿的设置
-            this.mainCatCanvasRenderingContext.imageSmoothingEnabled = true;
-            this.mainCatCanvasRenderingContext.imageSmoothingQuality = 'medium';
-            lottie.destroy('cat');
-            this.animationCatItem = lottie.loadAnimation({
-              container: this.mainCatCanvasRenderingContext,
-              renderer: 'canvas',
-              loop: true,
-              autoplay: true,
-              name: 'cat',
-              contentMode: 'Contain',
-              frameRate: 30,
-
-              // imagePath: 'lottie/images/',                 // 加载读取指定路径下的图片资源
-              path: 'common/lottie/lovely_cat.json', // json路径
-              // initialSegment: [10,50]                      // 播放的动画片段
-            });
-            this.setPlaySpeed(this.pk.audio_analysis_mode);
-            // 因为动画是异步加载，所以对animateItem的操作需要放在动画加载完成回调里操作
-            this.animationCatItem.addEventListener('DOMLoaded', (args: Object): void => {
-              this.animationCatItem.play();
-            });
-          });
       }
       Column() {
         if (this.as.db === 0) {
@@ -965,7 +940,7 @@ export struct DecibelMeter {
 @Builder
 function peakExp(ak: AppKeys) {
   Column({ space: 16 }) {
-    Text('峰值频率').fontSize(36)
+    Text('峰值频率').fontSize(24)
 
     Text(`${ak.peakFreq.toFixed(0)}Hz`).fontSize(36)
 
