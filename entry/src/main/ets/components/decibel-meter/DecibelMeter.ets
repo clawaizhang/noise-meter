@@ -42,7 +42,6 @@ export struct DecibelMeter {
   @Local private isRecording: boolean = false
   @Local private recordingTime: number = 0
   @Local private torchOn: boolean = false
-  @Local private touShu: boolean = false;
   @Local private isNoiseAlarm: boolean = false // 是否触发噪音报警
   @Local private isDisplayApp: boolean = true
   @Local pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys)!;
@@ -167,59 +166,6 @@ export struct DecibelMeter {
     })
   }
 
-  @Builder
-  toushu() {
-    if (canIUse('SystemCapability.Applications.Contacts') && this.touShu) {
-      Button('一键投诉', { type: ButtonType.Capsule })
-        .animation({ curve: Curve.Linear })
-        .onClick(() => {
-          AlertDialog.show(
-            {
-              title: '拨打电话,立即投诉',
-              subtitle: '政务服务便民热线',
-              message: '准备拨打12345进行投诉',
-              autoCancel: true,
-              alignment: DialogAlignment.Center,
-              offset: { dx: 0, dy: -20 },
-              buttonDirection: DialogButtonDirection.HORIZONTAL,
-              buttons: [
-                {
-                  value: '不投诉了',
-                  action: () => {
-                    try {
-                      promptAction.showToast({
-                        message: '小事一桩,今天就算了',
-                        duration: 2000
-                      });
-                    } catch (err) {
-                      const error: BusinessError = err as BusinessError;
-                      console.error(`Show toast error, the code is ${error.code}, the message is ${error.message}`);
-                    }
-                  }
-                },
-                {
-                  value: '立即打电话',
-                  fontColor: $r('app.color.button_red'),
-                  action: () => {
-                    call.makeCall('12345');
-                  }
-                }
-              ],
-              cancel: () => {
-                console.log('Closed callbacks');
-              },
-              onWillDismiss: (dismissDialogAction: DismissDialogAction) => {
-                if (dismissDialogAction.reason === DismissReason.PRESS_BACK) {
-                  dismissDialogAction.dismiss();
-                }
-                if (dismissDialogAction.reason === DismissReason.TOUCH_OUTSIDE) {
-                  dismissDialogAction.dismiss();
-                }
-              }
-            });
-        });
-    }
-  }
 
   @Monitor('pk.location_enabled')
   onLocationEnabledChange(monitor: IMonitor) {
@@ -411,12 +357,6 @@ export struct DecibelMeter {
       this.dbCount++;
       this.avgDecibel = Math.round(this.dbSum / this.dbCount);
 
-      // 判断是否超过噪音阈值
-      if (value > 80) {
-        this.touShu = true;
-      } else {
-        this.touShu = false;
-      }
       if (value > this.pk.noise_threshold && this.pk.noise_alarm_enabled) {
         if (this.noiseAlarmTimer === -1) {
           this.noiseAlarmTimer = setInterval(() => {
@@ -595,9 +535,7 @@ export struct DecibelMeter {
             spectrumData: this.currentSpectrum,
             fftSize: this.fft_size,
             sampleRate: this.sampleRate,
-            isDisplayApp: this.isDisplayApp,
-            showTouShuButton: true,
-            touShu: this.touShu
+            isDisplayApp: this.isDisplayApp
           })
         }
 
@@ -801,19 +739,4 @@ export struct DecibelMeter {
       this.torchOn = !this.torchOn;
     }
   }
-}
-
-@Builder
-function peakExp(ak: AppKeys) {
-  Column({ space: 16 }) {
-    Text('峰值频率').fontSize(24)
-
-    Text(`${ak.peakFreq.toFixed(0)}Hz`).fontSize(36)
-
-    Text('峰值频率反映了噪音中“最响”的那个音高。是的，它可以理解为当前噪音中能量最高的频率，帮助我们快速定位噪音的主要特征和可能来源，为降噪提供关键依据。')
-
-  }.backgroundColor($r('sys.color.comp_background_primary'))
-  .padding(16)
-  .borderRadius(16)
-  .alignItems(HorizontalAlign.Center)
 }

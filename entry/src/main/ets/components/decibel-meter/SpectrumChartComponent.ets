@@ -1,11 +1,9 @@
-import { AppStorageV2, curves, promptAction } from '@kit.ArkUI';
+import { AppStorageV2, curves } from '@kit.ArkUI';
 import display from '@ohos.display';
 import { resourceManager } from '@kit.LocalizationKit';
 import { AppKeys } from '../../models/AppKeys';
 import { drawSpectrum, getDbSteps, getFrequencySteps } from './DrawSpectrum';
 import { DialogHub } from '@hadss/dialoghub';
-import { call } from '@kit.TelephonyKit';
-import { BusinessError } from '@kit.BasicServicesKit';
 
 @ComponentV2
 export struct SpectrumChartComponent {
@@ -14,8 +12,6 @@ export struct SpectrumChartComponent {
   @Param fftSize: number = 1024
   @Param sampleRate: number = 44100
   @Param isDisplayApp: boolean = true
-  @Param showTouShuButton: boolean = false
-  @Param touShu: boolean = false
 
   // 本地状态
   @Local private canvasWidth: number = 0
@@ -71,11 +67,6 @@ export struct SpectrumChartComponent {
       // Canvas频谱显示
       Stack({ alignContent: Alignment.Top }) {
         this.SpectrumChart()
-        if (this.showTouShuButton) {
-          Flex({ justifyContent: FlexAlign.SpaceBetween, alignItems: ItemAlign.Baseline }) {
-            this.toushu()
-          }.margin(16)
-        }
       }
     }
   }
@@ -130,59 +121,6 @@ export struct SpectrumChartComponent {
       })
   }
 
-  @Builder
-  toushu() {
-    if (canIUse('SystemCapability.Applications.Contacts') && this.touShu) {
-      Button('一键投诉', { type: ButtonType.Capsule })
-        .animation({ curve: Curve.Linear })
-        .onClick(() => {
-          AlertDialog.show(
-            {
-              title: '拨打电话,立即投诉',
-              subtitle: '政务服务便民热线',
-              message: '准备拨打12345进行投诉',
-              autoCancel: true,
-              alignment: DialogAlignment.Center,
-              offset: { dx: 0, dy: -20 },
-              buttonDirection: DialogButtonDirection.HORIZONTAL,
-              buttons: [
-                {
-                  value: '不投诉了',
-                  action: () => {
-                    try {
-                      promptAction.showToast({
-                        message: '小事一桩,今天就算了',
-                        duration: 2000
-                      });
-                    } catch (err) {
-                      const error: BusinessError = err as BusinessError;
-                      console.error(`Show toast error, the code is ${error.code}, the message is ${error.message}`);
-                    }
-                  }
-                },
-                {
-                  value: '立即打电话',
-                  fontColor: $r('app.color.button_red'),
-                  action: () => {
-                    call.makeCall('12345');
-                  }
-                }
-              ],
-              cancel: () => {
-                console.log('Closed callbacks');
-              },
-              onWillDismiss: (dismissDialogAction: DismissDialogAction) => {
-                if (dismissDialogAction.reason === DismissReason.PRESS_BACK) {
-                  dismissDialogAction.dismiss();
-                }
-                if (dismissDialogAction.reason === DismissReason.TOUCH_OUTSIDE) {
-                  dismissDialogAction.dismiss();
-                }
-              }
-            });
-        });
-    }
-  }
 
   private drawSpectrum(spectrum: Float32Array) {
     const dbSteps: number[] = getDbSteps();
