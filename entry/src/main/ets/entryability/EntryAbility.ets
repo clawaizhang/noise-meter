@@ -10,9 +10,10 @@ import { WindowManager } from '../utils/WindowManager';
 import { DisplayManager } from '../utils/DisplayManager';
 import { NotificationHelper } from '../utils/NotificationHelper';
 import { PreferenceKeys } from '../models/PreferenceKeys';
+import { AppKeys } from '../models/AppKeys';
 import { AppUtil, PermissionUtil, PreferencesUtil } from '@pura/harmony-utils';
 import { camera } from '@kit.CameraKit';
-import { PersistenceV2 } from '@kit.ArkUI';
+import { AppStorageV2, PersistenceV2 } from '@kit.ArkUI';
 import { AudioPlayerGroupService } from '../services/AudioPlayerGroupService';
 
 const TAG = 'EntryAbility';
@@ -22,6 +23,7 @@ const NOTIFICATION_ID = 1;
 export default class EntryAbility extends UIAbility {
   private backgroundRunningRequested: boolean = false;
   private cameraManager: camera.CameraManager = camera.getCameraManager(getContext(this));
+  private mainWindow: window.Window | undefined = undefined;
 
   async onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): Promise<void> {
     hilog.info(DOMAIN, TAG, 'Ability onCreate');
@@ -60,6 +62,14 @@ export default class EntryAbility extends UIAbility {
         return;
       }
       windowClass = data;
+      this.mainWindow = data;
+      
+      // 初始化窗口尺寸和断点信息
+      this.updateWindowBreakpointInfo();
+      
+      // 监听窗口尺寸变化
+      this.setupWindowSizeChangeListener();
+      
       // 获取设备类型
       let deviceTypeInfo: string = deviceInfo.deviceType;
       hilog.info(DOMAIN, TAG, `the value of the deviceType is:${deviceTypeInfo}`);
@@ -196,6 +206,52 @@ export default class EntryAbility extends UIAbility {
       });
     } catch (err) {
       hilog.error(DOMAIN, TAG, `Stop background running failed, error: ${JSON.stringify(err)}`);
+    }
+  }
+
+  // 设置窗口尺寸变化监听
+  private setupWindowSizeChangeListener(): void {
+    if (!this.mainWindow) {
+      hilog.error(DOMAIN, TAG, 'Main window is not available for size change listener');
+      return;
+    }
+
+    this.mainWindow.on('windowSizeChange', (windowSize: window.Size) => {
+      hilog.info(DOMAIN, TAG, `Window size changed: ${windowSize.width}x${windowSize.height}`);
+      this.updateWindowBreakpointInfo();
+    });
+  }
+
+  // 更新窗口断点信息
+  private updateWindowBreakpointInfo(): void {
+    if (!this.mainWindow) {
+      return;
+    }
+
+    try {
+      // 获取窗口尺寸
+      const windowSize = this.mainWindow.getWindowProperties();
+      const widthVp = windowSize.windowRect.width;
+      const heightVp = windowSize.windowRect.height;
+
+      // 使用系统提供的断点计算方法
+      const uiContext = this.mainWindow.getUIContext();
+      const widthBp = uiContext.getWindowWidthBreakpoint();
+      const heightBp = uiContext.getWindowHeightBreakpoint();
+      const isLandscape = widthVp > heightVp;
+
+      // 更新到 AppStorage
+      let appKeys = AppStorageV2.connect(AppKeys)!;
+      appKeys.windowWidthBreakpoint = widthBp;
+      appKeys.windowHeightBreakpoint = heightBp;
+      appKeys.windowWidth = widthVp;
+      appKeys.windowHeight = heightVp;
+      appKeys.isLandscape = isLandscape;
+
+      hilog.info(DOMAIN, TAG,
+        `Window breakpoints updated - Width: ${widthBp}(${widthVp}vp), Height: ${heightBp}(${heightVp}vp), Landscape: ${isLandscape}`);
+    } catch (error) {
+      hilog.error(DOMAIN, TAG, `Failed to update window breakpoint info: ${JSON.stringify(error)}`);
     }
   }
 }

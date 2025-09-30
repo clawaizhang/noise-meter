@@ -5,4 +5,14 @@ export class AppKeys {
   db: number = 0;
   @Trace
   peakFreq: number = 0;
+  @Trace
+  windowWidthBreakpoint: WidthBreakpoint = WidthBreakpoint.WIDTH_MD; // 窗口宽度断点: xs, sm, md, lg, xl, xxl
+  @Trace
+  windowHeightBreakpoint: HeightBreakpoint = HeightBreakpoint.HEIGHT_MD; // 窗口高度断点: xs, sm, md, lg, xl, xxl
+  @Trace
+  windowWidth: number = 0; // 当前窗口宽度(vp)
+  @Trace
+  windowHeight: number = 0; // 当前窗口高度(vp)
+  @Trace
+  isLandscape: boolean = false; // 是否为横屏模式
 }
