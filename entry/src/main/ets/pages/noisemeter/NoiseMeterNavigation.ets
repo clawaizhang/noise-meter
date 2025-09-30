@@ -1,9 +1,7 @@
 import { DecibelMeter } from '../../components/decibel-meter/DecibelMeter';
 import { navigationStack } from '../../constants/ProviderConstant';
-import { PreferenceKeys } from '../../models/PreferenceKeys';
 import { DialogHub } from '@hadss/dialoghub';
 import { SettingsBuilder } from './SettingsNavigation';
-import { PersistenceV2 } from '@kit.ArkUI';
 
 // 导航菜单项接口定义
 interface NavigationMenuItem {
@@ -11,7 +9,6 @@ interface NavigationMenuItem {
   icon: Resource;
   action: () => void;
 }
-
 
 @Builder
 export function NoiseMeterBuilder() {
@@ -22,9 +19,7 @@ export function NoiseMeterBuilder() {
 export struct MainNoiseMeter {
   @Consumer(navigationStack) navStack: NavPathStack = new NavPathStack()
   @Local currentIndex: number = 0
-  @Local touchOn: boolean = false;
   @Local title: string = '静喵Sound';
-  @Local pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys)!;
   @Local menuItems: Array<NavigationMenuItem> = [];
 
   aboutToDisappear(): void {
@@ -38,15 +33,11 @@ export struct MainNoiseMeter {
   onTabIndexChange(monitor: IMonitor) {
     const currentValue = monitor.value<number>()?.now;
     if (currentValue === 0) {
-      this.title = '静喵Sound';
+      this.title = '仪表盘';
       this.menuItems = this.noiseMeterMenus;
     }
     if (currentValue === 1) {
-      this.title = 'Sound';
-      this.menuItems = this.decibelHistoryMenus;
-    }
-    if (currentValue === 2) {
-      this.title = '设置';
+      this.title = '我的';
       this.menuItems = [];
     }
   }
@@ -64,7 +55,6 @@ export struct MainNoiseMeter {
         .margin({ top: 4 })
     }
     .justifyContent(FlexAlign.Center)
-
   }
 
   private noiseMeterMenus: Array<NavigationMenuItem> = [
@@ -89,21 +79,58 @@ export struct MainNoiseMeter {
       }
     }
   ]
-  private decibelHistoryMenus: Array<NavigationMenuItem> = []
+
+  @Builder
+  DashboardContent() {
+    Column() {
+      // 噪音检测区域
+      DecibelMeter({ meterOn: true })
+        .id('decibelMeterId')
+        .width('92%')
+    }
+    .id('decibelMeterRoot')
+    .alignItems(HorizontalAlign.Center)
+  }
+
+  @Builder
+  MyContent() {
+    Column() {
+      Text('我的页面')
+        .fontSize(18)
+        .fontColor($r('app.color.text_primary'))
+        .margin({ top: 100 })
+      Text('这里是个人中心页面')
+        .fontSize(14)
+        .fontColor($r('app.color.text_secondary'))
+        .margin({ top: 20 })
+    }
+    .width('100%')
+    .alignItems(HorizontalAlign.Center)
+  }
 
   build() {
     NavDestination() {
-      Column() {
-        // 噪音检测区域
-        DecibelMeter({ meterOn: true })
-          .id('decibelMeterId')
-          .width('92%')
+      Tabs({ barPosition: BarPosition.End, index: this.currentIndex }) {
+        TabContent() {
+          this.DashboardContent()
+        }
+        .tabBar(this.TabBuilder('仪表盘', $r('app.media.ic_meter'), 0))
+
+        TabContent() {
+          this.MyContent()
+        }
+        .tabBar(this.TabBuilder('我的', $r('app.media.ic_favorite'), 1))
       }
-      .id('decibelMeterRoot')
-      .alignItems(HorizontalAlign.Center)
+      .onChange((index: number) => {
+        this.currentIndex = index;
+      })
+      .barMode(BarMode.Fixed)
+      .barWidth('100%')
+      .barHeight(56)
+      .animationDuration(200)
     }
     .title(this.title, {
-      barStyle: this.currentIndex == 1 ? BarStyle.STACK : BarStyle.STANDARD,
+      barStyle: BarStyle.STANDARD,
       backgroundBlurStyle: BlurStyle.BACKGROUND_REGULAR
     })
     .menus(this.menuItems)

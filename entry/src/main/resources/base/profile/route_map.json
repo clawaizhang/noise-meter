@@ -23,10 +23,6 @@
       "name": "NoiseInfoDialog",
       "pageSourceFile": "src/main/ets/pages/noisemeter/NoiseInfoDialogNavigation.ets",
       "buildFunction": "DecibelHistoryBuilder"
-    }, {
-      "name": "PlayingItemsDialog",
-      "pageSourceFile": "src/main/ets/pages/noisemeter/PlayingItemsDialogNavigation.ets",
-      "buildFunction": "PlayingItemsDialogBuilder"
     },
     {
       "name": "DetailDialog",
@@ -47,11 +43,6 @@
       "name": "NoiseDescriptionDialog",
       "pageSourceFile": "src/main/ets/pages/noisemeter/NoiseDescriptionDialogNavigation.ets",
       "buildFunction": "NoiseDescriptionDialogBuilder"
-    },
-    {
-      "name": "HealthDetailDialog",
-      "pageSourceFile": "src/main/ets/components/health-dialogs/HealthDetailDialog.ets",
-      "buildFunction": "HealthDetailDialogBuilder"
     },
     {
       "name": "AudioAnalysisSettings",

@@ -505,31 +505,6 @@ export struct Settings {
         .cardStyle()
       }
 
-      GridCol() {
-        Column({ space: 8 }) {
-          Row({ space: 8 }) {
-            Row() {
-              Image($r('app.media.ic_mic'))
-                .itemIcon()
-
-              Text('自然音频')
-                .itemTitle()
-            }.layoutWeight(1)
-
-            Toggle({ type: ToggleType.Switch, isOn: this.pk.nature_sound_enabled })
-              .selectedColor($r('app.color.toggle_active'))
-              .switchPointColor($r('app.color.background_primary'))
-              .onChange((isOn: boolean) => {
-                this.pk.nature_sound_enabled = isOn;
-              })
-          }
-          .listItemRow()
-          Text(this.pk.nature_sound_enabled ? '可以播放自然音频' : '自然音频已关闭')
-            .itemDescription()
-        }
-        .cardStyle()
-      }
-
       this.buildListItem({
         icon: $r('app.media.ic_info'),
         title: '关于',

@@ -30,7 +30,6 @@ import { LottieController, LottieView } from '@ohos/lottie-turbo';
 import { DialogHub, InfSheet } from '@hadss/dialoghub';
 import { resourceManager } from '@kit.LocalizationKit';
 import { NoiseDescriptionDialogBuilder } from '../../pages/noisemeter/NoiseDescriptionDialogNavigation';
-import { PressureSounds } from './PressureSounds';
 import { image } from '@kit.ImageKit';
 import { AppKeys } from '../../models/AppKeys';
 
@@ -723,17 +722,6 @@ export struct DecibelMeter {
           this.actionPanel()
         }.visibility(["md", "lg", "xl", "xxl"].includes(this.breakPoint) ? Visibility.Hidden : Visibility.Visible)
 
-        if (this.pk.nature_sound_enabled) {
-          GridCol({
-            span: {
-              xs: 12,
-              sm: 12,
-              md: 2,
-            }
-          }) {
-            PressureSounds({ cardDirection: FlexDirection.Row, hideDesc: true })
-          }
-        }
       }
       .padding({ top: 16, bottom: 16 })
       .id('mainNoiseMeterDisplayId')
