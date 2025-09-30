@@ -79,6 +79,15 @@ export struct MainNoiseMeter {
     .id('decibelMeterRoot')
     .justifyContent(FlexAlign.Center)
     .alignItems(HorizontalAlign.Center)
+    .opacity(this.currentIndex === 0 ? 1 : 0)
+    .scale({ x: this.currentIndex === 0 ? 1 : 0.95, y: this.currentIndex === 0 ? 1 : 0.95 })
+    .animation({
+      duration: 300,
+      curve: Curve.EaseOut,
+      delay: 0,
+      iterations: 1,
+      playMode: PlayMode.Normal
+    })
   }
 
   @Builder
@@ -128,6 +137,15 @@ export struct MainNoiseMeter {
     .id('myContentId')
     .justifyContent(FlexAlign.Start)
     .alignItems(HorizontalAlign.Center)
+    .opacity(this.currentIndex === 1 ? 1 : 0)
+    .scale({ x: this.currentIndex === 1 ? 1 : 0.95, y: this.currentIndex === 1 ? 1 : 0.95 })
+    .animation({
+      duration: 300,
+      curve: Curve.EaseOut,
+      delay: 0,
+      iterations: 1,
+      playMode: PlayMode.Normal
+    })
   }
 
   build() {
@@ -148,7 +166,7 @@ export struct MainNoiseMeter {
       })
       .barMode(BarMode.Fixed)
       .barWidth('100%')
-      .animationDuration(200)
+      .animationDuration(0)
     }
     .title(this.title, {
       barStyle: BarStyle.STANDARD,
