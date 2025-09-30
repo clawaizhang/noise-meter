@@ -176,9 +176,7 @@ export struct DecibelMeter {
       Stack({ alignContent: Alignment.Top }) {
         this.SpectrumChart()
         Flex({ justifyContent: FlexAlign.SpaceBetween, alignItems: ItemAlign.Baseline }) {
-          this.noiseDescriptions()
           this.toushu()
-          this.noiseCalibration()
         }.margin(16)
 
       }
@@ -241,12 +239,12 @@ export struct DecibelMeter {
     Row({ space: 4 }) {
       Text('声级校准:')
         .fontSize(12)
-        .fontColor('#ffffff');
+        .fontColor($r('sys.color.font_secondary'));
 
       Text(`${this.pk.calibration_value} ${this.pk.weighting_type === WeightingType.A ? 'dB(A)' :
         this.pk.weighting_type === WeightingType.C ? 'dB(C)' : 'dB'}`)
         .fontSize(12)
-        .fontColor('#ffffff');
+        .fontColor('sys.color.font_secondary');
     }
     .opacity(0.7)
   }
@@ -668,6 +666,13 @@ export struct DecibelMeter {
             Stack() {
               // 分贝显示和位置信息
               Column() {
+                // 噪音场景参考和升级校准信息
+                Flex({ justifyContent: FlexAlign.SpaceBetween, alignItems: ItemAlign.Center }) {
+                  this.noiseDescriptions()
+                  this.noiseCalibration()
+                }
+                .margin({ bottom: 12, left: 16, right: 16 })
+
                 // 分贝显示卡片
                 Row({ space: 8 }) {
                   this.averageMin()
