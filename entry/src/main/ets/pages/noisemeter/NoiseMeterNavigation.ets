@@ -55,6 +55,7 @@ export struct MainNoiseMeter {
         .margin({ top: 4 })
     }
     .justifyContent(FlexAlign.Center)
+    .flexGrow(1)
   }
 
   private noiseMeterMenus: Array<NavigationMenuItem> = [
@@ -63,19 +64,6 @@ export struct MainNoiseMeter {
       icon: $r('app.media.ic_history'),
       action: () => {
         this.navStack.pushPathByName('DecibelHistory', null);
-      }
-    },
-    {
-      value: '设置',
-      icon: $r('app.media.ic_settings'),
-      action: () => {
-        DialogHub.getSheet()
-          .setStyle({ title: { title: '设置' }, backgroundColor: $r('sys.color.background_secondary') })
-          .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS })
-          .setComponentTargetId('decibelMeterId')
-          .setContent(wrapBuilder(SettingsBuilder))
-          .build()
-          .show();
       }
     }
   ]
@@ -89,22 +77,56 @@ export struct MainNoiseMeter {
         .width('92%')
     }
     .id('decibelMeterRoot')
+    .justifyContent(FlexAlign.Center)
     .alignItems(HorizontalAlign.Center)
   }
 
   @Builder
   MyContent() {
     Column() {
-      Text('我的页面')
-        .fontSize(18)
-        .fontColor($r('app.color.text_primary'))
-        .margin({ top: 100 })
-      Text('这里是个人中心页面')
-        .fontSize(14)
-        .fontColor($r('app.color.text_secondary'))
-        .margin({ top: 20 })
+      // 全局设置列表项
+      List() {
+        ListItem() {
+          Row() {
+            Image($r('app.media.ic_settings'))
+              .width(24)
+              .height(24)
+              .fillColor($r('sys.color.font_primary'))
+              .margin({ right: 12 })
+            Text('全局设置')
+              .fontSize(16)
+              .fontColor($r('app.color.text_primary'))
+              .layoutWeight(1)
+            Image($r('app.media.ic_arrow_right'))
+              .width(16)
+              .height(16)
+              .fillColor($r('app.color.text_secondary'))
+          }
+          .width('100%')
+          .height(56)
+          .padding({
+            left: 16,
+            right: 16
+          })
+          .alignItems(VerticalAlign.Center)
+        }
+        .borderRadius(8)
+        .backgroundColor($r('sys.color.comp_background_primary'))
+        .margin({ top: 20, left: 16, right: 16 })
+        .onClick(() => {
+          DialogHub.getSheet()
+            .setStyle({ title: { title: '设置' }, backgroundColor: $r('sys.color.background_secondary') })
+            .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS })
+            .setComponentTargetId('myContentId')
+            .setContent(wrapBuilder(SettingsBuilder))
+            .build()
+            .show();
+        })
+      }
+
     }
-    .width('100%')
+    .id('myContentId')
+    .justifyContent(FlexAlign.Start)
     .alignItems(HorizontalAlign.Center)
   }
 
@@ -126,7 +148,6 @@ export struct MainNoiseMeter {
       })
       .barMode(BarMode.Fixed)
       .barWidth('100%')
-      .barHeight(56)
       .animationDuration(200)
     }
     .title(this.title, {
