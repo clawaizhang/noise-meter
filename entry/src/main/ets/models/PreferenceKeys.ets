@@ -20,9 +20,6 @@ export class PreferenceKeys {
 
 
   @Trace
-  cat_enabled: boolean = true;
-
-  @Trace
   nature_sound_enabled: boolean = true;
   /**
    * 分贝加权类型

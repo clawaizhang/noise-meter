@@ -26,7 +26,6 @@ import { WeightingType } from '../../constants/WeightingConstants';
 import { call } from '@kit.TelephonyKit';
 import { BusinessError } from '@kit.BasicServicesKit';
 import { camera } from '@kit.CameraKit';
-import { LottieController, LottieView } from '@ohos/lottie-turbo';
 import { DialogHub, InfSheet } from '@hadss/dialoghub';
 import { resourceManager } from '@kit.LocalizationKit';
 import { NoiseDescriptionDialogBuilder } from '../../pages/noisemeter/NoiseDescriptionDialogNavigation';
@@ -51,8 +50,6 @@ export struct DecibelMeter {
   @Local pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys)!;
   @Local startTime: number = 0
   @Local breakPoint: string = '';
-  @Local private catAnimationWidth: number = 120
-  @Local private catAnimationHeight: number = 72
   @Local dScale: number = 1; // 页面缩放比例
   @Local translateX: number = 0; // X轴位移
   @Local translateY: number = 0; // Y轴位移
@@ -80,69 +77,6 @@ export struct DecibelMeter {
   private canvasSettings: RenderingContextSettings = new RenderingContextSettings(true) // Canvas设置
   private canvasContext: CanvasRenderingContext2D = new CanvasRenderingContext2D(this.canvasSettings) // Canvas上下文
   private noiseAlarmTimer: number = -1 // 定时器ID用于控制闪烁
-  lottieController: LottieController = new LottieController()
-
-  // 基于断点更新小猫咪动画尺寸
-  private updateCatAnimationSize(): void {
-    try {
-      const widthBreakpoint = this.as.windowWidthBreakpoint;
-      const isLandscape = this.as.isLandscape;
-      const screenWidth = this.as.windowWidth;
-      
-      // 基于断点 + 方向的尺寸策略
-      let widthPercentage: number;
-      
-      if ([WidthBreakpoint.WIDTH_XS, WidthBreakpoint.WIDTH_SM].includes(widthBreakpoint)) {
-        widthPercentage = isLandscape ? 0.20 : 0.25; // 横屏20%，竖屏25%
-      } else if (widthBreakpoint === WidthBreakpoint.WIDTH_MD) {
-        widthPercentage = isLandscape ? 0.15 : 0.20; // 横屏15%，竖屏20%
-      } else { // lg/xl/xxl
-        widthPercentage = isLandscape ? 0.12 : 0.15; // 横屏12%，竖屏15%
-      }
-      
-      this.catAnimationWidth = Math.floor(screenWidth * widthPercentage);
-      this.catAnimationHeight = Math.floor(this.catAnimationWidth / 1.655); // 保持原始宽高比
-      
-      console.info(`[CAT_ANIMATION] 断点: ${widthBreakpoint}, 方向: ${isLandscape ? '横屏' : '竖屏'}, 尺寸: ${this.catAnimationWidth}x${this.catAnimationHeight}`);
-    } catch (error) {
-      console.error('[CAT_ANIMATION] 更新尺寸失败:', error);
-      this.catAnimationWidth = 120;
-      this.catAnimationHeight = 72;
-    }
-  }
-
-  // 监听断点变化并更新尺寸
-  @Monitor('as.windowWidthBreakpoint')
-  onBreakpointChange(monitor: IMonitor) {
-    const newBreakpoint = monitor.value<string>()?.now;
-    console.info(`[CAT_ANIMATION] 断点变化: ${newBreakpoint}`);
-    this.updateCatAnimationSize();
-  }
-
-  @Monitor('as.isLandscape')
-  onOrientationChange(monitor: IMonitor) {
-    const newOrientation = monitor.value<boolean>()?.now;
-    console.info(`[CAT_ANIMATION] 方向变化: ${newOrientation ? '横屏' : '竖屏'}`);
-    this.updateCatAnimationSize();
-  }
-
-  @Monitor('pk.audio_analysis_mode')
-  analysisModeChange(monitor: IMonitor) {
-    let mode = monitor.value<AudioAnalysisMode>()?.now;
-    this.setPlaySpeed(mode);
-  }
-
-  private setPlaySpeed(mode: AudioAnalysisMode | undefined) {
-    if (mode == AudioAnalysisMode.SLOW_TIME_WEIGHTING) {
-      this.lottieController.setSpeed(1);
-    }
-    if (mode == AudioAnalysisMode.FAST_TIME_WEIGHTING) {
-      this.lottieController.setSpeed(1.5);
-    }
-    if (mode == AudioAnalysisMode.IMPULSE_TIME_WEIGHTING) {
-      this.lottieController.setSpeed(2);
-    }
-  }
 
   // 计算Canvas尺寸（响应式版本）
   private async calculateCanvasDimensions(): Promise<void> {
@@ -407,7 +341,6 @@ export struct DecibelMeter {
   }
 
   async aboutToAppear() {
-    this.updateCatAnimationSize();
     try {
       let displayManager: DisplayManager = DisplayManager.getInstance();
       displayManager.onDisplay(() => {
@@ -718,7 +651,12 @@ export struct DecibelMeter {
                   this.noiseDescriptions()
                   this.noiseCalibration()
                 }
-                .margin({ bottom: 12, left: 16, right: 16 })
+                .margin({
+                  bottom: 12,
+                  left: 16,
+                  right: 16,
+                  top: 12
+                })
 
                 // 分贝显示卡片
                 Row({ space: 8 }) {
@@ -741,10 +679,8 @@ export struct DecibelMeter {
                 Row() {
                   LocationDisplay()
                 }
-              }.margin({ top: this.pk.cat_enabled ? -35 : 0 })
-              .justifyContent(FlexAlign.Center)
+              }.justifyContent(FlexAlign.Center)
             }
-            .height(this.pk.cat_enabled ? '100% - 30vp' : '')
             .clip(true)
 
             if (["md", "lg", "xl", "xxl"].includes(this.breakPoint)) {
@@ -904,20 +840,6 @@ export struct DecibelMeter {
   @Builder
   CurrentDecibel() {
     Stack({ alignContent: Alignment.Bottom }) {
-      if (this.pk.cat_enabled && this.isDisplayApp) {
-        LottieView({
-          controller: this.lottieController,
-          path: $rawfile('anima/lottie/lovely_cat.json'),
-          loop: true,
-          autoplay: true,
-          contentMode: 'Contain',
-          frameRate: 30,
-        })
-          .width(this.catAnimationWidth)
-          .height(this.catAnimationHeight)
-          .align(Alignment.Center)
-          .margin({ top: 8, bottom: 8 })
-      }
       Column() {
         if (this.as.db === 0) {
           Text('-')

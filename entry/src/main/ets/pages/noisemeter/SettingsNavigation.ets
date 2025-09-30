@@ -480,31 +480,6 @@ export struct Settings {
         .cardStyle()
       }
 
-      GridCol() {
-        Column({ space: 8 }) {
-          Row({ space: 8 }) {
-            Row() {
-              Image($r('app.media.ic_info'))
-                .itemIcon()
-
-              Text('小猫咪🐱')
-                .itemTitle()
-            }.layoutWeight(1)
-
-            Toggle({ type: ToggleType.Switch, isOn: this.pk.cat_enabled })
-              .selectedColor($r('app.color.toggle_active'))
-              .switchPointColor($r('app.color.background_primary'))
-              .onChange((isOn: boolean) => {
-                this.pk.cat_enabled = isOn;
-              })
-          }
-          .listItemRow()
-          Text(this.pk.cat_enabled ? '和小猫咪🐱一起测分贝, 设备可能发热' : '小猫咪走啦')
-            .itemDescription()
-        }
-        .cardStyle()
-      }
-
       this.buildListItem({
         icon: $r('app.media.ic_info'),
         title: '关于',
