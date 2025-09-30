@@ -12,7 +12,7 @@ import {
   secondsToHoursMinutesSecondsWithDecimal
 } from '../../utils/TimeUtils';
 import { ActionPanel } from './ActionPanel';
-import { drawSpectrum, getDbSteps, getFrequencySteps } from './DrawSpectrum';
+import { SpectrumChartComponent } from './SpectrumChartComponent';
 import { DisplayManager } from '../../../../main/ets/utils/DisplayManager';
 import { AudioAnalysisMode, AudioPresets } from '../../common/AudioConfig';
 import { PreferenceKeys } from '../../models/PreferenceKeys';
@@ -42,8 +42,6 @@ export struct DecibelMeter {
   @Local private isRecording: boolean = false
   @Local private recordingTime: number = 0
   @Local private torchOn: boolean = false
-  @Local private canvasWidth: number = 0 // Canvas宽度
-  @Local private canvasHeight: number = 0 // Canvas高度
   @Local private touShu: boolean = false;
   @Local private isNoiseAlarm: boolean = false // 是否触发噪音报警
   @Local private isDisplayApp: boolean = true
@@ -57,6 +55,7 @@ export struct DecibelMeter {
   @Local dWidthHeight: string = ''; // 页面透明度
   @Local bgImage: image.PixelMap | undefined = undefined; // 页面透明度
   @Local as: AppKeys = AppStorageV2.connect(AppKeys)!;
+  @Local private currentSpectrum: Float32Array = new Float32Array(); // 当前频谱数据
   @Consumer(navigationStack) navStack: NavPathStack = new NavPathStack()
   private audioService: AudioService = AudioService.getInstance(getContext() as common.UIAbilityContext)
   private locationService: LocationService = LocationService.getInstance()
@@ -70,40 +69,9 @@ export struct DecibelMeter {
   private currentRecord?: DecibelRecord
   noiseInfoDialog: InfSheet | undefined
   sysResourceManager: resourceManager.ResourceManager = resourceManager.getSystemResourceManager();
-  // Canvas相关属性
-
-  private ASPECT_RATIO: number = 1.5 // 宽高比改为3:2
   private readonly sampleRate: number = 44100 // 采样率
-  private canvasSettings: RenderingContextSettings = new RenderingContextSettings(true) // Canvas设置
-  private canvasContext: CanvasRenderingContext2D = new CanvasRenderingContext2D(this.canvasSettings) // Canvas上下文
   private noiseAlarmTimer: number = -1 // 定时器ID用于控制闪烁
 
-  // 计算Canvas尺寸（响应式版本）
-  private async calculateCanvasDimensions(): Promise<void> {
-    try {
-
-      // 获取实际可用区域
-      const availableArea = await display.getDefaultDisplaySync().getAvailableArea();
-      const availableWidth = availableArea.width < availableArea.height ? availableArea.width : availableArea.height;
-      const availableHeight = availableArea.width < availableArea.height ? availableArea.height : availableArea.width;
-
-      // 更新响应式布局状态
-      const availableWidthVp = px2vp(availableWidth);
-      const availableHeightVp = px2vp(availableHeight);
-
-      // 竖屏模式：保持原有宽高比计算
-      this.canvasWidth = availableWidthVp - (16 as number * 2);
-
-      // 根据布局模式调整宽高比
-      this.ASPECT_RATIO = 1.5;
-
-      this.canvasHeight = this.canvasWidth / this.ASPECT_RATIO;
-
-      console.info(`[FREQ_TRACE][Canvas] 响应式Canvas尺寸: ${this.canvasWidth}x${this.canvasHeight}`);
-    } catch (error) {
-      console.error('[FREQ_TRACE][显示设备信息] 计算Canvas尺寸失败:', error);
-    }
-  }
 
   @Computed
   get fft_size() {
@@ -149,70 +117,6 @@ export struct DecibelMeter {
     }
   }
 
-  @Builder
-  private SpectrumView() {
-    Column() {
-      // Canvas频谱显示
-      Stack({ alignContent: Alignment.Top }) {
-        this.SpectrumChart()
-        Flex({ justifyContent: FlexAlign.SpaceBetween, alignItems: ItemAlign.Baseline }) {
-          this.toushu()
-        }.margin(16)
-
-      }
-    }
-  }
-
-  @Builder
-  SpectrumChart() {
-    Canvas(this.canvasContext)
-      .width(this.canvasWidth)
-      .height(this.canvasHeight)
-      .borderRadius(12)
-      .backgroundColor('#ff000000')
-      .shadow({
-        radius: 8,
-        color: $r('sys.color.comp_divider'),
-        offsetX: 2,
-        offsetY: 2
-      })
-      .border({
-        width: 1,
-        color: $r('sys.color.comp_divider')
-      })
-      .onAreaChange((oldArea: Area, newArea: Area) => {
-        console.info(`[FREQ_TRACE][Canvas] Canvas区域变化: 旧尺寸=${oldArea.width}x${oldArea.height}, 新尺寸=${newArea.width}x${newArea.height}`);
-        this.canvasWidth = newArea.width as number;
-        this.canvasHeight = newArea.height as number;
-        console.info(`[FREQ_TRACE][Canvas] 更新后的Canvas尺寸: ${this.canvasWidth}x${this.canvasHeight}, 宽高比: ${(this.canvasWidth /
-        this.canvasHeight).toFixed(2)}`);
-      })
-      .animation({ curve: Curve.EaseOut })
-      .onReady(() => {
-        // 初始化完成后开始绘制
-        const emptySpectrum: Float32Array = new Float32Array(this.fft_size * 2);
-        if (this.isDisplayApp) {
-          this.drawSpectrumLocal(emptySpectrum);
-        }
-        this.recordingTime = new Date().getTime() - this.startTime;
-      })
-      .id('ashkjlgfshgal')
-      .onClick(() => {
-        let dialog = DialogHub.getSheet()
-          .setStyle({
-            detents: [SheetSize.FIT_CONTENT],
-            backgroundColor: $r('sys.color.background_secondary'),
-            title: { title: '频谱图', subtitle: '横坐标: 频率(Hz), 纵坐标: 分贝值(dB)' }
-          })
-          .setComponentTargetId('ashkjlgfshgal')
-          .setContent(wrapBuilder(peakExp), this.as)
-          .build();
-        dialog.show();
-        setInterval(() => {
-          dialog.updateContent(this.as);
-        }, 100)
-      })
-  }
 
   @Builder
   noiseCalibration() {
@@ -356,9 +260,6 @@ export struct DecibelMeter {
         this.locationService.requestSingleLocation();
       }
 
-      // 获取屏幕信息并初始化Canvas尺寸
-      await this.calculateCanvasDimensions();
-
     } catch (error) {
       console.error('[FREQ_TRACE][Screen] 初始化失败:', error);
     }
@@ -449,7 +350,7 @@ export struct DecibelMeter {
           if (this.isDisplayApp) {
             this.as.db = decibel;
             this.updateStatistics(this.as.db);
-            this.drawSpectrumLocal(spectrum);
+            this.currentSpectrum = spectrum; // 更新频谱数据
           }
           // 更新计时器（毫秒级）
           this.recordingTime = new Date().getTime() - this.startTime;
@@ -460,13 +361,6 @@ export struct DecibelMeter {
       this.isRecording = false;
       this.resetData();
     }
-  }
-
-  private drawSpectrumLocal(spectrum: Float32Array) {
-    const dbSteps: number[] = getDbSteps();
-    const frequencySteps: number[] = getFrequencySteps();
-    drawSpectrum(this.canvasContext, this.canvasWidth, this.canvasHeight, spectrum, dbSteps, frequencySteps,
-      this.fft_size, this.sampleRate, this.sysResourceManager);
   }
 
   private resetData() {
@@ -697,7 +591,14 @@ export struct DecibelMeter {
             md: 5,
           }
         }) {
-          this.SpectrumView()
+          SpectrumChartComponent({
+            spectrumData: this.currentSpectrum,
+            fftSize: this.fft_size,
+            sampleRate: this.sampleRate,
+            isDisplayApp: this.isDisplayApp,
+            showTouShuButton: true,
+            touShu: this.touShu
+          })
         }
 
         GridCol({
