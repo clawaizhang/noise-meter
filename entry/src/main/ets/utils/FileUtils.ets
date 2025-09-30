@@ -5,27 +5,58 @@ import { BusinessError } from '@ohos.base';
 import buffer from '@ohos.buffer';
 
 /**
- * 文件服务类
- * 用于处理应用内部存储文件的读写操作
+ * 文件工具类
+ * 提供静态方法处理应用内部存储文件的读写操作
+ * 需要在应用启动时调用init方法初始化上下文
  */
-export class FileService {
-  private context: common.Context;
-  private filesDir: string;
+export class FileUtils {
+  private static context: common.Context | null = null;
+  private static filesDir: string;
 
-  constructor(context: common.Context) {
+  /**
+   * 初始化文件工具类
+   * @param context - 应用上下文
+   */
+  static init(context: common.Context | undefined): void {
     if (!context) {
       throw new Error('Context is required');
     }
-    this.context = context;
-    this.filesDir = this.context.filesDir;
+    FileUtils.context = context;
+    FileUtils.filesDir = context.filesDir;
+  }
+
+  /**
+   * 检查是否已初始化
+   */
+  private static checkInitialized(): void {
+    if (!FileUtils.context || !FileUtils.filesDir) {
+      throw new Error('FileUtils未初始化，请先调用FileUtils.init(context)');
+    }
+  }
+
+  /**
+   * 获取文件信息
+   * @param fileName - 文件名
+   * @returns Promise<fs.Stat>
+   */
+  static getFileInfoSync(fileName: string): fs.Stat {
+    try {
+      const filePath = `${FileUtils.filesDir}/${fileName}`;
+      return fs.statSync(filePath);
+    } catch (error) {
+      const businessError = error as BusinessError;
+      console.error(`获取文件信息失败: ${businessError.message}`);
+      throw new Error(`获取文件信息失败: ${businessError.message}`);
+    }
   }
 
   /**
    * 获取应用文件存储的基础路径
    * @returns string
    */
-  getBasePath(): string {
-    return this.filesDir;
+  static getBasePath(): string {
+    FileUtils.checkInitialized();
+    return FileUtils.filesDir!;
   }
 
   /**
@@ -34,13 +65,15 @@ export class FileService {
    * @param content - 文件内容
    * @returns Promise<string> 返回保存文件的绝对路径
    */
-  async saveFile(fileName: string, content: string | ArrayBuffer): Promise<string> {
+  static async saveFile(fileName: string, content: string | ArrayBuffer): Promise<string> {
     try {
+      FileUtils.checkInitialized();
+      
       // 构建完整的文件路径
-      const filePath = `${this.filesDir}/${fileName}`;
+      const filePath = `${FileUtils.filesDir}/${fileName}`;
       
       // 如果是字符串内容，转换为ArrayBuffer
-      const fileContent = typeof content === 'string' ? 
+      const fileContent = typeof content === 'string' ?
         buffer.from(content).buffer : content;
       
       // 创建文件并写入内容
@@ -61,9 +94,11 @@ export class FileService {
    * @param fileName - 文件名
    * @returns Promise<ArrayBuffer>
    */
-  async readFile(fileName: string): Promise<ArrayBuffer> {
+  static async readFile(fileName: string): Promise<ArrayBuffer> {
     try {
-      const filePath = `${this.filesDir}/${fileName}`;
+      FileUtils.checkInitialized();
+      
+      const filePath = `${FileUtils.filesDir}/${fileName}`;
       
       // 检查文件是否存在
       const exists = await fs.access(filePath);
@@ -93,9 +128,11 @@ export class FileService {
    * @param fileName - 文件名
    * @returns Promise<void>
    */
-  async deleteFile(fileName: string): Promise<void> {
+  static async deleteFile(fileName: string): Promise<void> {
     try {
-      const filePath = `${this.filesDir}/${fileName}`;
+      FileUtils.checkInitialized();
+      
+      const filePath = `${FileUtils.filesDir}/${fileName}`;
       await fs.unlink(filePath);
     } catch (error) {
       const businessError = error as BusinessError;
@@ -109,9 +146,11 @@ export class FileService {
    * @param fileName - 文件名
    * @returns Promise<boolean>
    */
-  async exists(fileName: string): Promise<boolean> {
+  static async exists(fileName: string): Promise<boolean> {
     try {
-      const filePath = `${this.filesDir}/${fileName}`;
+      FileUtils.checkInitialized();
+      
+      const filePath = `${FileUtils.filesDir}/${fileName}`;
       return await fs.access(filePath);
     } catch (error) {
       return false;
@@ -123,10 +162,12 @@ export class FileService {
    * @param fileName - 文件名
    * @returns Promise<fs.Stat>
    */
-  getFileInfoSync(fileName: string): fs.Stat {
+  static async getFileInfo(fileName: string): Promise<fs.Stat> {
     try {
-      const filePath = `${this.filesDir}/${fileName}`;
-      return fs.statSync(filePath);
+      FileUtils.checkInitialized();
+      
+      const filePath = `${FileUtils.filesDir}/${fileName}`;
+      return await fs.stat(filePath);
     } catch (error) {
       const businessError = error as BusinessError;
       console.error(`获取文件信息失败: ${businessError.message}`);
@@ -141,7 +182,7 @@ export class FileService {
    */
   async listFiles(directory: string = ''): Promise<string[]> {
     try {
-      const dirPath = directory ? `${this.filesDir}/${directory}` : this.filesDir;
+      const dirPath = directory ? `${FileUtils.filesDir}/${directory}` : FileUtils.filesDir;
       return await fs.listFile(dirPath);
     } catch (error) {
       const businessError = error as BusinessError;
@@ -155,9 +196,11 @@ export class FileService {
    * @param directory - 相对于filesDir的目录路径
    * @returns Promise<void>
    */
-  async createDirectory(directory: string): Promise<void> {
+  static async createDirectory(directory: string): Promise<void> {
     try {
-      const dirPath = `${this.filesDir}/${directory}`;
+      FileUtils.checkInitialized();
+      
+      const dirPath = `${FileUtils.filesDir}/${directory}`;
       await fs.mkdir(dirPath);
     } catch (error) {
       const businessError = error as BusinessError;
@@ -165,4 +208,4 @@ export class FileService {
       throw new Error(`创建目录失败: ${businessError.message}`);
     }
   }
-} 
+}

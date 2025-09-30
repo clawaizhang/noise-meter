@@ -18,7 +18,7 @@ import { AudioAnalysisMode, AudioPresets } from '../../common/AudioConfig';
 import { PreferenceKeys } from '../../models/PreferenceKeys';
 import { DecibelRecord } from '../../models/DecibelRecord';
 import { AudioService } from '../../services/AudioService';
-import { FileService } from '../../services/FileService';
+import { FileUtils } from '../../utils/FileUtils';
 import { LocationService, LocationInfo } from '../../services/LocationService';
 import { FFTAnalyzer } from '../../utils/FFTAnalyzer';
 import { LocationDisplay } from '../business/LocationDisplay';
@@ -59,7 +59,6 @@ export struct DecibelMeter {
   private audioService: AudioService = AudioService.getInstance(getContext() as common.UIAbilityContext)
   private locationService: LocationService = LocationService.getInstance()
   private recordService: DecibelRecordService = new DecibelRecordService(getContext() as common.UIAbilityContext)
-  private fileService: FileService = new FileService(getContext() as common.Context)
   private dbCount: number = 0
   private dbSum: number = 0
   private values: number[] = []
@@ -403,7 +402,7 @@ export struct DecibelMeter {
 
         if (this.pk.record_enabled) {
           try {
-            currentAudioFilePath = await this.audioService.stopRecordingAndGetWavData(this.fileService);
+            currentAudioFilePath = await this.audioService.stopRecordingAndGetWavData();
           } catch (error) {
             console.error('[FREQ_TRACE][Audio] 获取或保存WAV音频数据失败:', error);
           }

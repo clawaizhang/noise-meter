@@ -13,6 +13,7 @@ import { AudioAnalysisMode } from '../common/AudioConfig'
 import { AudioService } from '../services/AudioService'
 import { NotificationHelper } from '../utils/NotificationHelper'
 import { AppKeys } from '../models/AppKeys'
+import { FileUtils } from '../utils/FileUtils'
 
 const TAG = 'Index';
 const DOMAIN = 0x0000;
@@ -72,6 +73,7 @@ struct Index {
   }
 
   async aboutToAppear() {
+    FileUtils.init(this.getUIContext().getHostContext());
     this.setDisplayMode(this.pk.display_mode);
     if (!this.pk.privacy_agreed) {
       this.subscribe();

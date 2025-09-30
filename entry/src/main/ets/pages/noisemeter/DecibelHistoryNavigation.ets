@@ -5,7 +5,7 @@ import { DecibelRecordService } from '../../services/DecibelRecordService';
 import { navigationStack } from '../../constants/ProviderConstant';
 import { AudioPlayer } from '../../components/business/AudioPlayer';
 import { DecibelRecord } from '../../models/DecibelRecord';
-import { FileService } from '../../services/FileService';
+import { FileUtils } from '../../utils/FileUtils';
 import { DesignConstants } from '../../constants/DesignConstants';
 import { AppStorageV2, curves, SymbolGlyphModifier } from '@kit.ArkUI';
 import { DialogHub } from '@hadss/dialoghub';
@@ -79,7 +79,6 @@ export struct DecibelHistory {
   private context: Context = getContext(this)
   private recordService: DecibelRecordService = new DecibelRecordService(this.context);
   private promptAction: PromptAction = this.getUIContext().getPromptAction();
-  private fileService: FileService = new FileService(this.context)
 
   onPageShow() {
     this.loadRecords();
@@ -385,7 +384,7 @@ export struct DecibelHistory {
         .fontSize(14)
 
       if (record.audioFilePath) {
-        Text(`音频大小: ${this.formatBytes(this.fileService.getFileInfoSync(record.audioFilePath.replace(this.fileService.getBasePath(),
+        Text(`音频大小: ${this.formatBytes(FileUtils.getFileInfoSync(record.audioFilePath.replace(FileUtils.getBasePath(),
           '')).size)}`)
           .fontSize(14)
       }
@@ -431,7 +430,7 @@ export struct DecibelHistory {
     try {
       record.audioFilePath = '';
       this.recordService.updateRecord(record).then(() => {
-        this.fileService.deleteFile(record.audioFilePath!.replace(this.fileService.getBasePath(), '')).then(() => {
+        FileUtils.deleteFile(record.audioFilePath!.replace(FileUtils.getBasePath(), '')).then(() => {
         })
       });
       // 隐藏删除按钮
@@ -457,7 +456,6 @@ export struct DecibelHistory {
       const params: DetailDialogParams = {
         selectedRecord: this.selectedRecord,
         context: getContext(this),
-        fileService: this.fileService
       };
       DialogHub.getSheet()
         .setComponentTargetId('showNoiseDetailDialogFromHistory')

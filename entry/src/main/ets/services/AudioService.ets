@@ -4,7 +4,7 @@ import common from '@ohos.app.ability.common';
 import promptAction from '@ohos.promptAction';
 import { WavFileGenerator } from '../utils/WavFileGenerator';
 import { AudioAnalysisMode, AudioPresets } from '../common/AudioConfig';
-import { FileService } from './FileService';
+import { FileUtils } from '../utils/FileUtils';
 import { AudioEnhancer } from './AudioEnhancer';
 import { PersistenceV2 } from '@kit.ArkUI';
 import { PreferenceKeys } from '../models/PreferenceKeys';
@@ -369,7 +369,7 @@ export class AudioService {
    * @param fileService 文件服务实例
    * @returns Promise<string> 保存的WAV文件路径
    */
-  async stopRecordingAndGetWavData(fileService: FileService): Promise<string> {
+  async stopRecordingAndGetWavData(): Promise<string> {
     try {
       // 停止录音
       this.stopRecording();
@@ -387,7 +387,7 @@ export class AudioService {
       // 创建音频文件目录
       const audioDir = 'audio';
       try {
-        await fileService.createDirectory(audioDir);
+        await FileUtils.createDirectory(audioDir);
       } catch (error) {
         // 目录可能已存在，忽略错误
       }
@@ -396,7 +396,7 @@ export class AudioService {
       const fileName = `audio_${new Date().getTime()}.wav`;
       const relativePath = `${audioDir}/${fileName}`;
       console.info('准备保存音频文件:', relativePath);
-      const filePath = await fileService.saveFile(relativePath, audioData);
+      const filePath = await FileUtils.saveFile(relativePath, audioData);
       console.info('音频文件保存成功:', filePath);
 
       // 清空录音缓存

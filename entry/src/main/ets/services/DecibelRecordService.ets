@@ -1,7 +1,7 @@
 import common from '@ohos.app.ability.common';
 import { relationalStore } from '@kit.ArkData';
 import hilog from '@ohos.hilog';
-import { FileService } from './FileService';
+import { FileUtils } from '../utils/FileUtils';
 import { RelationalStoreService } from './RelationalStoreService';
 import { DecibelRecord } from '../models/DecibelRecord';
 
@@ -13,12 +13,10 @@ const DOMAIN = 0x0000;
  */
 export class DecibelRecordService {
   private context: common.Context;
-  private fileService: FileService;
   private relationalStoreService: RelationalStoreService;
 
   constructor(context: common.Context) {
     this.context = context;
-    this.fileService = new FileService(context);
     this.relationalStoreService = RelationalStoreService.getInstance();
   }
 
@@ -90,7 +88,7 @@ export class DecibelRecordService {
         const record = DecibelRecord.fromResultSet(resultSet);
         if (record.audioFilePath) {
           try {
-            await this.fileService.deleteFile(record.audioFilePath);
+            await FileUtils.deleteFile(record.audioFilePath);
           } catch (error) {
             hilog.error(DOMAIN, TAG, '删除音频文件失败: %{public}s', error instanceof Error ? error.message : String(error));
           }
@@ -158,7 +156,7 @@ export class DecibelRecordService {
       // 如果有音频文件，先删除音频文件
       if (record.audioFilePath) {
         try {
-          await this.fileService.deleteFile(record.audioFilePath);
+          await FileUtils.deleteFile(record.audioFilePath);
         } catch (error) {
           hilog.error(DOMAIN, TAG, '删除音频文件失败: %{public}s', error instanceof Error ? error.message : String(error));
         }
