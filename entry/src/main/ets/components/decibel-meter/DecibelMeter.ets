@@ -22,6 +22,7 @@ import { DialogHub, InfSheet } from '@hadss/dialoghub';
 import { resourceManager } from '@kit.LocalizationKit';
 import { image } from '@kit.ImageKit';
 import { AppKeys } from '../../models/AppKeys';
+import { PermissionService } from '../../services/PermissionService';
 import { catchError, delay, filter, from, map, of, Subject, Subscription, switchMap, take, tap } from 'rxjs';
 
 @ComponentV2
@@ -373,7 +374,22 @@ export struct DecibelMeter {
             md: 5,
           }
         }) {
+          // 权限提示组件 - 显示在顶部
+          if (!this.as.microphonePermissionGranted) {
+            this.smartPermissionPrompt()
+          }
+
+        }
+
+        GridCol({
+          span: {
+            xs: 12,
+            sm: 12,
+            md: 5,
+          }
+        }) {
           Column({ space: 8 }) {
+
             // 使用新的分贝显示组件
             DecibelDisplayComponent({
               audioBuffer: this.currentAudioBuffer,
@@ -454,6 +470,60 @@ export struct DecibelMeter {
         .scale({ x: this.dScale, y: this.dScale })
         .translate({ x: this.translateX, y: this.translateY })
     }
+  }
+
+  @Builder
+  smartPermissionPrompt() {
+    Row() {
+      Image($r('app.media.ic_mic'))
+        .width(20)
+        .height(20)
+        .margin({ right: 8 })
+
+      Column() {
+        Text('需要麦克风权限才能检测噪音')
+          .fontSize(14)
+          .fontColor($r('sys.color.ohos_id_color_warning'))
+
+        if (!this.pk.microphone_permission_requested) {
+          Text('点击按钮授权')
+            .fontSize(12)
+            .fontColor($r('sys.color.ohos_id_color_text_secondary'))
+            .margin({ top: 2 })
+        } else {
+          Text('请在系统设置中开启麦克风权限')
+            .fontSize(12)
+            .fontColor($r('sys.color.ohos_id_color_text_secondary'))
+            .margin({ top: 2 })
+        }
+      }
+      .alignItems(HorizontalAlign.Start)
+
+      Blank()
+
+      if (!this.pk.microphone_permission_requested) {
+        Button('授权')
+          .fontSize(12)
+          .padding({ left: 16, right: 16, top: 6, bottom: 6 })
+          .onClick(async () => {
+            const permissionService = PermissionService.getInstance();
+            await permissionService.requestMicrophonePermission();
+          })
+      } else {
+        Button('去设置')
+          .fontSize(12)
+          .padding({ left: 16, right: 16, top: 6, bottom: 6 })
+          .onClick(async () => {
+            const permissionService = PermissionService.getInstance();
+            await permissionService.openPermissionSettings();
+          })
+      }
+    }
+    .padding(12)
+    .width('100%')
+    .backgroundColor($r('sys.color.comp_background_warning_secondary'))
+    .borderRadius(8)
+    .margin({ top: 8, left: 16, right: 16 })
   }
 
   @Builder

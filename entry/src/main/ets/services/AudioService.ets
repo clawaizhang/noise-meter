@@ -1,13 +1,13 @@
 import audio from '@ohos.multimedia.audio';
 import { PermissionUtil } from '@pura/harmony-utils';
 import common from '@ohos.app.ability.common';
-import promptAction from '@ohos.promptAction';
 import { WavFileGenerator } from '../utils/WavFileGenerator';
 import { AudioAnalysisMode, AudioPresets } from '../common/AudioConfig';
 import { FileUtils } from '../utils/FileUtils';
 import { AudioEnhancer } from './AudioEnhancer';
 import { PersistenceV2 } from '@kit.ArkUI';
 import { PreferenceKeys } from '../models/PreferenceKeys';
+import { PermissionService } from './PermissionService';
 
 /**
  * 音频服务类
@@ -93,34 +93,10 @@ export class AudioService {
    */
   private async checkMicrophonePermission(): Promise<boolean> {
     try {
-      const hasPermission = await PermissionUtil.checkPermissions('ohos.permission.MICROPHONE');
-      if (hasPermission) {
-        return true;
-      }
-
-      const granted = await PermissionUtil.requestPermissions(['ohos.permission.MICROPHONE']);
-      if (!granted) {
-        // 用户拒绝了权限，显示提示对话框
-        const result = await promptAction.showDialog({
-          title: '需要录音权限',
-          message: '检测噪音需要使用麦克风，是否去设置开启权限？',
-          buttons: [
-            { text: '取消', color: $r('app.color.button_cancel') },
-            { text: '去设置', color: $r('app.color.button_confirm') }
-          ]
-        });
-
-        if (result.index === 1) {
-          // 用户点击了"去设置"
-          await PermissionUtil.requestPermissionOnSettingEasy(['ohos.permission.MICROPHONE']);
-          // 从设置页面返回后，重新检查权限
-          const newPermissionStatus = await PermissionUtil.checkPermissions('ohos.permission.MICROPHONE');
-          return newPermissionStatus;
-        }
-      }
-      return granted;
+      const permissionService = PermissionService.getInstance();
+      return await permissionService.checkAndUpdateMicrophonePermission();
     } catch (err) {
-      console.error('Failed to check/request microphone permission:', err);
+      console.error('检查麦克风权限失败:', err);
       return false;
     }
   }
@@ -158,8 +134,7 @@ export class AudioService {
       const hasPermission = await this.checkMicrophonePermission();
       if (!hasPermission) {
         console.error('[音频采集] 没有麦克风权限');
-        await PermissionUtil.requestPermissionOnSettingEasy(['ohos.permission.MICROPHONE']);
-        throw new Error('没有麦克风权限, 尝试获取权限');
+        throw new Error('没有麦克风权限');
       }
 
       // 创建音频采集器
@@ -181,7 +156,7 @@ export class AudioService {
       this.setState(AudioServiceState.IDLE);
 
       // 检查是否是资源占用错误
-      throw new Error('麦克风被占用, 正在等待其他应用释放');
+      throw err as Error;
     }
   }
 

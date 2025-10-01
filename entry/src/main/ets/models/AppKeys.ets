@@ -15,4 +15,7 @@ export class AppKeys {
   windowHeight: number = 0; // 当前窗口高度(vp)
   @Trace
   isLandscape: boolean = false; // 是否为横屏模式
+
+  @Trace
+  microphonePermissionGranted: boolean = false; // 实时麦克风权限状态
 }

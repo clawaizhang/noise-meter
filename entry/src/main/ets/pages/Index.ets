@@ -14,6 +14,7 @@ import { AudioService } from '../services/AudioService'
 import { NotificationHelper } from '../utils/NotificationHelper'
 import { AppKeys } from '../models/AppKeys'
 import { FileUtils } from '../utils/FileUtils'
+import { PermissionService } from '../services/PermissionService'
 
 const TAG = 'Index';
 const DOMAIN = 0x0000;
@@ -78,6 +79,11 @@ struct Index {
     if (!this.pk.privacy_agreed) {
       this.subscribe();
     }
+    
+    // 初始化权限状态
+    const permissionService = PermissionService.getInstance();
+    await permissionService.initializePermissionState();
+    
     this.initialize();
   }
 

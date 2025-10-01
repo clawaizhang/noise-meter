@@ -60,4 +60,10 @@ export class PreferenceKeys {
    */
   @Trace
   background_running: boolean = PreferencesUtil.getBooleanSync('background_running', false);
+
+  /**
+   * 麦克风权限请求状态
+   */
+  @Trace
+  microphone_permission_requested: boolean = PreferencesUtil.getBooleanSync('microphone_permission_requested', false);
 }
