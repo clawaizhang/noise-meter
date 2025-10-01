@@ -1,53 +1,28 @@
 import { DecibelRecordService } from '../../services/DecibelRecordService';
 import common from '@ohos.app.ability.common';
 import { navigationStack } from '../../constants/ProviderConstant';
-import { AppStorageV2, curves, LevelMode, PersistenceV2, promptAction, window } from '@kit.ArkUI';
+import { AppStorageV2, curves, LevelMode, PersistenceV2, promptAction } from '@kit.ArkUI';
 import display from '@ohos.display';
 import { taskpool } from '@kit.ArkTS';
 import { concurrentCalculateSpectrum } from '../../concurrent/ConcurrentFftAnalyzer';
-import {
-  formatStartTime,
-  secondsToHoursMinutesSeconds,
-  secondsToHoursMinutesSecondsWithDecimal
-} from '../../utils/TimeUtils';
+import { secondsToHoursMinutesSecondsWithDecimal } from '../../utils/TimeUtils';
 import { ActionPanel } from './ActionPanel';
 import { SpectrumChartComponent } from './SpectrumChartComponent';
 import { DecibelDisplayComponent } from './DecibelDisplayComponent';
 import { DisplayManager } from '../../../../main/ets/utils/DisplayManager';
-import { AudioAnalysisMode, AudioPresets } from '../../common/AudioConfig';
+import { AudioPresets } from '../../common/AudioConfig';
 import { PreferenceKeys } from '../../models/PreferenceKeys';
 import { DecibelRecord } from '../../models/DecibelRecord';
 import { AudioService } from '../../services/AudioService';
-import { FileUtils } from '../../utils/FileUtils';
-import { LocationService, LocationInfo } from '../../services/LocationService';
-import { FFTAnalyzer } from '../../utils/FFTAnalyzer';
+import { LocationInfo } from '../../services/LocationService';
 import { LocationDisplay } from '../business/LocationDisplay';
 import { WeightingType } from '../../constants/WeightingConstants';
-import { call } from '@kit.TelephonyKit';
 import { BusinessError } from '@kit.BasicServicesKit';
-import { camera } from '@kit.CameraKit';
 import { DialogHub, InfSheet } from '@hadss/dialoghub';
 import { resourceManager } from '@kit.LocalizationKit';
-import { NoiseDescriptionDialogBuilder } from '../../pages/noisemeter/NoiseDescriptionDialogNavigation';
 import { image } from '@kit.ImageKit';
 import { AppKeys } from '../../models/AppKeys';
-import {
-  from,
-  interval,
-  take,
-  takeUntil,
-  timer,
-  Subject,
-  Subscription,
-  map,
-  filter,
-  switchMap,
-  tap,
-  delay,
-  catchError,
-  of
-} from 'rxjs';
-import { StatisticsService } from '../../services/StatisticsService';
+import { catchError, delay, filter, from, map, of, Subject, Subscription, switchMap, take, tap } from 'rxjs';
 
 @ComponentV2
 export struct DecibelMeter {
@@ -67,7 +42,6 @@ export struct DecibelMeter {
   @Local as: AppKeys = AppStorageV2.connect(AppKeys)!;
   @Local private currentSpectrum: Float32Array = new Float32Array(); // 当前频谱数据
   @Local private currentAudioBuffer: ArrayBuffer = new ArrayBuffer(0); // 当前音频缓冲区
-  @Local private calculatedDecibel: number = 0; // 从显示组件接收计算的分贝值
   @Local private currentLocation: LocationInfo | null = null; // 当前位置信息，从LocationDisplay接收
   @Consumer(navigationStack) navStack: NavPathStack = new NavPathStack()
   private audioService: AudioService = AudioService.getInstance(getContext() as common.UIAbilityContext)
@@ -79,7 +53,6 @@ export struct DecibelMeter {
   noiseInfoDialog: InfSheet | undefined
   sysResourceManager: resourceManager.ResourceManager = resourceManager.getSystemResourceManager();
   private readonly sampleRate: number = 44100 // 采样率
-  private noiseAlarmTimer: number = -1 // 定时器ID用于控制闪烁（保留用于兼容性）
   private audioBufferSubject = new Subject<void>();
   private durationCheckSubscription?: Subscription;
   private minDecibel: number = 0;

@@ -77,6 +77,7 @@ export struct DecibelDisplayComponent {
       this.minDecibel = state.minDecibel;
       this.maxDecibel = state.maxDecibel;
       this.avgDecibel = state.avgDecibel;
+      this.minMaxAvg(this.minDecibel, this.maxDecibel, this.avgDecibel);
       console.info('[DecibelDisplay] 统计状态更新:', state);
     });
     
