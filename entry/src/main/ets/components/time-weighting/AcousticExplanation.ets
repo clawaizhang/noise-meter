@@ -35,6 +35,7 @@ export struct AcousticExplanationComp {
         Text(TimeWeightingConstants.ACOUSTIC_EXPLANATIONS[this.selectedMode] .timeConstant)
           .fontSize(DesignConstants.FONT_SIZE_MD)
           .fontColor($r('sys.color.font_primary'))
+          .layoutWeight(1)
       }
       .width('100%')
       .alignItems(VerticalAlign.Top)

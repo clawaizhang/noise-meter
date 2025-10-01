@@ -93,8 +93,8 @@ export struct TimeWeightingDialog {
         })
       })
     }
-    .width('100%')
-    .padding(16)
+    .backgroundColor($r('sys.color.comp_background_primary'))
+    .margin(16)
     .borderRadius(16)
     .height(56)
   }
@@ -175,7 +175,7 @@ export struct TimeWeightingDialog {
   }
 
   build() {
-    Column({ space: 16 }) {
+    Column({ space: 8 }) {
       this.buildFixedTabs()
       // 可滚动内容区域
       Scroll() {

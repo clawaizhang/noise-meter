@@ -240,15 +240,8 @@ export struct PreviewPanel {
       // 模式对比信息
       this.buildModeComparison()
 
-      // 分隔线
-      Divider()
-        .strokeWidth(1)
-        .color($r('sys.color.comp_border_color'))
-        .margin({ top: DesignConstants.SPACING_SM, bottom: DesignConstants.SPACING_SM })
-
       // 响应曲线预览
       this.buildResponseCurve()
-
     }
     .width('100%')
     .padding(DesignConstants.SPACING_MD)
