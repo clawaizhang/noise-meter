@@ -31,6 +31,8 @@ import { resourceManager } from '@kit.LocalizationKit';
 import { NoiseDescriptionDialogBuilder } from '../../pages/noisemeter/NoiseDescriptionDialogNavigation';
 import { image } from '@kit.ImageKit';
 import { AppKeys } from '../../models/AppKeys';
+import { from, interval, take, takeUntil, timer, Subject, Subscription, map, filter, switchMap, tap, delay, catchError, of } from 'rxjs';
+import { StatisticsService } from '../../services/StatisticsService';
 
 @ComponentV2
 export struct DecibelMeter {
@@ -68,7 +70,12 @@ export struct DecibelMeter {
   noiseInfoDialog: InfSheet | undefined
   sysResourceManager: resourceManager.ResourceManager = resourceManager.getSystemResourceManager();
   private readonly sampleRate: number = 44100 // 采样率
-  private noiseAlarmTimer: number = -1 // 定时器ID用于控制闪烁
+  private noiseAlarmTimer: number = -1 // 定时器ID用于控制闪烁（保留用于兼容性）
+  private audioBufferSubject = new Subject<void>();
+  private durationCheckSubscription?: Subscription;
+  private statisticsService: StatisticsService = new StatisticsService();
+  private statisticsSubscription?: Subscription;
+  private alarmSubscription?: Subscription;
 
 
   @Computed
@@ -180,11 +187,44 @@ export struct DecibelMeter {
     }
   }
 
+  @Monitor('pk.audio_analysis_mode')
+  onAudioAnalysisModeChange(monitor: IMonitor) {
+    const newMode = monitor.value<AudioAnalysisMode>()?.now;
+    if (newMode) {
+      this.statisticsService.setAudioAnalysisMode(newMode);
+    }
+  }
+
+  @Monitor('pk.noise_threshold', 'pk.noise_alarm_enabled')
+  onAlarmConfigChange(monitor: IMonitor) {
+    const newThreshold = monitor.value<number>()?.now;
+    const newEnabled = monitor.value<boolean>()?.now;
+    if (newThreshold !== undefined && newEnabled !== undefined) {
+      this.statisticsService.setAlarmConfig(newThreshold, newEnabled);
+    }
+  }
+
   aboutToDisappear() {
     if (this.releaseTimer !== -1) {
       clearTimeout(this.releaseTimer);
       this.releaseTimer = -1;
     }
+    
+    // 清理RxJS资源
+    this.audioBufferSubject.complete();
+    this.stopDurationMonitoring();
+    
+    // 清理统计服务资源
+    this.statisticsService.stop();
+    if (this.statisticsSubscription) {
+      this.statisticsSubscription.unsubscribe();
+      this.statisticsSubscription = undefined;
+    }
+    if (this.alarmSubscription) {
+      this.alarmSubscription.unsubscribe();
+      this.alarmSubscription = undefined;
+    }
+    
     this.audioService.stopProcessing();
     this.audioService.stopCapture();
   }
@@ -248,6 +288,28 @@ export struct DecibelMeter {
       this.dbCount = 0;
       this.dbSum = 0;
 
+      // 配置统计服务
+      this.statisticsService.setAudioAnalysisMode(this.pk.audio_analysis_mode);
+      this.statisticsService.setAlarmConfig(this.pk.noise_threshold, this.pk.noise_alarm_enabled);
+      
+      // 启动统计服务
+      this.statisticsService.start();
+      
+      // 订阅统计状态变化
+      this.statisticsSubscription = this.statisticsService.statisticsState$.subscribe(state => {
+        this.minDecibel = state.minDecibel;
+        this.maxDecibel = state.maxDecibel;
+        this.avgDecibel = state.avgDecibel;
+        this.dbCount = state.dbCount;
+        this.dbSum = state.dbSum;
+        this.values = [...state.values];
+      });
+      
+      // 订阅报警状态变化
+      this.alarmSubscription = this.statisticsService.alarmState$.subscribe(state => {
+        this.isNoiseAlarm = state.isNoiseAlarm;
+      });
+
       // 创建新的记录对象
       this.currentRecord = new DecibelRecord(
         0, // minDecibel
@@ -267,21 +329,14 @@ export struct DecibelMeter {
         this.audioService.startRecording();
       }
 
+      // 启动时长监控
+      this.startDurationMonitoring();
+
       // 开始处理音频数据
       this.audioService.startProcessing((buffer: ArrayBuffer) => {
-        // 检查录音时长是否超过限制
-        const currentDuration = new Date().getTime() - this.startTime;
-        if (currentDuration > this.MAX_RECORDING_DURATION) {
-          console.info('[自动保存] 达到5分钟录音限制，自动保存并开始新录音');
-          this.stopRecording('自动保存').then(() => {
-            // 延迟100ms确保完全停止后再开始新录音
-            setTimeout(() => {
-              this.startRecording();
-            }, 100);
-          });
-          return;
-        }
-
+        // 发出事件通知有新的音频数据到达
+        this.audioBufferSubject.next();
+        
         taskpool.execute<[string, ArrayBuffer,
           WeightingType, number], Float32Array>(concurrentCalculateSpectrum, this.pk.audio_analysis_mode,
           buffer, this.pk.weighting_type, this.pk.calibration_value).then(spectrum => {
@@ -294,7 +349,8 @@ export struct DecibelMeter {
           this.weightingTypes.push(this.pk.weighting_type)
           if (this.isDisplayApp) {
             this.as.db = decibel;
-            this.updateStatistics(this.as.db);
+            // 使用新的 RxJS 统计服务更新统计信息
+            this.statisticsService.updateDecibelValue(this.as.db);
             this.currentSpectrum = spectrum; // 更新频谱数据
           }
           // 更新计时器（毫秒级）
@@ -309,6 +365,9 @@ export struct DecibelMeter {
   }
 
   private resetData() {
+    // 重置统计服务状态
+    this.statisticsService.reset();
+    
     // 重置状态
     this.as.db = 0;
     this.minDecibel = 0;
@@ -324,56 +383,67 @@ export struct DecibelMeter {
     this.weightingTypes = [];
   }
 
-  private updateStatistics(value: number) {
-    if (value > 0) {
-      if (this.dbCount === 0) {
-        // 第一次检测到的值作为初始值
-        this.minDecibel = value;
-        this.maxDecibel = value;
-        this.avgDecibel = value;
-      } else {
-        // 更新最小值
-        if (value < this.minDecibel) {
-          this.minDecibel = value;
+  private startDurationMonitoring(): void {
+    // 停止之前的监控（如果存在）
+    this.stopDurationMonitoring();
+    
+    this.durationCheckSubscription = this.audioBufferSubject.pipe(
+      // 每次音频数据到达时检查时长
+      map(() => new Date().getTime() - this.startTime),
+      filter(duration => duration > this.MAX_RECORDING_DURATION),
+      take(1),
+      tap(() => console.info('[自动保存] 达到60分钟录音限制，自动保存并开始新录音')),
+      switchMap(() => from(this.stopRecording('自动保存')).pipe(
+        catchError((error:BusinessError) => {
+          console.error('[自动保存] 停止录音失败:', error);
+          return of(null);
+        })
+      )),
+      delay(100),
+      tap(() => {
+        try {
+          this.startRecording();
+        } catch (error) {
+          console.error('[自动保存] 重新开始录音失败:', error);
         }
-        // 更新最大值
-        if (value > this.maxDecibel) {
-          this.maxDecibel = value;
-        }
+      })
+    ).subscribe({
+      error: (error:BusinessError) => {
+        console.error('[自动保存] RxJS监控流错误:', error);
+        setTimeout(() => {
+          try {
+            this.startRecording();
+          } catch (e) {
+            console.error('[自动保存] 错误恢复失败:', e);
+          }
+        }, 100);
       }
-      if (this.dbCount <= 5 && this.pk.audio_analysis_mode == AudioAnalysisMode.FAST_TIME_WEIGHTING) {
-        this.maxDecibel = this.minDecibel;
-        this.values.shift();
-        this.values.unshift(this.minDecibel);
-      }
-      if (this.dbCount <= 10 && this.pk.audio_analysis_mode == AudioAnalysisMode.IMPULSE_TIME_WEIGHTING) {
-        this.maxDecibel = this.minDecibel;
-        this.values.shift();
-        this.values.unshift(this.minDecibel);
-      }
-      // 更新平均值
-      this.dbSum += value;
-      this.dbCount++;
-      this.avgDecibel = Math.round(this.dbSum / this.dbCount);
+    });
+  }
 
-      if (value > this.pk.noise_threshold && this.pk.noise_alarm_enabled) {
-        if (this.noiseAlarmTimer === -1) {
-          this.noiseAlarmTimer = setInterval(() => {
-            this.isNoiseAlarm = !this.isNoiseAlarm;
-          }, 300); // 每300毫秒切换一次
-        }
-      } else {
-        clearInterval(this.noiseAlarmTimer);
-        this.noiseAlarmTimer = -1;
-        this.isNoiseAlarm = false;
-      }
+  private stopDurationMonitoring(): void {
+    if (this.durationCheckSubscription) {
+      this.durationCheckSubscription.unsubscribe();
+      this.durationCheckSubscription = undefined;
     }
+  }
+
+  /**
+   * 更新统计信息（已重构为使用 RxJS 服务）
+   * @deprecated 请使用 statisticsService.updateDecibelValue() 替代
+   */
+  private updateStatistics(value: number) {
+    // 使用新的 RxJS 统计服务
+    this.statisticsService.updateDecibelValue(value);
   }
 
   private async stopRecording(comments: string): Promise<void> {
     if (this.isRecording) {
       this.isRecording = false;
       console.info("[FREQ_TRACE][Recording] 停止检测 - 开始");
+      
+      // 停止时长监控
+      this.stopDurationMonitoring();
 
       // 如果是自动保存，不显示保存提示
       const isAutoSave = new Date().getTime() - this.startTime >= this.MAX_RECORDING_DURATION;

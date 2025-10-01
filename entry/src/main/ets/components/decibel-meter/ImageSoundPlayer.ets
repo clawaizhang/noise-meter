@@ -4,6 +4,7 @@ import { AudioPlayerService } from "../../services/AudioPlayerService";
 import { curves } from "@kit.ArkUI";
 import { AudioPlayerGroupService } from "../../services/AudioPlayerGroupService";
 import { media } from "@kit.MediaKit";
+import { Subscription, timer } from "rxjs";
 
 @ComponentV2
 export struct ImageSoundPlayer {
@@ -16,6 +17,7 @@ export struct ImageSoundPlayer {
   private context = getContext(this);
   private audioPlayerService: AudioPlayerService = AudioPlayerGroupService.getPlayerInstance(this.file);
   private autoStopTimeOutId: number | undefined;
+  timerStop?:Subscription ;
 
   aboutToAppear(): void {
     this.rawFileDescriptor = this.context.resourceManager.getRawFdSync(this.file);
@@ -48,11 +50,11 @@ export struct ImageSoundPlayer {
           try {
             if (this.playerState === 'playing') {
               await this.audioPlayerService.pause();
-              this.autoStopTimeOutId = setTimeout(() => {
+              this.timerStop = timer(10_000).subscribe(() => {
                 this.audioPlayerService.stop();
-              }, 10_000);
+              });
             } else {
-              clearTimeout(this.autoStopTimeOutId);
+              this.timerStop?.unsubscribe();
               if (this.playerState === 'paused') {
                 await this.audioPlayerService.resume();
               } else {
@@ -73,6 +75,7 @@ export struct ImageSoundPlayer {
   }
 
   aboutToDisappear(): void {
+    this.timerStop?.unsubscribe();
     if (this.playerState === 'playing' || this.playerState === 'paused') {
       this.audioPlayerService.stop();
     }

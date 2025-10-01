@@ -7,6 +7,7 @@ import { AboutSettingsBuilder } from '../settings/AboutSettingsNavigation';
 import { AppKeys } from '../../models/AppKeys';
 import { AppStorageV2 } from '@kit.ArkUI';
 import { ListItemBuilder } from '../../components/common/ListItemBuilder';
+import { interval, Subscription } from 'rxjs';
 
 // 导航菜单项接口定义
 interface NavigationMenuItem {
@@ -27,8 +28,10 @@ export struct MainNoiseMeter {
   @Local title: string = '静喵Sound';
   @Local menuItems: Array<NavigationMenuItem> = [];
   @Local as: AppKeys = AppStorageV2.connect(AppKeys)!;
+  noiseReferSub?:Subscription
 
   aboutToDisappear(): void {
+    this.noiseReferSub?.unsubscribe();
   }
 
   aboutToAppear(): void {
@@ -128,9 +131,9 @@ export struct MainNoiseMeter {
               .setContent(wrapBuilder(NoiseStandardDialogBuilder), this.as)
               .build();
             dialog.show();
-            setInterval(() => {
+            this.noiseReferSub = interval(100).subscribe(() => {
               dialog.updateContent(this.as);
-            }, 100)
+            });
           }
         )
 
