@@ -9,17 +9,17 @@ import { DesignConstants } from '../../constants/DesignConstants';
 
 @ComponentV2
 export struct PreviewPanel {
-  @Param @Require currentMode: AudioAnalysisMode;        // 当前模式
-  @Param @Require selectedMode: AudioAnalysisMode;       // 选中的模式
-
-  @Local previewData: number[] = [];           // 预览数据（用于模拟响应曲线）
+  @Param @Require currentMode: AudioAnalysisMode; // 当前模式
+  @Param @Require selectedMode: AudioAnalysisMode; // 选中的模式
+  @Local previewData: number[] = []; // 预览数据（用于模拟响应曲线）
 
   aboutToAppear() {
     // 初始化预览数据
     this.generatePreviewData();
   }
 
-  aboutToUpdate() {
+  @Monitor('selectedMode')
+  selectedModeChange(monitor: IMonitor) {
     // 模式变化时更新预览数据
     this.generatePreviewData();
   }
@@ -28,12 +28,12 @@ export struct PreviewPanel {
   private generatePreviewData() {
     const data: number[] = [];
     const pointCount = 50;
-    
+
     // 根据模式生成不同的响应曲线
     for (let i = 0; i < pointCount; i++) {
       let value: number;
       const x = i / pointCount;
-      
+
       switch (this.selectedMode) {
         case AudioAnalysisMode.FAST_TIME_WEIGHTING:
           // 快速模式：快速响应，中等衰减
@@ -50,10 +50,10 @@ export struct PreviewPanel {
         default:
           value = 0;
       }
-      
+
       data.push(value);
     }
-    
+
     this.previewData = data;
   }
 
@@ -159,15 +159,15 @@ export struct PreviewPanel {
     const width = 280; // 假设宽度
     const height = 120;
     const step = width / (this.previewData.length - 1);
-    
+
     let path = `M0 ${height / 2 - this.previewData[0] * height / 2}`;
-    
+
     for (let i = 1; i < this.previewData.length; i++) {
       const x = i * step;
       const y = height / 2 - this.previewData[i] * height / 2;
       path += ` L${x} ${y}`;
     }
-    
+
     return path;
   }
 

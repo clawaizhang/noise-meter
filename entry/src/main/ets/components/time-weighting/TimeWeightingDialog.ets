@@ -6,7 +6,6 @@
 import { AudioAnalysisMode } from '../../common/AudioConfig';
 import { TimeWeightingConstants } from '../../constants/TimeWeightingConstants';
 import { DesignConstants } from '../../constants/DesignConstants';
-import { TimeWeightingCard } from './TimeWeightingCard';
 import { AcousticExplanationComp } from './AcousticExplanation';
 import { TechnicalParamsDisplay } from './TechnicalParamsDisplay';
 import { PreviewPanel } from './PreviewPanel';
@@ -17,6 +16,7 @@ export struct TimeWeightingDialog {
   @Param @Require onConfirm: (mode: AudioAnalysisMode) => void; // 确认回调
   @Param @Require onCancel: () => void; // 取消回调
   @Local selectedMode!: AudioAnalysisMode; // 选中的模式
+  @Local hoveredMode: AudioAnalysisMode | null = null; // 悬停的模式
 
   aboutToAppear() {
     // 初始化选中模式为当前模式
@@ -42,33 +42,61 @@ export struct TimeWeightingDialog {
     }
   }
 
-  // 构建模式选择区域
+  // 构建固定顶部选项卡
   @Builder
-  private buildModeSelection() {
-    Column({ space: DesignConstants.SPACING_MD }) {
-      // 模式卡片网格
-      GridRow({
-        columns: { sm: 1, md: 3 },
-        breakpoints: { reference: BreakpointsReference.WindowSize },
-        gutter: { x: DesignConstants.SPACING_MD, y: DesignConstants.SPACING_MD }
-      }) {
-        ForEach(TimeWeightingConstants.getAvailableModes(), (mode: AudioAnalysisMode) => {
-          GridCol({ span: 1 }) {
-            TimeWeightingCard({
-              mode: this.currentMode,
-              selectedMode: this.selectedMode,
-              modeInfo: mode,
-              onSelect: (selectedMode: AudioAnalysisMode) => {
-                this.handleModeSelect(selectedMode);
-              }
-            })
+  private buildFixedTabs() {
+    // 选项卡容器
+    Row({ space: 0 }) {
+      ForEach(TimeWeightingConstants.getAvailableModes(), (mode: AudioAnalysisMode) => {
+        // 选项卡内容
+        Row({ space: DesignConstants.SPACING_SM }) {
+          // 模式图标
+          Image(TimeWeightingConstants.getModeIcon(mode))
+            .width(DesignConstants.ICON_SIZE_SM)
+            .height(DesignConstants.ICON_SIZE_SM)
+            .fillColor(this.selectedMode === mode ?
+            $r('sys.color.font_on_primary') :
+              (this.hoveredMode === mode ?
+              $r('sys.color.interactive_active') :
+              $r('sys.color.font_primary')))
+
+          // 模式名称
+          Text(TimeWeightingConstants.MODE_DISPLAY_NAMES[mode])
+            .fontSize(DesignConstants.FONT_SIZE_MD)
+            .fontWeight(this.selectedMode === mode ? FontWeight.Bold : FontWeight.Medium)
+            .fontColor(this.selectedMode === mode ?
+            $r('sys.color.font_on_primary') :
+              (this.hoveredMode === mode ?
+              $r('sys.color.interactive_active') :
+              $r('sys.color.font_primary')))
+        }
+        .alignItems(VerticalAlign.Center)
+        .justifyContent(FlexAlign.Center)
+        .layoutWeight(1)
+        .height(56)
+        .backgroundColor(this.selectedMode === mode ?
+        $r('sys.color.interactive_active') :
+          (this.hoveredMode === mode ?
+          $r('sys.color.comp_background_secondary') :
+          $r('sys.color.comp_background_primary')))
+        .borderRadius(DesignConstants.BORDER_RADIUS_MD)
+        .padding(DesignConstants.SPACING_MD)
+        .onClick(() => {
+          this.handleModeSelect(mode);
+        })
+        .onHover((isHover: boolean) => {
+          if (isHover) {
+            this.hoveredMode = mode;
+          } else {
+            this.hoveredMode = null;
           }
         })
-      }
-      .width('100%')
-
+      })
     }
     .width('100%')
+    .padding(16)
+    .borderRadius(16)
+    .height(56)
   }
 
   // 构建预览区域
@@ -107,7 +135,7 @@ export struct TimeWeightingDialog {
   private buildActionButtons() {
     Row({ space: DesignConstants.SPACING_MD }) {
       // 取消按钮
-      Button('取消', { type: ButtonType.Normal })
+      Button('取消', { type: ButtonType.Capsule })
         .layoutWeight(1)
         .backgroundColor($r('sys.color.comp_background_primary'))
         .fontColor($r('sys.color.font_primary'))
@@ -122,6 +150,7 @@ export struct TimeWeightingDialog {
         .onClick(() => {
           this.handleCancel();
         })
+        .height(56)
 
       // 确认按钮
       Button('确认选择', { type: ButtonType.Capsule })
@@ -131,47 +160,32 @@ export struct TimeWeightingDialog {
         .fontWeight(FontWeight.Medium)
         .borderRadius(DesignConstants.BORDER_RADIUS_MD)
         .backgroundColor(this.currentMode !== this.selectedMode ?
-          $r('sys.color.interactive_active') :
-          $r('sys.color.comp_background_tertiary'))
+        $r('sys.color.interactive_active') :
+        $r('sys.color.comp_background_tertiary'))
         .enabled(this.currentMode !== this.selectedMode)
         .onClick(() => {
           this.handleConfirm();
         })
+        .height(56)
 
     }
     .width('100%')
-    .height(56)
+    .padding(8)
+    .borderRadius(8)
   }
 
   build() {
-    Stack({ alignContent: Alignment.Bottom }) {
+    Column({ space: 16 }) {
+      this.buildFixedTabs()
       // 可滚动内容区域
       Scroll() {
         Column({ space: DesignConstants.SPACING_LG }) {
-          // 模式选择区域
-          this.buildModeSelection()
-
-          // 分隔线
-          Divider()
-            .strokeWidth(1)
-            .color($r('sys.color.comp_border_color'))
-            .margin({ top: DesignConstants.SPACING_SM, bottom: DesignConstants.SPACING_SM })
-
           // 预览区域
           this.buildPreviewArea()
-
-          // 分隔线
-          Divider()
-            .strokeWidth(1)
-            .color($r('sys.color.comp_border_color'))
-            .margin({ top: DesignConstants.SPACING_SM, bottom: DesignConstants.SPACING_SM })
 
           // 详细信息区域
           this.buildDetailArea()
 
-          // 底部边距，避免内容被操作栏遮挡
-          Blank()
-            .height(80) // 为固定操作栏预留空间
         }
         .width('100%')
         .padding(DesignConstants.SPACING_LG)
@@ -180,28 +194,10 @@ export struct TimeWeightingDialog {
       .scrollBar(BarState.Auto)
       .scrollable(ScrollDirection.Vertical)
       .width('100%')
-      .height('100%')
+      .layoutWeight(1)
 
-      // 固定底部操作栏
-      Column({ space: 0 }) {
-        // 分隔线
-        Divider()
-          .strokeWidth(1)
-          .color($r('sys.color.comp_border_color'))
-          .margin({ top: 0, bottom: DesignConstants.SPACING_MD })
-
-        // 操作按钮区域
-        this.buildActionButtons()
-      }
-      .width('100%')
-      .padding({
-        left: DesignConstants.SPACING_LG,
-        right: DesignConstants.SPACING_LG,
-        bottom: DesignConstants.SPACING_LG
-      })
-      .backgroundColor($r('sys.color.background_secondary'))
-      .backdropBlur(10)
-      .align(Alignment.Bottom)
+      // 操作按钮区域
+      this.buildActionButtons()
     }
     .width('100%')
     .backgroundColor($r('sys.color.background_secondary'))

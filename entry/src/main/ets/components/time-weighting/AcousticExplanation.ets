@@ -173,12 +173,6 @@ export struct AcousticExplanationComp {
       // 声学理论解释
       this.buildAcousticTheory()
 
-      // 分隔线
-      Divider()
-        .strokeWidth(1)
-        .color($r('sys.color.comp_border_color'))
-        .margin({ top: DesignConstants.SPACING_SM, bottom: DesignConstants.SPACING_SM })
-
       // 应用场景
       this.buildApplicationScenarios()
 
