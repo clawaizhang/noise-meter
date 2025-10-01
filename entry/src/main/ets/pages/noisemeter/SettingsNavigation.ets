@@ -14,6 +14,10 @@ import {
   TimeWeightingDialogBuilder,
   TimeWeightingDialogParams,
 } from '../../components/time-weighting/TimeWeightingDialog';
+import {
+  FrequencyWeightingDialogBuilder,
+  FrequencyWeightingDialogParams,
+} from '../../components/frequency-weighting/FrequencyWeightingDialog';
 
 @Builder
 export function SettingsBuilder() {
@@ -256,6 +260,33 @@ export struct Settings {
     dialog.show();
   }
 
+  // 打开频率加权模式选择弹框
+  private openFrequencyWeightingDialog = () => {
+    let dialog: InfSheet;
+    let param: FrequencyWeightingDialogParams = {
+      currentWeighting: this.pk.weighting_type,
+      onConfirm: (selectedWeighting: WeightingType) => {
+        // 确认选择后的处理
+        this.pk.weighting_type = selectedWeighting;
+        dialog.dismiss();
+      },
+      onCancel: () => {
+        // 取消选择
+        dialog.dismiss();
+      }
+    }
+    dialog = DialogHub.getSheet()
+      .setStyle({
+        title: { title: '频率加权模式选择' },
+        backgroundColor: $r('sys.color.background_secondary')
+      })
+      .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS })
+      .setComponentTargetId('settingsId')
+      .setContent(wrapBuilder(FrequencyWeightingDialogBuilder), param)
+      .build();
+    dialog.show();
+  }
+
   // 处理时间计权模式变化
   private handleTimeWeightingModeChange(selectedMode: AudioAnalysisMode) {
     if (!this.isModeChangeEnabled) {
@@ -369,9 +400,9 @@ export struct Settings {
         .cardStyle()
       }
 
-      // 分贝计权设置
+      // 频率加权设置
       GridCol() {
-        Column({ space: 8 }) {
+        Column() {
           Row() {
             Row({ space: 8 }) {
               Image($r('app.media.ic_frequency_weighting'))
@@ -380,23 +411,34 @@ export struct Settings {
                 .itemTitle()
             }.layoutWeight(1)
 
-            Select([
-              { value: 'A计权' },
-              { value: 'C计权' },
-              { value: 'Z计权' }
-            ])
-              .selected(this.getWeightingIndex(this.pk.weighting_type))
-              .value(this.pk.weighting_type + '计权')
-              .onSelect((index: number) => {
-                const weightingType = this.getWeightingType(index);
-                this.pk.weighting_type = weightingType;
-              })
+            // 点击区域，触发弹框选择
+            Row({ space: DesignConstants.SPACING_XS }) {
+              Text(this.pk.weighting_type + '计权')
+                .fontSize(DesignConstants.FONT_SIZE_MD)
+                .fontColor($r('sys.color.font_primary'))
+                .fontWeight(FontWeight.Medium)
+
+              Image($r('sys.media.ohos_ic_public_arrow_right'))
+                .width(DesignConstants.ICON_SIZE_SM)
+                .height(DesignConstants.ICON_SIZE_SM)
+                .fillColor($r('sys.color.font_secondary'))
+            }
+            .padding({
+              left: DesignConstants.SPACING_MD,
+              right: DesignConstants.SPACING_MD,
+              top: DesignConstants.SPACING_SM,
+              bottom: DesignConstants.SPACING_SM
+            })
+            .backgroundColor($r('sys.color.comp_background_primary'))
+            .borderRadius(DesignConstants.BORDER_RADIUS_SM)
           }
           .listItemRow()
 
           Text(getWeightingDescription(this.pk.weighting_type))
             .itemDescription()
-        }
+        }.onClick(() => {
+          this.openFrequencyWeightingDialog();
+        })
         .cardStyle()
       }
 
