@@ -29,8 +29,8 @@ export function NoiseDescriptionDialogBuilder(as: AppKeys) {
             .justifyContent(FlexAlign.SpaceBetween)
             .margin({ bottom: 2 })
           }
-          .backgroundBlurStyle(as.db > db ? BlurStyle.COMPONENT_REGULAR : BlurStyle.NONE)
-          .backgroundColor(as.db > db ? DecibelService.getDecibelColor(db - 1) :
+          .backgroundBlurStyle(as.db > db - 10 ? BlurStyle.COMPONENT_REGULAR : BlurStyle.NONE)
+          .backgroundColor(as.db > db - 10 ? DecibelService.getDecibelColor(db - 1) :
           $r('sys.color.comp_background_primary'))
           .padding(12)
           .borderRadius(12)
