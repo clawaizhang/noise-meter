@@ -111,7 +111,14 @@ export struct TimeWeightingDialog {
         .layoutWeight(1)
         .backgroundColor($r('sys.color.comp_background_primary'))
         .fontColor($r('sys.color.font_primary'))
+        .fontSize(DesignConstants.FONT_SIZE_LG)
+        .fontWeight(FontWeight.Medium)
         .borderRadius(DesignConstants.BORDER_RADIUS_MD)
+        .border({
+          width: DesignConstants.BORDER_WIDTH_SM,
+          color: $r('sys.color.comp_border_color'),
+          style: BorderStyle.Solid
+        })
         .onClick(() => {
           this.handleCancel();
         })
@@ -120,7 +127,12 @@ export struct TimeWeightingDialog {
       Button('确认选择', { type: ButtonType.Capsule })
         .layoutWeight(1)
         .fontColor($r('sys.color.font_on_primary'))
+        .fontSize(DesignConstants.FONT_SIZE_LG)
+        .fontWeight(FontWeight.Medium)
         .borderRadius(DesignConstants.BORDER_RADIUS_MD)
+        .backgroundColor(this.currentMode !== this.selectedMode ?
+          $r('sys.color.interactive_active') :
+          $r('sys.color.comp_background_tertiary'))
         .enabled(this.currentMode !== this.selectedMode)
         .onClick(() => {
           this.handleConfirm();
@@ -128,38 +140,70 @@ export struct TimeWeightingDialog {
 
     }
     .width('100%')
-    .height(48)
+    .height(56)
   }
 
   build() {
-    Column({ space: DesignConstants.SPACING_LG }) {
-      // 模式选择区域
-      this.buildModeSelection()
+    Stack({ alignContent: Alignment.Bottom }) {
+      // 可滚动内容区域
+      Scroll() {
+        Column({ space: DesignConstants.SPACING_LG }) {
+          // 模式选择区域
+          this.buildModeSelection()
 
-      // 分隔线
-      Divider()
-        .strokeWidth(1)
-        .color($r('sys.color.comp_border_color'))
-        .margin({ top: DesignConstants.SPACING_SM, bottom: DesignConstants.SPACING_SM })
+          // 分隔线
+          Divider()
+            .strokeWidth(1)
+            .color($r('sys.color.comp_border_color'))
+            .margin({ top: DesignConstants.SPACING_SM, bottom: DesignConstants.SPACING_SM })
 
-      // 预览区域
-      this.buildPreviewArea()
+          // 预览区域
+          this.buildPreviewArea()
 
-      // 分隔线
-      Divider()
-        .strokeWidth(1)
-        .color($r('sys.color.comp_border_color'))
-        .margin({ top: DesignConstants.SPACING_SM, bottom: DesignConstants.SPACING_SM })
+          // 分隔线
+          Divider()
+            .strokeWidth(1)
+            .color($r('sys.color.comp_border_color'))
+            .margin({ top: DesignConstants.SPACING_SM, bottom: DesignConstants.SPACING_SM })
 
-      // 详细信息区域
-      this.buildDetailArea()
+          // 详细信息区域
+          this.buildDetailArea()
 
-      // 操作按钮区域
-      this.buildActionButtons()
+          // 底部边距，避免内容被操作栏遮挡
+          Blank()
+            .height(80) // 为固定操作栏预留空间
+        }
+        .width('100%')
+        .padding(DesignConstants.SPACING_LG)
+        .backgroundColor($r('sys.color.background_secondary'))
+      }
+      .scrollBar(BarState.Auto)
+      .scrollable(ScrollDirection.Vertical)
+      .width('100%')
+      .height('100%')
 
+      // 固定底部操作栏
+      Column({ space: 0 }) {
+        // 分隔线
+        Divider()
+          .strokeWidth(1)
+          .color($r('sys.color.comp_border_color'))
+          .margin({ top: 0, bottom: DesignConstants.SPACING_MD })
+
+        // 操作按钮区域
+        this.buildActionButtons()
+      }
+      .width('100%')
+      .padding({
+        left: DesignConstants.SPACING_LG,
+        right: DesignConstants.SPACING_LG,
+        bottom: DesignConstants.SPACING_LG
+      })
+      .backgroundColor($r('sys.color.background_secondary'))
+      .backdropBlur(10)
+      .align(Alignment.Bottom)
     }
     .width('100%')
-    .padding(DesignConstants.SPACING_LG)
     .backgroundColor($r('sys.color.background_secondary'))
   }
 }
