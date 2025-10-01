@@ -3,16 +3,16 @@ import { PreferenceKeys } from '../../models/PreferenceKeys';
 import { WeightingType } from '../../constants/WeightingConstants';
 import { InputDialog } from './InputDialog';
 import { LengthMetrics, PersistenceV2 } from '@kit.ArkUI';
+import { camera } from '@kit.CameraKit';
+import common from '@ohos.app.ability.common';
 
 @ComponentV2
 export struct ActionPanel {
   @Local pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys)!;
-  @Param isTorchOn: boolean = false;
+  @Local isTorchOn: boolean = false;
   @Param @Require weightingType: WeightingType;
   @Event onReset: () => void;
   @Event onSave: (comment: string) => void;
-  @Event torchToggle: () => void;
-  @Event onToggleWeighting: (weightingType: WeightingType) => void;
   private weightingTypes: Array<SelectOption> =
     [{ value: WeightingType.A }, { value: WeightingType.C }, { value: WeightingType.Z }];
 
@@ -56,7 +56,7 @@ export struct ActionPanel {
 
       .accessibilityDescription(this.isTorchOn ? '解锁界面' : '锁定界面')
       .onClick(() => {
-        this.torchToggle();
+        this.toggleTorch();
       })
 
       // 新增：切换频率加权方式选择框
@@ -140,5 +140,25 @@ export struct ActionPanel {
       default:
         return 0;
     }
+  }
+
+  // 手电筒切换功能
+  private toggleTorch() {
+    let cameraManager: camera.CameraManager = camera.getCameraManager(getContext(this) as common.UIAbilityContext);
+    if (cameraManager.isTorchSupported()) {
+      cameraManager.setTorchMode(this.isTorchOn ? camera.TorchMode.OFF : camera.TorchMode.ON);
+      promptAction.showToast({ message: '手电筒已' + (this.isTorchOn ? '关闭' : '打开') });
+      this.isTorchOn = !this.isTorchOn;
+    }
+  }
+
+  // 频率加权方式切换功能
+  private onToggleWeighting(weightingType: WeightingType) {
+    this.pk.weighting_type = weightingType;
+    // 弹出提示框显示当前频率加权方式
+    promptAction.showToast({
+      message: `已切换为: ${weightingType} 计权`,
+      duration: 2000
+    });
   }
 }

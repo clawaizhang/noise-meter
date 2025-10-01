@@ -54,7 +54,6 @@ export struct DecibelMeter {
   @Param @Require meterOn: boolean = true;
   @Local private isRecording: boolean = false
   @Local private recordingTime: number = 0
-  @Local private torchOn: boolean = false
   @Local private isDisplayApp: boolean = true
   @Local pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys)!;
   @Local startTime: number = 0
@@ -488,7 +487,6 @@ export struct DecibelMeter {
   @Builder
   actionPanel() {
     ActionPanel({
-      isTorchOn: this.torchOn,
       weightingType: this.pk.weighting_type,
       onReset: () => {
         this.audioService.resetData();
@@ -498,18 +496,6 @@ export struct DecibelMeter {
         this.bgImage = this.getUIContext().getComponentSnapshot().getSync('mainNoiseMeterDisplayId');
         this.stopRecording(comments);
         this.startCollapseAnimation();
-      },
-      torchToggle: () => {
-        this.toggleTorch();
-      },
-      // 修改：将onToggleWeighting的参数类型改为WeightingType
-      onToggleWeighting: (weightingType: WeightingType) => {
-        this.pk.weighting_type = weightingType;
-        // 弹出提示框显示当前频率加权方式
-        promptAction.showToast({
-          message: `已切换为: ${weightingType} 计权`,
-          duration: 2000
-        });
       }
     })
   }
@@ -558,12 +544,4 @@ export struct DecibelMeter {
 
   }
 
-  private toggleTorch() {
-    let cameraManager: camera.CameraManager = camera.getCameraManager(getContext(this));
-    if (cameraManager.isTorchSupported()) {
-      cameraManager.setTorchMode(this.torchOn ? camera.TorchMode.OFF : camera.TorchMode.ON);
-      promptAction.showToast({ message: '手电筒已' + (this.torchOn ? '关闭' : '打开') });
-      this.torchOn = !this.torchOn;
-    }
-  }
 }
