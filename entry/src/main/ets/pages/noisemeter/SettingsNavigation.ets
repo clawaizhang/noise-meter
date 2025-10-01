@@ -1,6 +1,6 @@
 import { navigationStack } from '../../constants/ProviderConstant';
 import { curves, PersistenceV2 } from '@kit.ArkUI';
-import { DialogHub } from '@hadss/dialoghub';
+import { DialogHub, InfSheet } from '@hadss/dialoghub';
 import { AudioAnalysisSettingsBuilder } from '../settings/AudioAnalysisSettingsNavigation';
 import { AlertsSettingsBuilder } from '../settings/AlertsSettingsNavigation';
 import { DataPrivacySettingsBuilder } from '../settings/DataPrivacySettingsNavigation';
@@ -10,6 +10,10 @@ import { PreferenceKeys } from '../../models/PreferenceKeys';
 import { DesignConstants } from '../../constants/DesignConstants';
 import { AudioAnalysisMode, AudioPresets } from '../../common/AudioConfig';
 import { getWeightingDescription, WeightingType } from '../../constants/WeightingConstants';
+import {
+  TimeWeightingDialogBuilder,
+  TimeWeightingDialogParams,
+} from '../../components/time-weighting/TimeWeightingDialog';
 
 @Builder
 export function SettingsBuilder() {
@@ -86,7 +90,6 @@ export struct Settings {
   @Local analysisModeDetails: string[] = [];
   @Local isModeChangeEnabled: boolean = true;
   @Local remainingTime: number = 0;
-
   private readonly COOLDOWN_DURATION: number = 500; // 0.5秒冷却时间
 
   // 工具方法
@@ -168,7 +171,6 @@ export struct Settings {
     }
   }
 
-
   aboutToAppear() {
     this.updateAnalysisModeCache();
   }
@@ -224,6 +226,58 @@ export struct Settings {
       .build()
       .show();
   }
+  // 打开时间计权模式选择弹框
+  private openTimeWeightingDialog = () => {
+    if (!this.isModeChangeEnabled) {
+      return;
+    }
+    let dialog: InfSheet;
+    let param: TimeWeightingDialogParams = {
+      currentMode: this.pk.audio_analysis_mode,
+      onConfirm: (selectedMode: AudioAnalysisMode) => {
+        // 确认选择后的处理
+        this.handleTimeWeightingModeChange(selectedMode);
+        dialog.dismiss();
+      },
+      onCancel: () => {
+        // 取消选择
+        dialog.dismiss();
+      }
+    }
+    dialog = DialogHub.getSheet()
+      .setStyle({
+        title: { title: '时间计权模式选择' },
+        backgroundColor: $r('sys.color.background_secondary')
+      })
+      .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS })
+      .setComponentTargetId('settingsId')
+      .setContent(wrapBuilder(TimeWeightingDialogBuilder), param)
+      .build();
+    dialog.show();
+  }
+
+  // 处理时间计权模式变化
+  private handleTimeWeightingModeChange(selectedMode: AudioAnalysisMode) {
+    if (!this.isModeChangeEnabled) {
+      return;
+    }
+
+    // 禁用切换
+    this.isModeChangeEnabled = false;
+    this.pk.audio_analysis_mode = selectedMode;
+    this.updateAnalysisModeCache();
+
+    // 启动冷却计时器
+    this.remainingTime = this.COOLDOWN_DURATION;
+    const interval = setInterval(() => {
+      this.remainingTime -= 100;
+      if (this.remainingTime <= 0) {
+        clearInterval(interval);
+        this.isModeChangeEnabled = true;
+        this.remainingTime = 0;
+      }
+    }, 100);
+  }
 
   build() {
     GridRow({
@@ -275,36 +329,31 @@ export struct Settings {
                 .fontSize(DesignConstants.FONT_SIZE_MD)
                 .fontColor($r('sys.color.font_secondary'))
                 .margin({ right: DesignConstants.SPACING_XS })
-              Select([
-                { value: '快速(F)' },
-                { value: '慢速(S)' },
-                { value: '脉冲(I)' }
-              ])
-                .selected(this.getAnalysisModeIndex(this.pk.audio_analysis_mode))
-                .value(this.getAnalysisModeDisplayName(this.pk.audio_analysis_mode))
-                .onSelect((index: number) => {
-                  if (!this.isModeChangeEnabled) {
-                    return;
-                  }
 
-                  // 禁用切换
-                  this.isModeChangeEnabled = false;
-                  const mode = this.getAnalysisModeFromIndex(index);
-                  this.pk.audio_analysis_mode = mode;
-                  this.updateAnalysisModeCache();
+              // 点击区域，触发弹框选择
+              Row({ space: DesignConstants.SPACING_XS }) {
+                Text(this.getAnalysisModeDisplayName(this.pk.audio_analysis_mode))
+                  .fontSize(DesignConstants.FONT_SIZE_MD)
+                  .fontColor($r('sys.color.font_primary'))
+                  .fontWeight(FontWeight.Medium)
 
-                  // 启动冷却计时器
-                  this.remainingTime = this.COOLDOWN_DURATION;
-                  const interval = setInterval(() => {
-                    this.remainingTime -= 100;
-                    if (this.remainingTime <= 0) {
-                      clearInterval(interval);
-                      this.isModeChangeEnabled = true;
-                      this.remainingTime = 0;
-                    }
-                  }, 100);
-                })
-                .enabled(this.isModeChangeEnabled)
+                Image($r('sys.media.ohos_ic_public_arrow_right'))
+                  .width(DesignConstants.ICON_SIZE_SM)
+                  .height(DesignConstants.ICON_SIZE_SM)
+                  .fillColor($r('sys.color.font_secondary'))
+              }
+              .padding({
+                left: DesignConstants.SPACING_MD,
+                right: DesignConstants.SPACING_MD,
+                top: DesignConstants.SPACING_SM,
+                bottom: DesignConstants.SPACING_SM
+              })
+              .backgroundColor($r('sys.color.comp_background_primary'))
+              .borderRadius(DesignConstants.BORDER_RADIUS_SM)
+              .onClick(() => {
+                this.openTimeWeightingDialog();
+              })
+              .enabled(this.isModeChangeEnabled)
             }
           }
           .listItemRow()
@@ -436,6 +485,7 @@ export struct Settings {
               })
           }
           .listItemRow()
+
           Text(this.pk.record_enabled ? '保存原始音频数据用于后期分析' : '不会保存音频数据')
             .itemDescription()
         }
