@@ -103,7 +103,6 @@ export struct DecibelMeter {
     }
   }
 
-
   aboutToDisappear() {
     if (this.releaseTimer !== -1) {
       clearTimeout(this.releaseTimer);
@@ -374,7 +373,7 @@ export struct DecibelMeter {
             md: 5,
           }
         }) {
-          Column() {
+          Column({ space: 8 }) {
             // 使用新的分贝显示组件
             DecibelDisplayComponent({
               audioBuffer: this.currentAudioBuffer,
@@ -516,5 +515,4 @@ export struct DecibelMeter {
     });
 
   }
-
 }
