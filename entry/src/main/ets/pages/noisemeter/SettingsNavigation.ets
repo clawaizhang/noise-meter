@@ -350,9 +350,6 @@ export struct Settings {
               })
               .backgroundColor($r('sys.color.comp_background_primary'))
               .borderRadius(DesignConstants.BORDER_RADIUS_SM)
-              .onClick(() => {
-                this.openTimeWeightingDialog();
-              })
               .enabled(this.isModeChangeEnabled)
             }
           }
@@ -366,7 +363,9 @@ export struct Settings {
                 .analysisDetail()
             })
           }.justifyContent(FlexAlign.Start)
-        }
+        }.onClick(() => {
+          this.openTimeWeightingDialog();
+        })
         .cardStyle()
       }
 

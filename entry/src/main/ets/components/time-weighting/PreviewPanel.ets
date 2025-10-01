@@ -17,13 +17,6 @@ export struct PreviewPanel {
   @Builder
   private buildResponseCurve() {
     Column({ space: DesignConstants.SPACING_SM }) {
-      // 标题
-      Text('动态响应特性预览')
-        .fontSize(DesignConstants.FONT_SIZE_LG)
-        .fontWeight(FontWeight.Bold)
-        .fontColor($r('sys.color.font_primary'))
-        .alignSelf(ItemAlign.Start)
-
       // 使用新的时间响应曲线组件
       TimeResponseChartComponent({ selectedMode: this.selectedMode })
         .width('100%')

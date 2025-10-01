@@ -17,6 +17,7 @@ export struct TimeResponseChartComponent {
   @Local private animationTime: number = 0; // 动画时间
   @Local private isAnimating: boolean = false; // 动画状态
   @Local private pulseTriggered: boolean = false; // 脉冲触发状态
+  @Local private cycleCount: number = 0; // 循环计数器
   @Local private sysResourceManager: resourceManager.ResourceManager = resourceManager.getSystemResourceManager();
 
   private canvasSettings: RenderingContextSettings = new RenderingContextSettings(true);
@@ -25,9 +26,9 @@ export struct TimeResponseChartComponent {
   
   // 常量定义
   private readonly TOTAL_TIME: number = 2000; // 总时间范围(ms)
-  private readonly SAMPLE_COUNT: number = 100; // 采样点数
+  private readonly SAMPLE_COUNT: number = 200; // 增加采样点数提高时间分辨率
   private readonly ANIMATION_INTERVAL: number = 16; // 动画间隔(ms) ~60fps
-  private readonly PULSE_DURATION: number = 50; // 脉冲持续时间(ms)
+  private readonly PULSE_INTERVAL: number = 1500; // 脉冲触发间隔(ms)
 
   aboutToAppear() {
     this.initializeCanvasDimensions();
@@ -58,6 +59,7 @@ export struct TimeResponseChartComponent {
     this.responseData = new Array(this.SAMPLE_COUNT).fill(0);
     this.animationTime = 0;
     this.pulseTriggered = false;
+    this.cycleCount = 0;
   }
 
   // 启动动画
@@ -85,8 +87,14 @@ export struct TimeResponseChartComponent {
   private updateAnimation() {
     this.animationTime += this.ANIMATION_INTERVAL;
     
-    // 每2秒触发一次脉冲
-    if (this.animationTime % 2000 < this.ANIMATION_INTERVAL) {
+    // 检查是否需要重置时间轴（循环播放）
+    if (this.animationTime >= this.TOTAL_TIME) {
+      this.animationTime = 0;
+      this.cycleCount++;
+    }
+    
+    // 每PULSE_INTERVAL触发一次脉冲
+    if (this.animationTime % this.PULSE_INTERVAL < this.ANIMATION_INTERVAL) {
       this.triggerPulse();
     }
     
@@ -114,6 +122,9 @@ export struct TimeResponseChartComponent {
       
       if (elapsedTime >= 0) {
         this.responseData[i] = this.calculateResponseValue(elapsedTime);
+      } else {
+        // 对于未来的时间点，保持为0
+        this.responseData[i] = 0;
       }
     }
   }
@@ -124,20 +135,33 @@ export struct TimeResponseChartComponent {
     
     switch (this.selectedMode) {
       case AudioAnalysisMode.FAST_TIME_WEIGHTING:
-        // 快速模式：125ms时间常数
-        return Math.exp(-elapsedTime / 125);
+        // 快速模式：125ms时间常数 - 快速响应和衰减
+        // 使用指数上升和衰减的组合来模拟真实响应
+        if (elapsedTime < 125) {
+          // 上升阶段：在125ms内达到峰值
+          return 1 - Math.exp(-elapsedTime / 40);
+        } else {
+          // 下降阶段：指数衰减
+          return Math.exp(-(elapsedTime - 125) / 125);
+        }
         
       case AudioAnalysisMode.SLOW_TIME_WEIGHTING:
-        // 慢速模式：1s时间常数
-        return Math.exp(-elapsedTime / 1000);
+        // 慢速模式：1s时间常数 - 缓慢响应和衰减
+        if (elapsedTime < 1000) {
+          // 上升阶段：在1s内缓慢达到峰值
+          return 1 - Math.exp(-elapsedTime / 300);
+        } else {
+          // 下降阶段：缓慢衰减
+          return Math.exp(-(elapsedTime - 1000) / 1000);
+        }
         
       case AudioAnalysisMode.IMPULSE_TIME_WEIGHTING:
-        // 脉冲模式：35ms上升，1.5s下降
+        // 脉冲模式：35ms上升，1.5s下降 - 快速上升，缓慢下降
         if (elapsedTime < 35) {
-          // 上升阶段
-          return elapsedTime / 35;
+          // 上升阶段：在35ms内快速达到峰值
+          return Math.min(1.0, elapsedTime / 35);
         } else {
-          // 下降阶段
+          // 下降阶段：非常缓慢的衰减
           return Math.exp(-(elapsedTime - 35) / 1500);
         }
         
@@ -151,10 +175,10 @@ export struct TimeResponseChartComponent {
   private buildResponseChart() {
     Column({ space: DesignConstants.SPACING_SM }) {
       // 图表标题
-      Text('动态响应特性')
+      Text('动态响应特性预览')
         .fontSize(DesignConstants.FONT_SIZE_LG)
         .fontWeight(FontWeight.Bold)
-        .fontColor('sys.color.font_primary')
+        .fontColor($r('sys.color.font_primary'))
         .alignSelf(ItemAlign.Start)
 
       // Canvas绘制区域
