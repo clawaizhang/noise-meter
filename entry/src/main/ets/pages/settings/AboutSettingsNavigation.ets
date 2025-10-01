@@ -38,6 +38,19 @@ function cardStyle() {
     .combine(TransitionEffect.translate({ x: -150, y: 0 }).animation({ curve: curves.springMotion() })))
 }
 
+@Extend(Column)
+function appInfoCardStyle() {
+  .justifyContent(FlexAlign.Center)
+  .alignItems(HorizontalAlign.Center)
+  .borderRadius(16)
+  .padding(24)
+  .margin({ bottom: 16 })
+  .width('100%')
+  .transition(TransitionEffect.OPACITY.animation({ curve: curves.springMotion(0.6, 0.8) })
+    .combine(TransitionEffect.scale({ x: 0, y: 0 }))
+    .combine(TransitionEffect.translate({ x: -150, y: 0 }).animation({ curve: curves.springMotion() })))
+}
+
 @Extend(Row)
 function listItemRow() {
   .alignItems(VerticalAlign.Center)
@@ -56,6 +69,37 @@ export struct AboutSettings {
         breakpoints: { reference: BreakpointsReference.WindowSize }
       , gutter: 16
       }) {
+        // 应用信息展示区域 - 在页面顶部
+        GridCol({ span: 1 }) {
+          Column({ space: 12 }) {
+            // APP图标
+            Image($r('app.media.app_icon_default'))
+              .width(80)
+              .height(80)
+              .borderRadius(16)
+              .objectFit(ImageFit.Contain)
+            
+            // 应用名称
+            Text('静喵Sound')
+              .fontSize(DesignConstants.FONT_SIZE_XL)
+              .fontWeight(FontWeight.Bold)
+              .fontColor($r('sys.color.font_primary'))
+            
+            // 应用描述
+            Text('专业级环境噪音检测分析工具')
+              .fontSize(DesignConstants.FONT_SIZE_MD)
+              .fontColor($r('sys.color.font_secondary'))
+              .textAlign(TextAlign.Center)
+            
+            // 版本号
+            Text('v1.0.9')
+              .fontSize(DesignConstants.FONT_SIZE_SM)
+              .fontColor($r('sys.color.font_tertiary'))
+              .textAlign(TextAlign.Center)
+          }
+          .appInfoCardStyle()
+        }.width('100%')
+
         // 隐私政策
         GridCol({ span: 1 }) {
           Column({ space: 8 }) {
@@ -78,32 +122,10 @@ export struct AboutSettings {
         }.width('100%').onClick(async () => {
           // 这里添加打开隐私政策的逻辑
           const uiContext = getContext(this) as common.UIAbilityContext;
-          await privacyManager.requestAppPrivacyConsent(uiContext);
-        })
-
-        // 应用信息
-        GridCol({ span: 1 }) {
-          Column({ space: 8 }) {
-            Row({ space: 8 }) {
-              Row() {
-                Image($r('app.media.ic_info'))
-                  .itemIcon()
-                Text('应用信息')
-                  .itemTitle()
-              }.layoutWeight(1)
-
-              Blank()
-              Text('v1.0.9')
-                .fontSize(DesignConstants.FONT_SIZE_MD)
-                .fontColor($r('sys.color.font_secondary'))
-            }
-            .listItemRow()
-
-            Text('静喵Sound - 专业的噪音检测工具')
-              .itemDescription()
+          if(canIUse('SystemCapability.AppGalleryService.PrivacyManager')){
+            await privacyManager.requestAppPrivacyConsent(uiContext);
           }
-          .cardStyle()
-        }.width('100%')
+        })
 
         // 技术支持
         GridCol({ span: 1 }) {
