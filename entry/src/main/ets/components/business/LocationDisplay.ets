@@ -10,6 +10,9 @@ export struct LocationDisplay {
   @Local pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys)!;
   @Local isRefreshing: boolean = false;
   private locationService: LocationService = LocationService.getInstance();
+  
+  // 位置更新事件
+  @Event onLocationUpdate: (locationInfo: LocationInfo | null) => void = () => {}
 
   @Monitor('pk.location_enabled')
   onLocationEnabledChange(monitor: IMonitor) {
@@ -20,9 +23,11 @@ export struct LocationDisplay {
         // 开启时自动刷新位置
         this.startSingleLocation();
       } else {
-        // 关闭时清空位置信息和缓存
+        // 关闭时清空位置信息和缓存，并发射null事件
         this.address = '开启位置服务可记录噪音检测位置';
         this.locationService.clearCache();
+        // 发射位置服务关闭事件
+        this.onLocationUpdate(null);
       }
     }
   }
@@ -32,6 +37,9 @@ export struct LocationDisplay {
     // 如果位置开关是打开的,自动获取位置信息
     if (this.pk.location_enabled) {
       this.startSingleLocation();
+    } else {
+      // 位置服务关闭时发射null事件
+      this.onLocationUpdate(null);
     }
 
   }
@@ -90,9 +98,13 @@ export struct LocationDisplay {
       // 获取位置信息
       const locationInfo: LocationInfo = await this.locationService.requestSingleLocation();
       this.address = locationInfo.address;
+      // 发射位置更新事件
+      this.onLocationUpdate(locationInfo);
     } catch (error) {
       console.error('Failed to request location:', error.message);
       this.address = '获取位置失败,请稍后重试';
+      // 发射位置获取失败事件
+      this.onLocationUpdate(null);
     } finally {
       this.isRefreshing = false;
     }

@@ -69,9 +69,9 @@ export struct DecibelMeter {
   @Local private currentSpectrum: Float32Array = new Float32Array(); // 当前频谱数据
   @Local private currentAudioBuffer: ArrayBuffer = new ArrayBuffer(0); // 当前音频缓冲区
   @Local private calculatedDecibel: number = 0; // 从显示组件接收计算的分贝值
+  @Local private currentLocation: LocationInfo | null = null; // 当前位置信息，从LocationDisplay接收
   @Consumer(navigationStack) navStack: NavPathStack = new NavPathStack()
   private audioService: AudioService = AudioService.getInstance(getContext() as common.UIAbilityContext)
-  private locationService: LocationService = LocationService.getInstance()
   private recordService: DecibelRecordService = new DecibelRecordService(getContext() as common.UIAbilityContext)
   private values: number[] = []
   private weightingTypes: WeightingType[] = []
@@ -131,19 +131,6 @@ export struct DecibelMeter {
     }
   }
 
-  @Monitor('pk.location_enabled')
-  onLocationEnabledChange(monitor: IMonitor) {
-    const beforeEnabled = monitor.value<boolean>()?.before;
-    const newEnabled = monitor.value<boolean>()?.now;
-    if (newEnabled !== beforeEnabled) {
-      const newEnabled = monitor.value<boolean>()?.now;
-      if (!newEnabled) {
-        this.locationService.clearCache();
-      } else {
-        this.locationService.requestSingleLocation();
-      }
-    }
-  }
 
   aboutToDisappear() {
     if (this.releaseTimer !== -1) {
@@ -168,12 +155,6 @@ export struct DecibelMeter {
       displayManager.onHidden(() => {
         this.isDisplayApp = false;
       });
-      if (!this.pk.location_enabled) {
-        this.locationService.clearCache();
-      } else {
-        // 初始化位置信息
-        this.locationService.requestSingleLocation();
-      }
 
     } catch (error) {
       console.error('[FREQ_TRACE][Screen] 初始化失败:', error);
@@ -336,11 +317,9 @@ export struct DecibelMeter {
         let locationInfo: LocationInfo | null = null;
 
         if (this.pk.location_enabled) {
-          locationInfo = this.locationService.getCachedLocation();
+          locationInfo = this.currentLocation;
           console.info('[FREQ_TRACE][Location] 位置信息:', locationInfo);
         } else {
-          // 位置服务关闭时清除缓存
-          this.locationService.clearCache();
           console.info('[FREQ_TRACE][Location] 位置服务已关闭，不保存位置信息');
         }
 
@@ -449,7 +428,13 @@ export struct DecibelMeter {
             this.recordingTime)} 后自动保存`).fontSize(14)
 
             // 位置显示
-            LocationDisplay()
+            LocationDisplay({
+              onLocationUpdate: (locationInfo: LocationInfo | null) => {
+                // 更新本地位置状态
+                this.currentLocation = locationInfo;
+                console.info('[FREQ_TRACE][Location] 位置更新事件接收:', locationInfo);
+              }
+            })
 
             if (["md", "lg", "xl", "xxl"].includes(this.breakPoint)) {
               this.actionPanel()
