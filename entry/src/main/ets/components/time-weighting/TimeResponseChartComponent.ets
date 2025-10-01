@@ -185,7 +185,7 @@ export struct TimeResponseChartComponent {
       Canvas(this.canvasContext)
         .width(this.canvasWidth)
         .height(this.canvasHeight)
-        .backgroundColor($r('sys.color.comp_background_primary'))
+        .backgroundColor(this.sysResourceManager.getColorSync($r('sys.color.comp_background_primary').id))
         .borderRadius(DesignConstants.BORDER_RADIUS_SM)
         .onAreaChange((oldArea: Area, newArea: Area) => {
           // 响应式尺寸调整
@@ -224,7 +224,7 @@ export struct TimeResponseChartComponent {
 
     // 清除画布
     this.canvasContext.clearRect(0, 0, this.canvasWidth, this.canvasHeight);
-    
+
     // 绘制背景网格
     this.drawGrid();
     
