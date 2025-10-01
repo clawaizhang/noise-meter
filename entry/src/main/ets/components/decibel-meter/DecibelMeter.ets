@@ -68,6 +68,7 @@ export struct DecibelMeter {
   @Local as: AppKeys = AppStorageV2.connect(AppKeys)!;
   @Local private currentSpectrum: Float32Array = new Float32Array(); // 当前频谱数据
   @Local private currentAudioBuffer: ArrayBuffer = new ArrayBuffer(0); // 当前音频缓冲区
+  @Local private calculatedDecibel: number = 0; // 从显示组件接收计算的分贝值
   @Consumer(navigationStack) navStack: NavPathStack = new NavPathStack()
   private audioService: AudioService = AudioService.getInstance(getContext() as common.UIAbilityContext)
   private locationService: LocationService = LocationService.getInstance()
@@ -245,18 +246,11 @@ export struct DecibelMeter {
         // 更新音频缓冲区数据，供显示组件使用
         this.currentAudioBuffer = buffer.slice(0);
 
+        // 计算频谱数据（用于频谱图显示）
         taskpool.execute<[string, ArrayBuffer,
           WeightingType, number], Float32Array>(concurrentCalculateSpectrum, this.pk.audio_analysis_mode,
           buffer, this.pk.weighting_type, this.pk.calibration_value).then(spectrum => {
-          const config = AudioPresets.getConfig(this.pk.audio_analysis_mode);
-          const db: number = new FFTAnalyzer(config.fftSize, config.windowType, config.smoothingFactor,
-            config.overlap).calculateAverageDb(spectrum);
-
-          let decibel = Math.round(db);
-          this.values.push(decibel);
-          this.weightingTypes.push(this.pk.weighting_type)
           if (this.isDisplayApp) {
-            this.as.db = decibel;
             this.currentSpectrum = spectrum; // 更新频谱数据
           }
           // 更新计时器（毫秒级）
@@ -444,6 +438,11 @@ export struct DecibelMeter {
                   this.minDecibel = min;
                   this.maxDecibel = max;
                   this.avgDecibel = avg;
+                },
+                decibelValue: (decibel, weightingType) => {
+                  // 收集分贝值和加权类型到数组中
+                  this.values.push(decibel);
+                  this.weightingTypes.push(weightingType);
                 }
               })
 

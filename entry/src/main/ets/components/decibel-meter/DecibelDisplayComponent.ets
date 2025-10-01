@@ -13,18 +13,6 @@ import { AppKeys } from '../../models/AppKeys';
 import { AppStorageV2, curves } from '@kit.ArkUI';
 import { from, interval, take, takeUntil, timer, Subject, Subscription, map, filter, switchMap, tap, delay, catchError, of } from 'rxjs';
 
-/**
- * 分贝显示组件配置接口
- */
-interface DecibelDisplayConfig {
-  audioAnalysisMode: AudioAnalysisMode;
-  weightingType: WeightingType;
-  calibrationValue: number;
-  noiseThreshold: number;
-  noiseAlarmEnabled: boolean;
-  isDisplayApp: boolean;
-}
-
 @ComponentV2
 export struct DecibelDisplayComponent {
   // 输入参数
@@ -36,7 +24,8 @@ export struct DecibelDisplayComponent {
   @Param @Require noiseAlarmEnabled: boolean = true;
   @Param @Require isDisplayApp: boolean = true;
   @Event minMaxAvg: (min: number, max: number, avg: number) => void;
-
+  @Event decibelValue: (decibel: number, weightingType: WeightingType) => void;
+  
   // 内部状态
   @Local private currentDecibel: number = 0;
   @Local private minDecibel: number = 0;
@@ -143,6 +132,9 @@ export struct DecibelDisplayComponent {
         let decibel = Math.round(db);
         this.currentDecibel = decibel;
         this.as.db = decibel;
+
+        // 触发事件通知父组件有新的分贝值
+        this.decibelValue(decibel, weightingType || this.weightingType);
         
         // 使用统计服务更新统计信息
         this.statisticsService.updateDecibelValue(decibel);
