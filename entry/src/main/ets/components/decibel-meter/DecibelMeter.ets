@@ -243,7 +243,7 @@ export struct DecibelMeter {
         this.audioBufferSubject.next();
 
         // 更新音频缓冲区数据，供显示组件使用
-        this.currentAudioBuffer = buffer;
+        this.currentAudioBuffer = buffer.slice(0);
 
         taskpool.execute<[string, ArrayBuffer,
           WeightingType, number], Float32Array>(concurrentCalculateSpectrum, this.pk.audio_analysis_mode,

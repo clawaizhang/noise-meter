@@ -68,8 +68,8 @@ export struct DecibelDisplayComponent {
 
   @Monitor('noiseThreshold', 'noiseAlarmEnabled')
   onAlarmConfigChange(monitor: IMonitor) {
-    const newThreshold = monitor.value<number>()?.now;
-    const newEnabled = monitor.value<boolean>()?.now;
+    const newThreshold = monitor.value<number>('noiseThreshold')?.now;
+    const newEnabled = monitor.value<boolean>('noiseAlarmEnabled')?.now;
     if (newThreshold !== undefined && newEnabled !== undefined) {
       this.statisticsService.setAlarmConfig(newThreshold, newEnabled);
     }
@@ -110,21 +110,16 @@ export struct DecibelDisplayComponent {
     }
   }
 
-  @Monitor('audioBuffer', 'audioAnalysisMode', 'weightingType', 'calibrationValue', 'noiseThreshold', 'noiseAlarmEnabled')
+  @Monitor('audioBuffer', 'audioAnalysisMode', 'weightingType', 'calibrationValue')
   async onAudioDataChange(monitor: IMonitor) {
-    const audioBuffer = monitor.value<ArrayBuffer>()?.now;
-    const audioAnalysisMode = monitor.value<AudioAnalysisMode>()?.now;
-    const weightingType = monitor.value<WeightingType>()?.now;
-    const calibrationValue = monitor.value<number>()?.now;
-    const noiseThreshold = monitor.value<number>()?.now;
-    const noiseAlarmEnabled = monitor.value<boolean>()?.now;
+    const audioBuffer = monitor.value<ArrayBuffer>('audioBuffer')?.now;
+    const audioAnalysisMode = monitor.value<AudioAnalysisMode>('audioAnalysisMode')?.now;
+    const weightingType = monitor.value<WeightingType>('weightingType')?.now;
+    const calibrationValue = monitor.value<number>('calibrationValue')?.now;
 
     // 处理配置参数变化
     if (audioAnalysisMode !== undefined) {
       this.statisticsService.setAudioAnalysisMode(audioAnalysisMode);
-    }
-    if (noiseThreshold !== undefined && noiseAlarmEnabled !== undefined) {
-      this.statisticsService.setAlarmConfig(noiseThreshold, noiseAlarmEnabled);
     }
 
     if (audioBuffer && audioBuffer.byteLength > 0 && this.isDisplayApp) {
