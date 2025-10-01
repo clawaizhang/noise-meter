@@ -3,6 +3,7 @@ import { navigationStack } from '../../constants/ProviderConstant';
 import { DialogHub } from '@hadss/dialoghub';
 import { SettingsBuilder } from './SettingsNavigation';
 import { NoiseStandardDialogBuilder } from './NoiseStandardDialogNavigation';
+import { AboutSettingsBuilder } from '../settings/AboutSettingsNavigation';
 import { AppKeys } from '../../models/AppKeys';
 import { AppStorageV2 } from '@kit.ArkUI';
 import { ListItemBuilder } from '../../components/common/ListItemBuilder';
@@ -130,6 +131,21 @@ export struct MainNoiseMeter {
             setInterval(() => {
               dialog.updateContent(this.as);
             }, 100)
+          }
+        )
+
+        // 关于列表项
+        ListItemBuilder(
+          $r('app.media.ic_info'),
+          '关于',
+          () => {
+            DialogHub.getSheet()
+              .setStyle({ title: { title: '关于' }, backgroundColor: $r('sys.color.background_secondary') })
+              .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS })
+              .setComponentTargetId('myContentId')
+              .setContent(wrapBuilder(AboutSettingsBuilder))
+              .build()
+              .show();
           }
         )
       }

@@ -224,16 +224,6 @@ export struct Settings {
       .build()
       .show();
   }
-  // 导航到关于页面
-  private navigateToAbout = () => {
-    DialogHub.getSheet()
-      .setStyle({ title: { title: '关于' }, backgroundColor: $r('sys.color.background_secondary') })
-      .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS })
-      .setComponentTargetId('settingsId')
-      .setContent(wrapBuilder(AboutSettingsBuilder))
-      .build()
-      .show();
-  }
 
   build() {
     GridRow({
@@ -480,14 +470,6 @@ export struct Settings {
         .cardStyle()
       }
 
-      this.buildListItem({
-        icon: $r('app.media.ic_info'),
-        title: '关于',
-        desc: '应用信息、隐私政策和技术支持',
-        action: () => {
-          this.navigateToAbout();
-        }
-      })
     }.padding(16).backgroundColor($r('sys.color.background_secondary'))
     .id
     ('settingsId'
