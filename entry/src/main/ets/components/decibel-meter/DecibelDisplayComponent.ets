@@ -22,7 +22,6 @@ export struct DecibelDisplayComponent {
   @Param @Require calibrationValue: number = 0;
   @Param @Require noiseThreshold: number = 80;
   @Param @Require noiseAlarmEnabled: boolean = true;
-  @Param @Require isDisplayApp: boolean = true;
   @Event minMaxAvg: (min: number, max: number, avg: number) => void;
   @Event decibelValue: (decibel: number, weightingType: WeightingType) => void;
   
@@ -112,7 +111,7 @@ export struct DecibelDisplayComponent {
       this.statisticsService.setAudioAnalysisMode(audioAnalysisMode);
     }
 
-    if (audioBuffer && audioBuffer.byteLength > 0 && this.isDisplayApp) {
+    if (audioBuffer && audioBuffer.byteLength > 0 && this.as.isDisplayApp) {
       try {
         const spectrum = await taskpool.execute<[string, ArrayBuffer, WeightingType, number], Float32Array>(
           concurrentCalculateSpectrum,

@@ -11,7 +11,6 @@ export struct SpectrumChartComponent {
   @Param spectrumData: Float32Array = new Float32Array()
   @Param fftSize: number = 1024
   @Param sampleRate: number = 44100
-  @Param isDisplayApp: boolean = true
 
   // 本地状态
   @Local private canvasWidth: number = 0
@@ -33,7 +32,7 @@ export struct SpectrumChartComponent {
   @Monitor('spectrumData')
   onSpectrumDataChange(monitor: IMonitor) {
     const newSpectrum = monitor.value<Float32Array>()?.now;
-    if (newSpectrum && this.isDisplayApp) {
+    if (newSpectrum && this.as.isDisplayApp) {
       this.drawSpectrum(newSpectrum);
     }
   }
@@ -99,7 +98,7 @@ export struct SpectrumChartComponent {
       .onReady(() => {
         // 初始化完成后开始绘制
         const emptySpectrum: Float32Array = new Float32Array(this.fftSize * 2);
-        if (this.isDisplayApp) {
+        if (this.as.isDisplayApp) {
           this.drawSpectrum(emptySpectrum);
         }
       })

@@ -49,7 +49,6 @@ export struct DecibelMeter {
   private recordService: DecibelRecordService = new DecibelRecordService(getContext() as common.UIAbilityContext)
   private values: number[] = []
   private weightingTypes: WeightingType[] = []
-  private releaseTimer: number = -1
   private currentRecord?: DecibelRecord
   noiseInfoDialog: InfSheet | undefined
   sysResourceManager: resourceManager.ResourceManager = resourceManager.getSystemResourceManager();
@@ -105,10 +104,6 @@ export struct DecibelMeter {
   }
 
   aboutToDisappear() {
-    if (this.releaseTimer !== -1) {
-      clearTimeout(this.releaseTimer);
-      this.releaseTimer = -1;
-    }
 
     // 清理RxJS资源
     this.audioBufferSubject.complete();
@@ -203,7 +198,7 @@ export struct DecibelMeter {
         taskpool.execute<[string, ArrayBuffer,
           WeightingType, number], Float32Array>(concurrentCalculateSpectrum, this.pk.audio_analysis_mode,
           buffer, this.pk.weighting_type, this.pk.calibration_value).then(spectrum => {
-          if (this.isDisplayApp) {
+          if (this.as.isDisplayApp) {
             this.currentSpectrum = spectrum; // 更新频谱数据
           }
           // 更新计时器（毫秒级）
@@ -398,7 +393,6 @@ export struct DecibelMeter {
               calibrationValue: this.pk.calibration_value,
               noiseThreshold: this.pk.noise_threshold,
               noiseAlarmEnabled: this.pk.noise_alarm_enabled,
-              isDisplayApp: this.isDisplayApp,
               minMaxAvg: (min, max, avg) => {
                 this.minDecibel = min;
                 this.maxDecibel = max;
@@ -441,7 +435,6 @@ export struct DecibelMeter {
             spectrumData: this.currentSpectrum,
             fftSize: this.fft_size,
             sampleRate: this.sampleRate,
-            isDisplayApp: this.isDisplayApp
           })
         }
 

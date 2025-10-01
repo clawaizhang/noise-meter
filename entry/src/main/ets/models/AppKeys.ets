@@ -18,4 +18,7 @@ export class AppKeys {
 
   @Trace
   microphonePermissionGranted: boolean = false; // 实时麦克风权限状态
+
+  @Trace
+  isDisplayApp: boolean = true; // 应用是否处于显示状态
 }

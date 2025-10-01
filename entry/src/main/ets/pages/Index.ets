@@ -15,6 +15,7 @@ import { NotificationHelper } from '../utils/NotificationHelper'
 import { AppKeys } from '../models/AppKeys'
 import { FileUtils } from '../utils/FileUtils'
 import { PermissionService } from '../services/PermissionService'
+import { DisplayManager } from '../utils/DisplayManager'
 
 const TAG = 'Index';
 const DOMAIN = 0x0000;
@@ -83,6 +84,9 @@ struct Index {
     // 初始化权限状态
     const permissionService = PermissionService.getInstance();
     await permissionService.initializePermissionState();
+    
+    // 初始化DisplayManager监听
+    this.initDisplayManager();
     
     this.initialize();
   }
@@ -166,6 +170,17 @@ struct Index {
       });
     }
 
+  }
+
+  // 初始化DisplayManager监听
+  private initDisplayManager(): void {
+    const displayManager: DisplayManager = DisplayManager.getInstance();
+    displayManager.onDisplay(() => {
+      this.as.isDisplayApp = true;
+    });
+    displayManager.onHidden(() => {
+      this.as.isDisplayApp = false;
+    });
   }
 
   build() {
