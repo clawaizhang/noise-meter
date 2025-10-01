@@ -14,6 +14,11 @@ export struct FrequencyResponseChartComponent {
   private canvasSettings: RenderingContextSettings = new RenderingContextSettings(true);
   private canvasContext: CanvasRenderingContext2D = new CanvasRenderingContext2D(this.canvasSettings);
 
+  @Monitor('selectedWeighting')
+  onSelectedWeightingChanged(monitor: IMonitor) {
+    this.drawFrequencyResponse();
+  }
+
   // 绘制频率响应曲线
   private drawFrequencyResponse() {
     const canvasWidth = 300;

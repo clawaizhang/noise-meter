@@ -9,22 +9,22 @@ import { DesignConstants } from '../../constants/DesignConstants';
 
 // 参数变化指示类型
 enum ParamChangeType {
-  INCREASE = 'increase',    // 增加
-  DECREASE = 'decrease',    // 减少
-  SAME = 'same'             // 相同
+  INCREASE = 'increase', // 增加
+  DECREASE = 'decrease', // 减少
+  SAME = 'same' // 相同
 }
 
 // 参数项接口
 interface ParamItem {
-  label: string;           // 参数标签
-  value: string;           // 参数值
+  label: string; // 参数标签
+  value: string; // 参数值
   changeType: ParamChangeType; // 变化类型
 }
 
 @ComponentV2
 export struct FrequencyTechnicalParamsDisplay {
-  @Param @Require currentWeighting: WeightingType;        // 当前计权类型
-  @Param @Require selectedWeighting: WeightingType;       // 选中的计权类型
+  @Param @Require currentWeighting: WeightingType; // 当前计权类型
+  @Param @Require selectedWeighting: WeightingType; // 选中的计权类型
 
   // 获取参数变化类型
   private getParamChangeType(currentValue: string, newValue: string): ParamChangeType {
@@ -151,7 +151,7 @@ export struct FrequencyTechnicalParamsDisplay {
 
       // 参数网格
       GridRow({
-        columns: { sm: 2, md: 3 },
+        columns: { sm: 1, md: 2 },
         breakpoints: { reference: BreakpointsReference.WindowSize },
         gutter: { x: DesignConstants.SPACING_MD, y: DesignConstants.SPACING_SM }
       }) {
@@ -164,21 +164,20 @@ export struct FrequencyTechnicalParamsDisplay {
       .width('100%')
 
       // 标准依据信息
-      if (this.currentWeighting !== this.selectedWeighting) {
-        Row({ space: DesignConstants.SPACING_XS }) {
-          Text('标准依据:')
-            .fontSize(DesignConstants.FONT_SIZE_MD)
-            .fontColor($r('sys.color.font_secondary'))
+      Row({ space: DesignConstants.SPACING_XS }) {
+        Text('标准依据:')
+          .fontSize(DesignConstants.FONT_SIZE_MD)
+          .fontColor($r('sys.color.font_secondary'))
 
-          Text(FrequencyWeightingConstants.ACOUSTIC_EXPLANATIONS[this.selectedWeighting].standardReference)
-            .fontSize(DesignConstants.FONT_SIZE_MD)
-            .fontColor($r('sys.color.font_primary'))
-            .fontWeight(FontWeight.Medium)
-        }
-        .width('100%')
-        .alignItems(VerticalAlign.Center)
-        .margin({ top: DesignConstants.SPACING_SM })
+        Text(FrequencyWeightingConstants.ACOUSTIC_EXPLANATIONS[this.selectedWeighting].standardReference)
+          .fontSize(DesignConstants.FONT_SIZE_MD)
+          .fontColor($r('sys.color.font_primary'))
+          .fontWeight(FontWeight.Medium)
+          .layoutWeight(1)
       }
+      .width('100%')
+      .alignItems(VerticalAlign.Center)
+      .margin({ top: DesignConstants.SPACING_SM })
 
     }
     .width('100%')
