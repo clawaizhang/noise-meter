@@ -5,6 +5,7 @@ import { SettingsBuilder } from './SettingsNavigation';
 import { NoiseStandardDialogBuilder } from './NoiseStandardDialogNavigation';
 import { AppKeys } from '../../models/AppKeys';
 import { AppStorageV2 } from '@kit.ArkUI';
+import { ListItemBuilder } from '../../components/common/ListItemBuilder';
 
 // 导航菜单项接口定义
 interface NavigationMenuItem {
@@ -99,83 +100,38 @@ export struct MainNoiseMeter {
     Column() {
       // 全局设置列表项
       List() {
-        ListItem() {
-          Row() {
-            Image($r('app.media.ic_settings'))
-              .width(24)
-              .height(24)
-              .fillColor($r('sys.color.font_primary'))
-              .margin({ right: 12 })
-            Text('全局设置')
-              .fontSize(16)
-              .fontColor($r('app.color.text_primary'))
-              .layoutWeight(1)
-            Image($r('app.media.ic_arrow_right'))
-              .width(16)
-              .height(16)
-              .fillColor($r('app.color.text_secondary'))
-          }
-          .width('100%')
-          .height(56)
-          .padding({
-            left: 16,
-            right: 16
-          })
-          .alignItems(VerticalAlign.Center)
-        }
-        .borderRadius(8)
-        .backgroundColor($r('sys.color.comp_background_primary'))
-        .margin({ top: 20, left: 16, right: 16 })
-        .onClick(() => {
-          DialogHub.getSheet()
-            .setStyle({ title: { title: '设置' }, backgroundColor: $r('sys.color.background_secondary') })
-            .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS })
-            .setComponentTargetId('myContentId')
-            .setContent(wrapBuilder(SettingsBuilder))
-            .build()
-            .show();
-        })
+        ListItemBuilder(
+          $r('app.media.ic_settings'),
+          '全局设置',
+          () => {
+            DialogHub.getSheet()
+              .setStyle({ title: { title: '设置' }, backgroundColor: $r('sys.color.background_secondary') })
+              .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS })
+              .setComponentTargetId('myContentId')
+              .setContent(wrapBuilder(SettingsBuilder))
+              .build()
+              .show();
+          },
+          20
+        )
 
         // 噪音参考标准列表项
-        ListItem() {
-          Row() {
-            Image($r('app.media.ic_info'))
-              .width(24)
-              .height(24)
-              .fillColor($r('sys.color.font_primary'))
-              .margin({ right: 12 })
-            Text('噪音参考标准')
-              .fontSize(16)
-              .fontColor($r('app.color.text_primary'))
-              .layoutWeight(1)
-            Image($r('app.media.ic_arrow_right'))
-              .width(16)
-              .height(16)
-              .fillColor($r('app.color.text_secondary'))
+        ListItemBuilder(
+          $r('app.media.ic_info'),
+          '噪音参考标准',
+          () => {
+            let dialog = DialogHub.getSheet()
+              .setStyle({ backgroundColor: $r('sys.color.background_secondary'), showClose: false })
+              .setComponentTargetId('myContentId')
+              .setConfig({ enableOutsideInteractive: false, scrollSizeMode: ScrollSizeMode.CONTINUOUS })
+              .setContent(wrapBuilder(NoiseStandardDialogBuilder), this.as)
+              .build();
+            dialog.show();
+            setInterval(() => {
+              dialog.updateContent(this.as);
+            }, 100)
           }
-          .width('100%')
-          .height(56)
-          .padding({
-            left: 16,
-            right: 16
-          })
-          .alignItems(VerticalAlign.Center)
-        }
-        .borderRadius(8)
-        .backgroundColor($r('sys.color.comp_background_primary'))
-        .margin({ top: 12, left: 16, right: 16 })
-        .onClick(() => {
-          let dialog = DialogHub.getSheet()
-            .setStyle({ backgroundColor: $r('sys.color.background_secondary'), showClose: false })
-            .setComponentTargetId('myContentId')
-            .setConfig({ enableOutsideInteractive: false, scrollSizeMode: ScrollSizeMode.CONTINUOUS })
-            .setContent(wrapBuilder(NoiseStandardDialogBuilder), this.as)
-            .build();
-          dialog.show();
-          setInterval(() => {
-            dialog.updateContent(this.as);
-          }, 100)
-        })
+        )
       }
 
     }
