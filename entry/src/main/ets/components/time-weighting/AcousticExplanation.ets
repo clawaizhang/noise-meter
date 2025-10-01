@@ -15,7 +15,7 @@ export struct AcousticExplanationComp {
 
   // 构建声学理论解释部分
   @Builder
-  private buildAcousticTheory(explanation:AcousticExplanation) {
+  private buildAcousticTheory() {
 
     Column({ space: DesignConstants.SPACING_SM }) {
       // 标题
@@ -32,7 +32,7 @@ export struct AcousticExplanationComp {
           .fontColor($r('sys.color.font_secondary'))
           .fontWeight(FontWeight.Medium)
 
-        Text(explanation.timeConstant)
+        Text(TimeWeightingConstants.ACOUSTIC_EXPLANATIONS[this.selectedMode] .timeConstant)
           .fontSize(DesignConstants.FONT_SIZE_MD)
           .fontColor($r('sys.color.font_primary'))
       }
@@ -46,7 +46,7 @@ export struct AcousticExplanationComp {
           .fontColor($r('sys.color.font_secondary'))
           .fontWeight(FontWeight.Medium)
 
-        Text(explanation.responseCharacteristic)
+        Text(TimeWeightingConstants.ACOUSTIC_EXPLANATIONS[this.selectedMode] .responseCharacteristic)
           .fontSize(DesignConstants.FONT_SIZE_MD)
           .fontColor($r('sys.color.font_primary'))
           .layoutWeight(1)
@@ -61,7 +61,7 @@ export struct AcousticExplanationComp {
           .fontColor($r('sys.color.font_secondary'))
           .fontWeight(FontWeight.Medium)
 
-        Text(explanation.frequencyResponse)
+        Text(TimeWeightingConstants.ACOUSTIC_EXPLANATIONS[this.selectedMode] .frequencyResponse)
           .fontSize(DesignConstants.FONT_SIZE_MD)
           .fontColor($r('sys.color.font_primary'))
           .layoutWeight(1)
@@ -76,7 +76,7 @@ export struct AcousticExplanationComp {
           .fontColor($r('sys.color.font_secondary'))
           .fontWeight(FontWeight.Medium)
 
-        Text(explanation.standardReference)
+        Text(TimeWeightingConstants.ACOUSTIC_EXPLANATIONS[this.selectedMode] .standardReference)
           .fontSize(DesignConstants.FONT_SIZE_MD)
           .fontColor($r('sys.color.font_primary'))
           .layoutWeight(1)
@@ -91,7 +91,7 @@ export struct AcousticExplanationComp {
           .fontColor($r('sys.color.font_secondary'))
           .fontWeight(FontWeight.Medium)
 
-        Text(explanation.physicalPrinciple)
+        Text(TimeWeightingConstants.ACOUSTIC_EXPLANATIONS[this.selectedMode] .physicalPrinciple)
           .fontSize(DesignConstants.FONT_SIZE_MD)
           .fontColor($r('sys.color.font_primary'))
           .layoutWeight(1)
@@ -106,7 +106,7 @@ export struct AcousticExplanationComp {
 
   // 构建应用场景部分
   @Builder
-  private buildApplicationScenarios(scenarios:ApplicationScenario[]) {
+  private buildApplicationScenarios() {
 
     Column({ space: DesignConstants.SPACING_SM }) {
       // 标题
@@ -117,7 +117,7 @@ export struct AcousticExplanationComp {
         .alignSelf(ItemAlign.Start)
 
       // 场景列表
-      ForEach(scenarios, (scenario: ApplicationScenario, index: number) => {
+      ForEach(TimeWeightingConstants.APPLICATION_SCENARIOS[this.selectedMode], (scenario: ApplicationScenario, index: number) => {
         Column({ space: DesignConstants.SPACING_XS }) {
           // 场景标题
           Row({ space: DesignConstants.SPACING_XS }) {
@@ -171,7 +171,7 @@ export struct AcousticExplanationComp {
   build() {
     Column({ space: DesignConstants.SPACING_LG }) {
       // 声学理论解释
-      this.buildAcousticTheory(   TimeWeightingConstants.ACOUSTIC_EXPLANATIONS[this.selectedMode] )
+      this.buildAcousticTheory()
 
       // 分隔线
       Divider()
@@ -180,7 +180,7 @@ export struct AcousticExplanationComp {
         .margin({ top: DesignConstants.SPACING_SM, bottom: DesignConstants.SPACING_SM })
 
       // 应用场景
-      this.buildApplicationScenarios(TimeWeightingConstants.APPLICATION_SCENARIOS[this.selectedMode])
+      this.buildApplicationScenarios()
 
     }
     .width('100%')

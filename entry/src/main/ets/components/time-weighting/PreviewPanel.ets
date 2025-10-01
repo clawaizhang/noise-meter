@@ -187,7 +187,7 @@ export struct PreviewPanel {
 
   // 构建模式对比信息
   @Builder
-  private buildModeComparison(isSameMode:boolean) {
+  private buildModeComparison() {
 
     Column({ space: DesignConstants.SPACING_SM }) {
       // 标题
@@ -197,7 +197,7 @@ export struct PreviewPanel {
         .fontColor($r('sys.color.font_primary'))
         .alignSelf(ItemAlign.Start)
 
-      if (isSameMode) {
+      if (this.currentMode === this.selectedMode) {
         Text('当前已选择此模式')
           .fontSize(DesignConstants.FONT_SIZE_MD)
           .fontColor($r('sys.color.confirm'))
@@ -238,7 +238,7 @@ export struct PreviewPanel {
   build() {
     Column({ space: DesignConstants.SPACING_LG }) {
       // 模式对比信息
-      this.buildModeComparison(this.currentMode === this.selectedMode)
+      this.buildModeComparison()
 
       // 分隔线
       Divider()
