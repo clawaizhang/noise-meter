@@ -203,8 +203,15 @@ export class StatisticsService {
   /**
    * 计算统计信息
    */
-  private calculateStatistics(newState: StatisticsState, value: number): StatisticsState {
-
+  private calculateStatistics(state: StatisticsState, value: number): StatisticsState {
+    let newState: StatisticsState = {
+      minDecibel: state.minDecibel,
+      maxDecibel: state.maxDecibel,
+      avgDecibel: state.avgDecibel,
+      dbCount: state.dbCount,
+      dbSum: state.dbSum,
+      values: state.values
+    };
     if (newState.dbCount === 0) {
       // 第一次检测到的值作为初始值
       newState.minDecibel = value;
