@@ -1,4 +1,3 @@
-import { DecibelService } from '../../services/DecibelService';
 import { DecibelRecordService } from '../../services/DecibelRecordService';
 import common from '@ohos.app.ability.common';
 import { navigationStack } from '../../constants/ProviderConstant';
@@ -13,6 +12,7 @@ import {
 } from '../../utils/TimeUtils';
 import { ActionPanel } from './ActionPanel';
 import { SpectrumChartComponent } from './SpectrumChartComponent';
+import { DecibelDisplayComponent } from './DecibelDisplayComponent';
 import { DisplayManager } from '../../../../main/ets/utils/DisplayManager';
 import { AudioAnalysisMode, AudioPresets } from '../../common/AudioConfig';
 import { PreferenceKeys } from '../../models/PreferenceKeys';
@@ -31,20 +31,30 @@ import { resourceManager } from '@kit.LocalizationKit';
 import { NoiseDescriptionDialogBuilder } from '../../pages/noisemeter/NoiseDescriptionDialogNavigation';
 import { image } from '@kit.ImageKit';
 import { AppKeys } from '../../models/AppKeys';
-import { from, interval, take, takeUntil, timer, Subject, Subscription, map, filter, switchMap, tap, delay, catchError, of } from 'rxjs';
+import {
+  from,
+  interval,
+  take,
+  takeUntil,
+  timer,
+  Subject,
+  Subscription,
+  map,
+  filter,
+  switchMap,
+  tap,
+  delay,
+  catchError,
+  of
+} from 'rxjs';
 import { StatisticsService } from '../../services/StatisticsService';
 
 @ComponentV2
 export struct DecibelMeter {
   @Param @Require meterOn: boolean = true;
-  @Local private minDecibel: number = 0
-  @Local private maxDecibel: number = 0
-  @Local private avgDecibel: number = 0
-  @Local private showAvgInsteadOfMin: boolean = true
   @Local private isRecording: boolean = false
   @Local private recordingTime: number = 0
   @Local private torchOn: boolean = false
-  @Local private isNoiseAlarm: boolean = false // 是否触发噪音报警
   @Local private isDisplayApp: boolean = true
   @Local pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys)!;
   @Local startTime: number = 0
@@ -57,12 +67,11 @@ export struct DecibelMeter {
   @Local bgImage: image.PixelMap | undefined = undefined; // 页面透明度
   @Local as: AppKeys = AppStorageV2.connect(AppKeys)!;
   @Local private currentSpectrum: Float32Array = new Float32Array(); // 当前频谱数据
+  @Local private currentAudioBuffer: ArrayBuffer = new ArrayBuffer(0); // 当前音频缓冲区
   @Consumer(navigationStack) navStack: NavPathStack = new NavPathStack()
   private audioService: AudioService = AudioService.getInstance(getContext() as common.UIAbilityContext)
   private locationService: LocationService = LocationService.getInstance()
   private recordService: DecibelRecordService = new DecibelRecordService(getContext() as common.UIAbilityContext)
-  private dbCount: number = 0
-  private dbSum: number = 0
   private values: number[] = []
   private weightingTypes: WeightingType[] = []
   private releaseTimer: number = -1
@@ -73,10 +82,9 @@ export struct DecibelMeter {
   private noiseAlarmTimer: number = -1 // 定时器ID用于控制闪烁（保留用于兼容性）
   private audioBufferSubject = new Subject<void>();
   private durationCheckSubscription?: Subscription;
-  private statisticsService: StatisticsService = new StatisticsService();
-  private statisticsSubscription?: Subscription;
-  private alarmSubscription?: Subscription;
-
+  private minDecibel: number = 0;
+  private maxDecibel: number = 0;
+  private avgDecibel: number = 0;
 
   @Computed
   get fft_size() {
@@ -122,57 +130,6 @@ export struct DecibelMeter {
     }
   }
 
-
-  @Builder
-  noiseCalibration() {
-    Row({ space: 4 }) {
-      Text('声级校准:')
-        .fontSize(12)
-        .fontColor($r('sys.color.font_secondary'));
-
-      Text(`${this.pk.calibration_value} ${this.pk.weighting_type === WeightingType.A ? 'dB(A)' :
-        this.pk.weighting_type === WeightingType.C ? 'dB(C)' : 'dB'}`)
-        .fontSize(12)
-        .fontColor('sys.color.font_secondary');
-    }
-    .opacity(0.7)
-  }
-
-  @Builder
-  noiseDescriptions() {
-    Row() {
-      Image($r('app.media.ic_info'))
-        .width(12)
-        .height(12)
-        .fillColor(DecibelService.getDecibelColor(this.as.db));
-
-      Text(DecibelService.getDecibelDescription(this.as.db))
-        .fontSize(12)
-        .fontColor(DecibelService.getDecibelColor(this.as.db))
-        .fontWeight(FontWeight.Medium);
-    }
-    .padding(8)
-    .borderRadius(8)
-    .border({
-      width: 1,
-      color: DecibelService.getDecibelColor(this.as.db)
-    })
-    .id('noiseDescriptionButtonId')
-    .onClick(() => {
-      let dialog = DialogHub.getSheet()
-        .setContent(wrapBuilder(NoiseDescriptionDialogBuilder), this.as)
-        .setStyle({ backgroundColor: $r('sys.color.background_secondary'), showClose: false })
-        .setConfig({ enableOutsideInteractive: false, scrollSizeMode: ScrollSizeMode.CONTINUOUS })
-        .setComponentTargetId('noiseDescriptionButtonId')
-        .build();
-      dialog.show();
-      setInterval(() => {
-        dialog.updateContent(this.as);
-      }, 100)
-    })
-  }
-
-
   @Monitor('pk.location_enabled')
   onLocationEnabledChange(monitor: IMonitor) {
     const beforeEnabled = monitor.value<boolean>()?.before;
@@ -187,44 +144,16 @@ export struct DecibelMeter {
     }
   }
 
-  @Monitor('pk.audio_analysis_mode')
-  onAudioAnalysisModeChange(monitor: IMonitor) {
-    const newMode = monitor.value<AudioAnalysisMode>()?.now;
-    if (newMode) {
-      this.statisticsService.setAudioAnalysisMode(newMode);
-    }
-  }
-
-  @Monitor('pk.noise_threshold', 'pk.noise_alarm_enabled')
-  onAlarmConfigChange(monitor: IMonitor) {
-    const newThreshold = monitor.value<number>()?.now;
-    const newEnabled = monitor.value<boolean>()?.now;
-    if (newThreshold !== undefined && newEnabled !== undefined) {
-      this.statisticsService.setAlarmConfig(newThreshold, newEnabled);
-    }
-  }
-
   aboutToDisappear() {
     if (this.releaseTimer !== -1) {
       clearTimeout(this.releaseTimer);
       this.releaseTimer = -1;
     }
-    
+
     // 清理RxJS资源
     this.audioBufferSubject.complete();
     this.stopDurationMonitoring();
-    
-    // 清理统计服务资源
-    this.statisticsService.stop();
-    if (this.statisticsSubscription) {
-      this.statisticsSubscription.unsubscribe();
-      this.statisticsSubscription = undefined;
-    }
-    if (this.alarmSubscription) {
-      this.alarmSubscription.unsubscribe();
-      this.alarmSubscription = undefined;
-    }
-    
+
     this.audioService.stopProcessing();
     this.audioService.stopCapture();
   }
@@ -285,30 +214,6 @@ export struct DecibelMeter {
       this.startTime = new Date().getTime();
       this.recordingTime = 0;
       this.values = [];
-      this.dbCount = 0;
-      this.dbSum = 0;
-
-      // 配置统计服务
-      this.statisticsService.setAudioAnalysisMode(this.pk.audio_analysis_mode);
-      this.statisticsService.setAlarmConfig(this.pk.noise_threshold, this.pk.noise_alarm_enabled);
-      
-      // 启动统计服务
-      this.statisticsService.start();
-      
-      // 订阅统计状态变化
-      this.statisticsSubscription = this.statisticsService.statisticsState$.subscribe(state => {
-        this.minDecibel = state.minDecibel;
-        this.maxDecibel = state.maxDecibel;
-        this.avgDecibel = state.avgDecibel;
-        this.dbCount = state.dbCount;
-        this.dbSum = state.dbSum;
-        this.values = [...state.values];
-      });
-      
-      // 订阅报警状态变化
-      this.alarmSubscription = this.statisticsService.alarmState$.subscribe(state => {
-        this.isNoiseAlarm = state.isNoiseAlarm;
-      });
 
       // 创建新的记录对象
       this.currentRecord = new DecibelRecord(
@@ -336,7 +241,10 @@ export struct DecibelMeter {
       this.audioService.startProcessing((buffer: ArrayBuffer) => {
         // 发出事件通知有新的音频数据到达
         this.audioBufferSubject.next();
-        
+
+        // 更新音频缓冲区数据，供显示组件使用
+        this.currentAudioBuffer = buffer;
+
         taskpool.execute<[string, ArrayBuffer,
           WeightingType, number], Float32Array>(concurrentCalculateSpectrum, this.pk.audio_analysis_mode,
           buffer, this.pk.weighting_type, this.pk.calibration_value).then(spectrum => {
@@ -349,8 +257,6 @@ export struct DecibelMeter {
           this.weightingTypes.push(this.pk.weighting_type)
           if (this.isDisplayApp) {
             this.as.db = decibel;
-            // 使用新的 RxJS 统计服务更新统计信息
-            this.statisticsService.updateDecibelValue(this.as.db);
             this.currentSpectrum = spectrum; // 更新频谱数据
           }
           // 更新计时器（毫秒级）
@@ -365,19 +271,12 @@ export struct DecibelMeter {
   }
 
   private resetData() {
-    // 重置统计服务状态
-    this.statisticsService.reset();
-    
     // 重置状态
     this.as.db = 0;
-    this.minDecibel = 0;
-    this.maxDecibel = 0;
-    this.avgDecibel = 0;
-    this.dbCount = 0;
-    this.dbSum = 0;
     this.values = [];
     this.startTime = new Date().getTime();
     this.recordingTime = 0;
+    this.currentAudioBuffer = new ArrayBuffer(0);
 
     // 重置 weightingTypes 数组
     this.weightingTypes = [];
@@ -386,7 +285,7 @@ export struct DecibelMeter {
   private startDurationMonitoring(): void {
     // 停止之前的监控（如果存在）
     this.stopDurationMonitoring();
-    
+
     this.durationCheckSubscription = this.audioBufferSubject.pipe(
       // 每次音频数据到达时检查时长
       map(() => new Date().getTime() - this.startTime),
@@ -394,7 +293,7 @@ export struct DecibelMeter {
       take(1),
       tap(() => console.info('[自动保存] 达到60分钟录音限制，自动保存并开始新录音')),
       switchMap(() => from(this.stopRecording('自动保存')).pipe(
-        catchError((error:BusinessError) => {
+        catchError((error: BusinessError) => {
           console.error('[自动保存] 停止录音失败:', error);
           return of(null);
         })
@@ -408,7 +307,7 @@ export struct DecibelMeter {
         }
       })
     ).subscribe({
-      error: (error:BusinessError) => {
+      error: (error: BusinessError) => {
         console.error('[自动保存] RxJS监控流错误:', error);
         setTimeout(() => {
           try {
@@ -428,20 +327,11 @@ export struct DecibelMeter {
     }
   }
 
-  /**
-   * 更新统计信息（已重构为使用 RxJS 服务）
-   * @deprecated 请使用 statisticsService.updateDecibelValue() 替代
-   */
-  private updateStatistics(value: number) {
-    // 使用新的 RxJS 统计服务
-    this.statisticsService.updateDecibelValue(value);
-  }
-
   private async stopRecording(comments: string): Promise<void> {
     if (this.isRecording) {
       this.isRecording = false;
       console.info("[FREQ_TRACE][Recording] 停止检测 - 开始");
-      
+
       // 停止时长监控
       this.stopDurationMonitoring();
 
@@ -526,12 +416,6 @@ export struct DecibelMeter {
       }
     }
 
-    // 清除闪烁定时器
-    if (this.noiseAlarmTimer !== -1) {
-      clearInterval(this.noiseAlarmTimer);
-      this.noiseAlarmTimer = -1;
-      this.isNoiseAlarm = false;
-    }
   }
 
   build() {
@@ -547,42 +431,29 @@ export struct DecibelMeter {
         }) {
           Column() {
             Stack() {
-              // 分贝显示和位置信息
-              Column() {
-                // 噪音场景参考和升级校准信息
-                Flex({ justifyContent: FlexAlign.SpaceBetween, alignItems: ItemAlign.Center }) {
-                  this.noiseDescriptions()
-                  this.noiseCalibration()
+              // 使用新的分贝显示组件
+              DecibelDisplayComponent({
+                audioBuffer: this.currentAudioBuffer,
+                audioAnalysisMode: this.pk.audio_analysis_mode,
+                weightingType: this.pk.weighting_type,
+                calibrationValue: this.pk.calibration_value,
+                noiseThreshold: this.pk.noise_threshold,
+                noiseAlarmEnabled: this.pk.noise_alarm_enabled,
+                isDisplayApp: this.isDisplayApp,
+                minMaxAvg: (min, max, avg) => {
+                  this.minDecibel = min;
+                  this.maxDecibel = max;
+                  this.avgDecibel = avg;
                 }
-                .margin({
-                  bottom: 12,
-                  left: 16,
-                  right: 16,
-                  top: 12
-                })
+              })
 
-                // 分贝显示卡片
-                Row({ space: 8 }) {
-                  this.averageMin()
+              Text(`${secondsToHoursMinutesSecondsWithDecimal(this.MAX_RECORDING_DURATION -
+              this.recordingTime)} 后自动保存`).fontSize(14)
 
-                  this.CurrentDecibel()
-
-                  this.max()
-                }
-
-                .justifyContent(FlexAlign.Center)
-                .alignItems(VerticalAlign.Bottom)
-                .borderColor(this.isNoiseAlarm ? DecibelService.getDecibelColor(this.as.db) :
-                Color.Transparent)
-
-                Text(`${secondsToHoursMinutesSecondsWithDecimal(this.MAX_RECORDING_DURATION -
-                this.recordingTime)} 后自动保存`).fontSize(14)
-
-                // 位置显示
-                Row() {
-                  LocationDisplay()
-                }
-              }.justifyContent(FlexAlign.Center)
+              // 位置显示
+              Row() {
+                LocationDisplay()
+              }
             }
             .clip(true)
 
@@ -706,98 +577,6 @@ export struct DecibelMeter {
       this.translateY = -this.getUIContext().px2vp(displayClass.height) / 2 + 20;
     });
 
-  }
-
-  @Builder
-  max() {
-    Column() {
-      Text('最大')
-
-        .margin({ bottom: 4 });
-      Text(this.maxDecibel === 0 ? '-' : this.maxDecibel.toString())
-        .fontSize(32)
-        .fontWeight(FontWeight.Medium)
-        .fontColor(DecibelService.getDecibelColor(this.maxDecibel))
-        .animation({ curve: Curve.EaseOut });
-    }
-    .alignItems(HorizontalAlign.Center)
-    .margin({
-      left: 16
-    })
-  }
-
-  @Builder
-  averageMin() {
-    Column() {
-      Text(this.showAvgInsteadOfMin ? '平均' : '最小')
-
-      Text(this.showAvgInsteadOfMin ?
-        (this.avgDecibel === 0 ? '-' : this.avgDecibel.toString()) :
-        (this.minDecibel === 0 ? '-' : this.minDecibel.toString()))
-        .fontSize(32)
-        .fontWeight(FontWeight.Medium)
-        .fontColor(DecibelService.getDecibelColor(
-          this.showAvgInsteadOfMin ? this.avgDecibel : this.minDecibel))
-        .onClick(() => {
-          this.showAvgInsteadOfMin = !this.showAvgInsteadOfMin;
-        });
-    }
-    .alignItems(HorizontalAlign.Center)
-  }
-
-  @Builder
-  CurrentDecibel() {
-    Stack({ alignContent: Alignment.Bottom }) {
-      Column() {
-        if (this.as.db === 0) {
-          Text('-')
-            .fontSize(100)
-            .textShadow({
-              radius: 2,
-              color: Color.White,
-              offsetX: 0,
-              offsetY: 0
-            })
-            .transition(TransitionEffect.scale({ x: 0, y: 0 }).animation({ curve: curves.springMotion() }))
-            .fontWeight(FontWeight.Bold)
-            .fontColor(DecibelService.getDecibelColor(this.as.db));
-        } else {
-          Text(this.as.db.toString())
-            .fontSize(100)
-            .textShadow({
-              radius: 2,
-              color: Color.White,
-              offsetX: 0,
-              offsetY: 0
-            })
-            .transition(TransitionEffect.scale({ x: 0, y: 0 }).animation({ curve: curves.springMotion() }))
-            .fontWeight(FontWeight.Bold)
-            .fontColor(DecibelService.getDecibelColor(this.as.db));
-        }
-
-      }
-      .backgroundColor('#00000000')
-      .margin({ bottom: -20, right: -20 })
-      .id('currentDbComp')
-      .onClick(() => {
-        DialogHub.getPopup()
-          .setTextContent('当前分贝值')
-          .setComponentTargetId('currentDbComp')
-          .setStyle({
-            radius: $r('sys.float.chip_small_radius'),
-            maskColor: '#00000000',
-          })
-          .setConfig({
-            dialogPosition: {
-              preferPlacement: Placement.Top
-            },
-            dialogBehavior: { isModal: true, autoDismiss: true }
-          })
-          .build()
-          .show();
-      })
-      .alignItems(HorizontalAlign.Center);
-    }
   }
 
   private toggleTorch() {
