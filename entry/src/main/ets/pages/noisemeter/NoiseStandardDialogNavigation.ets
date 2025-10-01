@@ -2,6 +2,7 @@ import { NoiseStandards } from '../../constants/NoiseStandardConstants';
 import { AppKeys } from '../../models/AppKeys';
 import { NoiseStandard } from '../../models/NoiseStandard';
 import { DecibelService } from '../../services/DecibelService';
+import { curves } from '@kit.ArkUI';
 
 @Builder
 function buildNoiseStandardCard(standard: NoiseStandard, as: AppKeys) {
@@ -43,6 +44,9 @@ function buildNoiseStandardCard(standard: NoiseStandard, as: AppKeys) {
   $r('sys.color.warning'))
   .borderRadius(16)
   .alignItems(HorizontalAlign.Start)
+  .transition(TransitionEffect.OPACITY.animation({ curve: curves.springMotion(0.6, 0.8) }) // 透明度动画，使用springMotion曲线
+    .combine(TransitionEffect.scale({ x: 0, y: 0 })) // 组合缩放效果（从0放大到1）
+    .combine(TransitionEffect.translate({ x: -150, y: 0 }).animation({ curve: curves.springMotion() })))
 }
 
 @Builder

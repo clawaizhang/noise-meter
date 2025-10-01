@@ -2,6 +2,9 @@ import { DecibelMeter } from '../../components/decibel-meter/DecibelMeter';
 import { navigationStack } from '../../constants/ProviderConstant';
 import { DialogHub } from '@hadss/dialoghub';
 import { SettingsBuilder } from './SettingsNavigation';
+import { NoiseStandardDialogBuilder } from './NoiseStandardDialogNavigation';
+import { AppKeys } from '../../models/AppKeys';
+import { AppStorageV2 } from '@kit.ArkUI';
 
 // 导航菜单项接口定义
 interface NavigationMenuItem {
@@ -21,6 +24,7 @@ export struct MainNoiseMeter {
   @Local currentIndex: number = 0
   @Local title: string = '静喵Sound';
   @Local menuItems: Array<NavigationMenuItem> = [];
+  @Local as: AppKeys = AppStorageV2.connect(AppKeys)!;
 
   aboutToDisappear(): void {
   }
@@ -130,6 +134,47 @@ export struct MainNoiseMeter {
             .setContent(wrapBuilder(SettingsBuilder))
             .build()
             .show();
+        })
+
+        // 噪音参考标准列表项
+        ListItem() {
+          Row() {
+            Image($r('app.media.ic_info'))
+              .width(24)
+              .height(24)
+              .fillColor($r('sys.color.font_primary'))
+              .margin({ right: 12 })
+            Text('噪音参考标准')
+              .fontSize(16)
+              .fontColor($r('app.color.text_primary'))
+              .layoutWeight(1)
+            Image($r('app.media.ic_arrow_right'))
+              .width(16)
+              .height(16)
+              .fillColor($r('app.color.text_secondary'))
+          }
+          .width('100%')
+          .height(56)
+          .padding({
+            left: 16,
+            right: 16
+          })
+          .alignItems(VerticalAlign.Center)
+        }
+        .borderRadius(8)
+        .backgroundColor($r('sys.color.comp_background_primary'))
+        .margin({ top: 12, left: 16, right: 16 })
+        .onClick(() => {
+          let dialog = DialogHub.getSheet()
+            .setStyle({ backgroundColor: $r('sys.color.background_secondary'), showClose: false })
+            .setComponentTargetId('myContentId')
+            .setConfig({ enableOutsideInteractive: false, scrollSizeMode: ScrollSizeMode.CONTINUOUS })
+            .setContent(wrapBuilder(NoiseStandardDialogBuilder), this.as)
+            .build();
+          dialog.show();
+          setInterval(() => {
+            dialog.updateContent(this.as);
+          }, 100)
         })
       }
 

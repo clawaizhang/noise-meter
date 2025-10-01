@@ -93,19 +93,6 @@ export struct DecibelHistory {
         this.ListLayoutView()
       }
     }.id('rbgnolqiwuejrbgvwoi').title('历史记录').backgroundColor($r('sys.color.background_secondary')).menus([{
-      value: '噪音参考标准', icon: $r('app.media.ic_info'), action: () => {
-        let dialog = DialogHub.getSheet()
-          .setStyle({ backgroundColor: $r('sys.color.background_secondary'), showClose: false })
-          .setComponentTargetId('rbgnolqiwuejrbgvwoi')
-          .setConfig({ enableOutsideInteractive: false, scrollSizeMode: ScrollSizeMode.CONTINUOUS })
-          .setContent(wrapBuilder(NoiseStandardDialogBuilder), this.as)
-          .build();
-        dialog.show();
-        setInterval(() => {
-          dialog.updateContent(this.as);
-        }, 100)
-      }
-    }, {
       value: '收藏',
       symbolIcon: new SymbolGlyphModifier($r("sys.symbol.heart")),
       action: () => {
