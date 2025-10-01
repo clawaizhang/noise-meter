@@ -424,37 +424,32 @@ export struct DecibelMeter {
           }
         }) {
           Column() {
-            Stack() {
-              // 使用新的分贝显示组件
-              DecibelDisplayComponent({
-                audioBuffer: this.currentAudioBuffer,
-                audioAnalysisMode: this.pk.audio_analysis_mode,
-                weightingType: this.pk.weighting_type,
-                calibrationValue: this.pk.calibration_value,
-                noiseThreshold: this.pk.noise_threshold,
-                noiseAlarmEnabled: this.pk.noise_alarm_enabled,
-                isDisplayApp: this.isDisplayApp,
-                minMaxAvg: (min, max, avg) => {
-                  this.minDecibel = min;
-                  this.maxDecibel = max;
-                  this.avgDecibel = avg;
-                },
-                decibelValue: (decibel, weightingType) => {
-                  // 收集分贝值和加权类型到数组中
-                  this.values.push(decibel);
-                  this.weightingTypes.push(weightingType);
-                }
-              })
-
-              Text(`${secondsToHoursMinutesSecondsWithDecimal(this.MAX_RECORDING_DURATION -
-              this.recordingTime)} 后自动保存`).fontSize(14)
-
-              // 位置显示
-              Row() {
-                LocationDisplay()
+            // 使用新的分贝显示组件
+            DecibelDisplayComponent({
+              audioBuffer: this.currentAudioBuffer,
+              audioAnalysisMode: this.pk.audio_analysis_mode,
+              weightingType: this.pk.weighting_type,
+              calibrationValue: this.pk.calibration_value,
+              noiseThreshold: this.pk.noise_threshold,
+              noiseAlarmEnabled: this.pk.noise_alarm_enabled,
+              isDisplayApp: this.isDisplayApp,
+              minMaxAvg: (min, max, avg) => {
+                this.minDecibel = min;
+                this.maxDecibel = max;
+                this.avgDecibel = avg;
+              },
+              decibelValue: (decibel, weightingType) => {
+                // 收集分贝值和加权类型到数组中
+                this.values.push(decibel);
+                this.weightingTypes.push(weightingType);
               }
-            }
-            .clip(true)
+            })
+
+            Text(`${secondsToHoursMinutesSecondsWithDecimal(this.MAX_RECORDING_DURATION -
+            this.recordingTime)} 后自动保存`).fontSize(14)
+
+            // 位置显示
+            LocationDisplay()
 
             if (["md", "lg", "xl", "xxl"].includes(this.breakPoint)) {
               this.actionPanel()
