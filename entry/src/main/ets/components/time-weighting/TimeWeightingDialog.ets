@@ -6,17 +6,17 @@
 import { AudioAnalysisMode } from '../../common/AudioConfig';
 import { TimeWeightingConstants } from '../../constants/TimeWeightingConstants';
 import { DesignConstants } from '../../constants/DesignConstants';
-import { TimeWeightingCardBuilder } from './TimeWeightingCard';
-import { TechnicalParamsDisplayBuilder } from './TechnicalParamsDisplay';
-import { AcousticExplanationBuilder } from './AcousticExplanation';
-import { PreviewPanelBuilder } from './PreviewPanel';
+import { TimeWeightingCard } from './TimeWeightingCard';
+import { AcousticExplanationComp } from './AcousticExplanation';
+import { TechnicalParamsDisplay } from './TechnicalParamsDisplay';
+import { PreviewPanel } from './PreviewPanel';
 
 @ComponentV2
 export struct TimeWeightingDialog {
-  @Param @Require currentMode: AudioAnalysisMode;                    // 当前模式（从外部传入）
-  @Param @Require onConfirm: (mode: AudioAnalysisMode) => void;      // 确认回调
-  @Param @Require onCancel: () => void;                              // 取消回调
-  @Local selectedMode!: AudioAnalysisMode;                  // 选中的模式
+  @Param @Require currentMode: AudioAnalysisMode; // 当前模式（从外部传入）
+  @Param @Require onConfirm: (mode: AudioAnalysisMode) => void; // 确认回调
+  @Param @Require onCancel: () => void; // 取消回调
+  @Local selectedMode!: AudioAnalysisMode; // 选中的模式
 
   aboutToAppear() {
     // 初始化选中模式为当前模式
@@ -46,13 +46,6 @@ export struct TimeWeightingDialog {
   @Builder
   private buildModeSelection() {
     Column({ space: DesignConstants.SPACING_MD }) {
-      // 标题
-      Text('选择时间计权模式')
-        .fontSize(DesignConstants.FONT_SIZE_XL)
-        .fontWeight(FontWeight.Bold)
-        .fontColor($r('sys.color.font_primary'))
-        .alignSelf(ItemAlign.Start)
-
       // 模式卡片网格
       GridRow({
         columns: { sm: 1, md: 3 },
@@ -61,14 +54,14 @@ export struct TimeWeightingDialog {
       }) {
         ForEach(TimeWeightingConstants.getAvailableModes(), (mode: AudioAnalysisMode) => {
           GridCol({ span: 1 }) {
-            TimeWeightingCardBuilder(
-              this.currentMode,
-              this.selectedMode,
-              mode,
-              (selectedMode: AudioAnalysisMode) => {
+            TimeWeightingCard({
+              mode: this.currentMode,
+              selectedMode: this.selectedMode,
+              modeInfo: mode,
+              onSelect: (selectedMode: AudioAnalysisMode) => {
                 this.handleModeSelect(selectedMode);
               }
-            )
+            })
           }
         })
       }
@@ -83,11 +76,15 @@ export struct TimeWeightingDialog {
   private buildPreviewArea() {
     Column({ space: DesignConstants.SPACING_LG }) {
       // 实时预览面板
-      PreviewPanelBuilder(this.currentMode, this.selectedMode)
-
+      PreviewPanel({
+        currentMode: this.currentMode,
+        selectedMode: this.selectedMode
+      })
       // 技术参数显示
-      TechnicalParamsDisplayBuilder(this.currentMode, this.selectedMode)
-
+      TechnicalParamsDisplay({
+        currentMode: this.currentMode,
+        selectedMode: this.selectedMode
+      })
     }
     .width('100%')
   }
@@ -97,7 +94,9 @@ export struct TimeWeightingDialog {
   private buildDetailArea() {
     Column({ space: DesignConstants.SPACING_LG }) {
       // 声学解释
-      AcousticExplanationBuilder(this.selectedMode)
+      AcousticExplanationComp({
+        selectedMode: this.selectedMode
+      })
 
     }
     .width('100%')
@@ -167,8 +166,8 @@ export struct TimeWeightingDialog {
 
 // 时间计权弹框的Builder版本
 @Builder
-export function TimeWeightingDialogBuilder(param:TimeWeightingDialogParams
-  ) {
+export function TimeWeightingDialogBuilder(param: TimeWeightingDialogParams
+) {
   TimeWeightingDialog({
     currentMode: param.currentMode,
     onConfirm: param.onConfirm,
@@ -176,7 +175,7 @@ export function TimeWeightingDialogBuilder(param:TimeWeightingDialogParams
   })
 }
 
-export  interface TimeWeightingDialogParams {
+export interface TimeWeightingDialogParams {
   currentMode: AudioAnalysisMode;
   onConfirm: (mode: AudioAnalysisMode) => void;
   onCancel: () => void;

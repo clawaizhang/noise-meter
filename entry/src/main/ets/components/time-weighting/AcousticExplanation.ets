@@ -189,13 +189,3 @@ export struct AcousticExplanationComp {
     .borderRadius(DesignConstants.BORDER_RADIUS_MD)
   }
 }
-
-// 声学解释组件的Builder版本
-@Builder
-export function AcousticExplanationBuilder(
-  selectedMode: AudioAnalysisMode
-) {
-  AcousticExplanationComp({
-    selectedMode: selectedMode
-  })
-}

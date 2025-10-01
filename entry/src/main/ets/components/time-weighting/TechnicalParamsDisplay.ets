@@ -190,15 +190,3 @@ export struct TechnicalParamsDisplay {
     .borderRadius(DesignConstants.BORDER_RADIUS_MD)
   }
 }
-
-// 技术参数显示组件的Builder版本
-@Builder
-export function TechnicalParamsDisplayBuilder(
-  currentMode: AudioAnalysisMode,
-  selectedMode: AudioAnalysisMode
-) {
-  TechnicalParamsDisplay({
-    currentMode: currentMode,
-    selectedMode: selectedMode
-  })
-}

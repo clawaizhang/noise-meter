@@ -256,15 +256,3 @@ export struct PreviewPanel {
     .borderRadius(DesignConstants.BORDER_RADIUS_MD)
   }
 }
-
-// 预览面板组件的Builder版本
-@Builder
-export function PreviewPanelBuilder(
-  currentMode: AudioAnalysisMode,
-  selectedMode: AudioAnalysisMode
-) {
-  PreviewPanel({
-    currentMode: currentMode,
-    selectedMode: selectedMode
-  })
-}
