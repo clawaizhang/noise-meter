@@ -158,7 +158,6 @@ export struct EnhancedManualCalibration {
           .blockColor(CALIBRATION_COLORS.PRIMARY)
           .trackColor($r('sys.color.background_secondary'))
           .selectedColor(CALIBRATION_COLORS.PRIMARY)
-          .showTips(true)
           .onChange((value: number) => {
             this.onValueChange(value);
           })

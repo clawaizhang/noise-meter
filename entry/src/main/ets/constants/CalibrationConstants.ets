@@ -20,43 +20,43 @@ export enum CalibrationStatus {
 
 // 环境噪声等级
 export enum EnvironmentNoiseLevel {
-  EXCELLENT = 'excellent',    // < 30dB - 非常适合校准
-  GOOD = 'good',              // 30-40dB - 适合校准
-  FAIR = 'fair',              // 40-50dB - 勉强校准
-  POOR = 'poor',              // > 50dB - 不适合校准
+  EXCELLENT = 'excellent', // < 30dB - 非常适合校准
+  GOOD = 'good', // 30-40dB - 适合校准
+  FAIR = 'fair', // 40-50dB - 勉强校准
+  POOR = 'poor', // > 50dB - 不适合校准
 }
 
 // 校准精度等级
 export enum CalibrationAccuracy {
-  HIGH = 'high',      // ±0.5dB
-  MEDIUM = 'medium',  // ±1.0dB
-  LOW = 'low'         // ±2.0dB
+  HIGH = 'high', // ±0.5dB
+  MEDIUM = 'medium', // ±1.0dB
+  LOW = 'low' // ±2.0dB
 }
 
 // 声学原理说明
 export interface AcousticTheory {
-  principle: string;           // 基本原理
-  timeConstant: string;        // 时间常数
-  frequencyResponse: string;   // 频率响应
-  standardReference: string;   // 标准依据
-  physicalPrinciple: string;   // 物理原理
+  principle: string; // 基本原理
+  timeConstant: string; // 时间常数
+  frequencyResponse: string; // 频率响应
+  standardReference: string; // 标准依据
+  physicalPrinciple: string; // 物理原理
 }
 
 // 应用场景说明
 export interface ApplicationScenario {
-  title: string;              // 场景标题
-  description: string;        // 场景描述
-  example: string;            // 实际示例
+  title: string; // 场景标题
+  description: string; // 场景描述
+  example: string; // 实际示例
 }
 
 // 技术参数
 export interface TechnicalParams {
-  calibrationRange: string;     // 校准范围
-  frequencyRange: string;       // 频率范围
-  dynamicRange: string;         // 动态范围
-  samplingRate: string;         // 采样率
-  accuracy: string;             // 精度
-  resolution: string;           // 分辨率
+  calibrationRange: string; // 校准范围
+  frequencyRange: string; // 频率范围
+  dynamicRange: string; // 动态范围
+  samplingRate: string; // 采样率
+  accuracy: string; // 精度
+  resolution: string; // 分辨率
 }
 
 // 声学解释内容
@@ -95,7 +95,7 @@ export const APPLICATION_SCENARIOS: Record<string, ApplicationScenario[]> = {
 export const TECHNICAL_PARAMS: TechnicalParams = {
   calibrationRange: '-30dB 至 +30dB',
   frequencyRange: '20Hz - 20kHz',
-  dynamicRange: '30dB - 130dB',
+  dynamicRange: '-20dB - 140dB',
   samplingRate: '44.1kHz',
   accuracy: '±0.5dB (A计权)',
   resolution: '0.1dB'
@@ -110,9 +110,9 @@ interface EnvironmentThreshold {
 }
 
 export const ENVIRONMENT_THRESHOLDS: EnvironmentThreshold = {
-  EXCELLENT: 20,   // 优秀环境 < 20dB
-  GOOD: 25,        // 良好环境 20-25dB
-  FAIR: 30,        // 一般环境 25-30dB
+  EXCELLENT: 20, // 优秀环境 < 20dB
+  GOOD: 25, // 良好环境 20-25dB
+  FAIR: 30, // 一般环境 25-30dB
   POOR: 30         // 差环境 > 30dB
 };
 
@@ -128,13 +128,13 @@ interface CaliConfig {
 }
 
 export const CALIBRATION_CONFIG: CaliConfig = {
-  AUTO_CALIBRATION_DURATION: 8,      // 自动校准时长(秒)
-  COUNTDOWN_DURATION: 3,             // 倒计时时长(秒)
-  REFERENCE_LEVEL: 25,               // 参考声级(dB) - 更新为25dB
-  TARGET_CALIBRATION_VALUE: 25,      // 目标校准值25dB
-  MIN_CALIBRATION_VALUE: -30,        // 最小校准值
-  MAX_CALIBRATION_VALUE: 30,         // 最大校准值
-  PRESET_VALUES: [-20, -10, 0, 10, 20] // 预设校准点
+  AUTO_CALIBRATION_DURATION: 8, // 自动校准时长(秒)
+  COUNTDOWN_DURATION: 3, // 倒计时时长(秒)
+  REFERENCE_LEVEL: 25, // 参考声级(dB) - 更新为25dB
+  TARGET_CALIBRATION_VALUE: 25, // 目标校准值25dB
+  MIN_CALIBRATION_VALUE: -30, // 最小校准值
+  MAX_CALIBRATION_VALUE: 30, // 最大校准值
+  PRESET_VALUES: [-30, -25, -20, -15, -10, -5, 0, 5, 10, 15, 20, 25, 30] // 预设校准点
 };
 
 // 颜色配置

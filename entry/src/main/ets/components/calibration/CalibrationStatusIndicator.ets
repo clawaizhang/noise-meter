@@ -130,13 +130,7 @@ export struct CalibrationStatusIndicator {
             .fontSize(DesignConstants.FONT_SIZE_MD)
             .fontColor(CALIBRATION_COLORS.PRIMARY)
             .fontWeight(FontWeight.Medium)
-        } else {
-          Text(this.getEnvironmentDescription())
-            .fontSize(DesignConstants.FONT_SIZE_MD)
-            .fontColor(this.getEnvironmentColor())
-            .fontWeight(FontWeight.Medium)
         }
-
       }
     }
     .alignItems(HorizontalAlign.Center)
