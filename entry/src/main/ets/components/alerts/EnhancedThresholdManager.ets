@@ -140,6 +140,9 @@ export struct EnhancedThresholdManager {
         .fontColor($r('sys.color.font_secondary'))
         .alignSelf(ItemAlign.Start)
 
+      // 阈值设置区域
+      this.buildDynamicThresholdControls()
+
       // 环境类型选择区域
       Column({ space: DesignConstants.SPACING_SM }) {
         // 引导提示
@@ -154,8 +157,6 @@ export struct EnhancedThresholdManager {
       .width('100%')
       .margin({ top: DesignConstants.SPACING_MD })
 
-      // 阈值设置区域
-      this.buildDynamicThresholdControls()
     }
     .width('100%')
     .padding(DesignConstants.SPACING_LG)
@@ -184,7 +185,7 @@ export struct EnhancedThresholdManager {
             onChange: (value: number) => {
               ThresholdManager.setBaseThreshold(value);
             },
-            color: $r('sys.color.ohos_id_color_palette1'), // 主色
+            color: $r('sys.color.brand'),
             timeRange: '全天统一阈值'
           })
         } else {
@@ -197,7 +198,7 @@ export struct EnhancedThresholdManager {
               onChange: (value: number) => {
                 ThresholdManager.setDaytimeThreshold(value);
               },
-              color: $r('sys.color.ohos_id_color_palette3'), // 黄色
+              color: $r('sys.color.brand'),
               timeRange: '6:00 - 22:00'
             })
 
@@ -208,7 +209,7 @@ export struct EnhancedThresholdManager {
               onChange: (value: number) => {
                 ThresholdManager.setNighttimeThreshold(value);
               },
-              color: $r('sys.color.ohos_id_color_palette6'), // 深蓝色
+              color: $r('sys.color.brand'),
               timeRange: '22:00 - 6:00'
             })
           }
@@ -231,7 +232,7 @@ export struct EnhancedThresholdManager {
             title: '统一阈值',
             value: `${this.currentConfig.baseThreshold}dB`,
             description: '全天使用的统一阈值',
-            color: $r('sys.color.ohos_id_color_palette1')
+            color: $r('sys.color.brand')
           })
         } else {
           // 时段调度开启：显示白天和夜间阈值
@@ -240,14 +241,14 @@ export struct EnhancedThresholdManager {
               title: '白天阈值',
               value: `${this.currentConfig.daytimeThreshold}dB`,
               description: '适用于日常活动环境',
-              color: $r('sys.color.ohos_id_color_palette3')
+              color: $r('sys.color.brand')
             })
 
             this.buildThresholdInfo({
               title: '夜间阈值',
               value: `${this.currentConfig.nighttimeThreshold}dB`,
               description: '适用于休息睡眠环境',
-              color: $r('sys.color.ohos_id_color_palette6')
+              color: $r('sys.color.brand')
             })
           }
           .width('100%')
@@ -367,28 +368,28 @@ export struct EnhancedThresholdManager {
         40,
         '安静环境',
         '图书馆、卧室等需要安静的环境',
-        $r('sys.color.ohos_id_color_palette2')
+        $r('sys.color.confirm')
       ),
       new PresetConfig(
         PresetType.GENERAL_ENVIRONMENT,
         55,
         '一般环境',
         '办公室、教室等日常环境',
-        $r('sys.color.ohos_id_color_palette5')
+        $r('sys.color.brand')
       ),
       new PresetConfig(
         PresetType.NOISY_ENVIRONMENT,
         70,
         '嘈杂环境',
         '街道、商场等嘈杂环境',
-        $r('sys.color.ohos_id_color_palette3')
+        $r('sys.color.alert')
       ),
       new PresetConfig(
         PresetType.DANGEROUS_ENVIRONMENT,
         85,
         '危险环境',
         '工厂、工地等可能损伤听力的环境',
-        $r('sys.color.ohos_id_color_palette4')
+        $r('sys.color.warning')
       ),
       new PresetConfig(
         PresetType.CUSTOM,

@@ -85,32 +85,32 @@ export const PRESET_THRESHOLDS: PresetThreshold[] = [
     name: '安静环境',
     value: 40,
     description: '图书馆、卧室等需要安静的环境',
-    color: $r('sys.color.ohos_id_color_palette2') // 绿色
+    color: $r('sys.color.confirm') // 绿色
   },
   {
     name: '一般环境',
     value: 55,
     description: '办公室、教室等日常环境',
-    color: $r('sys.color.ohos_id_color_palette5') // 浅蓝色
+    color: $r('sys.color.brand') // 浅蓝色
   },
   {
     name: '嘈杂环境',
     value: 70,
     description: '街道、商场等嘈杂环境',
-    color: $r('sys.color.ohos_id_color_palette3') // 黄色
+    color: $r('sys.color.warning') // 黄色
   },
   {
     name: '危险环境',
     value: 85,
     description: '工厂、工地等可能损伤听力的环境',
-    color: $r('sys.color.ohos_id_color_palette4') // 红色
+    color: $r('sys.color.alert') // 红色
   }
 ];
 
 // 技术参数配置
 export const TECHNICAL_PARAMS: TechnicalParams = {
   frequencyRange: '20Hz - 20kHz',
-  dynamicRange: '30dB - 130dB',
+  dynamicRange: '-20dB - 140dB',
   accuracy: '±0.5dB (A计权)',
   responseTime: '快速125ms / 慢速1s'
 };
@@ -171,10 +171,10 @@ interface AlertColors {
 }
 
 export const ALERT_COLORS: AlertColors = {
-  PRIMARY: $r('sys.color.ohos_id_color_palette1'),
-  SUCCESS: $r('sys.color.ohos_id_color_palette2'),
-  WARNING: $r('sys.color.ohos_id_color_palette3'),
-  ERROR: $r('sys.color.ohos_id_color_palette4'),
+  PRIMARY: $r('sys.color.brand'),
+  SUCCESS: $r('sys.color.confirm'),
+  WARNING: $r('sys.color.warning'),
+  ERROR: $r('sys.color.alert'),
   BACKGROUND: $r('sys.color.background_secondary'),
   CARD_BACKGROUND: $r('sys.color.comp_background_primary')
 };

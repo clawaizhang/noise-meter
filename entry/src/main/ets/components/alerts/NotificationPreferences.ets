@@ -17,27 +17,35 @@ export struct NotificationPreferences {
   @Param @Require onVibrationChange: (enabled: boolean) => void; // 振动变化回调
   @Param @Require onVisualChange: (enabled: boolean) => void; // 视觉变化回调
   @Param @Require onSystemNotificationChange: (enabled: boolean) => void; // 系统通知变化回调
-  @Local enabledTypes: string[] = [];
-  @Local previewText: string = '';
+  @Local previewText: string = '当前启用: ';
+
+  aboutToAppear(): void {
+    this.setPreviewText();
+  }
+
+  private setPreviewText() {
+    this.previewText = '当前启用: ';
+    if (this.soundEnabled) {
+      this.previewText += '声音、';
+    }
+    if (this.vibrationEnabled) {
+      this.previewText += '振动、';
+    }
+    if (this.visualEnabled) {
+      this.previewText += '视觉、';
+    }
+    if (this.systemNotificationEnabled) {
+      this.previewText += '系统通知、';
+    }
+    if (!this.soundEnabled && !this.visualEnabled && !this.vibrationEnabled && !this.systemNotificationEnabled) {
+      this.previewText = '所有通知类型已关闭';
+    }
+    this.previewText = this.previewText.slice(0, -1);
+  }
 
   @Monitor('soundEnabled', 'vibrationEnabled', 'visualEnabled', 'systemNotificationEnabled')
   private onNotifyChange(monitor: IMonitor) {
-    if (monitor.value<boolean>('soundEnabled')) {
-      this.enabledTypes.push('声音');
-    }
-    if (monitor.value('vibrationEnabled')) {
-      this.enabledTypes.push('振动');
-    }
-    if (monitor.value<boolean>('visualEnabled')) {
-      this.enabledTypes.push('视觉');
-    }
-    if (monitor.value<boolean>('systemNotificationEnabled')) {
-      this.enabledTypes.push('系统通知');
-    }
-
-    this.previewText = this.enabledTypes.length > 0 ?
-      `当前启用: ${this.enabledTypes.join('、')}` :
-      '所有通知类型已关闭';
+    this.setPreviewText();
   }
 
   // 构建通知类型设置项
@@ -82,14 +90,8 @@ export struct NotificationPreferences {
     }
     .width('100%')
     .padding(DesignConstants.SPACING_MD)
-    .backgroundColor(enabled ?
-    $r('sys.color.background_emphasize') :
-    $r('sys.color.background_secondary'))
+    .backgroundColor($r('sys.color.background_secondary'))
     .borderRadius(DesignConstants.BORDER_RADIUS_MD)
-    .border({
-      width: enabled ? 2 : 1,
-      color: enabled ? ALERT_COLORS.PRIMARY : $r('sys.color.background_secondary')
-    })
     .animation({
       duration: 200,
       curve: curves.springMotion()
@@ -169,11 +171,11 @@ export struct NotificationPreferences {
 
       Text(this.previewText)
         .fontSize(DesignConstants.FONT_SIZE_MD)
-        .fontColor(this.enabledTypes.length > 0 ? ALERT_COLORS.SUCCESS : ALERT_COLORS.WARNING)
+        .fontColor(this.previewText !== '所有通知类型已关闭' ? ALERT_COLORS.SUCCESS : ALERT_COLORS.WARNING)
         .textAlign(TextAlign.Start)
         .alignSelf(ItemAlign.Start)
 
-      if (this.enabledTypes.length === 0) {
+      if (this.previewText === '所有通知类型已关闭') {
         Text('建议至少启用一种通知方式')
           .fontSize(DesignConstants.FONT_SIZE_SM)
           .fontColor(ALERT_COLORS.WARNING)
