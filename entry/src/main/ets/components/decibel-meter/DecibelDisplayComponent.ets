@@ -9,6 +9,7 @@ import { image } from '@kit.ImageKit';
 import { AppKeys } from '../../models/AppKeys';
 import { AppStorageV2, curves } from '@kit.ArkUI';
 import { Subscription } from 'rxjs';
+import { DesignConstants } from '../../constants/DesignConstants';
 
 @ComponentV2
 export struct DecibelDisplayComponent {
@@ -90,17 +91,17 @@ export struct DecibelDisplayComponent {
   max() {
     Column() {
       Text('最大')
-        .fontSize(this.as.responsive.fontSize.sm)
-        .margin({ bottom: this.as.responsive.spacing.xs });
+        .fontSize(14)
+        .margin({ bottom: 4 });
       Text(this.maxDecibel === 0 ? '-' : this.maxDecibel.toString())
-        .fontSize(this.as.responsive.fontSize.xxxl)
+        .fontSize(32)
         .fontWeight(FontWeight.Medium)
         .fontColor(DecibelService.getDecibelColor(this.maxDecibel))
         .animation({ curve: Curve.EaseOut });
     }
     .alignItems(HorizontalAlign.Center)
     .margin({
-      left: this.as.responsive.spacing.lg
+      left: 16
     })
   }
 
@@ -108,11 +109,11 @@ export struct DecibelDisplayComponent {
   averageMin() {
     Column() {
       Text(this.showAvgInsteadOfMin ? '平均' : '最小')
-        .fontSize(this.as.responsive.fontSize.sm)
+        .fontSize(14)
       Text(this.showAvgInsteadOfMin ?
         (this.avgDecibel === 0 ? '-' : this.avgDecibel.toString()) :
         (this.minDecibel === 0 ? '-' : this.minDecibel.toString()))
-        .fontSize(this.as.responsive.fontSize.xxxl)
+        .fontSize(32)
         .fontWeight(FontWeight.Medium)
         .fontColor(DecibelService.getDecibelColor(
           this.showAvgInsteadOfMin ? this.avgDecibel : this.minDecibel))
@@ -130,7 +131,7 @@ export struct DecibelDisplayComponent {
       Column() {
         if (this.currentDecibel === 0) {
           Text('-')
-            .fontSize(this.as.responsive.fontSize.xxxxl)
+            .fontSize(100)
             .textShadow({
               radius: 2,
               color: Color.White,
@@ -142,7 +143,7 @@ export struct DecibelDisplayComponent {
             .fontColor(DecibelService.getDecibelColor(this.currentDecibel));
         } else {
           Text(this.currentDecibel.toString())
-            .fontSize(this.as.responsive.fontSize.xxxxl)
+            .fontSize(100)
             .textShadow({
               radius: 2,
               color: Color.White,
@@ -155,7 +156,7 @@ export struct DecibelDisplayComponent {
         }
       }
       .backgroundColor('#00000000')
-      .margin({ bottom: -this.as.responsive.spacing.xl, right: -this.as.responsive.spacing.xl })
+      .margin({ bottom: -20, right: -20 })
       .id('currentDbComp')
       .onClick(() => {
         DialogHub.getPopup()
@@ -186,14 +187,14 @@ export struct DecibelDisplayComponent {
         this.noiseCalibration()
       }
       .margin({
-        bottom: this.as.responsive.spacing.md,
-        left: this.as.responsive.spacing.lg,
-        right: this.as.responsive.spacing.lg,
-        top: this.as.responsive.spacing.md
+        bottom: DesignConstants.SPACING_MD,
+        left: DesignConstants.SPACING_LG,
+        right: DesignConstants.SPACING_LG,
+        top: DesignConstants.SPACING_MD
       })
 
       // 分贝显示卡片
-      Row({ space: this.as.responsive.spacing.sm }) {
+      Row({ space: DesignConstants.SPACING_SM }) {
         this.averageMin()
         this.CurrentDecibel()
         this.max()

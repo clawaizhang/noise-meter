@@ -14,7 +14,6 @@ import { AppKeys } from '../models/AppKeys';
 import { AppUtil, PermissionUtil, PreferencesUtil } from '@pura/harmony-utils';
 import { camera } from '@kit.CameraKit';
 import { AppStorageV2, PersistenceV2 } from '@kit.ArkUI';
-import { ResponsiveSizeCalculator } from '../utils/ResponsiveSizeCalculator';
 import { AudioPlayerGroupService } from '../services/AudioPlayerGroupService';
 
 const TAG = 'EntryAbility';
@@ -254,66 +253,10 @@ export default class EntryAbility extends UIAbility {
       appKeys.windowHeight = heightVp;
       appKeys.isLandscape = isLandscape;
 
-      // 更新响应式尺寸
-      this.updateResponsiveSizes(widthBp, heightBp, widthVp, heightVp);
-
       hilog.info(DOMAIN, TAG,
         `Window breakpoints updated - Width: ${widthBp}(${widthVp}vp), Height: ${heightBp}(${heightVp}vp), Landscape: ${isLandscape}`);
     } catch (error) {
       hilog.error(DOMAIN, TAG, `Failed to update window breakpoint info: ${JSON.stringify(error)}`);
     }
-  }
-
-  /**
-   * 更新响应式设计系统尺寸
-   */
-  private updateResponsiveSizes(
-    widthBp: WidthBreakpoint,
-    heightBp: HeightBreakpoint,
-    width: number,
-    height: number
-  ): void {
-    const appKeys = AppStorageV2.connect(AppKeys)!;
-    const scale = ResponsiveSizeCalculator.calculateResponsiveScale(widthBp, heightBp, width, height);
-
-    // 更新字体系统
-    appKeys.responsive.fontSize.xs = ResponsiveSizeCalculator.calculateFontSize(10, scale);
-    appKeys.responsive.fontSize.sm = ResponsiveSizeCalculator.calculateFontSize(12, scale);
-    appKeys.responsive.fontSize.md = ResponsiveSizeCalculator.calculateFontSize(14, scale);
-    appKeys.responsive.fontSize.lg = ResponsiveSizeCalculator.calculateFontSize(16, scale);
-    appKeys.responsive.fontSize.xl = ResponsiveSizeCalculator.calculateFontSize(18, scale);
-    appKeys.responsive.fontSize.xxl = ResponsiveSizeCalculator.calculateFontSize(20, scale);
-    appKeys.responsive.fontSize.xxxl = ResponsiveSizeCalculator.calculateFontSize(24, scale);
-    appKeys.responsive.fontSize.xxxxl = ResponsiveSizeCalculator.calculateFontSize(32, scale);
-
-    // 更新间距系统
-    appKeys.responsive.spacing.xs = ResponsiveSizeCalculator.calculateSpacing(4, scale);
-    appKeys.responsive.spacing.sm = ResponsiveSizeCalculator.calculateSpacing(8, scale);
-    appKeys.responsive.spacing.md = ResponsiveSizeCalculator.calculateSpacing(12, scale);
-    appKeys.responsive.spacing.lg = ResponsiveSizeCalculator.calculateSpacing(16, scale);
-    appKeys.responsive.spacing.xl = ResponsiveSizeCalculator.calculateSpacing(20, scale);
-    appKeys.responsive.spacing.xxl = ResponsiveSizeCalculator.calculateSpacing(24, scale);
-    appKeys.responsive.spacing.xxxl = ResponsiveSizeCalculator.calculateSpacing(32, scale);
-    appKeys.responsive.spacing.xxxxl = ResponsiveSizeCalculator.calculateSpacing(40, scale);
-
-    // 更新图标尺寸
-    appKeys.responsive.iconSize.xs = ResponsiveSizeCalculator.calculateIconSize(12, scale);
-    appKeys.responsive.iconSize.sm = ResponsiveSizeCalculator.calculateIconSize(16, scale);
-    appKeys.responsive.iconSize.md = ResponsiveSizeCalculator.calculateIconSize(20, scale);
-    appKeys.responsive.iconSize.lg = ResponsiveSizeCalculator.calculateIconSize(24, scale);
-    appKeys.responsive.iconSize.xl = ResponsiveSizeCalculator.calculateIconSize(32, scale);
-    appKeys.responsive.iconSize.xxl = ResponsiveSizeCalculator.calculateIconSize(40, scale);
-    appKeys.responsive.iconSize.xxxl = ResponsiveSizeCalculator.calculateIconSize(48, scale);
-
-    // 更新圆角
-    appKeys.responsive.borderRadius.xs = ResponsiveSizeCalculator.calculateBorderRadius(4, scale);
-    appKeys.responsive.borderRadius.sm = ResponsiveSizeCalculator.calculateBorderRadius(8, scale);
-    appKeys.responsive.borderRadius.md = ResponsiveSizeCalculator.calculateBorderRadius(12, scale);
-    appKeys.responsive.borderRadius.lg = ResponsiveSizeCalculator.calculateBorderRadius(16, scale);
-    appKeys.responsive.borderRadius.xl = ResponsiveSizeCalculator.calculateBorderRadius(20, scale);
-    appKeys.responsive.borderRadius.xxl = ResponsiveSizeCalculator.calculateBorderRadius(24, scale);
-    appKeys.responsive.borderRadius.full = ResponsiveSizeCalculator.calculateBorderRadius(999, scale);
-
-    hilog.info(DOMAIN, TAG, `响应式尺寸已更新，比例因子: ${scale.toFixed(2)}`);
   }
 }
