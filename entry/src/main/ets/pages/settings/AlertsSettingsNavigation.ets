@@ -6,11 +6,10 @@ import { AppStorageV2, curves, PersistenceV2 } from '@kit.ArkUI';
 
 // 导入新组件
 import { AlertsStatusIndicator } from '../../components/alerts/AlertsStatusIndicator';
-import { SmartThresholdPresets } from '../../components/alerts/SmartThresholdPresets';
-import { TimeSchedulingPanel } from '../../components/alerts/TimeSchedulingPanel';
+import { EnhancedThresholdManager } from '../../components/alerts/EnhancedThresholdManager';
 import { NotificationPreferences } from '../../components/alerts/NotificationPreferences';
 import { AcousticExplanationPanel } from '../../components/alerts/AcousticExplanationPanel';
-import { DayNightTime } from '../../constants/AlertsConstants';
+import { thresholdManager } from '../../services/ThresholdManager';
 
 @Extend(Image)
 function itemIcon() {
@@ -63,93 +62,13 @@ export struct AlertsSettings {
   @Consumer(navigationStack) navStack: NavPathStack = new NavPathStack();
 
   aboutToAppear() {
-    // 初始化时段调度阈值
-    if (this.pk.daytime_alert_threshold === undefined) {
-      this.pk.daytime_alert_threshold = 70;
-    }
-    if (this.pk.nighttime_alert_threshold === undefined) {
-      this.pk.nighttime_alert_threshold = 50;
-    }
+    // 初始化阈值管理器配置
+    // 这里可以添加从持久化存储加载配置的逻辑
   }
 
-  // 获取当前有效阈值
+  // 获取当前有效阈值（兼容原有逻辑）
   private getCurrentEffectiveThreshold(): number {
-    if (!this.pk.alert_time_scheduling_enabled) {
-      return this.pk.noise_threshold;
-    }
-    
-    const currentHour = new Date().getHours();
-    if (currentHour >= 6 && currentHour < 22) {
-      return this.pk.daytime_alert_threshold;
-    } else {
-      return this.pk.nighttime_alert_threshold;
-    }
-  }
-
-  // 处理阈值变化
-  private onThresholdChange(value: number) {
-    this.pk.noise_threshold = value;
-  }
-
-  // 获取预设基准阈值
-  private getPresetBaseThreshold(preset: string): number {
-    const presetMap: Record<string, number> = {
-      'quiet_environment': 40,
-      'general_environment': 55,
-      'noisy_environment': 70,
-      'dangerous_environment': 85
-    };
-    return presetMap[preset] || this.pk.noise_threshold;
-  }
-
-  // 计算时段调度阈值（智能联动）
-  private calculateTimeSchedulingThresholds(baseThreshold: number): DayNightTime {
-    let difference = 0;
-    
-    // 基于基准阈值智能计算差值
-    if (baseThreshold <= 40) {
-      difference = 5;  // 安静环境：差值较小
-    } else if (baseThreshold <= 55) {
-      difference = 10; // 一般环境：标准差值
-    } else if (baseThreshold <= 70) {
-      difference = 15; // 嘈杂环境：较大差值
-    } else {
-      difference = 20; // 危险环境：最大差值
-    }
-    
-    return {
-      daytime: baseThreshold + difference,
-      nighttime: baseThreshold - difference
-    };
-  }
-
-  // 处理预设变化（增强版，支持智能联动）
-  private onPresetChange(preset: string) {
-    this.pk.current_preset_threshold = preset;
-    
-    // 如果是预设模式且不是自定义，自动计算时段调度阈值
-    if (preset !== 'custom') {
-      const baseThreshold = this.getPresetBaseThreshold(preset);
-      const thresholds = this.calculateTimeSchedulingThresholds(baseThreshold);
-      
-      this.pk.daytime_alert_threshold = thresholds.daytime;
-      this.pk.nighttime_alert_threshold = thresholds.nighttime;
-    }
-  }
-
-  // 处理时段调度启用状态变化
-  private onTimeSchedulingEnabledChange(enabled: boolean) {
-    this.pk.alert_time_scheduling_enabled = enabled;
-  }
-
-  // 处理白天阈值变化
-  private onDaytimeThresholdChange(value: number) {
-    this.pk.daytime_alert_threshold = value;
-  }
-
-  // 处理夜间阈值变化
-  private onNighttimeThresholdChange(value: number) {
-    this.pk.nighttime_alert_threshold = value;
+    return thresholdManager.getCurrentEffectiveThreshold();
   }
 
   // 处理声音通知变化
@@ -181,39 +100,7 @@ export struct AlertsSettings {
         isAlertEnabled: this.pk.noise_alarm_enabled
       })
 
-      // 智能阈值预设
-      SmartThresholdPresets({
-        currentThreshold: this.pk.noise_threshold,
-        currentPreset: this.pk.current_preset_threshold,
-        onThresholdChange: (value: number) => {
-          this.onThresholdChange(value);
-        },
-        onPresetChange: (preset: string) => {
-          this.onPresetChange(preset);
-        },
-        onDaytimeThresholdChange: (value: number) => {
-          this.onDaytimeThresholdChange(value);
-        },
-        onNighttimeThresholdChange: (value: number) => {
-          this.onNighttimeThresholdChange(value);
-        }
-      })
-
-      // 时段调度设置
-      TimeSchedulingPanel({
-        isEnabled: this.pk.alert_time_scheduling_enabled,
-        daytimeThreshold: this.pk.daytime_alert_threshold,
-        nighttimeThreshold: this.pk.nighttime_alert_threshold,
-        onEnabledChange: (enabled: boolean) => {
-          this.onTimeSchedulingEnabledChange(enabled);
-        },
-        onDaytimeThresholdChange: (value: number) => {
-          this.onDaytimeThresholdChange(value);
-        },
-        onNighttimeThresholdChange: (value: number) => {
-          this.onNighttimeThresholdChange(value);
-        }
-      })
+      EnhancedThresholdManager()
 
       // 通知偏好设置
       NotificationPreferences({
