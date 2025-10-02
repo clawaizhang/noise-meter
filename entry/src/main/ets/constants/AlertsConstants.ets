@@ -130,6 +130,36 @@ export const TIME_PERIOD_CONFIG: TimePeriodConfig = {
   NIGHTTIME_END: 6    // 夜间结束时间 (6:00)
 };
 
+// 智能联动配置
+interface SmartLinkageConfig {
+  ENABLED: boolean;
+  PRESET_THRESHOLD_DIFFERENCES: Record<string, number>;
+}
+
+export const SMART_LINKAGE_CONFIG: SmartLinkageConfig = {
+  ENABLED: true,
+  PRESET_THRESHOLD_DIFFERENCES: {
+    'quiet_environment': 5,    // 安静环境差值
+    'general_environment': 10, // 一般环境差值
+    'noisy_environment': 15,   // 嘈杂环境差值
+    'dangerous_environment': 20 // 危险环境差值
+  }
+};
+
+// 预设映射表
+export const PRESET_MAPPING: Record<string, string> = {
+  'quiet_environment': '安静环境',
+  'general_environment': '一般环境',
+  'noisy_environment': '嘈杂环境',
+  'dangerous_environment': '危险环境',
+  'custom': '自定义'
+};
+
+export interface DayNightTime {
+  daytime: number;
+  nighttime: number;
+}
+
 // 颜色配置
 interface AlertColors {
   PRIMARY: Resource;

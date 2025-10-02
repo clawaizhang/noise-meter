@@ -10,6 +10,7 @@ import { SmartThresholdPresets } from '../../components/alerts/SmartThresholdPre
 import { TimeSchedulingPanel } from '../../components/alerts/TimeSchedulingPanel';
 import { NotificationPreferences } from '../../components/alerts/NotificationPreferences';
 import { AcousticExplanationPanel } from '../../components/alerts/AcousticExplanationPanel';
+import { DayNightTime } from '../../constants/AlertsConstants';
 
 @Extend(Image)
 function itemIcon() {
@@ -90,9 +91,50 @@ export struct AlertsSettings {
     this.pk.noise_threshold = value;
   }
 
-  // 处理预设变化
+  // 获取预设基准阈值
+  private getPresetBaseThreshold(preset: string): number {
+    const presetMap: Record<string, number> = {
+      'quiet_environment': 40,
+      'general_environment': 55,
+      'noisy_environment': 70,
+      'dangerous_environment': 85
+    };
+    return presetMap[preset] || this.pk.noise_threshold;
+  }
+
+  // 计算时段调度阈值（智能联动）
+  private calculateTimeSchedulingThresholds(baseThreshold: number): DayNightTime {
+    let difference = 0;
+    
+    // 基于基准阈值智能计算差值
+    if (baseThreshold <= 40) {
+      difference = 5;  // 安静环境：差值较小
+    } else if (baseThreshold <= 55) {
+      difference = 10; // 一般环境：标准差值
+    } else if (baseThreshold <= 70) {
+      difference = 15; // 嘈杂环境：较大差值
+    } else {
+      difference = 20; // 危险环境：最大差值
+    }
+    
+    return {
+      daytime: baseThreshold + difference,
+      nighttime: baseThreshold - difference
+    };
+  }
+
+  // 处理预设变化（增强版，支持智能联动）
   private onPresetChange(preset: string) {
     this.pk.current_preset_threshold = preset;
+    
+    // 如果是预设模式且不是自定义，自动计算时段调度阈值
+    if (preset !== 'custom') {
+      const baseThreshold = this.getPresetBaseThreshold(preset);
+      const thresholds = this.calculateTimeSchedulingThresholds(baseThreshold);
+      
+      this.pk.daytime_alert_threshold = thresholds.daytime;
+      this.pk.nighttime_alert_threshold = thresholds.nighttime;
+    }
   }
 
   // 处理时段调度启用状态变化
@@ -148,6 +190,12 @@ export struct AlertsSettings {
         },
         onPresetChange: (preset: string) => {
           this.onPresetChange(preset);
+        },
+        onDaytimeThresholdChange: (value: number) => {
+          this.onDaytimeThresholdChange(value);
+        },
+        onNighttimeThresholdChange: (value: number) => {
+          this.onNighttimeThresholdChange(value);
         }
       })
 

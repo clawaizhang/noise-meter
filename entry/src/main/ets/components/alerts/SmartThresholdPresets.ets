@@ -3,7 +3,8 @@
  * 提供基于声学标准的预设阈值选择
  */
 
-import { PRESET_THRESHOLDS, ALERT_COLORS, PresetThreshold } from '../../constants/AlertsConstants';
+import { PRESET_THRESHOLDS, ALERT_COLORS, PresetThreshold, SMART_LINKAGE_CONFIG, PRESET_MAPPING,
+  DayNightTime } from '../../constants/AlertsConstants';
 import { DesignConstants } from '../../constants/DesignConstants';
 import { curves } from '@kit.ArkUI';
 
@@ -13,6 +14,8 @@ export struct SmartThresholdPresets {
   @Param @Require currentPreset: string = 'custom'; // 当前预设
   @Param @Require onThresholdChange: (value: number) => void; // 阈值变化回调
   @Param @Require onPresetChange: (preset: string) => void; // 预设变化回调
+  @Param @Require onDaytimeThresholdChange?: (value: number) => void; // 白天阈值变化回调（新增）
+  @Param @Require onNighttimeThresholdChange?: (value: number) => void; // 夜间阈值变化回调（新增）
   @Local private isCustomMode: boolean = false; // 是否自定义模式
   @Local private customThreshold: number = 70; // 自定义阈值
 
@@ -77,6 +80,27 @@ export struct SmartThresholdPresets {
     }
   }
 
+  // 计算时段调度阈值（智能联动）
+  private calculateTimeSchedulingThresholds(baseThreshold: number): DayNightTime {
+    let difference = 0;
+    
+    // 基于基准阈值智能计算差值
+    if (baseThreshold <= 40) {
+      difference = 5;  // 安静环境：差值较小
+    } else if (baseThreshold <= 55) {
+      difference = 10; // 一般环境：标准差值
+    } else if (baseThreshold <= 70) {
+      difference = 15; // 嘈杂环境：较大差值
+    } else {
+      difference = 20; // 危险环境：最大差值
+    }
+    
+    return {
+      daytime: baseThreshold + difference,
+      nighttime: baseThreshold - difference
+    };
+  }
+
   // 构建预设卡片
   @Builder
   private buildPresetCard(preset: PresetThreshold) {
@@ -115,8 +139,16 @@ export struct SmartThresholdPresets {
     })
     .onClick(() => {
       this.isCustomMode = false;
-      this.onPresetChange(preset.name.toLowerCase().replace(' ', '_'));
+      const presetKey = preset.name.toLowerCase().replace(' ', '_');
+      this.onPresetChange(presetKey);
       this.onThresholdChange(preset.value);
+      
+      // 智能联动：自动计算并更新时段调度阈值
+      if (SMART_LINKAGE_CONFIG.ENABLED && this.onDaytimeThresholdChange && this.onNighttimeThresholdChange) {
+        const thresholds = this.calculateTimeSchedulingThresholds(preset.value);
+        this.onDaytimeThresholdChange(thresholds.daytime);
+        this.onNighttimeThresholdChange(thresholds.nighttime);
+      }
     })
     .animation({
       duration: 200,
