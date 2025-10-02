@@ -13,97 +13,79 @@ export struct ActionPanel {
   @Param @Require weightingType: WeightingType;
   @Event onReset: () => void;
   @Event onSave: (comment: string) => void;
-  private weightingTypes: Array<SelectOption> =
-    [{ value: WeightingType.A }, { value: WeightingType.C }, { value: WeightingType.Z }];
 
   aboutToAppear(): void {
   }
 
   build() {
     // 操作按钮 - 响应式布局
-    Column({ space: 12 }) {
-      // 标题
-      Text('操作')
-        .fontSize(16)
-        .fontWeight(FontWeight.Medium)
-        .fontColor($r('sys.color.ohos_id_color_text_primary'))
-        .width('100%')
-        .textAlign(TextAlign.Center)
-
-      // 按钮组 - 根据屏幕尺寸调整布局
-      Flex({
-        direction: FlexDirection.Column,
-        wrap: FlexWrap.NoWrap,
-        justifyContent: FlexAlign.SpaceEvenly,
-        alignItems: ItemAlign.Center,
-        alignContent: FlexAlign.Center
-      }) {
-        // 重置按钮
-        Button({ type: ButtonType.Circle }) {
-          Image($r('app.media.ic_reset'))
-            .width(24)
-            .height(24)
-            .fillColor($r('sys.color.icon_secondary'))
-        }
-        .width(48)
-        .height(48)
-        .backgroundColor($r('sys.color.comp_background_secondary'))
-        .accessibilityDescription('重置当前数据')
-        .onClick(async () => {
-          await this.onResetButtonClicked();
-        })
-
-        // 手电筒按钮
-        Button({ type: ButtonType.Circle }) {
-          Image($r('sys.media.light_flashlight_on_fill'))
-            .width(24)
-            .height(24)
-            .fillColor(this.isTorchOn ? '#ffffffff' : $r('sys.color.icon_secondary'))
-        }
-        .width(48)
-        .height(48)
-        .backgroundColor(this.isTorchOn ? $r('sys.color.background_emphasize') : $r('sys.color.comp_background_secondary'))
-        .accessibilityDescription(this.isTorchOn ? '关闭手电筒' : '打开手电筒')
-        .onClick(() => {
-          this.toggleTorch();
-        })
-
-        // 保存按钮
-        Button({ type: ButtonType.Circle }) {
-          Image($r('app.media.ic_save'))
-            .width(24)
-            .height(24)
-            .fillColor($r('sys.color.icon_secondary'))
-        }
-        .id('showNoiseDetailDialogFromActionPanels')
-        .width(48)
-        .height(48)
-        .backgroundColor($r('sys.color.comp_background_secondary'))
-        .accessibilityDescription('保存当前数据')
-        .onClick(async () => {
-          const dialogController = new CustomDialogController({
-            builder: InputDialog({
-              title: '保存记录',
-              onConfirm: (comment: string) => {
-                this.onSave(comment);
-              },
-              onClose: () => {
-                dialogController.close();
-              }
-            }),
-            cancel: () => {
-              console.log('Dialog canceled');
-            },
-            autoCancel: true
-          });
-          dialogController.open();
-        })
+    Row({ space: 12 }) {
+      // 重置按钮
+      Button({ type: ButtonType.Circle }) {
+        Image($r('app.media.ic_reset'))
+          .width(24)
+          .height(24)
+          .fillColor($r('sys.color.icon_secondary'))
       }
-      .width('100%')
-      .height('100%')
+      .width(48)
+      .height(48)
+      .backgroundColor($r('sys.color.comp_background_secondary'))
+      .accessibilityDescription('重置当前数据')
+      .onClick(async () => {
+        await this.onResetButtonClicked();
+      })
+
+      // 手电筒按钮
+      Button({ type: ButtonType.Circle }) {
+        Image($r('sys.media.light_flashlight_on_fill'))
+          .width(24)
+          .height(24)
+          .fillColor(this.isTorchOn ? '#ffffffff' : $r('sys.color.icon_secondary'))
+      }
+      .width(48)
+      .height(48)
+      .backgroundColor(this.isTorchOn ? $r('sys.color.background_emphasize') :
+      $r('sys.color.comp_background_secondary'))
+      .accessibilityDescription(this.isTorchOn ? '关闭手电筒' : '打开手电筒')
+      .onClick(() => {
+        this.toggleTorch();
+      })
+
+      // 保存按钮
+      Button({ type: ButtonType.Circle }) {
+        Image($r('app.media.ic_save'))
+          .width(24)
+          .height(24)
+          .fillColor($r('sys.color.icon_secondary'))
+      }
+      .id('showNoiseDetailDialogFromActionPanels')
+      .width(48)
+      .height(48)
+      .backgroundColor($r('sys.color.comp_background_secondary'))
+      .accessibilityDescription('保存当前数据')
+      .onClick(async () => {
+        const dialogController = new CustomDialogController({
+          builder: InputDialog({
+            title: '保存记录',
+            onConfirm: (comment: string) => {
+              this.onSave(comment);
+            },
+            onClose: () => {
+              dialogController.close();
+            }
+          }),
+          cancel: () => {
+            console.log('Dialog canceled');
+          },
+          autoCancel: true
+        });
+        dialogController.open();
+      })
     }
     .width('100%')
-    .height('100%')
+    .height(80)
+    .justifyContent(FlexAlign.SpaceBetween)
+    .alignItems(VerticalAlign.Center)
     .backgroundColor($r('sys.color.comp_background_primary'))
     .borderRadius(16)
     .padding(16)

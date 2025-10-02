@@ -1,5 +1,4 @@
-import { AppStorageV2, curves, PersistenceV2 } from '@kit.ArkUI';
-import display from '@ohos.display';
+import { AppStorageV2, PersistenceV2 } from '@kit.ArkUI';
 import { resourceManager } from '@kit.LocalizationKit';
 import { AppKeys } from '../../models/AppKeys';
 import { drawSpectrum, getDbSteps, getFrequencySteps } from './DrawSpectrum';
@@ -44,38 +43,22 @@ export struct SpectrumChartComponent {
     }
   }
 
-  // 计算Canvas尺寸（响应式版本）- 优化平板横屏支持
-  private async calculateCanvasDimensions(): Promise<void> {
-    try {
-      // 获取实际可用区域
-      const availableArea = await display.getDefaultDisplaySync().getAvailableArea();
-      const isLandscape = availableArea.width > availableArea.height;
-      
-      // 更新响应式布局状态
-      const availableWidthVp = px2vp(availableArea.width);
-      const availableHeightVp = px2vp(availableArea.height);
-
-      if (isLandscape) {
-        // 横屏模式：使用2:1宽高比，更适合平板横屏
-        this.canvasWidth = availableWidthVp * 0.7; // 占用70%可用宽度
-        this.canvasHeight = this.canvasWidth / 2; // 2:1宽高比
-      } else {
-        // 竖屏模式：保持原有1.5:1宽高比
-        this.canvasWidth = availableWidthVp - (16 as number * 2);
-        this.canvasHeight = this.canvasWidth / this.ASPECT_RATIO;
-      }
-
-      // 确保Canvas尺寸不会过大
-      const maxCanvasWidth = Math.min(this.canvasWidth, 600);
-      const maxCanvasHeight = Math.min(this.canvasHeight, 400);
-      
-      this.canvasWidth = maxCanvasWidth;
-      this.canvasHeight = maxCanvasHeight;
-
-      console.info(`[FREQ_TRACE][Canvas] 响应式Canvas尺寸: ${this.canvasWidth}x${this.canvasHeight}, 横屏: ${isLandscape}`);
-    } catch (error) {
-      console.error('[FREQ_TRACE][显示设备信息] 计算Canvas尺寸失败:', error);
+  // 计算Canvas尺寸（基于横向断点的简化版本）
+  private calculateCanvasDimensions(): void {
+    const widthBp = this.as.windowWidthBreakpoint;
+    
+    // 基于横向断点判断布局模式
+    if (widthBp === WidthBreakpoint.WIDTH_XS || widthBp === WidthBreakpoint.WIDTH_SM) {
+      // 横向XS/SM：单列布局，频谱图占满屏幕宽度
+      this.canvasWidth = this.as.windowWidth - 32; // 减去边距
+      this.canvasHeight = this.canvasWidth / this.ASPECT_RATIO;
+    } else {
+      // 横向MD及以上：双列布局，频谱图基于Grid分配的宽度计算
+      this.canvasWidth = (this.as.windowWidth / 2) - 32; // Grid分配半宽减去边距
+      this.canvasHeight = this.canvasWidth / this.ASPECT_RATIO;
     }
+
+    console.info(`[FREQ_TRACE][Canvas] 响应式Canvas尺寸: ${this.canvasWidth}x${this.canvasHeight}, 横向断点: ${widthBp}`);
   }
 
   @Builder

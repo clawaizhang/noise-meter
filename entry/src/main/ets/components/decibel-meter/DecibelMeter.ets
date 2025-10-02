@@ -16,10 +16,10 @@ import { AppKeys } from '../../models/AppKeys';
 import { PermissionService } from '../../services/PermissionService';
 import { AudioController } from './AudioController';
 import { AudioControllerService } from '../../services/AudioControllerService';
+import { DesignConstants } from '../../constants/DesignConstants';
 
 @ComponentV2
 export struct DecibelMeter {
-
   @Param @Require meterOn: boolean = true;
   @Local private isRecording: boolean = false
   @Local private recordingTime: number = 0
@@ -54,7 +54,7 @@ export struct DecibelMeter {
   }
 
   build() {
-    Stack() {
+    Stack({ alignContent: Alignment.Bottom }) {
       GridRow({ columns: 12, breakpoints: { reference: BreakpointsReference.WindowSize }, gutter: 16 }) {
 
         // 错误消息显示区域（支持多个错误同时显示）
@@ -98,14 +98,14 @@ export struct DecibelMeter {
           },
         })
 
-        // 分贝显示面板 - 优化平板横屏布局
+        // 分贝显示面板 - 简化布局策略
         GridCol({
           span: {
-            xs: 12,  // 手机竖屏：全宽
-            sm: 12,  // 手机横屏：全宽
-            md: 6,   // 平板竖屏：半宽
-            lg: 4,   // 平板横屏：4/12
-            xl: 4    // 大屏设备：4/12
+            xs: 12, // 横向XS/SM：单列布局（全宽）
+            sm: 12, // 横向XS/SM：单列布局（全宽）
+            md: 6, // 横向MD及以上：双列布局（半宽）
+            lg: 6, // 横向MD及以上：双列布局（半宽）
+            xl: 6    // 横向MD及以上：双列布局（半宽）
           }
         }) {
           Column({ space: 12 }) {
@@ -141,14 +141,14 @@ export struct DecibelMeter {
         .borderRadius(16)
         .padding(16)
 
-        // 频谱图 - 优化平板横屏布局
+        // 频谱图 - 简化布局策略
         GridCol({
           span: {
-            xs: 12,  // 手机竖屏：全宽
-            sm: 12,  // 手机横屏：全宽
-            md: 6,   // 平板竖屏：半宽
-            lg: 5,   // 平板横屏：5/12
-            xl: 5    // 大屏设备：5/12
+            xs: 12, // 横向XS/SM：单列布局（全宽）
+            sm: 12, // 横向XS/SM：单列布局（全宽）
+            md: 6, // 横向MD及以上：双列布局（半宽）
+            lg: 6, // 横向MD及以上：双列布局（半宽）
+            xl: 6    // 横向MD及以上：双列布局（半宽）
           }
         }) {
           SpectrumChartComponent({
@@ -156,27 +156,8 @@ export struct DecibelMeter {
           })
         }
         .backgroundColor($r('sys.color.comp_background_primary'))
-        .borderRadius(16)
-        .padding(16)
-
-        // 操作面板 - 优化平板横屏布局
-        GridCol({
-          span: {
-            xs: 12,  // 手机竖屏：全宽
-            sm: 12,  // 手机横屏：全宽
-            md: 12,  // 平板竖屏：全宽
-            lg: 3,   // 平板横屏：3/12
-            xl: 3    // 大屏设备：3/12
-          }
-        }) {
-          this.actionPanel()
-        }
-        .backgroundColor($r('sys.color.comp_background_primary'))
-        .borderRadius(16)
-        .padding(16)
-
       }
-      .padding({ top: 16, bottom: 16 })
+      .padding({ top: 16, bottom: 96 }) // 增加底部内边距为操作按钮留出空间
       .id('mainNoiseMeterDisplayId')
       .onBreakpointChange(breakPoints => {
         // 断点信息现在由 AppStorage 统一管理，这里不再需要处理
@@ -189,6 +170,8 @@ export struct DecibelMeter {
         .backgroundImage(this.bgImage)
         .scale({ x: this.dScale, y: this.dScale })
         .translate({ x: this.translateX, y: this.translateY })
+
+      this.actionPanel()
     }
   }
 
@@ -224,7 +207,12 @@ export struct DecibelMeter {
       if (!this.pk.microphone_permission_requested) {
         Button('授权')
           .fontSize(12)
-          .padding({ left: 16, right: 16, top: 6, bottom: 6 })
+          .padding({
+            left: 16,
+            right: 16,
+            top: 6,
+            bottom: 6
+          })
           .onClick(async () => {
             const permissionService = PermissionService.getInstance();
             await permissionService.requestMicrophonePermission();
@@ -232,7 +220,12 @@ export struct DecibelMeter {
       } else {
         Button('去设置')
           .fontSize(12)
-          .padding({ left: 16, right: 16, top: 6, bottom: 6 })
+          .padding({
+            left: 16,
+            right: 16,
+            top: 6,
+            bottom: 6
+          })
           .onClick(async () => {
             const permissionService = PermissionService.getInstance();
             await permissionService.openPermissionSettings();
