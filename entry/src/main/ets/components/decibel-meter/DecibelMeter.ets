@@ -15,6 +15,7 @@ import { image } from '@kit.ImageKit';
 import { AppKeys } from '../../models/AppKeys';
 import { PermissionService } from '../../services/PermissionService';
 import { AudioController } from './AudioController';
+import { AudioControllerService } from '../../services/AudioControllerService';
 
 @ComponentV2
 export struct DecibelMeter {
@@ -38,12 +39,15 @@ export struct DecibelMeter {
   @Local private avgDecibel: number = 0;
   @Local private maxDecibel: number = 0;
   @Local private minDecibel: number = 0;
+  // 服务实例
+  private audioControllerService: AudioControllerService = AudioControllerService.getInstance();
   @Consumer(navigationStack) navStack: NavPathStack = new NavPathStack()
   noiseInfoDialog: InfSheet | undefined
   sysResourceManager: resourceManager.ResourceManager = resourceManager.getSystemResourceManager();
 
   aboutToDisappear() {
     // 清理资源
+    this.audioControllerService.dispose();
   }
 
   async aboutToAppear() {
@@ -267,11 +271,15 @@ export struct DecibelMeter {
       weightingType: this.pk.weighting_type,
       onReset: () => {
         // 重置功能由AudioController处理
+        // 通过服务触发重置事件
+        this.audioControllerService.resetData();
         // 这里可以添加重置UI状态的逻辑
       },
       onSave: (comments) => {
         this.bgImage = this.getUIContext().getComponentSnapshot().getSync('mainNoiseMeterDisplayId');
         // 保存功能由AudioController处理
+        // 通过服务触发保存事件
+        this.audioControllerService.saveData(comments);
         // 这里只处理UI动画
         this.startCollapseAnimation();
       }

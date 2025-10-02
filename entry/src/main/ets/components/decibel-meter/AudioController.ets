@@ -13,6 +13,7 @@ import { BusinessError } from '@kit.BasicServicesKit';
 import { catchError, delay, filter, from, map, of, Subject, Subscription, switchMap, take, tap } from 'rxjs';
 import { AppKeys } from '../../models/AppKeys';
 import { FFTAnalyzer } from '../../utils/FFTAnalyzer';
+import { AudioControllerService } from '../../services/AudioControllerService';
 
 @ComponentV2
 export struct AudioController {
@@ -39,6 +40,8 @@ export struct AudioController {
   // RxJS相关
   private audioBufferSubject = new Subject<void>();
   private durationCheckSubscription?: Subscription;
+  // 服务实例
+  private audioControllerService: AudioControllerService = AudioControllerService.getInstance();
   // 常量
   private readonly MAX_RECORDING_DURATION: number = 60 * 60_000;
   // 记录相关
@@ -68,6 +71,16 @@ export struct AudioController {
     if (this.ak.microphonePermissionGranted) {
       this.startRecording();
     }
+
+    // 订阅重置事件
+    this.audioControllerService.subscribeReset(() => {
+      this.performReset();
+    });
+
+    // 订阅保存事件
+    this.audioControllerService.subscribeSave((comments: string) => {
+      this.performSave(comments);
+    });
   }
 
   aboutToDisappear() {
@@ -276,7 +289,7 @@ export struct AudioController {
     this.weightingTypes.push(weightingType);
   }
 
-  private resetData() {
+  resetData() {
     // 重置状态
     this.values = [];
     this.startTime = new Date().getTime();
@@ -284,6 +297,16 @@ export struct AudioController {
 
     // 重置 weightingTypes 数组
     this.weightingTypes = [];
+
+    // 重置统计信息
+    this.minDecibel = 0;
+    this.maxDecibel = 0;
+    this.avgDecibel = 0;
+    this.currentDecibel = 0;
+
+    // 通知UI更新
+    this.onMinMaxAvgCurrent(this.minDecibel, this.maxDecibel, this.avgDecibel, this.currentDecibel);
+    this.onRecordingTimeUpdate(this.recordingTime);
   }
 
   private startDurationMonitoring(): void {
@@ -384,5 +407,35 @@ export struct AudioController {
     // AudioController 主要负责逻辑处理，不渲染UI
     // UI渲染由父组件DecibelMeter负责
     Column()
+  }
+
+
+  // 执行重置操作
+  private performReset() {
+    console.info('[FREQ_TRACE][Reset] 开始重置数据');
+    
+    // 重置数据
+    this.values = [];
+    this.startTime = new Date().getTime();
+    this.recordingTime = 0;
+    this.weightingTypes = [];
+    
+    // 重置统计信息
+    this.minDecibel = 0;
+    this.maxDecibel = 0;
+    this.avgDecibel = 0;
+    this.currentDecibel = 0;
+
+    // 通知UI更新
+    this.onMinMaxAvgCurrent(this.minDecibel, this.maxDecibel, this.avgDecibel, this.currentDecibel);
+    this.onRecordingTimeUpdate(this.recordingTime);
+    
+    console.info('[FREQ_TRACE][Reset] 数据重置完成');
+  }
+
+  // 执行保存操作
+  private performSave(comments: string) {
+    console.info('[FREQ_TRACE][Save] 开始保存数据');
+    this.stopRecording(comments);
   }
 }
