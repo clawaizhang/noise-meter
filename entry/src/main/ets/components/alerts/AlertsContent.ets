@@ -11,7 +11,6 @@ export struct AlertsContent {
   // 通过AppKeys获取实时数据
   @Local private as: AppKeys = AppStorageV2.connect(AppKeys)!;
   @Local private pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys)!;
-
   // 警报状态
   @Local private isAlarmActive: boolean = false;
   @Local private visualAlertState: string = 'normal';
@@ -22,7 +21,7 @@ export struct AlertsContent {
   }
 
   @Monitor('as.db')
-  onDbChange(monitor:IMonitor){
+  onDbChange(monitor: IMonitor) {
     const currentDecibel = monitor.value<number>()?.now;
     if (currentDecibel !== undefined) {
       this.checkAlertStatus(currentDecibel);
@@ -83,11 +82,12 @@ export struct AlertsContent {
   // 显示系统通知
   private showSystemNotification(currentDecibel: number): void {
     const threshold = ThresholdManager.getCurrentEffectiveThreshold();
-    NotificationHelper.getInstance(this.getUIContext().getHostContext() as common.UIAbilityContext).showNotification(999_999,
-      '噪音警报',
-      `当前噪音水平 ${currentDecibel}dB 超过阈值 ${threshold}dB`,
-      '请采取适当防护措施'
-    );
+    NotificationHelper.getInstance(this.getUIContext().getHostContext() as common.UIAbilityContext)
+      .showNotification(999_999,
+        '噪音警报',
+        `当前噪音水平 ${currentDecibel}dB 超过阈值 ${threshold}dB`,
+        '请采取适当防护措施'
+      );
   }
 
   // 构建状态显示区
@@ -104,7 +104,7 @@ export struct AlertsContent {
             iterations: this.isAlarmActive ? -1 : 1,
             playMode: PlayMode.Alternate
           })
-        
+
         Text(this.getStatusText())
           .fontSize(DesignConstants.FONT_SIZE_XL)
           .fontColor(this.getStatusColor())
@@ -154,9 +154,9 @@ export struct AlertsContent {
           .fontSize(DesignConstants.FONT_SIZE_XL)
           .fontWeight(FontWeight.Bold)
           .fontColor($r('sys.color.font_primary'))
-        
+
         Blank()
-        
+
         // 总开关 - 只保留开关
         Toggle({ type: ToggleType.Switch, isOn: this.pk.noise_alarm_enabled })
           .onChange((enabled: boolean) => {
@@ -167,40 +167,42 @@ export struct AlertsContent {
       }
       .width('100%')
       .alignItems(VerticalAlign.Center)
-      
-      // 三个反馈项垂直排列
-      Column({ space: DesignConstants.SPACING_SM }) {
-        // 声音反馈
-        this.buildFeedbackItem(
-          '声音',
-          this.pk.sound_alert_enabled,
-          $r('app.media.ic_audio_analysis'),
-          (enabled: boolean) => {
-            this.pk.sound_alert_enabled = enabled;
-          }
-        )
-        
-        // 振动反馈
-        this.buildFeedbackItem(
-          '振动',
-          this.pk.vibration_alert_enabled,
-          $r('app.media.ic_sensor'),
-          (enabled: boolean) => {
-            this.pk.vibration_alert_enabled = enabled;
-          }
-        )
-        
-        // 通知反馈
-        this.buildFeedbackItem(
-          '通知',
-          this.pk.system_notification_enabled,
-          $r('app.media.ic_info'),
-          (enabled: boolean) => {
-            this.pk.system_notification_enabled = enabled;
-          }
-        )
+
+      if (this.pk.noise_alarm_enabled) {
+        // 三个反馈项垂直排列
+        Column({ space: DesignConstants.SPACING_SM }) {
+          // 声音反馈
+          this.buildFeedbackItem(
+            '声音',
+            this.pk.sound_alert_enabled,
+            $r('app.media.ic_audio_analysis'),
+            (enabled: boolean) => {
+              this.pk.sound_alert_enabled = enabled;
+            }
+          )
+
+          // 振动反馈
+          this.buildFeedbackItem(
+            '振动',
+            this.pk.vibration_alert_enabled,
+            $r('app.media.ic_sensor'),
+            (enabled: boolean) => {
+              this.pk.vibration_alert_enabled = enabled;
+            }
+          )
+
+          // 通知反馈
+          this.buildFeedbackItem(
+            '通知',
+            this.pk.system_notification_enabled,
+            $r('app.media.ic_info'),
+            (enabled: boolean) => {
+              this.pk.system_notification_enabled = enabled;
+            }
+          )
+        }
+        .width('100%')
       }
-      .width('100%')
     }
     .padding(DesignConstants.SPACING_MD)
     .backgroundColor($r('sys.color.comp_background_primary'))
@@ -217,15 +219,15 @@ export struct AlertsContent {
         .width(DesignConstants.ICON_SIZE_SM)
         .height(DesignConstants.ICON_SIZE_SM)
         .fillColor(enabled ? $r('sys.color.brand') : $r('sys.color.font_secondary'))
-      
+
       // 文字
       Text(title)
         .fontSize(DesignConstants.FONT_SIZE_MD)
         .fontColor(enabled ? $r('sys.color.font_primary') : $r('sys.color.font_secondary'))
         .fontWeight(FontWeight.Medium)
-      
+
       Blank()
-      
+
       // 开关
       Toggle({ type: ToggleType.Switch, isOn: enabled })
         .onChange(onToggle)
@@ -245,13 +247,14 @@ export struct AlertsContent {
 
   // 构建紧凑控制项 - 图标+开关（保留，可能在其他地方使用）
   @Builder
-  private buildCompactControl(enabled: boolean, icon: Resource, onToggle: (enabled: boolean) => void, isMainSwitch: boolean = false) {
+  private buildCompactControl(enabled: boolean, icon: Resource, onToggle: (enabled: boolean) => void,
+    isMainSwitch: boolean = false) {
     Row({ space: DesignConstants.SPACING_SM }) {
       Image(icon)
         .width(isMainSwitch ? DesignConstants.ICON_SIZE_MD : DesignConstants.ICON_SIZE_SM)
         .height(isMainSwitch ? DesignConstants.ICON_SIZE_MD : DesignConstants.ICON_SIZE_SM)
         .fillColor(enabled ? $r('sys.color.brand') : $r('sys.color.font_secondary'))
-      
+
       Toggle({ type: ToggleType.Switch, isOn: enabled })
         .onChange(onToggle)
         .selectedColor($r('sys.color.brand'))
@@ -276,11 +279,11 @@ export struct AlertsContent {
         .width(24)
         .height(24)
         .fillColor(enabled ? $r('sys.color.brand') : $r('sys.color.font_secondary'))
-      
+
       Text(title)
         .fontSize(DesignConstants.FONT_SIZE_MD)
         .fontColor(enabled ? $r('sys.color.font_primary') : $r('sys.color.font_secondary'))
-      
+
       Toggle({ type: ToggleType.Switch, isOn: enabled })
         .onChange(onToggle)
         .selectedColor($r('sys.color.brand'))
@@ -301,19 +304,19 @@ export struct AlertsContent {
         .fontWeight(FontWeight.Bold)
         .alignSelf(ItemAlign.Start)
         .fontColor($r('sys.color.font_primary'))
-      
+
       // 环境质量评级
       Row({ space: DesignConstants.SPACING_SM }) {
         Text('环境质量:')
           .fontSize(DesignConstants.FONT_SIZE_MD)
           .fontColor($r('sys.color.font_primary'))
-        
+
         Text(this.getEnvironmentQuality())
           .fontSize(DesignConstants.FONT_SIZE_MD)
           .fontColor(this.getEnvironmentColor())
           .fontWeight(FontWeight.Medium)
       }
-      
+
       // 专业建议
       Text(this.getEnvironmentSuggestion())
         .fontSize(DesignConstants.FONT_SIZE_SM)
@@ -332,7 +335,7 @@ export struct AlertsContent {
   private getStatusColor(): Resource {
     const currentDecibel = this.as.db;
     const threshold = ThresholdManager.getCurrentEffectiveThreshold();
-    
+
     if (currentDecibel >= threshold) {
       return $r('sys.color.alert'); // 红色
     } else if (currentDecibel >= threshold - 10) {
@@ -346,7 +349,7 @@ export struct AlertsContent {
   private getStatusText(): string {
     const currentDecibel = this.as.db;
     const threshold = ThresholdManager.getCurrentEffectiveThreshold();
-    
+
     if (currentDecibel >= threshold) {
       return '警报触发中';
     } else if (currentDecibel >= threshold - 10) {
@@ -360,7 +363,7 @@ export struct AlertsContent {
   private getStatusBackground(): Resource {
     const currentDecibel = this.as.db;
     const threshold = ThresholdManager.getCurrentEffectiveThreshold();
-    
+
     if (currentDecibel >= threshold) {
       return $r('sys.color.comp_background_warning_secondary');
     } else if (currentDecibel >= threshold - 10) {
@@ -375,7 +378,7 @@ export struct AlertsContent {
     const seconds = Math.floor(duration / 1000);
     const minutes = Math.floor(seconds / 60);
     const hours = Math.floor(minutes / 60);
-    
+
     if (hours > 0) {
       return `${hours}小时${minutes % 60}分钟`;
     } else if (minutes > 0) {
@@ -389,7 +392,7 @@ export struct AlertsContent {
   private getEnvironmentQuality(): string {
     const currentDecibel = this.as.db;
     const threshold = ThresholdManager.getCurrentEffectiveThreshold();
-    
+
     if (currentDecibel >= threshold) {
       return '危险';
     } else if (currentDecibel >= threshold - 10) {
@@ -405,7 +408,7 @@ export struct AlertsContent {
   private getEnvironmentColor(): Resource {
     const currentDecibel = this.as.db;
     const threshold = ThresholdManager.getCurrentEffectiveThreshold();
-    
+
     if (currentDecibel >= threshold) {
       return $r('sys.color.alert');
     } else if (currentDecibel >= threshold - 10) {
@@ -421,7 +424,7 @@ export struct AlertsContent {
   private getEnvironmentSuggestion(): string {
     const currentDecibel = this.as.db;
     const threshold = ThresholdManager.getCurrentEffectiveThreshold();
-    
+
     if (currentDecibel >= threshold) {
       return '当前环境噪音过高，建议立即离开或采取防护措施。长期暴露可能对听力造成损害。';
     } else if (currentDecibel >= threshold - 10) {
@@ -437,10 +440,10 @@ export struct AlertsContent {
     Column({ space: DesignConstants.SPACING_LG }) {
       // 状态显示区（最突出）
       this.buildStatusDisplay()
-      
+
       // 快速控制区
       this.buildQuickControls()
-      
+
       // 环境信息区
       this.buildEnvironmentInfo()
     }

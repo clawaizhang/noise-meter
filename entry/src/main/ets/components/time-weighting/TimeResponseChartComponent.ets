@@ -185,8 +185,7 @@ export struct TimeResponseChartComponent {
       Canvas(this.canvasContext)
         .width(this.canvasWidth)
         .height(this.canvasHeight)
-        .backgroundColor(this.sysResourceManager.getColorSync($r('sys.color.comp_background_primary').id))
-        .borderRadius(DesignConstants.BORDER_RADIUS_SM)
+        .backgroundColor($r('sys.color.black'))
         .onAreaChange((oldArea: Area, newArea: Area) => {
           // 响应式尺寸调整
           this.canvasWidth = newArea.width as number;
@@ -238,7 +237,7 @@ export struct TimeResponseChartComponent {
   // 绘制网格
   private drawGrid() {
     const ctx = this.canvasContext;
-    const gridColor = this.sysResourceManager.getColorSync($r('sys.color.comp_border_color').id);
+    const gridColor = this.sysResourceManager.getColorSync($r('sys.color.font_on_secondary').id);
     
     // 水平网格线
     for (let i = 0; i <= 4; i++) {
@@ -263,7 +262,7 @@ export struct TimeResponseChartComponent {
     }
     
     // Y轴标签
-    ctx.fillStyle = this.sysResourceManager.getColorSync($r('sys.color.font_tertiary').id);
+    ctx.fillStyle = this.sysResourceManager.getColorSync($r('sys.color.font_on_tertiary').id);
     ctx.font = '10px sans-serif';
     ctx.textAlign = 'right';
     ctx.fillText('1.0', 25, 15);
@@ -279,7 +278,7 @@ export struct TimeResponseChartComponent {
     const step = this.canvasWidth / (this.SAMPLE_COUNT - 1);
     
     ctx.beginPath();
-    ctx.strokeStyle = this.sysResourceManager.getColorSync($r('sys.color.font_primary').id);
+    ctx.strokeStyle = this.sysResourceManager.getColorSync($r('sys.color.font_on_primary').id);
     ctx.lineWidth = 2;
     
     // 移动到起点
@@ -338,7 +337,7 @@ export struct TimeResponseChartComponent {
     ctx.stroke();
     
     // 绘制标签
-    ctx.fillStyle = this.sysResourceManager.getColorSync($r('sys.color.font_secondary').id);
+    ctx.fillStyle = this.sysResourceManager.getColorSync($r('sys.color.font_on_secondary').id);
     ctx.font = '10px sans-serif';
     ctx.textAlign = 'center';
     ctx.fillText(label, x, this.canvasHeight - 10);

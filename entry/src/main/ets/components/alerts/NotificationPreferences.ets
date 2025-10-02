@@ -1,6 +1,6 @@
 /**
- * 通知偏好设置组件
- * 配置警报触发时的通知方式
+ * 噪音警报相关设置组件
+ * 配置噪音警报的开关和通知方式
  */
 
 import { ALERT_COLORS, NotificationType } from '../../constants/AlertsConstants';
@@ -9,10 +9,12 @@ import { curves } from '@kit.ArkUI';
 
 @ComponentV2
 export struct NotificationPreferences {
+  @Param @Require noiseAlarmEnabled: boolean = true; // 噪音警报主开关
   @Param @Require soundEnabled: boolean = true; // 声音提示开关
   @Param @Require vibrationEnabled: boolean = true; // 振动提示开关
   @Param @Require visualEnabled: boolean = true; // 视觉提示开关
   @Param @Require systemNotificationEnabled: boolean = true; // 系统通知开关
+  @Param @Require onNoiseAlarmChange: (enabled: boolean) => void; // 噪音警报变化回调
   @Param @Require onSoundChange: (enabled: boolean) => void; // 声音变化回调
   @Param @Require onVibrationChange: (enabled: boolean) => void; // 振动变化回调
   @Param @Require onVisualChange: (enabled: boolean) => void; // 视觉变化回调
@@ -24,6 +26,11 @@ export struct NotificationPreferences {
   }
 
   private setPreviewText() {
+    if (!this.noiseAlarmEnabled) {
+      this.previewText = '噪音警报已关闭';
+      return;
+    }
+
     this.previewText = '当前启用: ';
     if (this.soundEnabled) {
       this.previewText += '声音、';
@@ -43,7 +50,7 @@ export struct NotificationPreferences {
     this.previewText = this.previewText.slice(0, -1);
   }
 
-  @Monitor('soundEnabled', 'vibrationEnabled', 'visualEnabled', 'systemNotificationEnabled')
+  @Monitor('noiseAlarmEnabled', 'soundEnabled', 'vibrationEnabled', 'visualEnabled', 'systemNotificationEnabled')
   private onNotifyChange(monitor: IMonitor) {
     this.setPreviewText();
   }
@@ -192,36 +199,46 @@ export struct NotificationPreferences {
 
   build() {
     Column({ space: DesignConstants.SPACING_MD }) {
-      // 标题区域
+      // 标题区域 - 包含噪音警报主开关
       Row({ space: DesignConstants.SPACING_SM }) {
         Image($r('app.media.ic_alarm'))
           .width(DesignConstants.ICON_SIZE_MD)
           .height(DesignConstants.ICON_SIZE_MD)
           .fillColor($r('sys.color.font_primary'))
 
-        Text('通知偏好设置')
+        Text('警报通知')
           .fontSize(DesignConstants.FONT_SIZE_XL)
           .fontWeight(FontWeight.Bold)
           .fontColor($r('sys.color.font_primary'))
           .layoutWeight(1)
+
+        // 噪音警报主开关
+        Toggle({ type: ToggleType.Switch, isOn: this.noiseAlarmEnabled })
+          .onChange((isOn: boolean) => {
+            this.onNoiseAlarmChange(isOn);
+          })
       }
       .width('100%')
       .alignItems(VerticalAlign.Center)
 
-      // 通知类型设置
-      Column({ space: DesignConstants.SPACING_MD }) {
-        this.buildSoundNotification()
-        this.buildVibrationNotification()
-        this.buildVisualNotification()
-        this.buildSystemNotification()
-      }
-      .width('100%')
+      if (this.noiseAlarmEnabled) {
+        // 通知类型设置
+        Column({ space: DesignConstants.SPACING_MD }) {
+          this.buildSoundNotification()
+          this.buildVibrationNotification()
+          this.buildVisualNotification()
+          this.buildSystemNotification()
+        }
+        .width('100%')
 
-      // 通知组合预览
-      this.buildNotificationPreview()
+        // 通知组合预览
+        this.buildNotificationPreview()
+      }
 
       // 使用说明
-      Text('警报触发时，系统将按照您的设置发送通知。建议根据使用场景选择合适的通知组合。')
+      Text(this.noiseAlarmEnabled ?
+        '警报触发时，系统将按照您的设置发送通知。建议根据使用场景选择合适的通知组合。' :
+        '噪音警报已关闭，系统不会检测和通知噪音超标情况。')
         .fontSize(DesignConstants.FONT_SIZE_MD)
         .fontColor($r('sys.color.font_secondary'))
         .textAlign(TextAlign.Start)

@@ -59,7 +59,6 @@ export function AlertsSettingsBuilder() {
 export struct AlertsSettings {
   @Local pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys)!;
   @Local as: AppKeys = AppStorageV2.connect(AppKeys)!;
-
   @Local gridColumns: number = 1;
   @Consumer(navigationStack) navStack: NavPathStack = new NavPathStack();
 
@@ -93,6 +92,11 @@ export struct AlertsSettings {
     this.pk.system_notification_enabled = enabled;
   }
 
+  // 处理噪音警报变化
+  private onNoiseAlarmChange(enabled: boolean) {
+    this.pk.noise_alarm_enabled = enabled;
+  }
+
   build() {
     Column({ space: DesignConstants.SPACING_LG }) {
       // 警报状态指示器
@@ -102,14 +106,20 @@ export struct AlertsSettings {
         isAlertEnabled: this.pk.noise_alarm_enabled
       })
 
-      EnhancedThresholdManager()
+      if (this.pk.noise_alarm_enabled) {
+        EnhancedThresholdManager()
+      }
 
-      // 通知偏好设置
+      // 噪音警报相关设置（整合了原来的通知偏好设置和噪音警报开关）
       NotificationPreferences({
+        noiseAlarmEnabled: this.pk.noise_alarm_enabled,
         soundEnabled: this.pk.sound_alert_enabled,
         vibrationEnabled: this.pk.vibration_alert_enabled,
         visualEnabled: this.pk.visual_alert_enabled,
         systemNotificationEnabled: this.pk.system_notification_enabled,
+        onNoiseAlarmChange: (enabled: boolean) => {
+          this.onNoiseAlarmChange(enabled);
+        },
         onSoundChange: (enabled: boolean) => {
           this.onSoundAlertChange(enabled);
         },
@@ -126,35 +136,6 @@ export struct AlertsSettings {
 
       // 专业声学解释
       AcousticExplanationPanel()
-
-      // 保留原有的基础设置（兼容性）
-      Column({ space: DesignConstants.SPACING_MD }) {
-        // 噪音阈值警报的开关
-        Column({ space: 8 }) {
-          Row({ space: 8 }) {
-            Row() {
-              Image($r('app.media.ic_alarm'))
-                .itemIcon()
-
-              Text('噪音警报')
-                .itemTitle()
-            }.layoutWeight(1)
-
-            Toggle({ type: ToggleType.Switch, isOn: this.pk.noise_alarm_enabled })
-              .onChange((isOn: boolean) => {
-                this.pk.noise_alarm_enabled = isOn;
-              })
-          }
-          .listItemRow()
-
-          Text(this.pk.noise_alarm_enabled ? 
-            '检测到噪音超过阈值时将触发警报' : 
-            '系统不会发出噪音超标警报')
-            .itemDescription()
-        }
-        .cardStyle()
-      }
-      .width('100%')
     }
     .width('100%')
     .padding(DesignConstants.SPACING_LG)
