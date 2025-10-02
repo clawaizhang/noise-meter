@@ -59,17 +59,6 @@ export struct ActionPanel {
         this.toggleTorch();
       })
 
-      // 新增：切换频率加权方式选择框
-      Select(this.weightingTypes)
-        .width(40)
-        .height(40)
-        .selected(this.getSelectedIndex())
-        .value(this.weightingType)
-        .accessibilityDescription('切换频率加权方式')
-        .onSelect((index: number, value: string) => {
-          this.onToggleWeighting(value as WeightingType);
-        })
-
       // 保存按钮
       Button({ type: ButtonType.Circle }) {
         Image($r('app.media.ic_save'))
