@@ -14,6 +14,9 @@ export struct CalibrationStatusIndicator {
   @Param @Require currentDecibel: number = 0;             // 当前声级
   @Param @Require isCalibrating: boolean = false;         // 是否正在校准
 
+  @Local private animationTime: number = 0;               // 动画时间状态
+  private animationInterval?: number;                     // 动画定时器
+
   // 获取环境噪声等级
   private getEnvironmentLevel(): EnvironmentNoiseLevel {
     if (this.environmentNoise < 30) {
@@ -57,9 +60,30 @@ export struct CalibrationStatusIndicator {
     }
   }
 
-  // 构建环形进度指示器
-  @Builder
-  private buildProgressRing() {
+  // 启动动画定时器
+  private startAnimation() {
+    this.animationInterval = setInterval(() => {
+      this.animationTime = Date.now();
+    }, 100); // 每100ms更新一次
+  }
+
+  // 停止动画定时器
+  private stopAnimation() {
+    if (this.animationInterval) {
+      clearInterval(this.animationInterval);
+      this.animationInterval = undefined;
+    }
+  }
+
+  aboutToAppear() {
+    this.startAnimation();
+  }
+
+  aboutToDisappear() {
+    this.stopAnimation();
+  }
+
+  build() {
     Column({ space: DesignConstants.SPACING_SM }) {
       // 外环 - 校准进度
       Stack({ alignContent: Alignment.Center }) {
@@ -120,53 +144,6 @@ export struct CalibrationStatusIndicator {
       }
     }
     .alignItems(HorizontalAlign.Center)
-  }
-
-  // 构建实时波形图
-  @Builder
-  private buildWaveformChart() {
-    Column({ space: DesignConstants.SPACING_SM }) {
-      Text('实时声级')
-        .fontSize(DesignConstants.FONT_SIZE_MD)
-        .fontColor($r('sys.color.font_primary'))
-        .fontWeight(FontWeight.Medium)
-        .alignSelf(ItemAlign.Start)
-
-      // 简化波形图 - 使用矩形模拟波形
-      Row({ space: 2 }) {
-        ForEach(Array.from({ length: 20 }), (index: number) => {
-          Row()
-            .width(4)
-            .height(10 + Math.abs(Math.sin(index * 0.5 + Date.now() * 0.01)) * 20)
-            .backgroundColor(CALIBRATION_COLORS.PRIMARY)
-            .animation({
-              duration: 100,
-              curve: Curve.EaseOut
-            })
-        })
-      }
-      .height(40)
-      .width('100%')
-      .justifyContent(FlexAlign.Center)
-
-      Text(`当前: ${this.currentDecibel.toFixed(1)}dB`)
-        .fontSize(DesignConstants.FONT_SIZE_SM)
-        .fontColor($r('sys.color.font_secondary'))
-    }
-    .width('100%')
-    .padding(DesignConstants.SPACING_MD)
-    .backgroundColor(CALIBRATION_COLORS.CARD_BACKGROUND)
-    .borderRadius(DesignConstants.BORDER_RADIUS_MD)
-  }
-
-  build() {
-    Column({ space: DesignConstants.SPACING_LG }) {
-      // 环形进度指示器
-      this.buildProgressRing()
-
-      // 实时波形图
-      this.buildWaveformChart()
-    }
     .width('100%')
     .padding(DesignConstants.SPACING_MD)
     .backgroundColor(CALIBRATION_COLORS.CARD_BACKGROUND)

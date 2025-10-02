@@ -21,4 +21,7 @@ export class AppKeys {
 
   @Trace
   isDisplayApp: boolean = true; // 应用是否处于显示状态
+
+  @Trace
+  spectrumData: Float32Array = new Float32Array(); // 实时频谱数据
 }

@@ -200,6 +200,7 @@ export struct DecibelMeter {
           buffer, this.pk.weighting_type, this.pk.calibration_value).then(spectrum => {
           if (this.as.isDisplayApp) {
             this.currentSpectrum = spectrum; // 更新频谱数据
+            this.as.spectrumData = spectrum; // 发布到AppStorage供其他组件使用
           }
           // 更新计时器（毫秒级）
           this.recordingTime = new Date().getTime() - this.startTime;
