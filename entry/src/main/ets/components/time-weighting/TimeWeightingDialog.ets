@@ -9,6 +9,9 @@ import { DesignConstants } from '../../constants/DesignConstants';
 import { AcousticExplanationComp } from './AcousticExplanation';
 import { TechnicalParamsDisplay } from './TechnicalParamsDisplay';
 import { PreviewPanel } from './PreviewPanel';
+import { ScenarioDisplay } from './ScenarioDisplay';
+import { CollapsibleSection } from './CollapsibleSection';
+import { EnhancedModeSelectionPanel } from './EnhancedModeSelectionPanel';
 
 @ComponentV2
 export struct TimeWeightingDialog {
@@ -17,6 +20,8 @@ export struct TimeWeightingDialog {
   @Param @Require onCancel: () => void; // 取消回调
   @Local selectedMode!: AudioAnalysisMode; // 选中的模式
   @Local hoveredMode: AudioAnalysisMode | null = null; // 悬停的模式
+  @Local isTechnicalParamsExpanded: boolean = false; // 技术参数是否展开
+  @Local isAcousticTheoryExpanded: boolean = false; // 声学原理是否展开
 
   aboutToAppear() {
     // 初始化选中模式为当前模式
@@ -44,7 +49,7 @@ export struct TimeWeightingDialog {
 
   // 构建固定顶部选项卡
   @Builder
-  private buildFixedTabs() {
+  private buildModeSelectionPanel() {
     // 选项卡容器
     Row({ space: 0 }) {
       ForEach(TimeWeightingConstants.getAvailableModes(), (mode: AudioAnalysisMode) => {
@@ -99,33 +104,54 @@ export struct TimeWeightingDialog {
     .height(56)
   }
 
-  // 构建预览区域
+  // 构建主要内容区域（面向普通用户）
   @Builder
-  private buildPreviewArea() {
+  private buildPrimaryContentArea() {
     Column({ space: DesignConstants.SPACING_LG }) {
       // 实时预览面板
       PreviewPanel({
         currentMode: this.currentMode,
         selectedMode: this.selectedMode
       })
-      // 技术参数显示
-      TechnicalParamsDisplay({
-        currentMode: this.currentMode,
+
+      // 场景展示
+      ScenarioDisplay({
         selectedMode: this.selectedMode
       })
     }
     .width('100%')
   }
 
-  // 构建详细信息区域
+  // 构建可折叠的专业内容区域
   @Builder
-  private buildDetailArea() {
-    Column({ space: DesignConstants.SPACING_LG }) {
-      // 声学解释
-      AcousticExplanationComp({
-        selectedMode: this.selectedMode
-      })
+  private buildExpandableProfessionalArea() {
+    Column({ space: DesignConstants.SPACING_MD }) {
+      // 技术参数区域
+      CollapsibleSection({
+        title: '技术参数',
+        isExpanded: this.isTechnicalParamsExpanded,
+        onToggle: () => {
+          this.isTechnicalParamsExpanded = !this.isTechnicalParamsExpanded;
+        }
+      }) {
+        TechnicalParamsDisplay({
+          currentMode: this.currentMode,
+          selectedMode: this.selectedMode
+        })
+      }
 
+      // 声学原理区域
+      CollapsibleSection({
+        title: '声学原理',
+        isExpanded: this.isAcousticTheoryExpanded,
+        onToggle: () => {
+          this.isAcousticTheoryExpanded = !this.isAcousticTheoryExpanded;
+        }
+      }) {
+        AcousticExplanationComp({
+          selectedMode: this.selectedMode
+        })
+      }
     }
     .width('100%')
   }
@@ -176,15 +202,17 @@ export struct TimeWeightingDialog {
 
   build() {
     Column({ space: 8 }) {
-      this.buildFixedTabs()
+      // 模式选择面板
+      this.buildModeSelectionPanel()
+      
       // 可滚动内容区域
       Scroll() {
         Column({ space: DesignConstants.SPACING_LG }) {
-          // 预览区域
-          this.buildPreviewArea()
+          // 主要内容区域（优先显示）
+          this.buildPrimaryContentArea()
 
-          // 详细信息区域
-          this.buildDetailArea()
+          // 可折叠的专业内容区域
+          this.buildExpandableProfessionalArea()
 
         }
         .width('100%')

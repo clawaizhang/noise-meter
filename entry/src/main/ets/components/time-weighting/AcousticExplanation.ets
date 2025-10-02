@@ -105,77 +105,10 @@ export struct AcousticExplanationComp {
     .alignItems(HorizontalAlign.Start)
   }
 
-  // 构建应用场景部分
-  @Builder
-  private buildApplicationScenarios() {
-
-    Column({ space: DesignConstants.SPACING_SM }) {
-      // 标题
-      Text('适用场景')
-        .fontSize(DesignConstants.FONT_SIZE_LG)
-        .fontWeight(FontWeight.Bold)
-        .fontColor($r('sys.color.font_primary'))
-        .alignSelf(ItemAlign.Start)
-
-      // 场景列表
-      ForEach(TimeWeightingConstants.APPLICATION_SCENARIOS[this.selectedMode], (scenario: ApplicationScenario, index: number) => {
-        Column({ space: DesignConstants.SPACING_XS }) {
-          // 场景标题
-          Row({ space: DesignConstants.SPACING_XS }) {
-            Text('•')
-              .fontSize(DesignConstants.FONT_SIZE_MD)
-              .fontColor($r('sys.color.font_primary'))
-              .fontWeight(FontWeight.Bold)
-
-            Text(scenario.title)
-              .fontSize(DesignConstants.FONT_SIZE_MD)
-              .fontColor($r('sys.color.font_primary'))
-              .fontWeight(FontWeight.Medium)
-          }
-          .width('100%')
-          .alignItems(VerticalAlign.Top)
-
-          // 场景描述
-          Text(scenario.description)
-            .fontSize(DesignConstants.FONT_SIZE_MD)
-            .fontColor($r('sys.color.font_secondary'))
-            .alignSelf(ItemAlign.Start)
-            .margin({ left: DesignConstants.SPACING_MD })
-
-          // 实际示例
-          Row({ space: DesignConstants.SPACING_XS }) {
-            Text('示例:')
-              .fontSize(DesignConstants.FONT_SIZE_SM)
-              .fontColor($r('sys.color.font_tertiary'))
-              .fontWeight(FontWeight.Medium)
-
-            Text(scenario.example)
-              .fontSize(DesignConstants.FONT_SIZE_SM)
-              .fontColor($r('sys.color.font_tertiary'))
-              .layoutWeight(1)
-          }
-          .width('100%')
-          .alignItems(VerticalAlign.Top)
-          .margin({ left: DesignConstants.SPACING_MD })
-
-        }
-        .width('100%')
-        .alignItems(HorizontalAlign.Start)
-        .padding({ top: index > 0 ? DesignConstants.SPACING_SM : 0 })
-      })
-
-    }
-    .width('100%')
-    .alignItems(HorizontalAlign.Start)
-  }
-
   build() {
     Column({ space: DesignConstants.SPACING_LG }) {
       // 声学理论解释
       this.buildAcousticTheory()
-
-      // 应用场景
-      this.buildApplicationScenarios()
 
     }
     .width('100%')
