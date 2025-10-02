@@ -216,28 +216,28 @@ export struct EnhancedThresholdManager {
 
         if (!this.currentConfig.timeSchedulingEnabled) {
           // 时段调度关闭：显示统一阈值
-          this.buildThresholdInfo(
-            '统一阈值',
-            `${this.currentConfig.baseThreshold}dB`,
-            '全天使用的统一阈值',
-            $r('sys.color.ohos_id_color_palette1')
-          )
+          this.buildThresholdInfo({
+            title: '统一阈值',
+            value: `${this.currentConfig.baseThreshold}dB`,
+            description: '全天使用的统一阈值',
+            color: $r('sys.color.ohos_id_color_palette1')
+          })
         } else {
           // 时段调度开启：显示白天和夜间阈值
           Column({ space: DesignConstants.SPACING_MD }) {
-            this.buildThresholdInfo(
-              '白天阈值',
-              `${this.currentConfig.daytimeThreshold}dB`,
-              '适用于日常活动环境',
-              $r('sys.color.ohos_id_color_palette3')
-            )
+            this.buildThresholdInfo({
+              title: '白天阈值',
+              value: `${this.currentConfig.daytimeThreshold}dB`,
+              description: '适用于日常活动环境',
+              color: $r('sys.color.ohos_id_color_palette3')
+            })
 
-            this.buildThresholdInfo(
-              '夜间阈值',
-              `${this.currentConfig.nighttimeThreshold}dB`,
-              '适用于休息睡眠环境',
-              $r('sys.color.ohos_id_color_palette6')
-            )
+            this.buildThresholdInfo({
+              title: '夜间阈值',
+              value: `${this.currentConfig.nighttimeThreshold}dB`,
+              description: '适用于休息睡眠环境',
+              color: $r('sys.color.ohos_id_color_palette6')
+            })
           }
           .width('100%')
         }
@@ -253,24 +253,24 @@ export struct EnhancedThresholdManager {
 
   // 构建阈值信息显示（无滚动条）
   @Builder
-  private buildThresholdInfo(title: string, value: string, description: string, color: Resource) {
+  private buildThresholdInfo(config: IThresholdInfoConfig) {
     Column({ space: DesignConstants.SPACING_SM }) {
       Row({ space: DesignConstants.SPACING_SM }) {
-        Text(title)
+        Text(config.title)
           .fontSize(DesignConstants.FONT_SIZE_LG)
           .fontWeight(FontWeight.Medium)
           .fontColor($r('sys.color.font_primary'))
           .layoutWeight(1)
 
-        Text(value)
+        Text(config.value)
           .fontSize(DesignConstants.FONT_SIZE_MD)
-          .fontColor(color)
+          .fontColor(config.color)
           .fontWeight(FontWeight.Medium)
       }
       .width('100%')
       .alignItems(VerticalAlign.Center)
 
-      Text(description)
+      Text(config.description)
         .fontSize(DesignConstants.FONT_SIZE_MD)
         .fontColor($r('sys.color.font_secondary'))
         .alignSelf(ItemAlign.Start)
@@ -397,18 +397,18 @@ export struct EnhancedThresholdManager {
 
   build() {
     Column({ space: DesignConstants.SPACING_LG }) {
-      // 1. 环境类型选择
-      this.buildEnvironmentSelector()
-      
-      // 2. 时段调度开关
+
+      //时段调度开关
       this.buildTimeSchedulingSwitch()
-      
-      // 3. 动态阈值控制区域
+
+      // 动态阈值控制区域
       this.buildDynamicThresholdControls()
-      
+
+      // 环境类型选择
+      this.buildEnvironmentSelector()
+
     }
     .width('100%')
-    .padding(DesignConstants.SPACING_LG)
     .backgroundColor($r('sys.color.background_secondary'))
     .alignItems(HorizontalAlign.Start)
   }
@@ -422,4 +422,12 @@ interface ISliderConfig {
   onChange: (value: number) => void;
   color: Resource;
   timeRange: string;
+}
+
+// 阈值信息配置接口
+interface IThresholdInfoConfig {
+  title: string;
+  value: string;
+  description: string;
+  color: Resource;
 }

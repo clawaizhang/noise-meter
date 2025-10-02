@@ -5,11 +5,11 @@
 
 // 环境类型枚举
 export enum PresetType {
-  QUIET_ENVIRONMENT = 'quiet_environment',    // 安静环境
+  QUIET_ENVIRONMENT = 'quiet_environment', // 安静环境
   GENERAL_ENVIRONMENT = 'general_environment', // 一般环境
-  NOISY_ENVIRONMENT = 'noisy_environment',    // 嘈杂环境
+  NOISY_ENVIRONMENT = 'noisy_environment', // 嘈杂环境
   DANGEROUS_ENVIRONMENT = 'dangerous_environment', // 危险环境
-  CUSTOM = 'custom'                           // 自定义环境
+  CUSTOM = 'custom' // 自定义环境
 }
 
 // 预设阈值配置
@@ -23,12 +23,12 @@ export interface PresetThreshold {
 
 @ObservedV2
 export class ThresholdConfig {
-  @Trace currentPreset: PresetType;           // 当前环境类型
-  @Trace timeSchedulingEnabled: boolean;      // 时段调度开关
-  @Trace baseThreshold: number;               // 统一阈值（时段调度关闭时）
-  @Trace daytimeThreshold: number;            // 白天阈值（时段调度开启时）
-  @Trace nighttimeThreshold: number;          // 夜间阈值（时段调度开启时）
-  @Trace lastModified: number;                // 最后修改时间
+  @Trace currentPreset: PresetType; // 当前环境类型
+  @Trace timeSchedulingEnabled: boolean; // 时段调度开关
+  @Trace baseThreshold: number; // 统一阈值（时段调度关闭时）
+  @Trace daytimeThreshold: number; // 白天阈值（时段调度开启时）
+  @Trace nighttimeThreshold: number; // 夜间阈值（时段调度开启时）
+  @Trace lastModified: number; // 最后修改时间
 
   constructor(
     currentPreset: PresetType,
@@ -65,12 +65,13 @@ export class TimeSchedulingConfig {
 // 阈值计算规则
 export interface ThresholdCalculationRule {
   presetType: PresetType;
-  daytimeDifference: number;  // 白天阈值差值
+  daytimeDifference: number; // 白天阈值差值
   nighttimeDifference: number; // 夜间阈值差值
 }
 
 // 默认配置
-export const DEFAULT_THRESHOLD_CONFIG: ThresholdConfig = new ThresholdConfig(PresetType.GENERAL_ENVIRONMENT, true, 55, 65, 45, Date.now())
+export const DEFAULT_THRESHOLD_CONFIG: ThresholdConfig =
+  new ThresholdConfig(PresetType.GENERAL_ENVIRONMENT, true, 55, 65, 45, Date.now())
 
 // 预设阈值配置
 export const PRESET_THRESHOLDS: PresetThreshold[] = [
@@ -104,8 +105,17 @@ export const PRESET_THRESHOLDS: PresetThreshold[] = [
   }
 ];
 
+export const CUSTOM_THRESHOLD_CONFIG: PresetThreshold = {
+  type: PresetType.CUSTOM,
+  name: '自定义环境',
+  baseValue: 55,
+  description: '自定义环境',
+  color: $r('sys.color.ohos_id_color_palette5')
+};
+
 // 时段调度配置
 export const DEFAULT_TIME_SCHEDULING_CONFIG: TimeSchedulingConfig = new TimeSchedulingConfig(6, 22, 22, 6);
+
 // 阈值计算规则
 export const THRESHOLD_CALCULATION_RULES: ThresholdCalculationRule[] = [
   {

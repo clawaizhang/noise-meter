@@ -11,7 +11,8 @@ import {
   DEFAULT_THRESHOLD_CONFIG,
   PRESET_THRESHOLDS,
   DEFAULT_TIME_SCHEDULING_CONFIG,
-  THRESHOLD_CALCULATION_RULES
+  THRESHOLD_CALCULATION_RULES,
+  CUSTOM_THRESHOLD_CONFIG
 } from '../models/ThresholdConfig';
 import { PersistenceV2 } from '@kit.ArkUI';
 
@@ -36,19 +37,13 @@ export class ThresholdManager {
 
   // 选择环境类型
   static selectPreset(presetType: PresetType): void {
-    const preset = PRESET_THRESHOLDS.find(p => p.type === presetType);
+    let preset = PRESET_THRESHOLDS.find(p => p.type === presetType);
     if (!preset) {
-      return;
+      preset = CUSTOM_THRESHOLD_CONFIG;
     }
 
     ThresholdManager.currentConfig.currentPreset = presetType;
     
-    if (presetType === PresetType.CUSTOM) {
-      // 自定义环境类型，保持当前阈值设置不变
-      ThresholdManager.currentConfig.lastModified = Date.now();
-      return;
-    }
-
     // 预设环境类型，设置基准阈值
     ThresholdManager.currentConfig.baseThreshold = preset.baseValue;
 
