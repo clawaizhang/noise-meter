@@ -19,17 +19,6 @@ export enum PresetType {
   CUSTOM = 'custom'                           // 自定义
 }
 
-// 阈值配置接口
-export interface ThresholdConfig {
-  mode: ThresholdMode;             // 当前模式
-  baseThreshold: number;           // 基准阈值
-  daytimeThreshold: number;        // 白天阈值
-  nighttimeThreshold: number;      // 夜间阈值
-  currentPreset: PresetType;       // 当前预设
-  timeSchedulingEnabled: boolean;  // 时段调度启用状态
-  lastModified: number;            // 最后修改时间戳
-}
-
 // 预设阈值配置
 export interface PresetThreshold {
   type: PresetType;
@@ -39,12 +28,48 @@ export interface PresetThreshold {
   color: Resource;
 }
 
-// 时段调度配置
-export interface TimeSchedulingConfig {
-  daytimeStart: number;    // 白天开始时间 (小时)
-  daytimeEnd: number;      // 白天结束时间 (小时)
-  nighttimeStart: number;  // 夜间开始时间 (小时)
-  nighttimeEnd: number;    // 夜间结束时间 (小时)
+@ObservedV2
+export class ThresholdConfig {
+  @Trace mode: ThresholdMode;
+  @Trace baseThreshold: number;
+  @Trace daytimeThreshold: number;
+  @Trace nighttimeThreshold: number;
+  @Trace currentPreset: PresetType;
+  @Trace timeSchedulingEnabled: boolean;
+  @Trace lastModified: number;
+
+  constructor(
+    mode: ThresholdMode,
+    baseThreshold: number,
+    daytimeThreshold: number,
+    nighttimeThreshold: number,
+    currentPreset: PresetType,
+    timeSchedulingEnabled: boolean,
+    lastModified: number
+  ) {
+    this.mode = mode;
+    this.baseThreshold = baseThreshold;
+    this.daytimeThreshold = daytimeThreshold;
+    this.nighttimeThreshold = nighttimeThreshold;
+    this.currentPreset = currentPreset;
+    this.timeSchedulingEnabled = timeSchedulingEnabled;
+    this.lastModified = lastModified;
+  }
+}
+
+@ObservedV2
+export class TimeSchedulingConfig {
+  @Trace daytimeStart: number;
+  @Trace daytimeEnd: number;
+  @Trace nighttimeStart: number;
+  @Trace nighttimeEnd: number;
+
+  constructor(daytimeStart: number, daytimeEnd: number, nighttimeStart: number, nighttimeEnd: number) {
+    this.daytimeStart = daytimeStart;
+    this.daytimeEnd = daytimeEnd;
+    this.nighttimeStart = nighttimeStart;
+    this.nighttimeEnd = nighttimeEnd;
+  }
 }
 
 // 阈值计算规则
@@ -55,15 +80,7 @@ export interface ThresholdCalculationRule {
 }
 
 // 默认配置
-export const DEFAULT_THRESHOLD_CONFIG: ThresholdConfig = {
-  mode: ThresholdMode.SMART_PRESET,
-  baseThreshold: 55,
-  daytimeThreshold: 65,
-  nighttimeThreshold: 45,
-  currentPreset: PresetType.GENERAL_ENVIRONMENT,
-  timeSchedulingEnabled: true,
-  lastModified: Date.now()
-};
+export const DEFAULT_THRESHOLD_CONFIG: ThresholdConfig = new ThresholdConfig(ThresholdMode.SMART_PRESET, 55, 65, 45, PresetType.GENERAL_ENVIRONMENT, true, Date.now())
 
 // 预设阈值配置
 export const PRESET_THRESHOLDS: PresetThreshold[] = [
@@ -98,13 +115,7 @@ export const PRESET_THRESHOLDS: PresetThreshold[] = [
 ];
 
 // 时段调度配置
-export const DEFAULT_TIME_SCHEDULING_CONFIG: TimeSchedulingConfig = {
-  daytimeStart: 6,   // 6:00
-  daytimeEnd: 22,    // 22:00
-  nighttimeStart: 22, // 22:00
-  nighttimeEnd: 6    // 6:00
-};
-
+export const DEFAULT_TIME_SCHEDULING_CONFIG: TimeSchedulingConfig = new TimeSchedulingConfig(6, 22, 22, 6);
 // 阈值计算规则
 export const THRESHOLD_CALCULATION_RULES: ThresholdCalculationRule[] = [
   {

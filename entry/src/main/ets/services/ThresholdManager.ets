@@ -8,9 +8,7 @@ import {
   ThresholdMode,
   PresetType,
   ThresholdConfig,
-  PresetThreshold,
   TimeSchedulingConfig,
-  ThresholdCalculationRule,
   DEFAULT_THRESHOLD_CONFIG,
   PRESET_THRESHOLDS,
   DEFAULT_TIME_SCHEDULING_CONFIG,
@@ -23,20 +21,33 @@ interface ThresholdValidation {
 }
 
 export class ThresholdManager {
-  private currentConfig: ThresholdConfig = DEFAULT_THRESHOLD_CONFIG;
-  private timeSchedulingConfig: TimeSchedulingConfig = DEFAULT_TIME_SCHEDULING_CONFIG;
+  private currentConfig: ThresholdConfig = new ThresholdConfig(
+    DEFAULT_THRESHOLD_CONFIG.mode,
+    DEFAULT_THRESHOLD_CONFIG.baseThreshold,
+    DEFAULT_THRESHOLD_CONFIG.daytimeThreshold,
+    DEFAULT_THRESHOLD_CONFIG.nighttimeThreshold,
+    DEFAULT_THRESHOLD_CONFIG.currentPreset,
+    DEFAULT_THRESHOLD_CONFIG.timeSchedulingEnabled,
+    DEFAULT_THRESHOLD_CONFIG.lastModified
+  );
+  private timeSchedulingConfig: TimeSchedulingConfig = new TimeSchedulingConfig(
+    DEFAULT_TIME_SCHEDULING_CONFIG.daytimeStart,
+    DEFAULT_TIME_SCHEDULING_CONFIG.daytimeEnd,
+    DEFAULT_TIME_SCHEDULING_CONFIG.nighttimeStart,
+    DEFAULT_TIME_SCHEDULING_CONFIG.nighttimeEnd
+  );
 
   // 获取当前配置
   getCurrentConfig(): ThresholdConfig {
-    return {
-      mode: this.currentConfig.mode,
-      currentPreset: this.currentConfig.currentPreset,
-      baseThreshold: this.currentConfig.baseThreshold,
-      daytimeThreshold: this.currentConfig.daytimeThreshold,
-      nighttimeThreshold: this.currentConfig.nighttimeThreshold,
-      timeSchedulingEnabled: this.currentConfig.timeSchedulingEnabled,
-      lastModified: this.currentConfig.lastModified
-    };
+    return new ThresholdConfig(
+      this.currentConfig.mode,
+      this.currentConfig.baseThreshold,
+      this.currentConfig.daytimeThreshold,
+      this.currentConfig.nighttimeThreshold,
+      this.currentConfig.currentPreset,
+      this.currentConfig.timeSchedulingEnabled,
+      this.currentConfig.lastModified
+    );
   }
 
   // 切换模式
@@ -44,7 +55,7 @@ export class ThresholdManager {
     const oldMode = this.currentConfig.mode;
 
     if (oldMode === newMode) {
-      return this.currentConfig;
+      return this.getCurrentConfig();
     }
 
     switch (newMode) {
@@ -62,7 +73,7 @@ export class ThresholdManager {
     this.currentConfig.mode = newMode;
     this.currentConfig.lastModified = Date.now();
 
-    return this.currentConfig;
+    return this.getCurrentConfig();
   }
 
   // 选择智能预设
@@ -74,7 +85,7 @@ export class ThresholdManager {
 
     const preset = PRESET_THRESHOLDS.find(p => p.type === presetType);
     if (!preset) {
-      return this.currentConfig;
+      return this.getCurrentConfig();
     }
 
     this.currentConfig.currentPreset = presetType;
@@ -92,7 +103,7 @@ export class ThresholdManager {
     }
 
     this.currentConfig.lastModified = Date.now();
-    return this.currentConfig;
+    return this.getCurrentConfig();
   }
 
   // 设置时段调度启用状态
@@ -111,7 +122,7 @@ export class ThresholdManager {
     }
 
     this.currentConfig.lastModified = Date.now();
-    return this.currentConfig;
+    return this.getCurrentConfig();
   }
 
   // 设置白天阈值
@@ -123,7 +134,7 @@ export class ThresholdManager {
 
     this.currentConfig.daytimeThreshold = value;
     this.currentConfig.lastModified = Date.now();
-    return this.currentConfig;
+    return this.getCurrentConfig();
   }
 
   // 设置夜间阈值
@@ -135,7 +146,7 @@ export class ThresholdManager {
 
     this.currentConfig.nighttimeThreshold = value;
     this.currentConfig.lastModified = Date.now();
-    return this.currentConfig;
+    return this.getCurrentConfig();
   }
 
   // 设置基准阈值
@@ -150,7 +161,7 @@ export class ThresholdManager {
     }
 
     this.currentConfig.lastModified = Date.now();
-    return this.currentConfig;
+    return this.getCurrentConfig();
   }
 
   // 获取当前有效阈值（基于当前时间）

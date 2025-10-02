@@ -8,27 +8,43 @@ import { thresholdManager } from '../../services/ThresholdManager';
 import { DesignConstants } from '../../constants/DesignConstants';
 import { curves } from '@kit.ArkUI';
 
-interface ThresholdOption {
-  value: ThresholdMode;
-  label: string;
-  description: string;
+@ObservedV2
+class ThresholdOption {
+  @Trace value: ThresholdMode;
+  @Trace label: string;
+  @Trace description: string;
+
+  constructor(value: ThresholdMode, label: string, description: string) {
+    this.value = value;
+    this.label = label;
+    this.description = description;
+  }
 }
 
-interface PresetConfig {
-  type: PresetType;
-  baseValue: number;
-  name: string;
-  description: string;
-  color: Resource;
+@ObservedV2
+class PresetConfig {
+  @Trace type: PresetType;
+  @Trace baseValue: number;
+  @Trace name: string;
+  @Trace description: string;
+  @Trace color: Resource;
+
+  constructor(type: PresetType, baseValue: number, name: string, description: string, color: Resource) {
+    this.type = type;
+    this.baseValue = baseValue;
+    this.name = name;
+    this.description = description;
+    this.color = color;
+  }
 }
 
 @ComponentV2
 export struct EnhancedThresholdManager {
   @Local private currentConfig: ThresholdConfig = thresholdManager.getCurrentConfig();
   @Local private modeOptions: ThresholdOption[] = [
-    { value: ThresholdMode.SMART_PRESET, label: '智能预设', description: '基于环境类型自动设置阈值' },
-    { value: ThresholdMode.TIME_SCHEDULING, label: '时段调度', description: '独立设置白天和夜间阈值' },
-    { value: ThresholdMode.CUSTOM, label: '自定义', description: '完全手动控制所有阈值' }
+    new ThresholdOption(ThresholdMode.SMART_PRESET, '智能预设', '基于环境类型自动设置阈值'),
+    new ThresholdOption(ThresholdMode.TIME_SCHEDULING, '时段调度', '独立设置白天和夜间阈值'),
+    new ThresholdOption(ThresholdMode.CUSTOM, '自定义', '完全手动控制所有阈值')
   ];
 
   // 构建模式选择器
@@ -90,6 +106,7 @@ export struct EnhancedThresholdManager {
     .borderRadius(DesignConstants.BORDER_RADIUS_MD)
     .onClick(() => {
       if (this.currentConfig.mode !== option.value) {
+        this.logStateChange('切换模式', option.value);
         this.currentConfig = thresholdManager.switchMode(option.value);
       }
     })
@@ -176,6 +193,7 @@ export struct EnhancedThresholdManager {
         color: this.currentConfig.currentPreset === presetType ? preset.color : $r('sys.color.background_secondary')
       })
       .onClick(() => {
+        this.logStateChange('选择预设', undefined, presetType);
         this.currentConfig = thresholdManager.selectPreset(presetType);
       })
       .animation({
@@ -198,6 +216,7 @@ export struct EnhancedThresholdManager {
 
         Toggle({ type: ToggleType.Switch, isOn: this.currentConfig.timeSchedulingEnabled })
           .onChange((isOn: boolean) => {
+            this.logStateChange(`切换时段调度: ${isOn ? '启用' : '禁用'}`);
             this.currentConfig = thresholdManager.setTimeSchedulingEnabled(isOn);
           })
       }
@@ -379,6 +398,7 @@ export struct EnhancedThresholdManager {
         .trackColor($r('sys.color.background_secondary'))
         .selectedColor(color)
         .onChange((newValue: number) => {
+          this.logStateChange(`调整阈值: ${newValue}dB`);
           onChange(newValue);
         })
         .margin({
@@ -470,37 +490,52 @@ export struct EnhancedThresholdManager {
     .margin({ top: DesignConstants.SPACING_MD })
   }
 
+  // 状态监控方法（用于调试）
+  private logStateChange(action: string, newMode?: ThresholdMode, newPreset?: PresetType): void {
+    console.log(`[EnhancedThresholdManager] ${action}:`);
+    console.log(`  - 当前模式: ${this.currentConfig.mode}`);
+    console.log(`  - 当前预设: ${this.currentConfig.currentPreset}`);
+    console.log(`  - 基准阈值: ${this.currentConfig.baseThreshold}dB`);
+    console.log(`  - 时段调度: ${this.currentConfig.timeSchedulingEnabled ? '启用' : '禁用'}`);
+    if (newMode) {
+      console.log(`  - 新模式: ${newMode}`);
+    }
+    if (newPreset) {
+      console.log(`  - 新预设: ${newPreset}`);
+    }
+  }
+
   // 根据类型获取预设
   private getPresetByType(presetType: PresetType): PresetThreshold {
     const presets: PresetConfig[] = [
-      {
-        type: PresetType.QUIET_ENVIRONMENT,
-        baseValue: 40,
-        name: '安静环境',
-        description: '图书馆、卧室等需要安静的环境',
-        color: $r('sys.color.ohos_id_color_palette2')
-      },
-      {
-        type: PresetType.GENERAL_ENVIRONMENT,
-        baseValue: 55,
-        name: '一般环境',
-        description: '办公室、教室等日常环境',
-        color: $r('sys.color.ohos_id_color_palette5')
-      },
-      {
-        type: PresetType.NOISY_ENVIRONMENT,
-        baseValue: 70,
-        name: '嘈杂环境',
-        description: '街道、商场等嘈杂环境',
-        color: $r('sys.color.ohos_id_color_palette3')
-      },
-      {
-        type: PresetType.DANGEROUS_ENVIRONMENT,
-        baseValue: 85,
-        name: '危险环境',
-        description: '工厂、工地等可能损伤听力的环境',
-        color: $r('sys.color.ohos_id_color_palette4')
-      }
+      new PresetConfig(
+        PresetType.QUIET_ENVIRONMENT,
+        40,
+        '安静环境',
+        '图书馆、卧室等需要安静的环境',
+        $r('sys.color.ohos_id_color_palette2')
+      ),
+      new PresetConfig(
+        PresetType.GENERAL_ENVIRONMENT,
+        55,
+        '一般环境',
+        '办公室、教室等日常环境',
+        $r('sys.color.ohos_id_color_palette5')
+      ),
+      new PresetConfig(
+        PresetType.NOISY_ENVIRONMENT,
+        70,
+        '嘈杂环境',
+        '街道、商场等嘈杂环境',
+        $r('sys.color.ohos_id_color_palette3')
+      ),
+      new PresetConfig(
+        PresetType.DANGEROUS_ENVIRONMENT,
+        85,
+        '危险环境',
+        '工厂、工地等可能损伤听力的环境',
+        $r('sys.color.ohos_id_color_palette4')
+      )
     ];
     return presets.find(p => p.type === presetType)!;
   }
@@ -522,5 +557,6 @@ export struct EnhancedThresholdManager {
     .width('100%')
     .padding(DesignConstants.SPACING_LG)
     .backgroundColor($r('sys.color.background_secondary'))
+    .alignItems(HorizontalAlign.Start)
   }
 }
