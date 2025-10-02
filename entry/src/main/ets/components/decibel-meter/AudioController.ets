@@ -20,15 +20,12 @@ export struct AudioController {
   @Local private isRecording: boolean = false
   @Local private recordingTime: number = 0
   @Local private startTime: number = 0
-  
   // 错误状态（支持多个错误同时显示）
   @Local private errorMessages: string[] = []
-  @Local ak:AppKeys = AppStorageV2.connect(AppKeys)!;
-  
+  @Local ak: AppKeys = AppStorageV2.connect(AppKeys)!;
   // 配置参数
   @Param @Require pk: PreferenceKeys
   @Param @Require currentLocation: LocationInfo | null = null
-  
   // 事件发射器
   @Event onAudioBuffer: (buffer: ArrayBuffer) => void
   @Event onSpectrumData: (spectrum: Float32Array) => void
@@ -36,18 +33,14 @@ export struct AudioController {
   @Event onRecordingStateChange: (isRecording: boolean) => void
   @Event onRecordingTimeUpdate: (time: number) => void
   @Event onMinMaxAvgCurrent: (min: number, max: number, avg: number, current: number) => void
-
   // 服务实例
   private audioService: AudioService = AudioService.getInstance(getContext() as common.UIAbilityContext)
   private recordService: DecibelRecordService = new DecibelRecordService(getContext() as common.UIAbilityContext)
-  
   // RxJS相关
   private audioBufferSubject = new Subject<void>();
   private durationCheckSubscription?: Subscription;
-  
   // 常量
   private readonly MAX_RECORDING_DURATION: number = 60 * 60_000;
-
   // 记录相关
   private values: number[] = []
   private weightingTypes: WeightingType[] = []
@@ -63,9 +56,18 @@ export struct AudioController {
     return AudioPresets.getConfig(this.pk.audio_analysis_mode).fftSize;
   }
 
+  @Monitor('ak.microphonePermissionGranted')
+  onRecordingPermissionChange(monitor: IMonitor) {
+    let permissionGranted = monitor.value<boolean>()?.now!;
+    if (permissionGranted) {
+      this.startRecording();
+    }
+  }
+
   aboutToAppear() {
-    // 组件出现时自动开始录音
-    this.startRecording();
+    if (this.ak.microphonePermissionGranted) {
+      this.startRecording();
+    }
   }
 
   aboutToDisappear() {
@@ -104,7 +106,7 @@ export struct AudioController {
       this.startTime = new Date().getTime();
       this.recordingTime = 0;
       this.values = [];
-      this.clearErrorMessage('audio');
+      this.clearErrorMessage();
 
       // 创建新的记录对象
       this.currentRecord = new DecibelRecord(
@@ -114,7 +116,7 @@ export struct AudioController {
         0, // duration
         [], // decibelValues
         undefined, // location
-        undefined // audioFilePath
+        undefined// audioFilePath
       );
 
       // 初始化 weightingTypes 数组
@@ -145,7 +147,7 @@ export struct AudioController {
           this.pk.calibration_value
         ).then(spectrum => {
           this.onSpectrumData(spectrum);
-          
+
           // 计算分贝值
           const config = AudioPresets.getConfig(this.pk.audio_analysis_mode);
           const db: number = new FFTAnalyzer(
@@ -159,13 +161,13 @@ export struct AudioController {
           // 收集分贝值和加权类型
           this.values.push(this.currentDecibel);
           this.weightingTypes.push(this.pk.weighting_type);
-          
+
           // 更新统计信息
           this.updateStatistics(this.currentDecibel);
-          
+
           // 检查报警状态
           this.checkAlarmStatus(this.currentDecibel);
-          
+
           // 更新计时器（毫秒级）
           this.recordingTime = new Date().getTime() - this.startTime;
           this.onRecordingTimeUpdate(this.recordingTime);
@@ -340,22 +342,9 @@ export struct AudioController {
     }
   }
 
-  private clearErrorMessage(type: string): void {
-    this.errorMessages = this.errorMessages.filter(msg => !msg.includes(type));
-    this.onError([...this.errorMessages]);
-  }
-
-  // 从频谱数据计算平均分贝值（简化版本）
-  private calculateAverageDbFromSpectrum(spectrum: Float32Array): number {
-    // 简化计算：取频谱数据的平均值并转换为分贝
-    let sum = 0;
-    for (let i = 0; i < spectrum.length; i++) {
-      sum += spectrum[i];
-    }
-    const average = sum / spectrum.length;
-    
-    // 转换为分贝值（简化计算，实际应该使用对数计算）
-    return Math.max(0, Math.min(120, average * 100));
+  private clearErrorMessage(): void {
+    this.errorMessages = [];
+    this.onError([]);
   }
 
   // 更新统计信息
@@ -367,7 +356,7 @@ export struct AudioController {
     } else {
       this.minDecibel = Math.min(this.minDecibel, currentDb);
       this.maxDecibel = Math.max(this.maxDecibel, currentDb);
-      
+
       // 计算平均值
       let sum = 0;
       for (let value of this.values) {

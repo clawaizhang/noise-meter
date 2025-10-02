@@ -241,29 +241,24 @@ export struct DecibelMeter {
           Text(errorMsg)
             .fontSize(14)
             .fontColor($r('sys.color.ohos_id_color_warning'))
-            .flexShrink(1)
+            .layoutWeight(1)
 
           Blank()
 
           Button('关闭')
             .fontSize(12)
-            .padding({ left: 12, right: 12, top: 4, bottom: 4 })
+            .type(ButtonType.Capsule)
             .onClick(() => {
               // 移除特定错误消息
               this.errorMessages.splice(index, 1);
             })
         }
-        .padding(12)
         .width('100%')
         .backgroundColor($r('sys.color.comp_background_warning_secondary'))
         .borderRadius(8)
-        .border({
-          width: 1,
-          color: $r('sys.color.ohos_id_color_warning')
-        })
+        .padding(8)
       })
     }
-    .padding({ left: 16, right: 16, top: 8, bottom: 8 })
   }
 
   @Builder
