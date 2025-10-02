@@ -3,45 +3,11 @@ import { navigationStack } from '../../constants/ProviderConstant';
 import { DesignConstants } from '../../constants/DesignConstants';
 import { PreferenceKeys } from '../../models/PreferenceKeys';
 import { AppKeys } from '../../models/AppKeys';
-
-@Extend(Image)
-function itemIcon() {
-  .width(DesignConstants.ICON_SIZE_MD)
-  .height(DesignConstants.ICON_SIZE_MD)
-  .fillColor($r('sys.color.font_primary'))
-}
-
-@Extend(Text)
-function itemTitle() {
-  .fontWeight(FontWeight.Medium)
-}
-
-@Extend(Text)
-function itemDescription() {
-  .fontColor($r('sys.color.font_secondary'))
-  .fontSize(DesignConstants.FONT_SIZE_MD)
-  .textAlign(TextAlign.Start)
-  .alignSelf(ItemAlign.Start)
-}
-
-@Extend(Column)
-function cardStyle() {
-  .backgroundColor($r('sys.color.comp_background_primary'))
-  .justifyContent(FlexAlign.Start)
-  .alignItems(HorizontalAlign.Start)
-  .borderRadius(16)
-  .padding(16)
-  .transition(TransitionEffect.OPACITY.animation({ curve: curves.springMotion(0.6, 0.8) }) // 透明度动画，使用springMotion曲线
-    .combine(TransitionEffect.scale({ x: 0, y: 0 })) // 组合缩放效果（从0放大到1）
-    .combine(TransitionEffect.translate({ x: -150, y: 0 }).animation({ curve: curves.springMotion() })))
-}
-
-@Extend(Row)
-function listItemRow() {
-  .alignItems(VerticalAlign.Center)
-  .justifyContent(FlexAlign.Start)
-}
-
+import { CALIBRATION_CONFIG } from '../../constants/CalibrationConstants';
+import { EnhancedManualCalibration } from '../../components/calibration/EnhancedManualCalibration';
+import { ImprovedAutoCalibration } from '../../components/calibration/ImprovedAutoCalibration';
+import { CalibrationStatusIndicator } from '../../components/calibration/CalibrationStatusIndicator';
+import { ProfessionalContentPanel } from '../../components/calibration/ProfessionalContentPanel';
 
 @ComponentV2
 export struct AudioAnalysisSettings {
@@ -51,16 +17,28 @@ export struct AudioAnalysisSettings {
   @Local calibrationProgress: number = 0;
   @Local as: AppKeys = AppStorageV2.connect(AppKeys)!;
   @Local gridColumns: number = 1;
+  @Local environmentNoise: number = 25; // 模拟环境噪声
   @Consumer(navigationStack) navStack: NavPathStack = new NavPathStack();
 
   aboutToAppear() {
+    // 初始化环境噪声监测
+    this.startEnvironmentMonitoring();
+  }
+
+  // 环境噪声监测
+  private startEnvironmentMonitoring() {
+    // 模拟环境噪声变化
+    setInterval(() => {
+      // 在25-35dB范围内随机变化，模拟真实环境
+      this.environmentNoise = 25 + Math.random() * 10;
+    }, 2000);
   }
 
   private startAutoCalibration() {
     this.isAutoCalibrating = true;
-    this.countdown = 3;
+    this.countdown = CALIBRATION_CONFIG.COUNTDOWN_DURATION;
 
-    // 5秒倒计时
+    // 倒计时
     const countdownInterval = setInterval(() => {
       this.countdown -= 1;
       if (this.countdown <= 0) {
@@ -71,7 +49,7 @@ export struct AudioAnalysisSettings {
   }
 
   private beginCalibration() {
-    const calibrationDuration = 8; // 8秒校准
+    const calibrationDuration = CALIBRATION_CONFIG.AUTO_CALIBRATION_DURATION;
     this.calibrationProgress = 0;
     let totalDecibel = 0;
     let sampleCount = 0;
@@ -91,9 +69,8 @@ export struct AudioAnalysisSettings {
 
   private finishCalibration(averageDecibel: number) {
     this.isAutoCalibrating = false;
-    const newCalibrationValue = 26 - averageDecibel; // 计算与26dB的差值
+    const newCalibrationValue = CALIBRATION_CONFIG.REFERENCE_LEVEL - averageDecibel;
     this.pk.calibration_value = Math.round(newCalibrationValue * 10) / 10; // 保留1位小数
-
 
     promptAction.showToast({
       message: `自动校准完成，新校准值: ${this.pk.calibration_value}dB`,
@@ -101,119 +78,54 @@ export struct AudioAnalysisSettings {
     });
   }
 
+  // 手动校准值变化处理
+  private onManualCalibrationChange(value: number) {
+    this.pk.calibration_value = value;
+  }
+
+  // 计算校准进度百分比
+  private getCalibrationProgressPercent(): number {
+    return Math.round((this.calibrationProgress / CALIBRATION_CONFIG.AUTO_CALIBRATION_DURATION) * 100);
+  }
+
   build() {
-    GridRow({
-      columns:
-      1,
-      breakpoints: { reference: BreakpointsReference.WindowSize }
-    , gutter: 16
-    }) {
+    Column({ space: DesignConstants.SPACING_LG }) {
+      // 状态反馈区域
+      CalibrationStatusIndicator({
+        calibrationProgress: this.getCalibrationProgressPercent(),
+        environmentNoise: this.environmentNoise,
+        currentDecibel: this.as.db,
+        isCalibrating: this.isAutoCalibrating
+      })
 
-      // 声级校准设置
-      GridCol() {
-        Column({ space: 8 }) {
-          Row({ space: 8 }) {
-            Row() {
-              Image($r('app.media.ic_calibration'))
-                .itemIcon()
-              Text('声级校准')
-                .itemTitle()
-            }.layoutWeight(1)
-
-            Text(`${this.pk.calibration_value}dB`)
-              .fontSize(DesignConstants.FONT_SIZE_MD)
-              .fontColor($r('sys.color.font_secondary'))
-              .margin({ right: DesignConstants.SPACING_SM })
+      // 核心校准控制区域
+      Column({ space: DesignConstants.SPACING_LG }) {
+        // 手动校准组件
+        EnhancedManualCalibration({
+          calibrationValue: this.pk.calibration_value,
+          onValueChange: (value: number) => {
+            this.onManualCalibrationChange(value);
           }
-          .listItemRow()
+        })
 
-          Slider({
-            value: this.pk.calibration_value,
-            min: -30,
-            max: 30,
-            style: SliderStyle.InSet
-          })
-            .blockColor($r('sys.color.font_emphasize'))
-            .trackColor($r('sys.color.background_secondary'))
-            .selectedColor($r('sys.color.font_emphasize'))
-            .showTips(true, `${this.as.db}dB`)
-            .onChange((value: number) => {
-              this.pk.calibration_value = value;
-            })
-            .margin({
-              top: DesignConstants.SPACING_MD,
-              bottom: DesignConstants.SPACING_MD
-            })
-            .height(24)
-            .trackThickness(24)
-            .blockSize({
-              width: 24,
-              height: 24
-            })
-
-          Text('手动校准麦克风灵敏度，确保测量精度')
-            .itemDescription()
-        }
-        .cardStyle()
-
+        // 自动校准组件
+        ImprovedAutoCalibration({
+          onStartCalibration: () => {
+            this.startAutoCalibration();
+          },
+          calibrationValue: this.pk.calibration_value,
+          isCalibrating: this.isAutoCalibrating,
+          calibrationProgress: this.getCalibrationProgressPercent(),
+          countdown: this.countdown,
+          environmentNoise: this.environmentNoise
+        })
       }
 
-      // 自动校准按钮
-      GridCol() {
-        Column({ space: 8 }) {
-          Row({ space: 8 }) {
-            Row() {
-              Image($r('app.media.ic_calibration'))
-                .itemIcon()
-              Text('自动校准')
-                .itemTitle()
-            }.layoutWeight(1)
-
-            if (this.isAutoCalibrating) {
-              Text(this.countdown > 0 ? `${this.countdown}秒后开始校准` :
-                `校准中,请保持安静...${8 - this.calibrationProgress}秒`)
-                .fontSize(DesignConstants.FONT_SIZE_MD)
-                .fontColor($r('sys.color.font_secondary'))
-                .margin({ right: DesignConstants.SPACING_SM })
-            } else {
-              Button('开始校准')
-                .type(ButtonType.Normal)
-                .fontSize(DesignConstants.FONT_SIZE_MD)
-                .backgroundColor($r('sys.color.background_emphasize'))
-                .borderRadius(DesignConstants.BORDER_RADIUS_LG)
-                .height(32)
-                .onClick(async () => {
-                  const result = await promptAction.showDialog({
-                    title: '自动校准提示',
-                    message: '请在非常安静的房间中进行自动校准，特别是夜间效果最佳',
-                    buttons: [
-                      {
-                        text: '取消',
-                        color: $r('app.color.text_disabled')
-                      },
-                      {
-                        text: '确认',
-                        color: $r('app.color.primary')
-                      }
-                    ]
-                  });
-
-                  // 根据用户选择处理
-                  if (result.index === 1) { // 确认按钮
-                    this.startAutoCalibration();
-                  }
-                })
-            }
-          }
-          .listItemRow()
-
-          Text('自动计算并设置校准值')
-            .itemDescription()
-        }
-        .cardStyle()
-      }
+      // 专业内容区域
+      ProfessionalContentPanel()
     }
-    .padding(16)
+    .width('100%')
+    .padding(DesignConstants.SPACING_LG)
     .backgroundColor($r('sys.color.background_secondary'))
   }
 }

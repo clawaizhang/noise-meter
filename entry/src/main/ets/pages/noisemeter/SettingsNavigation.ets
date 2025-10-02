@@ -197,7 +197,7 @@ export struct Settings {
   private navigateToAudioAnalysis = () => {
     DialogHub.getSheet()
       .setStyle({ title: { title: '声级校准' }, backgroundColor: $r('sys.color.background_secondary') })
-      .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS })
+      .setConfig({ scrollSizeMode: ScrollSizeMode.FOLLOW_DETENT })
       .setComponentTargetId('settingsId')
       .setContent(wrapBuilder(AudioAnalysisSettingsBuilder))
       .build()
@@ -210,26 +210,6 @@ export struct Settings {
       .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS })
       .setComponentTargetId('settingsId')
       .setContent(wrapBuilder(AlertsSettingsBuilder))
-      .build()
-      .show();
-  }
-  // 导航到数据记录与隐私设置页面
-  private navigateToDataPrivacy = () => {
-    DialogHub.getSheet()
-      .setStyle({ title: { title: '数据记录与隐私' }, backgroundColor: $r('sys.color.background_secondary') })
-      .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS })
-      .setComponentTargetId('settingsId')
-      .setContent(wrapBuilder(DataPrivacySettingsBuilder))
-      .build()
-      .show();
-  }
-  // 导航到设备设置页面
-  private navigateToDeviceSettings = () => {
-    DialogHub.getSheet()
-      .setStyle({ title: { title: '设备设置' }, backgroundColor: $r('sys.color.background_secondary') })
-      .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS })
-      .setComponentTargetId('settingsId')
-      .setContent(wrapBuilder(DeviceSettingsBuilder))
       .build()
       .show();
   }
