@@ -37,12 +37,6 @@ export struct EnhancedThresholdManager {
   @Builder
   private buildEnvironmentSelector() {
     Column({ space: DesignConstants.SPACING_MD }) {
-      Text('环境类型')
-        .fontSize(DesignConstants.FONT_SIZE_XL)
-        .fontWeight(FontWeight.Bold)
-        .fontColor($r('sys.color.font_primary'))
-        .alignSelf(ItemAlign.Start)
-
       // 环境类型选项网格
       GridRow({
         columns: { sm: 2, md: 3 },
@@ -62,13 +56,8 @@ export struct EnhancedThresholdManager {
         })
       }
       .width('100%')
-      .margin({ top: DesignConstants.SPACING_MD })
     }
     .width('100%')
-    .padding(DesignConstants.SPACING_LG)
-    .backgroundColor($r('sys.color.comp_background_primary'))
-    .borderRadius(DesignConstants.BORDER_RADIUS_LG)
-    .shadow(DesignConstants.SHADOW_SM)
   }
 
   // 构建环境类型卡片
@@ -114,38 +103,65 @@ export struct EnhancedThresholdManager {
     }
   }
 
-  // 构建时段调度开关
+  // 构建统一的阈值设置面板（包含时段调度开关和环境类型选择）
   @Builder
-  private buildTimeSchedulingSwitch() {
-    Column({ space: DesignConstants.SPACING_SM }) {
+  private buildUnifiedThresholdPanel() {
+    Column({ space: DesignConstants.SPACING_MD }) {
+      // 标题栏（包含时段调度开关）
       Row({ space: DesignConstants.SPACING_SM }) {
-        Text('时段调度')
-          .fontSize(DesignConstants.FONT_SIZE_LG)
-          .fontWeight(FontWeight.Medium)
+        Text('阈值设置')
+          .fontSize(DesignConstants.FONT_SIZE_XL)
+          .fontWeight(FontWeight.Bold)
           .fontColor($r('sys.color.font_primary'))
           .layoutWeight(1)
 
-        Toggle({ type: ToggleType.Switch, isOn: this.currentConfig.timeSchedulingEnabled })
-          .onChange((isOn: boolean) => {
-            this.logStateChange(`切换时段调度: ${isOn ? '启用' : '禁用'}`);
-            ThresholdManager.setTimeSchedulingEnabled(isOn);
-          })
+        // 时段调度开关
+        Row({ space: DesignConstants.SPACING_XS }) {
+          Text('时段调度')
+            .fontSize(DesignConstants.FONT_SIZE_MD)
+            .fontColor($r('sys.color.font_primary'))
+          
+          Toggle({ type: ToggleType.Switch, isOn: this.currentConfig.timeSchedulingEnabled })
+            .onChange((isOn: boolean) => {
+              this.logStateChange(`切换时段调度: ${isOn ? '启用' : '禁用'}`);
+              ThresholdManager.setTimeSchedulingEnabled(isOn);
+            })
+        }
+        .alignItems(VerticalAlign.Center)
       }
       .width('100%')
       .alignItems(VerticalAlign.Center)
 
+      // 时段调度状态描述
       Text(this.currentConfig.timeSchedulingEnabled ?
         '已启用时段调度，白天和夜间使用不同阈值' :
         '时段调度已关闭，全天使用统一阈值')
         .fontSize(DesignConstants.FONT_SIZE_MD)
         .fontColor($r('sys.color.font_secondary'))
         .alignSelf(ItemAlign.Start)
+
+      // 环境类型选择区域
+      Column({ space: DesignConstants.SPACING_SM }) {
+        // 引导提示
+        Text('选择环境类型快速设置阈值')
+          .fontSize(DesignConstants.FONT_SIZE_MD)
+          .fontColor($r('sys.color.font_secondary'))
+          .alignSelf(ItemAlign.Start)
+
+        // 环境类型网格选择器
+        this.buildEnvironmentSelector()
+      }
+      .width('100%')
+      .margin({ top: DesignConstants.SPACING_MD })
+
+      // 阈值设置区域
+      this.buildDynamicThresholdControls()
     }
     .width('100%')
-    .padding(DesignConstants.SPACING_MD)
-    .backgroundColor($r('sys.color.background_secondary'))
-    .borderRadius(DesignConstants.BORDER_RADIUS_MD)
-    .margin({ top: DesignConstants.SPACING_MD })
+    .padding(DesignConstants.SPACING_LG)
+    .backgroundColor($r('sys.color.comp_background_primary'))
+    .borderRadius(DesignConstants.BORDER_RADIUS_LG)
+    .shadow(DesignConstants.SHADOW_SM)
   }
 
   // 构建动态阈值控制区域
@@ -153,10 +169,10 @@ export struct EnhancedThresholdManager {
   private buildDynamicThresholdControls() {
     if (this.currentConfig.currentPreset === PresetType.CUSTOM) {
       Column({ space: DesignConstants.SPACING_MD }) {
-        Text('阈值设置')
-          .fontSize(DesignConstants.FONT_SIZE_XL)
-          .fontWeight(FontWeight.Bold)
-          .fontColor($r('sys.color.font_primary'))
+        // 自定义模式状态提示
+        Text('手动调整阈值设置')
+          .fontSize(DesignConstants.FONT_SIZE_MD)
+          .fontColor($r('sys.color.font_secondary'))
           .alignSelf(ItemAlign.Start)
 
         if (!this.currentConfig.timeSchedulingEnabled) {
@@ -200,18 +216,13 @@ export struct EnhancedThresholdManager {
         }
       }
       .width('100%')
-      .padding(DesignConstants.SPACING_LG)
-      .backgroundColor($r('sys.color.comp_background_primary'))
-      .borderRadius(DesignConstants.BORDER_RADIUS_LG)
-      .shadow(DesignConstants.SHADOW_SM)
-      .margin({ top: DesignConstants.SPACING_LG })
     } else {
       // 预设环境类型：显示当前阈值信息
       Column({ space: DesignConstants.SPACING_MD }) {
-        Text('当前阈值设置')
-          .fontSize(DesignConstants.FONT_SIZE_XL)
-          .fontWeight(FontWeight.Bold)
-          .fontColor($r('sys.color.font_primary'))
+        // 预设环境状态提示
+        Text(`当前使用${this.getPresetByType(this.currentConfig.currentPreset).name}预设阈值`)
+          .fontSize(DesignConstants.FONT_SIZE_MD)
+          .fontColor($r('sys.color.font_secondary'))
           .alignSelf(ItemAlign.Start)
 
         if (!this.currentConfig.timeSchedulingEnabled) {
@@ -243,11 +254,6 @@ export struct EnhancedThresholdManager {
         }
       }
       .width('100%')
-      .padding(DesignConstants.SPACING_LG)
-      .backgroundColor($r('sys.color.comp_background_primary'))
-      .borderRadius(DesignConstants.BORDER_RADIUS_LG)
-      .shadow(DesignConstants.SHADOW_SM)
-      .margin({ top: DesignConstants.SPACING_LG })
     }
   }
 
@@ -398,14 +404,8 @@ export struct EnhancedThresholdManager {
   build() {
     Column({ space: DesignConstants.SPACING_LG }) {
 
-      //时段调度开关
-      this.buildTimeSchedulingSwitch()
-
-      // 动态阈值控制区域
-      this.buildDynamicThresholdControls()
-
-      // 环境类型选择
-      this.buildEnvironmentSelector()
+      // 统一的阈值设置面板（包含时段调度开关和环境类型选择）
+      this.buildUnifiedThresholdPanel()
 
     }
     .width('100%')
