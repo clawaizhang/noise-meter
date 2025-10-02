@@ -74,12 +74,17 @@ export default class EntryAbility extends UIAbility {
       let deviceTypeInfo: string = deviceInfo.deviceType;
       hilog.info(DOMAIN, TAG, `the value of the deviceType is:${deviceTypeInfo}`);
       let orientation = window.Orientation.AUTO_ROTATION;
-      // 判断设备是手机or平板，来设置窗口显示方向
-      // if (deviceTypeInfo == 'phone') {
-      //   orientation = window.Orientation.PORTRAIT;
-      // } else if (deviceTypeInfo == 'tablet') {
-      //   orientation = window.Orientation.LANDSCAPE;
-      // }
+      // 判断设备类型来设置窗口显示方向
+      if (deviceTypeInfo == 'phone') {
+        // 手机设备强制竖屏
+        orientation = window.Orientation.PORTRAIT;
+      } else if (deviceTypeInfo == 'tablet') {
+        // 平板设备默认横屏
+        orientation = window.Orientation.LANDSCAPE;
+      } else {
+        // 其他设备类型（car、2in1等）保持自动旋转
+        orientation = window.Orientation.AUTO_ROTATION;
+      }
       try {
         windowClass.setPreferredOrientation(orientation, (err: BusinessError) => {
           const errCode: number = err.code;
