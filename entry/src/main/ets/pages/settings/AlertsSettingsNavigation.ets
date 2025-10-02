@@ -59,14 +59,11 @@ export function AlertsSettingsBuilder() {
 export struct AlertsSettings {
   @Local pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys)!;
   @Local as: AppKeys = AppStorageV2.connect(AppKeys)!;
-  @Local private currentConfig: ThresholdConfig =
-  PersistenceV2.connect(ThresholdConfig, () => DEFAULT_THRESHOLD_CONFIG)!;
 
   @Local gridColumns: number = 1;
   @Consumer(navigationStack) navStack: NavPathStack = new NavPathStack();
 
   aboutToAppear() {
-    ThresholdManager.setCurrentConfig(this.currentConfig);
     // 初始化阈值管理器配置
     // 这里可以添加从持久化存储加载配置的逻辑
   }

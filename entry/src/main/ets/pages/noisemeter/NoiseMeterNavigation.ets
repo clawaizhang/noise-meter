@@ -8,6 +8,9 @@ import { AppKeys } from '../../models/AppKeys';
 import { AppStorageV2 } from '@kit.ArkUI';
 import { ListItemBuilder } from '../../components/common/ListItemBuilder';
 import { interval, Subscription } from 'rxjs';
+import { PreferenceKeys } from '../../models/PreferenceKeys';
+import { PersistenceV2 } from '@kit.ArkUI';
+import { AlertsContent } from '../../components/alerts/AlertsContent';
 
 // 导航菜单项接口定义
 interface NavigationMenuItem {
@@ -24,11 +27,13 @@ export function NoiseMeterBuilder() {
 @ComponentV2
 export struct MainNoiseMeter {
   @Consumer(navigationStack) navStack: NavPathStack = new NavPathStack()
-  @Local currentIndex: number = 0
+  @Local currentIndex: number = 1
   @Local title: string = '静喵Sound';
   @Local menuItems: Array<NavigationMenuItem> = [];
   @Local as: AppKeys = AppStorageV2.connect(AppKeys)!;
+  @Local pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys)!;
   noiseReferSub?:Subscription
+  
 
   aboutToDisappear(): void {
     this.noiseReferSub?.unsubscribe();
@@ -42,14 +47,19 @@ export struct MainNoiseMeter {
   onTabIndexChange(monitor: IMonitor) {
     const currentValue = monitor.value<number>()?.now;
     if (currentValue === 0) {
+      this.title = '噪音警报';
+      this.menuItems = this.alertsMenus;
+    }
+    if (currentValue === 1) {
       this.title = '仪表盘';
       this.menuItems = this.noiseMeterMenus;
     }
-    if (currentValue === 1) {
+    if (currentValue === 2) {
       this.title = '我的';
       this.menuItems = [];
     }
   }
+  
 
   @Builder
   TabBuilder(title: string, icon: Resource, index: number) {
@@ -76,6 +86,17 @@ export struct MainNoiseMeter {
       }
     }
   ]
+  
+  private alertsMenus: Array<NavigationMenuItem> = [
+    {
+      value: '警报设置',
+      icon: $r('app.media.ic_settings'),
+      action: () => {
+        this.navStack.pushPathByName('AlertsSettings', null);
+      }
+    }
+  ]
+
 
   @Builder
   DashboardContent() {
@@ -88,8 +109,8 @@ export struct MainNoiseMeter {
     .id('decibelMeterRoot')
     .justifyContent(FlexAlign.Center)
     .alignItems(HorizontalAlign.Center)
-    .opacity(this.currentIndex === 0 ? 1 : 0)
-    .scale({ x: this.currentIndex === 0 ? 1 : 0.95, y: this.currentIndex === 0 ? 1 : 0.95 })
+    .opacity(this.currentIndex === 1 ? 1 : 0)
+    .scale({ x: this.currentIndex === 1 ? 1 : 0.95, y: this.currentIndex === 1 ? 1 : 0.95 })
     .animation({
       duration: 300,
       curve: Curve.EaseOut,
@@ -157,8 +178,8 @@ export struct MainNoiseMeter {
     .id('myContentId')
     .justifyContent(FlexAlign.Start)
     .alignItems(HorizontalAlign.Center)
-    .opacity(this.currentIndex === 1 ? 1 : 0)
-    .scale({ x: this.currentIndex === 1 ? 1 : 0.95, y: this.currentIndex === 1 ? 1 : 0.95 })
+    .opacity(this.currentIndex === 2 ? 1 : 0)
+    .scale({ x: this.currentIndex === 2 ? 1 : 0.95, y: this.currentIndex === 2 ? 1 : 0.95 })
     .animation({
       duration: 300,
       curve: Curve.EaseOut,
@@ -168,18 +189,25 @@ export struct MainNoiseMeter {
     })
   }
 
+
   build() {
     NavDestination() {
       Tabs({ barPosition: BarPosition.End, index: this.currentIndex }) {
+        // 警报页面 - 使用独立的AlertsContent组件
+        TabContent() {
+          AlertsContent()
+        }
+        .tabBar(this.TabBuilder('警报', $r('app.media.ic_alarm'), 0))
+
         TabContent() {
           this.DashboardContent()
         }
-        .tabBar(this.TabBuilder('仪表盘', $r('app.media.ic_meter'), 0))
+        .tabBar(this.TabBuilder('仪表盘', $r('app.media.ic_meter'), 1))
 
         TabContent() {
           this.MyContent()
         }
-        .tabBar(this.TabBuilder('我的', $r('app.media.ic_favorite'), 1))
+        .tabBar(this.TabBuilder('我的', $r('app.media.ic_favorite'), 2))
       }
       .onChange((index: number) => {
         this.currentIndex = index;

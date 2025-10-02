@@ -16,6 +16,8 @@ import { AppKeys } from '../models/AppKeys'
 import { FileUtils } from '../utils/FileUtils'
 import { PermissionService } from '../services/PermissionService'
 import { DisplayManager } from '../utils/DisplayManager'
+import { DEFAULT_THRESHOLD_CONFIG, ThresholdConfig } from '../models/ThresholdConfig'
+import { ThresholdManager } from '../services/ThresholdManager'
 
 const TAG = 'Index';
 const DOMAIN = 0x0000;
@@ -32,6 +34,8 @@ struct Index {
   @Local isInitialized: boolean = false;
   @Local isLoading: boolean = true;
   @Local pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys,() => new PreferenceKeys())!;
+  @Local private currentConfig: ThresholdConfig =
+    PersistenceV2.connect(ThresholdConfig, () => DEFAULT_THRESHOLD_CONFIG)!;
   @Local as: AppKeys = AppStorageV2.connect(AppKeys, () => new AppKeys())!;
   usePrivacy: boolean = true;
   private relationalStoreService: RelationalStoreService = RelationalStoreService.getInstance();
@@ -75,6 +79,7 @@ struct Index {
   }
 
   async aboutToAppear() {
+    ThresholdManager.setCurrentConfig(this.currentConfig);
     FileUtils.init(this.getUIContext().getHostContext());
     this.setDisplayMode(this.pk.display_mode);
     if (!this.pk.privacy_agreed) {
