@@ -1,8 +1,15 @@
 import { PreferenceKeys } from '../../models/PreferenceKeys';
 import { navigationStack } from '../../constants/ProviderConstant';
 import { DesignConstants } from '../../constants/DesignConstants';
-import { curves, PersistenceV2 } from '@kit.ArkUI';
+import { AppKeys } from '../../models/AppKeys';
+import { AppStorageV2, curves, PersistenceV2 } from '@kit.ArkUI';
 
+// 导入新组件
+import { AlertsStatusIndicator } from '../../components/alerts/AlertsStatusIndicator';
+import { SmartThresholdPresets } from '../../components/alerts/SmartThresholdPresets';
+import { TimeSchedulingPanel } from '../../components/alerts/TimeSchedulingPanel';
+import { NotificationPreferences } from '../../components/alerts/NotificationPreferences';
+import { AcousticExplanationPanel } from '../../components/alerts/AcousticExplanationPanel';
 
 @Extend(Image)
 function itemIcon() {
@@ -50,30 +57,142 @@ export function AlertsSettingsBuilder() {
 @ComponentV2
 export struct AlertsSettings {
   @Local pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys)!;
-
-  @Local noiseAlarmDescription: string = '';
+  @Local as: AppKeys = AppStorageV2.connect(AppKeys)!;
   @Local gridColumns: number = 1;
   @Consumer(navigationStack) navStack: NavPathStack = new NavPathStack();
 
   aboutToAppear() {
+    // 初始化时段调度阈值
+    if (this.pk.daytime_alert_threshold === undefined) {
+      this.pk.daytime_alert_threshold = 70;
+    }
+    if (this.pk.nighttime_alert_threshold === undefined) {
+      this.pk.nighttime_alert_threshold = 50;
+    }
   }
 
-  private updateNoiseAlarmDescription() {
-    this.noiseAlarmDescription = this.pk.noise_alarm_enabled
-      ? '检测到噪音超过阈值时将触发警报'
-      : '系统不会发出噪音超标警报';
+  // 获取当前有效阈值
+  private getCurrentEffectiveThreshold(): number {
+    if (!this.pk.alert_time_scheduling_enabled) {
+      return this.pk.noise_threshold;
+    }
+    
+    const currentHour = new Date().getHours();
+    if (currentHour >= 6 && currentHour < 22) {
+      return this.pk.daytime_alert_threshold;
+    } else {
+      return this.pk.nighttime_alert_threshold;
+    }
+  }
+
+  // 处理阈值变化
+  private onThresholdChange(value: number) {
+    this.pk.noise_threshold = value;
+  }
+
+  // 处理预设变化
+  private onPresetChange(preset: string) {
+    this.pk.current_preset_threshold = preset;
+  }
+
+  // 处理时段调度启用状态变化
+  private onTimeSchedulingEnabledChange(enabled: boolean) {
+    this.pk.alert_time_scheduling_enabled = enabled;
+  }
+
+  // 处理白天阈值变化
+  private onDaytimeThresholdChange(value: number) {
+    this.pk.daytime_alert_threshold = value;
+  }
+
+  // 处理夜间阈值变化
+  private onNighttimeThresholdChange(value: number) {
+    this.pk.nighttime_alert_threshold = value;
+  }
+
+  // 处理声音通知变化
+  private onSoundAlertChange(enabled: boolean) {
+    this.pk.sound_alert_enabled = enabled;
+  }
+
+  // 处理振动通知变化
+  private onVibrationAlertChange(enabled: boolean) {
+    this.pk.vibration_alert_enabled = enabled;
+  }
+
+  // 处理视觉通知变化
+  private onVisualAlertChange(enabled: boolean) {
+    this.pk.visual_alert_enabled = enabled;
+  }
+
+  // 处理系统通知变化
+  private onSystemNotificationChange(enabled: boolean) {
+    this.pk.system_notification_enabled = enabled;
   }
 
   build() {
-    // 列表布局（保持原有代码）
-    GridRow({
-      columns:
-      1,
-      breakpoints: { reference: BreakpointsReference.WindowSize }
-    , gutter: 16
-    }) {
-      // 噪音阈值警报的开关
-      GridCol() {
+    Column({ space: DesignConstants.SPACING_LG }) {
+      // 警报状态指示器
+      AlertsStatusIndicator({
+        currentDecibel: this.as.db,
+        alertThreshold: this.getCurrentEffectiveThreshold(),
+        isAlertEnabled: this.pk.noise_alarm_enabled
+      })
+
+      // 智能阈值预设
+      SmartThresholdPresets({
+        currentThreshold: this.pk.noise_threshold,
+        currentPreset: this.pk.current_preset_threshold,
+        onThresholdChange: (value: number) => {
+          this.onThresholdChange(value);
+        },
+        onPresetChange: (preset: string) => {
+          this.onPresetChange(preset);
+        }
+      })
+
+      // 时段调度设置
+      TimeSchedulingPanel({
+        isEnabled: this.pk.alert_time_scheduling_enabled,
+        daytimeThreshold: this.pk.daytime_alert_threshold,
+        nighttimeThreshold: this.pk.nighttime_alert_threshold,
+        onEnabledChange: (enabled: boolean) => {
+          this.onTimeSchedulingEnabledChange(enabled);
+        },
+        onDaytimeThresholdChange: (value: number) => {
+          this.onDaytimeThresholdChange(value);
+        },
+        onNighttimeThresholdChange: (value: number) => {
+          this.onNighttimeThresholdChange(value);
+        }
+      })
+
+      // 通知偏好设置
+      NotificationPreferences({
+        soundEnabled: this.pk.sound_alert_enabled,
+        vibrationEnabled: this.pk.vibration_alert_enabled,
+        visualEnabled: this.pk.visual_alert_enabled,
+        systemNotificationEnabled: this.pk.system_notification_enabled,
+        onSoundChange: (enabled: boolean) => {
+          this.onSoundAlertChange(enabled);
+        },
+        onVibrationChange: (enabled: boolean) => {
+          this.onVibrationAlertChange(enabled);
+        },
+        onVisualChange: (enabled: boolean) => {
+          this.onVisualAlertChange(enabled);
+        },
+        onSystemNotificationChange: (enabled: boolean) => {
+          this.onSystemNotificationChange(enabled);
+        }
+      })
+
+      // 专业声学解释
+      AcousticExplanationPanel()
+
+      // 保留原有的基础设置（兼容性）
+      Column({ space: DesignConstants.SPACING_MD }) {
+        // 噪音阈值警报的开关
         Column({ space: 8 }) {
           Row({ space: 8 }) {
             Row() {
@@ -87,58 +206,21 @@ export struct AlertsSettings {
             Toggle({ type: ToggleType.Switch, isOn: this.pk.noise_alarm_enabled })
               .onChange((isOn: boolean) => {
                 this.pk.noise_alarm_enabled = isOn;
-                this.updateNoiseAlarmDescription();
               })
           }
           .listItemRow()
 
-          Text(this.noiseAlarmDescription)
+          Text(this.pk.noise_alarm_enabled ? 
+            '检测到噪音超过阈值时将触发警报' : 
+            '系统不会发出噪音超标警报')
             .itemDescription()
         }
         .cardStyle()
       }
-
-      // 噪音阈值的设置
-      GridCol() {
-        Column({ space: 8 }) {
-          Row({ space: 8 }) {
-            Row() {
-              Image($r('app.media.ic_threshold'))
-                .itemIcon()
-              Text('噪音警报阈值')
-                .itemTitle()
-            }.layoutWeight(1)
-
-            Text(`${this.pk.noise_threshold}dB`)
-              .fontSize(DesignConstants.FONT_SIZE_MD)
-          }
-          .listItemRow()
-
-          Slider({
-            value: this.pk.noise_threshold,
-            min: 30,
-            max: 120,
-            style: SliderStyle.InSet
-          })
-            .blockColor($r('app.color.primary'))
-            .trackColor($r('app.color.background_secondary'))
-            .selectedColor($r('app.color.primary'))
-            .onChange((value: number) => {
-              this.pk.noise_threshold = value;
-            })
-            .margin({
-              top: DesignConstants.SPACING_MD,
-              bottom: DesignConstants.SPACING_MD
-            })
-            .height(24)
-            .trackThickness(24)
-            .blockSize({ width: 24, height: 24 })
-          Text('环境噪音超过设定阈值时，系统将发出警报提示')
-            .itemDescription()
-        }
-        .cardStyle()
-      }
+      .width('100%')
     }
-    .padding(16).backgroundColor($r('sys.color.background_secondary'))
+    .width('100%')
+    .padding(DesignConstants.SPACING_LG)
+    .backgroundColor($r('sys.color.background_secondary'))
   }
 }

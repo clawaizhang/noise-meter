@@ -66,4 +66,52 @@ export class PreferenceKeys {
    */
   @Trace
   microphone_permission_requested: boolean = PreferencesUtil.getBooleanSync('microphone_permission_requested', false);
+
+  /**
+   * 警报时段调度设置
+   */
+  @Trace
+  alert_time_scheduling_enabled: boolean = PreferencesUtil.getBooleanSync('alert_time_scheduling_enabled', false);
+
+  /**
+   * 白天警报阈值
+   */
+  @Trace
+  daytime_alert_threshold: number = PreferencesUtil.getNumberSync('daytime_alert_threshold', 70);
+
+  /**
+   * 夜间警报阈值
+   */
+  @Trace
+  nighttime_alert_threshold: number = PreferencesUtil.getNumberSync('nighttime_alert_threshold', 50);
+
+  /**
+   * 声音警报开关
+   */
+  @Trace
+  sound_alert_enabled: boolean = PreferencesUtil.getBooleanSync('sound_alert_enabled', true);
+
+  /**
+   * 振动警报开关
+   */
+  @Trace
+  vibration_alert_enabled: boolean = PreferencesUtil.getBooleanSync('vibration_alert_enabled', true);
+
+  /**
+   * 视觉警报开关
+   */
+  @Trace
+  visual_alert_enabled: boolean = PreferencesUtil.getBooleanSync('visual_alert_enabled', true);
+
+  /**
+   * 系统通知开关
+   */
+  @Trace
+  system_notification_enabled: boolean = PreferencesUtil.getBooleanSync('system_notification_enabled', true);
+
+  /**
+   * 当前使用的预设阈值名称
+   */
+  @Trace
+  current_preset_threshold: string = PreferencesUtil.getStringSync('current_preset_threshold', 'custom');
 }
