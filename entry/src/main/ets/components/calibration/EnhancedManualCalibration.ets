@@ -191,7 +191,7 @@ export struct EnhancedManualCalibration {
       this.buildQuickActions()
 
       // 说明文本
-      Text('手动调整麦克风灵敏度，确保测量精度。建议在安静环境中进行校准。')
+      Text('手动校准操作：\n1. 将设备与专业声级计放置在同一位置\n2. 对照标准设备读数\n3. 调整补偿值使读数一致')
         .fontSize(DesignConstants.FONT_SIZE_MD)
         .fontColor($r('sys.color.font_secondary'))
         .textAlign(TextAlign.Start)
