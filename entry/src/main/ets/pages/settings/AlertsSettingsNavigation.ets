@@ -9,7 +9,8 @@ import { AlertsStatusIndicator } from '../../components/alerts/AlertsStatusIndic
 import { EnhancedThresholdManager } from '../../components/alerts/EnhancedThresholdManager';
 import { NotificationPreferences } from '../../components/alerts/NotificationPreferences';
 import { AcousticExplanationPanel } from '../../components/alerts/AcousticExplanationPanel';
-import { thresholdManager } from '../../services/ThresholdManager';
+import { DEFAULT_THRESHOLD_CONFIG, ThresholdConfig } from '../../models/ThresholdConfig';
+import { ThresholdManager } from '../../services/ThresholdManager';
 
 @Extend(Image)
 function itemIcon() {
@@ -58,17 +59,21 @@ export function AlertsSettingsBuilder() {
 export struct AlertsSettings {
   @Local pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys)!;
   @Local as: AppKeys = AppStorageV2.connect(AppKeys)!;
+  @Local private currentConfig: ThresholdConfig =
+  PersistenceV2.connect(ThresholdConfig, () => DEFAULT_THRESHOLD_CONFIG)!;
+
   @Local gridColumns: number = 1;
   @Consumer(navigationStack) navStack: NavPathStack = new NavPathStack();
 
   aboutToAppear() {
+    ThresholdManager.setCurrentConfig(this.currentConfig);
     // 初始化阈值管理器配置
     // 这里可以添加从持久化存储加载配置的逻辑
   }
 
   // 获取当前有效阈值（兼容原有逻辑）
   private getCurrentEffectiveThreshold(): number {
-    return thresholdManager.getCurrentEffectiveThreshold();
+    return ThresholdManager.getCurrentEffectiveThreshold();
   }
 
   // 处理声音通知变化

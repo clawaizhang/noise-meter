@@ -13,6 +13,7 @@ import {
   DEFAULT_TIME_SCHEDULING_CONFIG,
   THRESHOLD_CALCULATION_RULES
 } from '../models/ThresholdConfig';
+import { PersistenceV2 } from '@kit.ArkUI';
 
 interface ThresholdValidation {
   isValid: boolean;
@@ -20,15 +21,8 @@ interface ThresholdValidation {
 }
 
 export class ThresholdManager {
-  private currentConfig: ThresholdConfig = new ThresholdConfig(
-    DEFAULT_THRESHOLD_CONFIG.currentPreset,
-    DEFAULT_THRESHOLD_CONFIG.timeSchedulingEnabled,
-    DEFAULT_THRESHOLD_CONFIG.baseThreshold,
-    DEFAULT_THRESHOLD_CONFIG.daytimeThreshold,
-    DEFAULT_THRESHOLD_CONFIG.nighttimeThreshold,
-    DEFAULT_THRESHOLD_CONFIG.lastModified
-  );
-  private timeSchedulingConfig: TimeSchedulingConfig = new TimeSchedulingConfig(
+  private static  currentConfig: ThresholdConfig;
+  private static  timeSchedulingConfig: TimeSchedulingConfig = new TimeSchedulingConfig(
     DEFAULT_TIME_SCHEDULING_CONFIG.daytimeStart,
     DEFAULT_TIME_SCHEDULING_CONFIG.daytimeEnd,
     DEFAULT_TIME_SCHEDULING_CONFIG.nighttimeStart,
@@ -36,148 +30,136 @@ export class ThresholdManager {
   );
 
   // 获取当前配置
-  getCurrentConfig(): ThresholdConfig {
-    return new ThresholdConfig(
-      this.currentConfig.currentPreset,
-      this.currentConfig.timeSchedulingEnabled,
-      this.currentConfig.baseThreshold,
-      this.currentConfig.daytimeThreshold,
-      this.currentConfig.nighttimeThreshold,
-      this.currentConfig.lastModified
-    );
+  static setCurrentConfig(config:ThresholdConfig): ThresholdConfig {
+    return ThresholdManager.currentConfig = config;
   }
 
   // 选择环境类型
-  selectPreset(presetType: PresetType): ThresholdConfig {
+  static selectPreset(presetType: PresetType): void {
     const preset = PRESET_THRESHOLDS.find(p => p.type === presetType);
     if (!preset) {
-      return this.getCurrentConfig();
+      return;
     }
 
-    this.currentConfig.currentPreset = presetType;
+    ThresholdManager.currentConfig.currentPreset = presetType;
     
     if (presetType === PresetType.CUSTOM) {
       // 自定义环境类型，保持当前阈值设置不变
-      this.currentConfig.lastModified = Date.now();
-      return this.getCurrentConfig();
+      ThresholdManager.currentConfig.lastModified = Date.now();
+      return;
     }
 
     // 预设环境类型，设置基准阈值
-    this.currentConfig.baseThreshold = preset.baseValue;
+    ThresholdManager.currentConfig.baseThreshold = preset.baseValue;
 
     // 自动计算时段调度阈值
-    if (this.currentConfig.timeSchedulingEnabled) {
-      const thresholds = this.calculateTimeSchedulingThresholds(preset.baseValue);
-      this.currentConfig.daytimeThreshold = thresholds.daytime;
-      this.currentConfig.nighttimeThreshold = thresholds.nighttime;
+    if (ThresholdManager.currentConfig.timeSchedulingEnabled) {
+      const thresholds = ThresholdManager.calculateTimeSchedulingThresholds(preset.baseValue);
+      ThresholdManager.currentConfig.daytimeThreshold = thresholds.daytime;
+      ThresholdManager.currentConfig.nighttimeThreshold = thresholds.nighttime;
     } else {
       // 如果时段调度未启用，使用基准阈值
-      this.currentConfig.daytimeThreshold = preset.baseValue;
-      this.currentConfig.nighttimeThreshold = preset.baseValue;
+      ThresholdManager.currentConfig.daytimeThreshold = preset.baseValue;
+      ThresholdManager.currentConfig.nighttimeThreshold = preset.baseValue;
     }
 
-    this.currentConfig.lastModified = Date.now();
-    return this.getCurrentConfig();
+    ThresholdManager.currentConfig.lastModified = Date.now();
   }
 
   // 设置时段调度启用状态
-  setTimeSchedulingEnabled(enabled: boolean): ThresholdConfig {
-    this.currentConfig.timeSchedulingEnabled = enabled;
+  static setTimeSchedulingEnabled(enabled: boolean): void {
+    ThresholdManager.currentConfig.timeSchedulingEnabled = enabled;
 
-    if (enabled && this.currentConfig.currentPreset !== PresetType.CUSTOM) {
+    if (enabled && ThresholdManager.currentConfig.currentPreset !== PresetType.CUSTOM) {
       // 在预设环境类型下启用时段调度，重新计算阈值
-      const thresholds = this.calculateTimeSchedulingThresholds(this.currentConfig.baseThreshold);
-      this.currentConfig.daytimeThreshold = thresholds.daytime;
-      this.currentConfig.nighttimeThreshold = thresholds.nighttime;
+      const thresholds = ThresholdManager.calculateTimeSchedulingThresholds(ThresholdManager.currentConfig.baseThreshold);
+      ThresholdManager.currentConfig.daytimeThreshold = thresholds.daytime;
+      ThresholdManager.currentConfig.nighttimeThreshold = thresholds.nighttime;
     } else if (!enabled) {
       // 禁用时段调度，使用基准阈值
-      this.currentConfig.daytimeThreshold = this.currentConfig.baseThreshold;
-      this.currentConfig.nighttimeThreshold = this.currentConfig.baseThreshold;
+      ThresholdManager.currentConfig.daytimeThreshold = ThresholdManager.currentConfig.baseThreshold;
+      ThresholdManager.currentConfig.nighttimeThreshold = ThresholdManager.currentConfig.baseThreshold;
     }
 
-    this.currentConfig.lastModified = Date.now();
-    return this.getCurrentConfig();
+    ThresholdManager.currentConfig.lastModified = Date.now();
   }
 
   // 设置白天阈值
-  setDaytimeThreshold(value: number): ThresholdConfig {
+  static setDaytimeThreshold(value: number): void {
     // 修改时段阈值时，自动切换到自定义环境类型
-    if (this.currentConfig.currentPreset !== PresetType.CUSTOM) {
-      this.currentConfig.currentPreset = PresetType.CUSTOM;
+    if (ThresholdManager.currentConfig.currentPreset !== PresetType.CUSTOM) {
+      ThresholdManager.currentConfig.currentPreset = PresetType.CUSTOM;
     }
 
-    this.currentConfig.daytimeThreshold = value;
-    this.currentConfig.lastModified = Date.now();
-    return this.getCurrentConfig();
+    ThresholdManager.currentConfig.daytimeThreshold = value;
+    ThresholdManager.currentConfig.lastModified = Date.now();
   }
 
   // 设置夜间阈值
-  setNighttimeThreshold(value: number): ThresholdConfig {
+  static setNighttimeThreshold(value: number): void {
     // 修改时段阈值时，自动切换到自定义环境类型
-    if (this.currentConfig.currentPreset !== PresetType.CUSTOM) {
-      this.currentConfig.currentPreset = PresetType.CUSTOM;
+    if (ThresholdManager.currentConfig.currentPreset !== PresetType.CUSTOM) {
+      ThresholdManager.currentConfig.currentPreset = PresetType.CUSTOM;
     }
 
-    this.currentConfig.nighttimeThreshold = value;
-    this.currentConfig.lastModified = Date.now();
-    return this.getCurrentConfig();
+    ThresholdManager.currentConfig.nighttimeThreshold = value;
+    ThresholdManager.currentConfig.lastModified = Date.now();
   }
 
   // 设置基准阈值
-  setBaseThreshold(value: number): ThresholdConfig {
+  static setBaseThreshold(value: number): void {
     // 修改基准阈值时，自动切换到自定义环境类型
-    if (this.currentConfig.currentPreset !== PresetType.CUSTOM) {
-      this.currentConfig.currentPreset = PresetType.CUSTOM;
+    if (ThresholdManager.currentConfig.currentPreset !== PresetType.CUSTOM) {
+      ThresholdManager.currentConfig.currentPreset = PresetType.CUSTOM;
     }
 
-    this.currentConfig.baseThreshold = value;
+    ThresholdManager.currentConfig.baseThreshold = value;
 
-    if (this.currentConfig.timeSchedulingEnabled) {
+    if (ThresholdManager.currentConfig.timeSchedulingEnabled) {
       // 如果时段调度启用，重新计算时段阈值
-      const thresholds = this.calculateTimeSchedulingThresholds(value);
-      this.currentConfig.daytimeThreshold = thresholds.daytime;
-      this.currentConfig.nighttimeThreshold = thresholds.nighttime;
+      const thresholds = ThresholdManager.calculateTimeSchedulingThresholds(value);
+      ThresholdManager.currentConfig.daytimeThreshold = thresholds.daytime;
+      ThresholdManager.currentConfig.nighttimeThreshold = thresholds.nighttime;
     }
 
-    this.currentConfig.lastModified = Date.now();
-    return this.getCurrentConfig();
+    ThresholdManager.currentConfig.lastModified = Date.now();
   }
 
   // 获取当前有效阈值（基于当前时间）
-  getCurrentEffectiveThreshold(): number {
-    if (!this.currentConfig.timeSchedulingEnabled) {
-      return this.currentConfig.baseThreshold;
+  static getCurrentEffectiveThreshold(): number {
+    if (!ThresholdManager.currentConfig.timeSchedulingEnabled) {
+      return ThresholdManager.currentConfig.baseThreshold;
     }
 
     const currentHour = new Date().getHours();
-    const isDaytime = currentHour >= this.timeSchedulingConfig.daytimeStart &&
-      currentHour < this.timeSchedulingConfig.daytimeEnd;
+    const isDaytime = currentHour >= ThresholdManager.timeSchedulingConfig.daytimeStart &&
+      currentHour < ThresholdManager.timeSchedulingConfig.daytimeEnd;
 
-    return isDaytime ? this.currentConfig.daytimeThreshold : this.currentConfig.nighttimeThreshold;
+    return isDaytime ? ThresholdManager.currentConfig.daytimeThreshold : ThresholdManager.currentConfig.nighttimeThreshold;
   }
 
   // 获取当前时段描述
-  getCurrentTimePeriod(): string {
+  static getCurrentTimePeriod(): string {
     const currentHour = new Date().getHours();
-    const isDaytime = currentHour >= this.timeSchedulingConfig.daytimeStart &&
-      currentHour < this.timeSchedulingConfig.daytimeEnd;
+    const isDaytime = currentHour >= ThresholdManager.timeSchedulingConfig.daytimeStart &&
+      currentHour < ThresholdManager.timeSchedulingConfig.daytimeEnd;
 
     return isDaytime ? '白天' : '夜间';
   }
 
   // 验证阈值设置的合理性
-  validateThresholds(): ThresholdValidation {
+  static validateThresholds(): ThresholdValidation {
     const errors: string[] = [];
 
-    if (this.currentConfig.daytimeThreshold < 30 || this.currentConfig.daytimeThreshold > 120) {
+    if (ThresholdManager.currentConfig.daytimeThreshold < 30 || ThresholdManager.currentConfig.daytimeThreshold > 120) {
       errors.push('白天阈值应在30-120dB范围内');
     }
 
-    if (this.currentConfig.nighttimeThreshold < 30 || this.currentConfig.nighttimeThreshold > 120) {
+    if (ThresholdManager.currentConfig.nighttimeThreshold < 30 || ThresholdManager.currentConfig.nighttimeThreshold > 120) {
       errors.push('夜间阈值应在30-120dB范围内');
     }
 
-    if (this.currentConfig.daytimeThreshold <= this.currentConfig.nighttimeThreshold) {
+    if (ThresholdManager.currentConfig.daytimeThreshold <= ThresholdManager.currentConfig.nighttimeThreshold) {
       errors.push('白天阈值应大于夜间阈值');
     }
 
@@ -189,7 +171,7 @@ export class ThresholdManager {
 
 
   // 私有方法：计算时段调度阈值
-  private calculateTimeSchedulingThresholds(baseThreshold: number): DayNightTime {
+  private static  calculateTimeSchedulingThresholds(baseThreshold: number): DayNightTime {
     const preset = PRESET_THRESHOLDS.find(p => p.baseValue === baseThreshold);
     if (!preset) {
       // 如果不是预设值，使用默认差值
@@ -213,6 +195,3 @@ export class ThresholdManager {
     };
   }
 }
-
-// 创建全局阈值管理器实例
-export const thresholdManager = new ThresholdManager();

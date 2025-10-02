@@ -3,10 +3,10 @@
  * 单一面板设计：环境类型选择 + 时段调度开关
  */
 
-import { PresetType, ThresholdConfig, PresetThreshold } from '../../models/ThresholdConfig';
-import { thresholdManager } from '../../services/ThresholdManager';
+import { PresetType, ThresholdConfig, PresetThreshold, DEFAULT_THRESHOLD_CONFIG } from '../../models/ThresholdConfig';
 import { DesignConstants } from '../../constants/DesignConstants';
-import { curves } from '@kit.ArkUI';
+import { curves, PersistenceV2 } from '@kit.ArkUI';
+import { ThresholdManager } from '../../services/ThresholdManager';
 
 @ObservedV2
 class PresetConfig {
@@ -27,7 +27,11 @@ class PresetConfig {
 
 @ComponentV2
 export struct EnhancedThresholdManager {
-  @Local private currentConfig: ThresholdConfig = thresholdManager.getCurrentConfig();
+  @Local private currentConfig: ThresholdConfig =
+    PersistenceV2.connect(ThresholdConfig)!;
+
+  aboutToAppear(): void {
+  }
 
   // 构建环境类型选择器
   @Builder
@@ -101,7 +105,7 @@ export struct EnhancedThresholdManager {
       })
       .onClick(() => {
         this.logStateChange('选择环境类型', presetType);
-        this.currentConfig = thresholdManager.selectPreset(presetType);
+        ThresholdManager.selectPreset(presetType);
       })
       .animation({
         duration: 200,
@@ -124,7 +128,7 @@ export struct EnhancedThresholdManager {
         Toggle({ type: ToggleType.Switch, isOn: this.currentConfig.timeSchedulingEnabled })
           .onChange((isOn: boolean) => {
             this.logStateChange(`切换时段调度: ${isOn ? '启用' : '禁用'}`);
-            this.currentConfig = thresholdManager.setTimeSchedulingEnabled(isOn);
+            ThresholdManager.setTimeSchedulingEnabled(isOn);
           })
       }
       .width('100%')
@@ -157,40 +161,40 @@ export struct EnhancedThresholdManager {
 
         if (!this.currentConfig.timeSchedulingEnabled) {
           // 时段调度关闭：显示统一阈值滚动条
-          this.buildThresholdSlider(
-            '统一阈值',
-            '全天使用的统一阈值',
-            this.currentConfig.baseThreshold,
-            (value: number) => {
-              this.currentConfig = thresholdManager.setBaseThreshold(value);
+          this.buildThresholdSlider({
+            title: '统一阈值',
+            description: '全天使用的统一阈值',
+            value: this.currentConfig.baseThreshold,
+            onChange: (value: number) => {
+              ThresholdManager.setBaseThreshold(value);
             },
-            $r('sys.color.ohos_id_color_palette1'), // 主色
-            '全天统一阈值'
-          )
+            color: $r('sys.color.ohos_id_color_palette1'), // 主色
+            timeRange: '全天统一阈值'
+          })
         } else {
           // 时段调度开启：显示白天和夜间阈值滚动条
           Column({ space: DesignConstants.SPACING_MD }) {
-            this.buildThresholdSlider(
-              '白天阈值',
-              '适用于日常活动环境',
-              this.currentConfig.daytimeThreshold,
-              (value: number) => {
-                this.currentConfig = thresholdManager.setDaytimeThreshold(value);
+            this.buildThresholdSlider({
+              title: '白天阈值',
+              description: '适用于日常活动环境',
+              value: this.currentConfig.daytimeThreshold,
+              onChange: (value: number) => {
+                ThresholdManager.setDaytimeThreshold(value);
               },
-              $r('sys.color.ohos_id_color_palette3'), // 黄色
-              '6:00 - 22:00'
-            )
+              color: $r('sys.color.ohos_id_color_palette3'), // 黄色
+              timeRange: '6:00 - 22:00'
+            })
 
-            this.buildThresholdSlider(
-              '夜间阈值',
-              '适用于休息睡眠环境',
-              this.currentConfig.nighttimeThreshold,
-              (value: number) => {
-                this.currentConfig = thresholdManager.setNighttimeThreshold(value);
+            this.buildThresholdSlider({
+              title: '夜间阈值',
+              description: '适用于休息睡眠环境',
+              value: this.currentConfig.nighttimeThreshold,
+              onChange: (value: number) => {
+                ThresholdManager.setNighttimeThreshold(value);
               },
-              $r('sys.color.ohos_id_color_palette6'), // 深蓝色
-              '22:00 - 6:00'
-            )
+              color: $r('sys.color.ohos_id_color_palette6'), // 深蓝色
+              timeRange: '22:00 - 6:00'
+            })
           }
           .width('100%')
         }
@@ -279,51 +283,44 @@ export struct EnhancedThresholdManager {
 
   // 构建阈值滑动条
   @Builder
-  private buildThresholdSlider(
-    title: string,
-    description: string,
-    value: number,
-    onChange: (value: number) => void,
-    color: Resource,
-    timeRange: string
-  ) {
+  private buildThresholdSlider(config: ISliderConfig) {
     Column({ space: DesignConstants.SPACING_SM }) {
       // 标题行
       Row({ space: DesignConstants.SPACING_SM }) {
-        Text(title)
+        Text(config.title)
           .fontSize(DesignConstants.FONT_SIZE_LG)
           .fontWeight(FontWeight.Medium)
           .fontColor($r('sys.color.font_primary'))
           .layoutWeight(1)
 
-        Text(`${value}dB`)
+        Text(`${config.value}dB`)
           .fontSize(DesignConstants.FONT_SIZE_MD)
-          .fontColor(color)
+          .fontColor(config.color)
           .fontWeight(FontWeight.Medium)
       }
       .width('100%')
       .alignItems(VerticalAlign.Center)
 
       // 时间范围
-      Text(timeRange)
+      Text(config.timeRange)
         .fontSize(DesignConstants.FONT_SIZE_SM)
         .fontColor($r('sys.color.font_secondary'))
         .alignSelf(ItemAlign.Start)
 
       // 滑动条
       Slider({
-        value: value,
+        value: config.value,
         min: 30,
         max: 120,
         step: 1,
         style: SliderStyle.InSet
       })
-        .blockColor(color)
+        .blockColor(config.color)
         .trackColor($r('sys.color.background_secondary'))
-        .selectedColor(color)
+        .selectedColor(config.color)
         .onChange((newValue: number) => {
           this.logStateChange(`调整阈值: ${newValue}dB`);
-          onChange(newValue);
+          config.onChange(newValue);
         })
         .margin({
           top: DesignConstants.SPACING_MD,
@@ -334,7 +331,7 @@ export struct EnhancedThresholdManager {
         .blockSize({ width: 20, height: 20 })
 
       // 描述
-      Text(description)
+      Text(config.description)
         .fontSize(DesignConstants.FONT_SIZE_MD)
         .fontColor($r('sys.color.font_secondary'))
         .alignSelf(ItemAlign.Start)
@@ -415,4 +412,14 @@ export struct EnhancedThresholdManager {
     .backgroundColor($r('sys.color.background_secondary'))
     .alignItems(HorizontalAlign.Start)
   }
+}
+
+// 滑动条配置接口
+interface ISliderConfig {
+  title: string;
+  description: string;
+  value: number;
+  onChange: (value: number) => void;
+  color: Resource;
+  timeRange: string;
 }
