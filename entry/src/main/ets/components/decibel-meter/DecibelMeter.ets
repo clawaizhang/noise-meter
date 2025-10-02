@@ -98,14 +98,17 @@ export struct DecibelMeter {
           },
         })
 
+        // 分贝显示面板 - 优化平板横屏布局
         GridCol({
           span: {
-            xs: 12,
-            sm: 12,
-            md: 5,
+            xs: 12,  // 手机竖屏：全宽
+            sm: 12,  // 手机横屏：全宽
+            md: 6,   // 平板竖屏：半宽
+            lg: 4,   // 平板横屏：4/12
+            xl: 4    // 大屏设备：4/12
           }
         }) {
-          Column({ space: 8 }) {
+          Column({ space: 12 }) {
 
             // 使用新的分贝显示组件（简化版，只负责显示）
             DecibelDisplayComponent({
@@ -120,7 +123,9 @@ export struct DecibelMeter {
               isNoiseAlarm: false // 报警状态由AudioController管理
             })
 
-            Text(`${secondsToHoursMinutesSecondsWithDecimal(60 * 60_000 - this.recordingTime)} 后自动保存`).fontSize(14)
+            Text(`${secondsToHoursMinutesSecondsWithDecimal(60 * 60_000 - this.recordingTime)} 后自动保存`)
+              .fontSize(14)
+              .fontColor($r('sys.color.ohos_id_color_text_secondary'))
 
             // 位置显示
             LocationDisplay({
@@ -130,35 +135,45 @@ export struct DecibelMeter {
                 console.info('[FREQ_TRACE][Location] 位置更新事件接收:', locationInfo);
               }
             })
-
-            if (["md", "lg", "xl", "xxl"].includes(this.breakPoint)) {
-              this.actionPanel()
-            }
           }
-        }.backgroundColor($r('sys.color.comp_background_primary')).borderRadius(16)
+        }
+        .backgroundColor($r('sys.color.comp_background_primary'))
+        .borderRadius(16)
+        .padding(16)
 
-        // 频谱图
+        // 频谱图 - 优化平板横屏布局
         GridCol({
           span: {
-            xs: 12,
-            sm: 12,
-            md: 5,
+            xs: 12,  // 手机竖屏：全宽
+            sm: 12,  // 手机横屏：全宽
+            md: 6,   // 平板竖屏：半宽
+            lg: 5,   // 平板横屏：5/12
+            xl: 5    // 大屏设备：5/12
           }
         }) {
           SpectrumChartComponent({
             spectrumData: this.currentSpectrum,
           })
         }
+        .backgroundColor($r('sys.color.comp_background_primary'))
+        .borderRadius(16)
+        .padding(16)
 
+        // 操作面板 - 优化平板横屏布局
         GridCol({
           span: {
-            xs: 12,
-            sm: 12,
-            md: 0,
+            xs: 12,  // 手机竖屏：全宽
+            sm: 12,  // 手机横屏：全宽
+            md: 12,  // 平板竖屏：全宽
+            lg: 3,   // 平板横屏：3/12
+            xl: 3    // 大屏设备：3/12
           }
         }) {
           this.actionPanel()
-        }.visibility(["md", "lg", "xl", "xxl"].includes(this.breakPoint) ? Visibility.Hidden : Visibility.Visible)
+        }
+        .backgroundColor($r('sys.color.comp_background_primary'))
+        .borderRadius(16)
+        .padding(16)
 
       }
       .padding({ top: 16, bottom: 16 })

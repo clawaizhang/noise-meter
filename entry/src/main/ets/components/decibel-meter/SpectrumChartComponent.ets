@@ -44,24 +44,35 @@ export struct SpectrumChartComponent {
     }
   }
 
-  // 计算Canvas尺寸（响应式版本）
+  // 计算Canvas尺寸（响应式版本）- 优化平板横屏支持
   private async calculateCanvasDimensions(): Promise<void> {
     try {
       // 获取实际可用区域
       const availableArea = await display.getDefaultDisplaySync().getAvailableArea();
-      const availableWidth = availableArea.width < availableArea.height ? availableArea.width : availableArea.height;
-      const availableHeight = availableArea.width < availableArea.height ? availableArea.height : availableArea.width;
-
+      const isLandscape = availableArea.width > availableArea.height;
+      
       // 更新响应式布局状态
-      const availableWidthVp = px2vp(availableWidth);
-      const availableHeightVp = px2vp(availableHeight);
+      const availableWidthVp = px2vp(availableArea.width);
+      const availableHeightVp = px2vp(availableArea.height);
 
-      // 竖屏模式：保持原有宽高比计算
-      this.canvasWidth = availableWidthVp - (16 as number * 2);
+      if (isLandscape) {
+        // 横屏模式：使用2:1宽高比，更适合平板横屏
+        this.canvasWidth = availableWidthVp * 0.7; // 占用70%可用宽度
+        this.canvasHeight = this.canvasWidth / 2; // 2:1宽高比
+      } else {
+        // 竖屏模式：保持原有1.5:1宽高比
+        this.canvasWidth = availableWidthVp - (16 as number * 2);
+        this.canvasHeight = this.canvasWidth / this.ASPECT_RATIO;
+      }
 
-      this.canvasHeight = this.canvasWidth / this.ASPECT_RATIO;
+      // 确保Canvas尺寸不会过大
+      const maxCanvasWidth = Math.min(this.canvasWidth, 600);
+      const maxCanvasHeight = Math.min(this.canvasHeight, 400);
+      
+      this.canvasWidth = maxCanvasWidth;
+      this.canvasHeight = maxCanvasHeight;
 
-      console.info(`[FREQ_TRACE][Canvas] 响应式Canvas尺寸: ${this.canvasWidth}x${this.canvasHeight}`);
+      console.info(`[FREQ_TRACE][Canvas] 响应式Canvas尺寸: ${this.canvasWidth}x${this.canvasHeight}, 横屏: ${isLandscape}`);
     } catch (error) {
       console.error('[FREQ_TRACE][显示设备信息] 计算Canvas尺寸失败:', error);
     }
