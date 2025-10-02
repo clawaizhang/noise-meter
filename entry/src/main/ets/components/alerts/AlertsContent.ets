@@ -144,73 +144,131 @@ export struct AlertsContent {
     })
   }
 
-  // 构建快速控制区
+  // 构建快速控制区 - 优化布局
   @Builder
   private buildQuickControls() {
     Column({ space: DesignConstants.SPACING_MD }) {
-      Text('快速控制')
-        .fontSize(DesignConstants.FONT_SIZE_XL)
-        .fontWeight(FontWeight.Bold)
-        .alignSelf(ItemAlign.Start)
-        .fontColor($r('sys.color.font_primary'))
-      
-      GridRow({ columns: 2, gutter: { x: 12, y: 12 } }) {
-        // 警报总开关
-        GridCol({ span: 1 }) {
-          this.buildControlCard(
-            '警报开关',
-            this.pk.noise_alarm_enabled,
-            $r('app.media.ic_power_on'),
-            (enabled: boolean) => {
-              this.pk.noise_alarm_enabled = enabled;
-            }
-          )
-        }
+      // 标题行：警报通知 + 总开关（右上角）
+      Row() {
+        Text('警报通知')
+          .fontSize(DesignConstants.FONT_SIZE_XL)
+          .fontWeight(FontWeight.Bold)
+          .fontColor($r('sys.color.font_primary'))
         
+        Blank()
+        
+        // 总开关 - 只保留开关
+        Toggle({ type: ToggleType.Switch, isOn: this.pk.noise_alarm_enabled })
+          .onChange((enabled: boolean) => {
+            this.pk.noise_alarm_enabled = enabled;
+          })
+          .selectedColor($r('sys.color.brand'))
+          .scale({ x: 1.1, y: 1.1 })
+      }
+      .width('100%')
+      .alignItems(VerticalAlign.Center)
+      
+      // 三个反馈项垂直排列
+      Column({ space: DesignConstants.SPACING_SM }) {
         // 声音反馈
-        GridCol({ span: 1 }) {
-          this.buildControlCard(
-            '声音',
-            this.pk.sound_alert_enabled,
-            $r('app.media.ic_audio_analysis'),
-            (enabled: boolean) => {
-              this.pk.sound_alert_enabled = enabled;
-            }
-          )
-        }
+        this.buildFeedbackItem(
+          '声音',
+          this.pk.sound_alert_enabled,
+          $r('app.media.ic_audio_analysis'),
+          (enabled: boolean) => {
+            this.pk.sound_alert_enabled = enabled;
+          }
+        )
         
         // 振动反馈
-        GridCol({ span: 1 }) {
-          this.buildControlCard(
-            '振动',
-            this.pk.vibration_alert_enabled,
-            $r('app.media.ic_sensor'),
-            (enabled: boolean) => {
-              this.pk.vibration_alert_enabled = enabled;
-            }
-          )
-        }
+        this.buildFeedbackItem(
+          '振动',
+          this.pk.vibration_alert_enabled,
+          $r('app.media.ic_sensor'),
+          (enabled: boolean) => {
+            this.pk.vibration_alert_enabled = enabled;
+          }
+        )
         
         // 通知反馈
-        GridCol({ span: 1 }) {
-          this.buildControlCard(
-            '通知',
-            this.pk.system_notification_enabled,
-            $r('app.media.ic_info'),
-            (enabled: boolean) => {
-              this.pk.system_notification_enabled = enabled;
-            }
-          )
-        }
+        this.buildFeedbackItem(
+          '通知',
+          this.pk.system_notification_enabled,
+          $r('app.media.ic_info'),
+          (enabled: boolean) => {
+            this.pk.system_notification_enabled = enabled;
+          }
+        )
       }
+      .width('100%')
     }
-    .padding(DesignConstants.SPACING_LG)
+    .padding(DesignConstants.SPACING_MD)
     .backgroundColor($r('sys.color.comp_background_primary'))
     .borderRadius(DesignConstants.BORDER_RADIUS_LG)
     .width('90%')
   }
 
-  // 构建控制卡片
+  // 构建反馈项 - 图标+文字+开关
+  @Builder
+  private buildFeedbackItem(title: string, enabled: boolean, icon: Resource, onToggle: (enabled: boolean) => void) {
+    Row({ space: DesignConstants.SPACING_MD }) {
+      // 图标
+      Image(icon)
+        .width(DesignConstants.ICON_SIZE_SM)
+        .height(DesignConstants.ICON_SIZE_SM)
+        .fillColor(enabled ? $r('sys.color.brand') : $r('sys.color.font_secondary'))
+      
+      // 文字
+      Text(title)
+        .fontSize(DesignConstants.FONT_SIZE_MD)
+        .fontColor(enabled ? $r('sys.color.font_primary') : $r('sys.color.font_secondary'))
+        .fontWeight(FontWeight.Medium)
+      
+      Blank()
+      
+      // 开关
+      Toggle({ type: ToggleType.Switch, isOn: enabled })
+        .onChange(onToggle)
+        .selectedColor($r('sys.color.brand'))
+    }
+    .width('100%')
+    .padding({
+      top: DesignConstants.SPACING_SM,
+      bottom: DesignConstants.SPACING_SM,
+      left: DesignConstants.SPACING_MD,
+      right: DesignConstants.SPACING_MD
+    })
+    .backgroundColor($r('sys.color.background_secondary'))
+    .borderRadius(DesignConstants.BORDER_RADIUS_MD)
+    .alignItems(VerticalAlign.Center)
+  }
+
+  // 构建紧凑控制项 - 图标+开关（保留，可能在其他地方使用）
+  @Builder
+  private buildCompactControl(enabled: boolean, icon: Resource, onToggle: (enabled: boolean) => void, isMainSwitch: boolean = false) {
+    Row({ space: DesignConstants.SPACING_SM }) {
+      Image(icon)
+        .width(isMainSwitch ? DesignConstants.ICON_SIZE_MD : DesignConstants.ICON_SIZE_SM)
+        .height(isMainSwitch ? DesignConstants.ICON_SIZE_MD : DesignConstants.ICON_SIZE_SM)
+        .fillColor(enabled ? $r('sys.color.brand') : $r('sys.color.font_secondary'))
+      
+      Toggle({ type: ToggleType.Switch, isOn: enabled })
+        .onChange(onToggle)
+        .selectedColor($r('sys.color.brand'))
+        .scale({ x: isMainSwitch ? 1.1 : 0.9, y: isMainSwitch ? 1.1 : 0.9 })
+    }
+    .padding({
+      top: DesignConstants.SPACING_SM,
+      bottom: DesignConstants.SPACING_SM,
+      left: isMainSwitch ? DesignConstants.SPACING_MD : DesignConstants.SPACING_SM,
+      right: isMainSwitch ? DesignConstants.SPACING_MD : DesignConstants.SPACING_SM
+    })
+    .backgroundColor(isMainSwitch ? $r('sys.color.background_emphasize') : $r('sys.color.background_secondary'))
+    .borderRadius(DesignConstants.BORDER_RADIUS_MD)
+    .alignItems(VerticalAlign.Center)
+  }
+
+  // 构建控制卡片（保留原有方法，可能在其他地方使用）
   @Builder
   private buildControlCard(title: string, enabled: boolean, icon: Resource, onToggle: (enabled: boolean) => void) {
     Column({ space: DesignConstants.SPACING_SM }) {

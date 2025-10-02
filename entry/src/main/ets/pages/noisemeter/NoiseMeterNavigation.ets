@@ -11,6 +11,7 @@ import { interval, Subscription } from 'rxjs';
 import { PreferenceKeys } from '../../models/PreferenceKeys';
 import { PersistenceV2 } from '@kit.ArkUI';
 import { AlertsContent } from '../../components/alerts/AlertsContent';
+import { AlertsSettingsBuilder } from '../settings/AlertsSettingsNavigation';
 
 // 导航菜单项接口定义
 interface NavigationMenuItem {
@@ -92,7 +93,13 @@ export struct MainNoiseMeter {
       value: '警报设置',
       icon: $r('app.media.ic_settings'),
       action: () => {
-        this.navStack.pushPathByName('AlertsSettings', null);
+        DialogHub.getSheet()
+          .setStyle({ title: { title: '警报与通知' }, backgroundColor: $r('sys.color.background_secondary') })
+          .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS })
+          .setComponentTargetId('mainAppId')
+          .setContent(wrapBuilder(AlertsSettingsBuilder))
+          .build()
+          .show();
       }
     }
   ]
@@ -220,6 +227,7 @@ export struct MainNoiseMeter {
       barStyle: BarStyle.STANDARD,
       backgroundBlurStyle: BlurStyle.BACKGROUND_REGULAR
     })
+    .id('mainAppId')
     .menus(this.menuItems)
     .hideTitleBar(false)
     .hideToolBar(true)
