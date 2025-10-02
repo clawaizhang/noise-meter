@@ -9,6 +9,8 @@ import { DesignConstants } from '../../constants/DesignConstants';
 import { FrequencyAcousticExplanationComp } from './FrequencyAcousticExplanation';
 import { FrequencyTechnicalParamsDisplay } from './FrequencyTechnicalParamsDisplay';
 import { FrequencyPreviewPanel } from './FrequencyPreviewPanel';
+import { FrequencyScenarioDisplay } from './FrequencyScenarioDisplay';
+import { CollapsibleSection } from '../time-weighting/CollapsibleSection';
 
 @ComponentV2
 export struct FrequencyWeightingDialog {
@@ -17,6 +19,8 @@ export struct FrequencyWeightingDialog {
   @Param @Require onCancel: () => void; // 取消回调
   @Local selectedWeighting!: WeightingType; // 选中的计权类型
   @Local hoveredWeighting: WeightingType | null = null; // 悬停的计权类型
+  @Local isTechnicalParamsExpanded: boolean = false; // 技术参数是否展开
+  @Local isAcousticTheoryExpanded: boolean = false; // 声学原理是否展开
 
   aboutToAppear() {
     // 初始化选中计权类型为当前计权类型
@@ -99,33 +103,54 @@ export struct FrequencyWeightingDialog {
     .height(56)
   }
 
-  // 构建预览区域
+  // 构建主要内容区域（面向普通用户）
   @Builder
-  private buildPreviewArea() {
+  private buildPrimaryContentArea() {
     Column({ space: DesignConstants.SPACING_LG }) {
       // 实时预览面板
       FrequencyPreviewPanel({
         currentWeighting: this.currentWeighting,
         selectedWeighting: this.selectedWeighting
       })
-      // 技术参数显示
-      FrequencyTechnicalParamsDisplay({
-        currentWeighting: this.currentWeighting,
+
+      // 场景展示
+      FrequencyScenarioDisplay({
         selectedWeighting: this.selectedWeighting
       })
     }
     .width('100%')
   }
 
-  // 构建详细信息区域
+  // 构建可折叠的专业内容区域
   @Builder
-  private buildDetailArea() {
-    Column({ space: DesignConstants.SPACING_LG }) {
-      // 声学解释
-      FrequencyAcousticExplanationComp({
-        selectedWeighting: this.selectedWeighting
-      })
+  private buildExpandableProfessionalArea() {
+    Column({ space: DesignConstants.SPACING_MD }) {
+      // 技术参数区域
+      CollapsibleSection({
+        title: '技术参数',
+        isExpanded: this.isTechnicalParamsExpanded,
+        onToggle: () => {
+          this.isTechnicalParamsExpanded = !this.isTechnicalParamsExpanded;
+        }
+      }) {
+        FrequencyTechnicalParamsDisplay({
+          currentWeighting: this.currentWeighting,
+          selectedWeighting: this.selectedWeighting
+        })
+      }
 
+      // 声学原理区域
+      CollapsibleSection({
+        title: '声学原理',
+        isExpanded: this.isAcousticTheoryExpanded,
+        onToggle: () => {
+          this.isAcousticTheoryExpanded = !this.isAcousticTheoryExpanded;
+        }
+      }) {
+        FrequencyAcousticExplanationComp({
+          selectedWeighting: this.selectedWeighting
+        })
+      }
     }
     .width('100%')
   }
@@ -180,11 +205,11 @@ export struct FrequencyWeightingDialog {
       // 可滚动内容区域
       Scroll() {
         Column({ space: DesignConstants.SPACING_LG }) {
-          // 预览区域
-          this.buildPreviewArea()
+          // 主要内容区域（优先显示）
+          this.buildPrimaryContentArea()
 
-          // 详细信息区域
-          this.buildDetailArea()
+          // 可折叠的专业内容区域
+          this.buildExpandableProfessionalArea()
 
         }
         .width('100%')

@@ -209,50 +209,6 @@ export struct ProfessionalContentPanel {
               .alignSelf(ItemAlign.Start)
           }
 
-          // 应用场景
-          Column({ space: DesignConstants.SPACING_SM }) {
-            Text('应用场景')
-              .fontSize(DesignConstants.FONT_SIZE_MD)
-              .fontWeight(FontWeight.Medium)
-              .fontColor($r('sys.color.font_primary'))
-              .alignSelf(ItemAlign.Start)
-
-            ForEach(APPLICATION_SCENARIOS['calibration'], 
-              (scenario: ApplicationScenario, index: number) => {
-                Column({ space: DesignConstants.SPACING_XS }) {
-                  Row({ space: DesignConstants.SPACING_XS }) {
-                    Text('•')
-                      .fontSize(DesignConstants.FONT_SIZE_MD)
-                      .fontColor($r('sys.color.font_primary'))
-                    
-                    Text(scenario.title)
-                      .fontSize(DesignConstants.FONT_SIZE_MD)
-                      .fontColor($r('sys.color.font_primary'))
-                      .fontWeight(FontWeight.Medium)
-                  }
-                  .alignItems(VerticalAlign.Top)
-
-                  Text(scenario.description)
-                    .fontSize(DesignConstants.FONT_SIZE_MD)
-                    .fontColor($r('sys.color.font_secondary'))
-                    .textAlign(TextAlign.Start)
-                    .margin({ left: DesignConstants.SPACING_MD })
-
-                  Row({ space: DesignConstants.SPACING_XS }) {
-                    Text('示例:')
-                      .fontSize(DesignConstants.FONT_SIZE_SM)
-                      .fontColor($r('sys.color.font_tertiary'))
-                    
-                    Text(scenario.example)
-                      .fontSize(DesignConstants.FONT_SIZE_SM)
-                      .fontColor($r('sys.color.font_tertiary'))
-                  }
-                  .alignItems(VerticalAlign.Top)
-                  .margin({ left: DesignConstants.SPACING_MD })
-                }
-                .alignItems(HorizontalAlign.Start)
-              })
-          }.alignItems(HorizontalAlign.Start)
         }
         .width('100%')
         .alignItems(HorizontalAlign.Start)
