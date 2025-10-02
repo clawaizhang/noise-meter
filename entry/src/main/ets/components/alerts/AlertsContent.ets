@@ -136,6 +136,7 @@ export struct AlertsContent {
     }
     .padding(DesignConstants.SPACING_XL)
     .backgroundColor(this.getStatusBackground())
+    .backgroundBlurStyle(BlurStyle.COMPONENT_THICK)
     .borderRadius(DesignConstants.BORDER_RADIUS_XL)
     .width('90%')
     .animation({
@@ -337,9 +338,9 @@ export struct AlertsContent {
     const threshold = ThresholdManager.getCurrentEffectiveThreshold();
 
     if (currentDecibel >= threshold) {
-      return $r('sys.color.alert'); // 红色
+      return $r('sys.color.warning'); // 红色
     } else if (currentDecibel >= threshold - 10) {
-      return $r('sys.color.warning'); // 黄色
+      return $r('sys.color.alert'); // 黄色
     } else {
       return $r('sys.color.confirm'); // 绿色
     }
@@ -365,9 +366,9 @@ export struct AlertsContent {
     const threshold = ThresholdManager.getCurrentEffectiveThreshold();
 
     if (currentDecibel >= threshold) {
-      return $r('sys.color.comp_background_warning_secondary');
+      return $r('sys.color.warning');
     } else if (currentDecibel >= threshold - 10) {
-      return $r('sys.color.comp_background_emphasize');
+      return $r('sys.color.alert');
     } else {
       return $r('sys.color.comp_background_secondary');
     }
