@@ -5,7 +5,6 @@
 
 import { DayNightTime } from '../constants/AlertsConstants';
 import {
-  ThresholdMode,
   PresetType,
   ThresholdConfig,
   TimeSchedulingConfig,
@@ -22,12 +21,11 @@ interface ThresholdValidation {
 
 export class ThresholdManager {
   private currentConfig: ThresholdConfig = new ThresholdConfig(
-    DEFAULT_THRESHOLD_CONFIG.mode,
+    DEFAULT_THRESHOLD_CONFIG.currentPreset,
+    DEFAULT_THRESHOLD_CONFIG.timeSchedulingEnabled,
     DEFAULT_THRESHOLD_CONFIG.baseThreshold,
     DEFAULT_THRESHOLD_CONFIG.daytimeThreshold,
     DEFAULT_THRESHOLD_CONFIG.nighttimeThreshold,
-    DEFAULT_THRESHOLD_CONFIG.currentPreset,
-    DEFAULT_THRESHOLD_CONFIG.timeSchedulingEnabled,
     DEFAULT_THRESHOLD_CONFIG.lastModified
   );
   private timeSchedulingConfig: TimeSchedulingConfig = new TimeSchedulingConfig(
@@ -40,55 +38,31 @@ export class ThresholdManager {
   // 获取当前配置
   getCurrentConfig(): ThresholdConfig {
     return new ThresholdConfig(
-      this.currentConfig.mode,
+      this.currentConfig.currentPreset,
+      this.currentConfig.timeSchedulingEnabled,
       this.currentConfig.baseThreshold,
       this.currentConfig.daytimeThreshold,
       this.currentConfig.nighttimeThreshold,
-      this.currentConfig.currentPreset,
-      this.currentConfig.timeSchedulingEnabled,
       this.currentConfig.lastModified
     );
   }
 
-  // 切换模式
-  switchMode(newMode: ThresholdMode): ThresholdConfig {
-    const oldMode = this.currentConfig.mode;
-
-    if (oldMode === newMode) {
-      return this.getCurrentConfig();
-    }
-
-    switch (newMode) {
-      case ThresholdMode.SMART_PRESET:
-        this.enterSmartPresetMode();
-        break;
-      case ThresholdMode.TIME_SCHEDULING:
-        this.enterTimeSchedulingMode();
-        break;
-      case ThresholdMode.CUSTOM:
-        this.enterCustomMode();
-        break;
-    }
-
-    this.currentConfig.mode = newMode;
-    this.currentConfig.lastModified = Date.now();
-
-    return this.getCurrentConfig();
-  }
-
-  // 选择智能预设
+  // 选择环境类型
   selectPreset(presetType: PresetType): ThresholdConfig {
-    if (this.currentConfig.mode !== ThresholdMode.SMART_PRESET) {
-      // 如果不在智能预设模式，先切换到该模式
-      this.switchMode(ThresholdMode.SMART_PRESET);
-    }
-
     const preset = PRESET_THRESHOLDS.find(p => p.type === presetType);
     if (!preset) {
       return this.getCurrentConfig();
     }
 
     this.currentConfig.currentPreset = presetType;
+    
+    if (presetType === PresetType.CUSTOM) {
+      // 自定义环境类型，保持当前阈值设置不变
+      this.currentConfig.lastModified = Date.now();
+      return this.getCurrentConfig();
+    }
+
+    // 预设环境类型，设置基准阈值
     this.currentConfig.baseThreshold = preset.baseValue;
 
     // 自动计算时段调度阈值
@@ -110,8 +84,8 @@ export class ThresholdManager {
   setTimeSchedulingEnabled(enabled: boolean): ThresholdConfig {
     this.currentConfig.timeSchedulingEnabled = enabled;
 
-    if (enabled && this.currentConfig.mode === ThresholdMode.SMART_PRESET) {
-      // 在智能预设模式下启用时段调度，重新计算阈值
+    if (enabled && this.currentConfig.currentPreset !== PresetType.CUSTOM) {
+      // 在预设环境类型下启用时段调度，重新计算阈值
       const thresholds = this.calculateTimeSchedulingThresholds(this.currentConfig.baseThreshold);
       this.currentConfig.daytimeThreshold = thresholds.daytime;
       this.currentConfig.nighttimeThreshold = thresholds.nighttime;
@@ -127,9 +101,9 @@ export class ThresholdManager {
 
   // 设置白天阈值
   setDaytimeThreshold(value: number): ThresholdConfig {
-    if (this.currentConfig.mode === ThresholdMode.SMART_PRESET) {
-      // 在智能预设模式下修改时段阈值，自动切换到自定义模式
-      this.switchMode(ThresholdMode.CUSTOM);
+    // 修改时段阈值时，自动切换到自定义环境类型
+    if (this.currentConfig.currentPreset !== PresetType.CUSTOM) {
+      this.currentConfig.currentPreset = PresetType.CUSTOM;
     }
 
     this.currentConfig.daytimeThreshold = value;
@@ -139,9 +113,9 @@ export class ThresholdManager {
 
   // 设置夜间阈值
   setNighttimeThreshold(value: number): ThresholdConfig {
-    if (this.currentConfig.mode === ThresholdMode.SMART_PRESET) {
-      // 在智能预设模式下修改时段阈值，自动切换到自定义模式
-      this.switchMode(ThresholdMode.CUSTOM);
+    // 修改时段阈值时，自动切换到自定义环境类型
+    if (this.currentConfig.currentPreset !== PresetType.CUSTOM) {
+      this.currentConfig.currentPreset = PresetType.CUSTOM;
     }
 
     this.currentConfig.nighttimeThreshold = value;
@@ -151,10 +125,15 @@ export class ThresholdManager {
 
   // 设置基准阈值
   setBaseThreshold(value: number): ThresholdConfig {
+    // 修改基准阈值时，自动切换到自定义环境类型
+    if (this.currentConfig.currentPreset !== PresetType.CUSTOM) {
+      this.currentConfig.currentPreset = PresetType.CUSTOM;
+    }
+
     this.currentConfig.baseThreshold = value;
 
-    if (this.currentConfig.mode === ThresholdMode.SMART_PRESET && this.currentConfig.timeSchedulingEnabled) {
-      // 在智能预设模式下修改基准阈值，重新计算时段阈值
+    if (this.currentConfig.timeSchedulingEnabled) {
+      // 如果时段调度启用，重新计算时段阈值
       const thresholds = this.calculateTimeSchedulingThresholds(value);
       this.currentConfig.daytimeThreshold = thresholds.daytime;
       this.currentConfig.nighttimeThreshold = thresholds.nighttime;
@@ -208,31 +187,6 @@ export class ThresholdManager {
     };
   }
 
-  // 私有方法：进入智能预设模式
-  private enterSmartPresetMode(): void {
-    // 基于当前预设重新计算阈值
-    const preset = PRESET_THRESHOLDS.find(p => p.type === this.currentConfig.currentPreset);
-    if (preset) {
-      this.currentConfig.baseThreshold = preset.baseValue;
-      if (this.currentConfig.timeSchedulingEnabled) {
-        const thresholds = this.calculateTimeSchedulingThresholds(preset.baseValue);
-        this.currentConfig.daytimeThreshold = thresholds.daytime;
-        this.currentConfig.nighttimeThreshold = thresholds.nighttime;
-      }
-    }
-  }
-
-  // 私有方法：进入时段调度模式
-  private enterTimeSchedulingMode(): void {
-    // 保持当前阈值设置，但将预设设为自定义
-    this.currentConfig.currentPreset = PresetType.CUSTOM;
-  }
-
-  // 私有方法：进入自定义模式
-  private enterCustomMode(): void {
-    // 保持当前所有设置不变
-    this.currentConfig.currentPreset = PresetType.CUSTOM;
-  }
 
   // 私有方法：计算时段调度阈值
   private calculateTimeSchedulingThresholds(baseThreshold: number): DayNightTime {

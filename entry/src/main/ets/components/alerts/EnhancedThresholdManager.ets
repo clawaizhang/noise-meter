@@ -1,25 +1,12 @@
 /**
- * 增强型阈值管理组件
- * 实现分层架构的阈值管理界面
+ * 简化型阈值管理组件
+ * 单一面板设计：环境类型选择 + 时段调度开关
  */
 
-import { ThresholdMode, PresetType, ThresholdConfig, PresetThreshold } from '../../models/ThresholdConfig';
+import { PresetType, ThresholdConfig, PresetThreshold } from '../../models/ThresholdConfig';
 import { thresholdManager } from '../../services/ThresholdManager';
 import { DesignConstants } from '../../constants/DesignConstants';
 import { curves } from '@kit.ArkUI';
-
-@ObservedV2
-class ThresholdOption {
-  @Trace value: ThresholdMode;
-  @Trace label: string;
-  @Trace description: string;
-
-  constructor(value: ThresholdMode, label: string, description: string) {
-    this.value = value;
-    this.label = label;
-    this.description = description;
-  }
-}
 
 @ObservedV2
 class PresetConfig {
@@ -41,25 +28,37 @@ class PresetConfig {
 @ComponentV2
 export struct EnhancedThresholdManager {
   @Local private currentConfig: ThresholdConfig = thresholdManager.getCurrentConfig();
-  @Local private modeOptions: ThresholdOption[] = [
-    new ThresholdOption(ThresholdMode.SMART_PRESET, '智能预设', '基于环境类型自动设置阈值'),
-    new ThresholdOption(ThresholdMode.TIME_SCHEDULING, '时段调度', '独立设置白天和夜间阈值'),
-    new ThresholdOption(ThresholdMode.CUSTOM, '自定义', '完全手动控制所有阈值')
-  ];
 
-  // 构建模式选择器
+  // 构建环境类型选择器
   @Builder
-  private buildModeSelector() {
+  private buildEnvironmentSelector() {
     Column({ space: DesignConstants.SPACING_MD }) {
-      Text('阈值管理模式')
+      Text('环境类型')
         .fontSize(DesignConstants.FONT_SIZE_XL)
         .fontWeight(FontWeight.Bold)
         .fontColor($r('sys.color.font_primary'))
         .alignSelf(ItemAlign.Start)
 
-      ForEach(this.modeOptions, (option: ThresholdOption) => {
-        this.buildModeOption(option)
-      })
+      // 环境类型选项网格
+      GridRow({
+        columns: { sm: 2, md: 3 },
+        breakpoints: { reference: BreakpointsReference.WindowSize },
+        gutter: { x: DesignConstants.SPACING_SM, y: DesignConstants.SPACING_SM }
+      }) {
+        ForEach([
+          PresetType.QUIET_ENVIRONMENT,
+          PresetType.GENERAL_ENVIRONMENT,
+          PresetType.NOISY_ENVIRONMENT,
+          PresetType.DANGEROUS_ENVIRONMENT,
+          PresetType.CUSTOM
+        ], (presetType: PresetType) => {
+          GridCol({ span: 1 }) {
+            this.buildEnvironmentCard(presetType, this.getPresetByType(presetType))
+          }
+        })
+      }
+      .width('100%')
+      .margin({ top: DesignConstants.SPACING_MD })
     }
     .width('100%')
     .padding(DesignConstants.SPACING_LG)
@@ -68,109 +67,17 @@ export struct EnhancedThresholdManager {
     .shadow(DesignConstants.SHADOW_SM)
   }
 
-  // 构建模式选项
+  // 构建环境类型卡片
   @Builder
-  private buildModeOption(option: ThresholdOption) {
-    Row({ space: DesignConstants.SPACING_MD }) {
-      // 选择指示器
-      Circle({ width: 20, height: 20 })
-        .fill(this.currentConfig.mode === option.value ?
-        $r('sys.color.ohos_id_color_palette1') :
-        $r('sys.color.background_secondary'))
-        .border({
-          width: 2,
-          color: this.currentConfig.mode === option.value ?
-          $r('sys.color.ohos_id_color_palette1') :
-          $r('sys.color.font_tertiary')
-        })
-
-      Column({ space: DesignConstants.SPACING_XS }) {
-        Text(option.label)
-          .fontSize(DesignConstants.FONT_SIZE_LG)
-          .fontWeight(FontWeight.Medium)
-          .fontColor($r('sys.color.font_primary'))
-          .alignSelf(ItemAlign.Start)
-
-        Text(option.description)
-          .fontSize(DesignConstants.FONT_SIZE_MD)
-          .fontColor($r('sys.color.font_secondary'))
-          .alignSelf(ItemAlign.Start)
-      }
-      .layoutWeight(1)
-    }
-    .width('100%')
-    .padding(DesignConstants.SPACING_MD)
-    .backgroundColor(this.currentConfig.mode === option.value ?
-    $r('sys.color.background_secondary') :
-    $r('sys.color.comp_background_primary'))
-    .borderRadius(DesignConstants.BORDER_RADIUS_MD)
-    .onClick(() => {
-      if (this.currentConfig.mode !== option.value) {
-        this.logStateChange('切换模式', option.value);
-        this.currentConfig = thresholdManager.switchMode(option.value);
-      }
-    })
-    .animation({
-      duration: 200,
-      curve: curves.springMotion()
-    })
-  }
-
-  // 构建智能预设面板
-  @Builder
-  private buildSmartPresetPanel() {
-    if (this.currentConfig.mode === ThresholdMode.SMART_PRESET) {
-      Column({ space: DesignConstants.SPACING_MD }) {
-        Text('智能预设')
-          .fontSize(DesignConstants.FONT_SIZE_XL)
-          .fontWeight(FontWeight.Bold)
-          .fontColor($r('sys.color.font_primary'))
-          .alignSelf(ItemAlign.Start)
-
-        // 预设选项网格
-        GridRow({
-          columns: { sm: 2, md: 4 },
-          breakpoints: { reference: BreakpointsReference.WindowSize },
-          gutter: { x: DesignConstants.SPACING_SM, y: DesignConstants.SPACING_SM }
-        }) {
-          ForEach([
-            PresetType.QUIET_ENVIRONMENT,
-            PresetType.GENERAL_ENVIRONMENT,
-            PresetType.NOISY_ENVIRONMENT,
-            PresetType.DANGEROUS_ENVIRONMENT
-          ], (presetType: PresetType) => {
-            GridCol({ span: 1 }) {
-              this.buildPresetCard(presetType, this.getPresetByType(presetType))
-            }
-          })
-        }
-        .width('100%')
-        .margin({ top: DesignConstants.SPACING_MD })
-
-        // 时段调度开关
-        this.buildTimeSchedulingSwitch()
-
-        // 当前阈值显示
-        this.buildCurrentThresholdDisplay()
-      }
-      .width('100%')
-      .padding(DesignConstants.SPACING_LG)
-      .backgroundColor($r('sys.color.comp_background_primary'))
-      .borderRadius(DesignConstants.BORDER_RADIUS_LG)
-      .shadow(DesignConstants.SHADOW_SM)
-      .margin({ top: DesignConstants.SPACING_LG })
-    }
-  }
-
-  // 构建预设卡片
-  @Builder
-  private buildPresetCard(presetType: PresetType, preset: PresetThreshold) {
+  private buildEnvironmentCard(presetType: PresetType, preset: PresetThreshold) {
     if (preset) {
       Column({ space: DesignConstants.SPACING_XS }) {
-        Text(`${preset.baseValue}dB`)
-          .fontSize(DesignConstants.FONT_SIZE_LG)
-          .fontWeight(FontWeight.Bold)
-          .fontColor(this.currentConfig.currentPreset === presetType ? Color.White : preset.color)
+        if (presetType !== PresetType.CUSTOM) {
+          Text(`${preset.baseValue}dB`)
+            .fontSize(DesignConstants.FONT_SIZE_LG)
+            .fontWeight(FontWeight.Bold)
+            .fontColor(this.currentConfig.currentPreset === presetType ? Color.White : preset.color)
+        }
 
         Text(preset.name)
           .fontSize(DesignConstants.FONT_SIZE_MD)
@@ -193,7 +100,7 @@ export struct EnhancedThresholdManager {
         color: this.currentConfig.currentPreset === presetType ? preset.color : $r('sys.color.background_secondary')
       })
       .onClick(() => {
-        this.logStateChange('选择预设', undefined, presetType);
+        this.logStateChange('选择环境类型', presetType);
         this.currentConfig = thresholdManager.selectPreset(presetType);
       })
       .animation({
@@ -237,84 +144,31 @@ export struct EnhancedThresholdManager {
     .margin({ top: DesignConstants.SPACING_MD })
   }
 
-  // 构建时段调度面板
+  // 构建动态阈值控制区域
   @Builder
-  private buildTimeSchedulingPanel() {
-    if (this.currentConfig.mode === ThresholdMode.TIME_SCHEDULING) {
+  private buildDynamicThresholdControls() {
+    if (this.currentConfig.currentPreset === PresetType.CUSTOM) {
       Column({ space: DesignConstants.SPACING_MD }) {
-        Text('时段调度设置')
+        Text('阈值设置')
           .fontSize(DesignConstants.FONT_SIZE_XL)
           .fontWeight(FontWeight.Bold)
           .fontColor($r('sys.color.font_primary'))
           .alignSelf(ItemAlign.Start)
 
-        // 时段调度开关
-        this.buildTimeSchedulingSwitch()
-
-        // 白天阈值设置
-        this.buildThresholdSlider(
-          '白天阈值',
-          '适用于日常活动环境',
-          this.currentConfig.daytimeThreshold,
-          (value: number) => {
-            this.currentConfig = thresholdManager.setDaytimeThreshold(value);
-          },
-          $r('sys.color.ohos_id_color_palette3'), // 黄色
-          '6:00 - 22:00'
-        )
-
-        // 夜间阈值设置
-        this.buildThresholdSlider(
-          '夜间阈值',
-          '适用于休息睡眠环境',
-          this.currentConfig.nighttimeThreshold,
-          (value: number) => {
-            this.currentConfig = thresholdManager.setNighttimeThreshold(value);
-          },
-          $r('sys.color.ohos_id_color_palette6'), // 深蓝色
-          '22:00 - 6:00'
-        )
-
-        // 当前时段状态
-        this.buildCurrentPeriodStatus()
-      }
-      .width('100%')
-      .padding(DesignConstants.SPACING_LG)
-      .backgroundColor($r('sys.color.comp_background_primary'))
-      .borderRadius(DesignConstants.BORDER_RADIUS_LG)
-      .shadow(DesignConstants.SHADOW_SM)
-      .margin({ top: DesignConstants.SPACING_LG })
-    }
-  }
-
-  // 构建自定义面板
-  @Builder
-  private buildCustomPanel() {
-    if (this.currentConfig.mode === ThresholdMode.CUSTOM) {
-      Column({ space: DesignConstants.SPACING_MD }) {
-        Text('自定义设置')
-          .fontSize(DesignConstants.FONT_SIZE_XL)
-          .fontWeight(FontWeight.Bold)
-          .fontColor($r('sys.color.font_primary'))
-          .alignSelf(ItemAlign.Start)
-
-        // 基准阈值设置
-        this.buildThresholdSlider(
-          '基准阈值',
-          '时段调度关闭时的统一阈值',
-          this.currentConfig.baseThreshold,
-          (value: number) => {
-            this.currentConfig = thresholdManager.setBaseThreshold(value);
-          },
-          $r('sys.color.ohos_id_color_palette1'), // 主色
-          '全天统一阈值'
-        )
-
-        // 时段调度开关
-        this.buildTimeSchedulingSwitch()
-
-        // 时段阈值设置（仅在时段调度启用时显示）
-        if (this.currentConfig.timeSchedulingEnabled) {
+        if (!this.currentConfig.timeSchedulingEnabled) {
+          // 时段调度关闭：显示统一阈值滚动条
+          this.buildThresholdSlider(
+            '统一阈值',
+            '全天使用的统一阈值',
+            this.currentConfig.baseThreshold,
+            (value: number) => {
+              this.currentConfig = thresholdManager.setBaseThreshold(value);
+            },
+            $r('sys.color.ohos_id_color_palette1'), // 主色
+            '全天统一阈值'
+          )
+        } else {
+          // 时段调度开启：显示白天和夜间阈值滚动条
           Column({ space: DesignConstants.SPACING_MD }) {
             this.buildThresholdSlider(
               '白天阈值',
@@ -340,9 +194,49 @@ export struct EnhancedThresholdManager {
           }
           .width('100%')
         }
+      }
+      .width('100%')
+      .padding(DesignConstants.SPACING_LG)
+      .backgroundColor($r('sys.color.comp_background_primary'))
+      .borderRadius(DesignConstants.BORDER_RADIUS_LG)
+      .shadow(DesignConstants.SHADOW_SM)
+      .margin({ top: DesignConstants.SPACING_LG })
+    } else {
+      // 预设环境类型：显示当前阈值信息
+      Column({ space: DesignConstants.SPACING_MD }) {
+        Text('当前阈值设置')
+          .fontSize(DesignConstants.FONT_SIZE_XL)
+          .fontWeight(FontWeight.Bold)
+          .fontColor($r('sys.color.font_primary'))
+          .alignSelf(ItemAlign.Start)
 
-        // 当前阈值显示
-        this.buildCurrentThresholdDisplay()
+        if (!this.currentConfig.timeSchedulingEnabled) {
+          // 时段调度关闭：显示统一阈值
+          this.buildThresholdInfo(
+            '统一阈值',
+            `${this.currentConfig.baseThreshold}dB`,
+            '全天使用的统一阈值',
+            $r('sys.color.ohos_id_color_palette1')
+          )
+        } else {
+          // 时段调度开启：显示白天和夜间阈值
+          Column({ space: DesignConstants.SPACING_MD }) {
+            this.buildThresholdInfo(
+              '白天阈值',
+              `${this.currentConfig.daytimeThreshold}dB`,
+              '适用于日常活动环境',
+              $r('sys.color.ohos_id_color_palette3')
+            )
+
+            this.buildThresholdInfo(
+              '夜间阈值',
+              `${this.currentConfig.nighttimeThreshold}dB`,
+              '适用于休息睡眠环境',
+              $r('sys.color.ohos_id_color_palette6')
+            )
+          }
+          .width('100%')
+        }
       }
       .width('100%')
       .padding(DesignConstants.SPACING_LG)
@@ -351,6 +245,36 @@ export struct EnhancedThresholdManager {
       .shadow(DesignConstants.SHADOW_SM)
       .margin({ top: DesignConstants.SPACING_LG })
     }
+  }
+
+  // 构建阈值信息显示（无滚动条）
+  @Builder
+  private buildThresholdInfo(title: string, value: string, description: string, color: Resource) {
+    Column({ space: DesignConstants.SPACING_SM }) {
+      Row({ space: DesignConstants.SPACING_SM }) {
+        Text(title)
+          .fontSize(DesignConstants.FONT_SIZE_LG)
+          .fontWeight(FontWeight.Medium)
+          .fontColor($r('sys.color.font_primary'))
+          .layoutWeight(1)
+
+        Text(value)
+          .fontSize(DesignConstants.FONT_SIZE_MD)
+          .fontColor(color)
+          .fontWeight(FontWeight.Medium)
+      }
+      .width('100%')
+      .alignItems(VerticalAlign.Center)
+
+      Text(description)
+        .fontSize(DesignConstants.FONT_SIZE_MD)
+        .fontColor($r('sys.color.font_secondary'))
+        .alignSelf(ItemAlign.Start)
+    }
+    .width('100%')
+    .padding(DesignConstants.SPACING_MD)
+    .backgroundColor($r('sys.color.background_secondary'))
+    .borderRadius(DesignConstants.BORDER_RADIUS_MD)
   }
 
   // 构建阈值滑动条
@@ -421,87 +345,14 @@ export struct EnhancedThresholdManager {
     .borderRadius(DesignConstants.BORDER_RADIUS_MD)
   }
 
-  // 构建当前时段状态
-  @Builder
-  private buildCurrentPeriodStatus() {
-    Column({ space: DesignConstants.SPACING_XS }) {
-      Row({ space: DesignConstants.SPACING_SM }) {
-        Circle({ width: 8, height: 8 })
-          .fill(thresholdManager.getCurrentTimePeriod() === '白天' ?
-          $r('sys.color.ohos_id_color_palette3') :
-          $r('sys.color.ohos_id_color_palette6'))
-
-        Text(thresholdManager.getCurrentTimePeriod())
-          .fontSize(DesignConstants.FONT_SIZE_MD)
-          .fontWeight(FontWeight.Medium)
-          .fontColor($r('sys.color.font_primary'))
-
-        Text(`当前阈值: ${thresholdManager.getCurrentEffectiveThreshold()}dB`)
-          .fontSize(DesignConstants.FONT_SIZE_MD)
-          .fontColor($r('sys.color.ohos_id_color_palette1'))
-          .layoutWeight(1)
-          .textAlign(TextAlign.End)
-      }
-      .width('100%')
-      .alignItems(VerticalAlign.Center)
-
-      Text(thresholdManager.getCurrentTimePeriod() === '白天' ?
-        '白天时段 6:00 - 22:00' :
-        '夜间时段 22:00 - 6:00')
-        .fontSize(DesignConstants.FONT_SIZE_SM)
-        .fontColor($r('sys.color.font_secondary'))
-        .alignSelf(ItemAlign.Start)
-    }
-    .width('100%')
-    .padding(DesignConstants.SPACING_MD)
-    .backgroundColor($r('sys.color.background_secondary'))
-    .borderRadius(DesignConstants.BORDER_RADIUS_MD)
-    .margin({ top: DesignConstants.SPACING_MD })
-  }
-
-  // 构建当前阈值显示
-  @Builder
-  private buildCurrentThresholdDisplay() {
-    Column({ space: DesignConstants.SPACING_XS }) {
-      Row({ space: DesignConstants.SPACING_SM }) {
-        Text('当前有效阈值')
-          .fontSize(DesignConstants.FONT_SIZE_LG)
-          .fontWeight(FontWeight.Medium)
-          .fontColor($r('sys.color.font_primary'))
-          .layoutWeight(1)
-
-        Text(`${thresholdManager.getCurrentEffectiveThreshold()}dB`)
-          .fontSize(DesignConstants.FONT_SIZE_XL)
-          .fontWeight(FontWeight.Bold)
-          .fontColor($r('sys.color.ohos_id_color_palette1'))
-      }
-      .width('100%')
-      .alignItems(VerticalAlign.Center)
-
-      Text(`基于${thresholdManager.getCurrentTimePeriod()}时段设置`)
-        .fontSize(DesignConstants.FONT_SIZE_MD)
-        .fontColor($r('sys.color.font_secondary'))
-        .alignSelf(ItemAlign.Start)
-    }
-    .width('100%')
-    .padding(DesignConstants.SPACING_MD)
-    .backgroundColor($r('sys.color.background_secondary'))
-    .borderRadius(DesignConstants.BORDER_RADIUS_MD)
-    .margin({ top: DesignConstants.SPACING_MD })
-  }
-
   // 状态监控方法（用于调试）
-  private logStateChange(action: string, newMode?: ThresholdMode, newPreset?: PresetType): void {
+  private logStateChange(action: string, newPreset?: PresetType): void {
     console.log(`[EnhancedThresholdManager] ${action}:`);
-    console.log(`  - 当前模式: ${this.currentConfig.mode}`);
-    console.log(`  - 当前预设: ${this.currentConfig.currentPreset}`);
+    console.log(`  - 当前环境类型: ${this.currentConfig.currentPreset}`);
     console.log(`  - 基准阈值: ${this.currentConfig.baseThreshold}dB`);
     console.log(`  - 时段调度: ${this.currentConfig.timeSchedulingEnabled ? '启用' : '禁用'}`);
-    if (newMode) {
-      console.log(`  - 新模式: ${newMode}`);
-    }
     if (newPreset) {
-      console.log(`  - 新预设: ${newPreset}`);
+      console.log(`  - 新环境类型: ${newPreset}`);
     }
   }
 
@@ -535,6 +386,13 @@ export struct EnhancedThresholdManager {
         '危险环境',
         '工厂、工地等可能损伤听力的环境',
         $r('sys.color.ohos_id_color_palette4')
+      ),
+      new PresetConfig(
+        PresetType.CUSTOM,
+        60,
+        '自定义',
+        '手动设置阈值',
+        $r('sys.color.ohos_id_color_palette1')
       )
     ];
     return presets.find(p => p.type === presetType)!;
@@ -542,17 +400,15 @@ export struct EnhancedThresholdManager {
 
   build() {
     Column({ space: DesignConstants.SPACING_LG }) {
-      // 模式选择器
-      this.buildModeSelector()
-
-      // 智能预设面板
-      this.buildSmartPresetPanel()
-
-      // 时段调度面板
-      this.buildTimeSchedulingPanel()
-
-      // 自定义面板
-      this.buildCustomPanel()
+      // 1. 环境类型选择
+      this.buildEnvironmentSelector()
+      
+      // 2. 时段调度开关
+      this.buildTimeSchedulingSwitch()
+      
+      // 3. 动态阈值控制区域
+      this.buildDynamicThresholdControls()
+      
     }
     .width('100%')
     .padding(DesignConstants.SPACING_LG)

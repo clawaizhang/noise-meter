@@ -1,22 +1,15 @@
 /**
  * 阈值配置模型定义
- * 支持分层架构的阈值管理系统
+ * 简化架构：环境类型选择 + 时段调度开关
  */
 
-// 阈值管理模式枚举
-export enum ThresholdMode {
-  SMART_PRESET = 'smart_preset',    // 智能预设模式
-  TIME_SCHEDULING = 'time_scheduling', // 时段调度模式  
-  CUSTOM = 'custom'                 // 自定义模式
-}
-
-// 预设类型枚举
+// 环境类型枚举
 export enum PresetType {
   QUIET_ENVIRONMENT = 'quiet_environment',    // 安静环境
   GENERAL_ENVIRONMENT = 'general_environment', // 一般环境
   NOISY_ENVIRONMENT = 'noisy_environment',    // 嘈杂环境
   DANGEROUS_ENVIRONMENT = 'dangerous_environment', // 危险环境
-  CUSTOM = 'custom'                           // 自定义
+  CUSTOM = 'custom'                           // 自定义环境
 }
 
 // 预设阈值配置
@@ -30,29 +23,26 @@ export interface PresetThreshold {
 
 @ObservedV2
 export class ThresholdConfig {
-  @Trace mode: ThresholdMode;
-  @Trace baseThreshold: number;
-  @Trace daytimeThreshold: number;
-  @Trace nighttimeThreshold: number;
-  @Trace currentPreset: PresetType;
-  @Trace timeSchedulingEnabled: boolean;
-  @Trace lastModified: number;
+  @Trace currentPreset: PresetType;           // 当前环境类型
+  @Trace timeSchedulingEnabled: boolean;      // 时段调度开关
+  @Trace baseThreshold: number;               // 统一阈值（时段调度关闭时）
+  @Trace daytimeThreshold: number;            // 白天阈值（时段调度开启时）
+  @Trace nighttimeThreshold: number;          // 夜间阈值（时段调度开启时）
+  @Trace lastModified: number;                // 最后修改时间
 
   constructor(
-    mode: ThresholdMode,
+    currentPreset: PresetType,
+    timeSchedulingEnabled: boolean,
     baseThreshold: number,
     daytimeThreshold: number,
     nighttimeThreshold: number,
-    currentPreset: PresetType,
-    timeSchedulingEnabled: boolean,
     lastModified: number
   ) {
-    this.mode = mode;
+    this.currentPreset = currentPreset;
+    this.timeSchedulingEnabled = timeSchedulingEnabled;
     this.baseThreshold = baseThreshold;
     this.daytimeThreshold = daytimeThreshold;
     this.nighttimeThreshold = nighttimeThreshold;
-    this.currentPreset = currentPreset;
-    this.timeSchedulingEnabled = timeSchedulingEnabled;
     this.lastModified = lastModified;
   }
 }
@@ -80,7 +70,7 @@ export interface ThresholdCalculationRule {
 }
 
 // 默认配置
-export const DEFAULT_THRESHOLD_CONFIG: ThresholdConfig = new ThresholdConfig(ThresholdMode.SMART_PRESET, 55, 65, 45, PresetType.GENERAL_ENVIRONMENT, true, Date.now())
+export const DEFAULT_THRESHOLD_CONFIG: ThresholdConfig = new ThresholdConfig(PresetType.GENERAL_ENVIRONMENT, true, 55, 65, 45, Date.now())
 
 // 预设阈值配置
 export const PRESET_THRESHOLDS: PresetThreshold[] = [
