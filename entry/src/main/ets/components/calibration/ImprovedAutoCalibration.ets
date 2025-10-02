@@ -5,7 +5,7 @@
 
 import { DesignConstants } from '../../constants/DesignConstants';
 import { curves, promptAction } from '@kit.ArkUI';
-import { CALIBRATION_COLORS, EnvironmentNoiseLevel } from '../../constants/CalibrationConstants';
+import { CALIBRATION_COLORS } from '../../constants/CalibrationConstants';
 
 @ComponentV2
 export struct ImprovedAutoCalibration {
@@ -16,77 +16,73 @@ export struct ImprovedAutoCalibration {
   @Param @Require countdown: number = 0;                  // 倒计时
   @Param @Require environmentNoise: number = 0;           // 环境噪声
 
-  @Local private showEnvironmentCheck: boolean = false;   // 显示环境检查
-
-  // 获取环境建议
-  private getEnvironmentAdvice(): string {
-    const level = this.getEnvironmentLevel();
-    switch (level) {
-      case EnvironmentNoiseLevel.EXCELLENT:
-        return '环境非常适合校准';
-      case EnvironmentNoiseLevel.GOOD:
-        return '环境适合校准';
-      case EnvironmentNoiseLevel.FAIR:
-        return '环境一般，建议寻找更安静的地方';
-      default:
-        return '环境嘈杂，不适合校准';
-    }
-  }
-
-  // 获取环境等级
-  private getEnvironmentLevel(): EnvironmentNoiseLevel {
-    if (this.environmentNoise < 30) {
-      return EnvironmentNoiseLevel.EXCELLENT;
-    } else if (this.environmentNoise < 40) {
-      return EnvironmentNoiseLevel.GOOD;
-    } else if (this.environmentNoise < 50) {
-      return EnvironmentNoiseLevel.FAIR;
-    } else {
-      return EnvironmentNoiseLevel.POOR;
-    }
-  }
-
   // 检查是否适合校准
   private isSuitableForCalibration(): boolean {
-    const level = this.getEnvironmentLevel();
-    return level !== EnvironmentNoiseLevel.POOR;
+    return this.environmentNoise < 25; // 只在<25dB环境中允许自动校准
   }
 
   // 构建环境检测面板
   @Builder
   private buildEnvironmentCheck() {
     Column({ space: DesignConstants.SPACING_SM }) {
-      Row({ space: DesignConstants.SPACING_SM }) {
-        Image($r('app.media.ic_info'))
-          .width(DesignConstants.ICON_SIZE_MD)
-          .height(DesignConstants.ICON_SIZE_MD)
-          .fillColor(this.isSuitableForCalibration() ? 
-            CALIBRATION_COLORS.SUCCESS : 
-            CALIBRATION_COLORS.WARNING)
-
-        Text('环境检测')
-          .fontSize(DesignConstants.FONT_SIZE_MD)
-          .fontWeight(FontWeight.Medium)
-          .fontColor($r('sys.color.font_primary'))
-          .layoutWeight(1)
-
-        Text(`${this.environmentNoise.toFixed(1)}dB`)
-          .fontSize(DesignConstants.FONT_SIZE_MD)
-          .fontColor($r('sys.color.font_secondary'))
-      }
-
-      Text(this.getEnvironmentAdvice())
+      Text('校准环境检测')
         .fontSize(DesignConstants.FONT_SIZE_MD)
-        .fontColor($r('sys.color.font_secondary'))
-        .textAlign(TextAlign.Start)
+        .fontWeight(FontWeight.Medium)
+        .fontColor($r('sys.color.font_primary'))
         .alignSelf(ItemAlign.Start)
 
-      if (!this.isSuitableForCalibration()) {
-        Text('建议在夜间或安静的房间中进行校准')
+      if (this.environmentNoise < 20) {
+        Row({ space: DesignConstants.SPACING_SM }) {
+          Image($r('sys.media.ohos_ic_public_ok')) // 成功图标
+            .width(DesignConstants.ICON_SIZE_SM)
+            .height(DesignConstants.ICON_SIZE_SM)
+            .fillColor(CALIBRATION_COLORS.SUCCESS)
+          Text('环境非常适合自动校准')
+            .fontSize(DesignConstants.FONT_SIZE_MD)
+            .fontColor(CALIBRATION_COLORS.SUCCESS)
+        }
+        Text('当前环境非常安静（<20dB），可获得最佳精度')
           .fontSize(DesignConstants.FONT_SIZE_SM)
-          .fontColor(CALIBRATION_COLORS.WARNING)
-          .textAlign(TextAlign.Start)
-          .alignSelf(ItemAlign.Start)
+          .fontColor($r('sys.color.font_secondary'))
+      } else if (this.environmentNoise < 25) {
+        Row({ space: DesignConstants.SPACING_SM }) {
+          Image($r('sys.media.ohos_ic_public_ok'))
+            .width(DesignConstants.ICON_SIZE_SM)
+            .height(DesignConstants.ICON_SIZE_SM)
+            .fillColor(CALIBRATION_COLORS.SUCCESS)
+          Text('环境适合自动校准')
+            .fontSize(DesignConstants.FONT_SIZE_MD)
+            .fontColor(CALIBRATION_COLORS.SUCCESS)
+        }
+        Text('当前环境适合自动校准（20-25dB）')
+          .fontSize(DesignConstants.FONT_SIZE_SM)
+          .fontColor($r('sys.color.font_secondary'))
+      } else if (this.environmentNoise < 30) {
+        Row({ space: DesignConstants.SPACING_SM }) {
+          Image($r('sys.media.ohos_ic_public_close')) // 警告图标
+            .width(DesignConstants.ICON_SIZE_SM)
+            .height(DesignConstants.ICON_SIZE_SM)
+            .fillColor(CALIBRATION_COLORS.WARNING)
+          Text('环境一般')
+            .fontSize(DesignConstants.FONT_SIZE_MD)
+            .fontColor(CALIBRATION_COLORS.WARNING)
+        }
+        Text('建议寻找更安静的环境（当前25-30dB）')
+          .fontSize(DesignConstants.FONT_SIZE_SM)
+          .fontColor($r('sys.color.font_secondary'))
+      } else {
+        Row({ space: DesignConstants.SPACING_SM }) {
+          Image($r('sys.media.ohos_ic_public_fail')) // 错误图标
+            .width(DesignConstants.ICON_SIZE_SM)
+            .height(DesignConstants.ICON_SIZE_SM)
+            .fillColor(CALIBRATION_COLORS.ERROR)
+          Text('环境不适合自动校准')
+            .fontSize(DesignConstants.FONT_SIZE_MD)
+            .fontColor(CALIBRATION_COLORS.ERROR)
+        }
+        Text('环境嘈杂（>30dB），建议在安静环境中校准')
+          .fontSize(DesignConstants.FONT_SIZE_SM)
+          .fontColor($r('sys.color.font_secondary'))
       }
     }
     .width('100%')

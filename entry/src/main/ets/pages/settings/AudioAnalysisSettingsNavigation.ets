@@ -21,17 +21,6 @@ export struct AudioAnalysisSettings {
   @Consumer(navigationStack) navStack: NavPathStack = new NavPathStack();
 
   aboutToAppear() {
-    // 初始化环境噪声监测
-    this.startEnvironmentMonitoring();
-  }
-
-  // 环境噪声监测
-  private startEnvironmentMonitoring() {
-    // 模拟环境噪声变化
-    setInterval(() => {
-      // 在25-35dB范围内随机变化，模拟真实环境
-      this.environmentNoise = 25 + Math.random() * 10;
-    }, 2000);
   }
 
   private startAutoCalibration() {
@@ -93,7 +82,6 @@ export struct AudioAnalysisSettings {
       // 状态反馈区域
       CalibrationStatusIndicator({
         calibrationProgress: this.getCalibrationProgressPercent(),
-        environmentNoise: this.environmentNoise,
         currentDecibel: this.as.db,
         isCalibrating: this.isAutoCalibrating
       })
@@ -117,7 +105,7 @@ export struct AudioAnalysisSettings {
           isCalibrating: this.isAutoCalibrating,
           calibrationProgress: this.getCalibrationProgressPercent(),
           countdown: this.countdown,
-          environmentNoise: this.environmentNoise
+          environmentNoise: this.as.db
         })
       }
 

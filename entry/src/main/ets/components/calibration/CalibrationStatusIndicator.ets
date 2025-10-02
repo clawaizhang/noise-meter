@@ -10,7 +10,6 @@ import { curves } from '@kit.ArkUI';
 @ComponentV2
 export struct CalibrationStatusIndicator {
   @Param @Require calibrationProgress: number = 0;        // 校准进度 0-100
-  @Param @Require environmentNoise: number = 0;           // 环境噪声水平
   @Param @Require currentDecibel: number = 0;             // 当前声级
   @Param @Require isCalibrating: boolean = false;         // 是否正在校准
 
@@ -19,11 +18,11 @@ export struct CalibrationStatusIndicator {
 
   // 获取环境噪声等级
   private getEnvironmentLevel(): EnvironmentNoiseLevel {
-    if (this.environmentNoise < 30) {
+    if (this.currentDecibel < 20) {
       return EnvironmentNoiseLevel.EXCELLENT;
-    } else if (this.environmentNoise < 40) {
+    } else if (this.currentDecibel < 25) {
       return EnvironmentNoiseLevel.GOOD;
-    } else if (this.environmentNoise < 50) {
+    } else if (this.currentDecibel < 30) {
       return EnvironmentNoiseLevel.FAIR;
     } else {
       return EnvironmentNoiseLevel.POOR;
@@ -138,9 +137,6 @@ export struct CalibrationStatusIndicator {
             .fontWeight(FontWeight.Medium)
         }
 
-        Text(`环境噪声: ${this.environmentNoise.toFixed(1)}dB`)
-          .fontSize(DesignConstants.FONT_SIZE_SM)
-          .fontColor($r('sys.color.font_secondary'))
       }
     }
     .alignItems(HorizontalAlign.Center)

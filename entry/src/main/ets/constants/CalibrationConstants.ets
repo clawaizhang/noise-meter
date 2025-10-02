@@ -110,10 +110,10 @@ interface EnvironmentThreshold {
 }
 
 export const ENVIRONMENT_THRESHOLDS: EnvironmentThreshold = {
-  EXCELLENT: 30,   // 优秀环境 < 30dB
-  GOOD: 40,        // 良好环境 30-40dB
-  FAIR: 50,        // 一般环境 40-50dB
-  POOR: 50         // 差环境 > 50dB
+  EXCELLENT: 20,   // 优秀环境 < 20dB
+  GOOD: 25,        // 良好环境 20-25dB
+  FAIR: 30,        // 一般环境 25-30dB
+  POOR: 30         // 差环境 > 30dB
 };
 
 // 校准配置
@@ -121,6 +121,7 @@ interface CaliConfig {
   AUTO_CALIBRATION_DURATION: number;
   COUNTDOWN_DURATION: number;
   REFERENCE_LEVEL: number;
+  TARGET_CALIBRATION_VALUE: number;
   MIN_CALIBRATION_VALUE: number;
   MAX_CALIBRATION_VALUE: number;
   PRESET_VALUES: number[];
@@ -129,7 +130,8 @@ interface CaliConfig {
 export const CALIBRATION_CONFIG: CaliConfig = {
   AUTO_CALIBRATION_DURATION: 8,      // 自动校准时长(秒)
   COUNTDOWN_DURATION: 3,             // 倒计时时长(秒)
-  REFERENCE_LEVEL: 26,               // 参考声级(dB)
+  REFERENCE_LEVEL: 25,               // 参考声级(dB) - 更新为25dB
+  TARGET_CALIBRATION_VALUE: 25,      // 目标校准值25dB
   MIN_CALIBRATION_VALUE: -30,        // 最小校准值
   MAX_CALIBRATION_VALUE: 30,         // 最大校准值
   PRESET_VALUES: [-20, -10, 0, 10, 20] // 预设校准点
