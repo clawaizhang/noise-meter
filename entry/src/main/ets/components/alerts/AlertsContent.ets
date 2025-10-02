@@ -2,7 +2,7 @@ import { AppKeys } from '../../models/AppKeys';
 import { PreferenceKeys } from '../../models/PreferenceKeys';
 import { DesignConstants } from '../../constants/DesignConstants';
 import { ThresholdManager } from '../../services/ThresholdManager';
-import { NotificationHelper } from '../../utils/NotificationHelper';
+import { AlertService } from '../../services/AlertService';
 import { AppStorageV2, PersistenceV2 } from '@kit.ArkUI';
 import { common } from '@kit.AbilityKit';
 
@@ -16,47 +16,54 @@ export struct AlertsContent {
   @Local private visualAlertState: string = 'normal';
   @Local private alertStartTime: number = 0;
   @Local private alertDuration: number = 0;
+  // 警报服务
+  private alertService: AlertService = AlertService.getInstance(getContext() as common.UIAbilityContext);
 
   aboutToAppear(): void {
   }
 
+  aboutToDisappear(): void {
+    // 组件销毁时重置警报状态
+    this.alertService.resetAlertState();
+  }
+
   @Monitor('as.db')
-  onDbChange(monitor: IMonitor) {
+  async onDbChange(monitor: IMonitor) {
     const currentDecibel = monitor.value<number>()?.now;
     if (currentDecibel !== undefined) {
-      this.checkAlertStatus(currentDecibel);
+      await this.checkAlertStatus(currentDecibel);
     }
   }
 
   // 检查警报状态
-  private checkAlertStatus(currentDecibel: number): void {
+  private async checkAlertStatus(currentDecibel: number): Promise<void> {
     const threshold = ThresholdManager.getCurrentEffectiveThreshold();
     const shouldAlert = currentDecibel >= threshold && this.pk.noise_alarm_enabled;
 
     if (shouldAlert && !this.isAlarmActive) {
       // 触发警报
-      this.triggerAlarm(currentDecibel);
+      await this.triggerAlarm(currentDecibel);
     } else if (!shouldAlert && this.isAlarmActive) {
       // 解除警报
       this.clearAlarm();
+    } else if (!shouldAlert) {
+      // 噪音恢复正常，重置警报状态
+      this.alertService.resetAlertState();
     }
   }
 
   // 触发警报
-  private triggerAlarm(currentDecibel: number): void {
+  private async triggerAlarm(currentDecibel: number): Promise<void> {
     this.isAlarmActive = true;
     this.visualAlertState = 'alert';
     this.alertStartTime = Date.now();
 
-    // 多模态反馈
-    if (this.pk.sound_alert_enabled) {
-      this.playAlertSound();
-    }
-    if (this.pk.vibration_alert_enabled) {
-      this.triggerVibration();
-    }
-    if (this.pk.system_notification_enabled) {
-      this.showSystemNotification(currentDecibel);
+    // 使用AlertService触发多模态警报
+    const threshold = ThresholdManager.getCurrentEffectiveThreshold();
+    
+    // 根据用户设置决定触发哪些警报
+    if (this.pk.sound_alert_enabled || this.pk.vibration_alert_enabled || this.pk.system_notification_enabled) {
+      await this.alertService.triggerAlert(currentDecibel, threshold);
     }
   }
 
@@ -65,29 +72,6 @@ export struct AlertsContent {
     this.isAlarmActive = false;
     this.visualAlertState = 'normal';
     this.alertDuration = Date.now() - this.alertStartTime;
-  }
-
-  // 播放警报声音
-  private playAlertSound(): void {
-    // 使用系统音频服务播放警报音
-    // 这里可以集成具体的音频播放逻辑
-  }
-
-  // 触发振动
-  private triggerVibration(): void {
-    // 使用系统振动服务
-    // 这里可以集成具体的振动逻辑
-  }
-
-  // 显示系统通知
-  private showSystemNotification(currentDecibel: number): void {
-    const threshold = ThresholdManager.getCurrentEffectiveThreshold();
-    NotificationHelper.getInstance(this.getUIContext().getHostContext() as common.UIAbilityContext)
-      .showNotification(999_999,
-        '噪音警报',
-        `当前噪音水平 ${currentDecibel}dB 超过阈值 ${threshold}dB`,
-        '请采取适当防护措施'
-      );
   }
 
   // 构建状态显示区

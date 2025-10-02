@@ -249,6 +249,10 @@
       "value": "返回"
     },
     {
+      "name": "vibrate_permission_reason",
+      "value": "需要振动权限来提供警报震动反馈"
+    },
+    {
       "name": "privacy_policy_link",
       "value": "https://agreement-drcn.hispace.dbankcloud.cn/index.html?lang=zh&agreementId=1772080835588051136"
     }
