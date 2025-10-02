@@ -2,6 +2,7 @@ import { navigationStack } from '../constants/ProviderConstant'
 import { RelationalStoreService } from '../services/RelationalStoreService'
 import { commonEventManager } from '@kit.BasicServicesKit'
 import { privacyManager } from '@kit.StoreKit'
+import { PrivacyPolicyDialogBuilder } from '../components/privacy/PrivacyPolicyDialog'
 import { PreferenceKeys } from '../models/PreferenceKeys'
 import { DatabaseUpgradeConfig, DbConfig } from '../interfaces/DatabaseInterfaces'
 import hilog from '@ohos.hilog'
@@ -82,9 +83,11 @@ struct Index {
     ThresholdManager.setCurrentConfig(this.currentConfig);
     FileUtils.init(this.getUIContext().getHostContext());
     this.setDisplayMode(this.pk.display_mode);
-    if (!this.pk.privacy_agreed) {
-      this.subscribe();
-    }
+    
+    // 不再订阅系统隐私政策事件，使用自定义隐私政策
+    // if (!this.pk.privacy_agreed) {
+    //   this.subscribe();
+    // }
     
     // 初始化权限状态
     const permissionService = PermissionService.getInstance();
@@ -116,16 +119,10 @@ struct Index {
 
   private async initialize() {
     try {
-      if (canIUse('SystemCapability.AppGalleryService.PrivacyManager') && this.usePrivacy) {
-        if (privacyManager.getAppPrivacyMgmtInfo().type == privacyManager.AppPrivacyMgmtType.FULL_MODE) {
-          let appPrivacyResults: privacyManager.AppPrivacyResult[] = privacyManager.getAppPrivacyResult();
-          this.pk.privacy_agreed = appPrivacyResults[0]?.result === 1;
-        } else {
-          this.pk.privacy_agreed = true;
-        }
-      } else {
-        this.pk.privacy_agreed = true;
-      }
+      // 使用自定义隐私政策，不再依赖系统隐私政策API
+      // 隐私政策状态由用户通过自定义对话框设置
+      // 这里保持隐私政策状态不变，等待用户交互
+      
       // 初始化数据库
       const upgradeConfigs: DatabaseUpgradeConfig[] = dbConfig.upgradeConfigs;
 
@@ -234,10 +231,19 @@ struct Index {
           if (this.pk.privacy_agreed) {
             MainPage()
           } else {
-            Column() {
-              Image($r('app.media.app_icon_fore'))
-                .width(120).height(120)
-            }.justifyContent(FlexAlign.Center)
+            // 显示自定义隐私政策对话框
+            PrivacyPolicyDialogBuilder({
+              onAgree: () => {
+                // 用户同意隐私政策
+                this.pk.privacy_agreed = true;
+                hilog.info(DOMAIN, TAG, '用户同意隐私政策');
+              },
+              onCancel: () => {
+                // 用户取消，退出APP
+                hilog.info(DOMAIN, TAG, '用户取消隐私政策，退出APP');
+                this.context.terminateSelf();
+              }
+            })
           }
         }
         .size({ width: '100%' })

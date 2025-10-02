@@ -175,6 +175,46 @@
     {
       "name": "function_links_title",
       "value": "快捷功能入口"
+    },
+    {
+      "name": "privacy_policy_welcome",
+      "value": "欢迎使用静喵Sound噪音检测应用"
+    },
+    {
+      "name": "privacy_policy_description",
+      "value": "为了更好地为您提供准确的噪音检测服务，我们需要获取必要的权限并收集相关数据。"
+    },
+    {
+      "name": "privacy_policy_permissions_title",
+      "value": "应用需要以下权限："
+    },
+    {
+      "name": "privacy_policy_microphone_permission",
+      "value": "麦克风权限 - 用于检测环境噪音"
+    },
+    {
+      "name": "privacy_policy_location_permission",
+      "value": "位置权限 - 用于记录检测地点"
+    },
+    {
+      "name": "privacy_policy_background_permission",
+      "value": "后台运行 - 持续监测环境噪音"
+    },
+    {
+      "name": "privacy_policy_agreement_text",
+      "value": "请阅读并同意"
+    },
+    {
+      "name": "privacy_policy_link_text",
+      "value": "《隐私政策》"
+    },
+    {
+      "name": "privacy_policy_cancel_button",
+      "value": "取消"
+    },
+    {
+      "name": "privacy_policy_agree_button",
+      "value": "同意并继续"
     }
   ]
 }
