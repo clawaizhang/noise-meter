@@ -1,147 +1,40 @@
 import { DecibelService } from '../../services/DecibelService';
 import { StatisticsService } from '../../services/StatisticsService';
-import { AudioAnalysisMode, AudioPresets } from '../../common/AudioConfig';
+import { AudioAnalysisMode } from '../../common/AudioConfig';
 import { WeightingType } from '../../constants/WeightingConstants';
-import { concurrentCalculateSpectrum } from '../../concurrent/ConcurrentFftAnalyzer';
-import { FFTAnalyzer } from '../../utils/FFTAnalyzer';
-import { taskpool } from '@kit.ArkTS';
 import { DialogHub, InfSheet } from '@hadss/dialoghub';
 import { resourceManager } from '@kit.LocalizationKit';
 import { NoiseDescriptionDialogBuilder } from '../../pages/noisemeter/NoiseDescriptionDialogNavigation';
 import { image } from '@kit.ImageKit';
 import { AppKeys } from '../../models/AppKeys';
 import { AppStorageV2, curves } from '@kit.ArkUI';
-import { from, interval, take, takeUntil, timer, Subject, Subscription, map, filter, switchMap, tap, delay, catchError, of } from 'rxjs';
+import { Subscription } from 'rxjs';
 
 @ComponentV2
 export struct DecibelDisplayComponent {
   // 输入参数
-  @Param @Require audioBuffer: ArrayBuffer = new ArrayBuffer(0);
-  @Param @Require audioAnalysisMode: AudioAnalysisMode = AudioAnalysisMode.FAST_TIME_WEIGHTING;
+  @Param @Require currentDecibel: number = 0;
+  @Param @Require minDecibel: number = 0;
+  @Param @Require maxDecibel: number = 0;
+  @Param @Require avgDecibel: number = 0;
   @Param @Require weightingType: WeightingType = WeightingType.A;
   @Param @Require calibrationValue: number = 0;
   @Param @Require noiseThreshold: number = 80;
   @Param @Require noiseAlarmEnabled: boolean = true;
-  @Event minMaxAvg: (min: number, max: number, avg: number) => void;
-  @Event decibelValue: (decibel: number, weightingType: WeightingType) => void;
+  @Param @Require isNoiseAlarm: boolean = false;
   
   // 内部状态
-  @Local private currentDecibel: number = 0;
-  @Local private minDecibel: number = 0;
-  @Local private maxDecibel: number = 0;
-  @Local private avgDecibel: number = 0;
-  @Local private isNoiseAlarm: boolean = false;
   @Local private showAvgInsteadOfMin: boolean = true;
-
-  // 服务实例
-  private statisticsService: StatisticsService = new StatisticsService();
-  private statisticsSubscription?: Subscription;
-  private alarmSubscription?: Subscription;
   
   @Local as: AppKeys = AppStorageV2.connect(AppKeys)!;
   sysResourceManager: resourceManager.ResourceManager = resourceManager.getSystemResourceManager();
 
-  @Computed
-  get fft_size() {
-    return AudioPresets.getConfig(this.audioAnalysisMode).fftSize;
-  }
-
-  @Monitor('audioAnalysisMode')
-  onAudioAnalysisModeChange(monitor: IMonitor) {
-    const newMode = monitor.value<AudioAnalysisMode>()?.now;
-    if (newMode) {
-      this.statisticsService.setAudioAnalysisMode(newMode);
-    }
-  }
-
-  @Monitor('noiseThreshold', 'noiseAlarmEnabled')
-  onAlarmConfigChange(monitor: IMonitor) {
-    const newThreshold = monitor.value<number>('noiseThreshold')?.now;
-    const newEnabled = monitor.value<boolean>('noiseAlarmEnabled')?.now;
-    if (newThreshold !== undefined && newEnabled !== undefined) {
-      this.statisticsService.setAlarmConfig(newThreshold, newEnabled);
-    }
-  }
-
   aboutToAppear() {
-    // 配置统计服务
-    this.statisticsService.setAudioAnalysisMode(this.audioAnalysisMode);
-    this.statisticsService.setAlarmConfig(this.noiseThreshold, this.noiseAlarmEnabled);
-    
-    // 启动统计服务
-    this.statisticsService.start();
-    
-    // 订阅统计状态变化
-    this.statisticsSubscription = this.statisticsService.statisticsState$.subscribe(state => {
-      this.minDecibel = state.minDecibel;
-      this.maxDecibel = state.maxDecibel;
-      this.avgDecibel = state.avgDecibel;
-      this.minMaxAvg(this.minDecibel, this.maxDecibel, this.avgDecibel);
-      console.info('[DecibelDisplay] 统计状态更新:', state);
-    });
-    
-    // 订阅报警状态变化
-    this.alarmSubscription = this.statisticsService.alarmState$.subscribe(state => {
-      this.isNoiseAlarm = state.isNoiseAlarm;
-    });
+    // 组件现在只负责显示，不需要初始化音频处理
   }
 
   aboutToDisappear() {
-    // 清理RxJS资源
-    this.statisticsService.stop();
-    if (this.statisticsSubscription) {
-      this.statisticsSubscription.unsubscribe();
-      this.statisticsSubscription = undefined;
-    }
-    if (this.alarmSubscription) {
-      this.alarmSubscription.unsubscribe();
-      this.alarmSubscription = undefined;
-    }
-  }
-
-  @Monitor('audioBuffer', 'audioAnalysisMode', 'weightingType', 'calibrationValue')
-  async onAudioDataChange(monitor: IMonitor) {
-    const audioBuffer = monitor.value<ArrayBuffer>('audioBuffer')?.now;
-    const audioAnalysisMode = monitor.value<AudioAnalysisMode>('audioAnalysisMode')?.now;
-    const weightingType = monitor.value<WeightingType>('weightingType')?.now;
-    const calibrationValue = monitor.value<number>('calibrationValue')?.now;
-
-    // 处理配置参数变化
-    if (audioAnalysisMode !== undefined) {
-      this.statisticsService.setAudioAnalysisMode(audioAnalysisMode);
-    }
-
-    if (audioBuffer && audioBuffer.byteLength > 0 && this.as.isDisplayApp) {
-      try {
-        const spectrum = await taskpool.execute<[string, ArrayBuffer, WeightingType, number], Float32Array>(
-          concurrentCalculateSpectrum,
-          audioAnalysisMode || this.audioAnalysisMode,
-          audioBuffer,
-          weightingType || this.weightingType,
-          calibrationValue || this.calibrationValue
-        );
-
-        const config = AudioPresets.getConfig(audioAnalysisMode || this.audioAnalysisMode);
-        const db: number = new FFTAnalyzer(
-          config.fftSize,
-          config.windowType,
-          config.smoothingFactor,
-          config.overlap
-        ).calculateAverageDb(spectrum);
-
-        let decibel = Math.round(db);
-        this.currentDecibel = decibel;
-        this.as.db = decibel;
-
-        // 触发事件通知父组件有新的分贝值
-        this.decibelValue(decibel, weightingType || this.weightingType);
-        
-        // 使用统计服务更新统计信息
-        this.statisticsService.updateDecibelValue(decibel);
-      } catch (error) {
-        console.error('[DecibelDisplay] 分贝计算失败:', error);
-      }
-    }
+    // 清理资源
   }
 
   @Builder

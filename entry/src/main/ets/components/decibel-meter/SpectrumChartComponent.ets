@@ -1,16 +1,23 @@
-import { AppStorageV2, curves } from '@kit.ArkUI';
+import { AppStorageV2, curves, PersistenceV2 } from '@kit.ArkUI';
 import display from '@ohos.display';
 import { resourceManager } from '@kit.LocalizationKit';
 import { AppKeys } from '../../models/AppKeys';
 import { drawSpectrum, getDbSteps, getFrequencySteps } from './DrawSpectrum';
 import { DialogHub } from '@hadss/dialoghub';
+import { AudioPresets } from '../../common/AudioConfig';
+import { PreferenceKeys } from '../../models/PreferenceKeys';
 
 @ComponentV2
 export struct SpectrumChartComponent {
   // 输入参数
   @Param spectrumData: Float32Array = new Float32Array()
-  @Param fftSize: number = 1024
-  @Param sampleRate: number = 44100
+  sampleRate: number = 44100
+  @Local pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys)!;
+
+  @Computed
+  get fftSize() {
+    return AudioPresets.getConfig(this.pk.audio_analysis_mode).fftSize;
+  }
 
   // 本地状态
   @Local private canvasWidth: number = 0
