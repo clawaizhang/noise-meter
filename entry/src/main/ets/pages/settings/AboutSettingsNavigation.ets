@@ -5,6 +5,10 @@ import { Want } from '@kit.AbilityKit';
 import { navigationStack } from '../../constants/ProviderConstant';
 import { DesignConstants } from '../../constants/DesignConstants';
 import { curves } from '@kit.ArkUI';
+import { PreferenceKeys } from '../../models/PreferenceKeys';
+import { PersistenceV2 } from '@kit.ArkUI';
+import { PrivacyPolicyViewBuilder } from '../../components/privacy/PrivacyPolicyDialog';
+import { DialogHub } from '@hadss/dialoghub';
 
 @Extend(Image)
 function itemIcon() {
@@ -60,6 +64,8 @@ function listItemRow() {
 @ComponentV2
 export struct AboutSettings {
   @Consumer(navigationStack) navStack: NavPathStack = new NavPathStack();
+  @Local pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys)!;
+  @Local showRevokeConfirmDialog: boolean = false;
 
   build() {
     Row() {
@@ -100,32 +106,67 @@ export struct AboutSettings {
           .appInfoCardStyle()
         }.width('100%')
 
-        // 隐私政策
+        // 隐私政策管理
         GridCol({ span: 1 }) {
-          Column({ space: 8 }) {
+          Column({ space: 12 }) {
+            // 标题
+            Text($r('app.string.privacy_policy_management_title'))
+              .fontSize(DesignConstants.FONT_SIZE_LG)
+              .fontWeight(FontWeight.Bold)
+              .fontColor($r('sys.color.font_primary'))
+              .alignSelf(ItemAlign.Start)
+            
+            // 查看隐私政策
             Row({ space: 8 }) {
               Row() {
                 Image($r('app.media.ic_info'))
                   .itemIcon()
-                Text('隐私政策')
+                Hyperlink($r('app.string.privacy_policy_link'),$r('app.string.privacy_policy_link_text'))
+              }.layoutWeight(1)
+
+              Blank()
+            }
+            .listItemRow()
+            .onClick(() => {
+              DialogHub.getSheet().setContent(wrapBuilder(PrivacyPolicyViewBuilder)).build().show();
+            })
+
+            // 取消隐私授权
+            Row({ space: 8 }) {
+              Row() {
+                Image($r('app.media.ic_lock'))
+                  .itemIcon()
+                Text($r('app.string.revoke_privacy_agreement'))
                   .itemTitle()
               }.layoutWeight(1)
 
               Blank()
             }
             .listItemRow()
-
-            Text('查看应用的隐私政策')
-              .itemDescription()
+            .onClick(() => {
+              AlertDialog.show({
+                title: $r('app.string.revoke_privacy_confirm_title'),
+                message: $r('app.string.revoke_privacy_confirm_message'),
+                primaryButton: {
+                  value: $r('app.string.revoke_privacy_confirm_button'),
+                  action: () => {
+                    this.revokePrivacyAgreement();
+                  }
+                },
+                secondaryButton: {
+                  value: $r('app.string.revoke_privacy_cancel_button'),
+                  action: () => {
+                    this.showRevokeConfirmDialog = false;
+                  }
+                },
+                cancel: () => {
+                  this.showRevokeConfirmDialog = false;
+                }
+              })
+            })
           }
           .cardStyle()
-        }.width('100%').onClick(async () => {
-          // 这里添加打开隐私政策的逻辑
-          const uiContext = getContext(this) as common.UIAbilityContext;
-          if(canIUse('SystemCapability.AppGalleryService.PrivacyManager')){
-            await privacyManager.requestAppPrivacyConsent(uiContext);
-          }
-        })
+        }.width('100%')
 
         // 技术支持
         GridCol({ span: 1 }) {
@@ -184,10 +225,18 @@ export struct AboutSettings {
         }
       }
       .backgroundColor('transparent')
-
     }
     .padding(16)
     .backgroundColor($r('sys.color.background_secondary'))
+  }
+
+  // 取消隐私授权
+  private revokePrivacyAgreement() {
+    // 撤销隐私同意状态
+    this.pk.privacy_agreed = false;
+    // 退出APP
+    const context = getContext(this) as common.UIAbilityContext;
+    context.terminateSelf();
   }
 }
 

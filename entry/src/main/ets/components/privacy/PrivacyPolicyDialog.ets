@@ -10,6 +10,7 @@ import { common } from '@kit.AbilityKit';
 export struct PrivacyPolicyDialog {
   @Param @Require onAgree: () => void; // 同意回调
   @Param @Require onCancel: () => void; // 取消回调（退出APP）
+  @Param isViewMode: boolean = false; // 是否为查看模式（不显示操作按钮）
   @Local context: common.UIAbilityContext = getContext(this) as common.UIAbilityContext;
 
   // 构建Header区域 - APP图标和名称
@@ -119,7 +120,7 @@ export struct PrivacyPolicyDialog {
           .fontSize(DesignConstants.FONT_SIZE_MD)
           .fontColor($r('sys.color.font_primary'))
 
-        Hyperlink('https://agreement-drcn.hispace.dbankcloud.cn/index.html?lang=zh&agreementId=1772080835588051136',
+        Hyperlink($r('app.string.privacy_policy_link'),
           $r('app.string.privacy_policy_link_text'))
       }
       .alignItems(VerticalAlign.Center)
@@ -133,40 +134,57 @@ export struct PrivacyPolicyDialog {
   // 构建操作按钮区域
   @Builder
   private buildActionButtons() {
-    Row({ space: DesignConstants.SPACING_MD }) {
-      // 取消按钮 - 退出APP
-      Button($r('app.string.privacy_policy_cancel_button'), { type: ButtonType.Capsule })
-        .layoutWeight(1)
-        .backgroundColor($r('sys.color.comp_background_primary'))
-        .fontColor($r('sys.color.font_primary'))
-        .fontSize(DesignConstants.FONT_SIZE_LG)
-        .fontWeight(FontWeight.Medium)
-        .borderRadius(DesignConstants.BORDER_RADIUS_MD)
-        .border({
-          width: DesignConstants.BORDER_WIDTH_SM,
-          color: $r('sys.color.comp_border_color'),
-          style: BorderStyle.Solid
-        })
-        .onClick(() => {
-          this.handleCancel();
-        })
-        .height(56)
-
-      // 同意按钮 - 继续使用
-      Button($r('app.string.privacy_policy_agree_button'), { type: ButtonType.Capsule })
-        .layoutWeight(1)
+    if (this.isViewMode) {
+      // 查看模式：只显示返回按钮
+      Button($r('app.string.privacy_policy_back_button'), { type: ButtonType.Capsule })
+        .width('100%')
         .backgroundColor($r('sys.color.interactive_active'))
         .fontColor($r('sys.color.font_on_primary'))
         .fontSize(DesignConstants.FONT_SIZE_LG)
         .fontWeight(FontWeight.Medium)
         .borderRadius(DesignConstants.BORDER_RADIUS_MD)
         .onClick(() => {
-          this.handleAgree();
+          this.handleCancel();
         })
         .height(56)
+        .margin(DesignConstants.SPACING_MD)
+    } else {
+      // 正常模式：显示取消和同意按钮
+      Row({ space: DesignConstants.SPACING_MD }) {
+        // 取消按钮 - 退出APP
+        Button($r('app.string.privacy_policy_cancel_button'), { type: ButtonType.Capsule })
+          .layoutWeight(1)
+          .backgroundColor($r('sys.color.comp_background_primary'))
+          .fontColor($r('sys.color.font_primary'))
+          .fontSize(DesignConstants.FONT_SIZE_LG)
+          .fontWeight(FontWeight.Medium)
+          .borderRadius(DesignConstants.BORDER_RADIUS_MD)
+          .border({
+            width: DesignConstants.BORDER_WIDTH_SM,
+            color: $r('sys.color.comp_border_color'),
+            style: BorderStyle.Solid
+          })
+          .onClick(() => {
+            this.handleCancel();
+          })
+          .height(56)
+
+        // 同意按钮 - 继续使用
+        Button($r('app.string.privacy_policy_agree_button'), { type: ButtonType.Capsule })
+          .layoutWeight(1)
+          .backgroundColor($r('sys.color.interactive_active'))
+          .fontColor($r('sys.color.font_on_primary'))
+          .fontSize(DesignConstants.FONT_SIZE_LG)
+          .fontWeight(FontWeight.Medium)
+          .borderRadius(DesignConstants.BORDER_RADIUS_MD)
+          .onClick(() => {
+            this.handleAgree();
+          })
+          .height(56)
+      }
+      .width('100%')
+      .padding(DesignConstants.SPACING_MD)
     }
-    .width('100%')
-    .padding(DesignConstants.SPACING_MD)
   }
 
   // 处理同意操作
@@ -211,16 +229,31 @@ export struct PrivacyPolicyDialog {
   }
 }
 
-// 隐私政策对话框的Builder版本
+// 隐私政策对话框的Builder版本 - 正常模式
 @Builder
 export function PrivacyPolicyDialogBuilder(param: PrivacyPolicyDialogParams) {
   PrivacyPolicyDialog({
     onAgree: param.onAgree,
-    onCancel: param.onCancel
+    onCancel: param.onCancel,
+    isViewMode: false
+  })
+}
+
+// 隐私政策查看模式的Builder版本
+@Builder
+export function PrivacyPolicyViewBuilder() {
+  PrivacyPolicyDialog({
+    onAgree: () => {},
+    onCancel: () => {},
+    isViewMode: true
   })
 }
 
 export interface PrivacyPolicyDialogParams {
   onAgree: () => void;
   onCancel: () => void;
+}
+
+export interface PrivacyPolicyViewParams {
+  onClose: () => void;
 }

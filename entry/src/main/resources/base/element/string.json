@@ -215,6 +215,42 @@
     {
       "name": "privacy_policy_agree_button",
       "value": "同意并继续"
+    },
+    {
+      "name": "privacy_policy_management_title",
+      "value": "隐私政策管理"
+    },
+    {
+      "name": "view_privacy_policy",
+      "value": "查看隐私政策"
+    },
+    {
+      "name": "revoke_privacy_agreement",
+      "value": "取消隐私授权"
+    },
+    {
+      "name": "revoke_privacy_confirm_title",
+      "value": "确认取消隐私授权"
+    },
+    {
+      "name": "revoke_privacy_confirm_message",
+      "value": "取消隐私授权后，应用将立即退出。下次打开应用时需要重新同意隐私政策才能使用。"
+    },
+    {
+      "name": "revoke_privacy_confirm_button",
+      "value": "确认取消"
+    },
+    {
+      "name": "revoke_privacy_cancel_button",
+      "value": "取消"
+    },
+    {
+      "name": "privacy_policy_back_button",
+      "value": "返回"
+    },
+    {
+      "name": "privacy_policy_link",
+      "value": "https://agreement-drcn.hispace.dbankcloud.cn/index.html?lang=zh&agreementId=1772080835588051136"
     }
   ]
 }
