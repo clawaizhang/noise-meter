@@ -166,10 +166,6 @@ export struct AlertsStatusIndicator {
           Text('dB')
             .fontSize(DesignConstants.FONT_SIZE_MD)
             .fontColor($r('sys.color.font_secondary'))
-
-          Text(`阈值: ${this.alertThreshold}dB`)
-            .fontSize(DesignConstants.FONT_SIZE_SM)
-            .fontColor(ALERT_COLORS.PRIMARY)
         }
       }
 
