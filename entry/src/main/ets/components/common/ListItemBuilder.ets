@@ -41,7 +41,7 @@ export function ListItemBuilder(
     })
     .alignItems(VerticalAlign.Center)
   }
-  .borderRadius(8)
+  .borderRadius(16)
   .backgroundColor($r('sys.color.comp_background_primary'))
   .margin({ 
     top: marginTop, 

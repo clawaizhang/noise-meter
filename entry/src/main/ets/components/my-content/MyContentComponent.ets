@@ -40,7 +40,10 @@ export struct MyContentComponent {
         ListItem() {
           // 显示模式组件
           DisplayModeComponent()
-        }
+        } .margin({
+          left: 16,
+          right: 16
+        })
 
         ListItemBuilder(
           $r('app.media.ic_settings'),

@@ -91,6 +91,11 @@ struct Index {
   }
 
   async aboutToAppear() {
+    // 初始化颜色模式和Dialog样式管理器
+    ColorModeManager.init();
+    DialogStyleManager.init();
+    ColorModeManager.setAppContext(this.context.getApplicationContext());
+
     ThresholdManager.setCurrentConfig(this.currentConfig);
     FileUtils.init(this.getUIContext().getHostContext());
     this.setDisplayMode(this.pk.display_mode);
@@ -121,10 +126,7 @@ struct Index {
 
   private async initialize() {
     try {
-      // 初始化颜色模式和Dialog样式管理器
-      ColorModeManager.init();
-      DialogStyleManager.init();
-      ColorModeManager.setAppContext(this.context.getApplicationContext());
+
       // 使用自定义隐私政策，不再依赖系统隐私政策API
       // 隐私政策状态由用户通过自定义对话框设置
       // 这里保持隐私政策状态不变，等待用户交互
