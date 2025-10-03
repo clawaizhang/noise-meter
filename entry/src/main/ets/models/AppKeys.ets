@@ -24,4 +24,7 @@ export class AppKeys {
 
   @Trace
   spectrumData: Float32Array = new Float32Array(); // 实时频谱数据
+
+  @Trace
+  systemNotificationPermissionGranted: boolean = false; // 系统通知权限状态
 }

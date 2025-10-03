@@ -2,6 +2,8 @@ import { BusinessError } from '@ohos.base';
 import { notificationManager } from '@kit.NotificationKit';
 import { common } from '@kit.AbilityKit';
 import { hilog } from '@kit.PerformanceAnalysisKit';
+import { AppKeys } from '../models/AppKeys';
+import { AppStorageV2 } from '@kit.ArkUI';
 
 const TAG = 'AlertService';
 const DOMAIN = 0xFF00;
@@ -190,15 +192,56 @@ export class AlertService {
   }
 
   /**
+   * 更新系统通知权限状态
+   */
+  public async updateSystemPermissionStatus(): Promise<void> {
+    try {
+      const isEnabled = await this.checkNotificationPermission();
+      const appKeys: AppKeys = AppStorageV2.connect(AppKeys)!;
+      appKeys.systemNotificationPermissionGranted = isEnabled;
+      hilog.info(DOMAIN, TAG, `系统通知权限状态已更新: ${isEnabled}`);
+    } catch (error) {
+      const err = error as BusinessError;
+      hilog.error(DOMAIN, TAG, `更新系统通知权限状态失败: ${err.code}, ${err.message}`);
+    }
+  }
+
+  /**
    * 请求通知权限
    */
   public async requestNotificationPermission(): Promise<void> {
     try {
       await notificationManager.requestEnableNotification(this.context);
       hilog.info(DOMAIN, TAG, '通知权限请求成功');
+      // 权限请求后更新状态
+      await this.updateSystemPermissionStatus();
     } catch (error) {
       const err = error as BusinessError;
       hilog.error(DOMAIN, TAG, `请求通知权限失败: ${err.code}, ${err.message}`);
+      // 即使请求失败也更新状态
+      await this.updateSystemPermissionStatus();
+    }
+  }
+
+  /**
+   * 跳转到系统通知设置页面
+   */
+  public async openSystemNotificationSettings(): Promise<void> {
+    try {
+      // 使用系统能力跳转到通知设置页面
+      await this.context.startAbility({
+        bundleName: 'com.ohos.settings',
+        abilityName: 'com.ohos.settings.MainAbility',
+        parameters: {
+          'settings:uri': 'notification'
+        }
+      });
+      hilog.info(DOMAIN, TAG, '跳转到系统通知设置页面');
+    } catch (error) {
+      const err = error as BusinessError;
+      hilog.error(DOMAIN, TAG, `跳转到系统通知设置失败: ${err.code}, ${err.message}`);
+      // 如果跳转失败，尝试请求权限
+      await this.requestNotificationPermission();
     }
   }
 }

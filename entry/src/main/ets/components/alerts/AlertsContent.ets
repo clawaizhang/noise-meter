@@ -5,6 +5,7 @@ import { ThresholdManager } from '../../services/ThresholdManager';
 import { AlertService } from '../../services/AlertService';
 import { AppStorageV2, PersistenceV2 } from '@kit.ArkUI';
 import { common } from '@kit.AbilityKit';
+import { NotificationPreferences } from './NotificationPreferences';
 
 @ComponentV2
 export struct AlertsContent {
@@ -20,6 +21,8 @@ export struct AlertsContent {
   private alertService: AlertService = AlertService.getInstance(getContext() as common.UIAbilityContext);
 
   aboutToAppear(): void {
+    // 组件加载时更新权限状态
+    this.alertService.updateSystemPermissionStatus();
   }
 
   aboutToDisappear(): void {
@@ -122,133 +125,10 @@ export struct AlertsContent {
     .backgroundColor(this.getStatusBackground())
     .backgroundBlurStyle(BlurStyle.COMPONENT_THICK)
     .borderRadius(DesignConstants.BORDER_RADIUS_XL)
-    .width('90%')
     .animation({
       duration: 300,
       curve: Curve.EaseInOut
     })
-  }
-
-  // 构建快速控制区 - 优化布局
-  @Builder
-  private buildQuickControls() {
-    Column({ space: DesignConstants.SPACING_MD }) {
-      // 标题行：系统通知 + 开关（右上角）
-      Row() {
-        Text('系统通知')
-          .fontSize(DesignConstants.FONT_SIZE_XL)
-          .fontWeight(FontWeight.Bold)
-          .fontColor($r('sys.color.font_primary'))
-
-        Blank()
-
-        // 系统通知开关
-        Toggle({ type: ToggleType.Switch, isOn: this.pk.system_notification_enabled })
-          .onChange((enabled: boolean) => {
-            this.pk.system_notification_enabled = enabled;
-          })
-          .selectedColor($r('sys.color.brand'))
-          .scale({ x: 1.1, y: 1.1 })
-      }
-      .width('100%')
-      .alignItems(VerticalAlign.Center)
-
-      // 系统通知描述
-      Text('在通知栏显示噪音警报信息')
-        .fontSize(DesignConstants.FONT_SIZE_MD)
-        .fontColor($r('sys.color.font_secondary'))
-        .textAlign(TextAlign.Start)
-        .alignSelf(ItemAlign.Start)
-    }
-    .padding(DesignConstants.SPACING_MD)
-    .backgroundColor($r('sys.color.comp_background_primary'))
-    .borderRadius(DesignConstants.BORDER_RADIUS_LG)
-    .width('90%')
-  }
-
-  // 构建反馈项 - 图标+文字+开关
-  @Builder
-  private buildFeedbackItem(title: string, enabled: boolean, icon: Resource, onToggle: (enabled: boolean) => void) {
-    Row({ space: DesignConstants.SPACING_MD }) {
-      // 图标
-      Image(icon)
-        .width(DesignConstants.ICON_SIZE_SM)
-        .height(DesignConstants.ICON_SIZE_SM)
-        .fillColor(enabled ? $r('sys.color.brand') : $r('sys.color.font_secondary'))
-
-      // 文字
-      Text(title)
-        .fontSize(DesignConstants.FONT_SIZE_MD)
-        .fontColor(enabled ? $r('sys.color.font_primary') : $r('sys.color.font_secondary'))
-        .fontWeight(FontWeight.Medium)
-
-      Blank()
-
-      // 开关
-      Toggle({ type: ToggleType.Switch, isOn: enabled })
-        .onChange(onToggle)
-        .selectedColor($r('sys.color.brand'))
-    }
-    .width('100%')
-    .padding({
-      top: DesignConstants.SPACING_SM,
-      bottom: DesignConstants.SPACING_SM,
-      left: DesignConstants.SPACING_MD,
-      right: DesignConstants.SPACING_MD
-    })
-    .backgroundColor($r('sys.color.background_secondary'))
-    .borderRadius(DesignConstants.BORDER_RADIUS_MD)
-    .alignItems(VerticalAlign.Center)
-  }
-
-  // 构建紧凑控制项 - 图标+开关（保留，可能在其他地方使用）
-  @Builder
-  private buildCompactControl(enabled: boolean, icon: Resource, onToggle: (enabled: boolean) => void,
-    isMainSwitch: boolean = false) {
-    Row({ space: DesignConstants.SPACING_SM }) {
-      Image(icon)
-        .width(isMainSwitch ? DesignConstants.ICON_SIZE_MD : DesignConstants.ICON_SIZE_SM)
-        .height(isMainSwitch ? DesignConstants.ICON_SIZE_MD : DesignConstants.ICON_SIZE_SM)
-        .fillColor(enabled ? $r('sys.color.brand') : $r('sys.color.font_secondary'))
-
-      Toggle({ type: ToggleType.Switch, isOn: enabled })
-        .onChange(onToggle)
-        .selectedColor($r('sys.color.brand'))
-        .scale({ x: isMainSwitch ? 1.1 : 0.9, y: isMainSwitch ? 1.1 : 0.9 })
-    }
-    .padding({
-      top: DesignConstants.SPACING_SM,
-      bottom: DesignConstants.SPACING_SM,
-      left: isMainSwitch ? DesignConstants.SPACING_MD : DesignConstants.SPACING_SM,
-      right: isMainSwitch ? DesignConstants.SPACING_MD : DesignConstants.SPACING_SM
-    })
-    .backgroundColor(isMainSwitch ? $r('sys.color.background_emphasize') : $r('sys.color.background_secondary'))
-    .borderRadius(DesignConstants.BORDER_RADIUS_MD)
-    .alignItems(VerticalAlign.Center)
-  }
-
-  // 构建控制卡片（保留原有方法，可能在其他地方使用）
-  @Builder
-  private buildControlCard(title: string, enabled: boolean, icon: Resource, onToggle: (enabled: boolean) => void) {
-    Column({ space: DesignConstants.SPACING_SM }) {
-      Image(icon)
-        .width(24)
-        .height(24)
-        .fillColor(enabled ? $r('sys.color.brand') : $r('sys.color.font_secondary'))
-
-      Text(title)
-        .fontSize(DesignConstants.FONT_SIZE_MD)
-        .fontColor(enabled ? $r('sys.color.font_primary') : $r('sys.color.font_secondary'))
-
-      Toggle({ type: ToggleType.Switch, isOn: enabled })
-        .onChange(onToggle)
-        .selectedColor($r('sys.color.brand'))
-    }
-    .padding(DesignConstants.SPACING_MD)
-    .backgroundColor($r('sys.color.background_secondary'))
-    .borderRadius(DesignConstants.BORDER_RADIUS_MD)
-    .width('100%')
-    .alignItems(HorizontalAlign.Center)
   }
 
   // 构建环境信息区
@@ -284,7 +164,6 @@ export struct AlertsContent {
     .padding(DesignConstants.SPACING_LG)
     .backgroundColor($r('sys.color.comp_background_primary'))
     .borderRadius(DesignConstants.BORDER_RADIUS_LG)
-    .width('90%')
   }
 
   // 辅助方法：获取状态颜色
@@ -397,13 +276,16 @@ export struct AlertsContent {
       // 状态显示区（最突出）
       this.buildStatusDisplay()
 
-      // 快速控制区
-      this.buildQuickControls()
-
+      NotificationPreferences({
+        systemNotificationEnabled: this.pk.system_notification_enabled,
+        onSystemNotificationChange: (enabled: boolean) => {
+          this.pk.system_notification_enabled = enabled;
+        }
+      })
       // 环境信息区
       this.buildEnvironmentInfo()
     }
-    .width('100%')
+    .width('90%')
     .height('100%')
     .justifyContent(FlexAlign.Start)
     .alignItems(HorizontalAlign.Center)
