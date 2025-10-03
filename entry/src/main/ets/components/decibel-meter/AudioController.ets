@@ -34,6 +34,7 @@ export struct AudioController {
   @Event onRecordingStateChange: (isRecording: boolean) => void
   @Event onRecordingTimeUpdate: (time: number) => void
   @Event onMinMaxAvgCurrent: (min: number, max: number, avg: number, current: number) => void
+  @Event onAutoSaveTimeUpdate: (lastSaveTime: number) => void
   // 服务实例
   private audioService: AudioService = AudioService.getInstance(getContext() as common.UIAbilityContext)
   private recordService: DecibelRecordService = new DecibelRecordService(getContext() as common.UIAbilityContext)
@@ -81,6 +82,7 @@ export struct AudioController {
     this.audioControllerService.subscribeSave((comments: string) => {
       this.performSave(comments);
     });
+
   }
 
   aboutToDisappear() {
@@ -432,6 +434,9 @@ export struct AudioController {
     
     // 更新最后保存时间
     this.lastAutoSaveTime = new Date().getTime();
+    
+    // 通知父组件更新时间
+    this.onAutoSaveTimeUpdate(this.lastAutoSaveTime);
     
     // 显示保存提示
     promptAction.showToast({

@@ -1,11 +1,9 @@
 import { navigationStack } from '../../constants/ProviderConstant';
 import { AppStorageV2, curves, LevelMode, PersistenceV2 } from '@kit.ArkUI';
 import display from '@ohos.display';
-import { secondsToHoursMinutesSecondsWithDecimal } from '../../utils/TimeUtils';
 import { ActionPanel } from './ActionPanel';
 import { SpectrumChartComponent } from './SpectrumChartComponent';
 import { DecibelDisplayComponent } from './DecibelDisplayComponent';
-import { DisplayManager } from '../../../../main/ets/utils/DisplayManager';
 import { PreferenceKeys } from '../../models/PreferenceKeys';
 import { LocationInfo } from '../../services/LocationService';
 import { LocationDisplay } from '../business/LocationDisplay';
@@ -16,7 +14,6 @@ import { AppKeys } from '../../models/AppKeys';
 import { PermissionService } from '../../services/PermissionService';
 import { AudioController } from './AudioController';
 import { AudioControllerService } from '../../services/AudioControllerService';
-import { DesignConstants } from '../../constants/DesignConstants';
 
 @ComponentV2
 export struct DecibelMeter {
@@ -39,6 +36,9 @@ export struct DecibelMeter {
   @Local private avgDecibel: number = 0;
   @Local private maxDecibel: number = 0;
   @Local private minDecibel: number = 0;
+  @Local private lastAutoSaveTime: number = Date.now();
+  @Local private currentTime: number = Date.now();
+  @Local private countdownTimer?: number;
   // 服务实例
   private audioControllerService: AudioControllerService = AudioControllerService.getInstance();
   @Consumer(navigationStack) navStack: NavPathStack = new NavPathStack()
@@ -48,9 +48,44 @@ export struct DecibelMeter {
   aboutToDisappear() {
     // 清理资源
     this.audioControllerService.dispose();
+    // 停止倒计时更新定时器
+    this.stopCountdownTimer();
   }
 
-  async aboutToAppear() {
+  aboutToAppear() {
+    // 启动倒计时更新定时器
+    this.countdownTimer =setInterval(() => {
+      this.currentTime = Date.now();
+    },1000)
+  }
+
+
+  private stopCountdownTimer() {
+    if (this.countdownTimer) {
+      clearInterval(this.countdownTimer);
+      this.countdownTimer = undefined;
+    }
+  }
+
+  @Computed
+  get autoSaveCountdown(): string {
+    if (!this.pk.auto_save_enabled) {
+      return '自动保存已禁用';
+    }
+
+    // 计算剩余时间
+    const elapsed = this.currentTime - this.lastAutoSaveTime;
+    const intervalMs = this.pk.auto_save_interval * 60 * 1000;
+    const remaining = Math.max(0, intervalMs - elapsed);
+
+    if (remaining <= 0) {
+      return '即将自动保存';
+    }
+
+    const minutes = Math.floor(remaining / 60000);
+    const seconds = Math.floor((remaining % 60000) / 1000);
+
+    return `${minutes}:${seconds.toString().padStart(2, '0')} 后自动保存`;
   }
 
   build() {
@@ -96,6 +131,9 @@ export struct DecibelMeter {
             this.avgDecibel = avg;
             this.currentDecibel = current;
           },
+          onAutoSaveTimeUpdate: (lastSaveTime: number) => {
+            this.lastAutoSaveTime = lastSaveTime;
+          },
         })
 
         // 分贝显示面板 - 简化布局策略
@@ -123,7 +161,7 @@ export struct DecibelMeter {
               isNoiseAlarm: false // 报警状态由AudioController管理
             })
 
-            Text(`${secondsToHoursMinutesSecondsWithDecimal(60 * 60_000 - this.recordingTime)} 后自动保存`)
+            Text(this.autoSaveCountdown)
               .fontSize(14)
               .fontColor($r('sys.color.ohos_id_color_text_secondary'))
 

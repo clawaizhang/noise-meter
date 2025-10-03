@@ -16,6 +16,14 @@ export struct AutoSaveSettingsDialog {
   @Local customInterval: number = this.interval;
   @Param @Require params: AutoSaveDialogParams;
 
+  aboutToAppear() {
+    // 确保状态正确初始化
+    this.autoSaveEnabled = this.pk.auto_save_enabled;
+    this.interval = this.pk.auto_save_interval;
+    this.selectedPreset = this.getPresetIndex(this.interval);
+    this.customInterval = this.interval;
+  }
+
   private getPresetIndex(interval: number): number {
     switch (interval) {
       case 3: return 0;
@@ -37,10 +45,12 @@ export struct AutoSaveSettingsDialog {
   }
 
   private handlePresetSelect(index: number) {
+    // 立即更新所有相关状态
     this.selectedPreset = index;
-    this.interval = this.getPresetInterval(index);
+    const newInterval = this.getPresetInterval(index);
+    this.interval = newInterval;
     if (index !== -1) {
-      this.customInterval = this.interval;
+      this.customInterval = newInterval;
     }
   }
 
