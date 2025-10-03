@@ -74,16 +74,6 @@ export struct SpectrumChartComponent {
   }
 
   @Builder
-  SpectrumView() {
-    Column() {
-      // Canvas频谱显示
-      Stack({ alignContent: Alignment.Top }) {
-        this.SpectrumChart()
-      }
-    }
-  }
-
-  @Builder
   SpectrumChart() {
     Canvas(this.canvasContext)
       .width(this.canvasWidth)
@@ -115,7 +105,6 @@ export struct SpectrumChartComponent {
           this.drawSpectrum(emptySpectrum);
         }
       })
-      .id('ashkjlgfshgal')
       .onClick(() => {
         if (!this.spectrumDialog) {
           this.spectrumDialog = DialogHub.getSheet()
@@ -150,7 +139,7 @@ export struct SpectrumChartComponent {
   }
 
   build() {
-    this.SpectrumView()
+    this.SpectrumChart()
   }
 }
 

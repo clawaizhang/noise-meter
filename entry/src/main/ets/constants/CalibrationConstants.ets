@@ -148,10 +148,10 @@ interface CaliColors {
 }
 
 export const CALIBRATION_COLORS: CaliColors = {
-  PRIMARY: $r('sys.color.ohos_id_color_palette1'),
-  SUCCESS: $r('sys.color.ohos_id_color_palette2'),
-  WARNING: $r('sys.color.ohos_id_color_palette3'),
-  ERROR: $r('sys.color.ohos_id_color_palette4'),
+  PRIMARY: $r('sys.color.font_emphasize'),
+  SUCCESS: $r('sys.color.confirm'),
+  WARNING: $r('sys.color.alert'),
+  ERROR: $r('sys.color.warning'),
   BACKGROUND: $r('sys.color.background_secondary'),
   CARD_BACKGROUND: $r('sys.color.comp_background_primary')
 };

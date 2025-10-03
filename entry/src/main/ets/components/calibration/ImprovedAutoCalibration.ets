@@ -72,7 +72,7 @@ export struct ImprovedAutoCalibration {
           .fontColor($r('sys.color.font_secondary'))
       } else {
         Row({ space: DesignConstants.SPACING_SM }) {
-          Image($r('sys.media.ohos_ic_public_fail')) // 错误图标
+          Image($r('sys.media.ohos_ic_public_close')) // 错误图标
             .width(DesignConstants.ICON_SIZE_SM)
             .height(DesignConstants.ICON_SIZE_SM)
             .fillColor(CALIBRATION_COLORS.ERROR)

@@ -190,7 +190,6 @@ export struct DecibelMeter {
             spectrumData: this.currentSpectrum,
           })
         }
-        .backgroundColor($r('sys.color.comp_background_primary'))
       }
       .padding({ top: 16, bottom: 96 }) // 增加底部内边距为操作按钮留出空间
       .id('mainNoiseMeterDisplayId')
