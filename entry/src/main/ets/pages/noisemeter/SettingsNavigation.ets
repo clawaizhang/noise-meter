@@ -22,6 +22,7 @@ import {
   AutoSaveSettingsDialogBuilder,
   AutoSaveDialogParams,
 } from '../../components/auto-save/AutoSaveSettingsDialog';
+import { ThresholdManager } from '../../services/ThresholdManager';
 
 @Builder
 export function SettingsBuilder() {
@@ -102,56 +103,62 @@ export struct Settings {
   @Local hoveredDisplayMode: string | null = null;
   private readonly COOLDOWN_DURATION: number = 500; // 0.5秒冷却时间
 
-  // 工具方法
-  private getWeightingIndex(type: WeightingType): number {
-    switch (type) {
-      case WeightingType.A:
-        return 0;
-      case WeightingType.C:
-        return 1;
-      case WeightingType.Z:
-        return 2;
-      default:
-        return 0;
+  // 获取声级校准显示值（右侧显示）
+  private getCalibrationDisplayValue(): string {
+    const value = this.pk.calibration_value;
+    if (value === 0) {
+      return "0 dB";
+    } else if (value > 0) {
+      return `+${value.toFixed(1)} dB`;
+    } else {
+      return `${value.toFixed(1)} dB`;
     }
   }
 
-  private getWeightingType(index: number): WeightingType {
-    switch (index) {
-      case 0:
-        return WeightingType.A;
-      case 1:
-        return WeightingType.C;
-      case 2:
-        return WeightingType.Z;
-      default:
-        return WeightingType.A;
+  // 获取声级校准描述（下方显示）
+  private getCalibrationDescription(): string {
+    const value = this.pk.calibration_value;
+    if (value === 0) {
+      return "当前校准值为0，未进行校准调整";
+    } else if (value > 0) {
+      return `当前校准值增加${value.toFixed(1)}dB，用于增益调整`;
+    } else {
+      return `当前校准值减少${Math.abs(value).toFixed(1)}dB，用于衰减调整`;
     }
   }
 
-  private getAnalysisModeIndex(mode: AudioAnalysisMode): number {
-    switch (mode) {
-      case AudioAnalysisMode.FAST_TIME_WEIGHTING:
-        return 0;
-      case AudioAnalysisMode.SLOW_TIME_WEIGHTING:
-        return 1;
-      case AudioAnalysisMode.IMPULSE_TIME_WEIGHTING:
-        return 2;
-      default:
-        return 0;
+  // 获取警报与通知显示值（右侧显示）
+  private getAlertsDisplayValue(): string {
+    return this.pk.system_notification_enabled ? "开启" : "关闭";
+  }
+
+  // 获取警报与通知描述（下方显示）
+  private getAlertsDescription(): string {
+    const enabled = this.pk.system_notification_enabled;
+    const threshold = ThresholdManager.getCurrentEffectiveThreshold();
+    const timePeriod = ThresholdManager.getCurrentTimePeriod();
+    
+    if (!enabled) {
+      return "警报通知已关闭，不会发送任何通知";
+    } else {
+      return `当噪音超过${threshold}dB时发送${timePeriod}警报通知`;
     }
   }
 
-  private getAnalysisModeFromIndex(index: number): AudioAnalysisMode {
-    switch (index) {
-      case 0:
-        return AudioAnalysisMode.FAST_TIME_WEIGHTING;
-      case 1:
-        return AudioAnalysisMode.SLOW_TIME_WEIGHTING;
-      case 2:
-        return AudioAnalysisMode.IMPULSE_TIME_WEIGHTING;
-      default:
-        return AudioAnalysisMode.FAST_TIME_WEIGHTING;
+  // 获取自动保存显示值（右侧显示）
+  private getAutoSaveDisplayValue(): string {
+    return this.pk.auto_save_enabled ? "开启" : "关闭";
+  }
+
+  // 获取自动保存描述（下方显示）
+  private getAutoSaveDescription(): string {
+    const enabled = this.pk.auto_save_enabled;
+    const interval = this.pk.auto_save_interval;
+    
+    if (!enabled) {
+      return "自动保存已关闭，需要手动保存数据";
+    } else {
+      return `系统会每隔${interval}分钟自动保存一次测量数据`;
     }
   }
 
@@ -440,34 +447,131 @@ export struct Settings {
         .cardStyle()
       }
 
-      // 音频分析设置
-      this.buildListItem({
-        icon: $r('app.media.ic_audio_analysis'),
-        title: '声级校准',
-        desc: '声级校准、自动校准等设置',
-        action: () => {
-          this.navigateToAudioAnalysis();
-        }
-      })
+      // 声级校准设置
+      GridCol() {
+        Column() {
+          Row() {
+            Row({ space: 8 }) {
+              Image($r('app.media.ic_audio_analysis'))
+                .itemIcon()
+              Text('声级校准')
+                .itemTitle()
+            }.layoutWeight(1)
 
-      this.buildListItem({
-        icon: $r('app.media.ic_alarm'),
-        title: '警报与通知',
-        desc: '噪音警报阈值和通知设置',
-        action: () => {
+            // 点击区域，触发弹框选择
+            Row({ space: DesignConstants.SPACING_XS }) {
+              Text(this.getCalibrationDisplayValue())
+                .fontSize(DesignConstants.FONT_SIZE_MD)
+                .fontColor($r('sys.color.font_primary'))
+                .fontWeight(FontWeight.Medium)
+
+              Image($r('sys.media.ohos_ic_public_arrow_right'))
+                .width(DesignConstants.ICON_SIZE_SM)
+                .height(DesignConstants.ICON_SIZE_SM)
+                .fillColor($r('sys.color.font_secondary'))
+            }
+            .padding({
+              left: DesignConstants.SPACING_MD,
+              right: DesignConstants.SPACING_MD,
+              top: DesignConstants.SPACING_SM,
+              bottom: DesignConstants.SPACING_SM
+            })
+            .backgroundColor($r('sys.color.comp_background_primary'))
+            .borderRadius(DesignConstants.BORDER_RADIUS_SM)
+          }
+          .listItemRow()
+
+          Text(this.getCalibrationDescription())
+            .itemDescription()
+        }.onClick(() => {
+          this.navigateToAudioAnalysis();
+        })
+        .cardStyle()
+      }
+
+      // 警报与通知设置
+      GridCol() {
+        Column() {
+          Row() {
+            Row({ space: 8 }) {
+              Image($r('app.media.ic_alarm'))
+                .itemIcon()
+              Text('警报与通知')
+                .itemTitle()
+            }.layoutWeight(1)
+
+            // 点击区域，触发弹框选择
+            Row({ space: DesignConstants.SPACING_XS }) {
+              Text(this.getAlertsDisplayValue())
+                .fontSize(DesignConstants.FONT_SIZE_MD)
+                .fontColor($r('sys.color.font_primary'))
+                .fontWeight(FontWeight.Medium)
+
+              Image($r('sys.media.ohos_ic_public_arrow_right'))
+                .width(DesignConstants.ICON_SIZE_SM)
+                .height(DesignConstants.ICON_SIZE_SM)
+                .fillColor($r('sys.color.font_secondary'))
+            }
+            .padding({
+              left: DesignConstants.SPACING_MD,
+              right: DesignConstants.SPACING_MD,
+              top: DesignConstants.SPACING_SM,
+              bottom: DesignConstants.SPACING_SM
+            })
+            .backgroundColor($r('sys.color.comp_background_primary'))
+            .borderRadius(DesignConstants.BORDER_RADIUS_SM)
+          }
+          .listItemRow()
+
+          Text(this.getAlertsDescription())
+            .itemDescription()
+        }.onClick(() => {
           this.navigateToAlerts();
-        }
-      })
+        })
+        .cardStyle()
+      }
 
       // 自动保存设置
-      this.buildListItem({
-        icon: $r('app.media.ic_save'),
-        title: '自动保存',
-        desc: '自动保存与时间间隔',
-        action: () => {
+      GridCol() {
+        Column() {
+          Row() {
+            Row({ space: 8 }) {
+              Image($r('app.media.ic_save'))
+                .itemIcon()
+              Text('自动保存')
+                .itemTitle()
+            }.layoutWeight(1)
+
+            // 点击区域，触发弹框选择
+            Row({ space: DesignConstants.SPACING_XS }) {
+              Text(this.getAutoSaveDisplayValue())
+                .fontSize(DesignConstants.FONT_SIZE_MD)
+                .fontColor($r('sys.color.font_primary'))
+                .fontWeight(FontWeight.Medium)
+
+              Image($r('sys.media.ohos_ic_public_arrow_right'))
+                .width(DesignConstants.ICON_SIZE_SM)
+                .height(DesignConstants.ICON_SIZE_SM)
+                .fillColor($r('sys.color.font_secondary'))
+            }
+            .padding({
+              left: DesignConstants.SPACING_MD,
+              right: DesignConstants.SPACING_MD,
+              top: DesignConstants.SPACING_SM,
+              bottom: DesignConstants.SPACING_SM
+            })
+            .backgroundColor($r('sys.color.comp_background_primary'))
+            .borderRadius(DesignConstants.BORDER_RADIUS_SM)
+          }
+          .listItemRow()
+
+          Text(this.getAutoSaveDescription())
+            .itemDescription()
+        }.onClick(() => {
           this.openAutoSaveDialog();
-        }
-      })
+        })
+        .cardStyle()
+      }
 
       // this.buildListItem({
       //   icon: $r('app.media.ic_security'),
