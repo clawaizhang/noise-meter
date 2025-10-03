@@ -47,94 +47,38 @@ export struct DecibelMeter {
 
   build() {
     Stack({ alignContent: Alignment.Bottom }) {
-      GridRow({ columns: 12, breakpoints: { reference: BreakpointsReference.WindowSize }, gutter: 16 }) {
+      Scroll() {
+        GridRow({ columns: 12, breakpoints: { reference: BreakpointsReference.WindowSize }, gutter: 16 }) {
 
-        // 音频控制器（逻辑组件，不渲染UI）
-        AudioController({
-          pk: this.pk,
-          currentLocation: this.currentLocation,
-          onSpectrumData: (spectrum: Float32Array) => {
-            this.currentSpectrum = spectrum;
-            this.as.spectrumData = spectrum;
-          },
-          onError: (errors: string[]) => {
-            this.errorMessages = errors;
-          },
-          onRecordingStateChange: (isRecording: boolean) => {
-            this.isRecording = isRecording;
-          },
-          onRecordingTimeUpdate: (time: number) => {
-            this.recordingTime = time;
-          },
-          onMinMaxAvgCurrent: (min: number, max: number, avg: number, current: number) => {
-            this.minDecibel = min;
-            this.maxDecibel = max;
-            this.avgDecibel = avg;
-            this.currentDecibel = current;
-          },
-          onAutoSaveTimeUpdate: (lastSaveTime: number) => {
-            this.lastAutoSaveTime = lastSaveTime;
-          },
-        })
+          // 音频控制器（逻辑组件，不渲染UI）
+          AudioController({
+            pk: this.pk,
+            currentLocation: this.currentLocation,
+            onSpectrumData: (spectrum: Float32Array) => {
+              this.currentSpectrum = spectrum;
+              this.as.spectrumData = spectrum;
+            },
+            onError: (errors: string[]) => {
+              this.errorMessages = errors;
+            },
+            onRecordingStateChange: (isRecording: boolean) => {
+              this.isRecording = isRecording;
+            },
+            onRecordingTimeUpdate: (time: number) => {
+              this.recordingTime = time;
+            },
+            onMinMaxAvgCurrent: (min: number, max: number, avg: number, current: number) => {
+              this.minDecibel = min;
+              this.maxDecibel = max;
+              this.avgDecibel = avg;
+              this.currentDecibel = current;
+            },
+            onAutoSaveTimeUpdate: (lastSaveTime: number) => {
+              this.lastAutoSaveTime = lastSaveTime;
+            },
+          })
 
-        // 分贝显示面板 - 简化布局策略
-        GridCol({
-          span: {
-            xs: 12, // 横向XS/SM：单列布局（全宽）
-            sm: 12, // 横向XS/SM：单列布局（全宽）
-            md: 6, // 横向MD及以上：双列布局（半宽）
-            lg: 6, // 横向MD及以上：双列布局（半宽）
-            xl: 6    // 横向MD及以上：双列布局（半宽）
-          }
-        }) {
-          Column({ space: 8 }) {
-
-            Stack({ alignContent: Alignment.Top }) {
-              // 使用新的分贝显示组件（重新设计版）
-              DecibelDisplayComponent({
-                currentDecibel: this.currentDecibel,
-                minDecibel: this.minDecibel, // 这些值现在由AudioController管理
-                maxDecibel: this.maxDecibel, // 这些值现在由AudioController管理
-                avgDecibel: this.avgDecibel, // 这些值现在由AudioController管理
-                weightingType: this.pk.weighting_type,
-                calibrationValue: this.pk.calibration_value,
-                noiseThreshold: this.pk.noise_threshold,
-                systemNotificationEnabled: this.pk.system_notification_enabled,
-                isNoiseAlarm: false, // 报警状态由AudioController管理
-                autoSaveCountdown: this.autoSaveCountdown // 传递自动保存倒计时
-              })
-
-              Column({ space: 8 }) {
-                // 错误消息显示区域（支持多个错误同时显示）
-                if (this.errorMessages.length > 0) {
-                  this.errorMessagesDisplay()
-                }
-
-                // 权限提示组件 - 显示在顶部
-                if (!this.as.microphonePermissionGranted) {
-                  this.smartPermissionPrompt()
-                }
-              }.padding(16)
-            }
-
-            if (!this.hideForXsMd) {
-              // 位置显示 - 调整UI展现方式以适应新设计
-              LocationDisplay({
-                onLocationUpdate: (locationInfo: LocationInfo | null) => {
-                  // 更新本地位置状态
-                  this.currentLocation = locationInfo;
-                  console.info('[FREQ_TRACE][Location] 位置更新事件接收:', locationInfo);
-                }
-              }).padding({ left: 16, right: 16, bottom: 16 })
-            }
-
-          }
-        }
-        .backgroundColor($r('sys.color.comp_background_primary'))
-        .borderRadius(16)
-
-        if (!this.hideForXsMd) {
-          // 频谱图 - 简化布局策略
+          // 分贝显示面板 - 简化布局策略
           GridCol({
             span: {
               xs: 12, // 横向XS/SM：单列布局（全宽）
@@ -144,18 +88,78 @@ export struct DecibelMeter {
               xl: 6    // 横向MD及以上：双列布局（半宽）
             }
           }) {
-            SpectrumChartComponent({
-              spectrumData: this.currentSpectrum,
-            })
+            Column({ space: 8 }) {
+
+              Stack({ alignContent: Alignment.Top }) {
+                // 使用新的分贝显示组件（重新设计版）
+                DecibelDisplayComponent({
+                  currentDecibel: this.currentDecibel,
+                  minDecibel: this.minDecibel, // 这些值现在由AudioController管理
+                  maxDecibel: this.maxDecibel, // 这些值现在由AudioController管理
+                  avgDecibel: this.avgDecibel, // 这些值现在由AudioController管理
+                  weightingType: this.pk.weighting_type,
+                  calibrationValue: this.pk.calibration_value,
+                  noiseThreshold: this.pk.noise_threshold,
+                  systemNotificationEnabled: this.pk.system_notification_enabled,
+                  isNoiseAlarm: false, // 报警状态由AudioController管理
+                  autoSaveCountdown: this.autoSaveCountdown // 传递自动保存倒计时
+                })
+
+                Column({ space: 8 }) {
+                  // 错误消息显示区域（支持多个错误同时显示）
+                  if (this.errorMessages.length > 0) {
+                    this.errorMessagesDisplay()
+                  }
+
+                  // 权限提示组件 - 显示在顶部
+                  if (!this.as.microphonePermissionGranted) {
+                    this.smartPermissionPrompt()
+                  }
+                }.padding(16)
+              }
+
+              if (!this.hideForXsMd) {
+                // 位置显示 - 调整UI展现方式以适应新设计
+                LocationDisplay({
+                  onLocationUpdate: (locationInfo: LocationInfo | null) => {
+                    // 更新本地位置状态
+                    this.currentLocation = locationInfo;
+                    console.info('[FREQ_TRACE][Location] 位置更新事件接收:', locationInfo);
+                  }
+                }).padding({ left: 16, right: 16, bottom: 16 })
+              }
+
+            }
+          }
+          .backgroundColor($r('sys.color.comp_background_primary'))
+          .borderRadius(16)
+
+          if (!this.hideForXsMd) {
+            // 频谱图 - 简化布局策略
+            GridCol({
+              span: {
+                xs: 12, // 横向XS/SM：单列布局（全宽）
+                sm: 12, // 横向XS/SM：单列布局（全宽）
+                md: 6, // 横向MD及以上：双列布局（半宽）
+                lg: 6, // 横向MD及以上：双列布局（半宽）
+                xl: 6    // 横向MD及以上：双列布局（半宽）
+              }
+            }) {
+              SpectrumChartComponent({
+                spectrumData: this.currentSpectrum,
+              })
+            }
           }
         }
+        .padding({ bottom: 96 }) // 增加底部内边距为操作按钮留出空间
+        .id('mainNoiseMeterDisplayId')
+        .onBreakpointChange(breakPoints => {
+          // 断点信息现在由 AppStorage 统一管理，这里不再需要处理
+          console.info(`[CAT_ANIMATION] GridRow 断点变化: ${breakPoints}`);
+        })
       }
-      .padding({ bottom: 96 }) // 增加底部内边距为操作按钮留出空间
-      .id('mainNoiseMeterDisplayId')
-      .onBreakpointChange(breakPoints => {
-        // 断点信息现在由 AppStorage 统一管理，这里不再需要处理
-        console.info(`[CAT_ANIMATION] GridRow 断点变化: ${breakPoints}`);
-      })
+      .scrollBar(BarState.Off)
+      .edgeEffect(EdgeEffect.Spring)
 
       Column()
         .width(this.dWidthHeight)

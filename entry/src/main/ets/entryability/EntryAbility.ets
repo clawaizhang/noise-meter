@@ -62,26 +62,24 @@ export default class EntryAbility extends UIAbility {
       }
       windowClass = data;
       this.mainWindow = data;
-      
+
       // 初始化窗口尺寸和断点信息
       this.updateWindowBreakpointInfo();
-      
+
       // 监听窗口尺寸变化
       this.setupWindowSizeChangeListener();
-      
+      // 使用系统提供的断点计算方法
+      const uiContext = this.mainWindow.getUIContext();
+      const widthBp = uiContext.getWindowWidthBreakpoint();
       // 获取设备类型
-      let deviceTypeInfo: string = deviceInfo.deviceType;
-      hilog.info(DOMAIN, TAG, `the value of the deviceType is:${deviceTypeInfo}`);
       let orientation = window.Orientation.AUTO_ROTATION;
+      windowClass.getWindowProperties().windowRect
       // 判断设备类型来设置窗口显示方向
-      if (deviceTypeInfo == 'phone') {
-        // 手机设备强制竖屏
+      if (widthBp <= WidthBreakpoint.WIDTH_SM) {
+        // 小屏强制竖屏
         orientation = window.Orientation.PORTRAIT;
-      } else if (deviceTypeInfo == 'tablet') {
-        // 平板设备默认横屏
-        orientation = window.Orientation.LANDSCAPE;
       } else {
-        // 其他设备类型（car、2in1等）保持自动旋转
+        // 平板设备 ,其他设备类型（car、2in1等）保持自动旋转
         orientation = window.Orientation.AUTO_ROTATION;
       }
       try {
