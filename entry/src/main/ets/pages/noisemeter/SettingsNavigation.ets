@@ -18,6 +18,10 @@ import {
   FrequencyWeightingDialogBuilder,
   FrequencyWeightingDialogParams,
 } from '../../components/frequency-weighting/FrequencyWeightingDialog';
+import {
+  AutoSaveSettingsDialogBuilder,
+  AutoSaveDialogParams,
+} from '../../components/auto-save/AutoSaveSettingsDialog';
 
 @Builder
 export function SettingsBuilder() {
@@ -270,6 +274,26 @@ export struct Settings {
     dialog.show();
   }
 
+  // 打开自动保存设置弹框
+  private openAutoSaveDialog = () => {
+    let dialog: InfSheet;
+    let param: AutoSaveDialogParams = {
+      onClose: () => {
+        dialog.dismiss();
+      }
+    }
+    dialog = DialogHub.getSheet()
+      .setStyle({
+        title: { title: '自动保存设置' },
+        backgroundColor: $r('sys.color.background_secondary')
+      })
+      .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS })
+      .setComponentTargetId('settingsId')
+      .setContent(wrapBuilder(AutoSaveSettingsDialogBuilder), param)
+      .build();
+    dialog.show();
+  }
+
   // 处理时间计权模式变化
   private handleTimeWeightingModeChange(selectedMode: AudioAnalysisMode) {
     if (!this.isModeChangeEnabled) {
@@ -432,6 +456,16 @@ export struct Settings {
         desc: '噪音警报阈值和通知设置',
         action: () => {
           this.navigateToAlerts();
+        }
+      })
+
+      // 自动保存设置
+      this.buildListItem({
+        icon: $r('app.media.ic_save'),
+        title: '自动保存',
+        desc: '自动保存与时间间隔',
+        action: () => {
+          this.openAutoSaveDialog();
         }
       })
 

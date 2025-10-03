@@ -100,4 +100,16 @@ export class PreferenceKeys {
    */
   @Trace
   notification_permission_requested: boolean = PreferencesUtil.getBooleanSync('notification_permission_requested', false);
+
+  /**
+   * 自动保存开关
+   */
+  @Trace
+  auto_save_enabled: boolean = PreferencesUtil.getBooleanSync('auto_save_enabled', false);
+
+  /**
+   * 自动保存间隔（分钟）
+   */
+  @Trace
+  auto_save_interval: number = PreferencesUtil.getNumberSync('auto_save_interval', 5);
 }

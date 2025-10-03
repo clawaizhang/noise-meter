@@ -10,7 +10,7 @@ import { AudioService } from '../../services/AudioService';
 import { LocationInfo } from '../../services/LocationService';
 import { WeightingType } from '../../constants/WeightingConstants';
 import { BusinessError } from '@kit.BasicServicesKit';
-import { catchError, delay, filter, from, map, of, Subject, Subscription, switchMap, take, tap } from 'rxjs';
+import { Subject } from 'rxjs';
 import { AppKeys } from '../../models/AppKeys';
 import { FFTAnalyzer } from '../../utils/FFTAnalyzer';
 import { AudioControllerService } from '../../services/AudioControllerService';
@@ -39,11 +39,11 @@ export struct AudioController {
   private recordService: DecibelRecordService = new DecibelRecordService(getContext() as common.UIAbilityContext)
   // RxJS相关
   private audioBufferSubject = new Subject<void>();
-  private durationCheckSubscription?: Subscription;
   // 服务实例
   private audioControllerService: AudioControllerService = AudioControllerService.getInstance();
-  // 常量
-  private readonly MAX_RECORDING_DURATION: number = 60 * 60_000;
+  // 自动保存相关属性
+  private autoSaveTimer?: number;
+  private lastAutoSaveTime: number = 0;
   // 记录相关
   private values: number[] = []
   private weightingTypes: WeightingType[] = []
@@ -86,7 +86,7 @@ export struct AudioController {
   aboutToDisappear() {
     // 清理RxJS资源
     this.audioBufferSubject.complete();
-    this.stopDurationMonitoring();
+    this.stopAutoSaveMonitoring();
     this.audioService.stopProcessing();
     this.audioService.stopCapture();
   }
@@ -140,8 +140,8 @@ export struct AudioController {
         this.audioService.startRecording();
       }
 
-      // 启动时长监控
-      this.startDurationMonitoring();
+      // 启动自动保存监控
+      this.startAutoSaveMonitoring();
 
       // 开始处理音频数据
       this.audioService.startProcessing((buffer: ArrayBuffer) => {
@@ -204,11 +204,11 @@ export struct AudioController {
       this.onRecordingStateChange(false);
       console.info("[FREQ_TRACE][Recording] 停止检测 - 开始");
 
-      // 停止时长监控
-      this.stopDurationMonitoring();
+      // 停止自动保存监控
+      this.stopAutoSaveMonitoring();
 
-      // 如果是自动保存，不显示保存提示
-      const isAutoSave = new Date().getTime() - this.startTime >= this.MAX_RECORDING_DURATION;
+      // 判断是否为自动保存
+      const isAutoSave = comments === '自动保存';
 
       try {
         let locationInfo: LocationInfo | null = null;
@@ -309,54 +309,6 @@ export struct AudioController {
     this.onRecordingTimeUpdate(this.recordingTime);
   }
 
-  private startDurationMonitoring(): void {
-    // 停止之前的监控（如果存在）
-    this.stopDurationMonitoring();
-
-    this.durationCheckSubscription = this.audioBufferSubject.pipe(
-      // 每次音频数据到达时检查时长
-      map(() => new Date().getTime() - this.startTime),
-      filter(duration => duration > this.MAX_RECORDING_DURATION),
-      take(1),
-      tap(() => console.info('[自动保存] 达到60分钟录音限制，自动保存并开始新录音')),
-      switchMap(() => from(this.stopRecording('自动保存')).pipe(
-        catchError((error: BusinessError) => {
-          console.error('[自动保存] 停止录音失败:', error);
-          this.addErrorMessage(`自动保存失败: ${error.message}`);
-          return of(null);
-        })
-      )),
-      delay(100),
-      tap(() => {
-        try {
-          this.startRecording();
-        } catch (error) {
-          console.error('[自动保存] 重新开始录音失败:', error);
-          this.addErrorMessage(`重新开始录音失败: ${error.message}`);
-        }
-      })
-    ).subscribe({
-      error: (error: BusinessError) => {
-        console.error('[自动保存] RxJS监控流错误:', error);
-        this.addErrorMessage(`录音监控错误: ${error.message}`);
-        setTimeout(() => {
-          try {
-            this.startRecording();
-          } catch (e) {
-            console.error('[自动保存] 错误恢复失败:', e);
-            this.addErrorMessage(`错误恢复失败: ${e.message}`);
-          }
-        }, 100);
-      }
-    });
-  }
-
-  private stopDurationMonitoring(): void {
-    if (this.durationCheckSubscription) {
-      this.durationCheckSubscription.unsubscribe();
-      this.durationCheckSubscription = undefined;
-    }
-  }
 
   private addErrorMessage(message: string): void {
     if (!this.errorMessages.includes(message)) {
@@ -437,5 +389,57 @@ export struct AudioController {
   private performSave(comments: string) {
     console.info('[FREQ_TRACE][Save] 开始保存数据');
     this.stopRecording(comments);
+  }
+
+  // 自动保存监控方法
+  private startAutoSaveMonitoring(): void {
+    this.stopAutoSaveMonitoring();
+    
+    if (this.pk.auto_save_enabled && this.isRecording) {
+      this.lastAutoSaveTime = new Date().getTime();
+      
+      // 每秒检查一次是否需要自动保存
+      this.autoSaveTimer = setInterval(() => {
+        this.checkAutoSave();
+      }, 1000);
+    }
+  }
+
+  private stopAutoSaveMonitoring(): void {
+    if (this.autoSaveTimer) {
+      clearInterval(this.autoSaveTimer);
+      this.autoSaveTimer = undefined;
+    }
+  }
+
+  private checkAutoSave(): void {
+    if (!this.pk.auto_save_enabled || !this.isRecording) {
+      return;
+    }
+    
+    const currentTime = new Date().getTime();
+    const elapsed = currentTime - this.lastAutoSaveTime;
+    const intervalMs = this.pk.auto_save_interval * 60 * 1000;
+    
+    // 检查是否达到自动保存间隔且有足够数据
+    if (elapsed >= intervalMs && this.values.length > 10) {
+      this.performAutoSave();
+    }
+  }
+
+  private performAutoSave(): void {
+    console.info('[自动保存] 执行定时自动保存');
+    
+    // 更新最后保存时间
+    this.lastAutoSaveTime = new Date().getTime();
+    
+    // 显示保存提示
+    promptAction.showToast({
+      message: `自动保存记录（${this.pk.auto_save_interval}分钟）`,
+      duration: 2000
+    });
+    
+    // 调用保存逻辑
+    this.performSave('自动保存');
   }
 }

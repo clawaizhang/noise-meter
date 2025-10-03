@@ -63,7 +63,7 @@ export struct AlertsContent {
 
     // 使用AlertService触发系统通知
     const threshold = ThresholdManager.getCurrentEffectiveThreshold();
-    
+
     // 如果系统通知启用，则触发警报
     if (this.pk.system_notification_enabled) {
       await this.alertService.triggerAlert(currentDecibel, threshold);
@@ -125,6 +125,7 @@ export struct AlertsContent {
     .backgroundColor(this.getStatusBackground())
     .backgroundBlurStyle(BlurStyle.COMPONENT_THICK)
     .borderRadius(DesignConstants.BORDER_RADIUS_XL)
+    .width('100%')
     .animation({
       duration: 300,
       curve: Curve.EaseInOut
