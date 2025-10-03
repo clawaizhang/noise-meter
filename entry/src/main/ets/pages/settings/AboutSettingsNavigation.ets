@@ -6,6 +6,7 @@ import { curves, PersistenceV2 } from '@kit.ArkUI';
 import { PreferenceKeys } from '../../models/PreferenceKeys';
 import { PrivacyPolicyViewBuilder } from '../../components/privacy/PrivacyPolicyDialog';
 import { DialogHub, InfSheet } from '@hadss/dialoghub';
+import { DialogStyleManager } from '../../utils/DialogStyleManager';
 
 @Extend(Image)
 function itemIcon() {
@@ -130,6 +131,9 @@ export struct AboutSettings {
             .onClick(() => {
               if (!this.privacyPolicyDialog) {
                 this.privacyPolicyDialog = DialogHub.getSheet().setConfig({enableOutsideInteractive:true}).setStyle({backgroundColor:$r('sys.color.background_secondary')}).setContent(wrapBuilder(PrivacyPolicyViewBuilder)).build();
+                
+                // 注册Dialog到样式管理器
+                DialogStyleManager.registerDialog(this.privacyPolicyDialog);
               }
               this.privacyPolicyDialog.show();
             })

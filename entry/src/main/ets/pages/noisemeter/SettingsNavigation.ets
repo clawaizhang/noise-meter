@@ -1,6 +1,7 @@
 import { navigationStack } from '../../constants/ProviderConstant';
 import { curves, PersistenceV2 } from '@kit.ArkUI';
 import { DialogHub, InfSheet } from '@hadss/dialoghub';
+import { DialogStyleManager } from '../../utils/DialogStyleManager';
 import { AudioAnalysisSettingsBuilder } from '../settings/AudioAnalysisSettingsNavigation';
 import { AlertsSettingsBuilder } from '../settings/AlertsSettingsNavigation';
 import { PreferenceKeys } from '../../models/PreferenceKeys';
@@ -216,6 +217,9 @@ struct Settings {
         .setComponentTargetId('popupTargetId')
         .setContent(wrapBuilder(AudioAnalysisSettingsBuilder))
         .build();
+      
+      // 注册Dialog到样式管理器
+      DialogStyleManager.registerDialog(this.audioAnalysisDialog);
     }
     this.audioAnalysisDialog.show();
   }
@@ -228,6 +232,9 @@ struct Settings {
         .setComponentTargetId('popupTargetId')
         .setContent(wrapBuilder(AlertsSettingsBuilder))
         .build();
+      
+      // 注册Dialog到样式管理器
+      DialogStyleManager.registerDialog(this.alertsDialog);
     }
     this.alertsDialog.show();
   }
@@ -256,6 +263,9 @@ struct Settings {
         .setComponentTargetId('popupTargetId')
         .setContent(wrapBuilder(TimeWeightingDialogBuilder), param)
         .build();
+      
+      // 注册Dialog到样式管理器
+      DialogStyleManager.registerDialog(this.timeWeightingDialog);
     }
     this.timeWeightingDialog.show();
   }
@@ -281,6 +291,9 @@ struct Settings {
         .setComponentTargetId('popupTargetId')
         .setContent(wrapBuilder(FrequencyWeightingDialogBuilder), param)
         .build();
+      
+      // 注册Dialog到样式管理器
+      DialogStyleManager.registerDialog(this.frequencyWeightingDialog);
     }
     this.frequencyWeightingDialog.show();
   }
@@ -301,6 +314,9 @@ struct Settings {
         .setComponentTargetId('popupTargetId')
         .setContent(wrapBuilder(AutoSaveSettingsDialogBuilder), param)
         .build();
+      
+      // 注册Dialog到样式管理器
+      DialogStyleManager.registerDialog(this.autoSaveDialog);
     }
     this.autoSaveDialog.show();
   }

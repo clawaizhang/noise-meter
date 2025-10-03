@@ -9,6 +9,7 @@ import { FileUtils } from '../../utils/FileUtils';
 import { DesignConstants } from '../../constants/DesignConstants';
 import { AppStorageV2, curves, SymbolGlyphModifier } from '@kit.ArkUI';
 import { DialogHub, InfSheet } from '@hadss/dialoghub';
+import { DialogStyleManager } from '../../utils/DialogStyleManager';
 import { NoiseStandardDialogBuilder } from './NoiseStandardDialogNavigation';
 import { AppKeys } from '../../models/AppKeys';
 
@@ -454,6 +455,9 @@ export struct DecibelHistory {
           .setConfig({ enableOutsideInteractive: true, scrollSizeMode: ScrollSizeMode.CONTINUOUS })
           .setContent(wrapBuilder(DetailDialogBuilder), params)
           .build();
+        
+        // 注册Dialog到样式管理器
+        DialogStyleManager.registerDialog(this.detailDialog);
       }
       this.detailDialog.show();
     } catch (error) {

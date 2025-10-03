@@ -2,6 +2,7 @@ import { DecibelService } from '../../services/DecibelService';
 import { WeightingType } from '../../constants/WeightingConstants';
 import { DialogHub, InfSheet } from '@hadss/dialoghub';
 import { resourceManager } from '@kit.LocalizationKit';
+import { DialogStyleManager } from '../../utils/DialogStyleManager';
 import { NoiseDescriptionDialogBuilder } from '../../pages/noisemeter/NoiseDescriptionDialogNavigation';
 import { NoiseStandardDialogBuilder } from '../../pages/noisemeter/NoiseStandardDialogNavigation';
 import { AppKeys } from '../../models/AppKeys';
@@ -68,6 +69,14 @@ export struct DecibelDisplayComponent {
     
     // 清理DialogHub定时器
     this.cleanupDialogTimers();
+    
+    // 注销Dialog
+    if (this.noiseDescriptionDialog) {
+      DialogStyleManager.unregisterDialog(this.noiseDescriptionDialog);
+    }
+    if (this.noiseStandardDialog) {
+      DialogStyleManager.unregisterDialog(this.noiseStandardDialog);
+    }
   }
   
   // 清理DialogHub相关定时器
@@ -109,6 +118,9 @@ export struct DecibelDisplayComponent {
           .setConfig({ enableOutsideInteractive: true, scrollSizeMode: ScrollSizeMode.CONTINUOUS })
           .setComponentTargetId('popupTargetId')
           .build();
+        
+        // 注册Dialog到样式管理器
+        DialogStyleManager.registerDialog(this.noiseDescriptionDialog);
       }
       this.noiseDescriptionDialog.show();
       
@@ -296,6 +308,9 @@ export struct DecibelDisplayComponent {
           .setConfig({ enableOutsideInteractive: true, scrollSizeMode: ScrollSizeMode.CONTINUOUS })
           .setContent(wrapBuilder(NoiseStandardDialogBuilder), this.as)
           .build();
+        
+        // 注册Dialog到样式管理器
+        DialogStyleManager.registerDialog(this.noiseStandardDialog);
       }
       this.noiseStandardDialog.show();
       

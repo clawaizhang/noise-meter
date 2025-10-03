@@ -17,6 +17,8 @@ import { AppKeys } from '../models/AppKeys'
 import { FileUtils } from '../utils/FileUtils'
 import { PermissionService } from '../services/PermissionService'
 import { DisplayManager } from '../utils/DisplayManager'
+import { ColorModeManager } from '../utils/ColorModeManager'
+import { DialogStyleManager } from '../utils/DialogStyleManager'
 import { DEFAULT_THRESHOLD_CONFIG, ThresholdConfig } from '../models/ThresholdConfig'
 import { ThresholdManager } from '../services/ThresholdManager'
 
@@ -114,20 +116,15 @@ struct Index {
   }
 
   private setDisplayMode(displayMode: string) {
-    let applicationContext = this.context.getApplicationContext();
-    if (displayMode == 'default') {
-      applicationContext.setColorMode(ConfigurationConstant.ColorMode.COLOR_MODE_NOT_SET)
-    }
-    if (displayMode == 'light') {
-      applicationContext.setColorMode(ConfigurationConstant.ColorMode.COLOR_MODE_LIGHT)
-    }
-    if (displayMode == 'dark') {
-      applicationContext.setColorMode(ConfigurationConstant.ColorMode.COLOR_MODE_DARK)
-    }
+    ColorModeManager.setColorMode(displayMode);
   }
 
   private async initialize() {
     try {
+      // 初始化颜色模式和Dialog样式管理器
+      ColorModeManager.init();
+      DialogStyleManager.init();
+      ColorModeManager.setAppContext(this.context.getApplicationContext());
       // 使用自定义隐私政策，不再依赖系统隐私政策API
       // 隐私政策状态由用户通过自定义对话框设置
       // 这里保持隐私政策状态不变，等待用户交互
