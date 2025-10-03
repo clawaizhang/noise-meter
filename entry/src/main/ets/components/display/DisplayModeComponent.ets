@@ -78,75 +78,73 @@ export struct DisplayModeComponent {
     this.pk.display_mode = displayMode;
   }
 
+  // 构建显示模式选项卡
+  @Builder
+  private buildDisplayModeTabs() {
+    // 选项卡容器
+    Row({ space: 2 }) {
+      ForEach(['default', 'light', 'dark'], (displayMode: string) => {
+        // 选项卡内容
+        Row({ space: 2 }) {
+          // 显示模式图标（更小的图标）
+          Image(this.getDisplayModeIcon(displayMode))
+            .width(14)
+            .height(14)
+            .fillColor(this.selectedDisplayMode === displayMode ?
+            $r('sys.color.font_on_primary') : $r('sys.color.font_primary'))
+
+          // 显示模式名称（更小的字体）
+          Text(this.getDisplayModeText(displayMode))
+            .fontSize(12)
+            .fontWeight(this.selectedDisplayMode === displayMode ? FontWeight.Bold : FontWeight.Medium)
+            .fontColor(this.selectedDisplayMode === displayMode ?
+            $r('sys.color.font_on_primary') : $r('sys.color.font_primary'))
+        }
+        .alignItems(VerticalAlign.Center)
+        .justifyContent(FlexAlign.Center)
+        .height(32)
+        .padding({ left: 8, right: 8 })
+        .backgroundColor(this.selectedDisplayMode === displayMode ?
+        $r('sys.color.interactive_active') : $r('sys.color.comp_background_primary'))
+        .borderRadius(16)
+        .onClick(() => {
+          this.handleDisplayModeSelect(displayMode);
+        })
+        .onHover((isHover: boolean) => {
+          if (isHover) {
+            this.hoveredDisplayMode = displayMode;
+          } else {
+            this.hoveredDisplayMode = null;
+          }
+        })
+      })
+    }
+    .backgroundColor($r('sys.color.comp_background_primary'))
+    .borderRadius(16)
+    .height(32)
+    .padding(2)
+  }
+
   build() {
     Column({ space: 8 }) {
       Row() {
+        // 左侧：标题区域
         Row({ space: 8 }) {
           Image($r('sys.media.ohos_ic_public_device_smartscreen'))
-            .width(DesignConstants.ICON_SIZE_MD)
-            .height(DesignConstants.ICON_SIZE_MD)
+            .width(24)
+            .height(24)
             .fillColor($r('sys.color.font_primary'))
           Text('显示模式')
-            .fontSize(DesignConstants.FONT_SIZE_LG)
+            .fontSize(16)
             .fontColor($r('sys.color.font_primary'))
             .fontWeight(FontWeight.Medium)
         }.layoutWeight(1)
+
+        // 右侧：按钮区域
+        this.buildDisplayModeTabs()
       }
       .alignItems(VerticalAlign.Center)
-      .justifyContent(FlexAlign.Start)
-
-      // 选项卡容器
-      Row({ space: 0 }) {
-        ForEach(['default', 'light', 'dark'], (displayMode: string) => {
-          // 选项卡内容
-          Row({ space: DesignConstants.SPACING_SM }) {
-            // 显示模式图标
-            Image(this.getDisplayModeIcon(displayMode))
-              .width(DesignConstants.ICON_SIZE_SM)
-              .height(DesignConstants.ICON_SIZE_SM)
-              .fillColor(this.selectedDisplayMode === displayMode ?
-              $r('sys.color.font_on_primary') :
-                (this.hoveredDisplayMode === displayMode ?
-                $r('sys.color.interactive_active') :
-                $r('sys.color.font_primary')))
-
-            // 显示模式名称
-            Text(this.getDisplayModeText(displayMode))
-              .fontSize(DesignConstants.FONT_SIZE_MD)
-              .fontWeight(this.selectedDisplayMode === displayMode ? FontWeight.Bold : FontWeight.Medium)
-              .fontColor(this.selectedDisplayMode === displayMode ?
-              $r('sys.color.font_on_primary') :
-                (this.hoveredDisplayMode === displayMode ?
-                $r('sys.color.interactive_active') :
-                $r('sys.color.font_primary')))
-          }
-          .alignItems(VerticalAlign.Center)
-          .justifyContent(FlexAlign.Center)
-          .layoutWeight(1)
-          .height(56)
-          .backgroundColor(this.selectedDisplayMode === displayMode ?
-          $r('sys.color.interactive_active') :
-            (this.hoveredDisplayMode === displayMode ?
-            $r('sys.color.comp_background_secondary') :
-            $r('sys.color.comp_background_primary')))
-          .borderRadius(DesignConstants.BORDER_RADIUS_MD)
-          .padding(DesignConstants.SPACING_MD)
-          .onClick(() => {
-            this.handleDisplayModeSelect(displayMode);
-          })
-          .onHover((isHover: boolean) => {
-            if (isHover) {
-              this.hoveredDisplayMode = displayMode;
-            } else {
-              this.hoveredDisplayMode = null;
-            }
-          })
-        })
-      }
-      .backgroundColor($r('sys.color.comp_background_primary'))
-      .margin(16)
-      .borderRadius(16)
-      .height(56)
+      .justifyContent(FlexAlign.SpaceBetween)
     }
     .backgroundColor($r('sys.color.comp_background_primary'))
     .justifyContent(FlexAlign.Start)
