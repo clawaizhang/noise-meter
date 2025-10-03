@@ -1,6 +1,6 @@
 /**
  * 时间响应曲线组件
- * 用于显示时间计权模式的动态响应特性，包含实时动画和脉冲模拟
+ * 用于显示音频分析模式的动态响应特性，包含实时动画和脉冲模拟
  */
 
 import { AudioAnalysisMode } from '../../common/AudioConfig';
@@ -9,7 +9,7 @@ import { resourceManager } from '@kit.LocalizationKit';
 
 @ComponentV2
 export struct TimeResponseChartComponent {
-  @Param @Require selectedMode: AudioAnalysisMode; // 当前选中的时间计权模式
+  @Param @Require selectedMode: AudioAnalysisMode; // 当前选中的音频分析模式
   @Local private canvasWidth: number = 0; // Canvas宽度
   @Local private canvasHeight: number = 0; // Canvas高度
   @Local private responseData: number[] = []; // 响应数据数组
@@ -149,7 +149,7 @@ export struct TimeResponseChartComponent {
     }
   }
 
-  // 计算响应值（基于时间计权模式）
+  // 计算响应值（基于音频分析模式）
   private calculateResponseValue(elapsedTime: number): number {
     if (elapsedTime < 0) return 0;
     

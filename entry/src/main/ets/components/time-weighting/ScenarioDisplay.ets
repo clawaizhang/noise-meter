@@ -1,6 +1,6 @@
 /**
  * 场景展示组件
- * 用于显示时间计权模式的适用场景，面向普通用户
+ * 用于显示音频分析模式的适用场景，面向普通用户
  */
 
 import { AudioAnalysisMode } from '../../common/AudioConfig';

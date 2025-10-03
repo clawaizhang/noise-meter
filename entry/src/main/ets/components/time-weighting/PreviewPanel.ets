@@ -1,6 +1,6 @@
 /**
  * 实时预览面板组件
- * 用于显示时间计权模式的实时预览信息，包括参数对比和响应特性
+ * 用于显示音频分析模式的实时预览信息，包括参数对比和响应特性
  */
 
 import { AudioAnalysisMode } from '../../common/AudioConfig';

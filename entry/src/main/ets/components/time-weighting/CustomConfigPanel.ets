@@ -3,8 +3,10 @@
  * 提供完整的音频分析参数自定义配置界面
  */
 
-import { AudioAnalysisConfig, WindowType, CustomConfigManager, DEFAULT_CUSTOM_CONFIG } from '../../common/AudioConfig';
+import { WindowType, DEFAULT_CUSTOM_CONFIG } from '../../common/AudioConfig';
 import { DesignConstants } from '../../constants/DesignConstants';
+import { PreferenceKeys } from '../../models/PreferenceKeys';
+import { PersistenceV2 } from '@kit.ArkUI';
 
 // 选项接口
 interface SelectOption {
@@ -39,48 +41,13 @@ interface SelectOptionS {
    * @since 11
    */
   value: ResourceStr;
-
-  /**
-   * Option icon.
-   *
-   * @type { ?ResourceStr }
-   * @syscap SystemCapability.ArkUI.ArkUI.Full
-   * @since 8
-   */
-  /**
-   * Option icon.
-   *
-   * @type { ?ResourceStr }
-   * @syscap SystemCapability.ArkUI.ArkUI.Full
-   * @crossplatform
-   * @since 10
-   */
-  /**
-   * Option icon.
-   *
-   * @type { ?ResourceStr }
-   * @syscap SystemCapability.ArkUI.ArkUI.Full
-   * @crossplatform
-   * @atomicservice
-   * @since 11
-   */
-  icon?: ResourceStr;
-
-  /**
-   * Indicates the symbol icon of this menu item.
-   *
-   * @type { ?SymbolGlyphModifier }
-   * @syscap SystemCapability.ArkUI.ArkUI.Full
-   * @atomicservice
-   * @since 12
-   */
-  symbolIcon?: SymbolGlyphModifier;
 }
 
 @ComponentV2
 export struct CustomConfigPanel {
-  @Local customConfig: AudioAnalysisConfig = CustomConfigManager.getCustomConfig();
-  @Local isConfigChanged: boolean = false;
+  @Local pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys)!;
+  @Local display: boolean = true;
+  @Event onSelectedChange: () => void;
   // FFT大小选项
   private readonly fftSizeOptions: SelectOption[] = [
     { value: 1024, label: '1024', index: 0 },
@@ -127,25 +94,18 @@ export struct CustomConfigPanel {
     { value: 0.9, label: '0.9', index: 8 }
   ];
 
-  // 处理配置变化
-  private handleConfigChange() {
-    this.isConfigChanged = true;
-    // 自动保存配置
-    CustomConfigManager.saveCustomConfig(this.customConfig);
-  }
-
   // 重置配置到默认值
   private resetToDefault() {
-    this.customConfig = {
-      fftSize: DEFAULT_CUSTOM_CONFIG.fftSize,
-      updateInterval: DEFAULT_CUSTOM_CONFIG.updateInterval,
-      windowType: DEFAULT_CUSTOM_CONFIG.windowType,
-      smoothingFactor: DEFAULT_CUSTOM_CONFIG.smoothingFactor,
-      overlap: DEFAULT_CUSTOM_CONFIG.overlap,
-      bufferSize: DEFAULT_CUSTOM_CONFIG.bufferSize
-    };
-    this.isConfigChanged = false;
-    CustomConfigManager.saveCustomConfig(this.customConfig);
+    this.display = false;
+    setTimeout(() => {
+      this.display = true;
+    }, 500);
+    this.pk.custom_audio_config.fftSize = DEFAULT_CUSTOM_CONFIG.fftSize;
+    this.pk.custom_audio_config.bufferSize = DEFAULT_CUSTOM_CONFIG.bufferSize;
+    this.pk.custom_audio_config.updateInterval = DEFAULT_CUSTOM_CONFIG.updateInterval;
+    this.pk.custom_audio_config.windowType = DEFAULT_CUSTOM_CONFIG.windowType;
+    this.pk.custom_audio_config.smoothingFactor = DEFAULT_CUSTOM_CONFIG.smoothingFactor;
+    this.pk.custom_audio_config.overlap = DEFAULT_CUSTOM_CONFIG.overlap;
   }
 
   // 构建参数选择器
@@ -167,7 +127,7 @@ export struct CustomConfigPanel {
         .onSelect((index: number) => {
           const newValue = options[index].value;
           onValueChange(newValue);
-          this.handleConfigChange();
+          this.onSelectedChange();
         })
         .width(120)
     }
@@ -183,114 +143,48 @@ export struct CustomConfigPanel {
     return option ? option.index : 0;
   }
 
-  // 构建技术参数显示
-  @Builder
-  private buildTechnicalParamsDisplay() {
-    Column({ space: DesignConstants.SPACING_SM }) {
-      Text('当前配置参数')
-        .fontSize(DesignConstants.FONT_SIZE_LG)
-        .fontWeight(FontWeight.Bold)
-        .fontColor($r('sys.color.font_primary'))
-        .width('100%')
-
-      Column({ space: DesignConstants.SPACING_XS }) {
-        Text(`FFT大小: ${this.customConfig.fftSize}`)
-          .fontSize(DesignConstants.FONT_SIZE_MD)
-          .fontColor($r('sys.color.font_primary'))
-
-        Text(`更新间隔: ${this.customConfig.updateInterval}ms`)
-          .fontSize(DesignConstants.FONT_SIZE_MD)
-          .fontColor($r('sys.color.font_primary'))
-
-        Text(`窗函数: ${this.customConfig.windowType === WindowType.HANNING ? '汉宁窗' : '布莱克曼窗'}`)
-          .fontSize(DesignConstants.FONT_SIZE_MD)
-          .fontColor($r('sys.color.font_primary'))
-
-        Text(`平滑因子: ${this.customConfig.smoothingFactor}`)
-          .fontSize(DesignConstants.FONT_SIZE_MD)
-          .fontColor($r('sys.color.font_primary'))
-
-        Text(`重叠率: ${this.customConfig.overlap}`)
-          .fontSize(DesignConstants.FONT_SIZE_MD)
-          .fontColor($r('sys.color.font_primary'))
-
-        Text(`缓冲区大小: ${this.customConfig.bufferSize}字节`)
-          .fontSize(DesignConstants.FONT_SIZE_MD)
-          .fontColor($r('sys.color.font_primary'))
-      }
-      .width('100%')
-      .padding(DesignConstants.SPACING_MD)
-      .backgroundColor($r('sys.color.comp_background_primary'))
-      .borderRadius(DesignConstants.BORDER_RADIUS_MD)
-    }
-    .width('100%')
-  }
-
   build() {
     Column({ space: DesignConstants.SPACING_LG }) {
-      // 配置参数区域
-      Column({ space: DesignConstants.SPACING_MD }) {
-        Text('自定义配置')
-          .fontSize(DesignConstants.FONT_SIZE_XL)
+      // 技术参数显示
+      Column({ space: DesignConstants.SPACING_SM }) {
+        Text('当前配置参数')
+          .fontSize(DesignConstants.FONT_SIZE_LG)
           .fontWeight(FontWeight.Bold)
           .fontColor($r('sys.color.font_primary'))
           .width('100%')
 
-        // FFT大小选择
-        this.buildParameterSelector(
-          'FFT大小',
-          this.customConfig.fftSize,
-          this.fftSizeOptions,
-          (newValue: number|string) => {
-            this.customConfig.fftSize = newValue as number;
-            this.customConfig.bufferSize = this.customConfig.fftSize * 2;
-          }
-        )
+        Column({ space: DesignConstants.SPACING_XS }) {
+          Text(`FFT大小: ${this.pk.custom_audio_config.fftSize}`)
+            .fontSize(DesignConstants.FONT_SIZE_MD)
+            .fontColor($r('sys.color.font_primary'))
 
-        // 更新间隔选择
-        this.buildParameterSelector(
-          '更新间隔',
-          this.customConfig.updateInterval,
-          this.updateIntervalOptions,
-          (newValue: number|string) => {
-            this.customConfig.updateInterval = newValue as number;
-          }
-        )
+          Text(`更新间隔: ${this.pk.custom_audio_config.updateInterval}ms`)
+            .fontSize(DesignConstants.FONT_SIZE_MD)
+            .fontColor($r('sys.color.font_primary'))
 
-        // 窗函数类型选择
-        this.buildParameterSelector(
-          '窗函数类型',
-          this.customConfig.windowType,
-          this.windowTypeOptions,
-          (newValue: number|string) => {
-            this.customConfig.windowType = newValue as WindowType;
-          }
-        )
+          Text(`窗函数: ${this.pk.custom_audio_config.windowType === WindowType.HANNING ? '汉宁窗' : '布莱克曼窗'}`)
+            .fontSize(DesignConstants.FONT_SIZE_MD)
+            .fontColor($r('sys.color.font_primary'))
 
-        // 平滑因子选择
-        this.buildParameterSelector(
-          '平滑因子',
-          this.customConfig.smoothingFactor,
-          this.smoothingFactorOptions,
-          (newValue: number|string ) => {
-            this.customConfig.smoothingFactor = newValue as  number;
-          }
-        )
+          Text(`平滑因子: ${this.pk.custom_audio_config.smoothingFactor}`)
+            .fontSize(DesignConstants.FONT_SIZE_MD)
+            .fontColor($r('sys.color.font_primary'))
 
-        // 重叠率选择
-        this.buildParameterSelector(
-          '重叠率',
-          this.customConfig.overlap,
-          this.overlapOptions,
-          (newValue: number|string) => {
-            this.customConfig.overlap = newValue as  number;
-          }
-        )
+          Text(`重叠率: ${this.pk.custom_audio_config.overlap}`)
+            .fontSize(DesignConstants.FONT_SIZE_MD)
+            .fontColor($r('sys.color.font_primary'))
+
+          Text(`缓冲区大小: ${this.pk.custom_audio_config.bufferSize}字节`)
+            .fontSize(DesignConstants.FONT_SIZE_MD)
+            .fontColor($r('sys.color.font_primary'))
+        }
+        .alignItems(HorizontalAlign.Start)
+        .width('100%')
+        .padding(DesignConstants.SPACING_MD)
+        .backgroundColor($r('sys.color.comp_background_primary'))
+        .borderRadius(DesignConstants.BORDER_RADIUS_MD)
       }
       .width('100%')
-
-      // 技术参数显示
-      this.buildTechnicalParamsDisplay()
 
       // 重置按钮
       Button('重置为默认值', { type: ButtonType.Normal })
@@ -303,8 +197,78 @@ export struct CustomConfigPanel {
         .onClick(() => {
           this.resetToDefault();
         })
+      // 配置参数区域
+      if (this.display) {
+        Column({ space: DesignConstants.SPACING_MD }) {
+          Text('自定义配置')
+            .fontSize(DesignConstants.FONT_SIZE_XL)
+            .fontWeight(FontWeight.Bold)
+            .fontColor($r('sys.color.font_primary'))
+            .width('100%')
+
+          // FFT大小选择
+          this.buildParameterSelector(
+            'FFT大小',
+            this.pk.custom_audio_config.fftSize,
+            this.fftSizeOptions,
+            (newValue: number | string) => {
+              this.pk.custom_audio_config.fftSize = newValue as number;
+              this.pk.custom_audio_config.bufferSize = this.pk.custom_audio_config.fftSize * 2;
+            }
+          )
+
+          // 更新间隔选择
+          this.buildParameterSelector(
+            '更新间隔',
+            this.pk.custom_audio_config.updateInterval,
+            this.updateIntervalOptions,
+            (newValue: number | string) => {
+              this.pk.custom_audio_config.updateInterval = newValue as number;
+            }
+          )
+
+          // 窗函数类型选择
+          this.buildParameterSelector(
+            '窗函数类型',
+            this.pk.custom_audio_config.windowType,
+            this.windowTypeOptions,
+            (newValue: number | string) => {
+              this.pk.custom_audio_config.windowType = newValue as WindowType;
+            }
+          )
+
+          // 平滑因子选择
+          this.buildParameterSelector(
+            '平滑因子',
+            this.pk.custom_audio_config.smoothingFactor,
+
+            this.smoothingFactorOptions,
+            (newValue: number | string) => {
+              this.pk.custom_audio_config.smoothingFactor = newValue as number;
+            }
+          )
+
+          // 重叠率选择
+          this.buildParameterSelector(
+            '重叠率',
+            this.pk.custom_audio_config.overlap,
+            this.overlapOptions,
+            (newValue: number | string) => {
+              this.pk.custom_audio_config.overlap = newValue as number;
+            }
+          )
+        }
+        .width('100%')
+      } else {
+        Column() {
+          LoadingProgress().width(45).height(45);
+        }.alignItems(HorizontalAlign.Center).justifyContent(FlexAlign.Center)
+      }
+
     }
     .width('100%')
+    .justifyContent(FlexAlign.Start)
+    .margin({ bottom: 100 })
     .padding(DesignConstants.SPACING_LG)
     .backgroundColor($r('sys.color.background_secondary'))
   }

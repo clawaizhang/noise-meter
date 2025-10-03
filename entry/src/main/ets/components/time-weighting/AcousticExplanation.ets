@@ -1,6 +1,6 @@
 /**
  * 声学解释组件
- * 用于显示时间计权模式的声学理论解释和应用场景
+ * 用于显示音频分析模式的声学理论解释和应用场景
  */
 
 import { AudioAnalysisMode } from '../../common/AudioConfig';

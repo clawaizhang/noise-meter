@@ -1,5 +1,5 @@
 /**
- * 时间计权模式选择弹框
+ * 音频分析模式选择弹框
  * 主弹框组件，集成所有子组件并提供完整的交互体验
  */
 
@@ -66,6 +66,7 @@ export struct TimeWeightingDialog {
       Text('自定义模式')
         .fontSize(DesignConstants.FONT_SIZE_MD)
         .fontColor($r('sys.color.font_primary'))
+        .fontWeight(FontWeight.Medium)
         .layoutWeight(1)
 
       Toggle({ type: ToggleType.Switch, isOn: this.pk.custom_audio_config_enabled })
@@ -73,17 +74,13 @@ export struct TimeWeightingDialog {
           this.handleCustomModeToggle(isOn);
         })
     }
+    .justifyContent(FlexAlign.Center)
+    .alignItems(VerticalAlign.Center)
     .width('100%')
-    .padding(DesignConstants.SPACING_MD)
     .backgroundColor($r('sys.color.comp_background_primary'))
+    .padding(16)
     .borderRadius(16)
-    .padding({ left: 16, right: 16 })
-    .margin({
-      top: 16,
-      left: 16,
-      right: 16,
-      bottom: 8
-    })
+    .height(56)
   }
 
   // 构建标准模式选择面板
@@ -161,16 +158,6 @@ export struct TimeWeightingDialog {
     .width('100%')
   }
 
-  // 构建自定义模式界面
-  @Builder
-  private buildCustomModeInterface() {
-    Column({ space: DesignConstants.SPACING_LG }) {
-      // 自定义配置面板
-      CustomConfigPanel()
-    }
-    .width('100%')
-  }
-
   // 构建可折叠的专业内容区域
   @Builder
   private buildExpandableProfessionalArea() {
@@ -209,7 +196,9 @@ export struct TimeWeightingDialog {
   build() {
     Column({ space: 8 }) {
       // 自定义模式开关
-      this.buildCustomModeSwitch()
+      Column() {
+        this.buildCustomModeSwitch()
+      }.padding(16)
 
       // 根据自定义模式状态显示不同界面
       if (!this.pk.custom_audio_config_enabled) {
@@ -239,7 +228,15 @@ export struct TimeWeightingDialog {
       } else {
         // 自定义模式界面
         Scroll() {
-          this.buildCustomModeInterface()
+          Column() {
+            CustomConfigPanel({
+              onSelectedChange: () => {
+                this.onModeChange(AudioAnalysisMode.CUSTOM_TIME_WEIGHTING);
+              }
+            })
+            Blank()
+          }
+          .justifyContent(FlexAlign.Start)
         }
         .scrollBar(BarState.Off)
         .edgeEffect(EdgeEffect.Spring)
@@ -254,7 +251,7 @@ export struct TimeWeightingDialog {
   }
 }
 
-// 时间计权弹框的Builder版本
+// 音频分析弹框的Builder版本
 @Builder
 export function TimeWeightingDialogBuilder(param: TimeWeightingDialogParams
 ) {

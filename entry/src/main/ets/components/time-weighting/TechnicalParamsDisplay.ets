@@ -1,6 +1,6 @@
 /**
  * 技术参数显示组件
- * 用于显示时间计权模式的技术参数，支持参数对比
+ * 用于显示音频分析模式的技术参数，支持参数对比
  */
 
 import { AudioAnalysisMode } from '../../common/AudioConfig';

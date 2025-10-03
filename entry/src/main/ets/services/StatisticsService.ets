@@ -228,7 +228,7 @@ export class StatisticsService {
       }
     }
 
-    // 时间计权模式特殊处理
+    // 音频分析模式特殊处理
     if (this.currentAudioAnalysisMode === AudioAnalysisMode.FAST_TIME_WEIGHTING && newState.dbCount <= 5) {
       newState.maxDecibel = newState.minDecibel;
       if (newState.values.length > 0) {

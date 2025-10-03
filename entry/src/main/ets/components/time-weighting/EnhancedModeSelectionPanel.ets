@@ -124,7 +124,7 @@ export struct EnhancedModeSelectionPanel {
   build() {
     Column({ space: DesignConstants.SPACING_MD }) {
       // 标题
-      Text('选择时间计权模式')
+      Text('选择音频分析模式')
         .fontSize(DesignConstants.FONT_SIZE_XL)
         .fontWeight(FontWeight.Bold)
         .fontColor($r('sys.color.font_primary'))

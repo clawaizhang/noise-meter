@@ -173,7 +173,7 @@ struct Settings {
       case AudioAnalysisMode.IMPULSE_TIME_WEIGHTING:
         return '脉冲(I)';
       default:
-        return '快速(F)';
+        return '自定义模式';
     }
   }
 
@@ -186,17 +186,18 @@ struct Settings {
       case AudioAnalysisMode.IMPULSE_TIME_WEIGHTING:
         return '时间常数35ms，适合测量脉冲噪声';
       default:
-        return '时间常数200ms，适合测量快速变化的噪声';
+        return `时间常数${this.pk.custom_audio_config.updateInterval}ms`;
     }
   }
 
   aboutToAppear() {
-    this.updateAnalysisModeCache();
+    this.updateAnalysisModeCache(this.pk.custom_audio_config_enabled ? AudioAnalysisMode.CUSTOM_TIME_WEIGHTING :
+    this.pk.audio_analysis_mode);
   }
 
-  private updateAnalysisModeCache() {
-    this.analysisModeDescription = this.getAnalysisModeDescription(this.pk.audio_analysis_mode);
-    const config = AudioPresets.getConfig(this.pk.audio_analysis_mode);
+  private updateAnalysisModeCache(selectedMode: AudioAnalysisMode) {
+    this.analysisModeDescription = this.getAnalysisModeDescription(selectedMode);
+    const config = AudioPresets.getConfig(selectedMode);
     this.analysisModeDetails = [
       `FFT大小: ${config.fftSize}`,
       `频率分辨率: ${(44100 / config.fftSize).toFixed(1)}Hz`,
@@ -210,11 +211,11 @@ struct Settings {
     if (!this.audioAnalysisDialog) {
       this.audioAnalysisDialog = DialogHub.getSheet()
         .setStyle({ title: { title: '声级校准' }, backgroundColor: $r('sys.color.background_secondary') })
-        .setConfig({ scrollSizeMode: ScrollSizeMode.FOLLOW_DETENT,enableOutsideInteractive:true })
+        .setConfig({ scrollSizeMode: ScrollSizeMode.FOLLOW_DETENT, enableOutsideInteractive: true })
         .setComponentTargetId('popupTargetId')
         .setContent(wrapBuilder(AudioAnalysisSettingsBuilder))
         .build();
-      
+
       // 注册Dialog到样式管理器
       DialogStyleManager.registerDialog(this.audioAnalysisDialog);
     }
@@ -225,17 +226,17 @@ struct Settings {
     if (!this.alertsDialog) {
       this.alertsDialog = DialogHub.getSheet()
         .setStyle({ title: { title: '警报与通知' }, backgroundColor: $r('sys.color.background_secondary') })
-        .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS,enableOutsideInteractive:true })
+        .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS, enableOutsideInteractive: true })
         .setComponentTargetId('popupTargetId')
         .setContent(wrapBuilder(AlertsSettingsBuilder))
         .build();
-      
+
       // 注册Dialog到样式管理器
       DialogStyleManager.registerDialog(this.alertsDialog);
     }
     this.alertsDialog.show();
   }
-  // 打开时间计权模式选择弹框
+  // 打开音频分析模式选择弹框
   private openTimeWeightingDialog = () => {
     if (!this.isModeChangeEnabled) {
       return;
@@ -253,14 +254,14 @@ struct Settings {
       }
       this.timeWeightingDialog = DialogHub.getSheet()
         .setStyle({
-          title: { title: '时间计权模式选择' },
+          title: { title: '音频分析模式选择' },
           backgroundColor: $r('sys.color.background_secondary')
         })
-        .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS,enableOutsideInteractive:true })
+        .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS, enableOutsideInteractive: true })
         .setComponentTargetId('popupTargetId')
         .setContent(wrapBuilder(TimeWeightingDialogBuilder), param)
         .build();
-      
+
       // 注册Dialog到样式管理器
       DialogStyleManager.registerDialog(this.timeWeightingDialog);
     }
@@ -284,11 +285,11 @@ struct Settings {
           title: { title: '频率加权模式选择' },
           backgroundColor: $r('sys.color.background_secondary')
         })
-        .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS,enableOutsideInteractive:true })
+        .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS, enableOutsideInteractive: true })
         .setComponentTargetId('popupTargetId')
         .setContent(wrapBuilder(FrequencyWeightingDialogBuilder), param)
         .build();
-      
+
       // 注册Dialog到样式管理器
       DialogStyleManager.registerDialog(this.frequencyWeightingDialog);
     }
@@ -307,18 +308,18 @@ struct Settings {
           title: { title: '自动保存设置' },
           backgroundColor: $r('sys.color.background_secondary')
         })
-        .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS,enableOutsideInteractive:true })
+        .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS, enableOutsideInteractive: true })
         .setComponentTargetId('popupTargetId')
         .setContent(wrapBuilder(AutoSaveSettingsDialogBuilder), param)
         .build();
-      
+
       // 注册Dialog到样式管理器
       DialogStyleManager.registerDialog(this.autoSaveDialog);
     }
     this.autoSaveDialog.show();
   }
 
-  // 处理时间计权模式变化
+  // 处理音频分析模式变化
   private handleTimeWeightingModeChange(selectedMode: AudioAnalysisMode) {
     if (!this.isModeChangeEnabled) {
       return;
@@ -327,7 +328,7 @@ struct Settings {
     // 禁用切换
     this.isModeChangeEnabled = false;
     this.pk.audio_analysis_mode = selectedMode;
-    this.updateAnalysisModeCache();
+    this.updateAnalysisModeCache(selectedMode);
 
     // 启动冷却计时器
     this.remainingTime = this.COOLDOWN_DURATION;
@@ -349,14 +350,14 @@ struct Settings {
     , gutter: 16
     }) {
 
-      // 时间计权模式
+      // 音频分析模式
       GridCol() {
         Column() {
           Row() {
             Row({ space: 8 }) {
               Image($r('app.media.ic_time_weighting'))
                 .itemIcon()
-              Text('时间计权模式')
+              Text('音频分析模式')
                 .itemTitle()
             }.layoutWeight(1)
 
@@ -679,7 +680,6 @@ struct Settings {
     ('settingsId'
     )
   }
-
 
   @
   Builder

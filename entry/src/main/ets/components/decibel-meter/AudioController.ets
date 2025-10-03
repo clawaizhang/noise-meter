@@ -3,7 +3,7 @@ import common from '@ohos.app.ability.common';
 import { AppStorageV2, promptAction } from '@kit.ArkUI';
 import { taskpool } from '@kit.ArkTS';
 import { concurrentCalculateSpectrum } from '../../concurrent/ConcurrentFftAnalyzer';
-import { AudioPresets, WindowType } from '../../common/AudioConfig';
+import { AudioAnalysisConfig, AudioPresets, WindowType } from '../../common/AudioConfig';
 import { PreferenceKeys } from '../../models/PreferenceKeys';
 import { DecibelRecord } from '../../models/DecibelRecord';
 import { AudioService } from '../../services/AudioService';
@@ -184,15 +184,18 @@ export struct AudioController {
 
         // 存储带时间戳的音频缓冲区
         const currentTime = Date.now();
-        this.timedAudioBuffers.push({timestamp: currentTime, buffer: buffer.slice(0)});
-
+        this.timedAudioBuffers.push({ timestamp: currentTime, buffer: buffer.slice(0) });
+        let config = AudioPresets.getConfig(this.pk.audio_analysis_mode);
         // 计算频谱数据（用于频谱图显示）
-        taskpool.execute<[string, ArrayBuffer, WeightingType, number], Float32Array>(
+        taskpool.execute<[ArrayBuffer, WeightingType, number, number, WindowType, number, number], Float32Array>(
           concurrentCalculateSpectrum,
-          this.pk.audio_analysis_mode,
           buffer.slice(0),
           this.pk.weighting_type,
-          this.pk.calibration_value
+          this.pk.calibration_value,
+          config.fftSize,
+          config.windowType,
+          config.smoothingFactor,
+          config.overlap
         ).then((spectrum) => {
           this.onSpectrumData(spectrum);
 
@@ -208,8 +211,8 @@ export struct AudioController {
 
           // 收集分贝值和加权类型（带时间戳）
           const currentTime = new Date().getTime();
-          this.timedValues.push({timestamp: currentTime, value: this.currentDecibel});
-          this.timedWeightingTypes.push({timestamp: currentTime, type: this.pk.weighting_type});
+          this.timedValues.push({ timestamp: currentTime, value: this.currentDecibel });
+          this.timedWeightingTypes.push({ timestamp: currentTime, type: this.pk.weighting_type });
 
           // 更新统计信息
           this.updateStatistics(this.currentDecibel);
@@ -274,7 +277,7 @@ export struct AudioController {
             // 获取最近20分钟的音频数据
             const recentAudioBuffers = this.timedAudioBuffers.map(item => item.buffer);
             console.info(`[音频保存] 使用最近${this.DATA_RETENTION_MINUTES}分钟的音频数据，缓冲区数量: ${recentAudioBuffers.length}`);
-            
+
             currentAudioFilePath = await this.audioService.stopRecordingAndGetWavData(recentAudioBuffers);
           } catch (error) {
             console.error('[FREQ_TRACE][Audio] 获取或保存WAV音频数据失败:', error);
@@ -329,8 +332,8 @@ export struct AudioController {
 
   addDecibelValue(decibel: number, weightingType: WeightingType): void {
     const currentTime = new Date().getTime();
-    this.timedValues.push({timestamp: currentTime, value: decibel});
-    this.timedWeightingTypes.push({timestamp: currentTime, type: weightingType});
+    this.timedValues.push({ timestamp: currentTime, value: decibel });
+    this.timedWeightingTypes.push({ timestamp: currentTime, type: weightingType });
   }
 
   resetData() {
@@ -354,7 +357,6 @@ export struct AudioController {
     this.onRecordingTimeUpdate(this.recordingTime);
   }
 
-
   private addErrorMessage(message: string): void {
     if (!this.errorMessages.includes(message)) {
       this.errorMessages.push(message);
@@ -370,7 +372,7 @@ export struct AudioController {
   // 更新统计信息
   private updateStatistics(currentDb: number): void {
     const values = this.timedValues.map(item => item.value);
-    
+
     if (values.length === 0) {
       this.minDecibel = currentDb;
       this.maxDecibel = currentDb;
@@ -402,18 +404,17 @@ export struct AudioController {
     Column()
   }
 
-
   // 执行重置操作
   private performReset() {
     console.info('[FREQ_TRACE][Reset] 开始重置数据');
-    
+
     // 重置数据
     this.timedValues = [];
     this.timedAudioBuffers = [];
     this.startTime = new Date().getTime();
     this.recordingTime = 0;
     this.timedWeightingTypes = [];
-    
+
     // 重置统计信息
     this.minDecibel = 0;
     this.maxDecibel = 0;
@@ -423,7 +424,7 @@ export struct AudioController {
     // 通知UI更新
     this.onMinMaxAvgCurrent(this.minDecibel, this.maxDecibel, this.avgDecibel, this.currentDecibel);
     this.onRecordingTimeUpdate(this.recordingTime);
-    
+
     console.info('[FREQ_TRACE][Reset] 数据重置完成');
   }
 
@@ -436,10 +437,10 @@ export struct AudioController {
   // 自动保存监控方法
   private startAutoSaveMonitoring(): void {
     this.stopAutoSaveMonitoring();
-    
+
     if (this.pk.auto_save_enabled && this.isRecording) {
       this.lastAutoSaveTime = new Date().getTime();
-      
+
       // 每秒检查一次是否需要自动保存
       this.autoSaveTimer = setInterval(() => {
         this.checkAutoSave();
@@ -458,11 +459,11 @@ export struct AudioController {
     if (!this.pk.auto_save_enabled || !this.isRecording) {
       return;
     }
-    
+
     const currentTime = new Date().getTime();
     const elapsed = currentTime - this.lastAutoSaveTime;
     const intervalMs = this.pk.auto_save_interval * 60 * 1000;
-    
+
     // 检查是否达到自动保存间隔且有足够数据
     if (elapsed >= intervalMs && this.timedValues.length > 10) {
       this.performAutoSave();
@@ -471,19 +472,19 @@ export struct AudioController {
 
   private performAutoSave(): void {
     console.info('[自动保存] 执行定时自动保存');
-    
+
     // 更新最后保存时间
     this.lastAutoSaveTime = new Date().getTime();
-    
+
     // 通知父组件更新时间
     this.onAutoSaveTimeUpdate(this.lastAutoSaveTime);
-    
+
     // 显示保存提示
     promptAction.showToast({
       message: `自动保存记录（${this.pk.auto_save_interval}分钟）`,
       duration: 2000
     });
-    
+
     // 调用保存逻辑
     this.performSave('自动保存');
   }
@@ -495,7 +496,7 @@ export struct AudioController {
    */
   private startDataCleanupMonitoring(): void {
     this.stopDataCleanupMonitoring();
-    
+
     if (!this.pk.auto_save_enabled && this.isRecording) {
       console.info('[数据清理] 启动20分钟数据清理监控');
       this.dataCleanupTimer = setInterval(() => {
@@ -522,24 +523,26 @@ export struct AudioController {
     if (this.pk.auto_save_enabled) {
       return; // 自动保存开启时不清理数据
     }
-    
+
     const currentTime = new Date().getTime();
     const cutoffTime = currentTime - (this.DATA_RETENTION_MINUTES * 60 * 1000);
-    
+
     // 清理过期的分贝值
     const originalValuesLength = this.timedValues.length;
     this.timedValues = this.timedValues.filter(item => item.timestamp >= cutoffTime);
-    
+
     // 清理过期的加权类型
     this.timedWeightingTypes = this.timedWeightingTypes.filter(item => item.timestamp >= cutoffTime);
-    
+
     // 清理过期的音频缓冲区
     const originalAudioBuffersLength = this.timedAudioBuffers.length;
     this.timedAudioBuffers = this.timedAudioBuffers.filter(item => item.timestamp >= cutoffTime);
-    
-    if (originalValuesLength !== this.timedValues.length || originalAudioBuffersLength !== this.timedAudioBuffers.length) {
-      console.info(`[数据清理] 清理了${originalValuesLength - this.timedValues.length}条分贝数据，${originalAudioBuffersLength - this.timedAudioBuffers.length}条音频数据，保留${this.timedValues.length}条分贝数据，${this.timedAudioBuffers.length}条音频数据`);
+
+    if (originalValuesLength !== this.timedValues.length ||
+      originalAudioBuffersLength !== this.timedAudioBuffers.length) {
+      console.info(`[数据清理] 清理了${originalValuesLength -
+      this.timedValues.length}条分贝数据，${originalAudioBuffersLength -
+      this.timedAudioBuffers.length}条音频数据，保留${this.timedValues.length}条分贝数据，${this.timedAudioBuffers.length}条音频数据`);
     }
   }
-
 }
