@@ -7,12 +7,18 @@ export interface AutoSaveDialogParams {
   onClose: () => void;
 }
 
+export interface PresetOptionParams {
+  index: number;
+  label: string;
+  description: string;
+  selectedIndex: number;
+}
+
 @ComponentV2
 export struct AutoSaveSettingsDialog {
   @Local pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys)!;
   @Local autoSaveEnabled: boolean = this.pk.auto_save_enabled;
   @Local interval: number = this.pk.auto_save_interval;
-  @Local selectedPreset: number = this.getPresetIndex(this.interval);
   @Local customInterval: number = this.interval;
   @Param @Require params: AutoSaveDialogParams;
 
@@ -20,8 +26,12 @@ export struct AutoSaveSettingsDialog {
     // 确保状态正确初始化
     this.autoSaveEnabled = this.pk.auto_save_enabled;
     this.interval = this.pk.auto_save_interval;
-    this.selectedPreset = this.getPresetIndex(this.interval);
     this.customInterval = this.interval;
+  }
+
+  @Computed
+  get selectedIndex(){
+    return this.getPresetIndex(this.interval);
   }
 
   private getPresetIndex(interval: number): number {
@@ -46,7 +56,6 @@ export struct AutoSaveSettingsDialog {
 
   private handlePresetSelect(index: number) {
     // 立即更新所有相关状态
-    this.selectedPreset = index;
     const newInterval = this.getPresetInterval(index);
     this.interval = newInterval;
     if (index !== -1) {
@@ -59,7 +68,6 @@ export struct AutoSaveSettingsDialog {
     if (!isNaN(numValue) && numValue >= 1 && numValue <= 60) {
       this.customInterval = numValue;
       this.interval = numValue;
-      this.selectedPreset = -1; // 切换到自定义模式
     }
   }
 
@@ -80,27 +88,27 @@ export struct AutoSaveSettingsDialog {
   }
 
   @Builder
-  private buildPresetOption(index: number, label: string, description: string) {
+  private buildPresetOption(params: PresetOptionParams) {
 
     Column({ space: 4 }) {
-      Text(label)
+      Text(params.label)
         .fontSize(DesignConstants.FONT_SIZE_MD)
         .fontWeight(FontWeight.Medium)
-        .fontColor(this.selectedPreset === index ? $r('sys.color.font_on_primary') : $r('sys.color.font_primary'))
+        .fontColor(params.selectedIndex === params.index ? $r('sys.color.font_on_primary') : $r('sys.color.font_primary'))
       
-      Text(description)
+      Text(params.description)
         .fontSize(DesignConstants.FONT_SIZE_SM)
-        .fontColor(this.selectedPreset === index ? $r('sys.color.font_on_primary') : $r('sys.color.font_secondary'))
+        .fontColor(params.selectedIndex === params.index ? $r('sys.color.font_on_primary') : $r('sys.color.font_secondary'))
     }
     .width('100%')
     .height(72)
-    .backgroundColor(this.selectedPreset === index ? $r('sys.color.interactive_active') : $r('sys.color.comp_background_primary'))
+    .backgroundColor(params.selectedIndex === params.index ? $r('sys.color.interactive_active') : $r('sys.color.comp_background_primary'))
     .borderRadius(DesignConstants.BORDER_RADIUS_MD)
     .padding(DesignConstants.SPACING_MD)
     .justifyContent(FlexAlign.Center)
     .alignItems(HorizontalAlign.Center)
     .onClick(() => {
-      this.handlePresetSelect(index);
+      this.handlePresetSelect(params.index);
     })
   }
 
@@ -163,16 +171,36 @@ export struct AutoSaveSettingsDialog {
         // 预设选项区域
         GridRow({ columns: 2, gutter: 12 }) {
           GridCol({ span: 1 }) {
-            this.buildPresetOption(0, '3分钟', '工业监测')
+            this.buildPresetOption({
+              index: 0,
+              label: '3分钟',
+              description: '工业监测',
+              selectedIndex: this.selectedIndex
+            })
           }
           GridCol({ span: 1 }) {
-            this.buildPresetOption(1, '5分钟', '综合应用')
+            this.buildPresetOption({
+              index: 1,
+              label: '5分钟',
+              description: '综合应用',
+              selectedIndex: this.selectedIndex
+            })
           }
           GridCol({ span: 1 }) {
-            this.buildPresetOption(2, '10分钟', '社区投诉')
+            this.buildPresetOption({
+              index: 2,
+              label: '10分钟',
+              description: '社区投诉',
+              selectedIndex: this.selectedIndex
+            })
           }
           GridCol({ span: 1 }) {
-            this.buildPresetOption(3, '20分钟', '健康监测')
+            this.buildPresetOption({
+              index: 3,
+              label: '20分钟',
+              description: '健康监测',
+              selectedIndex: this.selectedIndex
+            })
           }
         }
         .width('100%')

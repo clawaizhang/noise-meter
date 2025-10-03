@@ -54,6 +54,7 @@ export struct DecibelMeter {
 
   aboutToAppear() {
     // 启动倒计时更新定时器
+    this.currentTime = Date.now();
     this.countdownTimer =setInterval(() => {
       this.currentTime = Date.now();
     },1000)

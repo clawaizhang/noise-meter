@@ -57,7 +57,7 @@ export class PreferenceKeys {
    * 后台运行开关状态键名
    */
   @Trace
-  background_running: boolean = PreferencesUtil.getBooleanSync('background_running', false);
+  background_running: boolean = PreferencesUtil.getBooleanSync('background_running', true);
 
   /**
    * 麦克风权限请求状态
