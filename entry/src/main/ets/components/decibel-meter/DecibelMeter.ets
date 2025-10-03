@@ -144,7 +144,7 @@ export struct DecibelMeter {
             xl: 6    // 横向MD及以上：双列布局（半宽）
           }
         }) {
-          Column({ space: 12 }) {
+          Column({ space: 8 }) {
 
             // 使用新的分贝显示组件（重新设计版）
             DecibelDisplayComponent({

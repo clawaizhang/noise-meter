@@ -117,12 +117,12 @@ export struct LocationDisplay {
   build() {
     Row({ space: 8 }) {
       Image($r('app.media.ic_location'))
-        .width(12)
-        .height(12)
+        .width(14)
+        .height(14)
         .fillColor($r('sys.color.ohos_id_color_text_secondary'));
 
       Text(this.pk.location_enabled ? (this.address || '点击刷新按钮获取位置') : '开启位置服务可记录噪音检测位置')
-        .fontSize(11)
+        .fontSize(13)
         .fontColor($r('sys.color.ohos_id_color_text_secondary'))
         .textOverflow({ overflow: TextOverflow.Ellipsis })
         .maxLines(1)
@@ -132,7 +132,7 @@ export struct LocationDisplay {
         this.refreshButton()
       }
     }
-    .padding({ top: 6, bottom: 6, left: 12, right: 12 })
+    .padding({ top: 6, bottom: 6, left: 8, right: 8 })
     .width('100%')
     // 移除背景色，使用透明背景
     .backgroundColor(Color.Transparent)

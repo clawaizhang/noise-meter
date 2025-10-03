@@ -101,7 +101,7 @@ export struct DecibelDisplayComponent {
         .fontColor($r('sys.color.font_secondary'))
         .fontWeight(FontWeight.Medium);
     }
-    .padding({ left: 12, right: 12, top: 6, bottom: 6 })
+    .padding({ left: 12, right: 12, top: 16, bottom: 8 })
     .borderRadius(6)
     .width('100%')
     .justifyContent(FlexAlign.Center)
@@ -147,7 +147,7 @@ export struct DecibelDisplayComponent {
           .transition(TransitionEffect.scale({ x: 0, y: 0 }).animation({ curve: curves.springMotion() }));
       }
     }
-    .padding({ top: 16, bottom: 16 })
+    .padding({ top: 8, bottom: 8 })
     .width('100%')
     .justifyContent(FlexAlign.Center)
     .alignItems(VerticalAlign.Bottom)
@@ -224,7 +224,7 @@ export struct DecibelDisplayComponent {
       }
       .layoutWeight(1)
     }
-    .padding({ top: 12, bottom: 12, left: 16, right: 16 })
+    .padding({ top: 8, bottom: 8, left: 16, right: 16 })
     .width('100%')
     // 移除背景色，使用透明背景
     .backgroundColor(Color.Transparent)
@@ -233,17 +233,17 @@ export struct DecibelDisplayComponent {
 
   @Builder
   systemStatusDisplay() {
-    Row({ space: 12 }) {
+    Row({ space: 8 }) {
       // 校准状态
       Row({ space: 4 }) {
         Image($r('app.media.ic_calibration'))
-          .width(12)
-          .height(12)
+          .width(14)
+          .height(14)
           .fillColor($r('sys.color.ohos_id_color_text_secondary'));
         
         Text(`校准:${this.calibrationValue} ${this.weightingType === WeightingType.A ? 'dB(A)' :
           this.weightingType === WeightingType.C ? 'dB(C)' : 'dB'}`)
-          .fontSize(11)
+          .fontSize(13)
           .fontColor($r('sys.color.ohos_id_color_text_secondary'));
       }
 
@@ -253,18 +253,18 @@ export struct DecibelDisplayComponent {
       if (this.autoSaveCountdown) {
         Row({ space: 4 }) {
           Image($r('app.media.ic_save'))
-            .width(12)
-            .height(12)
+            .width(14)
+            .height(14)
             .fillColor($r('sys.color.ohos_id_color_text_secondary'));
           
           Text(this.autoSaveCountdown)
-            .fontSize(11)
+            .fontSize(13)
             .fontColor($r('sys.color.ohos_id_color_text_secondary'));
         }
       }
     }
-    .padding({ top: 8, bottom: 8, left: 12, right: 12 })
-    .margin({top: 12})
+    .padding({ top: 6, bottom: 6, left: 8, right: 8 })
+    .margin({top: 8})
     .width('100%')
     // 移除背景色，使用透明背景
     .backgroundColor(Color.Transparent)
@@ -275,24 +275,24 @@ export struct DecibelDisplayComponent {
   noiseStandardDisplay() {
     Row({ space: 6 }) {
       Image($r('app.media.ic_info'))
-        .width(12)
-        .height(12)
+        .width(14)
+        .height(14)
         .fillColor($r('sys.color.ohos_id_color_text_secondary'));
       
       Text('噪音参考标准')
-        .fontSize(11)
+        .fontSize(13)
         .fontColor($r('sys.color.ohos_id_color_text_secondary'))
         .textOverflow({ overflow: TextOverflow.Ellipsis })
         .maxLines(1)
         .layoutWeight(1);
       
       Image($r('app.media.ic_arrow_right'))
-        .width(10)
-        .height(10)
+        .width(12)
+        .height(12)
         .fillColor($r('sys.color.ohos_id_color_text_secondary'));
     }
-    .padding({ top: 6, bottom: 6, left: 12, right: 12 })
-    .margin({top: 12})
+    .padding({ top: 6, bottom: 6, left: 8, right: 8 })
+    .margin({top: 8})
     .width('100%')
     // 移除背景色，使用透明背景
     .backgroundColor(Color.Transparent)

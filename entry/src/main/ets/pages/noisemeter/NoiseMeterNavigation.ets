@@ -95,7 +95,7 @@ export struct MainNoiseMeter {
   private alertsMenus: Array<NavigationMenuItem> = [
     {
       value: '警报设置',
-      icon: $r('app.media.ic_settings'),
+      icon: $r('app.media.ic_alarm'),
       action: () => {
         if (!this.alertsDialog) {
           this.alertsDialog = DialogHub.getSheet()
