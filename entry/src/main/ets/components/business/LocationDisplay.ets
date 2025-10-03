@@ -134,8 +134,9 @@ export struct LocationDisplay {
     }
     .padding({ top: 6, bottom: 6, left: 12, right: 12 })
     .width('100%')
-    .backgroundColor($r('sys.color.comp_background_secondary'))
-    .borderRadius(6)
+    // 移除背景色，使用透明背景
+    .backgroundColor(Color.Transparent)
+    .borderRadius(0)
     .alignItems(VerticalAlign.Center)
   }
 

@@ -168,6 +168,7 @@ export struct MainNoiseMeter {
         }
         .tabBar(this.TabBuilder('我的', $r('app.media.ic_favorite'), 2))
       }
+      .scrollable(false)
       .onChange((index: number) => {
         this.currentIndex = index;
       })

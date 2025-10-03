@@ -70,17 +70,7 @@ export struct SpectrumChartComponent {
       .width(this.canvasWidth)
       .height(this.canvasHeight)
       .borderRadius(12)
-      .backgroundColor('#ff000000')
-      .shadow({
-        radius: 8,
-        color: $r('sys.color.comp_divider'),
-        offsetX: 2,
-        offsetY: 2
-      })
-      .border({
-        width: 1,
-        color: $r('sys.color.comp_divider')
-      })
+      .backgroundColor('#ff191a1c')
       .onAreaChange((oldArea: Area, newArea: Area) => {
         console.info(`[FREQ_TRACE][Canvas] Canvas区域变化: 旧尺寸=${oldArea.width}x${oldArea.height}, 新尺寸=${newArea.width}x${newArea.height}`);
         this.canvasWidth = newArea.width as number;

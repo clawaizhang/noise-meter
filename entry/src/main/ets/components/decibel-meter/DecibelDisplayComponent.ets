@@ -11,13 +11,12 @@ import { interval, Subscription } from 'rxjs';
 
 // 噪音等级横幅配置接口
 interface NoiseBannerConfig {
-  decibelColor: ResourceColor;
   description: string;
 }
 
 // 当前分贝显示配置接口
 interface CurrentDecibelConfig {
-  decibelColor: ResourceColor;
+  decibelColor?: ResourceColor;
   currentDecibel: number;
 }
 
@@ -26,9 +25,6 @@ interface StatisticsConfig {
   minDecibel: number;
   avgDecibel: number;
   maxDecibel: number;
-  minColor: ResourceColor;
-  avgColor: ResourceColor;
-  maxColor: ResourceColor;
 }
 
 @ComponentV2
@@ -98,15 +94,14 @@ export struct DecibelDisplayComponent {
       Image($r('app.media.ic_info'))
         .width(14)
         .height(14)
-        .fillColor(config.decibelColor);
+        .fillColor($r('sys.color.font_secondary'));
 
-      Text(DecibelService.getDecibelDescription(this.currentDecibel))
+      Text(config.description)
         .fontSize(12)
-        .fontColor(config.decibelColor)
+        .fontColor($r('sys.color.font_secondary'))
         .fontWeight(FontWeight.Medium);
     }
     .padding({ left: 12, right: 12, top: 6, bottom: 6 })
-    .backgroundColor(config.decibelColor + '20') // 20% 透明度
     .borderRadius(6)
     .width('100%')
     .justifyContent(FlexAlign.Center)
@@ -142,13 +137,13 @@ export struct DecibelDisplayComponent {
         Text('-')
           .fontSize(64)
           .fontWeight(FontWeight.Bold)
-          .fontColor(config.decibelColor)
+          .fontColor($r('sys.color.alert'))
           .transition(TransitionEffect.scale({ x: 0, y: 0 }).animation({ curve: curves.springMotion() }));
       } else {
         Text(`${config.currentDecibel}dB`)
           .fontSize(64)
           .fontWeight(FontWeight.Bold)
-          .fontColor(config.decibelColor)
+          .fontColor($r('sys.color.alert'))
           .transition(TransitionEffect.scale({ x: 0, y: 0 }).animation({ curve: curves.springMotion() }));
       }
     }
@@ -173,7 +168,7 @@ export struct DecibelDisplayComponent {
         Text(config.minDecibel === 0 ? '-' : config.minDecibel.toString())
           .fontSize(24)
           .fontWeight(FontWeight.Medium)
-          .fontColor(config.minColor)
+          .fontColor($r('sys.color.font_secondary'))
           .textAlign(TextAlign.Center)
           .width('100%');
       }
@@ -198,7 +193,7 @@ export struct DecibelDisplayComponent {
         Text(config.avgDecibel === 0 ? '-' : config.avgDecibel.toString())
           .fontSize(24)
           .fontWeight(FontWeight.Medium)
-          .fontColor(config.avgColor)
+          .fontColor($r('sys.color.font_secondary'))
           .textAlign(TextAlign.Center)
           .width('100%');
       }
@@ -223,7 +218,7 @@ export struct DecibelDisplayComponent {
         Text(config.maxDecibel === 0 ? '-' : config.maxDecibel.toString())
           .fontSize(24)
           .fontWeight(FontWeight.Medium)
-          .fontColor(config.maxColor)
+          .fontColor($r('sys.color.font_secondary'))
           .textAlign(TextAlign.Center)
           .width('100%');
       }
@@ -231,8 +226,9 @@ export struct DecibelDisplayComponent {
     }
     .padding({ top: 12, bottom: 12, left: 16, right: 16 })
     .width('100%')
-    .backgroundColor($r('sys.color.comp_background_secondary'))
-    .borderRadius(10)
+    // 移除背景色，使用透明背景
+    .backgroundColor(Color.Transparent)
+    .borderRadius(0)
   }
 
   @Builder
@@ -270,8 +266,9 @@ export struct DecibelDisplayComponent {
     .padding({ top: 8, bottom: 8, left: 12, right: 12 })
     .margin({top: 12})
     .width('100%')
-    .backgroundColor($r('sys.color.comp_background_secondary'))
-    .borderRadius(6)
+    // 移除背景色，使用透明背景
+    .backgroundColor(Color.Transparent)
+    .borderRadius(0)
   }
 
   @Builder
@@ -297,8 +294,9 @@ export struct DecibelDisplayComponent {
     .padding({ top: 6, bottom: 6, left: 12, right: 12 })
     .margin({top: 12})
     .width('100%')
-    .backgroundColor($r('sys.color.comp_background_secondary'))
-    .borderRadius(6)
+    // 移除背景色，使用透明背景
+    .backgroundColor(Color.Transparent)
+    .borderRadius(0)
     .onClick(() => {
       // 点击打开噪音参考标准对话框
       if (!this.noiseStandardDialog) {
@@ -328,13 +326,11 @@ export struct DecibelDisplayComponent {
     Column({ space: 0 }) {
       // 1. 噪音等级横幅（顶部）
       this.noiseLevelBanner({
-        decibelColor: DecibelService.getDecibelColor(this.currentDecibel),
         description: DecibelService.getDecibelDescription(this.currentDecibel)
       })
 
       // 2. 当前分贝值显示（核心区域）
       this.currentDecibelDisplay({
-        decibelColor: DecibelService.getDecibelColor(this.currentDecibel),
         currentDecibel: this.currentDecibel
       })
 
@@ -342,10 +338,7 @@ export struct DecibelDisplayComponent {
       this.statisticsDisplay({
         minDecibel: this.minDecibel,
         avgDecibel: this.avgDecibel,
-        maxDecibel: this.maxDecibel,
-        minColor: DecibelService.getDecibelColor(this.minDecibel),
-        avgColor: DecibelService.getDecibelColor(this.avgDecibel),
-        maxColor: DecibelService.getDecibelColor(this.maxDecibel)
+        maxDecibel: this.maxDecibel
       })
 
       // 4. 系统状态信息
@@ -357,6 +350,6 @@ export struct DecibelDisplayComponent {
     .width('100%')
     .borderColor(this.isNoiseAlarm ? DecibelService.getDecibelColor(this.currentDecibel) : Color.Transparent)
     .borderWidth(this.isNoiseAlarm ? 2 : 0)
-    .borderRadius(16)
+    .borderRadius(0)
   }
 }
