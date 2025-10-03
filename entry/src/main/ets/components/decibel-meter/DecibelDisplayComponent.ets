@@ -138,7 +138,7 @@ export struct DecibelDisplayComponent {
           .fontColor(config.decibelColor)
           .transition(TransitionEffect.scale({ x: 0, y: 0 }).animation({ curve: curves.springMotion() }));
       } else {
-        Text(config.currentDecibel.toString())
+        Text(`${config.currentDecibel}dB`)
           .fontSize(64)
           .fontWeight(FontWeight.Bold)
           .fontColor(config.decibelColor)
