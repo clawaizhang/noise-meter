@@ -12,6 +12,9 @@ import { PreferenceKeys } from '../../models/PreferenceKeys';
 import { PersistenceV2 } from '@kit.ArkUI';
 import { AlertsContent } from '../../components/alerts/AlertsContent';
 import { AlertsSettingsBuilder } from '../settings/AlertsSettingsNavigation';
+import { common } from '@kit.AbilityKit';
+import { BusinessError } from '@kit.BasicServicesKit';
+import { Want } from '@kit.AbilityKit';
 
 // 导航菜单项接口定义
 interface NavigationMenuItem {
@@ -165,6 +168,15 @@ export struct MainNoiseMeter {
           }
         )
 
+        // 给作者五星好评设置
+        ListItemBuilder(
+          $r('app.media.ic_favorite'),
+          '五星好评',
+          () => {
+            this.navigateToAppStoreRating();
+          },
+        )
+
         // 关于列表项
         ListItemBuilder(
           $r('app.media.ic_info'),
@@ -196,6 +208,20 @@ export struct MainNoiseMeter {
     })
   }
 
+
+  // 跳转到应用商店评价页面
+  private navigateToAppStoreRating = () => {
+    const context = getContext(this) as common.UIAbilityContext;
+    const want: Want = {
+      action: 'ohos.want.action.appdetail',
+      uri: 'store://appgallery.huawei.com/app/detail?id=yu.zhang.myapplication.noise_meter_pro&action=write-review'
+    };
+    context.startAbility(want).then(() => {
+      console.info('Succeeded in starting App Store rating page successfully.');
+    }).catch((err: BusinessError) => {
+      console.error(`Failed to start App Store rating page. Code: ${err.code}, message: ${err.message}`);
+    });
+  }
 
   build() {
     NavDestination() {

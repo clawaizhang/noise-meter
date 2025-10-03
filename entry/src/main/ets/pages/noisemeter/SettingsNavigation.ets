@@ -573,6 +573,7 @@ export struct Settings {
         .cardStyle()
       }
 
+
       // this.buildListItem({
       //   icon: $r('app.media.ic_security'),
       //   title: '数据记录与隐私',
