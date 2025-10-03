@@ -23,19 +23,22 @@ export struct SpectrumChartComponent {
   @Local private canvasHeight: number = 0
   private canvasSettings: RenderingContextSettings = new RenderingContextSettings(true) // Canvas设置
   private canvasContext: CanvasRenderingContext2D = new CanvasRenderingContext2D(this.canvasSettings) // Canvas上下文
-  
   // 依赖注入
   @Local private sysResourceManager: resourceManager.ResourceManager = resourceManager.getSystemResourceManager();
   @Local private as: AppKeys = AppStorageV2.connect(AppKeys)!
-  
   // 常量
   private readonly ASPECT_RATIO: number = 1.5
 
   aboutToAppear() {
     this.calculateCanvasDimensions();
   }
-  
+
   aboutToDisappear() {
+  }
+
+  @Monitor('as.windowWidth','as.windowHeight')
+  onWindowChange(monitor: IMonitor) {
+    this.calculateCanvasDimensions();
   }
 
   @Monitor('spectrumData')
@@ -49,9 +52,9 @@ export struct SpectrumChartComponent {
   // 计算Canvas尺寸（基于横向断点的简化版本）
   private calculateCanvasDimensions(): void {
     const widthBp = this.as.windowWidthBreakpoint;
-    
+
     // 基于横向断点判断布局模式
-    if (widthBp === WidthBreakpoint.WIDTH_XS || widthBp === WidthBreakpoint.WIDTH_SM) {
+    if (widthBp <= WidthBreakpoint.WIDTH_SM) {
       // 横向XS/SM：单列布局，频谱图占满屏幕宽度
       this.canvasWidth = this.as.windowWidth - 32; // 减去边距
       this.canvasHeight = this.canvasWidth / this.ASPECT_RATIO;
@@ -69,7 +72,7 @@ export struct SpectrumChartComponent {
     Canvas(this.canvasContext)
       .width(this.canvasWidth)
       .height(this.canvasHeight)
-      .borderRadius(12)
+      .borderRadius(16)
       .backgroundColor('#ff191a1c')
       .onAreaChange((oldArea: Area, newArea: Area) => {
         console.info(`[FREQ_TRACE][Canvas] Canvas区域变化: 旧尺寸=${oldArea.width}x${oldArea.height}, 新尺寸=${newArea.width}x${newArea.height}`);
@@ -87,7 +90,6 @@ export struct SpectrumChartComponent {
         }
       })
   }
-
 
   private drawSpectrum(spectrum: Float32Array) {
     const dbSteps: number[] = getDbSteps();

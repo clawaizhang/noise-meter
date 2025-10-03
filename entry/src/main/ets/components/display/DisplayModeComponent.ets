@@ -134,7 +134,7 @@ export struct DisplayModeComponent {
             .width(24)
             .height(24)
             .fillColor($r('sys.color.font_primary'))
-          Text('显示模式')
+          Text('色彩')
             .fontSize(16)
             .fontColor($r('sys.color.font_primary'))
             .fontWeight(FontWeight.Medium)

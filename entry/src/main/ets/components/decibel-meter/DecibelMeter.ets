@@ -39,72 +39,15 @@ export struct DecibelMeter {
   @Local private lastAutoSaveTime: number = Date.now();
   @Local private currentTime: number = Date.now();
   @Local private countdownTimer?: number;
+  @Local private hideForXsMd: boolean = false;
   // 服务实例
   private audioControllerService: AudioControllerService = AudioControllerService.getInstance();
   @Consumer(navigationStack) navStack: NavPathStack = new NavPathStack()
   sysResourceManager: resourceManager.ResourceManager = resourceManager.getSystemResourceManager();
 
-  aboutToDisappear() {
-    // 清理资源
-    this.audioControllerService.dispose();
-    // 停止倒计时更新定时器
-    this.stopCountdownTimer();
-  }
-
-  aboutToAppear() {
-    // 启动倒计时更新定时器
-    this.currentTime = Date.now();
-    this.countdownTimer =setInterval(() => {
-      this.currentTime = Date.now();
-    },1000)
-  }
-
-
-  private stopCountdownTimer() {
-    if (this.countdownTimer) {
-      clearInterval(this.countdownTimer);
-      this.countdownTimer = undefined;
-    }
-  }
-
-  @Computed
-  get autoSaveCountdown(): string {
-    if (!this.pk.auto_save_enabled) {
-      return '自动保存已禁用';
-    }
-
-    // 计算剩余时间
-    const elapsed = this.currentTime - this.lastAutoSaveTime;
-    const intervalMs = this.pk.auto_save_interval * 60 * 1000;
-    const remaining = Math.max(0, intervalMs - elapsed);
-
-    if (remaining <= 0) {
-      return '即将自动保存';
-    }
-
-    const minutes = Math.floor(remaining / 60000);
-    const seconds = Math.floor((remaining % 60000) / 1000);
-
-    return `${minutes}:${seconds.toString().padStart(2, '0')} 后自动保存`;
-  }
-
   build() {
     Stack({ alignContent: Alignment.Bottom }) {
       GridRow({ columns: 12, breakpoints: { reference: BreakpointsReference.WindowSize }, gutter: 16 }) {
-
-        // 错误消息显示区域（支持多个错误同时显示）
-        if (this.errorMessages.length > 0) {
-          GridCol({ span: { xs: 12 } }) {
-            this.errorMessagesDisplay()
-          }
-        }
-
-        // 权限提示组件 - 显示在顶部
-        GridCol({ span: { xs: 12 } }) {
-          if (!this.as.microphonePermissionGranted) {
-            this.smartPermissionPrompt()
-          }
-        }
 
         // 音频控制器（逻辑组件，不渲染UI）
         AudioController({
@@ -146,51 +89,68 @@ export struct DecibelMeter {
         }) {
           Column({ space: 8 }) {
 
-            // 使用新的分贝显示组件（重新设计版）
-            DecibelDisplayComponent({
-              currentDecibel: this.currentDecibel,
-              minDecibel: this.minDecibel, // 这些值现在由AudioController管理
-              maxDecibel: this.maxDecibel, // 这些值现在由AudioController管理
-              avgDecibel: this.avgDecibel, // 这些值现在由AudioController管理
-              weightingType: this.pk.weighting_type,
-              calibrationValue: this.pk.calibration_value,
-              noiseThreshold: this.pk.noise_threshold,
-              systemNotificationEnabled: this.pk.system_notification_enabled,
-              isNoiseAlarm: false, // 报警状态由AudioController管理
-              autoSaveCountdown: this.autoSaveCountdown // 传递自动保存倒计时
-            })
+            Stack({ alignContent: Alignment.Top }) {
+              // 使用新的分贝显示组件（重新设计版）
+              DecibelDisplayComponent({
+                currentDecibel: this.currentDecibel,
+                minDecibel: this.minDecibel, // 这些值现在由AudioController管理
+                maxDecibel: this.maxDecibel, // 这些值现在由AudioController管理
+                avgDecibel: this.avgDecibel, // 这些值现在由AudioController管理
+                weightingType: this.pk.weighting_type,
+                calibrationValue: this.pk.calibration_value,
+                noiseThreshold: this.pk.noise_threshold,
+                systemNotificationEnabled: this.pk.system_notification_enabled,
+                isNoiseAlarm: false, // 报警状态由AudioController管理
+                autoSaveCountdown: this.autoSaveCountdown // 传递自动保存倒计时
+              })
 
-            // 位置显示 - 调整UI展现方式以适应新设计
-            LocationDisplay({
-              onLocationUpdate: (locationInfo: LocationInfo | null) => {
-                // 更新本地位置状态
-                this.currentLocation = locationInfo;
-                console.info('[FREQ_TRACE][Location] 位置更新事件接收:', locationInfo);
+              Column({ space: 8 }) {
+                // 错误消息显示区域（支持多个错误同时显示）
+                if (this.errorMessages.length > 0) {
+                  this.errorMessagesDisplay()
+                }
+
+                // 权限提示组件 - 显示在顶部
+                if (!this.as.microphonePermissionGranted) {
+                  this.smartPermissionPrompt()
+                }
               }
-            })
+            }
+
+            if (!this.hideForXsMd) {
+              // 位置显示 - 调整UI展现方式以适应新设计
+              LocationDisplay({
+                onLocationUpdate: (locationInfo: LocationInfo | null) => {
+                  // 更新本地位置状态
+                  this.currentLocation = locationInfo;
+                  console.info('[FREQ_TRACE][Location] 位置更新事件接收:', locationInfo);
+                }
+              }).padding({ left: 16, right: 16, bottom: 16 })
+            }
 
           }
         }
         .backgroundColor($r('sys.color.comp_background_primary'))
         .borderRadius(16)
-        .padding(16)
 
-        // 频谱图 - 简化布局策略
-        GridCol({
-          span: {
-            xs: 12, // 横向XS/SM：单列布局（全宽）
-            sm: 12, // 横向XS/SM：单列布局（全宽）
-            md: 6, // 横向MD及以上：双列布局（半宽）
-            lg: 6, // 横向MD及以上：双列布局（半宽）
-            xl: 6    // 横向MD及以上：双列布局（半宽）
+        if (!this.hideForXsMd) {
+          // 频谱图 - 简化布局策略
+          GridCol({
+            span: {
+              xs: 12, // 横向XS/SM：单列布局（全宽）
+              sm: 12, // 横向XS/SM：单列布局（全宽）
+              md: 6, // 横向MD及以上：双列布局（半宽）
+              lg: 6, // 横向MD及以上：双列布局（半宽）
+              xl: 6    // 横向MD及以上：双列布局（半宽）
+            }
+          }) {
+            SpectrumChartComponent({
+              spectrumData: this.currentSpectrum,
+            })
           }
-        }) {
-          SpectrumChartComponent({
-            spectrumData: this.currentSpectrum,
-          })
         }
       }
-      .padding({ top: 16, bottom: 96 }) // 增加底部内边距为操作按钮留出空间
+      .padding({ bottom: 96 }) // 增加底部内边距为操作按钮留出空间
       .id('mainNoiseMeterDisplayId')
       .onBreakpointChange(breakPoints => {
         // 断点信息现在由 AppStorage 统一管理，这里不再需要处理
@@ -204,8 +164,70 @@ export struct DecibelMeter {
         .scale({ x: this.dScale, y: this.dScale })
         .translate({ x: this.translateX, y: this.translateY })
 
-      this.actionPanel()
+      if (!this.hideForXsMd) {
+        this.actionPanel()
+      }
+    }.margin({ top: 16 })
+  }
+
+  aboutToDisappear() {
+    // 清理资源
+    this.audioControllerService.dispose();
+    // 停止倒计时更新定时器
+    this.stopCountdownTimer();
+  }
+
+  @Monitor('as.windowWidth','as.windowHeight')
+  onWindowSizeChange(monitor: IMonitor) {
+    // 获取当前窗口尺寸
+    this.calculateSize();
+  }
+
+  private calculateSize() {
+    if (this.as.windowWidthBreakpoint <= WidthBreakpoint.WIDTH_SM &&
+      this.as.windowHeightBreakpoint <= HeightBreakpoint.HEIGHT_MD) {
+      this.hideForXsMd = true;
+    } else {
+      this.hideForXsMd = false;
     }
+  }
+
+  aboutToAppear() {
+    // 获取当前窗口尺寸
+    this.calculateSize();
+    // 启动倒计时更新定时器
+    this.currentTime = Date.now();
+    this.countdownTimer = setInterval(() => {
+      this.currentTime = Date.now();
+    }, 1000)
+  }
+
+  private stopCountdownTimer() {
+    if (this.countdownTimer) {
+      clearInterval(this.countdownTimer);
+      this.countdownTimer = undefined;
+    }
+  }
+
+  @Computed
+  get autoSaveCountdown(): string {
+    if (!this.pk.auto_save_enabled) {
+      return '自动保存已禁用';
+    }
+
+    // 计算剩余时间
+    const elapsed = this.currentTime - this.lastAutoSaveTime;
+    const intervalMs = this.pk.auto_save_interval * 60 * 1000;
+    const remaining = Math.max(0, intervalMs - elapsed);
+
+    if (remaining <= 0) {
+      return '即将自动保存';
+    }
+
+    const minutes = Math.floor(remaining / 60000);
+    const seconds = Math.floor((remaining % 60000) / 1000);
+
+    return `${minutes}:${seconds.toString().padStart(2, '0')} 后自动保存`;
   }
 
   @Builder
@@ -269,7 +291,7 @@ export struct DecibelMeter {
     .width('100%')
     .backgroundColor($r('sys.color.comp_background_warning_secondary'))
     .borderRadius(8)
-    .margin({ top: 8, left: 16, right: 16 })
+    .margin(16)
   }
 
   @Builder
@@ -303,7 +325,7 @@ export struct DecibelMeter {
         .borderRadius(8)
         .padding(8)
       })
-    }
+    }.margin({top: 16})
   }
 
   @Builder

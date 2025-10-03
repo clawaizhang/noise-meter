@@ -235,8 +235,8 @@ export default class EntryAbility extends UIAbility {
     try {
       // 获取窗口尺寸
       const windowSize = this.mainWindow.getWindowProperties();
-      const widthVp = windowSize.windowRect.width;
-      const heightVp = windowSize.windowRect.height;
+      const widthVp = px2vp(windowSize.windowRect.width);
+      const heightVp = px2vp(windowSize.windowRect.height);
 
       // 使用系统提供的断点计算方法
       const uiContext = this.mainWindow.getUIContext();

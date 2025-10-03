@@ -40,32 +40,30 @@ export struct DecibelDisplayComponent {
   @Param @Require systemNotificationEnabled: boolean = true;
   @Param @Require isNoiseAlarm: boolean = false;
   @Param @Require autoSaveCountdown: string = '';
-  
+  @Local hiddenForXsMd: boolean = false;
   // 内部状态
   noiseStandardSub?: Subscription;
-  
   // DialogHub实例缓存
   private noiseDescriptionDialog: InfSheet | null = null;
   private noiseStandardDialog: InfSheet | null = null;
-
   // 定时器管理
   private noiseDescriptionUpdateIntervalId: number | null = null;
   private noiseStandardUpdateSubscription?: Subscription;
-  
   @Local as: AppKeys = AppStorageV2.connect(AppKeys)!;
   sysResourceManager: resourceManager.ResourceManager = resourceManager.getSystemResourceManager();
 
   aboutToAppear() {
     // 初始化稳定描述
+    this.changeDisplay();
   }
 
   aboutToDisappear() {
     // 清理资源
     this.noiseStandardSub?.unsubscribe();
-    
+
     // 清理DialogHub定时器
     this.cleanupDialogTimers();
-    
+
     // 注销Dialog
     if (this.noiseDescriptionDialog) {
       DialogStyleManager.unregisterDialog(this.noiseDescriptionDialog);
@@ -74,7 +72,56 @@ export struct DecibelDisplayComponent {
       DialogStyleManager.unregisterDialog(this.noiseStandardDialog);
     }
   }
-  
+
+  build() {
+    Column({ space: 0 }) {
+      if (!this.hiddenForXsMd) {
+        // 1. 噪音等级横幅（顶部）
+        this.noiseLevelBanner({
+          description: DecibelService.getDecibelDescription(this.currentDecibel)
+        })
+      }
+
+      // 2. 当前分贝值显示（核心区域）
+      this.currentDecibelDisplay({
+        currentDecibel: this.currentDecibel
+      })
+
+
+      // 3. 统计数据展示（最小值-平均值-最大值）
+      this.statisticsDisplay({
+        minDecibel: this.minDecibel,
+        avgDecibel: this.avgDecibel,
+        maxDecibel: this.maxDecibel
+      })
+      if (!this.hiddenForXsMd) {
+        // 4. 系统状态信息
+        this.systemStatusDisplay()
+
+        // 5. 噪音参考标准
+        this.noiseStandardDisplay()
+      }
+    }
+    .width('100%')
+    .padding({ left: 16, right: 16 })
+    .borderRadius(0)
+  }
+
+  @Monitor('as.windowWidth','as.windowHeight')
+  onWindowSizeChange(monitor: IMonitor) {
+    this.changeDisplay();
+  }
+
+  private changeDisplay() {
+    // 获取当前窗口尺寸
+    if (this.as.windowWidthBreakpoint <= WidthBreakpoint.WIDTH_SM &&
+      this.as.windowHeightBreakpoint <= HeightBreakpoint.HEIGHT_MD) {
+      this.hiddenForXsMd = true;
+    } else {
+      this.hiddenForXsMd = false;
+    }
+  }
+
   // 清理DialogHub相关定时器
   private cleanupDialogTimers() {
     // 清理噪音描述对话框定时器
@@ -82,7 +129,7 @@ export struct DecibelDisplayComponent {
       clearInterval(this.noiseDescriptionUpdateIntervalId);
       this.noiseDescriptionUpdateIntervalId = null;
     }
-    
+
     // 清理噪音标准对话框定时器
     this.noiseStandardUpdateSubscription?.unsubscribe();
     this.noiseStandardUpdateSubscription = undefined;
@@ -101,7 +148,11 @@ export struct DecibelDisplayComponent {
         .fontColor($r('sys.color.font_secondary'))
         .fontWeight(FontWeight.Medium);
     }
-    .padding({ left: 12, right: 12, top: 16, bottom: 8 })
+    .padding({
+      left: 12,
+      right: 12,
+      top: 16,
+    })
     .borderRadius(6)
     .width('100%')
     .justifyContent(FlexAlign.Center)
@@ -113,12 +164,12 @@ export struct DecibelDisplayComponent {
           .setConfig({ enableOutsideInteractive: true, scrollSizeMode: ScrollSizeMode.CONTINUOUS })
           .setComponentTargetId('popupTargetId')
           .build();
-        
+
         // 注册Dialog到样式管理器
         DialogStyleManager.registerDialog(this.noiseDescriptionDialog);
       }
       this.noiseDescriptionDialog.show();
-      
+
       // 清理之前的定时器并启动新的
       if (this.noiseDescriptionUpdateIntervalId) {
         clearInterval(this.noiseDescriptionUpdateIntervalId);
@@ -127,7 +178,6 @@ export struct DecibelDisplayComponent {
         this.noiseDescriptionDialog?.updateContent(this.as);
       }, 100);
     })
-    .id('noiseLevelBannerId')
   }
 
   @Builder
@@ -164,7 +214,7 @@ export struct DecibelDisplayComponent {
           .fontColor($r('sys.color.ohos_id_color_text_secondary'))
           .textAlign(TextAlign.Center)
           .width('100%');
-        
+
         Text(config.minDecibel === 0 ? '-' : config.minDecibel.toString())
           .fontSize(24)
           .fontWeight(FontWeight.Medium)
@@ -189,7 +239,7 @@ export struct DecibelDisplayComponent {
           .fontColor($r('sys.color.ohos_id_color_text_secondary'))
           .textAlign(TextAlign.Center)
           .width('100%');
-        
+
         Text(config.avgDecibel === 0 ? '-' : config.avgDecibel.toString())
           .fontSize(24)
           .fontWeight(FontWeight.Medium)
@@ -214,7 +264,7 @@ export struct DecibelDisplayComponent {
           .fontColor($r('sys.color.ohos_id_color_text_secondary'))
           .textAlign(TextAlign.Center)
           .width('100%');
-        
+
         Text(config.maxDecibel === 0 ? '-' : config.maxDecibel.toString())
           .fontSize(24)
           .fontWeight(FontWeight.Medium)
@@ -224,7 +274,12 @@ export struct DecibelDisplayComponent {
       }
       .layoutWeight(1)
     }
-    .padding({ top: 8, bottom: 8, left: 16, right: 16 })
+    .padding({
+      top: 8,
+      bottom: 8,
+      left: 16,
+      right: 16
+    })
     .width('100%')
     // 移除背景色，使用透明背景
     .backgroundColor(Color.Transparent)
@@ -240,7 +295,7 @@ export struct DecibelDisplayComponent {
           .width(14)
           .height(14)
           .fillColor($r('sys.color.ohos_id_color_text_secondary'));
-        
+
         Text(`校准:${this.calibrationValue} ${this.weightingType === WeightingType.A ? 'dB(A)' :
           this.weightingType === WeightingType.C ? 'dB(C)' : 'dB'}`)
           .fontSize(13)
@@ -256,15 +311,20 @@ export struct DecibelDisplayComponent {
             .width(14)
             .height(14)
             .fillColor($r('sys.color.ohos_id_color_text_secondary'));
-          
+
           Text(this.autoSaveCountdown)
             .fontSize(13)
             .fontColor($r('sys.color.ohos_id_color_text_secondary'));
         }
       }
     }
-    .padding({ top: 6, bottom: 6, left: 8, right: 8 })
-    .margin({top: 8})
+    .padding({
+      top: 6,
+      bottom: 6,
+      left: 8,
+      right: 8
+    })
+    .margin({ top: 8 })
     .width('100%')
     // 移除背景色，使用透明背景
     .backgroundColor(Color.Transparent)
@@ -278,21 +338,26 @@ export struct DecibelDisplayComponent {
         .width(14)
         .height(14)
         .fillColor($r('sys.color.ohos_id_color_text_secondary'));
-      
+
       Text('噪音参考标准')
         .fontSize(13)
         .fontColor($r('sys.color.ohos_id_color_text_secondary'))
         .textOverflow({ overflow: TextOverflow.Ellipsis })
         .maxLines(1)
         .layoutWeight(1);
-      
+
       Image($r('app.media.ic_arrow_right'))
         .width(12)
         .height(12)
         .fillColor($r('sys.color.ohos_id_color_text_secondary'));
     }
-    .padding({ top: 6, bottom: 6, left: 8, right: 8 })
-    .margin({top: 8})
+    .padding({
+      top: 6,
+      bottom: 6,
+      left: 8,
+      right: 8
+    })
+    .margin({ top: 8 })
     .width('100%')
     // 移除背景色，使用透明背景
     .backgroundColor(Color.Transparent)
@@ -306,12 +371,12 @@ export struct DecibelDisplayComponent {
           .setConfig({ enableOutsideInteractive: true, scrollSizeMode: ScrollSizeMode.CONTINUOUS })
           .setContent(wrapBuilder(NoiseStandardDialogBuilder), this.as)
           .build();
-        
+
         // 注册Dialog到样式管理器
         DialogStyleManager.registerDialog(this.noiseStandardDialog);
       }
       this.noiseStandardDialog.show();
-      
+
       // 清理之前的订阅并启动新的
       this.noiseStandardUpdateSubscription?.unsubscribe();
       this.noiseStandardUpdateSubscription = interval(500).subscribe(() => {
@@ -319,37 +384,5 @@ export struct DecibelDisplayComponent {
       });
     })
     .id('noiseStandardDisplayId')
-  }
-
-
-  build() {
-    Column({ space: 0 }) {
-      // 1. 噪音等级横幅（顶部）
-      this.noiseLevelBanner({
-        description: DecibelService.getDecibelDescription(this.currentDecibel)
-      })
-
-      // 2. 当前分贝值显示（核心区域）
-      this.currentDecibelDisplay({
-        currentDecibel: this.currentDecibel
-      })
-
-      // 3. 统计数据展示（最小值-平均值-最大值）
-      this.statisticsDisplay({
-        minDecibel: this.minDecibel,
-        avgDecibel: this.avgDecibel,
-        maxDecibel: this.maxDecibel
-      })
-
-      // 4. 系统状态信息
-      this.systemStatusDisplay()
-
-      // 5. 噪音参考标准
-      this.noiseStandardDisplay()
-    }
-    .width('100%')
-    .borderColor(this.isNoiseAlarm ? DecibelService.getDecibelColor(this.currentDecibel) : Color.Transparent)
-    .borderWidth(this.isNoiseAlarm ? 2 : 0)
-    .borderRadius(0)
   }
 }
