@@ -114,7 +114,7 @@ export struct DecibelMeter {
                 if (!this.as.microphonePermissionGranted) {
                   this.smartPermissionPrompt()
                 }
-              }
+              }.padding(16)
             }
 
             if (!this.hideForXsMd) {
@@ -287,10 +287,10 @@ export struct DecibelMeter {
           })
       }
     }
-    .padding(12)
+    .padding(16)
     .width('100%')
     .backgroundColor($r('sys.color.comp_background_warning_secondary'))
-    .borderRadius(8)
+    .borderRadius(16)
     .margin(16)
   }
 
@@ -325,7 +325,7 @@ export struct DecibelMeter {
         .borderRadius(8)
         .padding(8)
       })
-    }.margin({top: 16})
+    }.margin({ top: 16 })
   }
 
   @Builder

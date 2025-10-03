@@ -54,7 +54,7 @@ export struct MainNoiseMeter {
       this.menuItems = this.alertsMenus;
     }
     if (currentValue === 1) {
-      this.title = '仪表盘';
+      this.title = '静喵Sound';
       this.menuItems = this.noiseMeterMenus;
     }
     if (currentValue === 2) {
@@ -163,7 +163,7 @@ export struct MainNoiseMeter {
         TabContent() {
           this.DashboardContent()
         }
-        .tabBar(this.TabBuilder('仪表盘', $r('app.media.ic_meter'), 1))
+        .tabBar(this.TabBuilder('静喵Sound', $r('app.media.ic_meter'), 1))
 
         TabContent() {
           MyContentComponent({ currentIndex: this.currentIndex })
