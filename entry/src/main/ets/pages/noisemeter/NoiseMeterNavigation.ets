@@ -12,6 +12,7 @@ import { AlertsContent } from '../../components/alerts/AlertsContent';
 import { AlertsSettingsBuilder } from '../settings/AlertsSettingsNavigation';
 import { common, Want } from '@kit.AbilityKit';
 import { BusinessError } from '@kit.BasicServicesKit';
+import { MyContentComponent } from '../../components/my-content/MyContentComponent';
 
 // 导航菜单项接口定义
 interface NavigationMenuItem {
@@ -132,64 +133,6 @@ export struct MainNoiseMeter {
     })
   }
 
-  @Builder
-  MyContent() {
-    Column() {
-      // 全局设置列表项
-      List() {
-        ListItemBuilder(
-          $r('app.media.ic_settings'),
-          '全局设置',
-          () => {
-            DialogHub.getSheet()
-              .setStyle({ title: { title: '设置' }, backgroundColor: $r('sys.color.background_secondary') })
-              .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS,enableOutsideInteractive:true })
-              .setComponentTargetId('popupTargetId')
-              .setContent(wrapBuilder(SettingsBuilder))
-              .build()
-              .show();
-          },
-          20
-        )
-
-        // 给作者五星好评设置
-        ListItemBuilder(
-          $r('app.media.ic_favorite'),
-          '五星好评',
-          () => {
-            this.navigateToAppStoreRating();
-          },
-        )
-
-        // 关于列表项
-        ListItemBuilder(
-          $r('app.media.ic_info'),
-          '关于',
-          () => {
-            DialogHub.getSheet()
-              .setStyle({ title: { title: '关于' }, backgroundColor: $r('sys.color.background_secondary') })
-              .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS,enableOutsideInteractive:true })
-              .setComponentTargetId('popupTargetId')
-              .setContent(wrapBuilder(AboutSettingsBuilder))
-              .build()
-              .show();
-          }
-        )
-      }
-
-    }
-    .justifyContent(FlexAlign.Start)
-    .alignItems(HorizontalAlign.Center)
-    .opacity(this.currentIndex === 2 ? 1 : 0)
-    .scale({ x: this.currentIndex === 2 ? 1 : 0.95, y: this.currentIndex === 2 ? 1 : 0.95 })
-    .animation({
-      duration: 300,
-      curve: Curve.EaseOut,
-      delay: 0,
-      iterations: 1,
-      playMode: PlayMode.Normal
-    })
-  }
 
 
   // 跳转到应用商店评价页面
@@ -221,7 +164,7 @@ export struct MainNoiseMeter {
         .tabBar(this.TabBuilder('仪表盘', $r('app.media.ic_meter'), 1))
 
         TabContent() {
-          this.MyContent()
+          MyContentComponent({ currentIndex: this.currentIndex })
         }
         .tabBar(this.TabBuilder('我的', $r('app.media.ic_favorite'), 2))
       }
