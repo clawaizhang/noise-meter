@@ -158,17 +158,10 @@ export struct DecibelMeter {
               noiseThreshold: this.pk.noise_threshold,
               systemNotificationEnabled: this.pk.system_notification_enabled,
               isNoiseAlarm: false, // 报警状态由AudioController管理
-              autoSaveCountdown: this.autoSaveCountdown // 传递自动保存倒计时
+              autoSaveCountdown: this.autoSaveCountdown, // 传递自动保存倒计时
+              locationInfo: this.currentLocation ? this.currentLocation.address : '' // 传递位置信息
             })
 
-            // 位置显示
-            LocationDisplay({
-              onLocationUpdate: (locationInfo: LocationInfo | null) => {
-                // 更新本地位置状态
-                this.currentLocation = locationInfo;
-                console.info('[FREQ_TRACE][Location] 位置更新事件接收:', locationInfo);
-              }
-            })
           }
         }
         .backgroundColor($r('sys.color.comp_background_primary'))
