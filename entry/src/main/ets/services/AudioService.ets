@@ -66,7 +66,6 @@ export class AudioService {
   // 缓冲区相关
   private tempBuffer: ArrayBuffer | null = null;
   private tempBufferOffset: number = 0;
-  private audioBuffers: ArrayBuffer[] = [];
   private lastProcessTime: number = 0;
   // 配置和回调
   private currentConfig = AudioPresets.getConfig(AudioAnalysisMode.FAST_TIME_WEIGHTING);
@@ -106,7 +105,6 @@ export class AudioService {
    */
   startRecording(): void {
     this.isRecording = true;
-    this.audioBuffers = []; // 清空之前的录音数据
   }
 
   /**
@@ -179,13 +177,6 @@ export class AudioService {
           if (this.state !== AudioServiceState.CAPTURING) {
             return;
           }
-          // 如果正在录音，保存数据
-          if (this.isRecording) {
-            // 创建副本以避免引用问题
-            const bufferCopy = buffer.slice(0);
-            this.audioBuffers.push(bufferCopy);
-          }
-
           // 处理音频数据
           if (buffer && buffer.byteLength > 0) {
             console.info(`[音频采集] 收到音频数据: 大小=${buffer.byteLength}字节, 样本数=${buffer.byteLength / 2}`);
@@ -333,18 +324,21 @@ export class AudioService {
 
   /**
    * 停止录音并获取WAV文件路径
-   * @param fileService 文件服务实例
+   * @param audioBuffers 音频缓冲区数组（可选，如果不提供则使用内部存储的缓冲区）
    * @returns Promise<string> 保存的WAV文件路径
    */
-  async stopRecordingAndGetWavData(): Promise<string> {
+  async stopRecordingAndGetWavData(audioBuffers: ArrayBuffer[]): Promise<string> {
     try {
       // 停止录音
       this.stopRecording();
 
       console.info('开始生成WAV音频数据');
+      // 使用传入的音频缓冲区或内部存储的缓冲区
+      console.info(`生成WAV文件，使用${audioBuffers.length}个音频缓冲区`);
+      
       // 生成WAV文件数据
       const audioData = WavFileGenerator.generateWavFile(
-        this.audioBuffers,
+        audioBuffers,
         44100, // 采样率
         1, // 单声道
         16     // 16位采样
@@ -365,9 +359,6 @@ export class AudioService {
       console.info('准备保存音频文件:', relativePath);
       const filePath = await FileUtils.saveFile(relativePath, audioData);
       console.info('音频文件保存成功:', filePath);
-
-      // 清空录音缓存
-      this.audioBuffers = [];
 
       return filePath;
     } catch (error) {
@@ -524,7 +515,6 @@ export class AudioService {
 
     this.tempBufferOffset = 0;
     this.lastProcessTime = 0;
-    this.audioBuffers = [];
   }
 
   /**

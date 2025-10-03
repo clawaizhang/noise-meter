@@ -111,8 +111,6 @@ export struct DecibelMeter {
         AudioController({
           pk: this.pk,
           currentLocation: this.currentLocation,
-          onAudioBuffer: (buffer: ArrayBuffer) => {
-          },
           onSpectrumData: (spectrum: Float32Array) => {
             this.currentSpectrum = spectrum;
             this.as.spectrumData = spectrum;
