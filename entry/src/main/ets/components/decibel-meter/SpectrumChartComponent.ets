@@ -24,10 +24,6 @@ export struct SpectrumChartComponent {
   private canvasSettings: RenderingContextSettings = new RenderingContextSettings(true) // Canvas设置
   private canvasContext: CanvasRenderingContext2D = new CanvasRenderingContext2D(this.canvasSettings) // Canvas上下文
   
-  // DialogHub实例缓存
-  private spectrumDialog: InfSheet | null = null;
-  private spectrumUpdateIntervalId: number | null = null;
-  
   // 依赖注入
   @Local private sysResourceManager: resourceManager.ResourceManager = resourceManager.getSystemResourceManager();
   @Local private as: AppKeys = AppStorageV2.connect(AppKeys)!
@@ -40,11 +36,6 @@ export struct SpectrumChartComponent {
   }
   
   aboutToDisappear() {
-    // 清理定时器
-    if (this.spectrumUpdateIntervalId) {
-      clearInterval(this.spectrumUpdateIntervalId);
-      this.spectrumUpdateIntervalId = null;
-    }
   }
 
   @Monitor('spectrumData')
@@ -105,29 +96,6 @@ export struct SpectrumChartComponent {
           this.drawSpectrum(emptySpectrum);
         }
       })
-      .onClick(() => {
-        if (!this.spectrumDialog) {
-          this.spectrumDialog = DialogHub.getSheet()
-            .setStyle({
-              detents: [SheetSize.FIT_CONTENT],
-              backgroundColor: $r('sys.color.background_secondary'),
-              title: { title: '频谱图', subtitle: '横坐标: 频率(Hz), 纵坐标: 分贝值(dB)' }
-            })
-            .setConfig({enableOutsideInteractive:true})
-            .setComponentTargetId('popupTargetId')
-            .setContent(wrapBuilder(peakExp), this.as)
-            .build();
-        }
-        this.spectrumDialog.show();
-        
-        // 清理之前的定时器并启动新的
-        if (this.spectrumUpdateIntervalId) {
-          clearInterval(this.spectrumUpdateIntervalId);
-        }
-        this.spectrumUpdateIntervalId = setInterval(() => {
-          this.spectrumDialog?.updateContent(this.as);
-        }, 100);
-      })
   }
 
 
@@ -141,19 +109,4 @@ export struct SpectrumChartComponent {
   build() {
     this.SpectrumChart()
   }
-}
-
-@Builder
-function peakExp(ak: AppKeys) {
-  Column({ space: 16 }) {
-    Text('峰值频率').fontSize(24)
-
-    Text(`${ak.peakFreq.toFixed(0)}Hz`).fontSize(36)
-
-    Text('峰值频率反映了噪音中"最响"的那个音高。是的，它可以理解为当前噪音中能量最高的频率，帮助我们快速定位噪音的主要特征和可能来源，为降噪提供关键依据。')
-
-  }.backgroundColor($r('sys.color.comp_background_primary'))
-  .padding(16)
-  .borderRadius(16)
-  .alignItems(HorizontalAlign.Center)
 }
