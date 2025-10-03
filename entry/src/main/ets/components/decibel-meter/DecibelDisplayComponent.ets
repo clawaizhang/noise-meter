@@ -46,7 +46,6 @@ export struct DecibelDisplayComponent {
   @Param @Require systemNotificationEnabled: boolean = true;
   @Param @Require isNoiseAlarm: boolean = false;
   @Param @Require autoSaveCountdown: string = '';
-  @Param @Require locationInfo: string = '';
   
   // 内部状态
   @Local private showAvgInsteadOfMin: boolean = true;
@@ -261,28 +260,6 @@ export struct DecibelDisplayComponent {
     .borderRadius(6)
   }
 
-  @Builder
-  locationDisplay() {
-    if (this.locationInfo) {
-      Row({ space: 4 }) {
-        Image($r('app.media.ic_location'))
-          .width(12)
-          .height(12)
-          .fillColor($r('sys.color.ohos_id_color_text_secondary'));
-        
-        Text(this.locationInfo)
-          .fontSize(11)
-          .fontColor($r('sys.color.ohos_id_color_text_secondary'))
-          .textOverflow({ overflow: TextOverflow.Ellipsis })
-          .maxLines(1)
-          .layoutWeight(1);
-      }
-      .padding({ top: 6, bottom: 6, left: 12, right: 12 })
-      .width('100%')
-      .backgroundColor($r('sys.color.comp_background_secondary'))
-      .borderRadius(6)
-    }
-  }
 
   build() {
     Column({ space: 0 }) {
@@ -311,8 +288,6 @@ export struct DecibelDisplayComponent {
       // 4. 系统状态信息
       this.systemStatusDisplay()
 
-      // 5. 位置信息
-      this.locationDisplay()
     }
     .width('100%')
     .borderColor(this.isNoiseAlarm ? DecibelService.getDecibelColor(this.currentDecibel) : Color.Transparent)

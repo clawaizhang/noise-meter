@@ -115,18 +115,28 @@ export struct LocationDisplay {
   }
 
   build() {
-    Row() {
+    Row({ space: 8 }) {
+      Image($r('app.media.ic_location'))
+        .width(12)
+        .height(12)
+        .fillColor($r('sys.color.ohos_id_color_text_secondary'));
+
+      Text(this.pk.location_enabled ? (this.address || '点击刷新按钮获取位置') : '开启位置服务可记录噪音检测位置')
+        .fontSize(11)
+        .fontColor($r('sys.color.ohos_id_color_text_secondary'))
+        .textOverflow({ overflow: TextOverflow.Ellipsis })
+        .maxLines(1)
+        .layoutWeight(1);
+
       if (this.pk.location_enabled) {
         this.refreshButton()
       }
-
-      Text(this.pk.location_enabled ? (this.address || '点击刷新按钮获取位置') : '开启位置服务可记录噪音检测位置')
-        .textAlign(TextAlign.Center).textOverflow({ overflow: TextOverflow.MARQUEE })
     }
-
-    .height(40)
+    .padding({ top: 6, bottom: 6, left: 12, right: 12 })
+    .width('100%')
+    .backgroundColor($r('sys.color.comp_background_secondary'))
+    .borderRadius(6)
     .alignItems(VerticalAlign.Center)
-    .justifyContent(FlexAlign.Center)
   }
 
   @Builder
