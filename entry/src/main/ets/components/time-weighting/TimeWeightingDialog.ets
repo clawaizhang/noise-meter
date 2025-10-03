@@ -16,8 +16,8 @@ import { EnhancedModeSelectionPanel } from './EnhancedModeSelectionPanel';
 @ComponentV2
 export struct TimeWeightingDialog {
   @Param @Require currentMode: AudioAnalysisMode; // 当前模式（从外部传入）
-  @Param @Require onConfirm: (mode: AudioAnalysisMode) => void; // 确认回调
-  @Param @Require onCancel: () => void; // 取消回调
+  @Param @Require onModeChange: (mode: AudioAnalysisMode) => void; // 模式变化回调
+  @Param @Require onClose: () => void; // 关闭回调
   @Local selectedMode!: AudioAnalysisMode; // 选中的模式
   @Local hoveredMode: AudioAnalysisMode | null = null; // 悬停的模式
   @Local isTechnicalParamsExpanded: boolean = false; // 技术参数是否展开
@@ -28,22 +28,12 @@ export struct TimeWeightingDialog {
     this.selectedMode = this.currentMode;
   }
 
-  // 处理模式选择
+  // 处理模式选择 - 即时生效
   private handleModeSelect(mode: AudioAnalysisMode) {
     this.selectedMode = mode;
-  }
-
-  // 处理确认操作
-  private handleConfirm() {
-    if (this.onConfirm) {
-      this.onConfirm(this.selectedMode);
-    }
-  }
-
-  // 处理取消操作
-  private handleCancel() {
-    if (this.onCancel) {
-      this.onCancel();
+    // 立即应用新设置
+    if (this.onModeChange) {
+      this.onModeChange(mode);
     }
   }
 
@@ -156,49 +146,6 @@ export struct TimeWeightingDialog {
     .width('100%')
   }
 
-  // 构建操作按钮区域
-  @Builder
-  private buildActionButtons() {
-    Row({ space: DesignConstants.SPACING_MD }) {
-      // 取消按钮
-      Button('取消', { type: ButtonType.Capsule })
-        .layoutWeight(1)
-        .backgroundColor($r('sys.color.comp_background_primary'))
-        .fontColor($r('sys.color.font_primary'))
-        .fontSize(DesignConstants.FONT_SIZE_LG)
-        .fontWeight(FontWeight.Medium)
-        .borderRadius(DesignConstants.BORDER_RADIUS_MD)
-        .border({
-          width: DesignConstants.BORDER_WIDTH_SM,
-          color: $r('sys.color.comp_border_color'),
-          style: BorderStyle.Solid
-        })
-        .onClick(() => {
-          this.handleCancel();
-        })
-        .height(56)
-
-      // 确认按钮
-      Button('确认选择', { type: ButtonType.Capsule })
-        .layoutWeight(1)
-        .fontColor($r('sys.color.font_on_primary'))
-        .fontSize(DesignConstants.FONT_SIZE_LG)
-        .fontWeight(FontWeight.Medium)
-        .borderRadius(DesignConstants.BORDER_RADIUS_MD)
-        .backgroundColor(this.currentMode !== this.selectedMode ?
-        $r('sys.color.interactive_active') :
-        $r('sys.color.comp_background_tertiary'))
-        .enabled(this.currentMode !== this.selectedMode)
-        .onClick(() => {
-          this.handleConfirm();
-        })
-        .height(56)
-
-    }
-    .width('100%')
-    .padding(8)
-    .borderRadius(8)
-  }
 
   build() {
     Column({ space: 8 }) {
@@ -216,16 +163,16 @@ export struct TimeWeightingDialog {
 
         }
         .width('100%')
+        .margin({bottom:72})
         .padding(DesignConstants.SPACING_LG)
         .backgroundColor($r('sys.color.background_secondary'))
       }
-      .scrollBar(BarState.Auto)
+      .scrollBar(BarState.Off)
+      .edgeEffect(EdgeEffect.Spring)
       .scrollable(ScrollDirection.Vertical)
       .width('100%')
       .layoutWeight(1)
 
-      // 操作按钮区域
-      this.buildActionButtons()
     }
     .width('100%')
     .backgroundColor($r('sys.color.background_secondary'))
@@ -238,13 +185,13 @@ export function TimeWeightingDialogBuilder(param: TimeWeightingDialogParams
 ) {
   TimeWeightingDialog({
     currentMode: param.currentMode,
-    onConfirm: param.onConfirm,
-    onCancel: param.onCancel
+    onModeChange: param.onModeChange,
+    onClose: param.onClose
   })
 }
 
 export interface TimeWeightingDialogParams {
   currentMode: AudioAnalysisMode;
-  onConfirm: (mode: AudioAnalysisMode) => void;
-  onCancel: () => void;
+  onModeChange: (mode: AudioAnalysisMode) => void;
+  onClose: () => void;
 }

@@ -61,6 +61,8 @@ export struct AutoSaveSettingsDialog {
     if (index !== -1) {
       this.customInterval = newInterval;
     }
+    // 立即应用新设置
+    this.handleIntervalChange(newInterval);
   }
 
   private handleCustomInput(value: string) {
@@ -68,23 +70,33 @@ export struct AutoSaveSettingsDialog {
     if (!isNaN(numValue) && numValue >= 1 && numValue <= 60) {
       this.customInterval = numValue;
       this.interval = numValue;
+      // 立即应用新设置
+      this.handleIntervalChange(numValue);
     }
   }
 
-  private handleConfirm() {
-    this.pk.auto_save_enabled = this.autoSaveEnabled;
-    this.pk.auto_save_interval = this.interval;
+  // 处理开关变化 - 即时生效
+  private handleToggleChange(isOn: boolean) {
+    this.autoSaveEnabled = isOn;
+    this.pk.auto_save_enabled = isOn;
     
     promptAction.showToast({
-      message: this.autoSaveEnabled ? `自动保存已启用：每${this.interval}分钟保存` : '自动保存已禁用',
+      message: isOn ? `自动保存已启用：每${this.interval}分钟保存` : '自动保存已禁用',
       duration: 2000
     });
-    
-    this.params.onClose();
   }
 
-  private handleCancel() {
-    this.params.onClose();
+  // 处理间隔变化 - 即时生效
+  private handleIntervalChange(newInterval: number) {
+    this.interval = newInterval;
+    this.pk.auto_save_interval = newInterval;
+    
+    if (this.autoSaveEnabled) {
+      promptAction.showToast({
+        message: `自动保存间隔已更新：每${newInterval}分钟保存`,
+        duration: 2000
+      });
+    }
   }
 
   @Builder
@@ -159,7 +171,7 @@ export struct AutoSaveSettingsDialog {
           .selectedColor($r('app.color.toggle_active'))
           .switchPointColor($r('app.color.background_primary'))
           .onChange((isOn: boolean) => {
-            this.autoSaveEnabled = isOn;
+            this.handleToggleChange(isOn);
           })
       }
       .width('100%')
@@ -209,31 +221,6 @@ export struct AutoSaveSettingsDialog {
         this.buildCustomInput()
       }
 
-      // 按钮区域
-      Row({ space: 12 }) {
-        Button('取消', { type: ButtonType.Normal })
-          .layoutWeight(1)
-          .height(48)
-          .fontSize(DesignConstants.FONT_SIZE_MD)
-          .fontColor($r('sys.color.font_primary'))
-          .backgroundColor($r('sys.color.comp_background_secondary'))
-          .borderRadius(DesignConstants.BORDER_RADIUS_MD)
-          .onClick(() => {
-            this.handleCancel();
-          })
-
-        Button('确认', { type: ButtonType.Capsule })
-          .layoutWeight(1)
-          .height(48)
-          .fontSize(DesignConstants.FONT_SIZE_MD)
-          .fontColor($r('sys.color.font_on_primary'))
-          .backgroundColor($r('sys.color.interactive_active'))
-          .borderRadius(DesignConstants.BORDER_RADIUS_MD)
-          .onClick(() => {
-            this.handleConfirm();
-          })
-      }
-      .width('100%')
     }
     .width('100%')
     .padding(DesignConstants.SPACING_LG)

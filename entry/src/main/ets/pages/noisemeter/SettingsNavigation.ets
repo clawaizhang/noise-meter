@@ -239,13 +239,11 @@ struct Settings {
     if (!this.timeWeightingDialog) {
       let param: TimeWeightingDialogParams = {
         currentMode: this.pk.audio_analysis_mode,
-        onConfirm: (selectedMode: AudioAnalysisMode) => {
-          // 确认选择后的处理
+        onModeChange: (selectedMode: AudioAnalysisMode) => {
+          // 即时生效：立即应用新设置
           this.handleTimeWeightingModeChange(selectedMode);
-          this.timeWeightingDialog?.dismiss();
         },
-        onCancel: () => {
-          // 取消选择
+        onClose: () => {
           this.timeWeightingDialog?.dismiss();
         }
       }
@@ -266,13 +264,11 @@ struct Settings {
     if (!this.frequencyWeightingDialog) {
       let param: FrequencyWeightingDialogParams = {
         currentWeighting: this.pk.weighting_type,
-        onConfirm: (selectedWeighting: WeightingType) => {
-          // 确认选择后的处理
+        onWeightingChange: (selectedWeighting: WeightingType) => {
+          // 即时生效：立即应用新设置
           this.pk.weighting_type = selectedWeighting;
-          this.frequencyWeightingDialog?.dismiss();
         },
-        onCancel: () => {
-          // 取消选择
+        onClose: () => {
           this.frequencyWeightingDialog?.dismiss();
         }
       }

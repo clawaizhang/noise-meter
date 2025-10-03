@@ -15,8 +15,8 @@ import { CollapsibleSection } from '../time-weighting/CollapsibleSection';
 @ComponentV2
 export struct FrequencyWeightingDialog {
   @Param @Require currentWeighting: WeightingType; // 当前计权类型（从外部传入）
-  @Param @Require onConfirm: (weighting: WeightingType) => void; // 确认回调
-  @Param @Require onCancel: () => void; // 取消回调
+  @Param @Require onWeightingChange: (weighting: WeightingType) => void; // 计权类型变化回调
+  @Param @Require onClose: () => void; // 关闭回调
   @Local selectedWeighting!: WeightingType; // 选中的计权类型
   @Local hoveredWeighting: WeightingType | null = null; // 悬停的计权类型
   @Local isTechnicalParamsExpanded: boolean = false; // 技术参数是否展开
@@ -27,22 +27,12 @@ export struct FrequencyWeightingDialog {
     this.selectedWeighting = this.currentWeighting;
   }
 
-  // 处理计权类型选择
+  // 处理计权类型选择 - 即时生效
   private handleWeightingSelect(weighting: WeightingType) {
     this.selectedWeighting = weighting;
-  }
-
-  // 处理确认操作
-  private handleConfirm() {
-    if (this.onConfirm) {
-      this.onConfirm(this.selectedWeighting);
-    }
-  }
-
-  // 处理取消操作
-  private handleCancel() {
-    if (this.onCancel) {
-      this.onCancel();
+    // 立即应用新设置
+    if (this.onWeightingChange) {
+      this.onWeightingChange(weighting);
     }
   }
 
@@ -155,49 +145,6 @@ export struct FrequencyWeightingDialog {
     .width('100%')
   }
 
-  // 构建操作按钮区域
-  @Builder
-  private buildActionButtons() {
-    Row({ space: DesignConstants.SPACING_MD }) {
-      // 取消按钮
-      Button('取消', { type: ButtonType.Capsule })
-        .layoutWeight(1)
-        .backgroundColor($r('sys.color.comp_background_primary'))
-        .fontColor($r('sys.color.font_primary'))
-        .fontSize(DesignConstants.FONT_SIZE_LG)
-        .fontWeight(FontWeight.Medium)
-        .borderRadius(DesignConstants.BORDER_RADIUS_MD)
-        .border({
-          width: DesignConstants.BORDER_WIDTH_SM,
-          color: $r('sys.color.comp_border_color'),
-          style: BorderStyle.Solid
-        })
-        .onClick(() => {
-          this.handleCancel();
-        })
-        .height(56)
-
-      // 确认按钮
-      Button('确认选择', { type: ButtonType.Capsule })
-        .layoutWeight(1)
-        .fontColor($r('sys.color.font_on_primary'))
-        .fontSize(DesignConstants.FONT_SIZE_LG)
-        .fontWeight(FontWeight.Medium)
-        .borderRadius(DesignConstants.BORDER_RADIUS_MD)
-        .backgroundColor(this.currentWeighting !== this.selectedWeighting ?
-        $r('sys.color.interactive_active') :
-        $r('sys.color.comp_background_tertiary'))
-        .enabled(this.currentWeighting !== this.selectedWeighting)
-        .onClick(() => {
-          this.handleConfirm();
-        })
-        .height(56)
-
-    }
-    .width('100%')
-    .padding(8)
-    .borderRadius(8)
-  }
 
   build() {
     Column({ space: 8 }) {
@@ -213,16 +160,16 @@ export struct FrequencyWeightingDialog {
 
         }
         .width('100%')
+        .margin({bottom:72})
         .padding(DesignConstants.SPACING_LG)
         .backgroundColor($r('sys.color.background_secondary'))
       }
-      .scrollBar(BarState.Auto)
+      .scrollBar(BarState.Off)
       .scrollable(ScrollDirection.Vertical)
+      .edgeEffect(EdgeEffect.Spring)
       .width('100%')
       .layoutWeight(1)
 
-      // 操作按钮区域
-      this.buildActionButtons()
     }
     .width('100%')
     .backgroundColor($r('sys.color.background_secondary'))
@@ -235,13 +182,13 @@ export function FrequencyWeightingDialogBuilder(param: FrequencyWeightingDialogP
 ) {
   FrequencyWeightingDialog({
     currentWeighting: param.currentWeighting,
-    onConfirm: param.onConfirm,
-    onCancel: param.onCancel
+    onWeightingChange: param.onWeightingChange,
+    onClose: param.onClose
   })
 }
 
 export interface FrequencyWeightingDialogParams {
   currentWeighting: WeightingType;
-  onConfirm: (weighting: WeightingType) => void;
-  onCancel: () => void;
+  onWeightingChange: (weighting: WeightingType) => void;
+  onClose: () => void;
 }
