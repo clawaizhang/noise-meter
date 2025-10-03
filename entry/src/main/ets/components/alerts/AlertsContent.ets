@@ -163,6 +163,7 @@ export struct AlertsContent {
         .lineHeight(18)
     }
     .padding(DesignConstants.SPACING_LG)
+    .width('100%')
     .backgroundColor($r('sys.color.comp_background_primary'))
     .borderRadius(DesignConstants.BORDER_RADIUS_LG)
   }
