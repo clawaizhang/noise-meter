@@ -243,7 +243,7 @@ export default class EntryAbility extends UIAbility {
       const isLandscape = widthVp > heightVp;
 
       // 更新到 AppStorage
-      let appKeys = AppStorageV2.connect(AppKeys)!;
+      let appKeys = AppStorageV2.connect(AppKeys,() => new AppKeys())!;
       appKeys.windowWidthBreakpoint = widthBp;
       appKeys.windowHeightBreakpoint = heightBp;
       appKeys.windowWidth = widthVp;
@@ -253,7 +253,7 @@ export default class EntryAbility extends UIAbility {
       hilog.info(DOMAIN, TAG,
         `Window breakpoints updated - Width: ${widthBp}(${widthVp}vp), Height: ${heightBp}(${heightVp}vp), Landscape: ${isLandscape}`);
     } catch (error) {
-      hilog.error(DOMAIN, TAG, `Failed to update window breakpoint info: ${JSON.stringify(error)}`);
+      hilog.error(DOMAIN, TAG, `Failed to update window breakpoint info: ${error}`);
     }
   }
 }
