@@ -124,7 +124,8 @@ export struct SpectrumChartComponent {
               backgroundColor: $r('sys.color.background_secondary'),
               title: { title: '频谱图', subtitle: '横坐标: 频率(Hz), 纵坐标: 分贝值(dB)' }
             })
-            .setComponentTargetId('ashkjlgfshgal')
+            .setConfig({enableOutsideInteractive:true})
+            .setComponentTargetId('popupTargetId')
             .setContent(wrapBuilder(peakExp), this.as)
             .build();
         }

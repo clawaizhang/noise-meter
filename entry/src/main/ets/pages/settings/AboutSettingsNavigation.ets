@@ -132,7 +132,7 @@ export struct AboutSettings {
             .listItemRow()
             .onClick(() => {
               if (!this.privacyPolicyDialog) {
-                this.privacyPolicyDialog = DialogHub.getSheet().setContent(wrapBuilder(PrivacyPolicyViewBuilder)).build();
+                this.privacyPolicyDialog = DialogHub.getSheet().setConfig({enableOutsideInteractive:true}).setStyle({backgroundColor:$r('sys.color.background_secondary')}).setContent(wrapBuilder(PrivacyPolicyViewBuilder)).build();
               }
               this.privacyPolicyDialog.show();
             })

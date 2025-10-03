@@ -215,8 +215,8 @@ struct Settings {
     if (!this.audioAnalysisDialog) {
       this.audioAnalysisDialog = DialogHub.getSheet()
         .setStyle({ title: { title: '声级校准' }, backgroundColor: $r('sys.color.background_secondary') })
-        .setConfig({ scrollSizeMode: ScrollSizeMode.FOLLOW_DETENT })
-        .setComponentTargetId('settingsId')
+        .setConfig({ scrollSizeMode: ScrollSizeMode.FOLLOW_DETENT,enableOutsideInteractive:true })
+        .setComponentTargetId('popupTargetId')
         .setContent(wrapBuilder(AudioAnalysisSettingsBuilder))
         .build();
     }
@@ -227,8 +227,8 @@ struct Settings {
     if (!this.alertsDialog) {
       this.alertsDialog = DialogHub.getSheet()
         .setStyle({ title: { title: '警报与通知' }, backgroundColor: $r('sys.color.background_secondary') })
-        .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS })
-        .setComponentTargetId('settingsId')
+        .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS,enableOutsideInteractive:true })
+        .setComponentTargetId('popupTargetId')
         .setContent(wrapBuilder(AlertsSettingsBuilder))
         .build();
     }
@@ -257,8 +257,8 @@ struct Settings {
           title: { title: '时间计权模式选择' },
           backgroundColor: $r('sys.color.background_secondary')
         })
-        .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS })
-        .setComponentTargetId('settingsId')
+        .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS,enableOutsideInteractive:true })
+        .setComponentTargetId('popupTargetId')
         .setContent(wrapBuilder(TimeWeightingDialogBuilder), param)
         .build();
     }
@@ -284,8 +284,8 @@ struct Settings {
           title: { title: '频率加权模式选择' },
           backgroundColor: $r('sys.color.background_secondary')
         })
-        .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS })
-        .setComponentTargetId('settingsId')
+        .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS,enableOutsideInteractive:true })
+        .setComponentTargetId('popupTargetId')
         .setContent(wrapBuilder(FrequencyWeightingDialogBuilder), param)
         .build();
     }
@@ -304,8 +304,8 @@ struct Settings {
           title: { title: '自动保存设置' },
           backgroundColor: $r('sys.color.background_secondary')
         })
-        .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS })
-        .setComponentTargetId('settingsId')
+        .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS,enableOutsideInteractive:true })
+        .setComponentTargetId('popupTargetId')
         .setContent(wrapBuilder(AutoSaveSettingsDialogBuilder), param)
         .build();
     }

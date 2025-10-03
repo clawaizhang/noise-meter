@@ -102,8 +102,8 @@ export struct MainNoiseMeter {
         if (!this.alertsDialog) {
           this.alertsDialog = DialogHub.getSheet()
             .setStyle({ title: { title: '警报与通知' }, backgroundColor: $r('sys.color.background_secondary') })
-            .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS })
-            .setComponentTargetId('mainAppId')
+            .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS,enableOutsideInteractive:true })
+            .setComponentTargetId('popupTargetId')
             .setContent(wrapBuilder(AlertsSettingsBuilder))
             .build();
         }
@@ -146,8 +146,8 @@ export struct MainNoiseMeter {
           () => {
             DialogHub.getSheet()
               .setStyle({ title: { title: '设置' }, backgroundColor: $r('sys.color.background_secondary') })
-              .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS })
-              .setComponentTargetId('myContentId')
+              .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS,enableOutsideInteractive:true })
+              .setComponentTargetId('popupTargetId')
               .setContent(wrapBuilder(SettingsBuilder))
               .build()
               .show();
@@ -171,8 +171,8 @@ export struct MainNoiseMeter {
           () => {
             DialogHub.getSheet()
               .setStyle({ title: { title: '关于' }, backgroundColor: $r('sys.color.background_secondary') })
-              .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS })
-              .setComponentTargetId('myContentId')
+              .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS,enableOutsideInteractive:true })
+              .setComponentTargetId('popupTargetId')
               .setContent(wrapBuilder(AboutSettingsBuilder))
               .build()
               .show();
@@ -181,7 +181,6 @@ export struct MainNoiseMeter {
       }
 
     }
-    .id('myContentId')
     .justifyContent(FlexAlign.Start)
     .alignItems(HorizontalAlign.Center)
     .opacity(this.currentIndex === 2 ? 1 : 0)

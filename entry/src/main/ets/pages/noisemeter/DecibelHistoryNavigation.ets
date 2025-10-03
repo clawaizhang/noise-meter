@@ -449,9 +449,9 @@ export struct DecibelHistory {
       };
       if (!this.detailDialog) {
         this.detailDialog = DialogHub.getSheet()
-          .setComponentTargetId('showNoiseDetailDialogFromHistory')
-          .setStyle({ showClose: false })
-          .setConfig({ enableOutsideInteractive: false, scrollSizeMode: ScrollSizeMode.CONTINUOUS })
+          .setComponentTargetId('popupTargetId')
+          .setStyle({ backgroundColor:$r('sys.color.background_secondary') })
+          .setConfig({ enableOutsideInteractive: true, scrollSizeMode: ScrollSizeMode.CONTINUOUS })
           .setContent(wrapBuilder(DetailDialogBuilder), params)
           .build();
       }

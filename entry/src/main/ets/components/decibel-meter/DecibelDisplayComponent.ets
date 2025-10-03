@@ -54,8 +54,7 @@ export struct DecibelDisplayComponent {
   // DialogHub实例缓存
   private noiseDescriptionDialog: InfSheet | null = null;
   private noiseStandardDialog: InfSheet | null = null;
-  private currentDecibelPopup: InfPopup | null = null;
-  
+
   // 定时器管理
   private noiseDescriptionUpdateIntervalId: number | null = null;
   private noiseStandardUpdateSubscription?: Subscription;
@@ -110,9 +109,9 @@ export struct DecibelDisplayComponent {
       if (!this.noiseDescriptionDialog) {
         this.noiseDescriptionDialog = DialogHub.getSheet()
           .setContent(wrapBuilder(NoiseDescriptionDialogBuilder), this.as)
-          .setStyle({ backgroundColor: $r('sys.color.background_secondary'), showClose: false })
-          .setConfig({ enableOutsideInteractive: false, scrollSizeMode: ScrollSizeMode.CONTINUOUS })
-          .setComponentTargetId('noiseLevelBannerId')
+          .setStyle({ backgroundColor: $r('sys.color.background_secondary') })
+          .setConfig({ enableOutsideInteractive: true, scrollSizeMode: ScrollSizeMode.CONTINUOUS })
+          .setComponentTargetId('popupTargetId')
           .build();
       }
       this.noiseDescriptionDialog.show();
@@ -150,25 +149,6 @@ export struct DecibelDisplayComponent {
     .justifyContent(FlexAlign.Center)
     .alignItems(VerticalAlign.Bottom)
     .id('currentDbComp')
-    .onClick(() => {
-      if (!this.currentDecibelPopup) {
-        this.currentDecibelPopup = DialogHub.getPopup()
-          .setTextContent('当前分贝值')
-          .setComponentTargetId('currentDbComp')
-          .setStyle({
-            radius: $r('sys.float.chip_small_radius'),
-            maskColor: '#00000000',
-          })
-          .setConfig({
-            dialogPosition: {
-              preferPlacement: Placement.Top
-            },
-            dialogBehavior: { isModal: true, autoDismiss: true }
-          })
-          .build();
-      }
-      this.currentDecibelPopup.show();
-    })
   }
 
   @Builder
@@ -315,9 +295,9 @@ export struct DecibelDisplayComponent {
       // 点击打开噪音参考标准对话框
       if (!this.noiseStandardDialog) {
         this.noiseStandardDialog = DialogHub.getSheet()
-          .setStyle({ backgroundColor: $r('sys.color.background_secondary'), showClose: false })
-          .setComponentTargetId('noiseStandardDisplayId')
-          .setConfig({ enableOutsideInteractive: false, scrollSizeMode: ScrollSizeMode.CONTINUOUS })
+          .setStyle({ backgroundColor: $r('sys.color.background_secondary') })
+          .setComponentTargetId('popupTargetId')
+          .setConfig({ enableOutsideInteractive: true, scrollSizeMode: ScrollSizeMode.CONTINUOUS })
           .setContent(wrapBuilder(NoiseStandardDialogBuilder), this.as)
           .build();
       }
