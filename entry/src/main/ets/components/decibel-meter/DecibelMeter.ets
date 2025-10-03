@@ -42,7 +42,6 @@ export struct DecibelMeter {
   // 服务实例
   private audioControllerService: AudioControllerService = AudioControllerService.getInstance();
   @Consumer(navigationStack) navStack: NavPathStack = new NavPathStack()
-  noiseInfoDialog: InfSheet | undefined
   sysResourceManager: resourceManager.ResourceManager = resourceManager.getSystemResourceManager();
 
   aboutToDisappear() {

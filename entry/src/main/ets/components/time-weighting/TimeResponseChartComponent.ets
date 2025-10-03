@@ -35,7 +35,7 @@ export struct TimeResponseChartComponent {
   }
 
   aboutToDisappear() {
-    this.stopAnimation();
+    this.cleanupResources();
   }
 
   @Monitor('selectedMode')
@@ -44,6 +44,15 @@ export struct TimeResponseChartComponent {
     this.stopAnimation();
     this.initializeResponseData();
     this.startAnimation();
+  }
+
+  // 清理所有资源
+  private cleanupResources(): void {
+    this.stopAnimation();
+    this.responseData = [];
+    this.animationTime = 0;
+    this.pulseTriggered = false;
+    this.cycleCount = 0;
   }
 
   // 初始化Canvas尺寸
@@ -55,7 +64,15 @@ export struct TimeResponseChartComponent {
 
   // 初始化响应数据
   private initializeResponseData() {
-    this.responseData = new Array(this.SAMPLE_COUNT).fill(0);
+    // 重用现有数组，避免频繁创建新数组
+    if (this.responseData.length !== this.SAMPLE_COUNT) {
+      this.responseData = new Array(this.SAMPLE_COUNT).fill(0);
+    } else {
+      // 重用现有数组，直接填充0
+      for (let i = 0; i < this.SAMPLE_COUNT; i++) {
+        this.responseData[i] = 0;
+      }
+    }
     this.animationTime = 0;
     this.pulseTriggered = false;
     this.cycleCount = 0;
@@ -80,6 +97,8 @@ export struct TimeResponseChartComponent {
       this.animationTimer = 0;
     }
     this.isAnimating = false;
+    // 强制垃圾回收提示
+    this.responseData = [];
   }
 
   // 更新动画帧
@@ -107,8 +126,10 @@ export struct TimeResponseChartComponent {
   // 触发脉冲
   private triggerPulse() {
     this.pulseTriggered = true;
-    // 重置响应数据，模拟脉冲输入
-    this.responseData = new Array(this.SAMPLE_COUNT).fill(0);
+    // 重置响应数据，模拟脉冲输入 - 重用现有数组
+    for (let i = 0; i < this.SAMPLE_COUNT; i++) {
+      this.responseData[i] = 0;
+    }
   }
 
   // 更新响应数据
