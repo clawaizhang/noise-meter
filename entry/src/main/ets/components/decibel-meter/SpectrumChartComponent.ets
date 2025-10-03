@@ -2,7 +2,7 @@ import { AppStorageV2, PersistenceV2 } from '@kit.ArkUI';
 import { resourceManager } from '@kit.LocalizationKit';
 import { AppKeys } from '../../models/AppKeys';
 import { drawSpectrum, getDbSteps, getFrequencySteps } from './DrawSpectrum';
-import { DialogHub } from '@hadss/dialoghub';
+import { DialogHub, InfSheet } from '@hadss/dialoghub';
 import { AudioPresets } from '../../common/AudioConfig';
 import { PreferenceKeys } from '../../models/PreferenceKeys';
 
@@ -24,6 +24,10 @@ export struct SpectrumChartComponent {
   private canvasSettings: RenderingContextSettings = new RenderingContextSettings(true) // Canvas设置
   private canvasContext: CanvasRenderingContext2D = new CanvasRenderingContext2D(this.canvasSettings) // Canvas上下文
   
+  // DialogHub实例缓存
+  private spectrumDialog: InfSheet | null = null;
+  private spectrumUpdateIntervalId: number | null = null;
+  
   // 依赖注入
   @Local private sysResourceManager: resourceManager.ResourceManager = resourceManager.getSystemResourceManager();
   @Local private as: AppKeys = AppStorageV2.connect(AppKeys)!
@@ -33,6 +37,14 @@ export struct SpectrumChartComponent {
 
   aboutToAppear() {
     this.calculateCanvasDimensions();
+  }
+  
+  aboutToDisappear() {
+    // 清理定时器
+    if (this.spectrumUpdateIntervalId) {
+      clearInterval(this.spectrumUpdateIntervalId);
+      this.spectrumUpdateIntervalId = null;
+    }
   }
 
   @Monitor('spectrumData')
@@ -105,19 +117,26 @@ export struct SpectrumChartComponent {
       })
       .id('ashkjlgfshgal')
       .onClick(() => {
-        let dialog = DialogHub.getSheet()
-          .setStyle({
-            detents: [SheetSize.FIT_CONTENT],
-            backgroundColor: $r('sys.color.background_secondary'),
-            title: { title: '频谱图', subtitle: '横坐标: 频率(Hz), 纵坐标: 分贝值(dB)' }
-          })
-          .setComponentTargetId('ashkjlgfshgal')
-          .setContent(wrapBuilder(peakExp), this.as)
-          .build();
-        dialog.show();
-        setInterval(() => {
-          dialog.updateContent(this.as);
-        }, 100)
+        if (!this.spectrumDialog) {
+          this.spectrumDialog = DialogHub.getSheet()
+            .setStyle({
+              detents: [SheetSize.FIT_CONTENT],
+              backgroundColor: $r('sys.color.background_secondary'),
+              title: { title: '频谱图', subtitle: '横坐标: 频率(Hz), 纵坐标: 分贝值(dB)' }
+            })
+            .setComponentTargetId('ashkjlgfshgal')
+            .setContent(wrapBuilder(peakExp), this.as)
+            .build();
+        }
+        this.spectrumDialog.show();
+        
+        // 清理之前的定时器并启动新的
+        if (this.spectrumUpdateIntervalId) {
+          clearInterval(this.spectrumUpdateIntervalId);
+        }
+        this.spectrumUpdateIntervalId = setInterval(() => {
+          this.spectrumDialog?.updateContent(this.as);
+        }, 100);
       })
   }
 

@@ -92,7 +92,13 @@ interface ListItemParam {
 }
 
 @ComponentV2
-export struct Settings {
+struct Settings {
+  // DialogHub实例缓存
+  private audioAnalysisDialog: InfSheet | null = null;
+  private alertsDialog: InfSheet | null = null;
+  private timeWeightingDialog: InfSheet | null = null;
+  private frequencyWeightingDialog: InfSheet | null = null;
+  private autoSaveDialog: InfSheet | null = null;
   @Local pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys)!;
   @Consumer(navigationStack) navStack: NavPathStack = new NavPathStack();
   @Local analysisModeDescription: string = '';
@@ -137,7 +143,7 @@ export struct Settings {
     const enabled = this.pk.system_notification_enabled;
     const threshold = ThresholdManager.getCurrentEffectiveThreshold();
     const timePeriod = ThresholdManager.getCurrentTimePeriod();
-    
+
     if (!enabled) {
       return "警报通知已关闭，不会发送任何通知";
     } else {
@@ -154,7 +160,7 @@ export struct Settings {
   private getAutoSaveDescription(): string {
     const enabled = this.pk.auto_save_enabled;
     const interval = this.pk.auto_save_interval;
-    
+
     if (!enabled) {
       return "自动保存已关闭，需要手动保存数据";
     } else {
@@ -206,99 +212,104 @@ export struct Settings {
 
   // 导航到音频分析设置页面
   private navigateToAudioAnalysis = () => {
-    DialogHub.getSheet()
-      .setStyle({ title: { title: '声级校准' }, backgroundColor: $r('sys.color.background_secondary') })
-      .setConfig({ scrollSizeMode: ScrollSizeMode.FOLLOW_DETENT })
-      .setComponentTargetId('settingsId')
-      .setContent(wrapBuilder(AudioAnalysisSettingsBuilder))
-      .build()
-      .show();
+    if (!this.audioAnalysisDialog) {
+      this.audioAnalysisDialog = DialogHub.getSheet()
+        .setStyle({ title: { title: '声级校准' }, backgroundColor: $r('sys.color.background_secondary') })
+        .setConfig({ scrollSizeMode: ScrollSizeMode.FOLLOW_DETENT })
+        .setComponentTargetId('settingsId')
+        .setContent(wrapBuilder(AudioAnalysisSettingsBuilder))
+        .build();
+    }
+    this.audioAnalysisDialog.show();
   }
   // 导航到警报与通知设置页面
   private navigateToAlerts = () => {
-    DialogHub.getSheet()
-      .setStyle({ title: { title: '警报与通知' }, backgroundColor: $r('sys.color.background_secondary') })
-      .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS })
-      .setComponentTargetId('settingsId')
-      .setContent(wrapBuilder(AlertsSettingsBuilder))
-      .build()
-      .show();
+    if (!this.alertsDialog) {
+      this.alertsDialog = DialogHub.getSheet()
+        .setStyle({ title: { title: '警报与通知' }, backgroundColor: $r('sys.color.background_secondary') })
+        .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS })
+        .setComponentTargetId('settingsId')
+        .setContent(wrapBuilder(AlertsSettingsBuilder))
+        .build();
+    }
+    this.alertsDialog.show();
   }
   // 打开时间计权模式选择弹框
   private openTimeWeightingDialog = () => {
     if (!this.isModeChangeEnabled) {
       return;
     }
-    let dialog: InfSheet;
-    let param: TimeWeightingDialogParams = {
-      currentMode: this.pk.audio_analysis_mode,
-      onConfirm: (selectedMode: AudioAnalysisMode) => {
-        // 确认选择后的处理
-        this.handleTimeWeightingModeChange(selectedMode);
-        dialog.dismiss();
-      },
-      onCancel: () => {
-        // 取消选择
-        dialog.dismiss();
+    if (!this.timeWeightingDialog) {
+      let param: TimeWeightingDialogParams = {
+        currentMode: this.pk.audio_analysis_mode,
+        onConfirm: (selectedMode: AudioAnalysisMode) => {
+          // 确认选择后的处理
+          this.handleTimeWeightingModeChange(selectedMode);
+          this.timeWeightingDialog?.dismiss();
+        },
+        onCancel: () => {
+          // 取消选择
+          this.timeWeightingDialog?.dismiss();
+        }
       }
+      this.timeWeightingDialog = DialogHub.getSheet()
+        .setStyle({
+          title: { title: '时间计权模式选择' },
+          backgroundColor: $r('sys.color.background_secondary')
+        })
+        .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS })
+        .setComponentTargetId('settingsId')
+        .setContent(wrapBuilder(TimeWeightingDialogBuilder), param)
+        .build();
     }
-    dialog = DialogHub.getSheet()
-      .setStyle({
-        title: { title: '时间计权模式选择' },
-        backgroundColor: $r('sys.color.background_secondary')
-      })
-      .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS })
-      .setComponentTargetId('settingsId')
-      .setContent(wrapBuilder(TimeWeightingDialogBuilder), param)
-      .build();
-    dialog.show();
+    this.timeWeightingDialog.show();
   }
-
   // 打开频率加权模式选择弹框
   private openFrequencyWeightingDialog = () => {
-    let dialog: InfSheet;
-    let param: FrequencyWeightingDialogParams = {
-      currentWeighting: this.pk.weighting_type,
-      onConfirm: (selectedWeighting: WeightingType) => {
-        // 确认选择后的处理
-        this.pk.weighting_type = selectedWeighting;
-        dialog.dismiss();
-      },
-      onCancel: () => {
-        // 取消选择
-        dialog.dismiss();
+    if (!this.frequencyWeightingDialog) {
+      let param: FrequencyWeightingDialogParams = {
+        currentWeighting: this.pk.weighting_type,
+        onConfirm: (selectedWeighting: WeightingType) => {
+          // 确认选择后的处理
+          this.pk.weighting_type = selectedWeighting;
+          this.frequencyWeightingDialog?.dismiss();
+        },
+        onCancel: () => {
+          // 取消选择
+          this.frequencyWeightingDialog?.dismiss();
+        }
       }
+      this.frequencyWeightingDialog = DialogHub.getSheet()
+        .setStyle({
+          title: { title: '频率加权模式选择' },
+          backgroundColor: $r('sys.color.background_secondary')
+        })
+        .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS })
+        .setComponentTargetId('settingsId')
+        .setContent(wrapBuilder(FrequencyWeightingDialogBuilder), param)
+        .build();
     }
-    dialog = DialogHub.getSheet()
-      .setStyle({
-        title: { title: '频率加权模式选择' },
-        backgroundColor: $r('sys.color.background_secondary')
-      })
-      .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS })
-      .setComponentTargetId('settingsId')
-      .setContent(wrapBuilder(FrequencyWeightingDialogBuilder), param)
-      .build();
-    dialog.show();
+    this.frequencyWeightingDialog.show();
   }
-
   // 打开自动保存设置弹框
   private openAutoSaveDialog = () => {
-    let dialog: InfSheet;
-    let param: AutoSaveDialogParams = {
-      onClose: () => {
-        dialog.dismiss();
+    if (!this.autoSaveDialog) {
+      let param: AutoSaveDialogParams = {
+        onClose: () => {
+          this.autoSaveDialog?.dismiss();
+        }
       }
+      this.autoSaveDialog = DialogHub.getSheet()
+        .setStyle({
+          title: { title: '自动保存设置' },
+          backgroundColor: $r('sys.color.background_secondary')
+        })
+        .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS })
+        .setComponentTargetId('settingsId')
+        .setContent(wrapBuilder(AutoSaveSettingsDialogBuilder), param)
+        .build();
     }
-    dialog = DialogHub.getSheet()
-      .setStyle({
-        title: { title: '自动保存设置' },
-        backgroundColor: $r('sys.color.background_secondary')
-      })
-      .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS })
-      .setComponentTargetId('settingsId')
-      .setContent(wrapBuilder(AutoSaveSettingsDialogBuilder), param)
-      .build();
-    dialog.show();
+    this.autoSaveDialog.show();
   }
 
   // 处理时间计权模式变化
@@ -343,7 +354,7 @@ export struct Settings {
             }.layoutWeight(1)
           }
           .listItemRow()
-          
+
           this.buildDisplayModeTabs()
         }
         .cardStyle()

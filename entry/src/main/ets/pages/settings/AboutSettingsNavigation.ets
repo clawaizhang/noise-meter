@@ -8,7 +8,7 @@ import { curves } from '@kit.ArkUI';
 import { PreferenceKeys } from '../../models/PreferenceKeys';
 import { PersistenceV2 } from '@kit.ArkUI';
 import { PrivacyPolicyViewBuilder } from '../../components/privacy/PrivacyPolicyDialog';
-import { DialogHub } from '@hadss/dialoghub';
+import { DialogHub, InfSheet } from '@hadss/dialoghub';
 
 @Extend(Image)
 function itemIcon() {
@@ -64,6 +64,9 @@ function listItemRow() {
 @ComponentV2
 export struct AboutSettings {
   @Consumer(navigationStack) navStack: NavPathStack = new NavPathStack();
+  
+  // DialogHub实例缓存
+  private privacyPolicyDialog: InfSheet | null = null;
   @Local pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys)!;
   @Local showRevokeConfirmDialog: boolean = false;
 
@@ -128,7 +131,10 @@ export struct AboutSettings {
             }
             .listItemRow()
             .onClick(() => {
-              DialogHub.getSheet().setContent(wrapBuilder(PrivacyPolicyViewBuilder)).build().show();
+              if (!this.privacyPolicyDialog) {
+                this.privacyPolicyDialog = DialogHub.getSheet().setContent(wrapBuilder(PrivacyPolicyViewBuilder)).build();
+              }
+              this.privacyPolicyDialog.show();
             })
 
             // 取消隐私授权

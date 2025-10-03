@@ -2,7 +2,7 @@ import { DecibelService } from '../../services/DecibelService';
 import { StatisticsService } from '../../services/StatisticsService';
 import { AudioAnalysisMode } from '../../common/AudioConfig';
 import { WeightingType } from '../../constants/WeightingConstants';
-import { DialogHub, InfSheet } from '@hadss/dialoghub';
+import { DialogHub, InfPopup, InfSheet } from '@hadss/dialoghub';
 import { resourceManager } from '@kit.LocalizationKit';
 import { NoiseDescriptionDialogBuilder } from '../../pages/noisemeter/NoiseDescriptionDialogNavigation';
 import { NoiseStandardDialogBuilder } from '../../pages/noisemeter/NoiseStandardDialogNavigation';
@@ -51,6 +51,15 @@ export struct DecibelDisplayComponent {
   // 内部状态
   noiseStandardSub?: Subscription;
   
+  // DialogHub实例缓存
+  private noiseDescriptionDialog: InfSheet | null = null;
+  private noiseStandardDialog: InfSheet | null = null;
+  private currentDecibelPopup: InfPopup | null = null;
+  
+  // 定时器管理
+  private noiseDescriptionUpdateIntervalId: number | null = null;
+  private noiseStandardUpdateSubscription?: Subscription;
+  
   @Local as: AppKeys = AppStorageV2.connect(AppKeys)!;
   sysResourceManager: resourceManager.ResourceManager = resourceManager.getSystemResourceManager();
 
@@ -61,6 +70,22 @@ export struct DecibelDisplayComponent {
   aboutToDisappear() {
     // 清理资源
     this.noiseStandardSub?.unsubscribe();
+    
+    // 清理DialogHub定时器
+    this.cleanupDialogTimers();
+  }
+  
+  // 清理DialogHub相关定时器
+  private cleanupDialogTimers() {
+    // 清理噪音描述对话框定时器
+    if (this.noiseDescriptionUpdateIntervalId) {
+      clearInterval(this.noiseDescriptionUpdateIntervalId);
+      this.noiseDescriptionUpdateIntervalId = null;
+    }
+    
+    // 清理噪音标准对话框定时器
+    this.noiseStandardUpdateSubscription?.unsubscribe();
+    this.noiseStandardUpdateSubscription = undefined;
   }
 
   @Builder
@@ -82,16 +107,23 @@ export struct DecibelDisplayComponent {
     .width('100%')
     .justifyContent(FlexAlign.Center)
     .onClick(() => {
-      let dialog = DialogHub.getSheet()
-        .setContent(wrapBuilder(NoiseDescriptionDialogBuilder), this.as)
-        .setStyle({ backgroundColor: $r('sys.color.background_secondary'), showClose: false })
-        .setConfig({ enableOutsideInteractive: false, scrollSizeMode: ScrollSizeMode.CONTINUOUS })
-        .setComponentTargetId('noiseLevelBannerId')
-        .build();
-      dialog.show();
-      setInterval(() => {
-        dialog.updateContent(this.as);
-      }, 100)
+      if (!this.noiseDescriptionDialog) {
+        this.noiseDescriptionDialog = DialogHub.getSheet()
+          .setContent(wrapBuilder(NoiseDescriptionDialogBuilder), this.as)
+          .setStyle({ backgroundColor: $r('sys.color.background_secondary'), showClose: false })
+          .setConfig({ enableOutsideInteractive: false, scrollSizeMode: ScrollSizeMode.CONTINUOUS })
+          .setComponentTargetId('noiseLevelBannerId')
+          .build();
+      }
+      this.noiseDescriptionDialog.show();
+      
+      // 清理之前的定时器并启动新的
+      if (this.noiseDescriptionUpdateIntervalId) {
+        clearInterval(this.noiseDescriptionUpdateIntervalId);
+      }
+      this.noiseDescriptionUpdateIntervalId = setInterval(() => {
+        this.noiseDescriptionDialog?.updateContent(this.as);
+      }, 100);
     })
     .id('noiseLevelBannerId')
   }
@@ -119,21 +151,23 @@ export struct DecibelDisplayComponent {
     .alignItems(VerticalAlign.Bottom)
     .id('currentDbComp')
     .onClick(() => {
-      DialogHub.getPopup()
-        .setTextContent('当前分贝值')
-        .setComponentTargetId('currentDbComp')
-        .setStyle({
-          radius: $r('sys.float.chip_small_radius'),
-          maskColor: '#00000000',
-        })
-        .setConfig({
-          dialogPosition: {
-            preferPlacement: Placement.Top
-          },
-          dialogBehavior: { isModal: true, autoDismiss: true }
-        })
-        .build()
-        .show();
+      if (!this.currentDecibelPopup) {
+        this.currentDecibelPopup = DialogHub.getPopup()
+          .setTextContent('当前分贝值')
+          .setComponentTargetId('currentDbComp')
+          .setStyle({
+            radius: $r('sys.float.chip_small_radius'),
+            maskColor: '#00000000',
+          })
+          .setConfig({
+            dialogPosition: {
+              preferPlacement: Placement.Top
+            },
+            dialogBehavior: { isModal: true, autoDismiss: true }
+          })
+          .build();
+      }
+      this.currentDecibelPopup.show();
     })
   }
 
@@ -279,15 +313,20 @@ export struct DecibelDisplayComponent {
     .borderRadius(6)
     .onClick(() => {
       // 点击打开噪音参考标准对话框
-      let dialog = DialogHub.getSheet()
-        .setStyle({ backgroundColor: $r('sys.color.background_secondary'), showClose: false })
-        .setComponentTargetId('noiseStandardDisplayId')
-        .setConfig({ enableOutsideInteractive: false, scrollSizeMode: ScrollSizeMode.CONTINUOUS })
-        .setContent(wrapBuilder(NoiseStandardDialogBuilder), this.as)
-        .build();
-      dialog.show();
-      this.noiseStandardSub = interval(500).subscribe(() => {
-        dialog.updateContent(this.as);
+      if (!this.noiseStandardDialog) {
+        this.noiseStandardDialog = DialogHub.getSheet()
+          .setStyle({ backgroundColor: $r('sys.color.background_secondary'), showClose: false })
+          .setComponentTargetId('noiseStandardDisplayId')
+          .setConfig({ enableOutsideInteractive: false, scrollSizeMode: ScrollSizeMode.CONTINUOUS })
+          .setContent(wrapBuilder(NoiseStandardDialogBuilder), this.as)
+          .build();
+      }
+      this.noiseStandardDialog.show();
+      
+      // 清理之前的订阅并启动新的
+      this.noiseStandardUpdateSubscription?.unsubscribe();
+      this.noiseStandardUpdateSubscription = interval(500).subscribe(() => {
+        this.noiseStandardDialog?.updateContent(this.as);
       });
     })
     .id('noiseStandardDisplayId')

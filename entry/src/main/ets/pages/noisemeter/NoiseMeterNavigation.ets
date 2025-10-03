@@ -1,6 +1,6 @@
 import { DecibelMeter } from '../../components/decibel-meter/DecibelMeter';
 import { navigationStack } from '../../constants/ProviderConstant';
-import { DialogHub } from '@hadss/dialoghub';
+import { DialogHub, InfSheet } from '@hadss/dialoghub';
 import { SettingsBuilder } from './SettingsNavigation';
 import { NoiseStandardDialogBuilder } from './NoiseStandardDialogNavigation';
 import { AboutSettingsBuilder } from '../settings/AboutSettingsNavigation';
@@ -38,6 +38,9 @@ export struct MainNoiseMeter {
   @Local pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys)!;
   noiseReferSub?:Subscription
   
+  // DialogHub实例缓存
+  private alertsDialog: InfSheet | null = null;
+
 
   aboutToDisappear(): void {
     this.noiseReferSub?.unsubscribe();
@@ -96,13 +99,15 @@ export struct MainNoiseMeter {
       value: '警报设置',
       icon: $r('app.media.ic_settings'),
       action: () => {
-        DialogHub.getSheet()
-          .setStyle({ title: { title: '警报与通知' }, backgroundColor: $r('sys.color.background_secondary') })
-          .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS })
-          .setComponentTargetId('mainAppId')
-          .setContent(wrapBuilder(AlertsSettingsBuilder))
-          .build()
-          .show();
+        if (!this.alertsDialog) {
+          this.alertsDialog = DialogHub.getSheet()
+            .setStyle({ title: { title: '警报与通知' }, backgroundColor: $r('sys.color.background_secondary') })
+            .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS })
+            .setComponentTargetId('mainAppId')
+            .setContent(wrapBuilder(AlertsSettingsBuilder))
+            .build();
+        }
+        this.alertsDialog.show();
       }
     }
   ]

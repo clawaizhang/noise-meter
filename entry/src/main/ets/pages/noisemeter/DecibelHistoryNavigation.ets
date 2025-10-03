@@ -8,7 +8,7 @@ import { DecibelRecord } from '../../models/DecibelRecord';
 import { FileUtils } from '../../utils/FileUtils';
 import { DesignConstants } from '../../constants/DesignConstants';
 import { AppStorageV2, curves, SymbolGlyphModifier } from '@kit.ArkUI';
-import { DialogHub } from '@hadss/dialoghub';
+import { DialogHub, InfSheet } from '@hadss/dialoghub';
 import { NoiseStandardDialogBuilder } from './NoiseStandardDialogNavigation';
 import { AppKeys } from '../../models/AppKeys';
 
@@ -79,6 +79,9 @@ export struct DecibelHistory {
   private context: Context = getContext(this)
   private recordService: DecibelRecordService = new DecibelRecordService(this.context);
   private promptAction: PromptAction = this.getUIContext().getPromptAction();
+  
+  // DialogHub实例缓存
+  private detailDialog: InfSheet | null = null;
 
   onPageShow() {
     this.loadRecords();
@@ -444,13 +447,15 @@ export struct DecibelHistory {
         selectedRecord: this.selectedRecord,
         context: getContext(this),
       };
-      DialogHub.getSheet()
-        .setComponentTargetId('showNoiseDetailDialogFromHistory')
-        .setStyle({ showClose: false })
-        .setConfig({ enableOutsideInteractive: false, scrollSizeMode: ScrollSizeMode.CONTINUOUS })
-        .setContent(wrapBuilder(DetailDialogBuilder), params)
-        .build()
-        .show();
+      if (!this.detailDialog) {
+        this.detailDialog = DialogHub.getSheet()
+          .setComponentTargetId('showNoiseDetailDialogFromHistory')
+          .setStyle({ showClose: false })
+          .setConfig({ enableOutsideInteractive: false, scrollSizeMode: ScrollSizeMode.CONTINUOUS })
+          .setContent(wrapBuilder(DetailDialogBuilder), params)
+          .build();
+      }
+      this.detailDialog.show();
     } catch (error) {
       console.error('导航到详情页失败:', error);
     }
