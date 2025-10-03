@@ -298,7 +298,7 @@ export struct DecibelMeter {
   startCollapseAnimation() {
     // 获取屏幕尺寸
     const displayClass = display.getDefaultDisplaySync();
-    this.dWidthHeight = '100%';
+    this.dWidthHeight = '120%';
     // 页面内容动画
     this.getUIContext().animateTo({
       duration: 800,

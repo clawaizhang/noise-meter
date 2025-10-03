@@ -19,7 +19,7 @@ export struct ActionPanel {
 
   build() {
     // 操作按钮 - 响应式布局
-    Row({ space: 12 }) {
+    Row({ space: 16 }) {
       // 重置按钮
       Button({ type: ButtonType.Circle }) {
         Image($r('app.media.ic_reset'))
@@ -82,13 +82,14 @@ export struct ActionPanel {
         dialogController.open();
       })
     }
-    .width('100%')
-    .height(80)
+    .width(192)
+    .height(64)
     .justifyContent(FlexAlign.SpaceBetween)
     .alignItems(VerticalAlign.Center)
     .backgroundColor($r('sys.color.comp_background_primary'))
-    .borderRadius(16)
-    .padding(16)
+    .borderRadius(32)
+    .padding(8)
+    .margin({ bottom: 16 })
     .animation({ curve: Curve.EaseOut })
   }
 
