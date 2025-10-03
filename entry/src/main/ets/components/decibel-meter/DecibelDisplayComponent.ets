@@ -92,12 +92,12 @@ export struct DecibelDisplayComponent {
   noiseLevelBanner(config: NoiseBannerConfig) {
     Row({ space: 8 }) {
       Image($r('app.media.ic_info'))
-        .width(14)
-        .height(14)
+        .width(16)
+        .height(16)
         .fillColor($r('sys.color.font_secondary'));
 
       Text(config.description)
-        .fontSize(12)
+        .fontSize(14)
         .fontColor($r('sys.color.font_secondary'))
         .fontWeight(FontWeight.Medium);
     }

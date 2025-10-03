@@ -34,11 +34,9 @@ export struct MainNoiseMeter {
   @Local menuItems: Array<NavigationMenuItem> = [];
   @Local as: AppKeys = AppStorageV2.connect(AppKeys)!;
   @Local pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys)!;
-  noiseReferSub?:Subscription
-  
+  noiseReferSub?: Subscription
   // DialogHub实例缓存
   private alertsDialog: InfSheet | null = null;
-
 
   aboutToDisappear(): void {
     this.noiseReferSub?.unsubscribe();
@@ -64,7 +62,6 @@ export struct MainNoiseMeter {
       this.menuItems = [];
     }
   }
-  
 
   @Builder
   TabBuilder(title: string, icon: Resource, index: number) {
@@ -91,7 +88,6 @@ export struct MainNoiseMeter {
       }
     }
   ]
-  
   private alertsMenus: Array<NavigationMenuItem> = [
     {
       value: '警报设置',
@@ -100,7 +96,7 @@ export struct MainNoiseMeter {
         if (!this.alertsDialog) {
           this.alertsDialog = DialogHub.getSheet()
             .setStyle({ title: { title: '警报与通知' }, backgroundColor: $r('sys.color.background_secondary') })
-            .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS,enableOutsideInteractive:true })
+            .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS, enableOutsideInteractive: true })
             .setComponentTargetId('popupTargetId')
             .setContent(wrapBuilder(AlertsSettingsBuilder))
             .build();
@@ -109,7 +105,6 @@ export struct MainNoiseMeter {
       }
     }
   ]
-
 
   @Builder
   DashboardContent() {
@@ -133,8 +128,6 @@ export struct MainNoiseMeter {
     })
   }
 
-
-
   // 跳转到应用商店评价页面
   private navigateToAppStoreRating = () => {
     const context = getContext(this) as common.UIAbilityContext;
@@ -155,6 +148,15 @@ export struct MainNoiseMeter {
         // 警报页面 - 使用独立的AlertsContent组件
         TabContent() {
           AlertsContent()
+            .opacity(this.currentIndex === 0 ? 1 : 0)
+            .scale({ x: this.currentIndex === 0 ? 1 : 0.95, y: this.currentIndex === 0 ? 1 : 0.95 })
+            .animation({
+              duration: 300,
+              curve: Curve.EaseOut,
+              delay: 0,
+              iterations: 1,
+              playMode: PlayMode.Normal
+            })
         }
         .tabBar(this.TabBuilder('警报', $r('app.media.ic_alarm'), 0))
 
