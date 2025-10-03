@@ -150,24 +150,6 @@ export struct MainNoiseMeter {
           20
         )
 
-        // 噪音参考标准列表项
-        ListItemBuilder(
-          $r('app.media.ic_info'),
-          '噪音参考标准',
-          () => {
-            let dialog = DialogHub.getSheet()
-              .setStyle({ backgroundColor: $r('sys.color.background_secondary'), showClose: false })
-              .setComponentTargetId('myContentId')
-              .setConfig({ enableOutsideInteractive: false, scrollSizeMode: ScrollSizeMode.CONTINUOUS })
-              .setContent(wrapBuilder(NoiseStandardDialogBuilder), this.as)
-              .build();
-            dialog.show();
-            this.noiseReferSub = interval(100).subscribe(() => {
-              dialog.updateContent(this.as);
-            });
-          }
-        )
-
         // 给作者五星好评设置
         ListItemBuilder(
           $r('app.media.ic_favorite'),

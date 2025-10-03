@@ -5,10 +5,11 @@ import { WeightingType } from '../../constants/WeightingConstants';
 import { DialogHub, InfSheet } from '@hadss/dialoghub';
 import { resourceManager } from '@kit.LocalizationKit';
 import { NoiseDescriptionDialogBuilder } from '../../pages/noisemeter/NoiseDescriptionDialogNavigation';
+import { NoiseStandardDialogBuilder } from '../../pages/noisemeter/NoiseStandardDialogNavigation';
 import { image } from '@kit.ImageKit';
 import { AppKeys } from '../../models/AppKeys';
 import { AppStorageV2, curves } from '@kit.ArkUI';
-import { Subscription } from 'rxjs';
+import { interval, Subscription } from 'rxjs';
 import { DesignConstants } from '../../constants/DesignConstants';
 
 // 噪音等级横幅配置接口
@@ -48,17 +49,18 @@ export struct DecibelDisplayComponent {
   @Param @Require autoSaveCountdown: string = '';
   
   // 内部状态
-  @Local private showAvgInsteadOfMin: boolean = true;
+  noiseStandardSub?: Subscription;
   
   @Local as: AppKeys = AppStorageV2.connect(AppKeys)!;
   sysResourceManager: resourceManager.ResourceManager = resourceManager.getSystemResourceManager();
 
   aboutToAppear() {
-    // 组件现在只负责显示，不需要初始化音频处理
+    // 初始化稳定描述
   }
 
   aboutToDisappear() {
     // 清理资源
+    this.noiseStandardSub?.unsubscribe();
   }
 
   @Builder
@@ -69,7 +71,7 @@ export struct DecibelDisplayComponent {
         .height(14)
         .fillColor(config.decibelColor);
 
-      Text(config.description)
+      Text(DecibelService.getDecibelDescription(this.currentDecibel))
         .fontSize(12)
         .fontColor(config.decibelColor)
         .fontWeight(FontWeight.Medium);
@@ -96,35 +98,25 @@ export struct DecibelDisplayComponent {
 
   @Builder
   currentDecibelDisplay(config: CurrentDecibelConfig) {
-    Column({ space: 0 }) {
+    Row({ space: 8 }) {
       if (config.currentDecibel === 0) {
         Text('-')
           .fontSize(64)
           .fontWeight(FontWeight.Bold)
           .fontColor(config.decibelColor)
-          .textAlign(TextAlign.Center)
-          .width('100%')
           .transition(TransitionEffect.scale({ x: 0, y: 0 }).animation({ curve: curves.springMotion() }));
       } else {
         Text(config.currentDecibel.toString())
           .fontSize(64)
           .fontWeight(FontWeight.Bold)
           .fontColor(config.decibelColor)
-          .textAlign(TextAlign.Center)
-          .width('100%')
           .transition(TransitionEffect.scale({ x: 0, y: 0 }).animation({ curve: curves.springMotion() }));
       }
-      
-      Text('分贝')
-        .fontSize(14)
-        .fontColor($r('sys.color.ohos_id_color_text_secondary'))
-        .textAlign(TextAlign.Center)
-        .width('100%')
-        .margin({ top: 2 });
     }
     .padding({ top: 16, bottom: 16 })
     .width('100%')
-    .alignItems(HorizontalAlign.Center)
+    .justifyContent(FlexAlign.Center)
+    .alignItems(VerticalAlign.Bottom)
     .id('currentDbComp')
     .onClick(() => {
       DialogHub.getPopup()
@@ -260,6 +252,47 @@ export struct DecibelDisplayComponent {
     .borderRadius(6)
   }
 
+  @Builder
+  noiseStandardDisplay() {
+    Row({ space: 6 }) {
+      Image($r('app.media.ic_info'))
+        .width(12)
+        .height(12)
+        .fillColor($r('sys.color.ohos_id_color_text_secondary'));
+      
+      Text('噪音参考标准')
+        .fontSize(11)
+        .fontColor($r('sys.color.ohos_id_color_text_secondary'))
+        .textOverflow({ overflow: TextOverflow.Ellipsis })
+        .maxLines(1)
+        .layoutWeight(1);
+      
+      Image($r('app.media.ic_arrow_right'))
+        .width(10)
+        .height(10)
+        .fillColor($r('sys.color.ohos_id_color_text_secondary'));
+    }
+    .padding({ top: 6, bottom: 6, left: 12, right: 12 })
+    .margin({top: 12})
+    .width('100%')
+    .backgroundColor($r('sys.color.comp_background_secondary'))
+    .borderRadius(6)
+    .onClick(() => {
+      // 点击打开噪音参考标准对话框
+      let dialog = DialogHub.getSheet()
+        .setStyle({ backgroundColor: $r('sys.color.background_secondary'), showClose: false })
+        .setComponentTargetId('noiseStandardDisplayId')
+        .setConfig({ enableOutsideInteractive: false, scrollSizeMode: ScrollSizeMode.CONTINUOUS })
+        .setContent(wrapBuilder(NoiseStandardDialogBuilder), this.as)
+        .build();
+      dialog.show();
+      this.noiseStandardSub = interval(500).subscribe(() => {
+        dialog.updateContent(this.as);
+      });
+    })
+    .id('noiseStandardDisplayId')
+  }
+
 
   build() {
     Column({ space: 0 }) {
@@ -288,6 +321,8 @@ export struct DecibelDisplayComponent {
       // 4. 系统状态信息
       this.systemStatusDisplay()
 
+      // 5. 噪音参考标准
+      this.noiseStandardDisplay()
     }
     .width('100%')
     .borderColor(this.isNoiseAlarm ? DecibelService.getDecibelColor(this.currentDecibel) : Color.Transparent)
