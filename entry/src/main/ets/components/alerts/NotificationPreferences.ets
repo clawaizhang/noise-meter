@@ -10,15 +10,16 @@ import { AppStorageV2, curves, PersistenceV2 } from '@kit.ArkUI';
 import { common } from '@kit.AbilityKit';
 import { PreferenceKeys } from '../../models/PreferenceKeys';
 import { AppKeys } from '../../models/AppKeys';
+import { notificationManager } from '@kit.NotificationKit';
 
 @ComponentV2
 export struct NotificationPreferences {
   @Param @Require systemNotificationEnabled: boolean = true; // 系统通知开关
   @Param @Require onSystemNotificationChange: (enabled: boolean) => void; // 系统通知变化回调
-  @Local pk:PreferenceKeys = PersistenceV2.connect(PreferenceKeys)!;
+  @Local pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys)!;
   @Local private as: AppKeys = AppStorageV2.connect(AppKeys)!;
-
   private alertService: AlertService = AlertService.getInstance(getContext() as common.UIAbilityContext);
+  private intervalId?: number;
 
   aboutToAppear() {
   }
@@ -31,6 +32,13 @@ export struct NotificationPreferences {
   // 跳转到系统设置
   private async openSystemSettings() {
     await this.alertService.openSystemNotificationSettings();
+    this.intervalId = setInterval(() => {
+      let isEnabled = notificationManager.isNotificationEnabledSync();
+      AppStorageV2.connect(AppKeys)!.systemNotificationPermissionGranted = isEnabled;
+      if (isEnabled) {
+        clearInterval(this.intervalId);
+      }
+    }, 500);
   }
 
   // 构建权限警告卡片

@@ -94,4 +94,10 @@ export class PreferenceKeys {
    */
   @Trace
   current_preset_threshold: string = PreferencesUtil.getStringSync('current_preset_threshold', 'custom');
+
+  /**
+   * 是否申请过系统通知权限
+   */
+  @Trace
+  notification_permission_requested: boolean = PreferencesUtil.getBooleanSync('notification_permission_requested', false);
 }

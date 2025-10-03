@@ -2,6 +2,8 @@ import { notificationManager } from '@kit.NotificationKit';
 import { BusinessError } from '@kit.BasicServicesKit';
 import { hilog } from '@kit.PerformanceAnalysisKit';
 import { common, WantAgent, wantAgent } from '@kit.AbilityKit';
+import { PersistenceV2 } from '@kit.ArkUI';
+import { PreferenceKeys } from '../models/PreferenceKeys';
 
 const TAG = 'NotificationHelper';
 const DOMAIN = 0xFF00;
@@ -23,15 +25,15 @@ export class NotificationHelper {
 
   public async checkAndRequestPermission(): Promise<boolean> {
     try {
-      const isEnabled = await notificationManager.isNotificationEnabled();
+      let isEnabled = await notificationManager.isNotificationEnabled();
       hilog.info(DOMAIN, TAG, `Notification enabled: ${isEnabled}`);
-      
+      PersistenceV2.connect(PreferenceKeys)!.notification_permission_requested = true;
       if (!isEnabled) {
         await notificationManager.requestEnableNotification(this.context);
         hilog.info(DOMAIN, TAG, 'Notification permission granted');
-        return true;
+        isEnabled = await notificationManager.isNotificationEnabled();
       }
-      return true;
+      return isEnabled;
     } catch (err) {
       const error = err as BusinessError;
       if (error.code === 1600004) {

@@ -3,7 +3,8 @@ import { notificationManager } from '@kit.NotificationKit';
 import { common } from '@kit.AbilityKit';
 import { hilog } from '@kit.PerformanceAnalysisKit';
 import { AppKeys } from '../models/AppKeys';
-import { AppStorageV2 } from '@kit.ArkUI';
+import { PreferenceKeys } from '../models/PreferenceKeys';
+import { AppStorageV2, PersistenceV2 } from '@kit.ArkUI';
 
 const TAG = 'AlertService';
 const DOMAIN = 0xFF00;
@@ -80,6 +81,7 @@ export class AlertService {
   private static instance: AlertService;
   private context: common.UIAbilityContext;
   private frequencyController: AlertFrequencyController;
+  private pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys)!;
   
   private constructor(context: common.UIAbilityContext) {
     this.context = context;
@@ -211,6 +213,9 @@ export class AlertService {
    */
   public async requestNotificationPermission(): Promise<void> {
     try {
+      // 记录权限申请状态
+      this.pk.notification_permission_requested = true;
+      
       await notificationManager.requestEnableNotification(this.context);
       hilog.info(DOMAIN, TAG, '通知权限请求成功');
       // 权限请求后更新状态
@@ -228,15 +233,17 @@ export class AlertService {
    */
   public async openSystemNotificationSettings(): Promise<void> {
     try {
-      // 使用系统能力跳转到通知设置页面
-      await this.context.startAbility({
-        bundleName: 'com.ohos.settings',
-        abilityName: 'com.ohos.settings.MainAbility',
-        parameters: {
-          'settings:uri': 'notification'
+      // 如果已经申请过权限，直接跳转到系统设置
+      if (this.pk.notification_permission_requested) {
+        if (canIUse('SystemCapability.Notification.NotificationSettings')) {
+          notificationManager.openNotificationSettings(this.context)
         }
-      });
-      hilog.info(DOMAIN, TAG, '跳转到系统通知设置页面');
+        hilog.info(DOMAIN, TAG, '跳转到系统通知设置页面');
+      } else {
+        // 首次申请，使用requestEnableNotification
+        hilog.info(DOMAIN, TAG, '首次申请通知权限');
+        await this.requestNotificationPermission();
+      }
     } catch (error) {
       const err = error as BusinessError;
       hilog.error(DOMAIN, TAG, `跳转到系统通知设置失败: ${err.code}, ${err.message}`);
