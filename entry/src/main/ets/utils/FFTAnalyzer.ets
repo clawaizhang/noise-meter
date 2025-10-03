@@ -1,5 +1,6 @@
 import { WeightingType } from '../constants/WeightingConstants';
 import { WindowType } from '../common/AudioConfig';
+import { WindowFunctionCache } from './WindowFunctionCache';
 
 /**
  * 复数类型接口
@@ -104,49 +105,14 @@ export class FFTAnalyzer {
     this.smoothingFactor = smoothingFactor;
     this.overlap = overlap;
 
-    // 初始化窗函数
-    this.window = new Float32Array(size);
-    switch (windowType) {
-      case WindowType.HANNING:
-        this.initHanningWindow();
-        this.WINDOW_CORRECTION = 2.67; // Hanning窗的能量校正因子 (8/3)
-        break;
-      case WindowType.BLACKMAN:
-        this.initBlackmanWindow();
-        this.WINDOW_CORRECTION = 2.38; // Blackman窗的能量校正因子
-        break;
-      default:
-        this.initHanningWindow();
-        this.WINDOW_CORRECTION = 2.67;
-    }
+    // 使用预缓存的窗函数和能量校正因子
+    const windowData = WindowFunctionCache.getWindowData(size, windowType);
+    this.window = windowData.window;
+    this.WINDOW_CORRECTION = windowData.correction;
   }
 
   private isPowerOf2(value: number): boolean {
     return (value & (value - 1)) === 0 && value !== 0;
-  }
-
-  /**
-   * 初始化Hanning窗函数
-   */
-  private initHanningWindow(): void {
-    const N = this.size - 1;
-    for (let i = 0; i < this.size; i++) {
-      this.window[i] = 0.5 * (1 - Math.cos(2 * Math.PI * i / N));
-    }
-  }
-
-  /**
-   * 初始化Blackman窗函数
-   */
-  private initBlackmanWindow(): void {
-    const a0 = 0.42;
-    const a1 = 0.5;
-    const a2 = 0.08;
-    const N = this.size - 1;
-    for (let i = 0; i < this.size; i++) {
-      this.window[i] = a0 - a1 * Math.cos(2 * Math.PI * i / N) +
-        a2 * Math.cos(4 * Math.PI * i / N);
-    }
   }
 
   /**
