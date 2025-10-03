@@ -46,8 +46,6 @@ export class PreferenceKeys {
   @Trace
   keep_screen_on: boolean = PreferencesUtil.getBooleanSync('keep_screen_on', true);
   @Trace
-  noise_alarm_enabled: boolean = PreferencesUtil.getBooleanSync('noise_alarm_enabled',true);
-  @Trace
   noise_threshold: number = PreferencesUtil.getNumberSync('noise_threshold',80);
   /**
    * 隐私协议同意状态
@@ -86,25 +84,7 @@ export class PreferenceKeys {
   nighttime_alert_threshold: number = PreferencesUtil.getNumberSync('nighttime_alert_threshold', 50);
 
   /**
-   * 声音警报开关
-   */
-  @Trace
-  sound_alert_enabled: boolean = PreferencesUtil.getBooleanSync('sound_alert_enabled', true);
-
-  /**
-   * 振动警报开关
-   */
-  @Trace
-  vibration_alert_enabled: boolean = PreferencesUtil.getBooleanSync('vibration_alert_enabled', true);
-
-  /**
-   * 视觉警报开关
-   */
-  @Trace
-  visual_alert_enabled: boolean = PreferencesUtil.getBooleanSync('visual_alert_enabled', true);
-
-  /**
-   * 系统通知开关
+   * 系统通知开关（合并了原来的主开关和系统通知开关）
    */
   @Trace
   system_notification_enabled: boolean = PreferencesUtil.getBooleanSync('system_notification_enabled', true);

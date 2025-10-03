@@ -78,7 +78,7 @@ export struct AlertsStatusIndicator {
   // 获取警报状态描述
   private getAlertStatusDescription(): string {
     if (!this.isAlertEnabled) {
-      return '警报已关闭';
+      return '通知已关闭';
     }
     
     if (this.currentDecibel >= this.alertThreshold) {

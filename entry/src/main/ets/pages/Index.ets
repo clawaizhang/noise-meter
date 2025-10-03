@@ -78,6 +78,15 @@ struct Index {
       notificationHelper.checkAndRequestPermission();
     }
   }
+  @Monitor('pk.system_notification_enabled')
+  system_notification_enabledChange(monitor: IMonitor) {
+    let system_notification_enabled = monitor.value<boolean>()?.now!;
+    if (system_notification_enabled) {
+      // 请求通知权限
+      const notificationHelper = NotificationHelper.getInstance(this.context);
+      notificationHelper.checkAndRequestPermission();
+    }
+  }
 
   async aboutToAppear() {
     ThresholdManager.setCurrentConfig(this.currentConfig);

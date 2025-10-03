@@ -122,7 +122,7 @@ export class AlertService {
     }
 
     try {
-      // 发布通知（包含声音和振动）
+      // 发布通知
       await this.publishAlertNotification(currentDecibel, threshold);
       
       // 记录警报触发
@@ -136,10 +136,10 @@ export class AlertService {
   }
 
   /**
-   * 发布带有声音和振动的通知
+   * 发布静默系统通知（不包含声音和振动）
    */
   private async publishAlertNotification(
-    currentDecibel: number, 
+    currentDecibel: number,
     threshold: number
   ): Promise<void> {
     const notificationRequest: notificationManager.NotificationRequest = {
@@ -153,11 +153,10 @@ export class AlertService {
         }
       },
       deliveryTime: new Date().getTime(),
-      // 使用系统默认设置，避免过于刺激
     };
 
     await notificationManager.publish(notificationRequest);
-    hilog.info(DOMAIN, TAG, '警报通知发布成功');
+    hilog.info(DOMAIN, TAG, '静默警报通知发布成功');
   }
 
   /**

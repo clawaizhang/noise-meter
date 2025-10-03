@@ -72,29 +72,9 @@ export struct AlertsSettings {
     return ThresholdManager.getCurrentEffectiveThreshold();
   }
 
-  // 处理声音通知变化
-  private onSoundAlertChange(enabled: boolean) {
-    this.pk.sound_alert_enabled = enabled;
-  }
-
-  // 处理振动通知变化
-  private onVibrationAlertChange(enabled: boolean) {
-    this.pk.vibration_alert_enabled = enabled;
-  }
-
-  // 处理视觉通知变化
-  private onVisualAlertChange(enabled: boolean) {
-    this.pk.visual_alert_enabled = enabled;
-  }
-
   // 处理系统通知变化
   private onSystemNotificationChange(enabled: boolean) {
     this.pk.system_notification_enabled = enabled;
-  }
-
-  // 处理噪音警报变化
-  private onNoiseAlarmChange(enabled: boolean) {
-    this.pk.noise_alarm_enabled = enabled;
   }
 
   build() {
@@ -103,32 +83,14 @@ export struct AlertsSettings {
       AlertsStatusIndicator({
         currentDecibel: this.as.db,
         alertThreshold: this.getCurrentEffectiveThreshold(),
-        isAlertEnabled: this.pk.noise_alarm_enabled
+        isAlertEnabled: this.pk.system_notification_enabled
       })
 
-      if (this.pk.noise_alarm_enabled) {
-        EnhancedThresholdManager()
-      }
+      EnhancedThresholdManager()
 
-      // 噪音警报相关设置（整合了原来的通知偏好设置和噪音警报开关）
+      // 系统通知设置
       NotificationPreferences({
-        noiseAlarmEnabled: this.pk.noise_alarm_enabled,
-        soundEnabled: this.pk.sound_alert_enabled,
-        vibrationEnabled: this.pk.vibration_alert_enabled,
-        visualEnabled: this.pk.visual_alert_enabled,
         systemNotificationEnabled: this.pk.system_notification_enabled,
-        onNoiseAlarmChange: (enabled: boolean) => {
-          this.onNoiseAlarmChange(enabled);
-        },
-        onSoundChange: (enabled: boolean) => {
-          this.onSoundAlertChange(enabled);
-        },
-        onVibrationChange: (enabled: boolean) => {
-          this.onVibrationAlertChange(enabled);
-        },
-        onVisualChange: (enabled: boolean) => {
-          this.onVisualAlertChange(enabled);
-        },
         onSystemNotificationChange: (enabled: boolean) => {
           this.onSystemNotificationChange(enabled);
         }

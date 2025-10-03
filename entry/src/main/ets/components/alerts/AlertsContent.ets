@@ -38,7 +38,7 @@ export struct AlertsContent {
   // 检查警报状态
   private async checkAlertStatus(currentDecibel: number): Promise<void> {
     const threshold = ThresholdManager.getCurrentEffectiveThreshold();
-    const shouldAlert = currentDecibel >= threshold && this.pk.noise_alarm_enabled;
+    const shouldAlert = currentDecibel >= threshold && this.pk.system_notification_enabled;
 
     if (shouldAlert && !this.isAlarmActive) {
       // 触发警报
@@ -58,11 +58,11 @@ export struct AlertsContent {
     this.visualAlertState = 'alert';
     this.alertStartTime = Date.now();
 
-    // 使用AlertService触发多模态警报
+    // 使用AlertService触发系统通知
     const threshold = ThresholdManager.getCurrentEffectiveThreshold();
     
-    // 根据用户设置决定触发哪些警报
-    if (this.pk.sound_alert_enabled || this.pk.vibration_alert_enabled || this.pk.system_notification_enabled) {
+    // 如果系统通知启用，则触发警报
+    if (this.pk.system_notification_enabled) {
       await this.alertService.triggerAlert(currentDecibel, threshold);
     }
   }
@@ -133,19 +133,19 @@ export struct AlertsContent {
   @Builder
   private buildQuickControls() {
     Column({ space: DesignConstants.SPACING_MD }) {
-      // 标题行：警报通知 + 总开关（右上角）
+      // 标题行：系统通知 + 开关（右上角）
       Row() {
-        Text('警报通知')
+        Text('系统通知')
           .fontSize(DesignConstants.FONT_SIZE_XL)
           .fontWeight(FontWeight.Bold)
           .fontColor($r('sys.color.font_primary'))
 
         Blank()
 
-        // 总开关 - 只保留开关
-        Toggle({ type: ToggleType.Switch, isOn: this.pk.noise_alarm_enabled })
+        // 系统通知开关
+        Toggle({ type: ToggleType.Switch, isOn: this.pk.system_notification_enabled })
           .onChange((enabled: boolean) => {
-            this.pk.noise_alarm_enabled = enabled;
+            this.pk.system_notification_enabled = enabled;
           })
           .selectedColor($r('sys.color.brand'))
           .scale({ x: 1.1, y: 1.1 })
@@ -153,41 +153,12 @@ export struct AlertsContent {
       .width('100%')
       .alignItems(VerticalAlign.Center)
 
-      if (this.pk.noise_alarm_enabled) {
-        // 三个反馈项垂直排列
-        Column({ space: DesignConstants.SPACING_SM }) {
-          // 声音反馈
-          this.buildFeedbackItem(
-            '声音',
-            this.pk.sound_alert_enabled,
-            $r('app.media.ic_audio_analysis'),
-            (enabled: boolean) => {
-              this.pk.sound_alert_enabled = enabled;
-            }
-          )
-
-          // 振动反馈
-          this.buildFeedbackItem(
-            '振动',
-            this.pk.vibration_alert_enabled,
-            $r('app.media.ic_sensor'),
-            (enabled: boolean) => {
-              this.pk.vibration_alert_enabled = enabled;
-            }
-          )
-
-          // 通知反馈
-          this.buildFeedbackItem(
-            '通知',
-            this.pk.system_notification_enabled,
-            $r('app.media.ic_info'),
-            (enabled: boolean) => {
-              this.pk.system_notification_enabled = enabled;
-            }
-          )
-        }
-        .width('100%')
-      }
+      // 系统通知描述
+      Text('在通知栏显示噪音警报信息')
+        .fontSize(DesignConstants.FONT_SIZE_MD)
+        .fontColor($r('sys.color.font_secondary'))
+        .textAlign(TextAlign.Start)
+        .alignSelf(ItemAlign.Start)
     }
     .padding(DesignConstants.SPACING_MD)
     .backgroundColor($r('sys.color.comp_background_primary'))

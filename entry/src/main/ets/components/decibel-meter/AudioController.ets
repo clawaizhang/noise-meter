@@ -393,7 +393,7 @@ export struct AudioController {
 
   // 检查报警状态
   private checkAlarmStatus(currentDb: number): void {
-    const shouldAlarm = this.pk.noise_alarm_enabled && currentDb >= this.pk.noise_threshold;
+    const shouldAlarm = this.pk.system_notification_enabled && currentDb >= this.pk.noise_threshold;
     if (shouldAlarm !== this.isNoiseAlarm) {
       this.isNoiseAlarm = shouldAlarm;
       // 可以在这里触发报警通知

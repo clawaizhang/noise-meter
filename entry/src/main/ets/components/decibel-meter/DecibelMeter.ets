@@ -119,7 +119,7 @@ export struct DecibelMeter {
               weightingType: this.pk.weighting_type,
               calibrationValue: this.pk.calibration_value,
               noiseThreshold: this.pk.noise_threshold,
-              noiseAlarmEnabled: this.pk.noise_alarm_enabled,
+              systemNotificationEnabled: this.pk.system_notification_enabled,
               isNoiseAlarm: false // 报警状态由AudioController管理
             })
 

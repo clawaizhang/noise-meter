@@ -21,7 +21,7 @@ export struct DecibelDisplayComponent {
   @Param @Require weightingType: WeightingType = WeightingType.A;
   @Param @Require calibrationValue: number = 0;
   @Param @Require noiseThreshold: number = 80;
-  @Param @Require noiseAlarmEnabled: boolean = true;
+  @Param @Require systemNotificationEnabled: boolean = true;
   @Param @Require isNoiseAlarm: boolean = false;
   
   // 内部状态
