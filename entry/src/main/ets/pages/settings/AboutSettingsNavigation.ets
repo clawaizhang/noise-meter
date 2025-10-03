@@ -1,12 +1,9 @@
-import { privacyManager } from '@kit.StoreKit';
-import { common } from '@kit.AbilityKit';
+import { common, Want } from '@kit.AbilityKit';
 import { BusinessError } from '@kit.BasicServicesKit';
-import { Want } from '@kit.AbilityKit';
 import { navigationStack } from '../../constants/ProviderConstant';
 import { DesignConstants } from '../../constants/DesignConstants';
-import { curves } from '@kit.ArkUI';
+import { curves, PersistenceV2 } from '@kit.ArkUI';
 import { PreferenceKeys } from '../../models/PreferenceKeys';
-import { PersistenceV2 } from '@kit.ArkUI';
 import { PrivacyPolicyViewBuilder } from '../../components/privacy/PrivacyPolicyDialog';
 import { DialogHub, InfSheet } from '@hadss/dialoghub';
 

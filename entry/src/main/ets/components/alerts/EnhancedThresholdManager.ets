@@ -3,7 +3,7 @@
  * 单一面板设计：环境类型选择 + 时段调度开关
  */
 
-import { PresetType, ThresholdConfig, PresetThreshold, DEFAULT_THRESHOLD_CONFIG } from '../../models/ThresholdConfig';
+import { DEFAULT_THRESHOLD_CONFIG, PresetThreshold, PresetType, ThresholdConfig } from '../../models/ThresholdConfig';
 import { DesignConstants } from '../../constants/DesignConstants';
 import { curves, PersistenceV2 } from '@kit.ArkUI';
 import { ThresholdManager } from '../../services/ThresholdManager';

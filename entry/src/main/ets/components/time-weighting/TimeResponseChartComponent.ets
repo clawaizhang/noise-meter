@@ -4,7 +4,6 @@
  */
 
 import { AudioAnalysisMode } from '../../common/AudioConfig';
-import { TimeWeightingConstants } from '../../constants/TimeWeightingConstants';
 import { DesignConstants } from '../../constants/DesignConstants';
 import { resourceManager } from '@kit.LocalizationKit';
 

@@ -6,7 +6,7 @@
 import { ALERT_COLORS } from '../../constants/AlertsConstants';
 import { DesignConstants } from '../../constants/DesignConstants';
 import { AlertService } from '../../services/AlertService';
-import { AppStorageV2, curves, PersistenceV2 } from '@kit.ArkUI';
+import { AppStorageV2, PersistenceV2 } from '@kit.ArkUI';
 import { common } from '@kit.AbilityKit';
 import { PreferenceKeys } from '../../models/PreferenceKeys';
 import { AppKeys } from '../../models/AppKeys';

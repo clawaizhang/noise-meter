@@ -1,6 +1,6 @@
-import { AudioAnalysisMode, AudioPresets } from "../common/AudioConfig";
-import { WeightingType } from "../constants/WeightingConstants";
-import { FFTAnalyzer } from "../utils/FFTAnalyzer";
+import { AudioAnalysisMode, AudioPresets } from '../common/AudioConfig';
+import { WeightingType } from '../constants/WeightingConstants';
+import { FFTAnalyzer } from '../utils/FFTAnalyzer';
 
 @Concurrent
 export function concurrentCalculateSpectrum(savedMode: string, buffer: ArrayBuffer,

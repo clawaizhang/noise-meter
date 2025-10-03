@@ -3,9 +3,6 @@ import { curves, PersistenceV2 } from '@kit.ArkUI';
 import { DialogHub, InfSheet } from '@hadss/dialoghub';
 import { AudioAnalysisSettingsBuilder } from '../settings/AudioAnalysisSettingsNavigation';
 import { AlertsSettingsBuilder } from '../settings/AlertsSettingsNavigation';
-import { DataPrivacySettingsBuilder } from '../settings/DataPrivacySettingsNavigation';
-import { DeviceSettingsBuilder } from '../settings/DeviceSettingsNavigation';
-import { AboutSettingsBuilder } from '../settings/AboutSettingsNavigation';
 import { PreferenceKeys } from '../../models/PreferenceKeys';
 import { DesignConstants } from '../../constants/DesignConstants';
 import { AudioAnalysisMode, AudioPresets } from '../../common/AudioConfig';
@@ -19,8 +16,8 @@ import {
   FrequencyWeightingDialogParams,
 } from '../../components/frequency-weighting/FrequencyWeightingDialog';
 import {
-  AutoSaveSettingsDialogBuilder,
   AutoSaveDialogParams,
+  AutoSaveSettingsDialogBuilder,
 } from '../../components/auto-save/AutoSaveSettingsDialog';
 import { ThresholdManager } from '../../services/ThresholdManager';
 

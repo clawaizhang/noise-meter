@@ -2,8 +2,16 @@
  * 性能测试工具 - 用于验证HealthStatusCard优化效果
  */
 
-import { DeviceHealthInfo, BatteryInfo, PerformanceInfo, SystemMemInfo, StorageInfo, NetworkInfo, SensorInfo } from "../types/DeviceHealthInfo"
-import { MemoryUtils } from "./MemoryUtils"
+import {
+  BatteryInfo,
+  DeviceHealthInfo,
+  NetworkInfo,
+  PerformanceInfo,
+  SensorInfo,
+  StorageInfo,
+  SystemMemInfo
+} from '../types/DeviceHealthInfo'
+import { MemoryUtils } from './MemoryUtils'
 
 export class PerformanceTest {
   // 模拟测试数据

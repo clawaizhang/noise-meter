@@ -3,10 +3,13 @@
  * 提供可展开的声学原理说明和技术参数显示
  */
 
-import { ACOUSTIC_EXPLANATIONS,
-  ApplicationScenario,
+import {
+  ACOUSTIC_EXPLANATIONS,
   APPLICATION_SCENARIOS,
-  CALIBRATION_COLORS, TECHNICAL_PARAMS } from '../../constants/CalibrationConstants';
+  ApplicationScenario,
+  CALIBRATION_COLORS,
+  TECHNICAL_PARAMS
+} from '../../constants/CalibrationConstants';
 import { DesignConstants } from '../../constants/DesignConstants';
 import { curves } from '@kit.ArkUI';
 

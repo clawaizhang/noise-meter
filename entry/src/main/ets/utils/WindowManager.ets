@@ -2,8 +2,6 @@ import window from '@ohos.window';
 import { BusinessError } from '@kit.BasicServicesKit';
 import hilog from '@ohos.hilog';
 import { DialogHub } from '@hadss/dialoghub';
-import { PersistenceV2, UIContext } from '@kit.ArkUI';
-import { PreferenceKeys } from '../models/PreferenceKeys';
 
 const TAG = 'WindowManager';
 const DOMAIN = 0x0000;

@@ -1,6 +1,6 @@
-import { DatabaseConstants } from "../main/ets/constants/DatabaseConstants";
-import { DbConfig } from "../main/ets/interfaces/DatabaseInterfaces";
-import { MainDeviceManager } from "../main/ets/pages/device_manager/MainDeviceManagerNavigation";
+import { DatabaseConstants } from '../main/ets/constants/DatabaseConstants';
+import { DbConfig } from '../main/ets/interfaces/DatabaseInterfaces';
+import { MainDeviceManager } from '../main/ets/pages/device_manager/MainDeviceManagerNavigation';
 
 @ComponentV2
 export struct MainPage {

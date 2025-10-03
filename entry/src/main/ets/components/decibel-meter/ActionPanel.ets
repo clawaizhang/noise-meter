@@ -2,7 +2,7 @@ import promptAction from '@ohos.promptAction';
 import { PreferenceKeys } from '../../models/PreferenceKeys';
 import { WeightingType } from '../../constants/WeightingConstants';
 import { InputDialog } from './InputDialog';
-import { LengthMetrics, PersistenceV2 } from '@kit.ArkUI';
+import { PersistenceV2 } from '@kit.ArkUI';
 import { camera } from '@kit.CameraKit';
 import common from '@ohos.app.ability.common';
 

@@ -1,5 +1,5 @@
-import { DecibelRecord } from "../../models/DecibelRecord";
-import { InputDialog } from "../decibel-meter/InputDialog"
+import { DecibelRecord } from '../../models/DecibelRecord';
+import { InputDialog } from '../decibel-meter/InputDialog';
 
 @ComponentV2
 export struct BasicInfo {

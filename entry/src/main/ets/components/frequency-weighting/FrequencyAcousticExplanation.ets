@@ -4,9 +4,9 @@
  */
 
 import { WeightingType } from '../../constants/WeightingConstants';
-import { AcousticExplanation,
-  ApplicationScenario,
-  FrequencyWeightingConstants } from '../../constants/FrequencyWeightingConstants';
+import {
+  FrequencyWeightingConstants
+} from '../../constants/FrequencyWeightingConstants';
 import { DesignConstants } from '../../constants/DesignConstants';
 
 @ComponentV2

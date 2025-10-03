@@ -1,9 +1,9 @@
-import { DecibelService } from "../../services/DecibelService"
-import { display } from "@kit.ArkUI"
-import { DecibelRecord } from "../../models/DecibelRecord";
-import { AudioPlayer } from "../business/AudioPlayer";
-import { WeightingType } from "../../constants/WeightingConstants";
-import { resourceManager } from "@kit.LocalizationKit";
+import { DecibelService } from '../../services/DecibelService'
+import { display } from '@kit.ArkUI'
+import { DecibelRecord } from '../../models/DecibelRecord';
+import { AudioPlayer } from '../business/AudioPlayer';
+import { WeightingType } from '../../constants/WeightingConstants';
+import { resourceManager } from '@kit.LocalizationKit';
 
 interface Margin {
   top: number;

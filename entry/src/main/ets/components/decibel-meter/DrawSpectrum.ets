@@ -1,6 +1,6 @@
-import { resourceManager } from "@kit.LocalizationKit";
-import { AppStorageV2 } from "@kit.ArkUI";
-import { AppKeys } from "../../models/AppKeys";
+import { resourceManager } from '@kit.LocalizationKit';
+import { AppStorageV2 } from '@kit.ArkUI';
+import { AppKeys } from '../../models/AppKeys';
 
 export function getDbSteps(): number[] {
   return [-20, 0, 20, 40, 60, 80, 100, 120, 140];

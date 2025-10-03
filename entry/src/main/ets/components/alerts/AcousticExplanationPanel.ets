@@ -3,7 +3,7 @@
  * 提供可展开的声学原理说明和技术参数显示
  */
 
-import { ACOUSTIC_EXPLANATIONS, TECHNICAL_PARAMS, ALERT_COLORS } from '../../constants/AlertsConstants';
+import { ACOUSTIC_EXPLANATIONS, ALERT_COLORS, TECHNICAL_PARAMS } from '../../constants/AlertsConstants';
 import { DesignConstants } from '../../constants/DesignConstants';
 import { curves } from '@kit.ArkUI';
 

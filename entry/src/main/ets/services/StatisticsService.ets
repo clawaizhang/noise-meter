@@ -1,16 +1,16 @@
 import { AudioAnalysisMode } from '../common/AudioConfig';
 import {
   BehaviorSubject,
-  Subject,
-  Subscription,
+  distinctUntilChanged,
+  filter,
   interval,
   map,
   scan,
-  tap,
-  filter,
+  Subject,
+  Subscription,
   switchMap,
   takeUntil,
-  distinctUntilChanged
+  tap
 } from 'rxjs';
 
 /**

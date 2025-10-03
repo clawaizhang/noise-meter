@@ -6,7 +6,7 @@ import { PrivacyPolicyDialogBuilder } from '../components/privacy/PrivacyPolicyD
 import { PreferenceKeys } from '../models/PreferenceKeys'
 import { DatabaseUpgradeConfig, DbConfig } from '../interfaces/DatabaseInterfaces'
 import hilog from '@ohos.hilog'
-import { MainPage, dbConfig } from 'entry/MainPage'
+import { dbConfig, MainPage } from 'entry/MainPage'
 import { common, ConfigurationConstant, Want } from '@kit.AbilityKit'
 import { AppStorageV2, PersistenceV2 } from '@kit.ArkUI'
 import { WindowManager } from '../utils/WindowManager'

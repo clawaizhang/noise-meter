@@ -1,7 +1,3 @@
-import { DesignConstants } from "../constants/DesignConstants"
-import display from '@ohos.display';
-import common from '@ohos.app.ability.common';
-import prompt from '@ohos.prompt';
 
 // 功能链接项接口
 interface FunctionLinkItem {

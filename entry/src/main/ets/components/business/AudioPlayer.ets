@@ -1,8 +1,8 @@
-import { AudioPlayerService } from "../../services/AudioPlayerService"
-import hilog from '@ohos.hilog'
-import resourceManager from "@ohos.resourceManager";
-import { AudioPlayerGroupService } from "../../services/AudioPlayerGroupService";
-import media from "@ohos.multimedia.media";
+import { AudioPlayerService } from '../../services/AudioPlayerService';
+import hilog from '@ohos.hilog';
+import resourceManager from '@ohos.resourceManager';
+import { AudioPlayerGroupService } from '../../services/AudioPlayerGroupService';
+import media from '@ohos.multimedia.media';
 
 const TAG = 'AudioPlayer';
 const DOMAIN = 0x0000;

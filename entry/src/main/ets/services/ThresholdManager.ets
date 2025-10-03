@@ -5,14 +5,14 @@
 
 import { DayNightTime } from '../constants/AlertsConstants';
 import {
-  PresetType,
-  ThresholdConfig,
-  TimeSchedulingConfig,
+  CUSTOM_THRESHOLD_CONFIG,
   DEFAULT_THRESHOLD_CONFIG,
-  PRESET_THRESHOLDS,
   DEFAULT_TIME_SCHEDULING_CONFIG,
+  PRESET_THRESHOLDS,
+  PresetType,
   THRESHOLD_CALCULATION_RULES,
-  CUSTOM_THRESHOLD_CONFIG
+  ThresholdConfig,
+  TimeSchedulingConfig
 } from '../models/ThresholdConfig';
 import { PersistenceV2 } from '@kit.ArkUI';
 

@@ -1,7 +1,5 @@
-import { DialogHub } from '@hadss/dialoghub';
 import { DecibelService } from '../../services/DecibelService';
-import { NoiseStandardDialogBuilder } from './NoiseStandardDialogNavigation';
-import { AppStorageV2, curves } from '@kit.ArkUI';
+import { curves } from '@kit.ArkUI';
 import { AppKeys } from '../../models/AppKeys';
 
 // 对话框构建器

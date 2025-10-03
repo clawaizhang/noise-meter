@@ -1,9 +1,8 @@
 import { common } from '@kit.AbilityKit';
-import { fileUri } from '@kit.CoreFileKit';
+import { fileIo, fileUri } from '@kit.CoreFileKit';
 import { BusinessError } from '@kit.BasicServicesKit';
 import { componentSnapshot } from '@kit.ArkUI';
 import { image } from '@kit.ImageKit';
-import { fileIo } from '@kit.CoreFileKit';
 import { systemShare } from '@kit.ShareKit';
 import { uniformTypeDescriptor as utd } from '@kit.ArkData';
 

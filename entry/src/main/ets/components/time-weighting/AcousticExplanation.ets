@@ -4,9 +4,9 @@
  */
 
 import { AudioAnalysisMode } from '../../common/AudioConfig';
-import { AcousticExplanation,
-  ApplicationScenario,
-  TimeWeightingConstants } from '../../constants/TimeWeightingConstants';
+import {
+  TimeWeightingConstants
+} from '../../constants/TimeWeightingConstants';
 import { DesignConstants } from '../../constants/DesignConstants';
 
 @ComponentV2

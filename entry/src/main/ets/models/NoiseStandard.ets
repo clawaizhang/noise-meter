@@ -1,4 +1,4 @@
-import { NoiseStandardType } from "../constants/NoiseStandardConstants";
+import { NoiseStandardType } from '../constants/NoiseStandardConstants';
 
 export class NoiseStandard {
   type: NoiseStandardType;

@@ -9,7 +9,6 @@ import { DecibelRecord } from '../../models/DecibelRecord';
 import { AudioService } from '../../services/AudioService';
 import { LocationInfo } from '../../services/LocationService';
 import { WeightingType } from '../../constants/WeightingConstants';
-import { BusinessError } from '@kit.BasicServicesKit';
 import { Subject } from 'rxjs';
 import { AppKeys } from '../../models/AppKeys';
 import { FFTAnalyzer } from '../../utils/FFTAnalyzer';

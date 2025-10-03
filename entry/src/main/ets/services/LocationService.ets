@@ -1,6 +1,5 @@
 import common from '@ohos.app.ability.common';
 import { LocationUtil } from '@pura/harmony-utils';
-import geoLocationManager from '@ohos.geoLocationManager';
 import { SpatialStats } from '../types/NoiseStats';
 
 /**

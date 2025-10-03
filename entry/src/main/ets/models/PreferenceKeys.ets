@@ -1,7 +1,6 @@
-import { PreferencesUtil } from "@pura/harmony-utils";
-import { AudioAnalysisMode, AudioPresets } from "../common/AudioConfig";
-import { WeightingType } from "../constants/WeightingConstants";
-import { NoiseStandardType } from "../constants/NoiseStandardConstants";
+import { PreferencesUtil } from '@pura/harmony-utils';
+import { AudioAnalysisMode } from '../common/AudioConfig';
+import { WeightingType } from '../constants/WeightingConstants';
 
 /**
  * 首选项键名常量

@@ -1,5 +1,5 @@
-import { WeightingType } from "../constants/WeightingConstants";
-import { BasicStats, HealthStats } from "../types/NoiseStats";
+import { WeightingType } from '../constants/WeightingConstants';
+import { BasicStats, HealthStats } from '../types/NoiseStats';
 
 export interface NoiseLevel {
   range: string;

@@ -1,6 +1,6 @@
-import { ImageRaw } from "../common/ImageRaw";
-import { AudioPlayerService } from "../../services/AudioPlayerService";
-import { media } from "@kit.MediaKit";
+import { ImageRaw } from '../common/ImageRaw';
+import { AudioPlayerService } from '../../services/AudioPlayerService';
+import { media } from '@kit.MediaKit';
 
 @ComponentV2
 export struct ImageSoundPlayer2 {

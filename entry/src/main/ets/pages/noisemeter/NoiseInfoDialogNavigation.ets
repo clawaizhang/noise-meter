@@ -1,4 +1,4 @@
-import { navigationStack } from "../../constants/ProviderConstant";
+import { navigationStack } from '../../constants/ProviderConstant';
 
 @Builder
 function DecibelHistoryBuilder() {

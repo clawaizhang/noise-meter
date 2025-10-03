@@ -1,5 +1,5 @@
 import promptAction from '@ohos.promptAction';
-import { LocationService, LocationInfo } from '../../services/LocationService';
+import { LocationInfo, LocationService } from '../../services/LocationService';
 import { PreferenceKeys } from '../../models/PreferenceKeys';
 import { PersistenceV2 } from '@kit.ArkUI';
 

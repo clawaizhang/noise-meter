@@ -1,10 +1,9 @@
 import common from '@ohos.app.ability.common'
-import { BasicInfo } from "../../components/noise-dialogs/BasicInfo"
-import { Statistics } from "../../components/noise-dialogs/Statistics"
-import { NoiseChart } from "../../components/noise-dialogs/NoiseChart"
-import { DecibelRecordService } from "../../services/DecibelRecordService"
+import { BasicInfo } from '../../components/noise-dialogs/BasicInfo'
+import { Statistics } from '../../components/noise-dialogs/Statistics'
+import { NoiseChart } from '../../components/noise-dialogs/NoiseChart'
+import { DecibelRecordService } from '../../services/DecibelRecordService'
 import { DecibelRecord } from '../../models/DecibelRecord'
-import { FileUtils } from '../../utils/FileUtils'
 
 export interface DetailDialogParams {
   selectedRecord: DecibelRecord;

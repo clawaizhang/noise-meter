@@ -1,5 +1,5 @@
-import { AudioPlayerService, endState } from "./AudioPlayerService";
-import { media } from "@kit.MediaKit";
+import { AudioPlayerService, endState } from './AudioPlayerService';
+import { media } from '@kit.MediaKit';
 
 export class AudioPlayerGroupService {
   private static players: Map<string, AudioPlayerService> = new Map();

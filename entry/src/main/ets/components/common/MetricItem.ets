@@ -1,5 +1,5 @@
-import { LengthUnit } from "@kit.ArkUI"
-import { DesignConstants } from "../../constants/DesignConstants"
+import { LengthUnit } from '@kit.ArkUI'
+import { DesignConstants } from '../../constants/DesignConstants'
 
 @ComponentV2
 export struct MetricItem {

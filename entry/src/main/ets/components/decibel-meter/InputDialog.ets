@@ -1,4 +1,4 @@
-import curves from "@ohos.curves";
+import curves from '@ohos.curves';
 
 @CustomDialog
 export struct InputDialog {

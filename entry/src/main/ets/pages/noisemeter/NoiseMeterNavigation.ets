@@ -2,19 +2,16 @@ import { DecibelMeter } from '../../components/decibel-meter/DecibelMeter';
 import { navigationStack } from '../../constants/ProviderConstant';
 import { DialogHub, InfSheet } from '@hadss/dialoghub';
 import { SettingsBuilder } from './SettingsNavigation';
-import { NoiseStandardDialogBuilder } from './NoiseStandardDialogNavigation';
 import { AboutSettingsBuilder } from '../settings/AboutSettingsNavigation';
 import { AppKeys } from '../../models/AppKeys';
-import { AppStorageV2 } from '@kit.ArkUI';
+import { AppStorageV2, PersistenceV2 } from '@kit.ArkUI';
 import { ListItemBuilder } from '../../components/common/ListItemBuilder';
-import { interval, Subscription } from 'rxjs';
+import { Subscription } from 'rxjs';
 import { PreferenceKeys } from '../../models/PreferenceKeys';
-import { PersistenceV2 } from '@kit.ArkUI';
 import { AlertsContent } from '../../components/alerts/AlertsContent';
 import { AlertsSettingsBuilder } from '../settings/AlertsSettingsNavigation';
-import { common } from '@kit.AbilityKit';
+import { common, Want } from '@kit.AbilityKit';
 import { BusinessError } from '@kit.BasicServicesKit';
-import { Want } from '@kit.AbilityKit';
 
 // 导航菜单项接口定义
 interface NavigationMenuItem {

@@ -1,10 +1,10 @@
-import { DeviceHealthInfo, ScoreHealth } from "../types/DeviceHealthInfo"
-import { LengthUnit } from "@kit.ArkUI"
-import { DeviceHealthService } from "../services/DeviceHealthService"
-import { MetricItem } from "./common/MetricItem"
-import { DesignConstants } from "../constants/DesignConstants"
-import { MemoryUtils, calculateMemoryUsage, calculateStorageUsage } from "../utils/MemoryUtils"
-import { navigationStack } from "../constants/ProviderConstant"
+import { DeviceHealthInfo, ScoreHealth } from '../types/DeviceHealthInfo'
+import { LengthUnit } from '@kit.ArkUI'
+import { DeviceHealthService } from '../services/DeviceHealthService'
+import { MetricItem } from './common/MetricItem'
+import { DesignConstants } from '../constants/DesignConstants'
+import { calculateMemoryUsage, calculateStorageUsage, MemoryUtils } from '../utils/MemoryUtils'
+import { navigationStack } from '../constants/ProviderConstant'
 
 // 健康卡片状态枚举
 enum HealthCardState {

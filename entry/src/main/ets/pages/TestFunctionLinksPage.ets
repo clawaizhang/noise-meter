@@ -1,5 +1,5 @@
-import { FunctionLinksPanel } from "../components/FunctionLinksPanel"
-import { DesignConstants } from "../constants/DesignConstants"
+import { FunctionLinksPanel } from '../components/FunctionLinksPanel'
+import { DesignConstants } from '../constants/DesignConstants'
 
 @Entry
 @ComponentV2

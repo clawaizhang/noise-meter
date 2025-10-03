@@ -1,16 +1,12 @@
 import { DecibelService } from '../../services/DecibelService';
-import { StatisticsService } from '../../services/StatisticsService';
-import { AudioAnalysisMode } from '../../common/AudioConfig';
 import { WeightingType } from '../../constants/WeightingConstants';
-import { DialogHub, InfPopup, InfSheet } from '@hadss/dialoghub';
+import { DialogHub, InfSheet } from '@hadss/dialoghub';
 import { resourceManager } from '@kit.LocalizationKit';
 import { NoiseDescriptionDialogBuilder } from '../../pages/noisemeter/NoiseDescriptionDialogNavigation';
 import { NoiseStandardDialogBuilder } from '../../pages/noisemeter/NoiseStandardDialogNavigation';
-import { image } from '@kit.ImageKit';
 import { AppKeys } from '../../models/AppKeys';
 import { AppStorageV2, curves } from '@kit.ArkUI';
 import { interval, Subscription } from 'rxjs';
-import { DesignConstants } from '../../constants/DesignConstants';
 
 // 噪音等级横幅配置接口
 interface NoiseBannerConfig {

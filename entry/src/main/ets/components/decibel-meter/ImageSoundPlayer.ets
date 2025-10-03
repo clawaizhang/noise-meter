@@ -1,10 +1,10 @@
-import { ImageRaw } from "../common/ImageRaw";
-import resourceManager from "@ohos.resourceManager";
-import { AudioPlayerService } from "../../services/AudioPlayerService";
-import { curves } from "@kit.ArkUI";
-import { AudioPlayerGroupService } from "../../services/AudioPlayerGroupService";
-import { media } from "@kit.MediaKit";
-import { Subscription, timer } from "rxjs";
+import { ImageRaw } from '../common/ImageRaw';
+import resourceManager from '@ohos.resourceManager';
+import { AudioPlayerService } from '../../services/AudioPlayerService';
+import { curves } from '@kit.ArkUI';
+import { AudioPlayerGroupService } from '../../services/AudioPlayerGroupService';
+import { media } from '@kit.MediaKit';
+import { Subscription, timer } from 'rxjs';
 
 @ComponentV2
 export struct ImageSoundPlayer {
