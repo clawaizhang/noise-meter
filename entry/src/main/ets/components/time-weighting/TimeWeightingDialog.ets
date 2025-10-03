@@ -12,6 +12,7 @@ import { PreviewPanel } from './PreviewPanel';
 import { ScenarioDisplay } from './ScenarioDisplay';
 import { CollapsibleSection } from './CollapsibleSection';
 import { EnhancedModeSelectionPanel } from './EnhancedModeSelectionPanel';
+import { WindowFunctionSettings } from './WindowFunctionSettings';
 
 @ComponentV2
 export struct TimeWeightingDialog {
@@ -22,6 +23,7 @@ export struct TimeWeightingDialog {
   @Local hoveredMode: AudioAnalysisMode | null = null; // 悬停的模式
   @Local isTechnicalParamsExpanded: boolean = false; // 技术参数是否展开
   @Local isAcousticTheoryExpanded: boolean = false; // 声学原理是否展开
+  @Local isWindowFunctionExpanded: boolean = false; // 窗函数设置是否展开
 
   aboutToAppear() {
     // 初始化选中模式为当前模式
@@ -141,6 +143,17 @@ export struct TimeWeightingDialog {
         AcousticExplanationComp({
           selectedMode: this.selectedMode
         })
+      }
+
+      // 窗函数设置区域（高级设置）
+      CollapsibleSection({
+        title: '窗函数设置',
+        isExpanded: this.isWindowFunctionExpanded,
+        onToggle: () => {
+          this.isWindowFunctionExpanded = !this.isWindowFunctionExpanded;
+        }
+      }) {
+        WindowFunctionSettings()
       }
     }
     .width('100%')

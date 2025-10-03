@@ -1,5 +1,5 @@
 import { PreferencesUtil } from '@pura/harmony-utils';
-import { AudioAnalysisMode } from '../common/AudioConfig';
+import { AudioAnalysisMode, WindowType } from '../common/AudioConfig';
 import { WeightingType } from '../constants/WeightingConstants';
 
 /**
@@ -112,4 +112,16 @@ export class PreferenceKeys {
    */
   @Trace
   auto_save_interval: number = PreferencesUtil.getNumberSync('auto_save_interval', 5);
+
+  /**
+   * 窗函数覆盖开关
+   */
+  @Trace
+  window_function_override_enabled: boolean = PreferencesUtil.getBooleanSync('window_function_override_enabled', false);
+
+  /**
+   * 覆盖的窗函数类型
+   */
+  @Trace
+  window_function_override_type: WindowType = PreferencesUtil.getStringSync('window_function_override_type', WindowType.HANNING) as WindowType;
 }

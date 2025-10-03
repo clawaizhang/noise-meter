@@ -1,12 +1,12 @@
-import { AudioAnalysisMode, AudioPresets } from '../common/AudioConfig';
+import { AudioAnalysisMode, AudioPresets, WindowType } from '../common/AudioConfig';
 import { WeightingType } from '../constants/WeightingConstants';
 import { FFTAnalyzer } from '../utils/FFTAnalyzer';
 
 @Concurrent
 export function concurrentCalculateSpectrum(savedMode: string, buffer: ArrayBuffer,
-  weightingType: WeightingType,calibrationGain:number): Float32Array {
+  weightingType: WeightingType, calibrationGain: number, overrideWindowType?: WindowType): Float32Array {
   // 初始化权分析器
-  const config = AudioPresets.getConfig(savedMode as AudioAnalysisMode);
+  const config = AudioPresets.getConfig(savedMode as AudioAnalysisMode, overrideWindowType);
   let fftAnalyzer = new FFTAnalyzer(
     config.fftSize,
     config.windowType,
