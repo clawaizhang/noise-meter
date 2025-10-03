@@ -13,6 +13,8 @@ import { ScenarioDisplay } from './ScenarioDisplay';
 import { CollapsibleSection } from './CollapsibleSection';
 import { EnhancedModeSelectionPanel } from './EnhancedModeSelectionPanel';
 import { CustomConfigPanel } from './CustomConfigPanel';
+import { PreferenceKeys } from '../../models/PreferenceKeys';
+import { PersistenceV2 } from '@kit.ArkUI';
 
 @ComponentV2
 export struct TimeWeightingDialog {
@@ -23,7 +25,7 @@ export struct TimeWeightingDialog {
   @Local hoveredMode: AudioAnalysisMode | null = null; // 悬停的模式
   @Local isTechnicalParamsExpanded: boolean = false; // 技术参数是否展开
   @Local isAcousticTheoryExpanded: boolean = false; // 声学原理是否展开
-  @Local isCustomModeEnabled: boolean = false; // 自定义模式是否启用
+  @Local pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys)!;
 
   aboutToAppear() {
     // 初始化选中模式为当前模式
@@ -41,7 +43,7 @@ export struct TimeWeightingDialog {
 
   // 处理自定义模式开关
   private handleCustomModeToggle(isEnabled: boolean) {
-    this.isCustomModeEnabled = isEnabled;
+    this.pk.custom_audio_config_enabled = isEnabled;
     if (isEnabled) {
       // 启用自定义模式
       this.selectedMode = AudioAnalysisMode.CUSTOM_TIME_WEIGHTING;
@@ -66,7 +68,7 @@ export struct TimeWeightingDialog {
         .fontColor($r('sys.color.font_primary'))
         .layoutWeight(1)
 
-      Toggle({ type: ToggleType.Switch, isOn: this.isCustomModeEnabled })
+      Toggle({ type: ToggleType.Switch, isOn: this.pk.custom_audio_config_enabled })
         .onChange((isOn: boolean) => {
           this.handleCustomModeToggle(isOn);
         })
@@ -74,8 +76,14 @@ export struct TimeWeightingDialog {
     .width('100%')
     .padding(DesignConstants.SPACING_MD)
     .backgroundColor($r('sys.color.comp_background_primary'))
-    .borderRadius(DesignConstants.BORDER_RADIUS_MD)
-    .margin({ top: 16, left: 16, right: 16, bottom: 8 })
+    .borderRadius(16)
+    .padding({ left: 16, right: 16 })
+    .margin({
+      top: 16,
+      left: 16,
+      right: 16,
+      bottom: 8
+    })
   }
 
   // 构建标准模式选择面板
@@ -198,17 +206,16 @@ export struct TimeWeightingDialog {
     .width('100%')
   }
 
-
   build() {
     Column({ space: 8 }) {
       // 自定义模式开关
       this.buildCustomModeSwitch()
 
       // 根据自定义模式状态显示不同界面
-      if (!this.isCustomModeEnabled) {
+      if (!this.pk.custom_audio_config_enabled) {
         // 标准模式界面
         this.buildStandardModeSelectionPanel()
-        
+
         // 可滚动内容区域
         Scroll() {
           Column({ space: DesignConstants.SPACING_LG }) {
@@ -220,7 +227,7 @@ export struct TimeWeightingDialog {
 
           }
           .width('100%')
-          .margin({bottom:72})
+          .margin({ bottom: 72 })
           .padding(DesignConstants.SPACING_LG)
           .backgroundColor($r('sys.color.background_secondary'))
         }
