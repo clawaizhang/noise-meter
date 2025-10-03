@@ -4,9 +4,9 @@ import { FFTAnalyzer } from '../utils/FFTAnalyzer';
 
 @Concurrent
 export function concurrentCalculateSpectrum(savedMode: string, buffer: ArrayBuffer,
-  weightingType: WeightingType, calibrationGain: number, overrideWindowType?: WindowType): Float32Array {
+  weightingType: WeightingType, calibrationGain: number): Float32Array {
   // 初始化权分析器
-  const config = AudioPresets.getConfig(savedMode as AudioAnalysisMode, overrideWindowType);
+  const config = AudioPresets.getConfig(savedMode as AudioAnalysisMode);
   let fftAnalyzer = new FFTAnalyzer(
     config.fftSize,
     config.windowType,

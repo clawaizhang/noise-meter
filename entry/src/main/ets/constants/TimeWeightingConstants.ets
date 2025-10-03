@@ -7,29 +7,29 @@ import { AudioAnalysisMode } from '../common/AudioConfig';
 
 // 声学理论解释接口
 export interface AcousticExplanation {
-  timeConstant: string;           // 时间常数
+  timeConstant: string; // 时间常数
   responseCharacteristic: string; // 响应特性
-  frequencyResponse: string;      // 频率响应
-  standardReference: string;      // 标准依据
-  physicalPrinciple: string;      // 物理原理
+  frequencyResponse: string; // 频率响应
+  standardReference: string; // 标准依据
+  physicalPrinciple: string; // 物理原理
 }
 
 // 技术参数接口
 interface TechnicalParams {
-  fftSize: number;               // FFT大小
-  updateInterval: number;        // 更新间隔(ms)
-  frequencyResolution: number;   // 频率分辨率(Hz)
-  timeResolution: number;        // 时间分辨率(ms)
-  windowType: string;            // 窗函数类型
-  overlapRate: number;           // 重叠率
-  bufferSize: number;            // 缓冲区大小
+  fftSize: number; // FFT大小
+  updateInterval: number; // 更新间隔(ms)
+  frequencyResolution: number; // 频率分辨率(Hz)
+  timeResolution: number; // 时间分辨率(ms)
+  windowType: string; // 窗函数类型
+  overlapRate: number; // 重叠率
+  bufferSize: number; // 缓冲区大小
 }
 
 // 应用场景接口
 export interface ApplicationScenario {
-  title: string;                 // 场景标题
-  description: string;           // 场景描述
-  example: string;               // 实际示例
+  title: string; // 场景标题
+  description: string; // 场景描述
+  example: string; // 实际示例
 }
 
 export class TimeWeightingConstants {
@@ -55,9 +55,15 @@ export class TimeWeightingConstants {
       frequencyResponse: '对脉冲信号有特殊加权处理，优化瞬时信号的检测能力',
       standardReference: 'GB/T 3785.1-2010, IEC 61672-1 Class 1',
       physicalPrinciple: '双时间常数设计，上升时间常数τ₁=35ms，下降时间常数τ₂=1.5s，专门针对脉冲信号优化'
+    },
+    [AudioAnalysisMode.CUSTOM_TIME_WEIGHTING]: {
+      timeConstant: '自定义时间常数',
+      responseCharacteristic: '自定义时间常数，可满足不同场景需求',
+      frequencyResponse: '自定义时间常数，可满足不同场景需求',
+      standardReference: '自定义时间常数，可满足不同场景需求',
+      physicalPrinciple: '自定义时间常数，可满足不同场景需求'
     }
   };
-
   // 技术参数配置
   static readonly TECHNICAL_PARAMS: Record<AudioAnalysisMode, TechnicalParams> = {
     [AudioAnalysisMode.FAST_TIME_WEIGHTING]: {
@@ -86,9 +92,17 @@ export class TimeWeightingConstants {
       windowType: '布莱克曼窗',
       overlapRate: 0.75,
       bufferSize: 2048
+    },
+    [AudioAnalysisMode.CUSTOM_TIME_WEIGHTING]: {
+      fftSize: 1024,
+      updateInterval: 35,
+      frequencyResolution: 43.1,
+      timeResolution: 23.2,
+      windowType: '布莱克曼窗',
+      overlapRate: 0.75,
+      bufferSize: 2048
     }
   };
-
   // 应用场景配置
   static readonly APPLICATION_SCENARIOS: Record<AudioAnalysisMode, ApplicationScenario[]> = {
     [AudioAnalysisMode.FAST_TIME_WEIGHTING]: [
@@ -141,21 +155,28 @@ export class TimeWeightingConstants {
         description: '评估警报器、警笛的脉冲特性',
         example: '消防车、救护车警报声检测'
       }
+    ],
+    [AudioAnalysisMode.CUSTOM_TIME_WEIGHTING]: [
+      {
+        title: '自定义时间常数',
+        description: '自定义时间常数',
+        example: '自定义时间常数'
+      }
     ]
   };
-
   // 模式显示名称
   static readonly MODE_DISPLAY_NAMES: Record<AudioAnalysisMode, string> = {
     [AudioAnalysisMode.FAST_TIME_WEIGHTING]: '快速(F)',
     [AudioAnalysisMode.SLOW_TIME_WEIGHTING]: '慢速(S)',
-    [AudioAnalysisMode.IMPULSE_TIME_WEIGHTING]: '脉冲(I)'
+    [AudioAnalysisMode.IMPULSE_TIME_WEIGHTING]: '脉冲(I)',
+    [AudioAnalysisMode.CUSTOM_TIME_WEIGHTING]: '自定义'
   };
-
   // 模式简要描述
   static readonly MODE_DESCRIPTIONS: Record<AudioAnalysisMode, string> = {
     [AudioAnalysisMode.FAST_TIME_WEIGHTING]: '时间常数125ms，适合测量快速变化的噪声',
     [AudioAnalysisMode.SLOW_TIME_WEIGHTING]: '时间常数1s，适合测量稳态噪声',
-    [AudioAnalysisMode.IMPULSE_TIME_WEIGHTING]: '时间常数35ms/1.5s，适合测量脉冲噪声'
+    [AudioAnalysisMode.IMPULSE_TIME_WEIGHTING]: '时间常数35ms/1.5s，适合测量脉冲噪声',
+    [AudioAnalysisMode.CUSTOM_TIME_WEIGHTING]: '用户自定义配置，完全可调的音频分析参数'
   };
 
   // 获取模式图标资源

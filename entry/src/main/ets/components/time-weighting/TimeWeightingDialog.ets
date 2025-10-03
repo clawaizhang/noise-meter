@@ -12,7 +12,7 @@ import { PreviewPanel } from './PreviewPanel';
 import { ScenarioDisplay } from './ScenarioDisplay';
 import { CollapsibleSection } from './CollapsibleSection';
 import { EnhancedModeSelectionPanel } from './EnhancedModeSelectionPanel';
-import { WindowFunctionSettings } from './WindowFunctionSettings';
+import { CustomConfigPanel } from './CustomConfigPanel';
 
 @ComponentV2
 export struct TimeWeightingDialog {
@@ -23,7 +23,7 @@ export struct TimeWeightingDialog {
   @Local hoveredMode: AudioAnalysisMode | null = null; // 悬停的模式
   @Local isTechnicalParamsExpanded: boolean = false; // 技术参数是否展开
   @Local isAcousticTheoryExpanded: boolean = false; // 声学原理是否展开
-  @Local isWindowFunctionExpanded: boolean = false; // 窗函数设置是否展开
+  @Local isCustomModeEnabled: boolean = false; // 自定义模式是否启用
 
   aboutToAppear() {
     // 初始化选中模式为当前模式
@@ -39,9 +39,48 @@ export struct TimeWeightingDialog {
     }
   }
 
-  // 构建固定顶部选项卡
+  // 处理自定义模式开关
+  private handleCustomModeToggle(isEnabled: boolean) {
+    this.isCustomModeEnabled = isEnabled;
+    if (isEnabled) {
+      // 启用自定义模式
+      this.selectedMode = AudioAnalysisMode.CUSTOM_TIME_WEIGHTING;
+      if (this.onModeChange) {
+        this.onModeChange(AudioAnalysisMode.CUSTOM_TIME_WEIGHTING);
+      }
+    } else {
+      // 禁用自定义模式，回到快速模式
+      this.selectedMode = AudioAnalysisMode.FAST_TIME_WEIGHTING;
+      if (this.onModeChange) {
+        this.onModeChange(AudioAnalysisMode.FAST_TIME_WEIGHTING);
+      }
+    }
+  }
+
+  // 构建自定义模式开关
   @Builder
-  private buildModeSelectionPanel() {
+  private buildCustomModeSwitch() {
+    Row({ space: DesignConstants.SPACING_MD }) {
+      Text('自定义模式')
+        .fontSize(DesignConstants.FONT_SIZE_MD)
+        .fontColor($r('sys.color.font_primary'))
+        .layoutWeight(1)
+
+      Toggle({ type: ToggleType.Switch, isOn: this.isCustomModeEnabled })
+        .onChange((isOn: boolean) => {
+          this.handleCustomModeToggle(isOn);
+        })
+    }
+    .width('100%')
+    .padding(DesignConstants.SPACING_MD)
+    .backgroundColor($r('sys.color.comp_background_primary'))
+    .borderRadius(DesignConstants.BORDER_RADIUS_MD)
+    .margin({ top: 16, left: 16, right: 16, bottom: 8 })
+  }
+
+  // 构建标准模式选择面板
+  @Builder
+  private buildStandardModeSelectionPanel() {
     // 选项卡容器
     Row({ space: 0 }) {
       ForEach(TimeWeightingConstants.getAvailableModes(), (mode: AudioAnalysisMode) => {
@@ -91,7 +130,7 @@ export struct TimeWeightingDialog {
       })
     }
     .backgroundColor($r('sys.color.comp_background_primary'))
-    .margin(16)
+    .margin({ left: 16, right: 16, bottom: 16 })
     .borderRadius(16)
     .height(56)
   }
@@ -110,6 +149,16 @@ export struct TimeWeightingDialog {
       ScenarioDisplay({
         selectedMode: this.selectedMode
       })
+    }
+    .width('100%')
+  }
+
+  // 构建自定义模式界面
+  @Builder
+  private buildCustomModeInterface() {
+    Column({ space: DesignConstants.SPACING_LG }) {
+      // 自定义配置面板
+      CustomConfigPanel()
     }
     .width('100%')
   }
@@ -145,16 +194,6 @@ export struct TimeWeightingDialog {
         })
       }
 
-      // 窗函数设置区域（高级设置）
-      CollapsibleSection({
-        title: '窗函数设置',
-        isExpanded: this.isWindowFunctionExpanded,
-        onToggle: () => {
-          this.isWindowFunctionExpanded = !this.isWindowFunctionExpanded;
-        }
-      }) {
-        WindowFunctionSettings()
-      }
     }
     .width('100%')
   }
@@ -162,29 +201,45 @@ export struct TimeWeightingDialog {
 
   build() {
     Column({ space: 8 }) {
-      // 模式选择面板
-      this.buildModeSelectionPanel()
-      
-      // 可滚动内容区域
-      Scroll() {
-        Column({ space: DesignConstants.SPACING_LG }) {
-          // 主要内容区域（优先显示）
-          this.buildPrimaryContentArea()
+      // 自定义模式开关
+      this.buildCustomModeSwitch()
 
-          // 可折叠的专业内容区域
-          this.buildExpandableProfessionalArea()
+      // 根据自定义模式状态显示不同界面
+      if (!this.isCustomModeEnabled) {
+        // 标准模式界面
+        this.buildStandardModeSelectionPanel()
+        
+        // 可滚动内容区域
+        Scroll() {
+          Column({ space: DesignConstants.SPACING_LG }) {
+            // 主要内容区域（优先显示）
+            this.buildPrimaryContentArea()
 
+            // 可折叠的专业内容区域
+            this.buildExpandableProfessionalArea()
+
+          }
+          .width('100%')
+          .margin({bottom:72})
+          .padding(DesignConstants.SPACING_LG)
+          .backgroundColor($r('sys.color.background_secondary'))
         }
+        .scrollBar(BarState.Off)
+        .edgeEffect(EdgeEffect.Spring)
+        .scrollable(ScrollDirection.Vertical)
         .width('100%')
-        .margin({bottom:72})
-        .padding(DesignConstants.SPACING_LG)
-        .backgroundColor($r('sys.color.background_secondary'))
+        .layoutWeight(1)
+      } else {
+        // 自定义模式界面
+        Scroll() {
+          this.buildCustomModeInterface()
+        }
+        .scrollBar(BarState.Off)
+        .edgeEffect(EdgeEffect.Spring)
+        .scrollable(ScrollDirection.Vertical)
+        .width('100%')
+        .layoutWeight(1)
       }
-      .scrollBar(BarState.Off)
-      .edgeEffect(EdgeEffect.Spring)
-      .scrollable(ScrollDirection.Vertical)
-      .width('100%')
-      .layoutWeight(1)
 
     }
     .width('100%')

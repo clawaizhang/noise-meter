@@ -187,16 +187,12 @@ export struct AudioController {
         this.timedAudioBuffers.push({timestamp: currentTime, buffer: buffer.slice(0)});
 
         // 计算频谱数据（用于频谱图显示）
-        const overrideEnabled = this.pk.window_function_override_enabled;
-        const overrideType = this.pk.window_function_override_type;
-
-        taskpool.execute<[string, ArrayBuffer, WeightingType, number, WindowType], Float32Array>(
+        taskpool.execute<[string, ArrayBuffer, WeightingType, number], Float32Array>(
           concurrentCalculateSpectrum,
           this.pk.audio_analysis_mode,
           buffer.slice(0),
           this.pk.weighting_type,
-          this.pk.calibration_value,
-          overrideEnabled ? overrideType : AudioPresets.getConfig(this.pk.audio_analysis_mode).windowType
+          this.pk.calibration_value
         ).then((spectrum) => {
           this.onSpectrumData(spectrum);
 
