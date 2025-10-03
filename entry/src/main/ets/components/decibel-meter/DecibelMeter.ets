@@ -147,7 +147,7 @@ export struct DecibelMeter {
         }) {
           Column({ space: 12 }) {
 
-            // 使用新的分贝显示组件（简化版，只负责显示）
+            // 使用新的分贝显示组件（重新设计版）
             DecibelDisplayComponent({
               currentDecibel: this.currentDecibel,
               minDecibel: this.minDecibel, // 这些值现在由AudioController管理
@@ -157,12 +157,9 @@ export struct DecibelMeter {
               calibrationValue: this.pk.calibration_value,
               noiseThreshold: this.pk.noise_threshold,
               systemNotificationEnabled: this.pk.system_notification_enabled,
-              isNoiseAlarm: false // 报警状态由AudioController管理
+              isNoiseAlarm: false, // 报警状态由AudioController管理
+              autoSaveCountdown: this.autoSaveCountdown // 传递自动保存倒计时
             })
-
-            Text(this.autoSaveCountdown)
-              .fontSize(14)
-              .fontColor($r('sys.color.ohos_id_color_text_secondary'))
 
             // 位置显示
             LocationDisplay({

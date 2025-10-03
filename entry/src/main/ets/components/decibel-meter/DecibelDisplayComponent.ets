@@ -23,6 +23,7 @@ export struct DecibelDisplayComponent {
   @Param @Require noiseThreshold: number = 80;
   @Param @Require systemNotificationEnabled: boolean = true;
   @Param @Require isNoiseAlarm: boolean = false;
+  @Param @Require autoSaveCountdown: string = '';
   
   // 内部状态
   @Local private showAvgInsteadOfMin: boolean = true;
@@ -39,170 +40,226 @@ export struct DecibelDisplayComponent {
   }
 
   @Builder
-  noiseCalibration() {
-    Row({ space: 4 }) {
-      Text('声级校准:')
-        .fontSize(12)
-        .fontColor($r('sys.color.font_secondary'));
+  noiseLevelBanner() {
 
-      Text(`${this.calibrationValue} ${this.weightingType === WeightingType.A ? 'dB(A)' :
-        this.weightingType === WeightingType.C ? 'dB(C)' : 'dB'}`)
-        .fontSize(12)
-        .fontColor('sys.color.font_secondary');
-    }
-    .opacity(0.7)
-  }
-
-  @Builder
-  noiseDescriptions() {
-    Row() {
+    Row({ space: 8 }) {
       Image($r('app.media.ic_info'))
-        .width(12)
-        .height(12)
+        .width(16)
+        .height(16)
         .fillColor(DecibelService.getDecibelColor(this.currentDecibel));
 
       Text(DecibelService.getDecibelDescription(this.currentDecibel))
-        .fontSize(12)
+        .fontSize(14)
         .fontColor(DecibelService.getDecibelColor(this.currentDecibel))
         .fontWeight(FontWeight.Medium);
     }
-    .padding(8)
+    .padding({ left: 16, right: 16, top: 8, bottom: 8 })
+    .backgroundColor(DecibelService.getDecibelColor(this.currentDecibel) + '20') // 20% 透明度
     .borderRadius(8)
-    .border({
-      width: 1,
-      color: DecibelService.getDecibelColor(this.currentDecibel)
-    })
-    .id('noiseDescriptionButtonId')
+    .width('100%')
+    .justifyContent(FlexAlign.Center)
     .onClick(() => {
       let dialog = DialogHub.getSheet()
         .setContent(wrapBuilder(NoiseDescriptionDialogBuilder), this.as)
         .setStyle({ backgroundColor: $r('sys.color.background_secondary'), showClose: false })
         .setConfig({ enableOutsideInteractive: false, scrollSizeMode: ScrollSizeMode.CONTINUOUS })
-        .setComponentTargetId('noiseDescriptionButtonId')
+        .setComponentTargetId('noiseLevelBannerId')
         .build();
       dialog.show();
       setInterval(() => {
         dialog.updateContent(this.as);
       }, 100)
     })
+    .id('noiseLevelBannerId')
   }
 
   @Builder
-  max() {
-    Column() {
-      Text('最大')
-        .fontSize(14)
-        .margin({ bottom: 4 });
-      Text(this.maxDecibel === 0 ? '-' : this.maxDecibel.toString())
-        .fontSize(32)
-        .fontWeight(FontWeight.Medium)
-        .fontColor(DecibelService.getDecibelColor(this.maxDecibel))
-        .animation({ curve: Curve.EaseOut });
+  currentDecibelDisplay() {
+
+    Column({ space: 0 }) {
+      if (this.currentDecibel === 0) {
+        Text('-')
+          .fontSize(80)
+          .fontWeight(FontWeight.Bold)
+          .fontColor(DecibelService.getDecibelColor(this.currentDecibel))
+          .textAlign(TextAlign.Center)
+          .width('100%')
+          .transition(TransitionEffect.scale({ x: 0, y: 0 }).animation({ curve: curves.springMotion() }));
+      } else {
+        Text(this.currentDecibel.toString())
+          .fontSize(80)
+          .fontWeight(FontWeight.Bold)
+          .fontColor(DecibelService.getDecibelColor(this.currentDecibel))
+          .textAlign(TextAlign.Center)
+          .width('100%')
+          .transition(TransitionEffect.scale({ x: 0, y: 0 }).animation({ curve: curves.springMotion() }));
+      }
+      
+      Text('分贝')
+        .fontSize(16)
+        .fontColor($r('sys.color.ohos_id_color_text_secondary'))
+        .textAlign(TextAlign.Center)
+        .width('100%')
+        .margin({ top: 4 });
     }
+    .padding({ top: 24, bottom: 24 })
+    .width('100%')
     .alignItems(HorizontalAlign.Center)
-    .margin({
-      left: 16
+    .id('currentDbComp')
+    .onClick(() => {
+      DialogHub.getPopup()
+        .setTextContent('当前分贝值')
+        .setComponentTargetId('currentDbComp')
+        .setStyle({
+          radius: $r('sys.float.chip_small_radius'),
+          maskColor: '#00000000',
+        })
+        .setConfig({
+          dialogPosition: {
+            preferPlacement: Placement.Top
+          },
+          dialogBehavior: { isModal: true, autoDismiss: true }
+        })
+        .build()
+        .show();
     })
   }
 
   @Builder
-  averageMin() {
-    Column() {
-      Text(this.showAvgInsteadOfMin ? '平均' : '最小')
-        .fontSize(14)
-      Text(this.showAvgInsteadOfMin ?
-        (this.avgDecibel === 0 ? '-' : this.avgDecibel.toString()) :
-        (this.minDecibel === 0 ? '-' : this.minDecibel.toString()))
-        .fontSize(32)
-        .fontWeight(FontWeight.Medium)
-        .fontColor(DecibelService.getDecibelColor(
-          this.showAvgInsteadOfMin ? this.avgDecibel : this.minDecibel))
-        .onClick(() => {
-          this.showAvgInsteadOfMin = !this.showAvgInsteadOfMin;
-        });
+  statisticsDisplay() {
+    Row({ space: 0 }) {
+      // 平均值
+      Column({ space: 4 }) {
+        Text('平均')
+          .fontSize(14)
+          .fontColor($r('sys.color.ohos_id_color_text_secondary'))
+          .textAlign(TextAlign.Center)
+          .width('100%');
+        
+        Text(this.avgDecibel === 0 ? '-' : this.avgDecibel.toString())
+          .fontSize(32)
+          .fontWeight(FontWeight.Medium)
+          .fontColor(DecibelService.getDecibelColor(this.avgDecibel))
+          .textAlign(TextAlign.Center)
+          .width('100%');
+      }
+      .layoutWeight(1)
+
+      // 分隔线
+      Divider()
+        .vertical(true)
+        .strokeWidth(1)
+        .color($r('sys.color.comp_divider'))
+        .margin({ left: 16, right: 16 })
+        .height(40)
+
+      // 最大值
+      Column({ space: 4 }) {
+        Text('最大')
+          .fontSize(14)
+          .fontColor($r('sys.color.ohos_id_color_text_secondary'))
+          .textAlign(TextAlign.Center)
+          .width('100%');
+        
+        Text(this.maxDecibel === 0 ? '-' : this.maxDecibel.toString())
+          .fontSize(32)
+          .fontWeight(FontWeight.Medium)
+          .fontColor(DecibelService.getDecibelColor(this.maxDecibel))
+          .textAlign(TextAlign.Center)
+          .width('100%');
+      }
+      .layoutWeight(1)
+
+      // 分隔线
+      Divider()
+        .vertical(true)
+        .strokeWidth(1)
+        .color($r('sys.color.comp_divider'))
+        .margin({ left: 16, right: 16 })
+        .height(40)
+
+      // 最小值
+      Column({ space: 4 }) {
+        Text('最小')
+          .fontSize(14)
+          .fontColor($r('sys.color.ohos_id_color_text_secondary'))
+          .textAlign(TextAlign.Center)
+          .width('100%');
+        
+        Text(this.minDecibel === 0 ? '-' : this.minDecibel.toString())
+          .fontSize(32)
+          .fontWeight(FontWeight.Medium)
+          .fontColor(DecibelService.getDecibelColor(this.minDecibel))
+          .textAlign(TextAlign.Center)
+          .width('100%');
+      }
+      .layoutWeight(1)
     }
-    .alignItems(HorizontalAlign.Center)
+    .padding({ top: 16, bottom: 16, left: 24, right: 24 })
+    .width('100%')
+    .backgroundColor($r('sys.color.comp_background_secondary'))
+    .borderRadius(12)
   }
 
-
   @Builder
-  CurrentDecibel() {
-    Stack({ alignContent: Alignment.Bottom }) {
-      Column() {
-        if (this.currentDecibel === 0) {
-          Text('-')
-            .fontSize(100)
-            .textShadow({
-              radius: 2,
-              color: Color.White,
-              offsetX: 0,
-              offsetY: 0
-            })
-            .transition(TransitionEffect.scale({ x: 0, y: 0 }).animation({ curve: curves.springMotion() }))
-            .fontWeight(FontWeight.Bold)
-            .fontColor(DecibelService.getDecibelColor(this.currentDecibel));
-        } else {
-          Text(this.currentDecibel.toString())
-            .fontSize(100)
-            .textShadow({
-              radius: 2,
-              color: Color.White,
-              offsetX: 0,
-              offsetY: 0
-            })
-            .transition(TransitionEffect.scale({ x: 0, y: 0 }).animation({ curve: curves.springMotion() }))
-            .fontWeight(FontWeight.Bold)
-            .fontColor(DecibelService.getDecibelColor(this.currentDecibel));
+  systemStatusDisplay() {
+    Row({ space: 16 }) {
+      // 校准状态
+      Row({ space: 4 }) {
+        Image($r('app.media.ic_calibration'))
+          .width(14)
+          .height(14)
+          .fillColor($r('sys.color.ohos_id_color_text_secondary'));
+        
+        Text(`校准:${this.calibrationValue} ${this.weightingType === WeightingType.A ? 'dB(A)' :
+          this.weightingType === WeightingType.C ? 'dB(C)' : 'dB'}`)
+          .fontSize(12)
+          .fontColor($r('sys.color.ohos_id_color_text_secondary'));
+      }
+
+      Blank()
+
+      // 自动保存状态
+      if (this.autoSaveCountdown) {
+        Row({ space: 4 }) {
+          Image($r('app.media.ic_save'))
+            .width(14)
+            .height(14)
+            .fillColor($r('sys.color.ohos_id_color_text_secondary'));
+          
+          Text(this.autoSaveCountdown)
+            .fontSize(12)
+            .fontColor($r('sys.color.ohos_id_color_text_secondary'));
         }
       }
-      .backgroundColor('#00000000')
-      .margin({ bottom: -20, right: -20 })
-      .id('currentDbComp')
-      .onClick(() => {
-        DialogHub.getPopup()
-          .setTextContent('当前分贝值')
-          .setComponentTargetId('currentDbComp')
-          .setStyle({
-            radius: $r('sys.float.chip_small_radius'),
-            maskColor: '#00000000',
-          })
-          .setConfig({
-            dialogPosition: {
-              preferPlacement: Placement.Top
-            },
-            dialogBehavior: { isModal: true, autoDismiss: true }
-          })
-          .build()
-          .show();
-      })
-      .alignItems(HorizontalAlign.Center);
     }
+    .padding({ top: 12, bottom: 12, left: 16, right: 16 })
+    .width('100%')
+    .backgroundColor($r('sys.color.comp_background_secondary'))
+    .borderRadius(8)
   }
 
   build() {
-    Column() {
-      // 噪音场景参考和升级校准信息
-      Flex({ justifyContent: FlexAlign.SpaceBetween, alignItems: ItemAlign.Center }) {
-        this.noiseDescriptions()
-        this.noiseCalibration()
-      }
-      .margin({
-        bottom: DesignConstants.SPACING_MD,
-        left: DesignConstants.SPACING_LG,
-        right: DesignConstants.SPACING_LG,
-        top: DesignConstants.SPACING_MD
-      })
+    Column({ space: 16 }) {
+      // 1. 噪音等级横幅（顶部）
+      this.noiseLevelBanner()
 
-      // 分贝显示卡片
-      Row({ space: DesignConstants.SPACING_SM }) {
-        this.averageMin()
-        this.CurrentDecibel()
-        this.max()
-      }
-      .justifyContent(FlexAlign.Center)
-      .alignItems(VerticalAlign.Bottom)
-      .borderColor(this.isNoiseAlarm ? DecibelService.getDecibelColor(this.currentDecibel) : Color.Transparent)
+      // 2. 当前分贝值显示（核心区域）
+      this.currentDecibelDisplay()
+
+      // 3. 统计数据展示
+      this.statisticsDisplay()
+
+      // 4. 系统状态信息
+      this.systemStatusDisplay()
+
+      // 5. 位置信息（由父组件传入）
+      Blank()
+        .height(40) // 为位置信息预留空间
     }
-    .justifyContent(FlexAlign.Center)
+    .width('100%')
+    .borderColor(this.isNoiseAlarm ? DecibelService.getDecibelColor(this.currentDecibel) : Color.Transparent)
+    .borderWidth(this.isNoiseAlarm ? 2 : 0)
+    .borderRadius(16)
   }
 }
