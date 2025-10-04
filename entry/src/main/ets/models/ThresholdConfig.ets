@@ -71,7 +71,7 @@ export interface ThresholdCalculationRule {
 
 // 默认配置
 export const DEFAULT_THRESHOLD_CONFIG: ThresholdConfig =
-  new ThresholdConfig(PresetType.GENERAL_ENVIRONMENT, true, 55, 65, 45, Date.now())
+  new ThresholdConfig(PresetType.GENERAL_ENVIRONMENT, false, 65, 75, 55, Date.now())
 
 // 预设阈值配置
 export const PRESET_THRESHOLDS: PresetThreshold[] = [

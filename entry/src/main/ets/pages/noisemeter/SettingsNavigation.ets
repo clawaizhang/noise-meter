@@ -21,6 +21,7 @@ import {
   AutoSaveSettingsDialogBuilder,
 } from '../../components/auto-save/AutoSaveSettingsDialog';
 import { ThresholdManager } from '../../services/ThresholdManager';
+import { PremiumFeature } from '../../components/membership/PremiumFeature';
 
 @Builder
 export function SettingsBuilder() {
@@ -534,44 +535,46 @@ struct Settings {
 
       // 自动保存设置
       GridCol() {
-        Column() {
-          Row() {
-            Row({ space: 8 }) {
-              Image($r('app.media.ic_save'))
-                .itemIcon()
-              Text('自动保存')
-                .itemTitle()
-            }.layoutWeight(1)
+        PremiumFeature({ featureName: '自动保存', featureDesc: '自动保存功能将自动保存您的录音' }) {
+          Column() {
+            Row() {
+              Row({ space: 8 }) {
+                Image($r('app.media.ic_save'))
+                  .itemIcon()
+                Text('自动保存')
+                  .itemTitle()
+              }.layoutWeight(1)
 
-            // 点击区域，触发弹框选择
-            Row({ space: DesignConstants.SPACING_XS }) {
-              Text(this.getAutoSaveDisplayValue())
-                .fontSize(DesignConstants.FONT_SIZE_MD)
-                .fontColor($r('sys.color.font_primary'))
-                .fontWeight(FontWeight.Medium)
+              // 点击区域，触发弹框选择
+              Row({ space: DesignConstants.SPACING_XS }) {
+                Text(this.getAutoSaveDisplayValue())
+                  .fontSize(DesignConstants.FONT_SIZE_MD)
+                  .fontColor($r('sys.color.font_primary'))
+                  .fontWeight(FontWeight.Medium)
 
-              Image($r('sys.media.ohos_ic_public_arrow_right'))
-                .width(DesignConstants.ICON_SIZE_SM)
-                .height(DesignConstants.ICON_SIZE_SM)
-                .fillColor($r('sys.color.font_secondary'))
+                Image($r('sys.media.ohos_ic_public_arrow_right'))
+                  .width(DesignConstants.ICON_SIZE_SM)
+                  .height(DesignConstants.ICON_SIZE_SM)
+                  .fillColor($r('sys.color.font_secondary'))
+              }
+              .padding({
+                left: DesignConstants.SPACING_MD,
+                right: DesignConstants.SPACING_MD,
+                top: DesignConstants.SPACING_SM,
+                bottom: DesignConstants.SPACING_SM
+              })
+              .backgroundColor($r('sys.color.comp_background_primary'))
+              .borderRadius(DesignConstants.BORDER_RADIUS_SM)
             }
-            .padding({
-              left: DesignConstants.SPACING_MD,
-              right: DesignConstants.SPACING_MD,
-              top: DesignConstants.SPACING_SM,
-              bottom: DesignConstants.SPACING_SM
-            })
-            .backgroundColor($r('sys.color.comp_background_primary'))
-            .borderRadius(DesignConstants.BORDER_RADIUS_SM)
-          }
-          .listItemRow()
+            .listItemRow()
 
-          Text(this.getAutoSaveDescription())
-            .itemDescription()
-        }.onClick(() => {
-          this.openAutoSaveDialog();
-        })
-        .cardStyle()
+            Text(this.getAutoSaveDescription())
+              .itemDescription()
+          }.onClick(() => {
+            this.openAutoSaveDialog();
+          })
+          .cardStyle()
+        }
       }
 
 

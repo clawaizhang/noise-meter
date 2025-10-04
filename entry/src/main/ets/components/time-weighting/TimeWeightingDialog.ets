@@ -15,6 +15,7 @@ import { EnhancedModeSelectionPanel } from './EnhancedModeSelectionPanel';
 import { CustomConfigPanel } from './CustomConfigPanel';
 import { PreferenceKeys } from '../../models/PreferenceKeys';
 import { PersistenceV2 } from '@kit.ArkUI';
+import { PremiumFeature } from '../membership/PremiumFeature';
 
 @ComponentV2
 export struct TimeWeightingDialog {
@@ -62,25 +63,27 @@ export struct TimeWeightingDialog {
   // 构建自定义模式开关
   @Builder
   private buildCustomModeSwitch() {
-    Row({ space: DesignConstants.SPACING_MD }) {
-      Text('自定义模式')
-        .fontSize(DesignConstants.FONT_SIZE_MD)
-        .fontColor($r('sys.color.font_primary'))
-        .fontWeight(FontWeight.Medium)
-        .layoutWeight(1)
+    PremiumFeature({ featureName: '自定义模式', featureDesc: '自定义所有FFT参数' }) {
+      Row({ space: DesignConstants.SPACING_MD }) {
+        Text('自定义模式')
+          .fontSize(DesignConstants.FONT_SIZE_MD)
+          .fontColor($r('sys.color.font_primary'))
+          .fontWeight(FontWeight.Medium)
+          .layoutWeight(1)
 
-      Toggle({ type: ToggleType.Switch, isOn: this.pk.custom_audio_config_enabled })
-        .onChange((isOn: boolean) => {
-          this.handleCustomModeToggle(isOn);
-        })
+        Toggle({ type: ToggleType.Switch, isOn: this.pk.custom_audio_config_enabled })
+          .onChange((isOn: boolean) => {
+            this.handleCustomModeToggle(isOn);
+          })
+      }
+      .justifyContent(FlexAlign.Center)
+      .alignItems(VerticalAlign.Center)
+      .width('100%')
+      .backgroundColor($r('sys.color.comp_background_primary'))
+      .padding(16)
+      .borderRadius(16)
+      .height(56)
     }
-    .justifyContent(FlexAlign.Center)
-    .alignItems(VerticalAlign.Center)
-    .width('100%')
-    .backgroundColor($r('sys.color.comp_background_primary'))
-    .padding(16)
-    .borderRadius(16)
-    .height(56)
   }
 
   // 构建标准模式选择面板
@@ -89,55 +92,71 @@ export struct TimeWeightingDialog {
     // 选项卡容器
     Row({ space: 0 }) {
       ForEach(TimeWeightingConstants.getAvailableModes(), (mode: AudioAnalysisMode) => {
-        // 选项卡内容
-        Row({ space: DesignConstants.SPACING_SM }) {
-          // 模式图标
-          Image(TimeWeightingConstants.getModeIcon(mode))
-            .width(DesignConstants.ICON_SIZE_SM)
-            .height(DesignConstants.ICON_SIZE_SM)
-            .fillColor(this.selectedMode === mode ?
-            $r('sys.color.font_on_primary') :
-              (this.hoveredMode === mode ?
-              $r('sys.color.interactive_active') :
-              $r('sys.color.font_primary')))
-
-          // 模式名称
-          Text(TimeWeightingConstants.MODE_DISPLAY_NAMES[mode])
-            .fontSize(DesignConstants.FONT_SIZE_MD)
-            .fontWeight(this.selectedMode === mode ? FontWeight.Bold : FontWeight.Medium)
-            .fontColor(this.selectedMode === mode ?
-            $r('sys.color.font_on_primary') :
-              (this.hoveredMode === mode ?
-              $r('sys.color.interactive_active') :
-              $r('sys.color.font_primary')))
+        if (mode == AudioAnalysisMode.SLOW_TIME_WEIGHTING || mode == AudioAnalysisMode.IMPULSE_TIME_WEIGHTING) {
+          Row(){
+            PremiumFeature({
+              featureName: TimeWeightingConstants.MODE_DISPLAY_NAMES[mode],
+              featureDesc: TimeWeightingConstants.MODE_DESCRIPTIONS[mode]
+            }) {
+              this.modeSelect(mode)
+            }
+          }.layoutWeight(1)
+        } else {
+          this.modeSelect(mode)
         }
-        .alignItems(VerticalAlign.Center)
-        .justifyContent(FlexAlign.Center)
-        .layoutWeight(1)
-        .height(56)
-        .backgroundColor(this.selectedMode === mode ?
-        $r('sys.color.interactive_active') :
-          (this.hoveredMode === mode ?
-          $r('sys.color.comp_background_secondary') :
-          $r('sys.color.comp_background_primary')))
-        .borderRadius(DesignConstants.BORDER_RADIUS_MD)
-        .padding(DesignConstants.SPACING_MD)
-        .onClick(() => {
-          this.handleModeSelect(mode);
-        })
-        .onHover((isHover: boolean) => {
-          if (isHover) {
-            this.hoveredMode = mode;
-          } else {
-            this.hoveredMode = null;
-          }
-        })
       })
     }
     .backgroundColor($r('sys.color.comp_background_primary'))
     .margin({ left: 16, right: 16, bottom: 16 })
     .borderRadius(16)
     .height(56)
+  }
+
+  @Builder
+  modeSelect(mode: AudioAnalysisMode) {
+    // 选项卡内容
+    Row({ space: DesignConstants.SPACING_SM }) {
+      // 模式图标
+      Image(TimeWeightingConstants.getModeIcon(mode))
+        .width(DesignConstants.ICON_SIZE_SM)
+        .height(DesignConstants.ICON_SIZE_SM)
+        .fillColor(this.selectedMode === mode ?
+        $r('sys.color.font_on_primary') :
+          (this.hoveredMode === mode ?
+          $r('sys.color.interactive_active') :
+          $r('sys.color.font_primary')));
+
+      // 模式名称
+      Text(TimeWeightingConstants.MODE_DISPLAY_NAMES[mode])
+        .fontSize(DesignConstants.FONT_SIZE_MD)
+        .fontWeight(this.selectedMode === mode ? FontWeight.Bold : FontWeight.Medium)
+        .fontColor(this.selectedMode === mode ?
+        $r('sys.color.font_on_primary') :
+          (this.hoveredMode === mode ?
+          $r('sys.color.interactive_active') :
+          $r('sys.color.font_primary')));
+    }
+    .alignItems(VerticalAlign.Center)
+    .justifyContent(FlexAlign.Center)
+    .layoutWeight(1)
+    .height(56)
+    .backgroundColor(this.selectedMode === mode ?
+    $r('sys.color.interactive_active') :
+      (this.hoveredMode === mode ?
+      $r('sys.color.comp_background_secondary') :
+      $r('sys.color.comp_background_primary')))
+    .borderRadius(DesignConstants.BORDER_RADIUS_MD)
+    .padding(DesignConstants.SPACING_MD)
+    .onClick(() => {
+      this.handleModeSelect(mode);
+    })
+    .onHover((isHover: boolean) => {
+      if (isHover) {
+        this.hoveredMode = mode;
+      } else {
+        this.hoveredMode = null;
+      }
+    })
   }
 
   // 构建主要内容区域（面向普通用户）

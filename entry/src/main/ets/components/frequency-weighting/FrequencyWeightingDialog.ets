@@ -67,8 +67,7 @@ export struct FrequencyWeightingDialog {
       // 专业功能，使用PremiumFeature包装
       PremiumFeature({
         featureName: displayName,
-        featureDesc: description,
-        icon: FrequencyWeightingConstants.getWeightingIcon(weighting),
+        featureDesc: description
       }) {
         this.buildTabContent(weighting, displayName)
       }

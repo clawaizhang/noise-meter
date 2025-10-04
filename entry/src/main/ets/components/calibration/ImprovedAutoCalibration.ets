@@ -6,15 +6,16 @@
 import { DesignConstants } from '../../constants/DesignConstants';
 import { curves, promptAction } from '@kit.ArkUI';
 import { CALIBRATION_COLORS } from '../../constants/CalibrationConstants';
+import { PremiumFeature } from '../membership/PremiumFeature';
 
 @ComponentV2
 export struct ImprovedAutoCalibration {
-  @Param @Require onStartCalibration: () => void;         // 开始校准回调
-  @Param @Require calibrationValue: number = 0;           // 当前校准值
-  @Param @Require isCalibrating: boolean = false;         // 是否正在校准
-  @Param @Require calibrationProgress: number = 0;        // 校准进度
-  @Param @Require countdown: number = 0;                  // 倒计时
-  @Param @Require environmentNoise: number = 0;           // 环境噪声
+  @Param @Require onStartCalibration: () => void; // 开始校准回调
+  @Param @Require calibrationValue: number = 0; // 当前校准值
+  @Param @Require isCalibrating: boolean = false; // 是否正在校准
+  @Param @Require calibrationProgress: number = 0; // 校准进度
+  @Param @Require countdown: number = 0; // 倒计时
+  @Param @Require environmentNoise: number = 0; // 环境噪声
 
   // 检查是否适合校准
   private isSuitableForCalibration(): boolean {
@@ -41,6 +42,7 @@ export struct ImprovedAutoCalibration {
             .fontSize(DesignConstants.FONT_SIZE_MD)
             .fontColor(CALIBRATION_COLORS.SUCCESS)
         }
+
         Text('当前环境非常安静（<20dB），可获得最佳精度')
           .fontSize(DesignConstants.FONT_SIZE_SM)
           .fontColor($r('sys.color.font_secondary'))
@@ -54,6 +56,7 @@ export struct ImprovedAutoCalibration {
             .fontSize(DesignConstants.FONT_SIZE_MD)
             .fontColor(CALIBRATION_COLORS.SUCCESS)
         }
+
         Text('当前环境适合自动校准（20-25dB）')
           .fontSize(DesignConstants.FONT_SIZE_SM)
           .fontColor($r('sys.color.font_secondary'))
@@ -67,6 +70,7 @@ export struct ImprovedAutoCalibration {
             .fontSize(DesignConstants.FONT_SIZE_MD)
             .fontColor(CALIBRATION_COLORS.WARNING)
         }
+
         Text('建议寻找更安静的环境（当前25-30dB）')
           .fontSize(DesignConstants.FONT_SIZE_SM)
           .fontColor($r('sys.color.font_secondary'))
@@ -80,6 +84,7 @@ export struct ImprovedAutoCalibration {
             .fontSize(DesignConstants.FONT_SIZE_MD)
             .fontColor(CALIBRATION_COLORS.ERROR)
         }
+
         Text('环境嘈杂（>30dB），建议在安静环境中校准')
           .fontSize(DesignConstants.FONT_SIZE_SM)
           .fontColor($r('sys.color.font_secondary'))
@@ -110,7 +115,12 @@ export struct ImprovedAutoCalibration {
           .strokeWidth(6)
           .fill(Color.Transparent)
           .strokeDashArray([this.calibrationProgress * 1.88, 188]) // 2πr ≈ 188
-          .rotate({ x: 0, y: 0, z: 1, angle: -90 })
+          .rotate({
+            x: 0,
+            y: 0,
+            z: 1,
+            angle: -90
+          })
           .animation({
             duration: 200,
             curve: curves.springMotion()
@@ -259,7 +269,9 @@ export struct ImprovedAutoCalibration {
       this.buildEnvironmentCheck()
 
       // 主按钮区域
-      this.buildMainButton()
+      PremiumFeature({ featureName: '自动校准', featureDesc: '自动计算并设置最佳校准值，确保测量准确性。' }) {
+        this.buildMainButton()
+      }
 
       // 说明文本
       Text('自动计算并设置最佳校准值，确保测量准确性。')

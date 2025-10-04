@@ -7,6 +7,7 @@ import { DEFAULT_THRESHOLD_CONFIG, PresetThreshold, PresetType, ThresholdConfig 
 import { DesignConstants } from '../../constants/DesignConstants';
 import { curves, PersistenceV2 } from '@kit.ArkUI';
 import { ThresholdManager } from '../../services/ThresholdManager';
+import { PremiumFeature } from '../membership/PremiumFeature';
 
 @ObservedV2
 class PresetConfig {
@@ -116,18 +117,20 @@ export struct EnhancedThresholdManager {
           .layoutWeight(1)
 
         // 时段调度开关
-        Row({ space: DesignConstants.SPACING_XS }) {
-          Text('时段调度')
-            .fontSize(DesignConstants.FONT_SIZE_MD)
-            .fontColor($r('sys.color.font_primary'))
-          
-          Toggle({ type: ToggleType.Switch, isOn: this.currentConfig.timeSchedulingEnabled })
-            .onChange((isOn: boolean) => {
-              this.logStateChange(`切换时段调度: ${isOn ? '启用' : '禁用'}`);
-              ThresholdManager.setTimeSchedulingEnabled(isOn);
-            })
+        PremiumFeature({ featureName: '时段调度', featureDesc: '白天和夜间使用不同阈值' }) {
+          Row({ space: DesignConstants.SPACING_XS }) {
+            Text('时段调度')
+              .fontSize(DesignConstants.FONT_SIZE_MD)
+              .fontColor($r('sys.color.font_primary'))
+
+            Toggle({ type: ToggleType.Switch, isOn: this.currentConfig.timeSchedulingEnabled })
+              .onChange((isOn: boolean) => {
+                this.logStateChange(`切换时段调度: ${isOn ? '启用' : '禁用'}`);
+                ThresholdManager.setTimeSchedulingEnabled(isOn);
+              })
+          }
+          .alignItems(VerticalAlign.Center)
         }
-        .alignItems(VerticalAlign.Center)
       }
       .width('100%')
       .alignItems(VerticalAlign.Center)
@@ -151,8 +154,10 @@ export struct EnhancedThresholdManager {
           .fontColor($r('sys.color.font_secondary'))
           .alignSelf(ItemAlign.Start)
 
-        // 环境类型网格选择器
-        this.buildEnvironmentSelector()
+        PremiumFeature({ featureName: '选择预设环境', featureDesc: '选择预设环境快速设置阈值' }) {
+          // 环境类型网格选择器
+          this.buildEnvironmentSelector()
+        }
       }
       .width('100%')
       .margin({ top: DesignConstants.SPACING_MD })

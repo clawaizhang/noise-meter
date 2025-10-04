@@ -18,7 +18,7 @@ export struct PremiumFeature {
   @BuilderParam content: () => void; // 功能内容
   @Param @Require featureName: string; // 功能名称
   @Param @Require featureDesc: string; // 功能描述
-  @Param @Require icon: Resource; // 功能图标
+  @Param icon: Resource = $r('app.media.ic_vip'); // 功能图标
   @Event onUpgrade?: () => void; // 升级成功回调
   @Param showTrialOption: boolean = false; // 是否显示试用选项
   @Local private upgradeDialog: InfSheet | null = null; // 升级提示弹框
@@ -106,15 +106,6 @@ export struct PremiumFeature {
       .onClick(() => {
         this.showUpgradeDialog();
       })
-      .gesture(
-        // 添加长按提示
-        LongPressGesture({ repeat: false })
-          .onAction((event: GestureEvent) => {
-            if (event.repeat) {
-              console.info(`长按功能 "${this.featureName}"`);
-            }
-          })
-      )
     }
   }
 }
