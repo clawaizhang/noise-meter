@@ -1,7 +1,6 @@
 import { WeightingType } from '../constants/WeightingConstants';
 import { WindowType } from '../common/AudioConfig';
 import { WindowFunctionCache } from './WindowFunctionCache';
-import { FFTMemoryPool } from './FFTMemoryPool';
 
 /**
  * 复数类型接口
@@ -172,7 +171,6 @@ export class FFTAnalyzer {
   /**
    * 执行FFT变换
    * @param input 输入数据缓冲区
-   * @param weightingType 计权类型
    * @returns 频谱数据
    * @throws Error 当输入数据无效时抛出异常
    */
@@ -189,77 +187,67 @@ export class FFTAnalyzer {
       console.info(`当前计权类型: ${weightingType}`);
     }
 
-    // 从内存池获取数组
-    const memoryPool = FFTMemoryPool.getInstance();
-    const real = memoryPool.getArray(this.size);
-    const imag = memoryPool.getArray(this.size);
-    const spectrum = memoryPool.getArray(this.size / 2);
+    // 重用samples数组
+    const samples = new Int16Array(input);
+    if (!this.cachedSamples || this.cachedSamples.length !== samples.length) {
+      this.cachedSamples = new Int16Array(samples.length);
+    }
+    this.cachedSamples.set(samples);
 
-    if (!real || !imag || !spectrum) {
-      throw new Error('无法从内存池获取数组');
+    // 验证输入信号
+    const signalStats = this.validateSignal(this.cachedSamples);
+    if (!signalStats.isValid) {
+      if (this.DEBUG) {
+        console.warn('输入信号可能无效，振幅过低');
+      }
     }
 
-    try {
-      // 重用samples数组
-      const samples = new Int16Array(input);
-      if (!this.cachedSamples || this.cachedSamples.length !== samples.length) {
-        this.cachedSamples = new Int16Array(samples.length);
-      }
-      this.cachedSamples.set(samples);
+    // 重用real/imag数组
+    const real = new Float32Array(this.size);
+    const imag = new Float32Array(this.size);
 
-      // 验证输入信号
-      const signalStats = this.validateSignal(this.cachedSamples);
-      if (!signalStats.isValid) {
-        if (this.DEBUG) {
-          console.warn('输入信号可能无效，振幅过低');
-        }
-      }
+    // 应用窗函数并归一化
+    const scale = 1.0 / this.REF_VALUE;
+    const actualSamples = Math.min(this.size, this.cachedSamples.length);
 
-      // 应用窗函数并归一化
-      const scale = 1.0 / this.REF_VALUE;
-      const actualSamples = Math.min(this.size, this.cachedSamples.length);
-
-      if (this.DEBUG) {
-        console.info(`归一化比例: ${scale}, 窗函数修正: ${this.WINDOW_CORRECTION}, 实际样本数: ${actualSamples}`);
-      }
-
-      // 将输入数据复制到FFT缓冲区并应用窗函数
-      for (let i = 0; i < actualSamples; i++) {
-        // 使用实际大小计算窗函数索引
-        const windowIndex = Math.floor(i * this.window.length / actualSamples);
-        real[i] = this.cachedSamples[i] * scale * this.window[windowIndex];
-        imag[i] = 0;
-      }
-
-      // 对未使用的部分填充0
-      for (let i = actualSamples; i < this.size; i++) {
-        real[i] = 0;
-        imag[i] = 0;
-      }
-
-      // 执行FFT
-      this.fft(real, imag);
-
-      // 计算频率分辨率
-      const freqResolution = FFTAnalyzer.sampleRate / actualSamples; // 使用实际样本数计算分辨率
-      if (this.DEBUG) {
-        console.info(`FFT参数: 归一化因子=${1.0 / this.size}, 频率分辨率=${freqResolution}Hz`);
-      }
-
-      // 计算频谱
-      for (let i = 0; i < spectrum.length; i++) {
-        const frequency = i * freqResolution;
-        const db = this.calculateDecibels(real[i], imag[i], frequency, weightingType);
-        spectrum[i] = db;
-      }
-
-      return this.smoothMagnitudes(spectrum);
-    } finally {
-      // 确保释放所有数组（传入对应的size参数）
-      memoryPool.releaseArray(real, this.size);
-      memoryPool.releaseArray(imag, this.size);
-      memoryPool.releaseArray(spectrum, this.size / 2);
+    if (this.DEBUG) {
+      console.info(`归一化比例: ${scale}, 窗函数修正: ${this.WINDOW_CORRECTION}, 实际样本数: ${actualSamples}`);
     }
+
+    // 将输入数据复制到FFT缓冲区并应用窗函数
+    for (let i = 0; i < actualSamples; i++) {
+      // 使用实际大小计算窗函数索引
+      const windowIndex = Math.floor(i * this.window.length / actualSamples);
+      real[i] = this.cachedSamples[i] * scale * this.window[windowIndex];
+      imag[i] = 0;
+    }
+
+    // 对未使用的部分填充0
+    for (let i = actualSamples; i < this.size; i++) {
+      real[i] = 0;
+      imag[i] = 0;
+    }
+
+    // 执行FFT
+    this.fft(real, imag);
+
+    // 计算频谱
+    const spectrum = new Float32Array(this.size / 2); // 只需要一半的频率点（奈奎斯特定理）
+
+    // 计算频率分辨率
+    const freqResolution = FFTAnalyzer.sampleRate / actualSamples; // 使用实际样本数计算分辨率
+    if (this.DEBUG) {
+      console.info(`FFT参数: 归一化因子=${1.0 / this.size}, 频率分辨率=${freqResolution}Hz`);
+    }
+
+    // 计算频谱
+    for (let i = 0; i < spectrum.length; i++) {
+      const frequency = i * freqResolution;
+      const db = this.calculateDecibels(real[i], imag[i], frequency, weightingType);
+      spectrum[i] = db;
+    }
+
+    return this.smoothMagnitudes(spectrum);
   }
 
   /**
