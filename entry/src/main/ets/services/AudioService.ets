@@ -8,12 +8,12 @@ import { AudioEnhancer } from './AudioEnhancer';
 import { PersistenceV2 } from '@kit.ArkUI';
 import { PreferenceKeys } from '../models/PreferenceKeys';
 import { PermissionService } from './PermissionService';
+import { AudioStreamProcessor } from '../utils/AudioStreamProcessor';
 
 /**
  * 音频服务类
  * 提供音频采集功能
  */
-
 
 /**
  * 音频服务状态
@@ -61,18 +61,15 @@ export class AudioService {
   private stateChangeCallback: ((info: audio.AudioCapturerChangeInfo) => void) | null = null;
   // 状态标志
   private state: AudioServiceState = AudioServiceState.IDLE;
-  private isProcessing: boolean = false;
   private isRecording: boolean = false;
-  // 缓冲区相关
-  private tempBuffer: ArrayBuffer | null = null;
-  private tempBufferOffset: number = 0;
-  private lastProcessTime: number = 0;
   // 配置和回调
   private currentConfig = AudioPresets.getConfig(AudioAnalysisMode.FAST_TIME_WEIGHTING);
   private onAudioData: ((buffer: ArrayBuffer) => void) | null = null;
   private context: common.UIAbilityContext;
   // 状态变更回调类型
   private stateChangeCallbacks: ((state: AudioServiceState) => void)[] = [];
+  // 音频流处理器
+  private audioStreamProcessor: AudioStreamProcessor;
 
   constructor(context: common.UIAbilityContext) {
     this.context = context;
@@ -80,6 +77,10 @@ export class AudioService {
     // 从首选项加载分析模式
     const savedMode: AudioAnalysisMode = PersistenceV2.connect(PreferenceKeys)!.audio_analysis_mode!;
     this.currentConfig = AudioPresets.getConfig(savedMode);
+    
+    // 初始化音频流处理器
+    this.audioStreamProcessor = new AudioStreamProcessor(this.currentConfig);
+    
     console.info(`[音频采集] 加载配置: 模式=${savedMode}, FFT大小=${this.currentConfig.fftSize}, ` +
       `处理间隔=${this.currentConfig.updateInterval}ms, 重叠率=${this.currentConfig.overlap}`);
 
@@ -287,16 +288,15 @@ export class AudioService {
    * @param callback - 音频数据回调
    */
   startProcessing(callback: (buffer: ArrayBuffer) => void): void {
-    this.isProcessing = true;
+    this.audioStreamProcessor.startProcessing(callback);
     this.onAudioData = callback;
-    this.lastProcessTime = Date.now();
   }
 
   /**
    * 停止处理音频数据
    */
   stopProcessing(): void {
-    this.isProcessing = false;
+    this.audioStreamProcessor.stopProcessing();
     this.onAudioData = null;
   }
 
@@ -319,7 +319,7 @@ export class AudioService {
    * 是否正在处理音频数据
    */
   isAudioProcessing(): boolean {
-    return this.isProcessing;
+    return this.audioStreamProcessor.isProcessingAudio();
   }
 
   /**
@@ -381,9 +381,7 @@ export class AudioService {
 
         // 更新配置
         this.currentConfig = AudioPresets.getConfig(mode);
-
-        // 重置缓冲区
-        this.resetBuffers();
+        this.audioStreamProcessor.updateConfig(this.currentConfig);
 
         console.info(`[音频采集] 模式已更新为: ${mode}`);
       } catch (err) {
@@ -401,6 +399,9 @@ export class AudioService {
     if (this.state === AudioServiceState.CAPTURING) {
       this.stopCapture();
     }
+    
+    // 销毁音频流处理器
+    this.audioStreamProcessor.destroy();
   }
 
   /**
@@ -411,9 +412,7 @@ export class AudioService {
 
     // 更新配置
     this.currentConfig = AudioPresets.getConfig(mode);
-
-    // 重置缓冲区
-    this.resetBuffers();
+    this.audioStreamProcessor.updateConfig(this.currentConfig);
 
     console.info(`[音频采集] 切换到${mode}模式`);
   }
@@ -442,61 +441,8 @@ export class AudioService {
     }
 
     try {
-      const currentTime = Date.now();
-
-      // 如果正在处理并且满足处理间隔
-      if (this.isProcessing &&
-        currentTime - this.lastProcessTime >= this.currentConfig.updateInterval) {
-
-        console.info(`[音频处理] 开始处理数据: 当前时间=${currentTime}, ` +
-          `上次处理时间=${this.lastProcessTime}, ` +
-          `间隔=${currentTime - this.lastProcessTime}ms`);
-
-        // 将数据复制到临时缓冲区
-        if (!this.tempBuffer || this.tempBuffer.byteLength !== this.currentConfig.fftSize * 2) {
-          console.info(`[音频采集] 创建新的临时缓冲区, FFT大小: ${this.currentConfig.fftSize}, ` +
-            `缓冲区大小: ${this.currentConfig.fftSize * 2}字节`);
-          this.tempBuffer = new ArrayBuffer(this.currentConfig.fftSize * 2); // 16位采样，每个样本2字节
-          this.tempBufferOffset = 0;
-        }
-
-        const newData = new Int16Array(buffer);
-        const tempView = new Int16Array(this.tempBuffer);
-
-        // 计算新样本的添加
-        const availableSpace = this.currentConfig.fftSize - this.tempBufferOffset;
-        const samplesToAdd = Math.min(newData.length, availableSpace);
-
-        console.info(`[音频处理] 样本累积情况: ` +
-          `当前累积=${this.tempBufferOffset}, ` +
-          `新增=${samplesToAdd}, ` +
-          `目标=${this.currentConfig.fftSize}, ` +
-          `累积进度=${((this.tempBufferOffset + samplesToAdd) / this.currentConfig.fftSize * 100).toFixed(1)}%`);
-
-        // 复制新数据
-        tempView.set(newData.subarray(0, samplesToAdd), this.tempBufferOffset);
-        this.tempBufferOffset += samplesToAdd;
-
-        // 添加调试日志，显示处理后的状态
-        console.debug(`[音频处理] 处理后状态: 累积样本=${this.tempBufferOffset}, ` +
-          `已添加样本=${samplesToAdd}`);
-
-        // 严格检查：只有当样本数量精确达到FFT大小时才处理
-        if (this.tempBufferOffset === this.currentConfig.fftSize) {
-          console.info(`[音频处理] 样本数已达到FFT大小(${this.currentConfig.fftSize})，开始处理`);
-
-          // 发送数据进行处理
-          if (this.onAudioData) {
-            console.info(`[音频采集] 发送数据进行处理，数据大小: ${this.tempBuffer.byteLength}字节`);
-            this.onAudioData(this.tempBuffer);
-          }
-
-          this.lastProcessTime = currentTime;
-          this.tempBufferOffset = 0; // 重置缓冲区偏移量
-          this.tempBuffer = new ArrayBuffer(this.currentConfig.fftSize * 2); // 创建新的缓冲区
-        }
-      }
-
+      // 使用音频流处理器处理数据
+      this.audioStreamProcessor.processAudioData(buffer);
     } catch (err) {
       console.error(`[音频采集] 处理数据失败: ${err instanceof Error ? err.message : String(err)}`);
       // 不抛出错误，继续处理下一帧
@@ -507,14 +453,8 @@ export class AudioService {
    * 重置缓冲区
    */
   private resetBuffers(): void {
-    console.info(`[音频采集] 重置缓冲区开始: fftSize=${this.currentConfig.fftSize}, tempBufferOffset=${this.tempBufferOffset}`);
-
-    // 创建新的临时缓冲区
-    this.tempBuffer = new ArrayBuffer(this.currentConfig.fftSize * 2);
-    console.info(`[音频采集] 创建新的临时缓冲区: 大小=${this.tempBuffer.byteLength}字节`);
-
-    this.tempBufferOffset = 0;
-    this.lastProcessTime = 0;
+    console.info(`[音频采集] 重置缓冲区开始`);
+    this.audioStreamProcessor.reset();
   }
 
   /**
@@ -530,7 +470,6 @@ export class AudioService {
     if (processInterval < 20 || processInterval > 200) {
       throw new Error('处理间隔必须在20到200毫秒之间');
     }
-
 
     console.info(`[音频采集] 更新配置: 目标样本数=${targetSamples}, 处理间隔=${processInterval}ms`);
   }
