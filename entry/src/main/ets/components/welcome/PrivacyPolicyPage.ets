@@ -3,7 +3,6 @@ import { DesignConstants } from '../../constants/DesignConstants';
 @ComponentV2
 export struct PrivacyPolicyPage {
   @Event onPrev: () => void;
-  @Event onSkip: () => void;
   @Event onAgree: () => void;
 
   @Local private privacyAgreed: boolean = false;
@@ -130,9 +129,6 @@ export struct PrivacyPolicyPage {
 
   build() {
     Column({ space: 0 }) {
-      // 顶部导航 - 与其他页面保持一致
-      this.buildHeader()
-
       // 可滚动内容区域
       Scroll() {
         Column({ space: DesignConstants.SPACING_LG }) {
@@ -156,25 +152,6 @@ export struct PrivacyPolicyPage {
     .opacity(this.contentOpacity)
   }
 
-  // 构建Header区域 - 与其他页面保持一致，添加返回图标
-  @Builder
-  private buildHeader() {
-    Row() {
-      // 返回按钮 - 使用图标，移除灰色背景
-      Image($r('app.media.ic_back'))
-        .width(DesignConstants.ICON_SIZE_LG)
-        .height(DesignConstants.ICON_SIZE_LG)
-        .fillColor($r('sys.color.font_primary'))
-        .onClick(() => this.onPrev())
-
-      Blank()
-
-      // 移除跳过按钮，隐私保护页面不需要跳过功能
-    }
-    .width('100%')
-    .padding(DesignConstants.SPACING_LG)
-    .opacity(this.headerOpacity)
-  }
 
   // 构建权限说明列表 - 集成隐私政策对话框的设计，添加动画效果
   @Builder
@@ -350,7 +327,7 @@ export struct PrivacyPolicyPage {
         .backgroundColor($r('sys.color.comp_background_primary'))
         .fontColor($r('sys.color.font_primary'))
         .fontSize(DesignConstants.FONT_SIZE_MD)
-        .onClick(() => this.onSkip())
+        .onClick(() => this.onPrev())
         .opacity(this.buttonsOpacity)
     }
     .width('100%')

@@ -11,7 +11,6 @@ interface FeatureCard {
 export struct AdvancedFeaturesPage {
   @Param @Require onNext: () => void;
   @Param @Require onPrev: () => void;
-  @Param @Require onSkip: () => void;
   
   private canvasSettings: RenderingContextSettings = new RenderingContextSettings(true);
   private canvasContext: CanvasRenderingContext2D = new CanvasRenderingContext2D(this.canvasSettings);
@@ -159,27 +158,6 @@ export struct AdvancedFeaturesPage {
     }
   }
 
-  private handleButtonClick(): void {
-    animateTo({
-      duration: DesignConstants.ANIMATION_DURATION_XS,
-      curve: Curve.EaseOut
-    }, () => {
-      this.buttonScale = 0.98;
-    });
-
-    setTimeout(() => {
-      animateTo({
-        duration: DesignConstants.ANIMATION_DURATION_SM,
-        curve: Curve.EaseOut
-      }, () => {
-        this.buttonScale = 1.0;
-      });
-
-      setTimeout(() => {
-        this.onNext();
-      }, 100);
-    }, 50);
-  }
 
   private handleCardHover(isHover: boolean, index: number): void {
     animateTo({
@@ -192,9 +170,6 @@ export struct AdvancedFeaturesPage {
 
   build() {
     Column({ space: DesignConstants.SPACING_XL }) {
-      // 顶部导航
-      this.buildHeader()
-
       // 频谱分析区域
       this.buildSpectrumDisplay()
 
@@ -204,16 +179,8 @@ export struct AdvancedFeaturesPage {
       // 功能卡片网格
       this.buildFeatureGrid()
 
-      // 操作按钮
-      Button('下一页', { type: ButtonType.Capsule })
-        .width('100%')
-        .height(56)
-        .backgroundColor($r('sys.color.interactive_active'))
-        .fontColor($r('sys.color.font_on_primary'))
-        .fontSize(DesignConstants.FONT_SIZE_LG)
-        .scale({ x: this.buttonScale, y: this.buttonScale })
-        .opacity(this.buttonOpacity)
-        .onClick(() => this.handleButtonClick())
+      // 底部留白区域 - 为滑动指示器留出空间
+      Blank(DesignConstants.SPACING_2XL)
     }
     .width('100%')
     .height('100%')
@@ -221,25 +188,6 @@ export struct AdvancedFeaturesPage {
     .opacity(this.contentOpacity)
   }
 
-  @Builder
-  private buildHeader() {
-    Row() {
-      // 返回按钮 - 使用图标，移除灰色背景
-      Image($r('app.media.ic_back'))
-        .width(DesignConstants.ICON_SIZE_LG)
-        .height(DesignConstants.ICON_SIZE_LG)
-        .fillColor($r('sys.color.font_primary'))
-        .onClick(() => this.onPrev())
-
-      Blank()
-
-      Text('跳过')
-        .fontSize(DesignConstants.FONT_SIZE_MD)
-        .fontColor($r('sys.color.font_secondary'))
-        .onClick(() => this.onSkip())
-    }
-    .width('100%')
-  }
 
   @Builder
   private buildSpectrumDisplay() {

@@ -3,7 +3,6 @@ import { DesignConstants } from '../../constants/DesignConstants';
 @ComponentV2
 export struct WelcomePage {
   @Event onNext: () => void;
-  @Event onSkip: () => void;
 
   // 动画状态变量
   @Local private iconScale: number = 1.0;
@@ -59,29 +58,6 @@ export struct WelcomePage {
     }, 600);
   }
 
-  private handleButtonClick(): void {
-    // 按钮点击动画
-    animateTo({
-      duration: DesignConstants.ANIMATION_DURATION_XS,
-      curve: Curve.EaseOut
-    }, () => {
-      this.buttonScale = 0.95;
-    });
-
-    setTimeout(() => {
-      animateTo({
-        duration: DesignConstants.ANIMATION_DURATION_SM,
-        curve: Curve.EaseOut
-      }, () => {
-        this.buttonScale = 1.0;
-      });
-
-      // 延迟执行页面切换，让动画完成
-      setTimeout(() => {
-        this.onNext();
-      }, 100);
-    }, 50);
-  }
 
   build() {
     Column({ space: DesignConstants.SPACING_XL }) {
@@ -153,37 +129,8 @@ export struct WelcomePage {
       .borderRadius(DesignConstants.BORDER_RADIUS_LG)
       .shadow(DesignConstants.SHADOW_SM)
 
-      // 底部按钮区域
-      Column({ space: DesignConstants.SPACING_MD }) {
-        Button('开始探索', { type: ButtonType.Capsule })
-          .width('100%')
-          .height(56)
-          .backgroundColor($r('sys.color.interactive_active'))
-          .fontColor($r('sys.color.font_on_primary'))
-          .fontSize(DesignConstants.FONT_SIZE_LG)
-          .fontWeight(FontWeight.Medium)
-          .shadow(DesignConstants.SHADOW_MD)
-          .scale({ x: this.buttonScale, y: this.buttonScale })
-          .onClick(() => this.handleButtonClick())
-
-        Text('跳过引导')
-          .fontSize(DesignConstants.FONT_SIZE_MD)
-          .fontColor($r('sys.color.font_secondary'))
-          .opacity(DesignConstants.OPACITY_HOVER)
-          .onClick(() => this.onSkip())
-          .onHover((isHover: boolean) => {
-            animateTo({
-              duration: DesignConstants.ANIMATION_DURATION_XS,
-              curve: Curve.EaseOut
-            }, () => {
-              // 悬停效果
-            });
-          })
-      }
-      .alignItems(HorizontalAlign.Center)
-      .layoutWeight(1)
-      .justifyContent(FlexAlign.End)
-      .margin({ bottom: DesignConstants.SPACING_2XL })
+      // 底部留白区域 - 为滑动指示器留出空间
+      Blank(DesignConstants.SPACING_2XL)
     }
     .width('100%')
     .height('100%')
