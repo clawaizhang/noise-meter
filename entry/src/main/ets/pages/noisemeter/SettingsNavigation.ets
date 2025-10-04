@@ -212,7 +212,7 @@ struct Settings {
       this.audioAnalysisDialog = DialogHub.getSheet()
         .setStyle({ title: { title: '声级校准' }, backgroundColor: $r('sys.color.background_secondary') })
         .setConfig({ scrollSizeMode: ScrollSizeMode.FOLLOW_DETENT, enableOutsideInteractive: true })
-        .setComponentTargetId('popupTargetId')
+        .setComponentTargetId('mainId')
         .setContent(wrapBuilder(AudioAnalysisSettingsBuilder))
         .build();
 
@@ -227,7 +227,7 @@ struct Settings {
       this.alertsDialog = DialogHub.getSheet()
         .setStyle({ title: { title: '警报与通知' }, backgroundColor: $r('sys.color.background_secondary') })
         .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS, enableOutsideInteractive: true })
-        .setComponentTargetId('popupTargetId')
+        .setComponentTargetId('mainId')
         .setContent(wrapBuilder(AlertsSettingsBuilder))
         .build();
 
@@ -258,7 +258,7 @@ struct Settings {
           backgroundColor: $r('sys.color.background_secondary')
         })
         .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS, enableOutsideInteractive: true })
-        .setComponentTargetId('popupTargetId')
+        .setComponentTargetId('mainId')
         .setContent(wrapBuilder(TimeWeightingDialogBuilder), param)
         .build();
 
@@ -286,7 +286,7 @@ struct Settings {
           backgroundColor: $r('sys.color.background_secondary')
         })
         .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS, enableOutsideInteractive: true })
-        .setComponentTargetId('popupTargetId')
+        .setComponentTargetId('mainId')
         .setContent(wrapBuilder(FrequencyWeightingDialogBuilder), param)
         .build();
 
@@ -309,7 +309,7 @@ struct Settings {
           backgroundColor: $r('sys.color.background_secondary')
         })
         .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS, enableOutsideInteractive: true })
-        .setComponentTargetId('popupTargetId')
+        .setComponentTargetId('mainId')
         .setContent(wrapBuilder(AutoSaveSettingsDialogBuilder), param)
         .build();
 

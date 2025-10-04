@@ -11,6 +11,8 @@ import { FrequencyTechnicalParamsDisplay } from './FrequencyTechnicalParamsDispl
 import { FrequencyPreviewPanel } from './FrequencyPreviewPanel';
 import { FrequencyScenarioDisplay } from './FrequencyScenarioDisplay';
 import { CollapsibleSection } from '../time-weighting/CollapsibleSection';
+import { MembershipManager } from '../../services/MembershipManager';
+import { PremiumFeature } from '../membership/PremiumFeature';
 
 @ComponentV2
 export struct FrequencyWeightingDialog {
@@ -41,56 +43,86 @@ export struct FrequencyWeightingDialog {
   private buildFixedTabs() {
     // 选项卡容器
     Row({ space: 0 }) {
-      ForEach(FrequencyWeightingConstants.getAvailableWeightings(), (weighting: WeightingType) => {
-        // 选项卡内容
-        Row({ space: DesignConstants.SPACING_SM }) {
-          // 计权类型图标
-          Image(FrequencyWeightingConstants.getWeightingIcon(weighting))
-            .width(DesignConstants.ICON_SIZE_SM)
-            .height(DesignConstants.ICON_SIZE_SM)
-            .fillColor(this.selectedWeighting === weighting ?
-            $r('sys.color.font_on_primary') :
-              (this.hoveredWeighting === weighting ?
-              $r('sys.color.interactive_active') :
-              $r('sys.color.font_primary')))
+      // A计权 - 免费功能
+      this.buildWeightingTab(WeightingType.A, 'A计权', '模拟人耳对声音的感知,适合评估环境噪声', false)
 
-          // 计权类型名称
-          Text(FrequencyWeightingConstants.getWeightingDisplayName(weighting))
-            .fontSize(DesignConstants.FONT_SIZE_MD)
-            .fontWeight(this.selectedWeighting === weighting ? FontWeight.Bold : FontWeight.Medium)
-            .fontColor(this.selectedWeighting === weighting ?
-            $r('sys.color.font_on_primary') :
-              (this.hoveredWeighting === weighting ?
-              $r('sys.color.interactive_active') :
-              $r('sys.color.font_primary')))
-        }
-        .alignItems(VerticalAlign.Center)
-        .justifyContent(FlexAlign.Center)
-        .layoutWeight(1)
-        .height(56)
-        .backgroundColor(this.selectedWeighting === weighting ?
-        $r('sys.color.interactive_active') :
-          (this.hoveredWeighting === weighting ?
-          $r('sys.color.comp_background_secondary') :
-          $r('sys.color.comp_background_primary')))
-        .borderRadius(DesignConstants.BORDER_RADIUS_MD)
-        .padding(DesignConstants.SPACING_MD)
-        .onClick(() => {
-          this.handleWeightingSelect(weighting);
-        })
-        .onHover((isHover: boolean) => {
-          if (isHover) {
-            this.hoveredWeighting = weighting;
-          } else {
-            this.hoveredWeighting = null;
-          }
-        })
-      })
+      // C计权 - 专业功能
+      this.buildWeightingTab(WeightingType.C, 'C计权', '对低频响应更好,适合评估高声压级噪声', true)
+
+      // Z计权 - 专业功能
+      this.buildWeightingTab(WeightingType.Z, 'Z计权', '零频率计权,适合声学分析和研究', true)
     }
+    .width('92%')
+    .alignItems(VerticalAlign.Center)
+    .justifyContent(FlexAlign.SpaceAround)
     .backgroundColor($r('sys.color.comp_background_primary'))
     .margin(16)
     .borderRadius(16)
     .height(56)
+  }
+
+  // 构建单个计权类型选项卡
+  @Builder
+  private buildWeightingTab(weighting: WeightingType, displayName: string, description: string, isPremium: boolean) {
+    if (isPremium) {
+      // 专业功能，使用PremiumFeature包装
+      PremiumFeature({
+        featureName: displayName,
+        featureDesc: description,
+        icon: FrequencyWeightingConstants.getWeightingIcon(weighting),
+      }) {
+        this.buildTabContent(weighting, displayName)
+      }
+    } else {
+      // 免费功能，直接构建
+      this.buildTabContent(weighting, displayName)
+    }
+  }
+
+  // 构建选项卡内容
+  @Builder
+  private buildTabContent(weighting: WeightingType, displayName: string) {
+    Row({ space: DesignConstants.SPACING_SM }) {
+      // 计权类型图标
+      Image(FrequencyWeightingConstants.getWeightingIcon(weighting))
+        .width(DesignConstants.ICON_SIZE_SM)
+        .height(DesignConstants.ICON_SIZE_SM)
+        .fillColor(this.selectedWeighting === weighting ?
+        $r('sys.color.font_on_primary') :
+          (this.hoveredWeighting === weighting ?
+          $r('sys.color.interactive_active') :
+          $r('sys.color.font_primary')))
+
+      // 计权类型名称
+      Text(displayName)
+        .fontSize(DesignConstants.FONT_SIZE_MD)
+        .fontWeight(this.selectedWeighting === weighting ? FontWeight.Bold : FontWeight.Medium)
+        .fontColor(this.selectedWeighting === weighting ?
+        $r('sys.color.font_on_primary') :
+          (this.hoveredWeighting === weighting ?
+          $r('sys.color.interactive_active') :
+          $r('sys.color.font_primary')))
+    }
+    .alignItems(VerticalAlign.Center)
+    .justifyContent(FlexAlign.Center)
+    .height(56)
+    .backgroundColor(this.selectedWeighting === weighting ?
+    $r('sys.color.interactive_active') :
+      (this.hoveredWeighting === weighting ?
+      $r('sys.color.comp_background_secondary') :
+      $r('sys.color.comp_background_primary')))
+    .borderRadius(DesignConstants.BORDER_RADIUS_MD)
+    .padding(DesignConstants.SPACING_MD)
+    .onClick(() => {
+      this.handleWeightingSelect(weighting);
+    })
+    .onHover((isHover: boolean) => {
+      if (isHover) {
+        this.hoveredWeighting = weighting;
+      } else {
+        this.hoveredWeighting = null;
+      }
+    })
   }
 
   // 构建主要内容区域（面向普通用户）
@@ -145,7 +177,6 @@ export struct FrequencyWeightingDialog {
     .width('100%')
   }
 
-
   build() {
     Column({ space: 8 }) {
       this.buildFixedTabs()
@@ -160,7 +191,7 @@ export struct FrequencyWeightingDialog {
 
         }
         .width('100%')
-        .margin({bottom:72})
+        .margin({ bottom: 72 })
         .padding(DesignConstants.SPACING_LG)
         .backgroundColor($r('sys.color.background_secondary'))
       }

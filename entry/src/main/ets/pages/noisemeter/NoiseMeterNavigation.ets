@@ -97,7 +97,7 @@ export struct MainNoiseMeter {
           this.alertsDialog = DialogHub.getSheet()
             .setStyle({ title: { title: '警报与通知' }, backgroundColor: $r('sys.color.background_secondary') })
             .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS, enableOutsideInteractive: true })
-            .setComponentTargetId('popupTargetId')
+            .setComponentTargetId('mainId')
             .setContent(wrapBuilder(AlertsSettingsBuilder))
             .build();
         }

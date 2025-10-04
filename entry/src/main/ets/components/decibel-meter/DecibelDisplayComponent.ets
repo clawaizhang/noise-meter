@@ -162,7 +162,7 @@ export struct DecibelDisplayComponent {
           .setContent(wrapBuilder(NoiseDescriptionDialogBuilder), this.as)
           .setStyle({ backgroundColor: $r('sys.color.background_secondary') })
           .setConfig({ enableOutsideInteractive: true, scrollSizeMode: ScrollSizeMode.CONTINUOUS })
-          .setComponentTargetId('popupTargetId')
+          .setComponentTargetId('mainId')
           .build();
 
         // 注册Dialog到样式管理器
@@ -367,7 +367,7 @@ export struct DecibelDisplayComponent {
       if (!this.noiseStandardDialog) {
         this.noiseStandardDialog = DialogHub.getSheet()
           .setStyle({ backgroundColor: $r('sys.color.background_secondary') })
-          .setComponentTargetId('popupTargetId')
+          .setComponentTargetId('mainId')
           .setConfig({ enableOutsideInteractive: true, scrollSizeMode: ScrollSizeMode.CONTINUOUS })
           .setContent(wrapBuilder(NoiseStandardDialogBuilder), this.as)
           .build();

@@ -195,7 +195,7 @@ struct Index {
 
   build() {
     Column() {
-      Column().id('popupTargetId');
+      Column().id('mainId');
       if (this.isLoading) {
         // 显示加载中
         Column() {

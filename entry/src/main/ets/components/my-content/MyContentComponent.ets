@@ -52,7 +52,7 @@ export struct MyContentComponent {
             DialogHub.getSheet()
               .setStyle({ title: { title: '设置' }, backgroundColor: $r('sys.color.background_secondary') })
               .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS, enableOutsideInteractive: true })
-              .setComponentTargetId('popupTargetId')
+              .setComponentTargetId('mainId')
               .setContent(wrapBuilder(SettingsBuilder))
               .build()
               .show();
@@ -77,7 +77,7 @@ export struct MyContentComponent {
             DialogHub.getSheet()
               .setStyle({ title: { title: '关于' }, backgroundColor: $r('sys.color.background_secondary') })
               .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS, enableOutsideInteractive: true })
-              .setComponentTargetId('popupTargetId')
+              .setComponentTargetId('mainId')
               .setContent(wrapBuilder(AboutSettingsBuilder))
               .build()
               .show();

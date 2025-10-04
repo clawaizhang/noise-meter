@@ -450,7 +450,7 @@ export struct DecibelHistory {
       };
       if (!this.detailDialog) {
         this.detailDialog = DialogHub.getSheet()
-          .setComponentTargetId('popupTargetId')
+          .setComponentTargetId('mainId')
           .setStyle({ backgroundColor:$r('sys.color.background_secondary') })
           .setConfig({ enableOutsideInteractive: true, scrollSizeMode: ScrollSizeMode.CONTINUOUS })
           .setContent(wrapBuilder(DetailDialogBuilder), params)
