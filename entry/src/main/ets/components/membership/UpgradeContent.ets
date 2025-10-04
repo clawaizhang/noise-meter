@@ -192,13 +192,13 @@ export struct UpgradeContent {
           )
           this.buildCompactBenefitItem(
             $r('app.media.ic_history'),
-            '历史报告',
-            '趋势分析可视化'
+            '自动保存',
+            '数据实时保存'
           )
           this.buildCompactBenefitItem(
             $r('app.media.ic_vip'),
-            '无广告',
-            '纯净使用环境'
+            '更多功能',
+            '持续功能更新'
           )
         }
         .width('100%')
@@ -645,14 +645,14 @@ export struct UpgradeContent {
             'FFT参数自定义'
           )
           this.buildCompactBenefitItem(
-            $r('app.media.ic_history'),
-            '历史报告',
-            '趋势分析可视化'
+            $r('app.media.ic_save'),
+            '自动保存',
+            '数据实时保存'
           )
           this.buildCompactBenefitItem(
-            $r('app.media.ic_vip'),
-            '无广告',
-            '纯净使用环境'
+            $r('app.media.ic_meter'),
+            '更多功能',
+            '持续功能更新'
           )
         }
         .width('100%')
