@@ -102,7 +102,7 @@ export struct DecibelMeter {
                   noiseThreshold: this.pk.noise_threshold,
                   systemNotificationEnabled: this.pk.system_notification_enabled,
                   isNoiseAlarm: false, // 报警状态由AudioController管理
-                  autoSaveCountdown: this.autoSaveCountdown // 传递自动保存倒计时
+                  timeDisplay: this.timeDisplay // 传递自动保存倒计时
                 })
 
                 Column({ space: 8 }) {
@@ -187,7 +187,6 @@ export struct DecibelMeter {
     this.calculateSize();
   }
 
-
   private calculateSize() {
     if (this.as.windowWidthBreakpoint <= WidthBreakpoint.WIDTH_SM &&
       this.as.windowHeightBreakpoint <= HeightBreakpoint.HEIGHT_MD) {
@@ -215,13 +214,23 @@ export struct DecibelMeter {
   }
 
   @Computed
-  get autoSaveCountdown(): string {
+  get timeDisplay(): string {
+    let elapsed = this.currentTime - this.lastAutoSaveTime;
+    let minutes = Math.floor(elapsed / 60000);
+    let seconds = Math.floor((elapsed % 60000) / 1000);
     if (!this.pk.auto_save_enabled) {
-      return '自动保存已禁用';
+      //20 分钟循环
+      if (minutes >= 20) {
+        this.lastAutoSaveTime = Date.now();
+        elapsed = this.currentTime - this.lastAutoSaveTime;
+        minutes = Math.floor(elapsed / 60000);
+        seconds = Math.floor((elapsed % 60000) / 1000);
+        return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+      }
+      return `${minutes}:${seconds.toString().padStart(2, '0')}`;
     }
 
     // 计算剩余时间
-    const elapsed = this.currentTime - this.lastAutoSaveTime;
     const intervalMs = this.pk.auto_save_interval * 60 * 1000;
     const remaining = Math.max(0, intervalMs - elapsed);
 
@@ -229,8 +238,8 @@ export struct DecibelMeter {
       return '即将自动保存';
     }
 
-    const minutes = Math.floor(remaining / 60000);
-    const seconds = Math.floor((remaining % 60000) / 1000);
+    minutes = Math.floor(remaining / 60000);
+    seconds = Math.floor((remaining % 60000) / 1000);
 
     return `${minutes}:${seconds.toString().padStart(2, '0')} 后自动保存`;
   }
