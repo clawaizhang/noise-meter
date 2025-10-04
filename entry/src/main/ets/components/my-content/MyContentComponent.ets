@@ -8,10 +8,7 @@ import { common, Want } from '@kit.AbilityKit';
 import { BusinessError } from '@kit.BasicServicesKit';
 import { DisplayModeComponent } from '../display/DisplayModeComponent';
 import {
-  defaultPricingPlans,
-  UpgradeContent,
-  UpgradeContentBuilder,
-  UpgradeContentProps
+  defaultPricingPlans, UpgradeContentBuilder, UpgradeContentProps
 } from '../membership/UpgradeContent';
 import { DialogStyleManager } from '../../utils/DialogStyleManager';
 
@@ -46,6 +43,14 @@ export struct MyContentComponent {
     },
     showTrialOption: false
   }
+
+  @Monitor('pk.display_mode')
+  onDisplayStyleChange() {
+    DialogStyleManager.unregisterDialog(this.dialog!);
+    this.dialog = this.createDialog();
+    DialogStyleManager.registerDialog(this.dialog);
+  }
+
   // 跳转到应用商店评价页面
   private navigateToAppStoreRating = () => {
     const context = getContext(this) as common.UIAbilityContext;
@@ -64,23 +69,26 @@ export struct MyContentComponent {
     if (this.dialog) {
 
     } else {
-      this.dialog = this.dialog ?? DialogHub.getSheet()
-        .setStyle({
-          title: { title: this.pk.member_ship.can() ? '专业版' : '升级到专业版' },
-          backgroundColor: $r('sys.color.background_secondary')
-        })
-        .setConfig({
-          scrollSizeMode: ScrollSizeMode.CONTINUOUS,
-          enableOutsideInteractive: true
-        })
-        .setComponentTargetId('mainId')
-        .setStyle({ backgroundColor: $r('sys.color.background_primary') })
-        .setContent(wrapBuilder(UpgradeContentBuilder), this.props)
-        .build();
+      this.dialog = this.dialog ?? this.createDialog();
       DialogStyleManager.registerDialog(this.dialog);
     }
     this.dialog.show();
 
+  }
+
+  private createDialog() {
+    return DialogHub.getSheet()
+      .setStyle({
+        title: { title: this.pk.member_ship.can() ? '专业版' : '升级到专业版' },
+        backgroundColor: $r('sys.color.background_secondary')
+      })
+      .setConfig({
+        scrollSizeMode: ScrollSizeMode.CONTINUOUS,
+        enableOutsideInteractive: true
+      })
+      .setComponentTargetId('mainId')
+      .setContent(wrapBuilder(UpgradeContentBuilder), this.props)
+      .build();
   }
 
   build() {

@@ -49,19 +49,29 @@ export struct PremiumFeature {
     showTrialOption: this.showTrialOption
   }
 
+  @Monitor('pk.display_mode')
+  onDisplayStyleChange() {
+    DialogStyleManager.unregisterDialog(this.upgradeDialog!);
+    this.upgradeDialog = this.createDialog();
+    DialogStyleManager.registerDialog(this.upgradeDialog);
+  }
+
+  private createDialog(): InfSheet {
+    return DialogHub.getSheet()
+      .setStyle({
+        backgroundColor: $r('sys.color.background_secondary'),
+      })
+      .setContent(wrapBuilder(UpgradeContentBuilder), this.props)
+      .setComponentTargetId('mainId')
+      .build();
+  }
+
   /**
    * 显示升级提示弹框
    */
   private showUpgradeDialog() {
     if (!this.upgradeDialog) {
-      this.upgradeDialog = DialogHub.getSheet()
-        .setStyle({
-          backgroundColor: $r('sys.color.background_primary'),
-        })
-        .setContent(wrapBuilder(UpgradeContentBuilder), this.props)
-        .setComponentTargetId('mainId')
-        .build();
-      DialogStyleManager.registerDialog(this.upgradeDialog);
+      this.upgradeDialog = this.createDialog();
     }
     this.upgradeDialog.show();
   }

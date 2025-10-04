@@ -262,7 +262,7 @@ export struct UpgradeContent {
         Button('稍后再说')
           .layoutWeight(1)
           .fontSize(DesignConstants.FONT_SIZE_MD)
-          .backgroundColor($r('sys.color.background_secondary'))
+          .backgroundColor($r('sys.color.comp_background_secondary'))
           .fontColor($r('sys.color.font_primary'))
           .borderRadius(DesignConstants.BORDER_RADIUS_MD)
           .onClick(() => {
@@ -409,14 +409,15 @@ export struct UpgradeContent {
       DesignConstants.BORDER_WIDTH_MD :
       DesignConstants.BORDER_WIDTH_SM,
       color: plans.selected?.type === plans.current.type ?
-      $r('sys.color.ohos_id_color_palette1') :
+      $r('sys.color.confirm') :
       $r('sys.color.comp_divider')
     })
     .borderRadius(DesignConstants.BORDER_RADIUS_LG)
+    .backgroundBlurStyle(BlurStyle.COMPONENT_ULTRA_THICK)
     .backgroundColor(
       plans.selected?.type === plans.current.type ?
-      $r('sys.color.background_secondary') :
-      $r('sys.color.background_primary')
+      $r('sys.color.confirm') :
+      $r('sys.color.comp_background_primary')
     )
     .width('30%')
     .height(150)
@@ -448,7 +449,7 @@ export struct UpgradeContent {
         .textOverflow({ overflow: TextOverflow.Ellipsis })
     }
     .padding(DesignConstants.SPACING_SM)
-    .backgroundColor($r('sys.color.background_secondary'))
+    .backgroundColor($r('sys.color.comp_background_primary'))
     .borderRadius(DesignConstants.BORDER_RADIUS_MD)
     .width(100)
     .height(80)
@@ -472,7 +473,7 @@ export struct UpgradeContent {
       top: 4,
       bottom: 4
     })
-    .backgroundColor($r('sys.color.background_secondary'))
+    .backgroundColor($r('sys.color.comp_background_primary'))
     .borderRadius(DesignConstants.BORDER_RADIUS_SM)
     .alignSelf(ItemAlign.Start)
   }
@@ -600,7 +601,7 @@ export struct UpgradeContent {
       top: 4,
       bottom: 4
     })
-    .backgroundColor($r('sys.color.background_secondary'))
+    .backgroundColor($r('sys.color.comp_background_primary'))
     .borderRadius(DesignConstants.BORDER_RADIUS_SM)
     .alignSelf(ItemAlign.Start)
   }
@@ -682,7 +683,7 @@ export struct UpgradeContent {
       }
       .width('100%')
       .padding(DesignConstants.SPACING_MD)
-      .backgroundColor($r('sys.color.background_secondary'))
+      .backgroundColor($r('sys.color.comp_background_primary'))
       .borderRadius(DesignConstants.BORDER_RADIUS_LG)
     }
     .width('100%')
@@ -717,7 +718,7 @@ export struct UpgradeContent {
         Button('管理订阅')
           .layoutWeight(1)
           .fontSize(DesignConstants.FONT_SIZE_MD)
-          .backgroundColor($r('sys.color.background_secondary'))
+          .backgroundColor($r('sys.color.comp_background_secondary'))
           .fontColor($r('sys.color.font_primary'))
           .borderRadius(DesignConstants.BORDER_RADIUS_MD)
           .onClick(() => {
