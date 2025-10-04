@@ -1,4 +1,7 @@
 import { DesignConstants } from "../../constants/DesignConstants"
+import { PreferenceKeys } from "../../models/PreferenceKeys";
+import { PersistenceV2 } from "@kit.ArkUI";
+import { MembershipLevel } from "../../services/MembershipManager";
 
 // 价格方案接口
 interface PricingPlan {
@@ -38,12 +41,40 @@ export struct UpgradeContent {
   @Param showTrialOption: boolean = false;
   @Local selectedPlan: PricingPlan | null = null;
   @Local purchaseState: 'idle' | 'loading' | 'success' | 'error' = 'idle';
+  
+  // 会员状态管理
+  @Local pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys)!;
+  @Local expiryDate: number = 0;
+  @Local isTrial: boolean = false;
+  @Local trialDays: number = 0;
+  @Local purchaseDate: number = 0;
 
   aboutToAppear() {
     // 默认选中推荐方案
     const recommendedPlan = this.pricingPlans.find(plan => plan.isRecommended);
     if (recommendedPlan) {
       this.selectedPlan = recommendedPlan;
+    }
+    
+  }
+
+  // 升级到专业版
+  private async upgradeToPro(): Promise<void> {
+    try {
+      this.purchaseState = 'loading';
+      // 模拟支付成功后的状态更新
+      this.pk.member_ship.level = MembershipLevel.PRO;
+      this.pk.member_ship.expiryDate = Date.now() + 30 * 24 * 60 * 60 * 1000; // 30天
+      this.pk.member_ship.isTrial = false;
+      this.pk.member_ship.trialDays = 0;
+      this.pk.member_ship.purchaseDate = Date.now();
+      
+      this.purchaseState = 'success';
+      console.info('[会员管理] 已升级到专业版');
+    } catch (error) {
+      this.purchaseState = 'error';
+      console.error('[会员管理] 升级失败:', error);
+      throw new Error('[会员管理] 升级失败');
     }
   }
 
@@ -454,32 +485,25 @@ export struct UpgradeContent {
   }
 
   // 处理升级逻辑
-  private handleUpgrade() {
-    this.purchaseState = 'loading';
+  private async handleUpgrade() {
+    try {
+      await this.upgradeToPro();
+      this.purchaseState = 'success';
+      console.info('购买成功，方案类型:', this.selectedPlan?.type);
 
-    // 模拟购买过程
-    setTimeout(() => {
-      // 这里应该调用实际的购买API
-      const success = Math.random() > 0.2; // 80%成功率模拟
+      // 延迟执行回调
+      setTimeout(() => {
+        this.onUpgrade();
+      }, 1500);
+    } catch (error) {
+      this.purchaseState = 'error';
+      console.error('购买失败:', error);
 
-      if (success) {
-        this.purchaseState = 'success';
-        console.info('购买成功，方案类型:', this.selectedPlan?.type);
-
-        // 延迟执行回调
-        setTimeout(() => {
-          this.onUpgrade();
-        }, 1500);
-      } else {
-        this.purchaseState = 'error';
-        console.error('购买失败');
-
-        // 3秒后重置状态
-        setTimeout(() => {
-          this.purchaseState = 'idle';
-        }, 3000);
-      }
-    }, 2000)
+      // 3秒后重置状态
+      setTimeout(() => {
+        this.purchaseState = 'idle';
+      }, 3000);
+    }
   }
 
   // 购买状态显示

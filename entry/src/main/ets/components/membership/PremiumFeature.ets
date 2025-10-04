@@ -4,13 +4,14 @@
  * 集成新的会员升级页面系统
  */
 
-import { MembershipManager } from '../../services/MembershipManager';
 import { DesignConstants } from '../../constants/DesignConstants';
 import { DialogHub, InfSheet } from '@hadss/dialoghub';
 import {
   defaultPricingPlans, UpgradeContentProps, UpgradeContentBuilder
 } from './UpgradeContent';
 import { DialogStyleManager } from '../../utils/DialogStyleManager';
+import { PreferenceKeys } from '../../models/PreferenceKeys';
+import { PersistenceV2 } from '@kit.ArkUI';
 
 @ComponentV2
 export struct PremiumFeature {
@@ -21,6 +22,7 @@ export struct PremiumFeature {
   @Event onUpgrade?: () => void; // 升级成功回调
   @Param showTrialOption: boolean = false; // 是否显示试用选项
   @Local private upgradeDialog: InfSheet | null = null; // 升级提示弹框
+  @Local private pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys)!; // 升级提示弹框
   private props: UpgradeContentProps = {
     featureName: this.featureName,
     featureDesc: this.featureDesc,
@@ -66,7 +68,7 @@ export struct PremiumFeature {
 
   build() {
     // 专业版用户直接显示功能
-    if (MembershipManager.hasProFeature()) {
+    if (this.pk.member_ship.can()) {
       this.content();
     } else {
       // 免费用户显示带锁标识的置灰功能

@@ -5,6 +5,7 @@ import {
   DEFAULT_CUSTOM_CONFIG,
 } from '../common/AudioConfig';
 import { WeightingType } from '../constants/WeightingConstants';
+import { MembershipStatus } from '../services/MembershipManager';
 
 /**
  * 首选项键名常量
@@ -117,4 +118,6 @@ export class PreferenceKeys {
     new AudioAnalysisConfig(DEFAULT_CUSTOM_CONFIG.fftSize, DEFAULT_CUSTOM_CONFIG.updateInterval,
       DEFAULT_CUSTOM_CONFIG.smoothingFactor, DEFAULT_CUSTOM_CONFIG.windowType, DEFAULT_CUSTOM_CONFIG.overlap,
       DEFAULT_CUSTOM_CONFIG.bufferSize);
+  @Trace
+  member_ship: MembershipStatus = new MembershipStatus();
 }

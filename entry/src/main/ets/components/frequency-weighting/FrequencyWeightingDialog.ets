@@ -11,7 +11,6 @@ import { FrequencyTechnicalParamsDisplay } from './FrequencyTechnicalParamsDispl
 import { FrequencyPreviewPanel } from './FrequencyPreviewPanel';
 import { FrequencyScenarioDisplay } from './FrequencyScenarioDisplay';
 import { CollapsibleSection } from '../time-weighting/CollapsibleSection';
-import { MembershipManager } from '../../services/MembershipManager';
 import { PremiumFeature } from '../membership/PremiumFeature';
 
 @ComponentV2
