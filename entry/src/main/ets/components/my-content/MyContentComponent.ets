@@ -66,7 +66,7 @@ export struct MyContentComponent {
     } else {
       this.dialog = this.dialog ?? DialogHub.getSheet()
         .setStyle({
-          title: { title: '升级到专业版' },
+          title: { title: this.pk.member_ship.can() ? '专业版' : '升级到专业版' },
           backgroundColor: $r('sys.color.background_secondary')
         })
         .setConfig({
