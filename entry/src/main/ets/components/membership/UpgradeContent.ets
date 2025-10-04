@@ -121,7 +121,7 @@ export struct UpgradeContent {
         .alignSelf(ItemAlign.Start)
 
       // 权益网格布局
-      Grid() {
+      Column({ space: 16 }) {
         // 多频率加权
         this.buildBenefitItem(
           $r('app.media.ic_frequency_weighting'),
@@ -164,10 +164,6 @@ export struct UpgradeContent {
           '纯净使用环境，专注测量'
         )
       }
-      .columnsTemplate('1fr 1fr')
-      .rowsTemplate('1fr 1fr 1fr')
-      .columnsGap(DesignConstants.SPACING_MD)
-      .rowsGap(DesignConstants.SPACING_MD)
     }
     .width('100%')
     .padding({
