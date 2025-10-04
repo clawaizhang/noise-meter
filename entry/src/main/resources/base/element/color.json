@@ -223,6 +223,10 @@
     {
       "name": "border_primary",
       "value": "#E0E0E0"
+    },
+    {
+      "name": "brand_primary",
+      "value": "#1890FF"
     }
   ]
 }
