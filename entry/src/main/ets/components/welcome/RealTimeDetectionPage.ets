@@ -151,13 +151,11 @@ export struct RealTimeDetectionPage {
 
       // 场景示例
       this.buildSceneExamples()
-
-      // 底部留白区域 - 为滑动指示器留出空间
-      Blank(DesignConstants.SPACING_2XL)
     }
     .width('100%')
     .height('100%')
     .padding(DesignConstants.SPACING_LG)
+    .justifyContent(FlexAlign.Center)  // 垂直居中
     .opacity(this.contentOpacity)
   }
 

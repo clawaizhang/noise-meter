@@ -61,9 +61,6 @@ export struct WelcomePage {
 
   build() {
     Column({ space: DesignConstants.SPACING_XL }) {
-      // 顶部留白
-      Blank(DesignConstants.SPACING_3XL)
-
       // 动画应用图标
       Stack({ alignContent: Alignment.Center }) {
         // 背景光晕效果
@@ -128,9 +125,6 @@ export struct WelcomePage {
       })
       .borderRadius(DesignConstants.BORDER_RADIUS_LG)
       .shadow(DesignConstants.SHADOW_SM)
-
-      // 底部留白区域 - 为滑动指示器留出空间
-      Blank(DesignConstants.SPACING_2XL)
     }
     .width('100%')
     .height('100%')
@@ -138,6 +132,7 @@ export struct WelcomePage {
       left: DesignConstants.SPACING_XL,
       right: DesignConstants.SPACING_XL
     })
+    .justifyContent(FlexAlign.Center)  // 垂直居中
     .backgroundColor($r('sys.color.background_secondary'))
     .backgroundBlurStyle(BlurStyle.Thin)
   }

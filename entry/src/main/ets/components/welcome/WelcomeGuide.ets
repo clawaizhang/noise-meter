@@ -15,36 +15,98 @@ export struct WelcomeGuide {
   
   // 滑动指示器动画状态
   @Local private arrowOffset: number = 0;
+  @Local private arrowOpacity: number = 1;
+  @Local private arrowScale: number = 1.0;
+  
+  // 页面切换动画状态
+  @Local private pageTransitionOffset: number = 0;
+  @Local private isAnimating: boolean = false;
 
   aboutToAppear(): void {
     this.startArrowAnimation();
   }
 
-  // 启动箭头跳动动画
+  // 启动箭头跳动动画 - 增强浮动效果
   private startArrowAnimation(): void {
     animateTo({
-      duration: 1500,
+      duration: 2000,
       curve: Curve.EaseInOut,
       iterations: -1,
       playMode: PlayMode.Alternate
     }, () => {
-      this.arrowOffset = 8;  // 增加抖动幅度
+      this.arrowOffset = 12;  // 增加到12px浮动幅度
+      this.arrowOpacity = 0.7; // 添加透明度变化
+      this.arrowScale = 1.1;  // 添加轻微缩放效果
     });
   }
 
-  // 页面切换方法
+  // 页面切换方法 - 带动画效果
   private goToNextPage(): void {
-    if (this.currentPage < this.totalPages - 1) {
-      this.currentPage++;
-    } else {
+    if (this.currentPage < this.totalPages - 1 && !this.isAnimating) {
+      this.animateToNextPage();
+    } else if (this.currentPage === this.totalPages - 1) {
       this.handleComplete();
     }
   }
 
   private goToPrevPage(): void {
-    if (this.currentPage > 0) {
-      this.currentPage--;
+    if (this.currentPage > 0 && !this.isAnimating) {
+      this.animateToPrevPage();
     }
+  }
+
+  // 前进切换动画 - 新页从下方滑入
+  private animateToNextPage(): void {
+    this.isAnimating = true;
+    
+    // 当前页向上滑出
+    animateTo({
+      duration: 300,
+      curve: Curve.EaseOut
+    }, () => {
+      this.pageTransitionOffset = -100;
+    });
+    
+    // 延迟后切换到新页面并从下方滑入
+    setTimeout(() => {
+      this.currentPage++;
+      this.pageTransitionOffset = 100; // 新页从下方开始
+      
+      animateTo({
+        duration: 300,
+        curve: Curve.EaseOut
+      }, () => {
+        this.pageTransitionOffset = 0;
+        this.isAnimating = false;
+      });
+    }, 150);
+  }
+
+  // 后退切换动画 - 新页从上方滑入
+  private animateToPrevPage(): void {
+    this.isAnimating = true;
+    
+    // 当前页向下滑出
+    animateTo({
+      duration: 300,
+      curve: Curve.EaseOut
+    }, () => {
+      this.pageTransitionOffset = 100;
+    });
+    
+    // 延迟后切换到新页面并从上方滑入
+    setTimeout(() => {
+      this.currentPage--;
+      this.pageTransitionOffset = -100; // 新页从上方开始
+      
+      animateTo({
+        duration: 300,
+        curve: Curve.EaseOut
+      }, () => {
+        this.pageTransitionOffset = 0;
+        this.isAnimating = false;
+      });
+    }, 150);
   }
 
   private handleComplete(): void {
@@ -120,17 +182,21 @@ export struct WelcomeGuide {
     }
   }
 
-  // 构建底部指示器（向下箭头）
+  // 构建底部指示器（向下箭头）- 优化大小和浮动效果
   @Builder
   private buildBottomIndicator() {
     Column({ space: DesignConstants.SPACING_SM }) {
-      // 使用右箭头旋转90度作为向下箭头
+      
+      // 增大箭头尺寸到36x36，增强浮动效果
       Image($r('app.media.ic_arrow_right'))
-        .width(24)
-        .height(24)
+        .width(36)
+        .height(36)
         .fillColor($r('sys.color.font_secondary'))
         .rotate({ angle: 90 })
         .translate({ y: this.arrowOffset })
+        .opacity(this.arrowOpacity)
+        .scale({ x: this.arrowScale, y: this.arrowScale })
+        .shadow(DesignConstants.SHADOW_SM)
     }
     .width('100%')
     .padding({
