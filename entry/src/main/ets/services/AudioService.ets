@@ -1,10 +1,8 @@
 import audio from '@ohos.multimedia.audio';
-import { PermissionUtil } from '@pura/harmony-utils';
 import common from '@ohos.app.ability.common';
 import { WavFileGenerator } from '../utils/WavFileGenerator';
 import { AudioAnalysisMode, AudioPresets } from '../common/AudioConfig';
 import { FileUtils } from '../utils/FileUtils';
-import { AudioEnhancer } from './AudioEnhancer';
 import { PersistenceV2 } from '@kit.ArkUI';
 import { PreferenceKeys } from '../models/PreferenceKeys';
 import { PermissionService } from './PermissionService';
