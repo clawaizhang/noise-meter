@@ -187,6 +187,7 @@ export struct DecibelMeter {
     this.calculateSize();
   }
 
+
   private calculateSize() {
     if (this.as.windowWidthBreakpoint <= WidthBreakpoint.WIDTH_SM &&
       this.as.windowHeightBreakpoint <= HeightBreakpoint.HEIGHT_MD) {

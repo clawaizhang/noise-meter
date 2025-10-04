@@ -45,6 +45,7 @@ export struct AudioController {
   @Local private isRecording: boolean = false
   @Local private recordingTime: number = 0
   @Local private startTime: number = 0
+  @Local private currentTime: number = Date.now();
   // 错误状态（支持多个错误同时显示）
   @Local private errorMessages: string[] = []
   @Local ak: AppKeys = AppStorageV2.connect(AppKeys)!;
@@ -97,16 +98,30 @@ export struct AudioController {
     }
   }
 
-  @Monitor('pk.auto_save_enabled','auto_save_interval')
-  onAutoSaveChange(monitor: IMonitor) {
+
+  @Monitor('currentTime')
+  monitorAutoSave() {
     if (this.pk.auto_save_enabled && this.isRecording) {
       console.info('[自动保存] 检测到自动保存已启用，立即检查是否需要保存');
-      // 延迟一小段时间确保设置已完全应用
-      this.checkAutoSave();
+      this.checkAutoSaveNow();
+    }
+  }
+
+  private checkAutoSaveNow() {
+    const elapsed = this.currentTime - this.lastAutoSaveTime;
+    const intervalMs = this.pk.auto_save_interval * 60 * 1000;
+    const remaining = Math.max(0, intervalMs - elapsed);
+
+    if (remaining <= 0) {
+      this.performAutoSave();
     }
   }
 
   aboutToAppear() {
+    // 每秒检查一次是否需要自动保存
+    this.autoSaveTimer = setInterval(() => {
+      this.currentTime = Date.now();
+    }, 1000);
     if (this.ak.microphonePermissionGranted) {
       this.startRecording();
     }
@@ -176,9 +191,6 @@ export struct AudioController {
 
       // 初始化 weightingTypes 数组
       this.timedWeightingTypes = [];
-
-      // 启动自动保存监控
-      this.startAutoSaveMonitoring();
 
       // 启动数据清理监控
       this.startDataCleanupMonitoring();
@@ -443,56 +455,10 @@ export struct AudioController {
     this.stopRecording(comments);
   }
 
-  // 自动保存监控方法
-  private startAutoSaveMonitoring(): void {
-    this.stopAutoSaveMonitoring();
-
-    if (this.pk.auto_save_enabled && this.isRecording) {
-
-      // 立即检查一次是否需要自动保存
-      this.checkAutoSave();
-
-      // 每秒检查一次是否需要自动保存
-      this.autoSaveTimer = setInterval(() => {
-        this.checkAutoSave();
-      }, 1000);
-    }
-  }
-
-  /**
-   * 当自动保存设置发生变化时调用此方法
-   * 用于处理从关闭到开启状态切换时的立即保存检查
-   */
-  public onAutoSaveSettingsChanged(): void {
-    if (this.pk.auto_save_enabled && this.isRecording) {
-      console.info('[自动保存] 设置发生变化，立即检查是否需要保存');
-      // 立即检查是否需要保存
-      this.checkAutoSave();
-    }
-  }
-
   private stopAutoSaveMonitoring(): void {
     if (this.autoSaveTimer) {
       clearInterval(this.autoSaveTimer);
       this.autoSaveTimer = undefined;
-    }
-  }
-
-  private checkAutoSave(): void {
-    if (!this.pk.auto_save_enabled || !this.isRecording) {
-      return;
-    }
-
-    const currentTime = new Date().getTime();
-
-    const elapsed = currentTime - this.lastAutoSaveTime;
-    const intervalMs = this.pk.auto_save_interval * 60 * 1000;
-
-    // 检查是否达到自动保存间隔且有足够数据
-    if (elapsed >= intervalMs && this.timedValues.length > 10) {
-      this.performAutoSave();
-    } else if (elapsed >= intervalMs) {
-      console.info(`[自动保存] 已达到保存间隔${elapsed}ms >= ${intervalMs}ms，但数据不足(${this.timedValues.length}条)，等待更多数据`);
     }
   }
 
