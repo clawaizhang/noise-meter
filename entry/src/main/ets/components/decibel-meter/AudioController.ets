@@ -59,7 +59,7 @@ export struct AudioController {
   @Event onMinMaxAvgCurrent: (min: number, max: number, avg: number, current: number) => void
   @Event onAutoSaveTimeUpdate: (lastSaveTime: number) => void
   // 服务实例
-  private audioService: AudioService = AudioService.getInstance(getContext() as common.UIAbilityContext)
+  private audioService: AudioService = AudioService.getInstance()
   private recordService: DecibelRecordService = new DecibelRecordService(getContext() as common.UIAbilityContext)
   // RxJS相关
   private audioBufferSubject = new Subject<void>();
@@ -166,11 +166,6 @@ export struct AudioController {
 
       // 初始化 weightingTypes 数组
       this.timedWeightingTypes = [];
-
-      // 如果启用了录音功能，开始录音
-      if (this.pk.record_enabled) {
-        this.audioService.startRecording();
-      }
 
       // 启动自动保存监控
       this.startAutoSaveMonitoring();

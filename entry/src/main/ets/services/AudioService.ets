@@ -30,12 +30,9 @@ export class AudioService {
   /**
    * 获取 AudioService 实例
    */
-  public static getInstance(context?: common.UIAbilityContext): AudioService {
+  public static getInstance(): AudioService {
     if (!AudioService.instance) {
-      if (!context) {
-        throw new Error('首次获取 AudioService 实例时必须提供 context');
-      }
-      AudioService.instance = new AudioService(context);
+      AudioService.instance = new AudioService();
     }
     return AudioService.instance;
   }
@@ -59,18 +56,14 @@ export class AudioService {
   private stateChangeCallback: ((info: audio.AudioCapturerChangeInfo) => void) | null = null;
   // 状态标志
   private state: AudioServiceState = AudioServiceState.IDLE;
-  private isRecording: boolean = false;
   // 配置和回调
   private currentConfig = AudioPresets.getConfig(AudioAnalysisMode.FAST_TIME_WEIGHTING);
-  private onAudioData: ((buffer: ArrayBuffer) => void) | null = null;
-  private context: common.UIAbilityContext;
   // 状态变更回调类型
   private stateChangeCallbacks: ((state: AudioServiceState) => void)[] = [];
   // 音频流处理器
   private audioStreamProcessor: AudioStreamProcessor;
 
-  constructor(context: common.UIAbilityContext) {
-    this.context = context;
+  constructor() {
 
     // 从首选项加载分析模式
     const savedMode: AudioAnalysisMode = PersistenceV2.connect(PreferenceKeys)!.audio_analysis_mode!;
@@ -97,20 +90,6 @@ export class AudioService {
       console.error('检查麦克风权限失败:', err);
       return false;
     }
-  }
-
-  /**
-   * 开始录音
-   */
-  startRecording(): void {
-    this.isRecording = true;
-  }
-
-  /**
-   * 停止录音
-   */
-  stopRecording(): void {
-    this.isRecording = false;
   }
 
   /**
@@ -287,7 +266,6 @@ export class AudioService {
    */
   startProcessing(callback: (buffer: ArrayBuffer) => void): void {
     this.audioStreamProcessor.startProcessing(callback);
-    this.onAudioData = callback;
   }
 
   /**
@@ -295,7 +273,6 @@ export class AudioService {
    */
   stopProcessing(): void {
     this.audioStreamProcessor.stopProcessing();
-    this.onAudioData = null;
   }
 
   /**
@@ -327,8 +304,6 @@ export class AudioService {
    */
   async stopRecordingAndGetWavData(audioBuffers: ArrayBuffer[]): Promise<string> {
     try {
-      // 停止录音
-      this.stopRecording();
 
       console.info('开始生成WAV音频数据');
       // 使用传入的音频缓冲区或内部存储的缓冲区

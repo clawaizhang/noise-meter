@@ -44,7 +44,7 @@ struct Index {
   private relationalStoreService: RelationalStoreService = RelationalStoreService.getInstance();
   private context = this.getUIContext().getHostContext() as common.UIAbilityContext;
   private readonly eventId = 'usual.event.PRIVACY_STATE_CHANGED';
-  private audioService: AudioService = AudioService.getInstance(getContext() as common.UIAbilityContext)
+  private audioService: AudioService = AudioService.getInstance()
   // 订阅者信息, 用于保存创建成功的订阅者对象，后续使用其完成订阅及退订的动作
   private subscriber: commonEventManager.CommonEventSubscriber | undefined = undefined;
   // 事件列表
