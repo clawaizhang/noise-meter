@@ -1,26 +1,193 @@
 import { DesignConstants } from '../../constants/DesignConstants';
 
+// 功能卡片接口定义
+interface FeatureCard {
+  icon: string;
+  title: string;
+  description: string;
+}
+
 @ComponentV2
 export struct AdvancedFeaturesPage {
   @Param @Require onNext: () => void;
   @Param @Require onPrev: () => void;
   @Param @Require onSkip: () => void;
-  private canvasSettings: RenderingContextSettings = new RenderingContextSettings(true) // Canvas设置
-  private canvasContext: CanvasRenderingContext2D = new CanvasRenderingContext2D(this.canvasSettings) // Canvas上下文
-  @Local private spectrumData: Float32Array = new Float32Array(128);
+  
+  private canvasSettings: RenderingContextSettings = new RenderingContextSettings(true);
+  private canvasContext: CanvasRenderingContext2D = new CanvasRenderingContext2D(this.canvasSettings);
+  
+  @Local private spectrumData: Float32Array = new Float32Array(8);
+  @Local private contentOpacity: number = 0.8;
+  @Local private titleOpacity: number = 0;
+  @Local private featuresOpacity: number = 0;
+  @Local private buttonOpacity: number = 0;
+  @Local private buttonScale: number = 1.0;
+  @Local private cardScales: number[] = [1.0, 1.0, 1.0, 1.0, 1.0, 1.0];
+  @Local private isAnimating: boolean = true;
+
+  // 功能卡片数据
+  private readonly features: FeatureCard[] = [
+    { icon: '📊', title: '频谱分析', description: '多频段可视化分析' },
+    { icon: '⚖️', title: '计权模式', description: 'A/C/Z专业计权' },
+    { icon: '🔔', title: '智能警报', description: '阈值警报提醒' },
+    { icon: '📝', title: '历史记录', description: '数据追踪分析' },
+    { icon: '⏰', title: '时段调度', description: '智能时段阈值' },
+    { icon: '📋', title: '专业报告', description: '数据分析报告' }
+  ];
 
   aboutToAppear(): void {
-    this.generateDemoSpectrum();
+    this.startEntranceAnimation();
+    this.startSpectrumAnimation();
   }
 
-  private generateDemoSpectrum(): void {
-    const data = new Float32Array(128);
-    for (let i = 0; i < data.length; i++) {
-      const base = Math.sin(i * 0.1) * 0.5;
-      const peak = Math.exp(-Math.pow(i - 40, 2) / 200) * 0.8;
-      data[i] = Math.max(base, peak) + Math.random() * 0.1;
+  aboutToDisappear(): void {
+    this.isAnimating = false;
+  }
+
+  private startEntranceAnimation(): void {
+    // 页面整体渐显
+    setTimeout(() => {
+      animateTo({
+        duration: DesignConstants.ANIMATION_DURATION_MD,
+        curve: Curve.EaseOut
+      }, () => {
+        this.contentOpacity = 1;
+      });
+    }, 100);
+
+    // 标题渐显
+    setTimeout(() => {
+      animateTo({
+        duration: DesignConstants.ANIMATION_DURATION_MD,
+        curve: Curve.EaseOut
+      }, () => {
+        this.titleOpacity = 1;
+      });
+    }, 300);
+
+    // 功能卡片渐显
+    setTimeout(() => {
+      animateTo({
+        duration: DesignConstants.ANIMATION_DURATION_MD,
+        curve: Curve.EaseOut
+      }, () => {
+        this.featuresOpacity = 1;
+      });
+    }, 600);
+
+    // 按钮渐显
+    setTimeout(() => {
+      animateTo({
+        duration: DesignConstants.ANIMATION_DURATION_MD,
+        curve: Curve.EaseOut
+      }, () => {
+        this.buttonOpacity = 1;
+      });
+    }, 900);
+  }
+
+  private startSpectrumAnimation(): void {
+    const animateSpectrum = () => {
+      if (this.isAnimating) {
+        this.generateMultiBandSpectrum();
+        setTimeout(animateSpectrum, 100);
+      }
+    };
+    animateSpectrum();
+  }
+
+  private generateMultiBandSpectrum(): void {
+    const bands = 8;
+    const data = new Float32Array(bands);
+    const time = Date.now() * 0.002;
+    
+    for (let i = 0; i < bands; i++) {
+      // 模拟不同频段的能量分布，每个频段有不同的频率和相位
+      const base = Math.sin(i * 0.8 + time) * 0.3;
+      const peak = Math.exp(-Math.pow(i - 3, 2) / 8) * Math.sin(time * 2) * 0.4;
+      const noise = Math.random() * 0.1;
+      data[i] = Math.max(0, base + peak + noise);
     }
     this.spectrumData = data;
+  }
+
+  private getBandColor(bandIndex: number): string {
+    const colors = [
+      '#FF6B6B', '#FF9E6B', '#FFD166', '#06D6A0',
+      '#118AB2', '#073B4C', '#7209B7', '#F72585'
+    ];
+    return colors[bandIndex % colors.length];
+  }
+
+  private drawMultiBandSpectrum(canvas: CanvasRenderingContext2D): void {
+    const width = 280;
+    const height = 80;
+    const bands = this.spectrumData.length;
+    const bandWidth = width / bands;
+    
+    canvas.clearRect(0, 0, width, height);
+    
+    // 绘制背景网格
+    canvas.strokeStyle = '#E0E0E0';
+    canvas.lineWidth = 0.5;
+    
+    // 水平网格线
+    for (let i = 1; i < 4; i++) {
+      const y = i * height / 4;
+      canvas.beginPath();
+      canvas.moveTo(0, y);
+      canvas.lineTo(width, y);
+      canvas.stroke();
+    }
+    
+    // 绘制频段
+    for (let i = 0; i < bands; i++) {
+      const barHeight = this.spectrumData[i] * height * 0.8;
+      const x = i * bandWidth + 2;
+      const y = height - barHeight;
+      
+      // 绘制频段柱状图
+      canvas.fillStyle = this.getBandColor(i);
+      canvas.fillRect(x, y, bandWidth - 4, barHeight);
+      
+      // 添加渐变效果
+      const gradient = canvas.createLinearGradient(x, y, x, y + barHeight);
+      gradient.addColorStop(0, this.getBandColor(i));
+      gradient.addColorStop(1, this.getBandColor(i) + '80');
+      canvas.fillStyle = gradient;
+      canvas.fillRect(x, y, bandWidth - 4, barHeight);
+    }
+  }
+
+  private handleButtonClick(): void {
+    animateTo({
+      duration: DesignConstants.ANIMATION_DURATION_XS,
+      curve: Curve.EaseOut
+    }, () => {
+      this.buttonScale = 0.98;
+    });
+
+    setTimeout(() => {
+      animateTo({
+        duration: DesignConstants.ANIMATION_DURATION_SM,
+        curve: Curve.EaseOut
+      }, () => {
+        this.buttonScale = 1.0;
+      });
+
+      setTimeout(() => {
+        this.onNext();
+      }, 100);
+    }, 50);
+  }
+
+  private handleCardHover(isHover: boolean, index: number): void {
+    animateTo({
+      duration: DesignConstants.ANIMATION_DURATION_XS,
+      curve: Curve.EaseOut
+    }, () => {
+      this.cardScales[index] = isHover ? 1.05 : 1.0;
+    });
   }
 
   build() {
@@ -28,14 +195,14 @@ export struct AdvancedFeaturesPage {
       // 顶部导航
       this.buildHeader()
 
-      // 频谱图
+      // 频谱分析区域
       this.buildSpectrumDisplay()
 
-      // 功能描述
-      this.buildFeatureDescription()
+      // 标题区域
+      this.buildTitle()
 
-      // 功能图标
-      this.buildFeatureIcons()
+      // 功能卡片网格
+      this.buildFeatureGrid()
 
       // 操作按钮
       Button('下一页', { type: ButtonType.Capsule })
@@ -44,11 +211,14 @@ export struct AdvancedFeaturesPage {
         .backgroundColor($r('sys.color.interactive_active'))
         .fontColor($r('sys.color.font_on_primary'))
         .fontSize(DesignConstants.FONT_SIZE_LG)
-        .onClick(() => this.onNext())
+        .scale({ x: this.buttonScale, y: this.buttonScale })
+        .opacity(this.buttonOpacity)
+        .onClick(() => this.handleButtonClick())
     }
     .width('100%')
     .height('100%')
     .padding(DesignConstants.SPACING_LG)
+    .opacity(this.contentOpacity)
   }
 
   @Builder
@@ -77,112 +247,98 @@ export struct AdvancedFeaturesPage {
         .width('100%')
         .height(80)
         .onReady(() => {
-          this.drawSpectrum(this.canvasContext);
+          this.drawMultiBandSpectrum(this.canvasContext);
         })
 
-      Text('实时频谱分析')
-        .fontSize(DesignConstants.FONT_SIZE_MD)
-        .fontColor($r('sys.color.font_secondary'))
+      // 频率标注
+      Row({ space: 0 }) {
+        Text('20Hz')
+          .fontSize(DesignConstants.FONT_SIZE_XS)
+          .fontColor($r('sys.color.font_secondary'))
+        
+        Blank()
+        
+        Text('20kHz')
+          .fontSize(DesignConstants.FONT_SIZE_XS)
+          .fontColor($r('sys.color.font_secondary'))
+      }
+      .width('100%')
     }
     .alignItems(HorizontalAlign.Center)
     .padding(DesignConstants.SPACING_XL)
   }
 
-  private drawSpectrum(canvas: CanvasRenderingContext2D): void {
-    const width = 200;
-    const height = 60;
-    
-    canvas.clearRect(0, 0, width, height);
-    canvas.beginPath();
-    
-    for (let i = 0; i < width; i++) {
-      const x = i;
-      const y = height / 2 + Math.sin(i * 0.1 + Date.now() * 0.005) * 20;
-      
-      if (i === 0) {
-        canvas.moveTo(x, y);
-      } else {
-        canvas.lineTo(x, y);
-      }
-    }
-    
-    canvas.strokeStyle = '#1890FF';
-    canvas.lineWidth = 2;
-    canvas.stroke();
-  }
-
   @Builder
-  private buildFeatureDescription() {
+  private buildTitle() {
     Column({ space: DesignConstants.SPACING_SM }) {
-      Text('专业分析工具')
+      Text('专业分析，精准守护')
         .fontSize(DesignConstants.FONT_SIZE_XL)
         .fontWeight(FontWeight.Bold)
         .fontColor($r('sys.color.font_emphasize'))
-        .alignSelf(ItemAlign.Start)
+        .textAlign(TextAlign.Center)
+        .opacity(this.titleOpacity)
 
-      Text('• 实时频谱分析 - 可视化音频频率分布')
+      Text('可视化音频分析，智能噪音防护')
         .fontSize(DesignConstants.FONT_SIZE_MD)
         .fontColor($r('sys.color.font_secondary'))
-        .alignSelf(ItemAlign.Start)
-
-      Text('• 智能数据记录 - 自动保存检测历史')
-        .fontSize(DesignConstants.FONT_SIZE_MD)
-        .fontColor($r('sys.color.font_secondary'))
-        .alignSelf(ItemAlign.Start)
-
-      Text('• 多种加权模式 - A/C/Z专业计权')
-        .fontSize(DesignConstants.FONT_SIZE_MD)
-        .fontColor($r('sys.color.font_secondary'))
-        .alignSelf(ItemAlign.Start)
+        .textAlign(TextAlign.Center)
+        .opacity(this.titleOpacity)
     }
     .width('100%')
+    .alignItems(HorizontalAlign.Center)
   }
 
   @Builder
-  private buildFeatureIcons() {
-    Row({ space: DesignConstants.SPACING_MD }) {
-      Column({ space: DesignConstants.SPACING_XS }) {
-        Image($r('app.media.ic_frequency_weighting'))
-          .width(32)
-          .height(32)
-          .fillColor($r('sys.color.interactive_active'))
-        Text('频谱分析')
-          .fontSize(DesignConstants.FONT_SIZE_SM)
-          .fontColor($r('sys.color.font_secondary'))
+  private buildFeatureGrid() {
+    Column({ space: DesignConstants.SPACING_LG }) {
+      // 第一行功能卡片
+      Row({ space: DesignConstants.SPACING_MD }) {
+        ForEach(this.features.slice(0, 3), (item: FeatureCard, index: number) => {
+          this.buildFeatureCard(item, index)
+        })
       }
+      .width('100%')
+      .justifyContent(FlexAlign.SpaceBetween)
 
-      Column({ space: DesignConstants.SPACING_XS }) {
-        Image($r('app.media.ic_history'))
-          .width(32)
-          .height(32)
-          .fillColor($r('sys.color.interactive_active'))
-        Text('数据记录')
-          .fontSize(DesignConstants.FONT_SIZE_SM)
-          .fontColor($r('sys.color.font_secondary'))
+      // 第二行功能卡片
+      Row({ space: DesignConstants.SPACING_MD }) {
+        ForEach(this.features.slice(3, 6), (item: FeatureCard, index: number) => {
+          this.buildFeatureCard(item, index + 3)
+        })
       }
-
-      Column({ space: DesignConstants.SPACING_XS }) {
-        Image($r('app.media.ic_weighting'))
-          .width(32)
-          .height(32)
-          .fillColor($r('sys.color.interactive_active'))
-        Text('加权模式')
-          .fontSize(DesignConstants.FONT_SIZE_SM)
-          .fontColor($r('sys.color.font_secondary'))
-      }
-
-      Column({ space: DesignConstants.SPACING_XS }) {
-        Image($r('app.media.ic_settings'))
-          .width(32)
-          .height(32)
-          .fillColor($r('sys.color.interactive_active'))
-        Text('自定义')
-          .fontSize(DesignConstants.FONT_SIZE_SM)
-          .fontColor($r('sys.color.font_secondary'))
-      }
+      .width('100%')
+      .justifyContent(FlexAlign.SpaceBetween)
     }
-    .justifyContent(FlexAlign.SpaceAround)
     .width('100%')
-    .margin({ top: DesignConstants.SPACING_LG })
+    .margin({ top: DesignConstants.SPACING_XL })
+    .opacity(this.featuresOpacity)
+  }
+
+  @Builder
+  private buildFeatureCard(item: FeatureCard, index: number) {
+    Column({ space: DesignConstants.SPACING_XS }) {
+      Text(item.icon)
+        .fontSize(DesignConstants.FONT_SIZE_XL)
+      
+      Text(item.title)
+        .fontSize(DesignConstants.FONT_SIZE_SM)
+        .fontWeight(FontWeight.Medium)
+        .fontColor($r('sys.color.font_primary'))
+        .textAlign(TextAlign.Center)
+
+      Text(item.description)
+        .fontSize(DesignConstants.FONT_SIZE_XS)
+        .fontColor($r('sys.color.font_secondary'))
+        .textAlign(TextAlign.Center)
+        .maxLines(2)
+    }
+    .width('30%')
+    .height(80)
+    .padding(DesignConstants.SPACING_MD)
+    .backgroundColor($r('sys.color.background_primary'))
+    .borderRadius(DesignConstants.BORDER_RADIUS_MD)
+    .shadow(DesignConstants.SHADOW_SM)
+    .scale({ x: this.cardScales[index], y: this.cardScales[index] })
+    .onHover((isHover: boolean) => this.handleCardHover(isHover, index))
   }
 }
