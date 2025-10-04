@@ -7,7 +7,7 @@
 import { MembershipManager } from '../../services/MembershipManager';
 import { DesignConstants } from '../../constants/DesignConstants';
 import { DialogHub, InfSheet } from '@hadss/dialoghub';
-import { UpgradeContent, defaultPricingPlans, defaultFeatureComparison, UpgradeContentProps,
+import { defaultPricingPlans, UpgradeContentProps,
   UpgradeContentBuilder } from './UpgradeContent';
 
 @ComponentV2
@@ -29,7 +29,6 @@ export struct PremiumFeature {
       featureDesc: this.featureDesc,
     icon: this.icon,
     pricingPlans: defaultPricingPlans,
-    featureComparison: this.getFeatureComparison(),
     onUpgrade: () => {
       // 升级成功处理
       console.info(`功能 "${this.featureName}" 已解锁`);
@@ -62,40 +61,6 @@ export struct PremiumFeature {
     this.upgradeDialog.show();
   }
 
-  /**
-   * 获取功能对比配置
-   */
-  private getFeatureComparison() {
-    // 基于当前功能生成特定的对比配置
-    const baseComparison = [...defaultFeatureComparison];
-    
-    // 可以根据具体功能调整对比内容
-    switch (this.featureName) {
-      case '频率加权模式':
-        return baseComparison.filter(item =>
-          item.feature === '频率加权' ||
-          item.feature === '广告显示'
-        );
-      case '音频分析模式':
-        return baseComparison.filter(item =>
-          item.feature === '音频分析' ||
-          item.feature === '广告显示'
-        );
-      case '自定义模式':
-        return baseComparison.filter(item =>
-          item.feature === '自定义设置' ||
-          item.feature === '广告显示'
-        );
-      case '智能时段警报':
-        return baseComparison.filter(item =>
-          item.feature === '警报系统' ||
-          item.feature === '广告显示'
-        );
-      default:
-        return baseComparison;
-    }
-  }
-
   build() {
     // 专业版用户直接显示功能
     if (MembershipManager.hasProFeature()) {
@@ -114,8 +79,7 @@ export struct PremiumFeature {
         Image($r('app.media.ic_vip'))
           .width(DesignConstants.ICON_SIZE_MD)
           .height(DesignConstants.ICON_SIZE_MD)
-          .fillColor($r('sys.color.font_tertiary'))
-          .margin({ top: DesignConstants.SPACING_SM, right: DesignConstants.SPACING_SM })
+          .margin({ top: DesignConstants.SPACING_XS, right: DesignConstants.SPACING_XS })
         
       }
       .border({

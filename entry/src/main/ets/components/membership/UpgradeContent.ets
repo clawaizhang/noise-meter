@@ -46,6 +46,14 @@ export struct UpgradeContent {
   @Local selectedPlan: PricingPlan | null = null;
   @Local purchaseState: 'idle' | 'loading' | 'success' | 'error' = 'idle';
 
+  aboutToAppear() {
+    // 默认选中推荐方案
+    const recommendedPlan = this.pricingPlans.find(plan => plan.isRecommended);
+    if (recommendedPlan) {
+      this.selectedPlan = recommendedPlan;
+    }
+  }
+
   build() {
     Column({ space: DesignConstants.SPACING_MD }) {
       // 1. 头部区域
@@ -57,11 +65,6 @@ export struct UpgradeContent {
       // 3. 价格方案区
       if (this.pricingPlans.length > 0) {
         this.buildPricingSection()
-      }
-
-      // 4. 功能对比区
-      if (this.featureComparison.length > 0) {
-        this.buildComparisonSection()
       }
 
       // 5. 操作按钮区
@@ -120,49 +123,49 @@ export struct UpgradeContent {
         .fontColor($r('sys.color.font_primary'))
         .alignSelf(ItemAlign.Start)
 
-      // 权益网格布局
-      Column({ space: 16 }) {
-        // 多频率加权
-        this.buildBenefitItem(
-          $r('app.media.ic_frequency_weighting'),
-          '多频率加权',
-          'A/C/Z计权模式，满足不同场景需求'
-        )
+      // 权益水平网格布局
+      Column({ space: DesignConstants.SPACING_SM }) {
+        // 第一行：3个权益项
+        Row({ space: DesignConstants.SPACING_MD }) {
+          this.buildCompactBenefitItem(
+            $r('app.media.ic_frequency_weighting'),
+            '多频率加权',
+            'A/C/Z计权模式'
+          )
+          this.buildCompactBenefitItem(
+            $r('app.media.ic_audio_analysis'),
+            '音频分析',
+            '快速/慢速/脉冲'
+          )
+          this.buildCompactBenefitItem(
+            $r('app.media.ic_alarm'),
+            '智能警报',
+            '基于时段提醒'
+          )
+        }
+        .width('100%')
+        .justifyContent(FlexAlign.SpaceBetween)
 
-        // 音频分析模式
-        this.buildBenefitItem(
-          $r('app.media.ic_audio_analysis'),
-          '音频分析模式',
-          '快速/慢速/脉冲响应，精准音频分析'
-        )
-
-        // 智能警报
-        this.buildBenefitItem(
-          $r('app.media.ic_alarm'),
-          '智能时段警报',
-          '基于时间段的智能提醒系统'
-        )
-
-        // 自定义模式
-        this.buildBenefitItem(
-          $r('app.media.ic_settings'),
-          '自定义模式',
-          'FFT参数自定义，个性化测量配置'
-        )
-
-        // 历史报告
-        this.buildBenefitItem(
-          $r('app.media.ic_history'),
-          '历史记录报告',
-          '完整测量历史，趋势分析可视化'
-        )
-
-        // 无广告
-        this.buildBenefitItem(
-          $r('app.media.ic_vip'),
-          '无广告体验',
-          '纯净使用环境，专注测量'
-        )
+        // 第二行：3个权益项
+        Row({ space: DesignConstants.SPACING_MD }) {
+          this.buildCompactBenefitItem(
+            $r('app.media.ic_settings'),
+            '自定义模式',
+            'FFT参数自定义'
+          )
+          this.buildCompactBenefitItem(
+            $r('app.media.ic_history'),
+            '历史报告',
+            '趋势分析可视化'
+          )
+          this.buildCompactBenefitItem(
+            $r('app.media.ic_vip'),
+            '无广告',
+            '纯净使用环境'
+          )
+        }
+        .width('100%')
+        .justifyContent(FlexAlign.SpaceBetween)
       }
     }
     .width('100%')
@@ -182,67 +185,14 @@ export struct UpgradeContent {
         .fontColor($r('sys.color.font_primary'))
         .alignSelf(ItemAlign.Start)
 
-      // 价格方案列表
-      ForEach(this.pricingPlans, (plan: PricingPlan) => {
-        this.buildPricingCard({ selected: this.selectedPlan!, current: plan })
-      })
-    }
-    .width('100%')
-    .padding({
-      top: DesignConstants.SPACING_LG,
-      bottom: DesignConstants.SPACING_LG
-    })
-  }
-
-  // 功能对比区构建
-  @Builder
-  private buildComparisonSection() {
-    Column({ space: DesignConstants.SPACING_MD }) {
-      Text('功能对比')
-        .fontSize(DesignConstants.FONT_SIZE_XL)
-        .fontWeight(FontWeight.Medium)
-        .fontColor($r('sys.color.font_primary'))
-        .alignSelf(ItemAlign.Start)
-
-      // 对比表格
-      Column({ space: DesignConstants.SPACING_XS }) {
-        // 表头
-        Row({ space: DesignConstants.SPACING_MD }) {
-          Text('功能特性')
-            .fontSize(DesignConstants.FONT_SIZE_MD)
-            .fontWeight(FontWeight.Medium)
-            .fontColor($r('sys.color.font_primary'))
-            .layoutWeight(2)
-
-          Text('免费版')
-            .fontSize(DesignConstants.FONT_SIZE_MD)
-            .fontWeight(FontWeight.Medium)
-            .fontColor($r('sys.color.font_secondary'))
-            .layoutWeight(1)
-            .textAlign(TextAlign.Center)
-
-          Text('专业版')
-            .fontSize(DesignConstants.FONT_SIZE_MD)
-            .fontWeight(FontWeight.Medium)
-            .fontColor($r('sys.color.ohos_id_color_palette1'))
-            .layoutWeight(1)
-            .textAlign(TextAlign.Center)
-        }
-        .width('100%')
-        .padding({
-          bottom: DesignConstants.SPACING_SM
-        })
-        .border({
-          width: DesignConstants.BORDER_WIDTH_SM,
-          color: $r('sys.color.comp_divider')
-        })
-
-        // 对比内容
-        ForEach(this.featureComparison, (item: FeatureComparison) => {
-          this.buildComparisonRow(item)
+      // 价格方案横向对比
+      Row({ space: DesignConstants.SPACING_MD }) {
+        ForEach(this.pricingPlans, (plan: PricingPlan) => {
+          this.buildPricingCard({ selected: this.selectedPlan!, current: plan })
         })
       }
       .width('100%')
+      .justifyContent(FlexAlign.SpaceBetween)
     }
     .width('100%')
     .padding({
@@ -307,82 +257,114 @@ export struct UpgradeContent {
   @Builder
   private buildPricingCard(plans: Plans) {
 
-    Column({ space: DesignConstants.SPACING_SM }) {
+    Column({ space: 2 }) {
       // 推荐标签
       if (plans.current.isRecommended) {
         Text('最受欢迎')
-          .fontSize(DesignConstants.FONT_SIZE_XS)
+          .fontSize(10)
           .fontColor($r('sys.color.white'))
           .backgroundColor($r('sys.color.ohos_id_color_palette1'))
-          .borderRadius(DesignConstants.BORDER_RADIUS_XS)
+          .borderRadius(4)
           .padding({
-            left: DesignConstants.SPACING_SM,
-            right: DesignConstants.SPACING_SM,
-            top: 2,
-            bottom: 2
+            left: 4,
+            right: 4,
+            top: 1,
+            bottom: 1
           })
           .alignSelf(ItemAlign.Start)
       }
 
       // 方案类型和价格
-      Row({ space: DesignConstants.SPACING_SM }) {
-        Column({ space: DesignConstants.SPACING_XS }) {
-          Text(this.getPlanTypeText(plans.current.type))
-            .fontSize(DesignConstants.FONT_SIZE_LG)
-            .fontWeight(FontWeight.Medium)
-            .fontColor($r('sys.color.font_primary'))
+      Column({ space: 1 }) {
+        Text(this.getPlanTypeText(plans.current.type))
+          .fontSize(14)
+          .fontWeight(FontWeight.Medium)
+          .fontColor($r('sys.color.font_primary'))
 
-          Row({ space: DesignConstants.SPACING_XS }) {
+        Row({ space: 2 }) {
+          if (plans.current.type === 'monthly') {
+            // 月度方案显示0元，原价6元划掉
+            Text('¥0')
+              .fontSize(18)
+              .fontWeight(FontWeight.Bold)
+              .fontColor($r('sys.color.ohos_id_color_palette1'))
+            
             Text(`¥${plans.current.price}`)
-              .fontSize(DesignConstants.FONT_SIZE_2XL)
+              .fontSize(12)
+              .fontColor($r('sys.color.font_tertiary'))
+              .decoration({ type: TextDecorationType.LineThrough })
+          } else {
+            // 其他方案正常显示
+            Text(`¥${plans.current.price}`)
+              .fontSize(18)
               .fontWeight(FontWeight.Bold)
               .fontColor($r('sys.color.ohos_id_color_palette1'))
 
             if (plans.current.originalPrice) {
               Text(`¥${plans.current.originalPrice}`)
-                .fontSize(DesignConstants.FONT_SIZE_MD)
+                .fontSize(12)
                 .fontColor($r('sys.color.font_tertiary'))
                 .decoration({ type: TextDecorationType.LineThrough })
             }
           }
-
-          if (plans.current.discount) {
-            Text(plans.current.discount)
-              .fontSize(DesignConstants.FONT_SIZE_SM)
-              .fontColor($r('sys.color.confirm'))
-          }
         }
-        .layoutWeight(1)
 
-        // 选择指示器
-        if (plans.selected?.type === plans.current.type) {
+        // 月均价格计算（年度方案）
+        if (plans.current.type === 'yearly') {
+          Text(`¥${Math.round(plans.current.price / 12 * 10) / 10}/月`)
+            .fontSize(10)
+            .fontColor($r('sys.color.font_secondary'))
+        }
+
+        if (plans.current.discount) {
+          Text(plans.current.discount)
+            .fontSize(10)
+            .fontColor($r('sys.color.confirm'))
+        }
+      }
+      .width('100%')
+
+      // 方案描述
+      Column({ space: 1 }) {
+        if (plans.current.type === 'monthly') {
+          Text('最灵活')
+            .fontSize(12)
+            .fontColor($r('sys.color.font_secondary'))
+          Text('首月零元免费试用')
+            .fontSize(10)
+            .fontColor($r('sys.color.confirm'))
+          Text('试用结束后自动续费')
+            .fontSize(10)
+            .fontColor($r('sys.color.font_tertiary'))
+        } else if (plans.current.type === 'yearly') {
+          Text('最划算')
+            .fontSize(12)
+            .fontColor($r('sys.color.font_secondary'))
+        } else if (plans.current.type === 'lifetime') {
+          Text('永久拥有')
+            .fontSize(12)
+            .fontColor($r('sys.color.font_secondary'))
+        }
+      }
+      .width('100%')
+      .margin({ top: 4 })
+
+      // 选择指示器
+      if (plans.selected?.type === plans.current.type) {
+        Row({ space: 2 }) {
           Image($r('app.media.ic_favorite'))
-            .width(DesignConstants.ICON_SIZE_MD)
-            .height(DesignConstants.ICON_SIZE_MD)
+            .width(12)
+            .height(12)
             .fillColor($r('sys.color.ohos_id_color_palette1'))
+
+          Text('已选择')
+            .fontSize(10)
+            .fontColor($r('sys.color.ohos_id_color_palette1'))
         }
+        .justifyContent(FlexAlign.Center)
+        .width('100%')
+        .margin({ top: 4 })
       }
-      .width('100%')
-
-      // 功能列表
-      Column({ space: DesignConstants.SPACING_XS }) {
-        ForEach(plans.current.features, (feature: string) => {
-          Row({ space: DesignConstants.SPACING_XS }) {
-            Image($r('app.media.ic_favorite'))
-              .width(DesignConstants.ICON_SIZE_XS)
-              .height(DesignConstants.ICON_SIZE_XS)
-              .fillColor($r('sys.color.confirm'))
-
-            Text(feature)
-              .fontSize(DesignConstants.FONT_SIZE_SM)
-              .fontColor($r('sys.color.font_secondary'))
-              .layoutWeight(1)
-          }
-          .width('100%')
-        })
-      }
-      .width('100%')
-      .margin({ top: DesignConstants.SPACING_SM })
     }
     .padding(DesignConstants.SPACING_MD)
     .border({
@@ -399,6 +381,8 @@ export struct UpgradeContent {
       $r('sys.color.background_secondary') :
       $r('sys.color.background_primary')
     )
+    .width('30%')
+    .height(150)
     .onClick(() => {
       this.selectedPlan = plans.current;
     })
@@ -433,33 +417,33 @@ export struct UpgradeContent {
     .height(120)
   }
 
-  // 构建对比行
+  // 构建紧凑权益项（水平布局使用）
   @Builder
-  private buildComparisonRow(item: FeatureComparison) {
-    Row({ space: DesignConstants.SPACING_MD }) {
-      Text(item.feature)
-        .fontSize(DesignConstants.FONT_SIZE_MD)
+  private buildCompactBenefitItem(icon: Resource, title: string, desc: string) {
+    Column({ space: DesignConstants.SPACING_XS }) {
+      Image(icon)
+        .width(DesignConstants.ICON_SIZE_MD)
+        .height(DesignConstants.ICON_SIZE_MD)
+        .fillColor($r('sys.color.ohos_id_color_palette1'))
+
+      Text(title)
+        .fontSize(DesignConstants.FONT_SIZE_SM)
+        .fontWeight(FontWeight.Medium)
         .fontColor($r('sys.color.font_primary'))
-        .layoutWeight(2)
+        .textAlign(TextAlign.Center)
 
-      Text(item.freeVersion)
-        .fontSize(DesignConstants.FONT_SIZE_MD)
+      Text(desc)
+        .fontSize(DesignConstants.FONT_SIZE_XS)
         .fontColor($r('sys.color.font_secondary'))
-        .layoutWeight(1)
         .textAlign(TextAlign.Center)
-
-      Text(item.proVersion)
-        .fontSize(DesignConstants.FONT_SIZE_MD)
-        .fontColor($r('sys.color.ohos_id_color_palette1'))
-        .fontWeight(item.isHighlight ? FontWeight.Bold : FontWeight.Normal)
-        .layoutWeight(1)
-        .textAlign(TextAlign.Center)
+        .maxLines(1)
+        .textOverflow({ overflow: TextOverflow.Ellipsis })
     }
-    .width('100%')
-    .padding({
-      top: DesignConstants.SPACING_SM,
-      bottom: DesignConstants.SPACING_SM
-    })
+    .padding(DesignConstants.SPACING_SM)
+    .backgroundColor($r('sys.color.background_secondary'))
+    .borderRadius(DesignConstants.BORDER_RADIUS_MD)
+    .width(100)
+    .height(80)
   }
 
   // 构建会员徽章
@@ -639,45 +623,5 @@ export const defaultPricingPlans: PricingPlan[] = [
       '最佳性价比',
       '一次购买永久拥有'
     ]
-  }
-];
-
-// 默认功能对比配置
-export const defaultFeatureComparison: FeatureComparison[] = [
-  {
-    feature: '频率加权',
-    freeVersion: '仅A计权',
-    proVersion: 'A/C/Z计权',
-    isHighlight: true
-  },
-  {
-    feature: '音频分析',
-    freeVersion: '基础模式',
-    proVersion: '快速/慢速/脉冲',
-    isHighlight: true
-  },
-  {
-    feature: '警报系统',
-    freeVersion: '基础警报',
-    proVersion: '智能时段警报',
-    isHighlight: false
-  },
-  {
-    feature: '自定义设置',
-    freeVersion: '不支持',
-    proVersion: 'FFT参数自定义',
-    isHighlight: true
-  },
-  {
-    feature: '历史报告',
-    freeVersion: '基础查看',
-    proVersion: '完整趋势分析',
-    isHighlight: false
-  },
-  {
-    feature: '广告显示',
-    freeVersion: '有广告',
-    proVersion: '无广告',
-    isHighlight: false
   }
 ];
