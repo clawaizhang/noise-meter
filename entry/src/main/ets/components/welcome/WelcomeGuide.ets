@@ -86,7 +86,7 @@ export struct WelcomeGuide {
           this.setPrivacyAgreed(true);
           this.handleComplete();
         },
-        onSkip: () => this.onCancel(),
+        onSkip: () => this.onCancel(), // 现在对应"暂不使用"按钮
         onPrev: () => this.goToPrevPage(),
       })
     }

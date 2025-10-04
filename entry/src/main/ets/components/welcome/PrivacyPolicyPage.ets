@@ -7,10 +7,130 @@ export struct PrivacyPolicyPage {
   @Event onAgree: () => void;
 
   @Local private privacyAgreed: boolean = false;
+  @Local private contentOpacity: number = 0.8;
+  @Local private headerOpacity: number = 0;
+  @Local private titleOpacity: number = 0;
+  @Local private permissionsOpacity: number = 0;
+  @Local private checkboxOpacity: number = 0;
+  @Local private buttonsOpacity: number = 0;
+  @Local private checkboxShake: number = 0;
+  @Local private checkboxScale: number = 1.0;
+  @Local private textColor: Resource = $r('sys.color.font_emphasize');
+
+  aboutToAppear(): void {
+    this.startEntranceAnimation();
+  }
+
+  private startEntranceAnimation(): void {
+    // 页面整体渐显
+    setTimeout(() => {
+      animateTo({
+        duration: DesignConstants.ANIMATION_DURATION_MD,
+        curve: Curve.EaseOut
+      }, () => {
+        this.contentOpacity = 1;
+      });
+    }, 100);
+
+    // Header渐显
+    setTimeout(() => {
+      animateTo({
+        duration: DesignConstants.ANIMATION_DURATION_MD,
+        curve: Curve.EaseOut
+      }, () => {
+        this.headerOpacity = 1;
+      });
+    }, 300);
+
+    // 标题渐显
+    setTimeout(() => {
+      animateTo({
+        duration: DesignConstants.ANIMATION_DURATION_MD,
+        curve: Curve.EaseOut
+      }, () => {
+        this.titleOpacity = 1;
+      });
+    }, 600);
+
+    // 权限列表渐显
+    setTimeout(() => {
+      animateTo({
+        duration: DesignConstants.ANIMATION_DURATION_MD,
+        curve: Curve.EaseOut
+      }, () => {
+        this.permissionsOpacity = 1;
+      });
+    }, 900);
+
+    // 复选框区域渐显
+    setTimeout(() => {
+      animateTo({
+        duration: DesignConstants.ANIMATION_DURATION_MD,
+        curve: Curve.EaseOut
+      }, () => {
+        this.checkboxOpacity = 1;
+      });
+    }, 1200);
+
+    // 按钮区域渐显
+    setTimeout(() => {
+      animateTo({
+        duration: DesignConstants.ANIMATION_DURATION_MD,
+        curve: Curve.EaseOut
+      }, () => {
+        this.buttonsOpacity = 1;
+      });
+    }, 1500);
+  }
+
+  private startShakeAnimation(): void {
+    // 颜色变化 - 变为温和的橙色
+    this.textColor = $r('sys.color.alert');
+    
+    // 缩放动画
+    animateTo({
+      duration: DesignConstants.ANIMATION_DURATION_XS,
+      curve: Curve.EaseOut
+    }, () => {
+      this.checkboxScale = 1.05;
+    });
+
+    // 增强抖动动画 - 幅度增加到8像素，频率增加到4次
+    animateTo({
+      duration: DesignConstants.ANIMATION_DURATION_SM,
+      curve: Curve.EaseInOut,
+      iterations: 4,
+      playMode: PlayMode.Alternate
+    }, () => {
+      this.checkboxShake = 8;
+    });
+
+    // 重置所有状态
+    setTimeout(() => {
+      animateTo({
+        duration: DesignConstants.ANIMATION_DURATION_SM,
+        curve: Curve.EaseOut
+      }, () => {
+        this.checkboxShake = 0;
+        this.checkboxScale = 1.0;
+        this.textColor = $r('sys.color.font_emphasize');
+      });
+    }, 400);
+  }
+
+  private handleAgreeClick(): void {
+    if (!this.privacyAgreed) {
+      // 未勾选复选框，触发抖动效果
+      this.startShakeAnimation();
+    } else {
+      // 已勾选，执行同意操作
+      this.onAgree();
+    }
+  }
 
   build() {
     Column({ space: 0 }) {
-      // Header区域 - 集成隐私政策对话框的设计
+      // 顶部导航 - 与其他页面保持一致
       this.buildHeader()
 
       // 可滚动内容区域
@@ -33,29 +153,30 @@ export struct PrivacyPolicyPage {
     .width('100%')
     .height('100%')
     .backgroundColor($r('sys.color.background_primary'))
+    .opacity(this.contentOpacity)
   }
 
-  // 构建Header区域 - 集成隐私政策对话框的设计
+  // 构建Header区域 - 与其他页面保持一致，添加返回图标
   @Builder
   private buildHeader() {
-    Column({ space: DesignConstants.SPACING_MD }) {
-      // APP图标和名称
-      Image($r('app.media.app_icon_fore'))
-        .width(80)
-        .height(80)
-        .borderRadius(DesignConstants.BORDER_RADIUS_MD)
+    Row() {
+      // 返回按钮 - 使用图标，移除灰色背景
+      Image($r('app.media.ic_back'))
+        .width(DesignConstants.ICON_SIZE_LG)
+        .height(DesignConstants.ICON_SIZE_LG)
+        .fillColor($r('sys.color.font_primary'))
+        .onClick(() => this.onPrev())
 
-      Text($r('app.string.EntryAbility_label'))
-        .fontSize(DesignConstants.FONT_SIZE_XL)
-        .fontWeight(FontWeight.Bold)
-        .fontColor($r('sys.color.font_emphasize'))
+      Blank()
+
+      // 移除跳过按钮，隐私保护页面不需要跳过功能
     }
-    .alignItems(HorizontalAlign.Center)
     .width('100%')
-    .padding({ top: DesignConstants.SPACING_XL, bottom: DesignConstants.SPACING_LG })
+    .padding(DesignConstants.SPACING_LG)
+    .opacity(this.headerOpacity)
   }
 
-  // 构建权限说明列表 - 集成隐私政策对话框的设计
+  // 构建权限说明列表 - 集成隐私政策对话框的设计，添加动画效果
   @Builder
   private buildPermissionList() {
     Column({ space: DesignConstants.SPACING_SM }) {
@@ -105,12 +226,30 @@ export struct PrivacyPolicyPage {
     .padding(DesignConstants.SPACING_MD)
     .backgroundColor($r('sys.color.comp_background_secondary'))
     .borderRadius(DesignConstants.BORDER_RADIUS_MD)
+    .opacity(this.permissionsOpacity)
   }
 
-  // 构建内容区域 - 专注于隐私政策内容
+  // 构建内容区域 - 专注于隐私政策内容，添加动画效果和APP图标
   @Builder
   private buildContent() {
     Column({ space: DesignConstants.SPACING_LG }) {
+      // APP图标和名称 - 利用顶部空白区域
+      Column({ space: DesignConstants.SPACING_MD }) {
+        Image($r('app.media.app_icon_fore'))
+          .width(80)
+          .height(80)
+          .borderRadius(DesignConstants.BORDER_RADIUS_MD)
+
+        Text($r('app.string.EntryAbility_label'))
+          .fontSize(DesignConstants.FONT_SIZE_XL)
+          .fontWeight(FontWeight.Bold)
+          .fontColor($r('sys.color.font_emphasize'))
+      }
+      .alignItems(HorizontalAlign.Center)
+      .width('100%')
+      .padding({ top: DesignConstants.SPACING_XL, bottom: DesignConstants.SPACING_LG })
+      .opacity(this.titleOpacity)
+
       // 隐私政策标题
       Text('隐私保护')
         .fontSize(DesignConstants.FONT_SIZE_XL)
@@ -118,6 +257,7 @@ export struct PrivacyPolicyPage {
         .fontColor($r('sys.color.font_emphasize'))
         .textAlign(TextAlign.Center)
         .width('100%')
+        .opacity(this.titleOpacity)
 
       // 隐私政策描述
       Text('我们重视您的隐私安全，请了解我们的数据使用政策')
@@ -126,6 +266,7 @@ export struct PrivacyPolicyPage {
         .textAlign(TextAlign.Center)
         .width('100%')
         .lineHeight(20)
+        .opacity(this.titleOpacity)
 
       // 权限说明
       Text('应用权限说明')
@@ -133,6 +274,7 @@ export struct PrivacyPolicyPage {
         .fontWeight(FontWeight.Medium)
         .fontColor($r('sys.color.font_primary'))
         .alignSelf(ItemAlign.Start)
+        .opacity(this.permissionsOpacity)
 
       // 权限列表
       this.buildPermissionList()
@@ -144,7 +286,7 @@ export struct PrivacyPolicyPage {
     .padding({ left: DesignConstants.SPACING_LG, right: DesignConstants.SPACING_LG })
   }
 
-  // 构建隐私政策链接部分 - 简化版本
+  // 构建隐私政策链接部分 - 简化版本，添加动画效果
   @Builder
   private buildPolicyLink() {
     Column({ space: DesignConstants.SPACING_MD }) {
@@ -162,57 +304,54 @@ export struct PrivacyPolicyPage {
       .width('100%')
     }
     .width('100%')
+    .opacity(this.permissionsOpacity)
   }
 
 
-  // 构建操作按钮区域 - 集成原欢迎页的复选框和按钮设计
+  // 构建操作按钮区域 - 优化布局和交互
   @Builder
   private buildActionButtons() {
     Column({ space: DesignConstants.SPACING_MD }) {
-      // 复选框和同意文本
+      // 复选框和同意文本 - 增强抖动效果
       Row({ space: DesignConstants.SPACING_MD }) {
         Checkbox({ name: 'privacyAgreement', group: 'privacy' })
           .select(this.privacyAgreed)
           .onChange((value: boolean) => {
             this.privacyAgreed = value;
           })
+          .translate({ x: this.checkboxShake })
+          .scale({ x: this.checkboxScale, y: this.checkboxScale })
 
         Text('我已阅读并同意隐私政策')
           .fontSize(DesignConstants.FONT_SIZE_MD)
-          .fontColor($r('sys.color.font_emphasize'))
+          .fontColor(this.textColor)
           .onClick(() => {
             this.privacyAgreed = !this.privacyAgreed;
           })
+          .translate({ x: this.checkboxShake })
+          .scale({ x: this.checkboxScale, y: this.checkboxScale })
       }
+      .opacity(this.checkboxOpacity)
 
-      // 同意按钮
+      // 同意按钮 - 始终可用，但点击时检查状态
       Button('同意并继续', { type: ButtonType.Capsule })
         .width('100%')
         .height(56)
-        .backgroundColor(this.privacyAgreed ? $r('sys.color.interactive_active') : $r('sys.color.comp_background_tertiary'))
-        .fontColor(this.privacyAgreed ? $r('sys.color.font_on_primary') : $r('sys.color.font_on_primary'))
+        .backgroundColor($r('sys.color.interactive_active'))
+        .fontColor($r('sys.color.font_on_primary'))
         .fontSize(DesignConstants.FONT_SIZE_LG)
-        .enabled(this.privacyAgreed)
-        .onClick(() => {
-          if (this.privacyAgreed) {
-            this.onAgree();
-          }
-        })
+        .onClick(() => this.handleAgreeClick())
+        .opacity(this.buttonsOpacity)
 
-      // 导航按钮
-      Row({ space: DesignConstants.SPACING_MD }) {
-        Button('上一页', { type: ButtonType.Normal })
-          .layoutWeight(1)
-          .backgroundColor($r('sys.color.comp_background_primary'))
-          .fontColor($r('sys.color.font_primary'))
-          .onClick(() => this.onPrev())
-
-        Text('跳过')
-          .fontSize(DesignConstants.FONT_SIZE_MD)
-          .fontColor($r('sys.color.font_secondary'))
-          .onClick(() => this.onSkip())
-      }
-      .width('100%')
+      // 不同意按钮 - 使用更友好的文案
+      Button('暂不使用', { type: ButtonType.Normal })
+        .width('100%')
+        .height(48)
+        .backgroundColor($r('sys.color.comp_background_primary'))
+        .fontColor($r('sys.color.font_primary'))
+        .fontSize(DesignConstants.FONT_SIZE_MD)
+        .onClick(() => this.onSkip())
+        .opacity(this.buttonsOpacity)
     }
     .width('100%')
     .padding(DesignConstants.SPACING_LG)

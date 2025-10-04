@@ -224,10 +224,11 @@ export struct AdvancedFeaturesPage {
   @Builder
   private buildHeader() {
     Row() {
-      Button('', { type: ButtonType.Circle })
-        .width(40)
-        .height(40)
-        .backgroundColor($r('sys.color.comp_background_secondary'))
+      // 返回按钮 - 使用图标，移除灰色背景
+      Image($r('app.media.ic_back'))
+        .width(DesignConstants.ICON_SIZE_LG)
+        .height(DesignConstants.ICON_SIZE_LG)
+        .fillColor($r('sys.color.font_primary'))
         .onClick(() => this.onPrev())
 
       Blank()
