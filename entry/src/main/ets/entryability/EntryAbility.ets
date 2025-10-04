@@ -15,6 +15,7 @@ import { camera } from '@kit.CameraKit';
 import { AppStorageV2, PersistenceV2 } from '@kit.ArkUI';
 import { AudioPlayerGroupService } from '../services/AudioPlayerGroupService';
 import { initializeFFTOptimizations } from '../utils/FFTOptimization';
+import { FFTMemoryPool } from '../utils/FFTMemoryPool';
 
 const TAG = 'EntryAbility';
 const DOMAIN = 0x0000;
@@ -27,7 +28,7 @@ export default class EntryAbility extends UIAbility {
 
   async onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): Promise<void> {
     hilog.info(DOMAIN, TAG, 'Ability onCreate');
-
+    FFTMemoryPool.getInstance();
     // 初始化FFT优化 - 预缓存窗函数
     initializeFFTOptimizations();
   }

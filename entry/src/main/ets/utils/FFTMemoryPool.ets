@@ -4,13 +4,13 @@
  * 解决8192点FFT + 1000ms间隔配置的性能瓶颈
  */
 export class FFTMemoryPool {
-  private static instance: FFTMemoryPool | null = null;
+  private static instance: FFTMemoryPool = new FFTMemoryPool()
   
   // 支持的FFT大小（从256开始，支持所有2的幂次方）
   private readonly SUPPORTED_FFT_SIZES = [256, 512, 1024, 2048, 4096, 8192];
   
   // 每个FFT大小预分配96个数组（32线程 × 3数组）
-  private readonly TOTAL_ARRAYS = 96;
+  private readonly TOTAL_ARRAYS = 192;
   
   // 内存池存储：FFT大小 -> 数组列表
   private memoryPools: Map<number, Float32Array[]> = new Map();
@@ -26,9 +26,6 @@ export class FFTMemoryPool {
    * 获取单例实例
    */
   public static getInstance(): FFTMemoryPool {
-    if (!FFTMemoryPool.instance) {
-      FFTMemoryPool.instance = new FFTMemoryPool();
-    }
     return FFTMemoryPool.instance;
   }
   
@@ -42,7 +39,7 @@ export class FFTMemoryPool {
       
       // 预分配96个数组，所有数组都是完整大小
       for (let i = 0; i < this.TOTAL_ARRAYS; i++) {
-        arrays.push(new Float32Array(size));
+        arrays.push(new Float32Array(size).fill(0));
         usage.push(false); // 初始状态为未使用
       }
       
@@ -152,35 +149,6 @@ export class FFTMemoryPool {
   }
   
   /**
-   * 获取内存使用统计
-   * @returns 内存使用统计信息
-   */
-  public getMemoryStats(): { totalMemory: number; usedArrays: number; totalArrays: number } {
-    let totalMemory = 0;
-    let usedArrays = 0;
-    let totalArrays = 0;
-    
-    for (const [size, arrays] of this.memoryPools) {
-      const usage = this.usageStatus.get(size);
-      if (!usage) continue;
-      
-      for (let i = 0; i < arrays.length; i++) {
-        totalMemory += arrays[i].byteLength;
-        totalArrays++;
-        if (usage[i]) {
-          usedArrays++;
-        }
-      }
-    }
-    
-    return {
-      totalMemory,
-      usedArrays,
-      totalArrays
-    };
-  }
-  
-  /**
    * 清理所有数组内容并重置使用状态
    */
   public clearArrays(): void {
@@ -197,12 +165,5 @@ export class FFTMemoryPool {
     
     console.info('[FFTMemoryPool] 所有数组已清理和重置');
   }
-  
-  /**
-   * 销毁内存池实例
-   */
-  public static destroy(): void {
-    FFTMemoryPool.instance = null;
-    console.info('[FFTMemoryPool] 内存池实例已销毁');
-  }
+
 }
