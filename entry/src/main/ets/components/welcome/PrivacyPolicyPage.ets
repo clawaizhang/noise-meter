@@ -10,124 +10,97 @@ export struct PrivacyPolicyPage {
   @Local private showFullPolicy: boolean = false;
 
   build() {
-    Column({ space: DesignConstants.SPACING_XL }) {
-      // 顶部导航
+    Column({ space: 0 }) {
+      // Header区域 - 集成隐私政策对话框的设计
       this.buildHeader()
 
-      // 标题
-      this.buildTitle()
+      // 可滚动内容区域
+      Scroll() {
+        Column({ space: DesignConstants.SPACING_LG }) {
+          // 主要内容区域
+          this.buildContent()
+        }
+        .width('100%')
+        .padding({ bottom: DesignConstants.SPACING_LG })
+      }
+      .scrollBar(BarState.Auto)
+      .scrollable(ScrollDirection.Vertical)
+      .width('100%')
+      .layoutWeight(1)
 
-      // 隐私政策内容
-      this.buildPolicyContent()
-
-      // 同意按钮
-      this.buildAgreementButton()
+      // 操作按钮区域
+      this.buildActionButtons()
     }
     .width('100%')
     .height('100%')
-    .padding(DesignConstants.SPACING_LG)
+    .backgroundColor($r('sys.color.background_primary'))
   }
 
+  // 构建Header区域 - 集成隐私政策对话框的设计
   @Builder
   private buildHeader() {
-    Row() {
-      Button('', { type: ButtonType.Circle })
-        .width(40)
-        .height(40)
-        .backgroundColor($r('sys.color.comp_background_secondary'))
-        .onClick(() => this.onPrev())
+    Column({ space: DesignConstants.SPACING_MD }) {
+      // APP图标和名称
+      Image($r('app.media.app_icon_fore'))
+        .width(80)
+        .height(80)
+        .borderRadius(DesignConstants.BORDER_RADIUS_MD)
 
-      Blank()
-
-      Text('跳过')
-        .fontSize(DesignConstants.FONT_SIZE_MD)
-        .fontColor($r('sys.color.font_secondary'))
-        .onClick(() => this.onSkip())
-    }
-    .width('100%')
-  }
-
-  @Builder
-  private buildTitle() {
-    Column({ space: DesignConstants.SPACING_SM }) {
-      Text('隐私保护')
+      Text($r('app.string.EntryAbility_label'))
         .fontSize(DesignConstants.FONT_SIZE_XL)
         .fontWeight(FontWeight.Bold)
         .fontColor($r('sys.color.font_emphasize'))
-
-      Text('我们重视您的隐私安全')
-        .fontSize(DesignConstants.FONT_SIZE_MD)
-        .fontColor($r('sys.color.font_secondary'))
     }
     .alignItems(HorizontalAlign.Center)
+    .width('100%')
+    .padding({ top: DesignConstants.SPACING_XL, bottom: DesignConstants.SPACING_LG })
   }
 
+  // 构建权限说明列表 - 集成隐私政策对话框的设计
   @Builder
-  private buildPolicyContent() {
-    Scroll() {
-      Column({ space: DesignConstants.SPACING_MD }) {
-        // 隐私政策摘要
-        this.buildPolicySummary()
+  private buildPermissionList() {
+    Column({ space: DesignConstants.SPACING_SM }) {
+      // 麦克风权限
+      Row({ space: DesignConstants.SPACING_SM }) {
+        Image($r('app.media.ic_mic'))
+          .width(DesignConstants.ICON_SIZE_MD)
+          .height(DesignConstants.ICON_SIZE_MD)
+          .fillColor($r('sys.color.font_primary'))
 
-        // 展开/收起按钮
-        if (!this.showFullPolicy) {
-          Text('查看完整隐私政策')
-            .fontSize(DesignConstants.FONT_SIZE_SM)
-            .fontColor($r('sys.color.interactive_active'))
-            .textAlign(TextAlign.Center)
-            .width('100%')
-            .onClick(() => {
-              this.showFullPolicy = true;
-            })
-        } else {
-          // 完整隐私政策
-          this.buildFullPolicy()
-        }
+        Text($r('app.string.privacy_policy_microphone_permission'))
+          .fontSize(DesignConstants.FONT_SIZE_MD)
+          .fontColor($r('sys.color.font_primary'))
+          .layoutWeight(1)
       }
       .width('100%')
-    }
-    .scrollable(ScrollDirection.Vertical)
-    .scrollBar(BarState.Auto)
-    .layoutWeight(1)
-  }
 
-  @Builder
-  private buildPolicySummary() {
-    Column({ space: DesignConstants.SPACING_SM }) {
-      Text('数据使用说明')
-        .fontSize(DesignConstants.FONT_SIZE_LG)
-        .fontWeight(FontWeight.Medium)
-        .fontColor($r('sys.color.font_emphasize'))
-        .alignSelf(ItemAlign.Start)
+      // 位置权限
+      Row({ space: DesignConstants.SPACING_SM }) {
+        Image($r('app.media.ic_location'))
+          .width(DesignConstants.ICON_SIZE_MD)
+          .height(DesignConstants.ICON_SIZE_MD)
+          .fillColor($r('sys.color.font_primary'))
 
-      this.buildPolicyItem('音频数据', '仅用于实时噪音分析，不会上传到服务器')
-      this.buildPolicyItem('位置信息', '用于环境噪音记录，可选择关闭')
-      this.buildPolicyItem('设备信息', '用于优化应用性能和兼容性')
-      this.buildPolicyItem('本地存储', '检测数据仅保存在您的设备中')
-    }
-    .width('100%')
-  }
-
-  @Builder
-  private buildPolicyItem(title: string, description: string) {
-    Row({ space: DesignConstants.SPACING_MD }) {
-      Image($r('app.media.ic_favorite'))
-        .width(20)
-        .height(20)
-        .fillColor($r('sys.color.confirm'))
-
-      Column({ space: DesignConstants.SPACING_XS }) {
-        Text(title)
+        Text($r('app.string.privacy_policy_location_permission'))
           .fontSize(DesignConstants.FONT_SIZE_MD)
-          .fontColor($r('sys.color.font_emphasize'))
-          .alignSelf(ItemAlign.Start)
-
-        Text(description)
-          .fontSize(DesignConstants.FONT_SIZE_SM)
-          .fontColor($r('sys.color.font_secondary'))
-          .alignSelf(ItemAlign.Start)
+          .fontColor($r('sys.color.font_primary'))
+          .layoutWeight(1)
       }
-      .layoutWeight(1)
+      .width('100%')
+
+      // 后台运行权限
+      Row({ space: DesignConstants.SPACING_SM }) {
+        Image($r('app.media.ic_power_on'))
+          .width(DesignConstants.ICON_SIZE_MD)
+          .height(DesignConstants.ICON_SIZE_MD)
+          .fillColor($r('sys.color.font_primary'))
+
+        Text($r('app.string.privacy_policy_background_permission'))
+          .fontSize(DesignConstants.FONT_SIZE_MD)
+          .fontColor($r('sys.color.font_primary'))
+          .layoutWeight(1)
+      }
+      .width('100%')
     }
     .width('100%')
     .padding(DesignConstants.SPACING_MD)
@@ -135,6 +108,79 @@ export struct PrivacyPolicyPage {
     .borderRadius(DesignConstants.BORDER_RADIUS_MD)
   }
 
+  // 构建内容区域 - 集成隐私政策对话框的设计
+  @Builder
+  private buildContent() {
+    Column({ space: DesignConstants.SPACING_LG }) {
+      // 欢迎文本
+      Text($r('app.string.privacy_policy_welcome'))
+        .fontSize(DesignConstants.FONT_SIZE_XL)
+        .fontWeight(FontWeight.Bold)
+        .fontColor($r('sys.color.font_emphasize'))
+        .textAlign(TextAlign.Center)
+        .width('100%')
+
+      // 描述文本
+      Text($r('app.string.privacy_policy_description'))
+        .fontSize(DesignConstants.FONT_SIZE_MD)
+        .fontColor($r('sys.color.font_primary'))
+        .textAlign(TextAlign.Start)
+        .width('100%')
+        .lineHeight(20)
+
+      // 权限说明
+      Text($r('app.string.privacy_policy_permissions_title'))
+        .fontSize(DesignConstants.FONT_SIZE_MD)
+        .fontWeight(FontWeight.Medium)
+        .fontColor($r('sys.color.font_primary'))
+        .alignSelf(ItemAlign.Start)
+
+      // 权限列表
+      this.buildPermissionList()
+
+      // 隐私政策链接和展开功能
+      this.buildPolicyExpandSection()
+    }
+    .width('100%')
+    .padding({ left: DesignConstants.SPACING_LG, right: DesignConstants.SPACING_LG })
+  }
+
+  // 构建隐私政策展开部分 - 保留原欢迎页的功能
+  @Builder
+  private buildPolicyExpandSection() {
+    Column({ space: DesignConstants.SPACING_MD }) {
+      // 隐私政策链接
+      Row({ space: DesignConstants.SPACING_SM }) {
+        Text($r('app.string.privacy_policy_agreement_text'))
+          .fontSize(DesignConstants.FONT_SIZE_MD)
+          .fontColor($r('sys.color.font_primary'))
+
+        Hyperlink($r('app.string.privacy_policy_link'),
+          $r('app.string.privacy_policy_link_text'))
+      }
+      .alignItems(VerticalAlign.Center)
+      .justifyContent(FlexAlign.Center)
+      .width('100%')
+
+      // 展开/收起完整隐私政策
+      if (!this.showFullPolicy) {
+        Text('查看完整隐私政策')
+          .fontSize(DesignConstants.FONT_SIZE_SM)
+          .fontColor($r('sys.color.interactive_active'))
+          .textAlign(TextAlign.Center)
+          .width('100%')
+          .onClick(() => {
+            this.showFullPolicy = true;
+          })
+      } else {
+        // 完整隐私政策
+        this.buildFullPolicy()
+      }
+    }
+    .width('100%')
+  }
+
+  // 构建完整隐私政策 - 保留原欢迎页的功能
   @Builder
   private buildFullPolicy() {
     Column({ space: DesignConstants.SPACING_MD }) {
@@ -189,9 +235,11 @@ export struct PrivacyPolicyPage {
     .width('100%')
   }
 
+  // 构建操作按钮区域 - 集成原欢迎页的复选框和按钮设计
   @Builder
-  private buildAgreementButton() {
-    Column({ space: DesignConstants.SPACING_SM }) {
+  private buildActionButtons() {
+    Column({ space: DesignConstants.SPACING_MD }) {
+      // 复选框和同意文本
       Row({ space: DesignConstants.SPACING_MD }) {
         Checkbox({ name: 'privacyAgreement', group: 'privacy' })
           .select(this.privacyAgreed)
@@ -207,6 +255,7 @@ export struct PrivacyPolicyPage {
           })
       }
 
+      // 同意按钮
       Button('同意并继续', { type: ButtonType.Capsule })
         .width('100%')
         .height(56)
@@ -219,7 +268,23 @@ export struct PrivacyPolicyPage {
             this.onAgree();
           }
         })
+
+      // 导航按钮
+      Row({ space: DesignConstants.SPACING_MD }) {
+        Button('上一页', { type: ButtonType.Normal })
+          .layoutWeight(1)
+          .backgroundColor($r('sys.color.comp_background_primary'))
+          .fontColor($r('sys.color.font_primary'))
+          .onClick(() => this.onPrev())
+
+        Text('跳过')
+          .fontSize(DesignConstants.FONT_SIZE_MD)
+          .fontColor($r('sys.color.font_secondary'))
+          .onClick(() => this.onSkip())
+      }
+      .width('100%')
     }
     .width('100%')
+    .padding(DesignConstants.SPACING_LG)
   }
 }

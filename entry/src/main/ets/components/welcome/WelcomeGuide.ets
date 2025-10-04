@@ -35,6 +35,7 @@ export struct WelcomeGuide {
 
   private handleComplete(): void {
     if (this.currentPage === this.totalPages - 1 && this.privacyAgreed) {
+      // 用户同意隐私政策，设置隐私政策状态并完成引导
       this.onComplete();
     }
   }

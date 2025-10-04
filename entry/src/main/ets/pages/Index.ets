@@ -1,7 +1,6 @@
 import { navigationStack } from '../constants/ProviderConstant'
 import { RelationalStoreService } from '../services/RelationalStoreService'
 import { commonEventManager } from '@kit.BasicServicesKit'
-import { PrivacyPolicyDialogBuilder } from '../components/privacy/PrivacyPolicyDialog'
 import { WelcomeGuide } from '../components/welcome'
 import { PreferenceKeys } from '../models/PreferenceKeys'
 import { DatabaseUpgradeConfig, DbConfig } from '../interfaces/DatabaseInterfaces'
@@ -41,7 +40,6 @@ struct Index {
     PersistenceV2.connect(ThresholdConfig, () => DEFAULT_THRESHOLD_CONFIG)!;
   @Local as: AppKeys = AppStorageV2.connect(AppKeys, () => new AppKeys())!;
   usePrivacy: boolean = true;
-  @Local private showWelcomeGuide: boolean = false;
   private relationalStoreService: RelationalStoreService = RelationalStoreService.getInstance();
   private context = this.getUIContext().getHostContext() as common.UIAbilityContext;
   private readonly eventId = 'usual.event.PRIVACY_STATE_CHANGED';
@@ -239,30 +237,19 @@ struct Index {
         // 显示正常内容
         Navigation(this.navStack) {
           if (this.pk.privacy_agreed) {
-            if (this.showWelcomeGuide) {
-              // 显示欢迎引导页
-              WelcomeGuide({
-                onComplete: () => {
-                  // 欢迎引导完成，进入主应用
-                  this.showWelcomeGuide = false;
-                }
-              })
-            } else {
               // 直接进入主应用
               MainPage()
-            }
           } else {
-            // 显示自定义隐私政策对话框
-            PrivacyPolicyDialogBuilder({
-              onAgree: () => {
-                // 用户同意隐私政策，显示欢迎引导页
+            // 直接显示欢迎引导页（包含隐私政策页面）
+            WelcomeGuide({
+              onComplete: () => {
+                // 用户完成欢迎引导并同意隐私政策，进入主应用
                 this.pk.privacy_agreed = true;
-                this.showWelcomeGuide = true;
-                hilog.info(DOMAIN, TAG, '用户同意隐私政策，显示欢迎引导页');
+                hilog.info(DOMAIN, TAG, '用户完成欢迎引导并同意隐私政策，进入主应用');
               },
               onCancel: () => {
-                // 用户取消，退出APP
-                hilog.info(DOMAIN, TAG, '用户取消隐私政策，退出APP');
+                // 用户取消欢迎引导，退出APP
+                hilog.info(DOMAIN, TAG, '用户取消欢迎引导，退出APP');
                 this.context.terminateSelf();
               }
             })
