@@ -3,10 +3,17 @@ import { PersistenceV2 } from '@kit.ArkUI';
 import { ListItemBuilder } from '../common/ListItemBuilder';
 import { SettingsBuilder } from '../../pages/noisemeter/SettingsNavigation';
 import { AboutSettingsBuilder } from '../../pages/settings/AboutSettingsNavigation';
-import { DialogHub } from '@hadss/dialoghub';
+import { DialogHub, InfSheet } from '@hadss/dialoghub';
 import { common, Want } from '@kit.AbilityKit';
 import { BusinessError } from '@kit.BasicServicesKit';
 import { DisplayModeComponent } from '../display/DisplayModeComponent';
+import {
+  defaultPricingPlans,
+  UpgradeContent,
+  UpgradeContentBuilder,
+  UpgradeContentProps
+} from '../membership/UpgradeContent';
+import { DialogStyleManager } from '../../utils/DialogStyleManager';
 
 /**
  * 我的内容页面组件
@@ -15,7 +22,30 @@ import { DisplayModeComponent } from '../display/DisplayModeComponent';
 @ComponentV2
 export struct MyContentComponent {
   @Param currentIndex: number = 2
-  @Local pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys)!
+  @Local pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys)!;
+  private dialog?: InfSheet;
+  private props: UpgradeContentProps = {
+    featureName: '专业版',
+    featureDesc: '解锁所有高级功能，享受更好的使用体验',
+    icon: $r('app.media.ic_vip'),
+    pricingPlans: defaultPricingPlans,
+    onUpgrade: () => {
+      // 升级成功处理
+      console.info(`功能 专业版 已解锁`);
+      // 关闭弹窗
+      if (this.dialog) {
+        this.dialog.dismiss();
+      }
+    },
+    onLater: () => {
+      // 用户选择稍后再说
+      console.info(`用户暂不升级 "专业版"`);
+      if (this.dialog) {
+        this.dialog.dismiss();
+      }
+    },
+    showTrialOption: false
+  }
   // 跳转到应用商店评价页面
   private navigateToAppStoreRating = () => {
     const context = getContext(this) as common.UIAbilityContext;
@@ -29,6 +59,29 @@ export struct MyContentComponent {
       console.error(`Failed to start App Store rating page. Code: ${err.code}, message: ${err.message}`);
     });
   }
+  // 显示专业版升级弹框
+  private showUpgradeDialog = () => {
+    if (this.dialog) {
+
+    } else {
+      this.dialog = this.dialog ?? DialogHub.getSheet()
+        .setStyle({
+          title: { title: '升级到专业版' },
+          backgroundColor: $r('sys.color.background_secondary')
+        })
+        .setConfig({
+          scrollSizeMode: ScrollSizeMode.CONTINUOUS,
+          enableOutsideInteractive: true
+        })
+        .setComponentTargetId('mainId')
+        .setStyle({ backgroundColor: $r('sys.color.background_primary') })
+        .setContent(wrapBuilder(UpgradeContentBuilder), this.props)
+        .build();
+      DialogStyleManager.registerDialog(this.dialog);
+    }
+    this.dialog.show();
+
+  }
 
   build() {
     Column() {
@@ -37,12 +90,21 @@ export struct MyContentComponent {
       // 全局设置列表项
       List() {
 
+        // 专业版升级选项 - 添加到第一个位置
+        ListItemBuilder(
+          $r('app.media.ic_vip'),
+          '专业版',
+          () => {
+            this.showUpgradeDialog();
+          }
+        )
+
         ListItem() {
           // 显示模式组件
           DisplayModeComponent()
-        } .margin({
+        }.margin({
           left: 16,
-          right: 16
+          right: 16, top: 16
         })
 
         ListItemBuilder(

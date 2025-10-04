@@ -12,19 +12,25 @@ export function ListItemBuilder(
 ) {
   ListItem() {
     Row() {
-      // 左侧图标
-      Image(icon)
-        .width(24)
-        .height(24)
-        .fillColor($r('sys.color.font_primary'))
-        .margin({ right: 12 })
-      
+      if (title == '专业版') {
+        Image(icon)
+          .width(24)
+          .height(24)
+          .margin({ right: 12 })
+      } else {
+        Image(icon)
+          .width(24)
+          .height(24)
+          .fillColor($r('sys.color.font_primary'))
+          .margin({ right: 12 })
+      }
+
       // 标题文本
       Text(title)
         .fontSize(16)
         .fontColor($r('sys.color.font_primary'))
         .layoutWeight(1)
-      
+
       // 右侧箭头（可选）
       if (showArrow) {
         Image($r('app.media.ic_arrow_right'))
@@ -43,10 +49,10 @@ export function ListItemBuilder(
   }
   .borderRadius(16)
   .backgroundColor($r('sys.color.comp_background_primary'))
-  .margin({ 
-    top: marginTop, 
-    left: 16, 
-    right: 16 
+  .margin({
+    top: marginTop,
+    left: 16,
+    right: 16
   })
   .onClick(() => {
     onClick()

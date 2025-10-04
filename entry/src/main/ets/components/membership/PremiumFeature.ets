@@ -7,8 +7,10 @@
 import { MembershipManager } from '../../services/MembershipManager';
 import { DesignConstants } from '../../constants/DesignConstants';
 import { DialogHub, InfSheet } from '@hadss/dialoghub';
-import { defaultPricingPlans, UpgradeContentProps,
-  UpgradeContentBuilder } from './UpgradeContent';
+import {
+  defaultPricingPlans, UpgradeContentProps, UpgradeContentBuilder
+} from './UpgradeContent';
+import { DialogStyleManager } from '../../utils/DialogStyleManager';
 
 @ComponentV2
 export struct PremiumFeature {
@@ -19,14 +21,9 @@ export struct PremiumFeature {
   @Event onUpgrade?: () => void; // 升级成功回调
   @Param showTrialOption: boolean = false; // 是否显示试用选项
   @Local private upgradeDialog: InfSheet | null = null; // 升级提示弹框
-
-  /**
-   * 显示升级提示弹框
-   */
-  private showUpgradeDialog() {
-   let props:UpgradeContentProps = {
-      featureName: this.featureName,
-      featureDesc: this.featureDesc,
+  private props: UpgradeContentProps = {
+    featureName: this.featureName,
+    featureDesc: this.featureDesc,
     icon: this.icon,
     pricingPlans: defaultPricingPlans,
     onUpgrade: () => {
@@ -48,15 +45,21 @@ export struct PremiumFeature {
       }
     },
     showTrialOption: this.showTrialOption
-    }
+  }
+
+  /**
+   * 显示升级提示弹框
+   */
+  private showUpgradeDialog() {
     if (!this.upgradeDialog) {
       this.upgradeDialog = DialogHub.getSheet()
         .setStyle({
           backgroundColor: $r('sys.color.background_primary'),
         })
-        .setContent(wrapBuilder(UpgradeContentBuilder),props)
+        .setContent(wrapBuilder(UpgradeContentBuilder), this.props)
         .setComponentTargetId('mainId')
         .build();
+      DialogStyleManager.registerDialog(this.upgradeDialog);
     }
     this.upgradeDialog.show();
   }
@@ -80,7 +83,7 @@ export struct PremiumFeature {
           .width(DesignConstants.ICON_SIZE_MD)
           .height(DesignConstants.ICON_SIZE_MD)
           .margin({ top: DesignConstants.SPACING_XS, right: DesignConstants.SPACING_XS })
-        
+
       }
       .border({
         width: DesignConstants.BORDER_WIDTH_SM,

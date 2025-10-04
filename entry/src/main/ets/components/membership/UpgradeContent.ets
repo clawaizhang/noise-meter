@@ -18,13 +18,6 @@ interface FeatureComparison {
   isHighlight: boolean;
 }
 
-// 权益项接口
-interface BenefitItem {
-  icon: Resource;
-  title: string;
-  description: string;
-}
-
 interface Plans {
   selected: PricingPlan;
   current: PricingPlan
@@ -81,10 +74,16 @@ export struct UpgradeContent {
       // 应用图标和标题
       Row({ space: DesignConstants.SPACING_SM }) {
         if (this.icon) {
-          Image(this.icon)
-            .width(DesignConstants.ICON_SIZE_XL)
-            .height(DesignConstants.ICON_SIZE_XL)
-            .fillColor($r('sys.color.ohos_id_color_palette1'))
+          if (this.featureName == '专业版') {
+            Image(this.icon)
+              .width(DesignConstants.ICON_SIZE_XL)
+              .height(DesignConstants.ICON_SIZE_XL)
+          } else {
+            Image(this.icon)
+              .width(DesignConstants.ICON_SIZE_XL)
+              .height(DesignConstants.ICON_SIZE_XL)
+              .fillColor($r('sys.color.ohos_id_color_palette1'))
+          }
         }
 
         Text(this.featureName)
@@ -288,7 +287,7 @@ export struct UpgradeContent {
               .fontSize(18)
               .fontWeight(FontWeight.Bold)
               .fontColor($r('sys.color.ohos_id_color_palette1'))
-            
+
             Text(`¥${plans.current.price}`)
               .fontSize(12)
               .fontColor($r('sys.color.font_tertiary'))
@@ -386,35 +385,6 @@ export struct UpgradeContent {
     .onClick(() => {
       this.selectedPlan = plans.current;
     })
-  }
-
-  // 构建权益项
-  @Builder
-  private buildBenefitItem(icon: Resource, title: string, desc: string) {
-    Column({ space: DesignConstants.SPACING_XS }) {
-      Image(icon)
-        .width(DesignConstants.ICON_SIZE_LG)
-        .height(DesignConstants.ICON_SIZE_LG)
-        .fillColor($r('sys.color.ohos_id_color_palette1'))
-
-      Text(title)
-        .fontSize(DesignConstants.FONT_SIZE_MD)
-        .fontWeight(FontWeight.Medium)
-        .fontColor($r('sys.color.font_primary'))
-        .textAlign(TextAlign.Center)
-
-      Text(desc)
-        .fontSize(DesignConstants.FONT_SIZE_SM)
-        .fontColor($r('sys.color.font_secondary'))
-        .textAlign(TextAlign.Center)
-        .maxLines(2)
-        .textOverflow({ overflow: TextOverflow.Ellipsis })
-    }
-    .padding(DesignConstants.SPACING_MD)
-    .backgroundColor($r('sys.color.background_secondary'))
-    .borderRadius(DesignConstants.BORDER_RADIUS_MD)
-    .width('100%')
-    .height(120)
   }
 
   // 构建紧凑权益项（水平布局使用）
