@@ -44,10 +44,6 @@ export struct UpgradeContent {
   
   // 会员状态管理
   @Local pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys)!;
-  @Local expiryDate: number = 0;
-  @Local isTrial: boolean = false;
-  @Local trialDays: number = 0;
-  @Local purchaseDate: number = 0;
 
   aboutToAppear() {
     // 默认选中推荐方案
