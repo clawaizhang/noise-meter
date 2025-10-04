@@ -101,20 +101,18 @@ export struct WelcomeGuide {
         ForEach(this.totalPagesArray, (index: number) => {
           Circle({ width: 8, height: 8 })
             .backgroundColor(index === this.currentPage ?
-              $r('sys.color.interactive_active') : 
+              $r('sys.color.interactive_active') :
               $r('sys.color.comp_background_secondary'))
             .opacity(index === this.currentPage ? 1 : 0.5)
         })
       }
       .justifyContent(FlexAlign.Center)
 
-      // 跳过按钮（前3页显示）
-      if (this.currentPage < this.totalPages - 1) {
-        Text('跳过')
-          .fontSize(DesignConstants.FONT_SIZE_MD)
-          .fontColor($r('sys.color.font_secondary'))
-          .onClick(() => this.skipToEnd())
-      }
+      // 跳过按钮（所有页面都显示）
+      Text('跳过')
+        .fontSize(DesignConstants.FONT_SIZE_MD)
+        .fontColor($r('sys.color.font_secondary'))
+        .onClick(() => this.skipToEnd())
     }
     .width('100%')
     .padding({

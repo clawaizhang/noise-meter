@@ -7,7 +7,6 @@ export struct PrivacyPolicyPage {
   @Event onAgree: () => void;
 
   @Local private privacyAgreed: boolean = false;
-  @Local private showFullPolicy: boolean = false;
 
   build() {
     Column({ space: 0 }) {
@@ -108,28 +107,28 @@ export struct PrivacyPolicyPage {
     .borderRadius(DesignConstants.BORDER_RADIUS_MD)
   }
 
-  // 构建内容区域 - 集成隐私政策对话框的设计
+  // 构建内容区域 - 专注于隐私政策内容
   @Builder
   private buildContent() {
     Column({ space: DesignConstants.SPACING_LG }) {
-      // 欢迎文本
-      Text($r('app.string.privacy_policy_welcome'))
+      // 隐私政策标题
+      Text('隐私保护')
         .fontSize(DesignConstants.FONT_SIZE_XL)
         .fontWeight(FontWeight.Bold)
         .fontColor($r('sys.color.font_emphasize'))
         .textAlign(TextAlign.Center)
         .width('100%')
 
-      // 描述文本
-      Text($r('app.string.privacy_policy_description'))
+      // 隐私政策描述
+      Text('我们重视您的隐私安全，请了解我们的数据使用政策')
         .fontSize(DesignConstants.FONT_SIZE_MD)
         .fontColor($r('sys.color.font_primary'))
-        .textAlign(TextAlign.Start)
+        .textAlign(TextAlign.Center)
         .width('100%')
         .lineHeight(20)
 
       // 权限说明
-      Text($r('app.string.privacy_policy_permissions_title'))
+      Text('应用权限说明')
         .fontSize(DesignConstants.FONT_SIZE_MD)
         .fontWeight(FontWeight.Medium)
         .fontColor($r('sys.color.font_primary'))
@@ -138,20 +137,20 @@ export struct PrivacyPolicyPage {
       // 权限列表
       this.buildPermissionList()
 
-      // 隐私政策链接和展开功能
-      this.buildPolicyExpandSection()
+      // 隐私政策链接
+      this.buildPolicyLink()
     }
     .width('100%')
     .padding({ left: DesignConstants.SPACING_LG, right: DesignConstants.SPACING_LG })
   }
 
-  // 构建隐私政策展开部分 - 保留原欢迎页的功能
+  // 构建隐私政策链接部分 - 简化版本
   @Builder
-  private buildPolicyExpandSection() {
+  private buildPolicyLink() {
     Column({ space: DesignConstants.SPACING_MD }) {
       // 隐私政策链接
       Row({ space: DesignConstants.SPACING_SM }) {
-        Text($r('app.string.privacy_policy_agreement_text'))
+        Text('请阅读并同意')
           .fontSize(DesignConstants.FONT_SIZE_MD)
           .fontColor($r('sys.color.font_primary'))
 
@@ -161,79 +160,10 @@ export struct PrivacyPolicyPage {
       .alignItems(VerticalAlign.Center)
       .justifyContent(FlexAlign.Center)
       .width('100%')
-
-      // 展开/收起完整隐私政策
-      if (!this.showFullPolicy) {
-        Text('查看完整隐私政策')
-          .fontSize(DesignConstants.FONT_SIZE_SM)
-          .fontColor($r('sys.color.interactive_active'))
-          .textAlign(TextAlign.Center)
-          .width('100%')
-          .onClick(() => {
-            this.showFullPolicy = true;
-          })
-      } else {
-        // 完整隐私政策
-        this.buildFullPolicy()
-      }
     }
     .width('100%')
   }
 
-  // 构建完整隐私政策 - 保留原欢迎页的功能
-  @Builder
-  private buildFullPolicy() {
-    Column({ space: DesignConstants.SPACING_MD }) {
-      Text('完整隐私政策')
-        .fontSize(DesignConstants.FONT_SIZE_LG)
-        .fontWeight(FontWeight.Medium)
-        .fontColor($r('sys.color.font_emphasize'))
-        .alignSelf(ItemAlign.Start)
-
-      Text('1. 数据收集')
-        .fontSize(DesignConstants.FONT_SIZE_MD)
-        .fontWeight(FontWeight.Medium)
-        .fontColor($r('sys.color.font_emphasize'))
-        .alignSelf(ItemAlign.Start)
-
-      Text('我们收集的音频数据仅用于实时噪音检测和分析，不会用于其他目的。位置信息仅在您明确授权时用于环境噪音记录。')
-        .fontSize(DesignConstants.FONT_SIZE_SM)
-        .fontColor($r('sys.color.font_secondary'))
-        .alignSelf(ItemAlign.Start)
-
-      Text('2. 数据存储')
-        .fontSize(DesignConstants.FONT_SIZE_MD)
-        .fontWeight(FontWeight.Medium)
-        .fontColor($r('sys.color.font_emphasize'))
-        .alignSelf(ItemAlign.Start)
-
-      Text('所有检测数据都存储在您的设备本地，不会上传到任何服务器。您可以随时在设置中清除所有数据。')
-        .fontSize(DesignConstants.FONT_SIZE_SM)
-        .fontColor($r('sys.color.font_secondary'))
-        .alignSelf(ItemAlign.Start)
-
-      Text('3. 权限使用')
-        .fontSize(DesignConstants.FONT_SIZE_MD)
-        .fontWeight(FontWeight.Medium)
-        .fontColor($r('sys.color.font_emphasize'))
-        .alignSelf(ItemAlign.Start)
-
-      Text('麦克风权限：仅用于噪音检测\n位置权限：可选，用于环境记录\n存储权限：用于保存检测历史')
-        .fontSize(DesignConstants.FONT_SIZE_SM)
-        .fontColor($r('sys.color.font_secondary'))
-        .alignSelf(ItemAlign.Start)
-
-      Text('收起')
-        .fontSize(DesignConstants.FONT_SIZE_SM)
-        .fontColor($r('sys.color.interactive_active'))
-        .textAlign(TextAlign.Center)
-        .width('100%')
-        .onClick(() => {
-          this.showFullPolicy = false;
-        })
-    }
-    .width('100%')
-  }
 
   // 构建操作按钮区域 - 集成原欢迎页的复选框和按钮设计
   @Builder
