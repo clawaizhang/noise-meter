@@ -1,5 +1,5 @@
+import { WindowType } from '../common/WindowType';
 import { WeightingType } from '../constants/WeightingConstants';
-import { WindowType } from '../common/AudioConfig';
 import { WindowFunctionCache } from './WindowFunctionCache';
 
 /**
@@ -8,17 +8,6 @@ import { WindowFunctionCache } from './WindowFunctionCache';
 interface ComplexNumber {
   real: number;
   imag: number;
-}
-
-/**
- * FFT分析器类
- * 提供FFT变换和频谱分析功能
- */
-
-// 定义频率范围接口
-interface FrequencyRange {
-  startFreq: number;
-  endFreq: number;
 }
 
 // 信号统计信息接口
@@ -37,18 +26,6 @@ interface SpectrumStats {
   peakFreq: number;
   validSamples: number;
   totalSamples: number;
-}
-
-// 复数旋转因子接口
-interface ComplexRotation {
-  real: number;
-  imag: number;
-}
-
-// FFT分析器配置接口
-interface FFTConfig {
-  size: number;
-  sampleRate: number;
 }
 
 export class FFTAnalyzer {

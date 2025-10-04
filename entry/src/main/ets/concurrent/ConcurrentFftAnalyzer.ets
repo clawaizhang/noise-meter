@@ -1,4 +1,4 @@
-import { AudioAnalysisConfig, AudioAnalysisMode, AudioPresets, WindowType } from '../common/AudioConfig';
+import { WindowType } from '../common/WindowType';
 import { WeightingType } from '../constants/WeightingConstants';
 import { FFTAnalyzer } from '../utils/FFTAnalyzer';
 

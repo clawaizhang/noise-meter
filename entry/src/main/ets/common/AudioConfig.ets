@@ -1,5 +1,6 @@
 import { PersistenceV2 } from "@kit.ArkUI";
 import { PreferenceKeys } from "../models/PreferenceKeys";
+import { WindowType } from "./WindowType";
 
 /**
  * 音频分析模式（符合GB/T 3785.1-2010标准）
@@ -11,13 +12,6 @@ export enum AudioAnalysisMode {
   CUSTOM_TIME_WEIGHTING = 'CUSTOM_TIME_WEIGHTING' // 自定义音频分析
 }
 
-/**
- * 窗函数类型
- */
-export enum WindowType {
-  HANNING = 'HANNING', // 汉宁窗
-  BLACKMAN = 'BLACKMAN' // 布莱克曼窗
-}
 
 /**
  * 音频分析配置

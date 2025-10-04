@@ -3,10 +3,11 @@
  * 提供完整的音频分析参数自定义配置界面
  */
 
-import { WindowType, DEFAULT_CUSTOM_CONFIG } from '../../common/AudioConfig';
+import {DEFAULT_CUSTOM_CONFIG } from '../../common/AudioConfig';
 import { DesignConstants } from '../../constants/DesignConstants';
 import { PreferenceKeys } from '../../models/PreferenceKeys';
 import { PersistenceV2 } from '@kit.ArkUI';
+import { WindowType } from '../../common/WindowType';
 
 // 选项接口
 interface SelectOption {

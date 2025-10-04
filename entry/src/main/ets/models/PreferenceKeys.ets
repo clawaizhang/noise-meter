@@ -3,7 +3,6 @@ import {
   AudioAnalysisConfig,
   AudioAnalysisMode,
   DEFAULT_CUSTOM_CONFIG,
-  WindowType
 } from '../common/AudioConfig';
 import { WeightingType } from '../constants/WeightingConstants';
 

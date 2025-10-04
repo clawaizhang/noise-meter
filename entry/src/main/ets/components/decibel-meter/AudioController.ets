@@ -3,7 +3,7 @@ import common from '@ohos.app.ability.common';
 import { AppStorageV2, promptAction } from '@kit.ArkUI';
 import { taskpool } from '@kit.ArkTS';
 import { concurrentCalculateSpectrum } from '../../concurrent/ConcurrentFftAnalyzer';
-import { AudioAnalysisConfig, AudioPresets, WindowType } from '../../common/AudioConfig';
+import { AudioAnalysisConfig, AudioPresets } from '../../common/AudioConfig';
 import { PreferenceKeys } from '../../models/PreferenceKeys';
 import { DecibelRecord } from '../../models/DecibelRecord';
 import { AudioService } from '../../services/AudioService';
@@ -13,6 +13,7 @@ import { Subject } from 'rxjs';
 import { AppKeys } from '../../models/AppKeys';
 import { FFTAnalyzer } from '../../utils/FFTAnalyzer';
 import { AudioControllerService } from '../../services/AudioControllerService';
+import { WindowType } from '../../common/WindowType';
 
 /**
  * 带时间戳的分贝值接口
