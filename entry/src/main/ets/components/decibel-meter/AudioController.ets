@@ -2,9 +2,8 @@ import { DecibelRecordService } from '../../services/DecibelRecordService';
 import common from '@ohos.app.ability.common';
 import { AppStorageV2, promptAction } from '@kit.ArkUI';
 import { taskpool } from '@kit.ArkTS';
-import { concurrentCalculateSpectrum, SpectrumResult } from '../../concurrent/ConcurrentFftAnalyzer';
+import { concurrentCalculateSpectrum } from '../../concurrent/ConcurrentFftAnalyzer';
 import { AudioAnalysisConfig, AudioPresets, WindowType } from '../../common/AudioConfig';
-import { FFTAnalyzerSessionPool } from '../../utils/FFTAnalyzerSessionPool';
 import { PreferenceKeys } from '../../models/PreferenceKeys';
 import { DecibelRecord } from '../../models/DecibelRecord';
 import { AudioService } from '../../services/AudioService';
@@ -52,7 +51,7 @@ export struct AudioController {
   @Param @Require pk: PreferenceKeys
   @Param @Require currentLocation: LocationInfo | null = null
   // 事件发射器
-  @Event onSpectrumData: (spectrum: SpectrumResult) => void
+  @Event onSpectrumData: (spectrum: Float32Array) => void
   @Event onError: (errors: string[]) => void
   @Event onRecordingStateChange: (isRecording: boolean) => void
   @Event onRecordingTimeUpdate: (time: number) => void
@@ -188,8 +187,7 @@ export struct AudioController {
         this.timedAudioBuffers.push({ timestamp: currentTime, buffer: buffer.slice(0) });
         let config = AudioPresets.getConfig(this.pk.audio_analysis_mode);
         // 计算频谱数据（用于频谱图显示）
-        taskpool.execute<[ArrayBuffer, WeightingType, number, number, WindowType, number, number],
-        SpectrumResult>(
+        taskpool.execute<[ArrayBuffer, WeightingType, number, number, WindowType, number, number], Float32Array>(
           concurrentCalculateSpectrum,
           buffer.slice(0),
           this.pk.weighting_type,
@@ -198,20 +196,18 @@ export struct AudioController {
           config.windowType,
           config.smoothingFactor,
           config.overlap
-        ).then((result) => {
-          const spectrum = result.spectrum;
-          const sessionId = result.sessionId;
-          const sessionPool = FFTAnalyzerSessionPool.getInstance();
+        ).then((spectrum) => {
+          this.onSpectrumData(spectrum);
 
-          // 发送频谱数据给频谱图组件
-          this.onSpectrumData(result);
-
-          // 计算分贝值（通过sessionId获取同一个FFTAnalyzer实例）
-          const analyzer = sessionPool.getAnalyzerBySessionId(sessionId);
-          if (analyzer) {
-            const db: number = analyzer.calculateAverageDb(spectrum);
-            this.currentDecibel = Math.round(db);
-          }
+          // 计算分贝值
+          const config = AudioPresets.getConfig(this.pk.audio_analysis_mode);
+          const db: number = new FFTAnalyzer(
+            config.fftSize,
+            config.windowType,
+            config.smoothingFactor,
+            config.overlap
+          ).calculateAverageDb(spectrum);
+          this.currentDecibel = Math.round(db);
 
           // 收集分贝值和加权类型（带时间戳）
           const currentTime = new Date().getTime();

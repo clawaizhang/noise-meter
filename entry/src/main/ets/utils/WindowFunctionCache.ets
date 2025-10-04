@@ -48,6 +48,26 @@ export class WindowFunctionCache {
     return windowData;
   }
   
+  /**
+   * 单独获取窗函数（向后兼容）
+   * @param size FFT大小
+   * @param windowType 窗函数类型
+   * @returns 窗函数数组
+   */
+  public static getWindow(size: number, windowType: WindowType): Float32Array {
+    return WindowFunctionCache.getWindowData(size, windowType).window;
+  }
+  
+  /**
+   * 获取能量校正因子
+   * @param size FFT大小
+   * @param windowType 窗函数类型
+   * @returns 能量校正因子
+   */
+  public static getCorrectionFactor(size: number, windowType: WindowType): number {
+    return WindowFunctionCache.getWindowData(size, windowType).correction;
+  }
+  
   private static getKey(size: number, windowType: WindowType): string {
     return `${size}-${windowType}`;
   }

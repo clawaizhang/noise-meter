@@ -5,13 +5,11 @@ import { drawSpectrum, getDbSteps, getFrequencySteps } from './DrawSpectrum';
 import { DialogHub, InfSheet } from '@hadss/dialoghub';
 import { AudioPresets } from '../../common/AudioConfig';
 import { PreferenceKeys } from '../../models/PreferenceKeys';
-import { SpectrumResult } from '../../concurrent/ConcurrentFftAnalyzer';
-import { FFTAnalyzerSessionPool } from '../../utils/FFTAnalyzerSessionPool';
 
 @ComponentV2
 export struct SpectrumChartComponent {
   // 输入参数
-  @Param @Require spectrumResult: SpectrumResult
+  @Param spectrumData: Float32Array = new Float32Array()
   sampleRate: number = 44100
   @Local pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys)!;
 
@@ -45,10 +43,9 @@ export struct SpectrumChartComponent {
 
   @Monitor('spectrumData')
   onSpectrumDataChange(monitor: IMonitor) {
-    const newSpectrum = monitor.value<SpectrumResult>()?.now;
+    const newSpectrum = monitor.value<Float32Array>()?.now;
     if (newSpectrum && this.as.isDisplayApp) {
-      this.drawSpectrum(newSpectrum.spectrum);
-      FFTAnalyzerSessionPool.getInstance().releaseSession(newSpectrum.sessionId);
+      this.drawSpectrum(newSpectrum);
     }
   }
 

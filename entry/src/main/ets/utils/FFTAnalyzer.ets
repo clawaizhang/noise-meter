@@ -78,16 +78,13 @@ export class FFTAnalyzer {
       console.info(`系统增益已更新为: ${gain}dB`);
     }
   }
-  private  memoryPool = FFTMemoryPool.getInstance();
+
   // 缓存数组
   private cachedSamples: Int16Array | null = null;
   private cachedReal: Float32Array | null = null;
   private cachedImag: Float32Array | null = null;
   private previousMagnitudes: Float32Array | null = null;
   private cachedCosSin: ComplexNumber[] | null = null;
-  private real : Float32Array | null = null;
-  private imag: Float32Array | null = null;
-  private spectrum : Float32Array | null = null;
 
   /**
    * 构造函数
@@ -108,13 +105,7 @@ export class FFTAnalyzer {
     this.windowType = windowType;
     this.smoothingFactor = smoothingFactor;
     this.overlap = overlap;
-    this.real = this.memoryPool.getArray(this.size);
-    this.imag = this.memoryPool.getArray(this.size);
-    this.spectrum = this.memoryPool.getArray(this.size / 2);
 
-    if (!this.real || !this.imag || !this.spectrum) {
-      throw new Error('无法从内存池获取数组');
-    }
     // 使用预缓存的窗函数和能量校正因子
     const windowData = WindowFunctionCache.getWindowData(size, windowType);
     this.window = windowData.window;
@@ -198,6 +189,16 @@ export class FFTAnalyzer {
       console.info(`当前计权类型: ${weightingType}`);
     }
 
+    // 从内存池获取数组
+    const memoryPool = FFTMemoryPool.getInstance();
+    const real = memoryPool.getArray(this.size);
+    const imag = memoryPool.getArray(this.size);
+    const spectrum = memoryPool.getArray(this.size / 2);
+
+    if (!real || !imag || !spectrum) {
+      throw new Error('无法从内存池获取数组');
+    }
+
     try {
       // 重用samples数组
       const samples = new Int16Array(input);
@@ -226,18 +227,18 @@ export class FFTAnalyzer {
       for (let i = 0; i < actualSamples; i++) {
         // 使用实际大小计算窗函数索引
         const windowIndex = Math.floor(i * this.window.length / actualSamples);
-        this.real![i] = this.cachedSamples[i] * scale * this.window[windowIndex];
-        this.imag![i] = 0;
+        real[i] = this.cachedSamples[i] * scale * this.window[windowIndex];
+        imag[i] = 0;
       }
 
       // 对未使用的部分填充0
       for (let i = actualSamples; i < this.size; i++) {
-        this.real![i] = 0;
-        this.imag![i] = 0;
+        real[i] = 0;
+        imag[i] = 0;
       }
 
       // 执行FFT
-      this.fft(this.real!, this.imag!);
+      this.fft(real, imag);
 
       // 计算频率分辨率
       const freqResolution = FFTAnalyzer.sampleRate / actualSamples; // 使用实际样本数计算分辨率
@@ -246,32 +247,19 @@ export class FFTAnalyzer {
       }
 
       // 计算频谱
-      for (let i = 0; i < this.spectrum!.length; i++) {
+      for (let i = 0; i < spectrum.length; i++) {
         const frequency = i * freqResolution;
-        const db = this.calculateDecibels(this.real![i], this.imag![i], frequency, weightingType);
-        this.spectrum![i] = db;
+        const db = this.calculateDecibels(real[i], imag[i], frequency, weightingType);
+        spectrum[i] = db;
       }
 
-      return this.smoothMagnitudes(this.spectrum!);
-    } catch (error) {
-      // 发生错误时释放数组
-      this.memoryPool.releaseArray(this.real!, this.size);
-      this.memoryPool.releaseArray(this.imag!, this.size);
-      this.memoryPool.releaseArray(this.spectrum!, this.size / 2);
-      throw new Error(`FFT变换失败: ${error}`);
+      return this.smoothMagnitudes(spectrum);
+    } finally {
+      // 确保释放所有数组（传入对应的size参数）
+      memoryPool.releaseArray(real, this.size);
+      memoryPool.releaseArray(imag, this.size);
+      memoryPool.releaseArray(spectrum, this.size / 2);
     }
-  }
-
-  /**
-   * 清理FFTAnalyzer内部资源
-   * 释放所有从内存池获取的数组
-   */
-  public cleanup(): void {
-    console.info(`[FFT_ANALYZER] 清理FFTAnalyzer资源, FFT大小: ${this.size}`);
-    // 清理缓存数组
-    this.memoryPool.releaseArray(this.real!, this.size);
-    this.memoryPool.releaseArray(this.imag!, this.size);
-    this.memoryPool.releaseArray(this.spectrum!, this.size / 2);
   }
 
   /**

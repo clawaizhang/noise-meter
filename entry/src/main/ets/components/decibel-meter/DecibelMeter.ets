@@ -14,7 +14,6 @@ import { AppKeys } from '../../models/AppKeys';
 import { PermissionService } from '../../services/PermissionService';
 import { AudioController } from './AudioController';
 import { AudioControllerService } from '../../services/AudioControllerService';
-import { SpectrumResult } from '../../concurrent/ConcurrentFftAnalyzer';
 
 @ComponentV2
 export struct DecibelMeter {
@@ -30,7 +29,7 @@ export struct DecibelMeter {
   @Local dWidthHeight: string = ''; // 页面透明度
   @Local bgImage: image.PixelMap | undefined = undefined; // 页面透明度
   @Local as: AppKeys = AppStorageV2.connect(AppKeys)!;
-  @Local private currentSpectrum?: SpectrumResult; // 当前频谱数据
+  @Local private currentSpectrum: Float32Array = new Float32Array(); // 当前频谱数据
   @Local private currentLocation: LocationInfo | null = null; // 当前位置信息，从LocationDisplay接收
   @Local private errorMessages: string[] = []; // 错误消息队列
   @Local private currentDecibel: number = 0;
@@ -55,8 +54,9 @@ export struct DecibelMeter {
           AudioController({
             pk: this.pk,
             currentLocation: this.currentLocation,
-            onSpectrumData: (spectrum: SpectrumResult) => {
+            onSpectrumData: (spectrum: Float32Array) => {
               this.currentSpectrum = spectrum;
+              this.as.spectrumData = spectrum;
             },
             onError: (errors: string[]) => {
               this.errorMessages = errors;
@@ -146,7 +146,7 @@ export struct DecibelMeter {
               }
             }) {
               SpectrumChartComponent({
-                spectrumResult: this.currentSpectrum,
+                spectrumData: this.currentSpectrum,
               })
             }
           }
