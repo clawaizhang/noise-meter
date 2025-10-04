@@ -132,7 +132,7 @@ export struct MyContentComponent {
 
         // 给作者五星好评设置
         ListItemBuilder(
-          $r('app.media.ic_favorite'),
+          $r('app.media.ic_smile'),
           '五星好评',
           () => {
             this.navigateToAppStoreRating();

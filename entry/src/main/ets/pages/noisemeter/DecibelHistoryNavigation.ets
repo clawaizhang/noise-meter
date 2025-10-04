@@ -10,7 +10,6 @@ import { DesignConstants } from '../../constants/DesignConstants';
 import { AppStorageV2, curves, SymbolGlyphModifier } from '@kit.ArkUI';
 import { DialogHub, InfSheet } from '@hadss/dialoghub';
 import { DialogStyleManager } from '../../utils/DialogStyleManager';
-import { NoiseStandardDialogBuilder } from './NoiseStandardDialogNavigation';
 import { AppKeys } from '../../models/AppKeys';
 
 class DecibelRecordDataSource implements IDataSource {
@@ -98,7 +97,7 @@ export struct DecibelHistory {
       }
     }.id('rbgnolqiwuejrbgvwoi').title('历史记录').backgroundColor($r('sys.color.background_secondary')).menus([{
       value: '收藏',
-      symbolIcon: new SymbolGlyphModifier($r("sys.symbol.heart")),
+      icon: $r('app.media.ic_favorite'),
       action: () => {
         this.shouChangMode = !this.shouChangMode;
         if (this.shouChangMode) {
@@ -106,8 +105,8 @@ export struct DecibelHistory {
         }
       }
     }, {
-      value: '删除',
-      symbolIcon: new SymbolGlyphModifier($r('sys.symbol.edit_badge_star')),
+      value: '编辑',
+      icon: $r('app.media.ic_document_edit'),
       action: () => {
         this.deleteMode = !this.deleteMode;
         if (this.deleteMode) {

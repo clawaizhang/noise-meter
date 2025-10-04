@@ -168,7 +168,7 @@ export struct MainNoiseMeter {
         TabContent() {
           MyContentComponent({ currentIndex: this.currentIndex })
         }
-        .tabBar(this.TabBuilder('我的', $r('app.media.ic_favorite'), 2))
+        .tabBar(this.TabBuilder('我的', $r('app.media.ic_user'), 2))
       }
       .scrollable(false)
       .onChange((index: number) => {

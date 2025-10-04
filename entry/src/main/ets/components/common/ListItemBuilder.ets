@@ -12,18 +12,11 @@ export function ListItemBuilder(
 ) {
   ListItem() {
     Row() {
-      if (title == '专业版') {
-        Image(icon)
-          .width(24)
-          .height(24)
-          .margin({ right: 12 })
-      } else {
-        Image(icon)
-          .width(24)
-          .height(24)
-          .fillColor($r('sys.color.font_primary'))
-          .margin({ right: 12 })
-      }
+      Image(icon)
+        .width(24)
+        .height(24)
+        .fillColor($r('sys.color.font_primary'))
+        .margin({ right: 12 })
 
       // 标题文本
       Text(title)

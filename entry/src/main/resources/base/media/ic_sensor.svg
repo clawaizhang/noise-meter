@@ -1,11 +1,1 @@
-<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <circle cx="12" cy="12" r="2" fill="currentColor"/>
-  <path d="M12 4V2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-  <path d="M12 22V20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-  <path d="M4 12H2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-  <path d="M22 12H20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-  <path d="M6.34314 6.34314L4.92893 4.92893" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-  <path d="M19.0711 19.0711L17.6569 17.6569" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-  <path d="M6.34314 17.6569L4.92893 19.0711" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-  <path d="M19.0711 4.92893L17.6569 6.34314" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 24 24"><path fill="currentColor" fill-rule="evenodd" d="M11.248 2A10.03 10.03 0 0 0 2 11.248h2.98a.752.752 0 1 1 0 1.504H2A10.03 10.03 0 0 0 11.248 22v-2.98a.752.752 0 0 1 1.504 0V22A10.03 10.03 0 0 0 22 12.752h-2.98a.752.752 0 0 1 0-1.504H22A10.03 10.03 0 0 0 12.752 2v2.98a.752.752 0 1 1-1.504 0zM9.242 12c0-.415.337-.752.752-.752h1.254V9.994a.752.752 0 1 1 1.504 0v1.254h1.254a.752.752 0 0 1 0 1.504h-1.254v1.254a.752.752 0 0 1-1.504 0v-1.254H9.994A.75.75 0 0 1 9.242 12" clip-rule="evenodd"/></svg>

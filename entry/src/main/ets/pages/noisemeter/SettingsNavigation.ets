@@ -655,7 +655,7 @@ struct Settings {
         Column({ space: 8 }) {
           Row({ space: 8 }) {
             Row() {
-              Image($r('app.media.ic_meter'))
+              Image($r('app.media.ic_running'))
                 .itemIcon()
 
               Text($r('app.string.background_running'))

@@ -62,13 +62,13 @@ export struct DisplayModeComponent {
   private getDisplayModeIcon(displayMode: string): Resource {
     switch (displayMode) {
       case 'default':
-        return $r('sys.media.ohos_ic_public_device_smartscreen');
+        return $r('app.media.ic_display');
       case 'light':
-        return $r('sys.media.lamp_ceiling_light');
+        return $r('app.media.ic_sun');
       case 'dark':
-        return $r('sys.media.moon_z_fill');
+        return $r('app.media.ic_moon');
       default:
-        return $r('sys.media.ohos_ic_public_device_smartscreen');
+        return $r('app.media.ic_display');
     }
   }
 
@@ -130,7 +130,7 @@ export struct DisplayModeComponent {
       Row() {
         // 左侧：标题区域
         Row({ space: 8 }) {
-          Image($r('sys.media.ohos_ic_public_device_smartscreen'))
+          Image($r('app.media.ic_display'))
             .width(24)
             .height(24)
             .fillColor($r('sys.color.font_primary'))

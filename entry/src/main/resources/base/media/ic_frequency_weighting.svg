@@ -1,14 +1,1 @@
-<svg width="24px" height="24px" viewBox="0 0 24 24" version="1.1" xmlns="http://www.w3.org/2000/svg">
-  <g stroke="none" fill="none">
-    <!-- 频率加权图标 -->
-    <g transform="translate(12, 12)" stroke="currentColor" stroke-width="1.5">
-      <!-- 频率曲线 -->
-      <path d="M-9,0 Q-6,3 -3,0 T3,0 T9,0" fill="none"/>
-      <!-- 刻度线 -->
-      <line x1="-9" y1="0" x2="-9" y2="2" stroke-linecap="round"/>
-      <line x1="-3" y1="0" x2="-3" y2="2" stroke-linecap="round"/>
-      <line x1="3" y1="0" x2="3" y2="2" stroke-linecap="round"/>
-      <line x1="9" y1="0" x2="9" y2="2" stroke-linecap="round"/>
-    </g>
-  </g>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 24 24"><path fill="currentColor" d="M11.25 7.056a5.001 5.001 0 1 0 1.5 0V11a.75.75 0 0 1-1.5 0zM13 3.5a1 1 0 1 1-2 0a1 1 0 0 1 2 0m7.5 9.5a1 1 0 1 1 0-2a1 1 0 0 1 0 2m-17 0a1 1 0 1 1 0-2a1 1 0 0 1 0 2m3.197-7.718a1 1 0 1 1-1.414 1.415a1 1 0 0 1 1.414-1.415m12.02 12.021a1 1 0 1 1-1.414 1.415a1 1 0 0 1 1.414-1.415m0-10.606a1 1 0 1 1-1.414-1.415a1 1 0 0 1 1.414 1.415M6.697 18.718a1 1 0 1 1-1.414-1.415a1 1 0 0 1 1.414 1.415"/></svg>

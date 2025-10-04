@@ -41,7 +41,6 @@ export struct UpgradeContent {
   @Param showTrialOption: boolean = false;
   @Local selectedPlan: PricingPlan | null = null;
   @Local purchaseState: 'idle' | 'loading' | 'success' | 'error' = 'idle';
-  
   // 会员状态管理
   @Local pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys)!;
 
@@ -51,7 +50,7 @@ export struct UpgradeContent {
     if (recommendedPlan) {
       this.selectedPlan = recommendedPlan;
     }
-    
+
   }
 
   // 升级到专业版
@@ -64,7 +63,7 @@ export struct UpgradeContent {
       this.pk.member_ship.isTrial = false;
       this.pk.member_ship.trialDays = 0;
       this.pk.member_ship.purchaseDate = Date.now();
-      
+
       this.purchaseState = 'success';
       console.info('[会员管理] 已升级到专业版');
     } catch (error) {
@@ -97,7 +96,7 @@ export struct UpgradeContent {
         // 5. 操作按钮区
         this.buildActionSection()
       }
-      
+
       // 购买状态显示（保持不变）
       this.buildPurchaseStatus()
     }
@@ -112,16 +111,10 @@ export struct UpgradeContent {
       // 应用图标和标题
       Row({ space: DesignConstants.SPACING_SM }) {
         if (this.icon) {
-          if (this.featureName == '专业版') {
-            Image(this.icon)
-              .width(DesignConstants.ICON_SIZE_XL)
-              .height(DesignConstants.ICON_SIZE_XL)
-          } else {
-            Image(this.icon)
-              .width(DesignConstants.ICON_SIZE_XL)
-              .height(DesignConstants.ICON_SIZE_XL)
-              .fillColor($r('sys.color.ohos_id_color_palette1'))
-          }
+          Image(this.icon)
+            .width(DesignConstants.ICON_SIZE_XL)
+            .height(DesignConstants.ICON_SIZE_XL)
+            .fillColor($r('sys.color.ohos_id_color_palette1'))
         }
 
         Text(this.featureName)
@@ -502,13 +495,15 @@ export struct UpgradeContent {
 
   // 日期格式化
   private formatDate(timestamp: number): string {
-    if (!timestamp || timestamp === 0) return '--';
-    
+    if (!timestamp || timestamp === 0) {
+      return '--';
+    }
+
     const date = new Date(timestamp);
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
-    
+
     return `${year}-${month}-${day}`;
   }
 
