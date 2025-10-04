@@ -67,7 +67,7 @@ export struct AudioController {
   private audioControllerService: AudioControllerService = AudioControllerService.getInstance();
   // 自动保存相关属性
   private autoSaveTimer?: number;
-  private lastAutoSaveTime: number = 0;
+  private lastAutoSaveTime: number = Date.now();
   // 20分钟数据保留相关属性
   private dataCleanupTimer?: number;
   private readonly DATA_RETENTION_MINUTES = 20;
@@ -94,6 +94,15 @@ export struct AudioController {
     let permissionGranted = monitor.value<boolean>()?.now!;
     if (permissionGranted) {
       this.startRecording();
+    }
+  }
+
+  @Monitor('pk.auto_save_enabled','auto_save_interval')
+  onAutoSaveChange(monitor: IMonitor) {
+    if (this.pk.auto_save_enabled && this.isRecording) {
+      console.info('[自动保存] 检测到自动保存已启用，立即检查是否需要保存');
+      // 延迟一小段时间确保设置已完全应用
+      this.checkAutoSave();
     }
   }
 
@@ -439,12 +448,26 @@ export struct AudioController {
     this.stopAutoSaveMonitoring();
 
     if (this.pk.auto_save_enabled && this.isRecording) {
-      this.lastAutoSaveTime = new Date().getTime();
+
+      // 立即检查一次是否需要自动保存
+      this.checkAutoSave();
 
       // 每秒检查一次是否需要自动保存
       this.autoSaveTimer = setInterval(() => {
         this.checkAutoSave();
       }, 1000);
+    }
+  }
+
+  /**
+   * 当自动保存设置发生变化时调用此方法
+   * 用于处理从关闭到开启状态切换时的立即保存检查
+   */
+  public onAutoSaveSettingsChanged(): void {
+    if (this.pk.auto_save_enabled && this.isRecording) {
+      console.info('[自动保存] 设置发生变化，立即检查是否需要保存');
+      // 立即检查是否需要保存
+      this.checkAutoSave();
     }
   }
 
@@ -461,12 +484,15 @@ export struct AudioController {
     }
 
     const currentTime = new Date().getTime();
+
     const elapsed = currentTime - this.lastAutoSaveTime;
     const intervalMs = this.pk.auto_save_interval * 60 * 1000;
 
     // 检查是否达到自动保存间隔且有足够数据
     if (elapsed >= intervalMs && this.timedValues.length > 10) {
       this.performAutoSave();
+    } else if (elapsed >= intervalMs) {
+      console.info(`[自动保存] 已达到保存间隔${elapsed}ms >= ${intervalMs}ms，但数据不足(${this.timedValues.length}条)，等待更多数据`);
     }
   }
 

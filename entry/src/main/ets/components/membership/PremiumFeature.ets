@@ -81,7 +81,6 @@ export struct PremiumFeature {
     if (this.pk.member_ship.can()) {
       this.content();
     } else {
-      // 免费用户显示带锁标识的置灰功能
       Stack({ alignContent: Alignment.TopEnd }) {
         // 功能内容（置灰显示）
         Column() {
@@ -95,6 +94,7 @@ export struct PremiumFeature {
           .width(DesignConstants.ICON_SIZE_MD)
           .height(DesignConstants.ICON_SIZE_MD)
           .margin({ top: DesignConstants.SPACING_XS, right: DesignConstants.SPACING_XS })
+          .fillColor($r('sys.color.icon_emphasize'))
 
       }
       .border({

@@ -151,7 +151,7 @@ export struct DecibelMeter {
             }
           }
         }
-        .padding({ bottom: 96 }) // 增加底部内边距为操作按钮留出空间
+        .padding({ bottom: 80 }) // 增加底部内边距为操作按钮留出空间
         .id('mainNoiseMeterDisplayId')
         .onBreakpointChange(breakPoints => {
           // 断点信息现在由 AppStorage 统一管理，这里不再需要处理

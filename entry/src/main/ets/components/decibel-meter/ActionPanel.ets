@@ -29,7 +29,7 @@ export struct ActionPanel {
       }
       .width(48)
       .height(48)
-      .backgroundColor($r('sys.color.comp_background_secondary'))
+      .backgroundColor($r('sys.color.comp_background_primary'))
       .accessibilityDescription('重置当前数据')
       .onClick(async () => {
         await this.onResetButtonClicked();
@@ -45,7 +45,7 @@ export struct ActionPanel {
       .width(48)
       .height(48)
       .backgroundColor(this.isTorchOn ? $r('sys.color.background_emphasize') :
-      $r('sys.color.comp_background_secondary'))
+      $r('sys.color.comp_background_primary'))
       .accessibilityDescription(this.isTorchOn ? '关闭手电筒' : '打开手电筒')
       .onClick(() => {
         this.toggleTorch();
@@ -61,7 +61,7 @@ export struct ActionPanel {
       .id('showNoiseDetailDialogFromActionPanels')
       .width(48)
       .height(48)
-      .backgroundColor($r('sys.color.comp_background_secondary'))
+      .backgroundColor($r('sys.color.comp_background_primary'))
       .accessibilityDescription('保存当前数据')
       .onClick(async () => {
         const dialogController = new CustomDialogController({
@@ -83,12 +83,11 @@ export struct ActionPanel {
       })
     }
     .width(224)
-    .height(64)
+    .height(48)
     .justifyContent(FlexAlign.SpaceBetween)
     .alignItems(VerticalAlign.Center)
     .backgroundColor($r('sys.color.comp_background_primary'))
     .borderRadius(32)
-    .padding(8)
     .margin({ bottom: 16 })
     .animation({ curve: Curve.EaseOut })
   }

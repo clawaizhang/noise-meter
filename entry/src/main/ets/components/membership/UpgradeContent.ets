@@ -455,6 +455,7 @@ export struct UpgradeContent {
       Image($r('app.media.ic_vip'))
         .width(DesignConstants.ICON_SIZE_SM)
         .height(DesignConstants.ICON_SIZE_SM)
+        .fillColor($r('sys.color.icon'))
 
       Text('专业版')
         .fontSize(DesignConstants.FONT_SIZE_SM)
@@ -550,6 +551,7 @@ export struct UpgradeContent {
         Image($r('app.media.ic_vip'))
           .width(DesignConstants.ICON_SIZE_XL)
           .height(DesignConstants.ICON_SIZE_XL)
+          .fillColor($r('sys.color.confirm'))
 
         Text('专业版已解锁')
           .fontSize(DesignConstants.FONT_SIZE_3XL)
