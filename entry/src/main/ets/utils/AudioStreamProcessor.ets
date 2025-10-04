@@ -9,7 +9,7 @@ export class AudioStreamProcessor {
   private fftBufferManager: FFTBufferManager;
   private currentConfig: AudioAnalysisConfig;
   private isProcessing: boolean = false;
-  private audioDataCallback: ((buffer: ArrayBuffer) => void) | null = null;
+  private calculateAudioDataCallBack: ((buffer: ArrayBuffer) => void) | null = null;
   private lastProcessTime: number = 0;
   
   /**
@@ -33,7 +33,7 @@ export class AudioStreamProcessor {
     }
     
     this.isProcessing = true;
-    this.audioDataCallback = callback;
+    this.calculateAudioDataCallBack = callback;
     this.lastProcessTime = Date.now();
     
     console.info('[音频流处理器] 开始处理音频数据');
@@ -44,7 +44,7 @@ export class AudioStreamProcessor {
    */
   stopProcessing(): void {
     this.isProcessing = false;
-    this.audioDataCallback = null;
+    this.calculateAudioDataCallBack = null;
     this.fftBufferManager.reset();
     
     console.info('[音频流处理器] 停止处理音频数据');
@@ -55,7 +55,7 @@ export class AudioStreamProcessor {
    * @param buffer 音频数据缓冲区
    */
   processAudioData(buffer: ArrayBuffer): void {
-    if (!this.isProcessing || !this.audioDataCallback) {
+    if (!this.isProcessing || !this.calculateAudioDataCallBack) {
       console.debug('[音频流处理器] 未在处理状态，忽略数据');
       return;
     }
@@ -79,9 +79,9 @@ export class AudioStreamProcessor {
         const fullBuffer = this.fftBufferManager.getBuffer();
         
         // 调用回调函数
-        if (this.audioDataCallback) {
+        if (this.calculateAudioDataCallBack) {
           console.debug(`[音频流处理器] 发送数据到回调: ${fullBuffer.byteLength}字节`);
-          this.audioDataCallback(fullBuffer);
+          this.calculateAudioDataCallBack(fullBuffer);
         }
         
         // 更新时间戳

@@ -3,7 +3,7 @@ import common from '@ohos.app.ability.common';
 import { AppStorageV2, promptAction } from '@kit.ArkUI';
 import { taskpool } from '@kit.ArkTS';
 import { concurrentCalculateSpectrum } from '../../concurrent/ConcurrentFftAnalyzer';
-import { AudioAnalysisConfig, AudioPresets } from '../../common/AudioConfig';
+import { AudioPresets } from '../../common/AudioConfig';
 import { PreferenceKeys } from '../../models/PreferenceKeys';
 import { DecibelRecord } from '../../models/DecibelRecord';
 import { AudioService } from '../../services/AudioService';
@@ -76,6 +76,7 @@ export struct AudioController {
   private timedValues: TimedDecibelValue[] = []
   private timedWeightingTypes: TimedWeightingType[] = []
   private timedAudioBuffers: TimedAudioBuffer[] = []
+  private originAudioBuffers: TimedAudioBuffer[] = []
   private currentRecord?: DecibelRecord
   private minDecibel: number = 0;
   private maxDecibel: number = 0;
@@ -173,6 +174,9 @@ export struct AudioController {
       // 启动数据清理监控
       this.startDataCleanupMonitoring();
 
+      this.audioService.registerOriginAudioDataCallBack((buffer: ArrayBuffer) => {
+        this.originAudioBuffers.push({ timestamp: Date.now(), buffer: buffer.slice(0) });
+      })
       // 开始处理音频数据
       this.audioService.startProcessing((buffer: ArrayBuffer) => {
         // 发出事件通知有新的音频数据到达
@@ -271,7 +275,7 @@ export struct AudioController {
         if (this.pk.record_enabled) {
           try {
             // 获取最近20分钟的音频数据
-            const recentAudioBuffers = this.timedAudioBuffers.map(item => item.buffer);
+            const recentAudioBuffers = this.originAudioBuffers.map(item => item.buffer);
             console.info(`[音频保存] 使用最近${this.DATA_RETENTION_MINUTES}分钟的音频数据，缓冲区数量: ${recentAudioBuffers.length}`);
 
             currentAudioFilePath = await this.audioService.stopRecordingAndGetWavData(recentAudioBuffers);
@@ -533,6 +537,8 @@ export struct AudioController {
     // 清理过期的音频缓冲区
     const originalAudioBuffersLength = this.timedAudioBuffers.length;
     this.timedAudioBuffers = this.timedAudioBuffers.filter(item => item.timestamp >= cutoffTime);
+
+    this.originAudioBuffers = this.originAudioBuffers.filter(item => item.timestamp >= cutoffTime);
 
     if (originalValuesLength !== this.timedValues.length ||
       originalAudioBuffersLength !== this.timedAudioBuffers.length) {

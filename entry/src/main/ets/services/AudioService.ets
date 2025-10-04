@@ -62,6 +62,7 @@ export class AudioService {
   private stateChangeCallbacks: ((state: AudioServiceState) => void)[] = [];
   // 音频流处理器
   private audioStreamProcessor: AudioStreamProcessor;
+  private originAudioDataCallBack: ((buffer: ArrayBuffer) => void) | null = null;
 
   constructor() {
 
@@ -75,6 +76,10 @@ export class AudioService {
     console.info(`[音频采集] 加载配置: 模式=${savedMode}, FFT大小=${this.currentConfig.fftSize}, ` +
       `处理间隔=${this.currentConfig.updateInterval}ms, 重叠率=${this.currentConfig.overlap}`);
 
+  }
+
+  registerOriginAudioDataCallBack(callback: (buffer: ArrayBuffer) => void){
+    this.originAudioDataCallBack = callback;
   }
 
   /**
@@ -414,6 +419,9 @@ export class AudioService {
     }
 
     try {
+      if (this.originAudioDataCallBack) {
+        this.originAudioDataCallBack(buffer.slice(0));
+      }
       // 使用音频流处理器处理数据
       this.audioStreamProcessor.processAudioData(buffer);
     } catch (err) {
