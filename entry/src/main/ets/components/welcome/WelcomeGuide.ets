@@ -42,8 +42,6 @@ export struct WelcomeGuide {
   private goToNextPage(): void {
     if (this.currentPage < this.totalPages - 1 && !this.isAnimating) {
       this.animateToNextPage();
-    } else if (this.currentPage === this.totalPages - 1) {
-      this.handleComplete();
     }
   }
 
