@@ -124,6 +124,12 @@ export class PreferenceKeys {
     new AudioAnalysisConfig(DEFAULT_CUSTOM_CONFIG.fftSize, DEFAULT_CUSTOM_CONFIG.updateInterval,
       DEFAULT_CUSTOM_CONFIG.smoothingFactor, DEFAULT_CUSTOM_CONFIG.windowType, DEFAULT_CUSTOM_CONFIG.overlap,
       DEFAULT_CUSTOM_CONFIG.bufferSize);
+  /**
+   * 会员奖励协议同意状态
+   */
+  @Trace
+  has_agreed_membership_reward: boolean = PreferencesUtil.getBooleanSync('has_agreed_membership_reward', false);
+
   @Trace
   member_ship: MembershipStatus = new MembershipStatus();
 

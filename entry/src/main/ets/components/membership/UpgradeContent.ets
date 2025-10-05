@@ -2,6 +2,11 @@ import { DesignConstants } from "../../constants/DesignConstants"
 import { PreferenceKeys } from "../../models/PreferenceKeys";
 import { PersistenceV2 } from "@kit.ArkUI";
 import { MembershipLevel } from "../../services/MembershipManager";
+import {
+  MembershipAgreementDialogBuilder,
+  MembershipAgreementDialogProps
+} from "./MembershipAgreementDialog";
+import { DialogHub } from "@hadss/dialoghub";
 
 // 价格方案接口
 interface PricingPlan {
@@ -80,7 +85,7 @@ export struct UpgradeContent {
         this.buildUnlockedHeader()
         this.buildUnlockedBenefits()
         this.buildMembershipInfo()
-        this.buildUnlockedActions()
+        // this.buildUnlockedActions()  // 暂时隐藏管理订阅和续费按钮
       } else {
         // 显示升级界面（原有逻辑）
         this.buildHeader()
@@ -88,10 +93,10 @@ export struct UpgradeContent {
         // 2. 权益展示区
         this.buildBenefitsSection()
 
-        // 3. 价格方案区
-        if (this.pricingPlans.length > 0) {
-          this.buildPricingSection()
-        }
+        // 3. 价格方案区（暂时隐藏）
+        // if (this.pricingPlans.length > 0) {
+        //   this.buildPricingSection()
+        // }
 
         // 5. 操作按钮区
         this.buildActionSection()
@@ -235,20 +240,20 @@ export struct UpgradeContent {
   @Builder
   private buildActionSection() {
     Column({ space: DesignConstants.SPACING_MD }) {
-      // 试用选项
-      if (this.showTrialOption) {
-        Row({ space: DesignConstants.SPACING_SM }) {
-          Text('7天免费试用')
-            .fontSize(DesignConstants.FONT_SIZE_MD)
-            .fontColor($r('sys.color.confirm'))
-
-          Text('试用结束后自动续费')
-            .fontSize(DesignConstants.FONT_SIZE_SM)
-            .fontColor($r('sys.color.font_tertiary'))
-        }
-        .width('100%')
-        .justifyContent(FlexAlign.Center)
-      }
+      // 试用选项（暂时隐藏）
+      // if (this.showTrialOption) {
+      //   Row({ space: DesignConstants.SPACING_SM }) {
+      //     Text('7天免费试用')
+      //       .fontSize(DesignConstants.FONT_SIZE_MD)
+      //       .fontColor($r('sys.color.confirm'))
+      //
+      //     Text('试用结束后自动续费')
+      //       .fontSize(DesignConstants.FONT_SIZE_SM)
+      //       .fontColor($r('sys.color.font_tertiary'))
+      //   }
+      //   .width('100%')
+      //   .justifyContent(FlexAlign.Center)
+      // }
 
       // 操作按钮
       Row({ space: DesignConstants.SPACING_MD }) {
@@ -262,17 +267,15 @@ export struct UpgradeContent {
             this.onLater();
           })
 
-        Button('立即升级')
+        Button('免费体验')
           .layoutWeight(1)
           .fontSize(DesignConstants.FONT_SIZE_MD)
           .backgroundColor($r('sys.color.ohos_id_color_palette1'))
           .fontColor($r('sys.color.font_on_primary'))
           .borderRadius(DesignConstants.BORDER_RADIUS_MD)
-          .enabled(this.selectedPlan !== null && this.purchaseState === 'idle')
+          .enabled(this.purchaseState === 'idle')
           .onClick(() => {
-            if (this.selectedPlan) {
-              this.handleUpgrade();
-            }
+            this.handleFreeExperience();
           })
       }
       .width('100%')
@@ -520,7 +523,24 @@ export struct UpgradeContent {
     // TODO: 实现续费升级逻辑
   }
 
-  // 处理升级逻辑
+  // 处理免费体验逻辑
+  private handleFreeExperience(): void {
+    // 关闭当前升级对话框
+    this.onLater();
+    // 使用DialogHub显示会员协议对话框
+    let props: MembershipAgreementDialogProps = {
+      onAgree: this.handleAgreementAgree,
+      onCancel: this.handleAgreementCancel,
+    };
+    DialogHub.getSheet()
+      .setComponentTargetId('mainId')
+      .setStyle({ backgroundColor: $r('sys.color.background_secondary') })
+      .setContent(wrapBuilder(MembershipAgreementDialogBuilder), props)
+      .build()
+      .show();
+  }
+
+  // 处理升级逻辑（保留原有逻辑，但暂时不使用）
   private async handleUpgrade() {
     try {
       await this.upgradeToPro();
@@ -540,6 +560,19 @@ export struct UpgradeContent {
         this.purchaseState = 'idle';
       }, 3000);
     }
+  }
+
+  // 处理会员协议同意
+  private handleAgreementAgree = () => {
+    // 记录用户同意状态
+    this.pk.has_agreed_membership_reward = true;
+    console.info('[会员管理] 用户已同意会员奖励计划协议，同意状态已记录');
+    // 这里可以添加其他逻辑，比如显示欢迎提示等
+  }
+
+  // 处理会员协议取消
+  private handleAgreementCancel = () => {
+    console.info('[会员管理] 用户取消了会员奖励计划协议');
   }
 
   // 已解锁头部区域构建

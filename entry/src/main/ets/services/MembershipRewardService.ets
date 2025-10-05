@@ -77,6 +77,12 @@ export class MembershipRewardService {
    * @param consecutiveDays 连续天数
    */
   public applyMembershipReward(consecutiveDays: number): void {
+    // 检查用户是否已同意会员奖励协议
+    if (!this.pk.has_agreed_membership_reward) {
+      console.info('[会员奖励] 用户未同意会员奖励协议，暂不赠送会员');
+      return;
+    }
+
     const rewardDays = this.calculateRewardDays(consecutiveDays);
     const membership = this.pk.member_ship;
 

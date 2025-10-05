@@ -25,6 +25,9 @@ import { UsageTrackingService } from '../services/UsageTrackingService'
 import { MembershipRewardService } from '../services/MembershipRewardService'
 import { ContinuousUsageManager } from '../services/ContinuousUsageManager'
 import { showRewardCompletionDialog } from '../components/membership/RewardCompletionDialog'
+import { MembershipAgreementDialogBuilder,
+  MembershipAgreementDialogProps } from '../components/membership/MembershipAgreementDialog'
+import { DialogHub } from '@hadss/dialoghub'
 
 const TAG = 'Index';
 const DOMAIN = 0x0000;
@@ -243,6 +246,14 @@ struct Index {
     // 获取连续天数
     const consecutiveDays = continuousUsageManager.getConsecutiveDays();
     
+    // 检查用户是否已同意会员奖励协议
+    if (!this.pk.has_agreed_membership_reward) {
+      // 用户未同意协议，显示引导提示
+      this.showAgreementPrompt();
+      console.info(`[使用完成] 连续${consecutiveDays}天，但用户未同意会员奖励协议`);
+      return;
+    }
+
     // 应用会员奖励
     membershipRewardService.applyMembershipReward(consecutiveDays);
 
@@ -254,6 +265,40 @@ struct Index {
     showRewardCompletionDialog(consecutiveDays, rewardDays, expiryDate);
 
     console.info(`[使用完成] 连续${consecutiveDays}天，获得${rewardDays}天会员`);
+  }
+
+  /**
+   * 显示协议引导提示（用户未同意协议时）
+   */
+  private showAgreementPrompt(): void {
+    let props: MembershipAgreementDialogProps = {
+      onAgree: this.handleAgreementAgree,
+      onCancel: this.handleAgreementCancel
+    };
+    DialogHub.getSheet()
+      .setComponentTargetId('mainId')
+      .setStyle({ backgroundColor: $r('sys.color.background_secondary') })
+      .setContent(wrapBuilder(MembershipAgreementDialogBuilder), props)
+      .build()
+      .show();
+  }
+
+  /**
+   * 处理会员协议同意
+   */
+  private handleAgreementAgree = () => {
+    // 记录用户同意状态
+    this.pk.has_agreed_membership_reward = true;
+    console.info('[会员管理] 用户已同意会员奖励计划协议，同意状态已记录');
+    // 重新处理使用完成
+    this.handleUsageCompletion();
+  }
+
+  /**
+   * 处理会员协议取消
+   */
+  private handleAgreementCancel = () => {
+    console.info('[会员管理] 用户取消了会员奖励计划协议');
   }
 
   build() {

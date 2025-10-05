@@ -9,6 +9,8 @@ import { PreferenceKeys } from '../../models/PreferenceKeys';
 import { ContinuousUsageManager } from '../../services/ContinuousUsageManager';
 import { DayReward, MembershipRewardService } from '../../services/MembershipRewardService';
 import { MembershipLevel } from '../../services/MembershipManager';
+import { DialogHub } from '@hadss/dialoghub';
+import { MembershipAgreementDialogBuilder, MembershipAgreementDialogProps } from './MembershipAgreementDialog';
 
 @ComponentV2
 export struct MembershipStatusCard {
@@ -19,7 +21,6 @@ export struct MembershipStatusCard {
   @Local todayReward: number = 0;
   @Local tomorrowReward: number = 0;
   @Local nextMilestone: DayReward | null = null;
-
   private continuousUsageManager: ContinuousUsageManager = ContinuousUsageManager.getInstance();
   private membershipRewardService: MembershipRewardService = MembershipRewardService.getInstance();
 
@@ -82,7 +83,7 @@ export struct MembershipStatusCard {
    */
   private getMembershipStatusText(): string {
     const membership = this.pk.member_ship;
-    
+
     if (membership.can()) {
       const remainingDays = Math.ceil((membership.expiryDate - Date.now()) / (1000 * 60 * 60 * 24));
       return `专业版 · 剩余${remainingDays}天`;
@@ -96,9 +97,9 @@ export struct MembershipStatusCard {
    * @returns 颜色资源
    */
   private getMembershipStatusColor(): Resource {
-    return this.pk.member_ship.can() ? 
-      $r('sys.color.confirm') : 
-      $r('sys.color.font_secondary');
+    return this.pk.member_ship.can() ?
+    $r('sys.color.confirm') :
+    $r('sys.color.font_secondary');
   }
 
   /**
@@ -275,11 +276,112 @@ export struct MembershipStatusCard {
     .width('100%')
   }
 
+  /**
+   * 构建协议提示（用户未同意协议时显示）
+   */
+  @Builder
+  buildAgreementPrompt() {
+    Column({ space: DesignConstants.SPACING_MD }) {
+      // 标题
+      Row({ space: DesignConstants.SPACING_SM }) {
+        Image($r('app.media.ic_vip'))
+          .width(DesignConstants.ICON_SIZE_MD)
+          .height(DesignConstants.ICON_SIZE_MD)
+          .fillColor($r('sys.color.ohos_id_color_palette1'))
+
+        Text('专业版免费送！')
+          .fontSize(DesignConstants.FONT_SIZE_LG)
+          .fontWeight(FontWeight.Bold)
+          .fontColor($r('sys.color.font_primary'))
+      }
+      .alignItems(VerticalAlign.Center)
+
+      // 描述
+      Text('每天使用APP即可获得专业版会员')
+        .fontSize(DesignConstants.FONT_SIZE_MD)
+        .fontColor($r('sys.color.font_secondary'))
+        .textAlign(TextAlign.Center)
+        .width('100%')
+
+      // 奖励规则
+      Column({ space: DesignConstants.SPACING_XS }) {
+        Text('🎁 每日奖励：使用1分钟获得1天会员')
+          .fontSize(DesignConstants.FONT_SIZE_SM)
+          .fontColor($r('sys.color.font_secondary'))
+
+        Text('🔥 连续奖励：连续使用额外赠送会员')
+          .fontSize(DesignConstants.FONT_SIZE_SM)
+          .fontColor($r('sys.color.font_secondary'))
+
+        Text('📱 自动累计：奖励天数自动累加')
+          .fontSize(DesignConstants.FONT_SIZE_SM)
+          .fontColor($r('sys.color.font_secondary'))
+      }
+      .width('100%')
+      .padding(DesignConstants.SPACING_MD)
+      .backgroundColor($r('sys.color.comp_background_secondary'))
+      .borderRadius(DesignConstants.BORDER_RADIUS_MD)
+
+      // 免费体验按钮
+      Button('免费体验')
+        .width('100%')
+        .fontSize(DesignConstants.FONT_SIZE_MD)
+        .backgroundColor($r('sys.color.ohos_id_color_palette1'))
+        .fontColor($r('sys.color.font_on_primary'))
+        .borderRadius(DesignConstants.BORDER_RADIUS_MD)
+        .onClick(() => {
+          this.showMembershipAgreement();
+        })
+    }
+    .width('100%')
+    .alignItems(HorizontalAlign.Center)
+  }
+
+  /**
+   * 显示会员协议对话框
+   */
+  private showMembershipAgreement(): void {
+    let props: MembershipAgreementDialogProps = {
+      onAgree: this.handleAgreementAgree,
+      onCancel: this.handleAgreementCancel
+    };
+    DialogHub.getSheet()
+      .setComponentTargetId('mainId')
+      .setStyle({ backgroundColor: $r('sys.color.background_secondary') })
+      .setContent(wrapBuilder(MembershipAgreementDialogBuilder), props)
+      .build()
+      .show();
+  }
+
+  /**
+   * 处理会员协议同意
+   */
+  private handleAgreementAgree = () => {
+    // 记录用户同意状态
+    this.pk.has_agreed_membership_reward = true;
+    console.info('[会员管理] 用户已同意会员奖励计划协议，同意状态已记录');
+    // 刷新显示
+    this.updateMembershipData();
+  }
+
+  /**
+   * 处理会员协议取消
+   */
+  private handleAgreementCancel =() =>  {
+    console.info('[会员管理] 用户取消了会员奖励计划协议');
+  }
+
   build() {
     Column({ space: DesignConstants.SPACING_MD }) {
-      this.buildMembershipHeader()
-      this.buildUsageProgress()
-      this.buildRewardPreview()
+      if (this.pk.has_agreed_membership_reward) {
+        // 用户已同意协议，显示正常的会员状态
+        this.buildMembershipHeader()
+        this.buildUsageProgress()
+        this.buildRewardPreview()
+      } else {
+        // 用户未同意协议，显示引导提示
+        this.buildAgreementPrompt()
+      }
     }
     .padding(DesignConstants.SPACING_LG)
     .backgroundColor($r('sys.color.comp_background_primary'))
