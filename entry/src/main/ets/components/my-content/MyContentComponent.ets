@@ -11,6 +11,8 @@ import {
   defaultPricingPlans, UpgradeContentBuilder, UpgradeContentProps
 } from '../membership/UpgradeContent';
 import { DialogStyleManager } from '../../utils/DialogStyleManager';
+import { MembershipStatusCard } from '../membership/MembershipStatusCard';
+import { DesignConstants } from '../../constants/DesignConstants';
 
 /**
  * 我的内容页面组件
@@ -89,6 +91,9 @@ export struct MyContentComponent {
   build() {
     Column() {
 
+      // 会员状态卡片
+      MembershipStatusCard()
+        .margin({ top: DesignConstants.SPACING_MD, left: 16, right: 16 })
 
       // 全局设置列表项
       List() {

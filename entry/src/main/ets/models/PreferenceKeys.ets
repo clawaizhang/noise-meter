@@ -6,6 +6,7 @@ import {
 } from '../common/AudioConfig';
 import { WeightingType } from '../constants/WeightingConstants';
 import { MembershipStatus } from '../services/MembershipManager';
+import { ContinuousUsageData } from './ContinuousUsageData';
 
 /**
  * 首选项键名常量
@@ -125,4 +126,22 @@ export class PreferenceKeys {
       DEFAULT_CUSTOM_CONFIG.bufferSize);
   @Trace
   member_ship: MembershipStatus = new MembershipStatus();
+
+  /**
+   * 连续使用数据
+   */
+  @Trace
+  continuous_usage_data: ContinuousUsageData = new ContinuousUsageData();
+
+  /**
+   * 最后进入前台时间戳
+   */
+  @Trace
+  last_app_foreground_time: number = 0;
+
+  /**
+   * 今日累计使用秒数（备份字段）
+   */
+  @Trace
+  total_app_usage_today: number = 0;
 }

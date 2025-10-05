@@ -21,6 +21,10 @@ import { ColorModeManager } from '../utils/ColorModeManager'
 import { DialogStyleManager } from '../utils/DialogStyleManager'
 import { DEFAULT_THRESHOLD_CONFIG, ThresholdConfig } from '../models/ThresholdConfig'
 import { ThresholdManager } from '../services/ThresholdManager'
+import { UsageTrackingService } from '../services/UsageTrackingService'
+import { MembershipRewardService } from '../services/MembershipRewardService'
+import { ContinuousUsageManager } from '../services/ContinuousUsageManager'
+import { showRewardCompletionDialog } from '../components/membership/RewardCompletionDialog'
 
 const TAG = 'Index';
 const DOMAIN = 0x0000;
@@ -114,6 +118,9 @@ struct Index {
     // 初始化DisplayManager监听
     this.initDisplayManager();
 
+    // 初始化使用追踪服务
+    this.initUsageTracking();
+
     this.initialize();
   }
 
@@ -189,10 +196,64 @@ struct Index {
     const displayManager: DisplayManager = DisplayManager.getInstance();
     displayManager.onDisplay(() => {
       this.as.isDisplayApp = true;
+      // APP显示时恢复使用追踪
+      const usageTrackingService = UsageTrackingService.getInstance();
+      usageTrackingService.resumeTracking();
     });
     displayManager.onHidden(() => {
       this.as.isDisplayApp = false;
+      // APP隐藏时暂停使用追踪
+      const usageTrackingService = UsageTrackingService.getInstance();
+      usageTrackingService.pauseTracking();
     });
+  }
+
+  // 初始化使用追踪服务
+  private initUsageTracking(): void {
+    const usageTrackingService = UsageTrackingService.getInstance();
+    const continuousUsageManager = ContinuousUsageManager.getInstance();
+    const membershipRewardService = MembershipRewardService.getInstance();
+
+    // 初始化服务
+    usageTrackingService.initialize();
+    
+    // 检查并更新连续使用天数
+    continuousUsageManager.checkAndUpdateConsecutiveDays();
+
+    // 设置使用秒数变化监听
+    usageTrackingService.onSecondsChange((seconds: number) => {
+      // 秒数变化时自动更新UI
+      console.info(`[使用追踪] 当前使用秒数: ${seconds}`);
+    });
+
+    // 设置使用完成监听
+    usageTrackingService.onUsageComplete((seconds: number) => {
+      this.handleUsageCompletion();
+    });
+
+    // 开始追踪使用时长
+    usageTrackingService.startTracking();
+  }
+
+  // 处理使用完成
+  private async handleUsageCompletion(): Promise<void> {
+    const continuousUsageManager = ContinuousUsageManager.getInstance();
+    const membershipRewardService = MembershipRewardService.getInstance();
+
+    // 获取连续天数
+    const consecutiveDays = continuousUsageManager.getConsecutiveDays();
+    
+    // 应用会员奖励
+    membershipRewardService.applyMembershipReward(consecutiveDays);
+
+    // 获取奖励信息
+    const rewardDays = membershipRewardService.calculateRewardDays(consecutiveDays);
+    const expiryDate = this.pk.member_ship.expiryDate;
+
+    // 显示完成弹窗
+    showRewardCompletionDialog(consecutiveDays, rewardDays, expiryDate);
+
+    console.info(`[使用完成] 连续${consecutiveDays}天，获得${rewardDays}天会员`);
   }
 
   build() {

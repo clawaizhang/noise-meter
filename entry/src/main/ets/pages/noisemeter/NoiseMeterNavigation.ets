@@ -128,6 +128,37 @@ export struct MainNoiseMeter {
     })
   }
 
+  @Builder
+  private buildMembershipBadge() {
+    if (this.pk.member_ship.can()) {
+      Row({ space: 4 }) {
+        Image($r('app.media.ic_vip'))
+          .width(16)
+          .height(16)
+          .fillColor($r('sys.color.confirm'))
+        Text(`专业 · ${Math.ceil((this.pk.member_ship.expiryDate - Date.now()) / (1000 * 60 * 60 * 24))}天`)
+          .fontSize(12)
+          .fontColor($r('sys.color.confirm'))
+      }
+      .padding({ left: 8, right: 8, top: 4, bottom: 4 })
+      .backgroundColor($r('sys.color.comp_background_primary'))
+      .borderRadius(12)
+    } else {
+      Row({ space: 4 }) {
+        Image($r('app.media.ic_vip'))
+          .width(16)
+          .height(16)
+          .fillColor($r('sys.color.font_secondary'))
+        Text('免费')
+          .fontSize(12)
+          .fontColor($r('sys.color.font_secondary'))
+      }
+      .padding({ left: 8, right: 8, top: 4, bottom: 4 })
+      .backgroundColor($r('sys.color.comp_background_primary'))
+      .borderRadius(12)
+    }
+  }
+
   build() {
     NavDestination() {
       Tabs({ barPosition: BarPosition.End, index: this.currentIndex }) {
@@ -164,9 +195,9 @@ export struct MainNoiseMeter {
       .barWidth('100%')
       .animationDuration(0)
     }
-    .title(this.title, {
+    .title(this.buildMembershipBadge, {
       barStyle: BarStyle.STANDARD,
-      backgroundBlurStyle: BlurStyle.BACKGROUND_REGULAR
+      backgroundBlurStyle: BlurStyle.BACKGROUND_REGULAR,
     })
     .id('mainAppId')
     .menus(this.menuItems)
