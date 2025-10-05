@@ -525,6 +525,14 @@ export struct UpgradeContent {
 
   // 处理免费体验逻辑
   private handleFreeExperience(): void {
+    // 检查用户是否已同意协议
+    if (this.pk.has_agreed_membership_reward) {
+      // 用户已同意，直接进入会员奖励流程
+      console.info('[会员管理] 用户已同意协议，直接进入会员奖励');
+      this.handleAgreementAgree();
+      return;
+    }
+    
     // 关闭当前升级对话框
     this.onLater();
     // 使用DialogHub显示会员协议对话框

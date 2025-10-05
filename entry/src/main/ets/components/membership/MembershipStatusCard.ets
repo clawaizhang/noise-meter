@@ -319,7 +319,6 @@ export struct MembershipStatusCard {
       }
       .width('100%')
       .padding(DesignConstants.SPACING_MD)
-      .backgroundColor($r('sys.color.comp_background_secondary'))
       .borderRadius(DesignConstants.BORDER_RADIUS_MD)
 
       // 免费体验按钮
@@ -341,6 +340,15 @@ export struct MembershipStatusCard {
    * 显示会员协议对话框
    */
   private showMembershipAgreement(): void {
+    // 检查用户是否已同意协议
+    if (this.pk.has_agreed_membership_reward) {
+      // 用户已同意，直接进入会员奖励流程
+      console.info('[会员管理] 用户已同意协议，直接进入会员奖励');
+      this.updateMembershipData();
+      return;
+    }
+    
+    // 用户未同意，显示协议对话框
     let props: MembershipAgreementDialogProps = {
       onAgree: () => {
         this.handleAgreementAgree();

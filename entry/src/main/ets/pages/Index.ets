@@ -25,9 +25,6 @@ import { UsageTrackingService } from '../services/UsageTrackingService'
 import { MembershipRewardService } from '../services/MembershipRewardService'
 import { ContinuousUsageManager } from '../services/ContinuousUsageManager'
 import { showRewardCompletionDialog } from '../components/membership/RewardCompletionDialog'
-import { MembershipAgreementDialogBuilder,
-  MembershipAgreementDialogProps } from '../components/membership/MembershipAgreementDialog'
-import { DialogHub } from '@hadss/dialoghub'
 
 const TAG = 'Index';
 const DOMAIN = 0x0000;
@@ -248,13 +245,12 @@ struct Index {
     
     // 检查用户是否已同意会员奖励协议
     if (!this.pk.has_agreed_membership_reward) {
-      // 用户未同意协议，显示引导提示
-      this.showAgreementPrompt();
-      console.info(`[使用完成] 连续${consecutiveDays}天，但用户未同意会员奖励协议`);
+      // 用户未同意协议，不主动弹出，只记录日志
+      console.info(`[使用完成] 连续${consecutiveDays}天，用户未同意会员奖励协议，等待用户主动点击`);
       return;
     }
 
-    // 应用会员奖励
+    // 用户已同意协议，应用会员奖励
     membershipRewardService.applyMembershipReward(consecutiveDays);
 
     // 获取奖励信息
@@ -265,28 +261,6 @@ struct Index {
     showRewardCompletionDialog(consecutiveDays, rewardDays, expiryDate);
 
     console.info(`[使用完成] 连续${consecutiveDays}天，获得${rewardDays}天会员`);
-  }
-
-  /**
-   * 显示协议引导提示（用户未同意协议时）
-   */
-  private showAgreementPrompt(): void {
-    let props: MembershipAgreementDialogProps = {
-      onAgree: () => {
-        this.handleAgreementAgree();
-        dialog.dismiss();
-      },
-      onCancel: () => {
-        this.handleAgreementCancel();
-        dialog.dismiss();
-      }
-    };
-    const dialog = DialogHub.getSheet()
-      .setComponentTargetId('mainId')
-      .setStyle({ backgroundColor: $r('sys.color.background_secondary') })
-      .setContent(wrapBuilder(MembershipAgreementDialogBuilder), props)
-      .build();
-    dialog.show();
   }
 
   /**

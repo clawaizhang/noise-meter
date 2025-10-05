@@ -136,7 +136,6 @@ export struct MembershipAgreementDialog {
     .width('100%')
     .height('80%')
     .padding(DesignConstants.SPACING_LG)
-    .backgroundColor($r('sys.color.comp_background_secondary'))
     .borderRadius(DesignConstants.BORDER_RADIUS_XL)
   }
 
