@@ -378,26 +378,6 @@ export struct DecibelMeter {
         this.translateY = 0;
         this.bgImage = undefined;
         this.dWidthHeight = '';
-        DialogHub.getToast()
-          .setTextContent('已保存')
-          .setAnimation({
-            dialogAnimation: TransitionEffect.scale({ x: 0, y: 0 })
-              .combine(TransitionEffect.OPACITY)
-              .animation({
-                curve: curves.springMotion()
-              })
-          })
-          .setConfig({
-            dialogBehavior: { levelMode: LevelMode.EMBEDDED },
-            dialogPosition: {
-              offset: {
-                dx: this.getUIContext().px2vp(displayClass.width) / 2 - 85,
-                dy: -this.getUIContext().px2vp(displayClass.height) / 2 + 120
-              }
-            }
-          })
-          .build()
-          .show();
       }
     }, () => {
       this.dScale = 0.05;
