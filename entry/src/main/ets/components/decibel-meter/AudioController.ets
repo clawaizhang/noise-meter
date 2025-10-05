@@ -71,7 +71,6 @@ export struct AudioController {
   private lastAutoSaveTime: number = Date.now();
   // 20分钟数据保留相关属性
   private dataCleanupTimer?: number;
-  private readonly DATA_RETENTION_MINUTES = 20;
   private readonly CLEANUP_CHECK_INTERVAL = 60000; // 1分钟检查一次
   // 记录相关
   private timedValues: TimedDecibelValue[] = []
@@ -264,12 +263,6 @@ export struct AudioController {
       this.onRecordingStateChange(false);
       console.info("[FREQ_TRACE][Recording] 停止检测 - 开始");
 
-      // 停止自动保存监控
-      this.stopAutoSaveMonitoring();
-
-      // 停止数据清理监控
-      this.stopDataCleanupMonitoring();
-
       // 判断是否为自动保存
       const isAutoSave = comments === '自动保存';
 
@@ -295,9 +288,9 @@ export struct AudioController {
 
         if (this.pk.record_enabled) {
           try {
-            // 获取最近20分钟的音频数据
+            // 获取音频数据
             const recentAudioBuffers = this.originAudioBuffers.map(item => item.buffer);
-            console.info(`[音频保存] 使用最近${this.DATA_RETENTION_MINUTES}分钟的音频数据，缓冲区数量: ${recentAudioBuffers.length}`);
+            console.info(`[音频保存] 使用最近${this.pk.auto_save_interval}分钟的音频数据，缓冲区数量: ${recentAudioBuffers.length}`);
 
             currentAudioFilePath = await this.audioService.stopRecordingAndGetWavData(recentAudioBuffers);
           } catch (error) {
@@ -488,13 +481,10 @@ export struct AudioController {
    */
   private startDataCleanupMonitoring(): void {
     this.stopDataCleanupMonitoring();
-
-    if (!this.pk.auto_save_enabled && this.isRecording) {
-      console.info('[数据清理] 启动20分钟数据清理监控');
-      this.dataCleanupTimer = setInterval(() => {
-        this.cleanupOldData();
-      }, this.CLEANUP_CHECK_INTERVAL);
-    }
+    console.info('[数据清理] 启动数据清理监控');
+    this.dataCleanupTimer = setInterval(() => {
+      this.cleanupOldData();
+    }, this.CLEANUP_CHECK_INTERVAL);
   }
 
   /**
@@ -512,12 +502,9 @@ export struct AudioController {
    * 清理过期数据（超过20分钟的数据）
    */
   private cleanupOldData(): void {
-    if (this.pk.auto_save_enabled) {
-      return; // 自动保存开启时不清理数据
-    }
 
     const currentTime = new Date().getTime();
-    const cutoffTime = currentTime - (this.DATA_RETENTION_MINUTES * 60 * 1000);
+    const cutoffTime = currentTime - (this.pk.auto_save_interval * 60 * 1000);
 
     // 清理过期的分贝值
     const originalValuesLength = this.timedValues.length;
