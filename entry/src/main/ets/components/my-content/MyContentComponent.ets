@@ -66,12 +66,7 @@ export struct MyContentComponent {
   }
   // 显示专业版升级弹框
   private showUpgradeDialog = () => {
-    if (this.dialog) {
-
-    } else {
-      this.dialog = this.dialog ?? this.createDialog();
-      DialogStyleManager.registerDialog(this.dialog);
-    }
+      this.dialog = this.createDialog();
     this.dialog.show();
 
   }

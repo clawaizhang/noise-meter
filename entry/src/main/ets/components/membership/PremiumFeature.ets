@@ -49,13 +49,6 @@ export struct PremiumFeature {
     showTrialOption: this.showTrialOption
   }
 
-  @Monitor('pk.display_mode')
-  onDisplayStyleChange() {
-    DialogStyleManager.unregisterDialog(this.upgradeDialog!);
-    this.upgradeDialog = this.createDialog();
-    DialogStyleManager.registerDialog(this.upgradeDialog);
-  }
-
   private createDialog(): InfSheet {
     return DialogHub.getSheet()
       .setStyle({
@@ -70,9 +63,8 @@ export struct PremiumFeature {
    * 显示升级提示弹框
    */
   private showUpgradeDialog() {
-    if (!this.upgradeDialog) {
       this.upgradeDialog = this.createDialog();
-    }
+      this.upgradeDialog.getStatus()
     this.upgradeDialog.show();
   }
 

@@ -80,9 +80,6 @@ export struct DecibelHistory {
   private recordService: DecibelRecordService = new DecibelRecordService(this.context);
   private promptAction: PromptAction = this.getUIContext().getPromptAction();
   
-  // DialogHub实例缓存
-  private detailDialog: InfSheet | null = null;
-
   onPageShow() {
     this.loadRecords();
   }
@@ -447,18 +444,13 @@ export struct DecibelHistory {
         selectedRecord: this.selectedRecord,
         context: getContext(this),
       };
-      if (!this.detailDialog) {
-        this.detailDialog = DialogHub.getSheet()
+        let detailDialog = DialogHub.getSheet()
           .setComponentTargetId('mainId')
           .setStyle({ backgroundColor:$r('sys.color.background_secondary') })
           .setConfig({ enableOutsideInteractive: true, scrollSizeMode: ScrollSizeMode.CONTINUOUS })
           .setContent(wrapBuilder(DetailDialogBuilder), params)
           .build();
-        
-        // 注册Dialog到样式管理器
-        DialogStyleManager.registerDialog(this.detailDialog);
-      }
-      this.detailDialog.show();
+      detailDialog.show();
     } catch (error) {
       console.error('导航到详情页失败:', error);
     }
