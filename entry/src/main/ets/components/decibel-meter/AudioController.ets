@@ -72,6 +72,7 @@ export struct AudioController {
   // 20分钟数据保留相关属性
   private dataCleanupTimer?: number;
   private readonly CLEANUP_CHECK_INTERVAL = 60000; // 1分钟检查一次
+  private readonly CLEAN_INTERVAL_MINUTES = 60;
   // 记录相关
   private timedValues: TimedDecibelValue[] = []
   private timedWeightingTypes: TimedWeightingType[] = []
@@ -96,7 +97,6 @@ export struct AudioController {
       this.startRecording();
     }
   }
-
 
   @Monitor('currentTime')
   monitorAutoSave() {
@@ -499,12 +499,12 @@ export struct AudioController {
   }
 
   /**
-   * 清理过期数据（超过20分钟的数据）
+   * 清理过期数据
    */
   private cleanupOldData(): void {
-
+    let cleanInterval = this.pk.auto_save_enabled ? this.pk.auto_save_interval : this.CLEAN_INTERVAL_MINUTES;
     const currentTime = new Date().getTime();
-    const cutoffTime = currentTime - (this.pk.auto_save_interval * 60 * 1000);
+    const cutoffTime = currentTime - (cleanInterval * 60 * 1000);
 
     // 清理过期的分贝值
     const originalValuesLength = this.timedValues.length;

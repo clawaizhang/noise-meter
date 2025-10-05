@@ -219,8 +219,8 @@ export struct DecibelMeter {
     let minutes = Math.floor(elapsed / 60000);
     let seconds = Math.floor((elapsed % 60000) / 1000);
     if (!this.pk.auto_save_enabled) {
-      //20 分钟循环
-      if (minutes >= 20) {
+      //60 分钟循环
+      if (minutes >= 60) {
         this.lastAutoSaveTime = Date.now();
         elapsed = this.currentTime - this.lastAutoSaveTime;
         minutes = Math.floor(elapsed / 60000);
