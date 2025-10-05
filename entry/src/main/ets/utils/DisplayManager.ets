@@ -5,7 +5,8 @@ export class DisplayManager {
   private displayListeners: Set<() => void> = new Set();
   private hiddenListeners: Set<() => void> = new Set();
 
-  private constructor() {}
+  private constructor() {
+  }
 
   // 获取单例实例
   public static getInstance(): DisplayManager {
@@ -21,17 +22,17 @@ export class DisplayManager {
     display.on('change', (state: display.DisplayState) => {
       if (state === display.DisplayState.STATE_ON) {
         this.displayListeners.forEach(callback => callback());
-      } else if (state === display.DisplayState.STATE_OFF) {
+      } else {
         this.hiddenListeners.forEach(callback => callback());
       }
     });
   }
 
-  public onForeground():void{
+  public onForeground(): void {
     this.displayListeners.forEach(callback => callback());
   }
 
-  public onBackground():void{
+  public onBackground(): void {
     this.hiddenListeners.forEach(callback => callback());
   }
 
@@ -54,5 +55,4 @@ export class DisplayManager {
   public offHidden(callback: () => void): void {
     this.hiddenListeners.delete(callback);
   }
-
 }
