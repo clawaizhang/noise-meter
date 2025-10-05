@@ -32,8 +32,13 @@ export default class EntryAbility extends UIAbility {
     initializeFFTOptimizations();
   }
 
-  onDestroy(): void {
+  async onDestroy(): Promise<void> {
     hilog.info(DOMAIN, TAG, 'Ability onDestroy');
+    
+    // 销毁DisplayManager资源
+    const displayManager = DisplayManager.getInstance();
+    await displayManager.destroy();
+    
     PermissionUtil.checkPermissions('ohos.permission.CAMERA').then((result) => {
       if (result) {
         if (this.cameraManager.isTorchSupported()) {
