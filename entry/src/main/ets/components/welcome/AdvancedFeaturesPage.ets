@@ -15,7 +15,8 @@ export struct AdvancedFeaturesPage {
   private canvasSettings: RenderingContextSettings = new RenderingContextSettings(true);
   private canvasContext: CanvasRenderingContext2D = new CanvasRenderingContext2D(this.canvasSettings);
   
-  @Local private spectrumData: Float32Array = new Float32Array(8);
+  @Local private spectrumData: Float32Array = new Float32Array(1000);
+  @Local private frequencies: number[] = [];
   @Local private contentOpacity: number = 0.8;
   @Local private titleOpacity: number = 0;
   @Local private featuresOpacity: number = 0;
@@ -38,7 +39,23 @@ export struct AdvancedFeaturesPage {
 
   aboutToAppear(): void {
     this.startEntranceAnimation();
+    this.initializeFrequencies();
     this.startSpectrumAnimation();
+  }
+
+  private initializeFrequencies(): void {
+    // 生成对数分布的频率点（20Hz - 20kHz）
+    const count = 1000;
+    const minFreq = 20;  // 20Hz
+    const maxFreq = 20000; // 20kHz
+    
+    for (let i = 0; i < count; i++) {
+      // 对数分布，更符合人耳感知
+      const logMin = Math.log10(minFreq);
+      const logMax = Math.log10(maxFreq);
+      const logFreq = logMin + (logMax - logMin) * i / (count - 1);
+      this.frequencies.push(Math.pow(10, logFreq));
+    }
   }
 
   aboutToDisappear(): void {
@@ -109,38 +126,70 @@ export struct AdvancedFeaturesPage {
   }
 
   private generateMultiBandSpectrum(): void {
-    const bands = 8;
-    const data = new Float32Array(bands);
     const time = Date.now() * 0.002;
+    const data = new Float32Array(this.frequencies.length);
     
-    for (let i = 0; i < bands; i++) {
-      // 模拟不同频段的能量分布，每个频段有不同的频率和相位
-      const base = Math.sin(i * 0.8 + time) * 0.3;
-      const peak = Math.exp(-Math.pow(i - 3, 2) / 8) * Math.sin(time * 2) * 0.4;
-      const noise = Math.random() * 0.1;
-      data[i] = Math.max(0, base + peak + noise);
+    for (let i = 0; i < this.frequencies.length; i++) {
+      const freq = this.frequencies[i];
+      
+      // 基础频谱特性
+      let amplitude = this.getBaseSpectrumAmplitude(freq);
+      
+      // 添加动态变化
+      amplitude = this.addDynamicVariation(amplitude, freq, time, i);
+      
+      data[i] = Math.max(0, Math.min(1, amplitude));
     }
     this.spectrumData = data;
   }
 
-  private getBandColor(bandIndex: number): string {
-    const colors = [
-      '#FF6B6B', '#FF9E6B', '#FFD166', '#06D6A0',
-      '#118AB2', '#073B4C', '#7209B7', '#F72585'
-    ];
-    return colors[bandIndex % colors.length];
+  private getBaseSpectrumAmplitude(frequency: number): number {
+    // 低频区域（20Hz - 200Hz）：平稳上升
+    if (frequency < 200) {
+      return 0.2 + 0.3 * (frequency - 20) / 180;
+    }
+    
+    // 中频区域（200Hz - 4000Hz）：达到峰值
+    if (frequency < 4000) {
+      const midRange = (frequency - 200) / 3800;
+      return 0.5 + 0.4 * Math.sin(midRange * Math.PI);
+    }
+    
+    // 高频区域（4000Hz - 20000Hz）：逐渐下降
+    const highRange = (frequency - 4000) / 16000;
+    return 0.9 - 0.7 * highRange;
   }
+
+  private addDynamicVariation(baseAmplitude: number, frequency: number, time: number, index: number): number {
+    const timeFactor = time * 0.001;
+    
+    // 低频缓慢变化
+    const lowFreqMod = frequency < 1000 ? Math.sin(timeFactor * 0.5 + index * 0.01) * 0.1 : 0;
+    
+    // 中频适度变化
+    const midFreqMod = frequency >= 1000 && frequency < 8000 ?
+      Math.sin(timeFactor * 2 + index * 0.05) * 0.15 : 0;
+    
+    // 高频快速变化
+    const highFreqMod = frequency >= 8000 ?
+      Math.sin(timeFactor * 5 + index * 0.1) * 0.08 : 0;
+    
+    // 随机噪声
+    const noise = Math.random() * 0.05;
+    
+    return baseAmplitude + lowFreqMod + midFreqMod + highFreqMod + noise;
+  }
+
+  // 移除彩色相关的方法，因为现在使用统一的灰色折线图
 
   private drawMultiBandSpectrum(canvas: CanvasRenderingContext2D): void {
     const width = 280;
     const height = 80;
-    const bands = this.spectrumData.length;
-    const bandWidth = width / bands;
     
     canvas.clearRect(0, 0, width, height);
     
     // 绘制背景网格
-    canvas.strokeStyle = '#E0E0E0';
+    canvas.strokeStyle = '#F0F0F0';  // 浅灰色网格
     canvas.lineWidth = 0.5;
     
     // 水平网格线
@@ -152,23 +201,35 @@ export struct AdvancedFeaturesPage {
       canvas.stroke();
     }
     
-    // 绘制频段
-    for (let i = 0; i < bands; i++) {
-      const barHeight = this.spectrumData[i] * height * 0.8;
-      const x = i * bandWidth + 2;
-      const y = height - barHeight;
-      
-      // 绘制频段柱状图
-      canvas.fillStyle = this.getBandColor(i);
-      canvas.fillRect(x, y, bandWidth - 4, barHeight);
-      
-      // 添加渐变效果
-      const gradient = canvas.createLinearGradient(x, y, x, y + barHeight);
-      gradient.addColorStop(0, this.getBandColor(i));
-      gradient.addColorStop(1, this.getBandColor(i) + '80');
-      canvas.fillStyle = gradient;
-      canvas.fillRect(x, y, bandWidth - 4, barHeight);
+    // 垂直网格线
+    for (let i = 1; i < 4; i++) {
+      const x = i * width / 4;
+      canvas.beginPath();
+      canvas.moveTo(x, 0);
+      canvas.lineTo(x, height);
+      canvas.stroke();
     }
+    
+    // 绘制频谱折线图
+    canvas.beginPath();
+    canvas.strokeStyle = '#666666';  // 深灰色折线
+    canvas.lineWidth = 1.5;
+    
+    const pointSpacing = width / (this.spectrumData.length - 1);
+    
+    for (let i = 0; i < this.spectrumData.length; i++) {
+      const x = i * pointSpacing;
+      const y = height - this.spectrumData[i] * height * 0.8;
+      
+      if (i === 0) {
+        canvas.moveTo(x, y);
+      } else {
+        // 使用线段连接，形成平滑折线
+        canvas.lineTo(x, y);
+      }
+    }
+    
+    canvas.stroke();
   }
 
 
