@@ -12,20 +12,16 @@ export struct AdvancedFeaturesPage {
   @Param @Require onComplete: () => void;
   @Param @Require onPrev: () => void;
   
-  private canvasSettings: RenderingContextSettings = new RenderingContextSettings(true);
-  private canvasContext: CanvasRenderingContext2D = new CanvasRenderingContext2D(this.canvasSettings);
-  
-  @Local private spectrumData: Float32Array = new Float32Array(1000);
-  @Local private frequencies: number[] = [];
   @Local private contentOpacity: number = 0.8;
   @Local private titleOpacity: number = 0;
   @Local private featuresOpacity: number = 0;
   @Local private buttonOpacity: number = 0;
   @Local private buttonScale: number = 1.0;
   @Local private cardScales: number[] = [1.0, 1.0, 1.0, 1.0, 1.0, 1.0];
-  @Local private isAnimating: boolean = true;
   @Local private useNowButtonScale: number = 0.8;
   @Local private useNowButtonOpacity: number = 0;
+  @Local private featureIconScale: number = 1.0;
+  @Local private featureIconRotation: number = 0;
 
   // 功能卡片数据
   private readonly features: FeatureCard[] = [
@@ -39,27 +35,33 @@ export struct AdvancedFeaturesPage {
 
   aboutToAppear(): void {
     this.startEntranceAnimation();
-    this.initializeFrequencies();
-    this.startSpectrumAnimation();
-  }
-
-  private initializeFrequencies(): void {
-    // 生成对数分布的频率点（20Hz - 20kHz）
-    const count = 1000;
-    const minFreq = 20;  // 20Hz
-    const maxFreq = 20000; // 20kHz
-    
-    for (let i = 0; i < count; i++) {
-      // 对数分布，更符合人耳感知
-      const logMin = Math.log10(minFreq);
-      const logMax = Math.log10(maxFreq);
-      const logFreq = logMin + (logMax - logMin) * i / (count - 1);
-      this.frequencies.push(Math.pow(10, logFreq));
-    }
+    this.startFeatureAnimation();
   }
 
   aboutToDisappear(): void {
-    this.isAnimating = false;
+    // 移除频谱动画相关代码
+  }
+
+  private startFeatureAnimation(): void {
+    // 功能图标脉动动画
+    animateTo({
+      duration: 2000,
+      curve: Curve.EaseInOut,
+      iterations: -1, // 无限循环
+      playMode: PlayMode.Alternate
+    }, () => {
+      this.featureIconScale = 1.1;
+    });
+
+    // 功能图标轻微旋转动画
+    animateTo({
+      duration: 8000,
+      curve: Curve.Linear,
+      iterations: -1,
+      playMode: PlayMode.AlternateReverse
+    }, () => {
+      this.featureIconRotation = 5;
+    });
   }
 
   private startEntranceAnimation(): void {
@@ -115,122 +117,7 @@ export struct AdvancedFeaturesPage {
     }, 1200);
   }
 
-  private startSpectrumAnimation(): void {
-    const animateSpectrum = () => {
-      if (this.isAnimating) {
-        this.generateMultiBandSpectrum();
-        setTimeout(animateSpectrum, 100);
-      }
-    };
-    animateSpectrum();
-  }
-
-  private generateMultiBandSpectrum(): void {
-    const time = Date.now() * 0.002;
-    const data = new Float32Array(this.frequencies.length);
-    
-    for (let i = 0; i < this.frequencies.length; i++) {
-      const freq = this.frequencies[i];
-      
-      // 基础频谱特性
-      let amplitude = this.getBaseSpectrumAmplitude(freq);
-      
-      // 添加动态变化
-      amplitude = this.addDynamicVariation(amplitude, freq, time, i);
-      
-      data[i] = Math.max(0, Math.min(1, amplitude));
-    }
-    this.spectrumData = data;
-  }
-
-  private getBaseSpectrumAmplitude(frequency: number): number {
-    // 低频区域（20Hz - 200Hz）：平稳上升
-    if (frequency < 200) {
-      return 0.2 + 0.3 * (frequency - 20) / 180;
-    }
-    
-    // 中频区域（200Hz - 4000Hz）：达到峰值
-    if (frequency < 4000) {
-      const midRange = (frequency - 200) / 3800;
-      return 0.5 + 0.4 * Math.sin(midRange * Math.PI);
-    }
-    
-    // 高频区域（4000Hz - 20000Hz）：逐渐下降
-    const highRange = (frequency - 4000) / 16000;
-    return 0.9 - 0.7 * highRange;
-  }
-
-  private addDynamicVariation(baseAmplitude: number, frequency: number, time: number, index: number): number {
-    const timeFactor = time * 0.001;
-    
-    // 低频缓慢变化
-    const lowFreqMod = frequency < 1000 ? Math.sin(timeFactor * 0.5 + index * 0.01) * 0.1 : 0;
-    
-    // 中频适度变化
-    const midFreqMod = frequency >= 1000 && frequency < 8000 ?
-      Math.sin(timeFactor * 2 + index * 0.05) * 0.15 : 0;
-    
-    // 高频快速变化
-    const highFreqMod = frequency >= 8000 ?
-      Math.sin(timeFactor * 5 + index * 0.1) * 0.08 : 0;
-    
-    // 随机噪声
-    const noise = Math.random() * 0.05;
-    
-    return baseAmplitude + lowFreqMod + midFreqMod + highFreqMod + noise;
-  }
-
-  // 移除彩色相关的方法，因为现在使用统一的灰色折线图
-
-  private drawMultiBandSpectrum(canvas: CanvasRenderingContext2D): void {
-    const width = 280;
-    const height = 80;
-    
-    canvas.clearRect(0, 0, width, height);
-    
-    // 绘制背景网格
-    canvas.strokeStyle = '#F0F0F0';  // 浅灰色网格
-    canvas.lineWidth = 0.5;
-    
-    // 水平网格线
-    for (let i = 1; i < 4; i++) {
-      const y = i * height / 4;
-      canvas.beginPath();
-      canvas.moveTo(0, y);
-      canvas.lineTo(width, y);
-      canvas.stroke();
-    }
-    
-    // 垂直网格线
-    for (let i = 1; i < 4; i++) {
-      const x = i * width / 4;
-      canvas.beginPath();
-      canvas.moveTo(x, 0);
-      canvas.lineTo(x, height);
-      canvas.stroke();
-    }
-    
-    // 绘制频谱折线图
-    canvas.beginPath();
-    canvas.strokeStyle = '#666666';  // 深灰色折线
-    canvas.lineWidth = 1.5;
-    
-    const pointSpacing = width / (this.spectrumData.length - 1);
-    
-    for (let i = 0; i < this.spectrumData.length; i++) {
-      const x = i * pointSpacing;
-      const y = height - this.spectrumData[i] * height * 0.8;
-      
-      if (i === 0) {
-        canvas.moveTo(x, y);
-      } else {
-        // 使用线段连接，形成平滑折线
-        canvas.lineTo(x, y);
-      }
-    }
-    
-    canvas.stroke();
-  }
+  // 移除所有频谱图相关的方法
 
 
   private handleCardHover(isHover: boolean, index: number): void {
@@ -244,8 +131,8 @@ export struct AdvancedFeaturesPage {
 
   build() {
     Column({ space: DesignConstants.SPACING_XL }) {
-      // 频谱分析区域
-      this.buildSpectrumDisplay()
+      // 功能展示区域
+      this.buildFeatureDisplay()
 
       // 标题区域
       this.buildTitle()
@@ -265,28 +152,23 @@ export struct AdvancedFeaturesPage {
 
 
   @Builder
-  private buildSpectrumDisplay() {
+  private buildFeatureDisplay() {
     Column({ space: DesignConstants.SPACING_MD }) {
-      Canvas(this.canvasContext)
-        .width('100%')
-        .height(80)
-        .onReady(() => {
-          this.drawMultiBandSpectrum(this.canvasContext);
-        })
+      // 动画功能图标 - 纯视觉元素，无文字描述
+      Stack({ alignContent: Alignment.Center }) {
+        // 品牌色半透明背景光晕效果
+        Circle({ width: 100, height: 100 })
+          .fill($r('sys.color.brand'))
+          .opacity(0.1)
+          .scale({ x: this.featureIconScale, y: this.featureIconScale })
 
-      // 频率标注
-      Row({ space: 0 }) {
-        Text('20Hz')
-          .fontSize(DesignConstants.FONT_SIZE_XS)
-          .fontColor($r('sys.color.font_secondary'))
-        
-        Blank()
-        
-        Text('20kHz')
-          .fontSize(DesignConstants.FONT_SIZE_XS)
-          .fontColor($r('sys.color.font_secondary'))
+        // 功能图标
+        Image($r('app.media.ic_audio_analysis'))
+          .width(80)
+          .height(80)
+          .scale({ x: this.featureIconScale, y: this.featureIconScale })
+          .rotate({ angle: this.featureIconRotation })
       }
-      .width('100%')
     }
     .alignItems(HorizontalAlign.Center)
     .padding(DesignConstants.SPACING_XL)

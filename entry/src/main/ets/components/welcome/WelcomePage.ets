@@ -63,18 +63,17 @@ export struct WelcomePage {
     Column({ space: DesignConstants.SPACING_XL }) {
       // 动画应用图标
       Stack({ alignContent: Alignment.Center }) {
-        // 背景光晕效果
+        // 品牌色半透明背景光晕效果
         Circle({ width: 140, height: 140 })
           .fill($r('sys.color.brand'))
           .opacity(0.1)
           .scale({ x: this.iconScale, y: this.iconScale })
 
-        // 应用图标
+        // 应用图标 - 移除边框和阴影，更简洁现代
         Image($r('app.media.app_icon_fore'))
           .width(120)
           .height(120)
           .borderRadius(DesignConstants.BORDER_RADIUS_LG)
-          .shadow(DesignConstants.SHADOW_MD)
           .scale({ x: this.iconScale, y: this.iconScale })
           .rotate({ angle: this.iconRotation })
       }
@@ -105,21 +104,21 @@ export struct WelcomePage {
       }
       .alignItems(HorizontalAlign.Center)
 
-      // 功能亮点展示 - 居中后再左对齐
-      Column({ space: DesignConstants.SPACING_SM }) {
-        Text('核心功能')
+      // 价值主张展示 - 强调噪音监测的重要性
+      Column({ space: DesignConstants.SPACING_MD }) {
+        Text('为什么需要噪音监测？')
           .fontSize(DesignConstants.FONT_SIZE_LG)
           .fontWeight(FontWeight.Medium)
           .fontColor($r('sys.color.font_emphasize'))
           .opacity(this.featuresOpacity)
 
-        // 功能项容器 - 居中
+        // 价值主张描述
         Column({ space: DesignConstants.SPACING_SM }) {
-          this.buildFeatureItem('实时精准检测', '毫秒级响应，专业级精度')
-          this.buildFeatureItem('智能数据分析', '可视化报告，专业评估')
-          this.buildFeatureItem('智能提醒保护', '噪音预警，环境监测')
+          this.buildValueItem('保护听力健康', '长期噪音暴露可能导致听力损伤')
+          this.buildValueItem('提升生活质量', '安静环境有助于提高专注力和睡眠质量')
+          this.buildValueItem('工作环境优化', '符合职业健康安全标准')
         }
-        .width('80%')  // 限制宽度
+        .width('85%')  // 限制宽度
         .alignItems(HorizontalAlign.Start)  // 内部左对齐
       }
       .alignItems(HorizontalAlign.Center)  // 外部居中
@@ -143,19 +142,19 @@ export struct WelcomePage {
   }
 
   @Builder
-  private buildFeatureItem(title: string, description: string) {
+  private buildValueItem(title: string, description: string) {
     Row({ space: DesignConstants.SPACING_MD }) {
       // 图标区域 - 固定宽度确保对齐
       Column() {
-        // 根据标题内容选择对应的图标
-        if (title.includes('实时精准检测')) {
-          Image($r('app.media.ic_meter'))
+        // 根据价值主张选择对应的图标
+        if (title.includes('保护听力健康')) {
+          Image($r('app.media.ic_user'))
             .width(DesignConstants.ICON_SIZE_MD)
-        } else if (title.includes('智能数据分析')) {
-          Image($r('app.media.ic_stats'))
+        } else if (title.includes('提升生活质量')) {
+          Image($r('app.media.ic_smile'))
             .width(DesignConstants.ICON_SIZE_MD)
-        } else if (title.includes('智能提醒保护')) {
-          Image($r('app.media.ic_alarm'))
+        } else if (title.includes('工作环境优化')) {
+          Image($r('app.media.ic_security'))
             .width(DesignConstants.ICON_SIZE_MD)
         }
       }
@@ -192,6 +191,6 @@ export struct WelcomePage {
     .borderRadius(DesignConstants.BORDER_RADIUS_MD)
     .shadow(DesignConstants.SHADOW_SM)
     .opacity(this.featuresOpacity)
-    .alignSelf(ItemAlign.Center)  // 确保每个功能项都居中
+    .alignSelf(ItemAlign.Center)  // 确保每个价值项都居中
   }
 }
