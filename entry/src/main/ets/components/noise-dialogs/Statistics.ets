@@ -74,32 +74,32 @@ export struct Statistics {
     // 噪音组合
     const combination = this.analyzeNoiseCombination(levels);
     if (combination) {
-      description += '🔊 ' + combination;
+      description += '噪音组合：' + combination;
     }
 
     if (levels['难以忍受'] > 10) {
       const areaType = this.getAreaTypeForHighNoise();
-      description += '，' + `⚠️ 存在危险噪音，超过${areaType}标准，建议立即采取保护措施`;
+      description += '，' + `存在危险噪音，超过${areaType}标准，建议立即采取保护措施`;
     }
 
     if (levels['非常吵闹'] > 20) {
-      description += '，' + '🔊 接近工业区标准，可能影响听力健康';
+      description += '，' + '接近工业区标准，可能影响听力健康';
     }
 
     if (levels['吵闹'] > 30) {
-      description += '，' + '🔉 接近商业区标准，可能影响专注力，';
+      description += '，' + '接近商业区标准，可能影响专注力，';
     }
 
     if (levels['一般'] > 40) {
-      description += '，' + '🗣️ 符合居民区标准';
+      description += '，' + '符合居民区标准';
     }
 
     if (levels['安静'] > 50) {
-      description += '，' + '🤫 达到疗养区标准，适合办公学习';
+      description += '，' + '达到疗养区标准，适合办公学习';
     }
 
     if (levels['非常安静'] > 60) {
-      description += '，' + '🌙 环境非常安静，优于疗养区标准，适合休息';
+      description += '，' + '环境非常安静，优于疗养区标准，适合休息';
     }
 
     // 追加新的分析结果
@@ -114,7 +114,7 @@ export struct Statistics {
     // 建议
     const recommendations = this.generateRecommendations(levels);
     if (recommendations) {
-      description += '，' + '📝 建议：' + recommendations;
+      description += '，' + '建议：' + recommendations;
     }
 
     return description + "。";

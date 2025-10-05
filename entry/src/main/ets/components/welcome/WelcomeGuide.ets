@@ -160,7 +160,7 @@ export struct WelcomeGuide {
       })
     } else if (this.currentPage == 2) {
       AdvancedFeaturesPage({
-        onNext: () => this.goToNextPage(),
+        onComplete: () => this.handleComplete(),
         onPrev: () => this.goToPrevPage()
       })
     }

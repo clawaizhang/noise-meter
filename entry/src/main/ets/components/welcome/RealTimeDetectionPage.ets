@@ -202,7 +202,7 @@ export struct RealTimeDetectionPage {
   @Builder
   private buildFeatureDescription() {
     Column({ space: DesignConstants.SPACING_LG }) {
-      Text('实时守护您的听力健康 😊')
+      Text('实时噪音监测分析')
         .fontSize(DesignConstants.FONT_SIZE_XL)
         .fontWeight(FontWeight.Bold)
         .fontColor($r('sys.color.font_emphasize'))
@@ -210,13 +210,14 @@ export struct RealTimeDetectionPage {
         .margin({ bottom: DesignConstants.SPACING_MD })
         .opacity(this.titleOpacity)
 
-      // 功能亮点卡片
+      // 功能亮点卡片 - 居中后再左对齐
       Column({ space: DesignConstants.SPACING_MD }) {
-        this.buildFeatureItem('🎵 即时响应，随时了解环境噪音')
-        this.buildFeatureItem('🎯 智能识别，贴心提醒')
-        this.buildFeatureItem('🏠 支持多种环境场景检测')
+        this.buildFeatureItem('即时响应，实时环境噪音监测', $r('app.media.ic_audio_analysis'))
+        this.buildFeatureItem('智能识别，专业数据分析', $r('app.media.ic_meter'))
+        this.buildFeatureItem('支持多种环境场景分析', $r('app.media.ic_home'))
       }
-      .width('100%')
+      .width('80%')  // 限制宽度
+      .alignItems(HorizontalAlign.Start)  // 内部左对齐
       .opacity(this.featuresOpacity)
     }
     .width('100%')
@@ -224,19 +225,34 @@ export struct RealTimeDetectionPage {
   }
 
   @Builder
-  private buildFeatureItem(text: string) {
-    Text(text)
-      .fontSize(DesignConstants.FONT_SIZE_MD)
-      .fontColor($r('sys.color.font_secondary'))
-      .textAlign(TextAlign.Center)
-      .padding({
-        top: DesignConstants.SPACING_MD,
-        bottom: DesignConstants.SPACING_MD,
-        left: DesignConstants.SPACING_LG,
-        right: DesignConstants.SPACING_LG
-      })
-      .borderRadius(DesignConstants.BORDER_RADIUS_MD)
-      .width('100%')
+  private buildFeatureItem(text: string, icon: Resource) {
+    Row({ space: DesignConstants.SPACING_SM }) {
+      // 图标区域 - 固定宽度确保对齐
+      Column() {
+        Image(icon)
+          .width(DesignConstants.ICON_SIZE_SM)
+      }
+      .width(32)  // 固定图标容器宽度
+      .alignItems(HorizontalAlign.Center)
+      
+      // 文本区域
+      Text(text)
+        .fontSize(DesignConstants.FONT_SIZE_MD)
+        .fontColor($r('sys.color.font_secondary'))
+        .textAlign(TextAlign.Start)
+        .layoutWeight(1)  // 文本区域占据剩余空间
+    }
+    .justifyContent(FlexAlign.Start)
+    .alignItems(VerticalAlign.Center)
+    .padding({
+      top: DesignConstants.SPACING_MD,
+      bottom: DesignConstants.SPACING_MD,
+      left: DesignConstants.SPACING_LG,
+      right: DesignConstants.SPACING_LG
+    })
+    .borderRadius(DesignConstants.BORDER_RADIUS_MD)
+    .width('90%')  // 限制整体宽度
+    .alignSelf(ItemAlign.Center)  // 确保每个功能项都居中
   }
 
   @Builder
@@ -255,8 +271,17 @@ export struct RealTimeDetectionPage {
   @Builder
   private buildSceneCard(title: string, value: string, color: Resource, icon: string, index: number) {
     Column({ space: DesignConstants.SPACING_XS }) {
-      Text(icon)
-        .fontSize(DesignConstants.FONT_SIZE_XL)
+      // 根据场景类型选择对应的图标
+      if (title === '图书馆') {
+        Image($r('app.media.ic_document_edit'))
+          .width(DesignConstants.ICON_SIZE_MD)
+      } else if (title === '办公室') {
+        Image($r('app.media.ic_user'))
+          .width(DesignConstants.ICON_SIZE_MD)
+      } else if (title === '街道') {
+        Image($r('app.media.ic_location'))
+          .width(DesignConstants.ICON_SIZE_MD)
+      }
       
       Text(title)
         .fontSize(DesignConstants.FONT_SIZE_SM)

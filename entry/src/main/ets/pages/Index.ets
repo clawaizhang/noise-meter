@@ -283,7 +283,8 @@ struct Index {
         .mode(NavigationMode.Stack)
       }
     }
-    .backgroundColor($r('sys.color.background_secondary'))
+    .backgroundColor(this.pk.show_welcome_guide || !this.pk.privacy_agreed ? $r('sys.color.background_primary') :
+    $r('sys.color.background_secondary'))
     .expandSafeArea([SafeAreaType.SYSTEM], [SafeAreaEdge.TOP, SafeAreaEdge.BOTTOM])
     .height('100%')
   }

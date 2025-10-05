@@ -2,14 +2,14 @@ import { DesignConstants } from '../../constants/DesignConstants';
 
 // 功能卡片接口定义
 interface FeatureCard {
-  icon: string;
+  icon: Resource;
   title: string;
   description: string;
 }
 
 @ComponentV2
 export struct AdvancedFeaturesPage {
-  @Param @Require onNext: () => void;
+  @Param @Require onComplete: () => void;
   @Param @Require onPrev: () => void;
   
   private canvasSettings: RenderingContextSettings = new RenderingContextSettings(true);
@@ -28,12 +28,12 @@ export struct AdvancedFeaturesPage {
 
   // 功能卡片数据
   private readonly features: FeatureCard[] = [
-    { icon: '📊', title: '频谱分析', description: '多频段可视化分析' },
-    { icon: '⚖️', title: '计权模式', description: 'A/C/Z专业计权' },
-    { icon: '🔔', title: '智能警报', description: '阈值警报提醒' },
-    { icon: '📝', title: '历史记录', description: '数据追踪分析' },
-    { icon: '⏰', title: '时段调度', description: '智能时段阈值' },
-    { icon: '📋', title: '专业报告', description: '数据分析报告' }
+    { icon: $r('app.media.ic_stats'), title: '频谱分析', description: '多频段可视化分析' },
+    { icon: $r('app.media.ic_weighting'), title: '计权模式', description: 'A/C/Z专业计权' },
+    { icon: $r('app.media.ic_alarm'), title: '智能警报', description: '阈值警报提醒' },
+    { icon: $r('app.media.ic_document_edit'), title: '历史记录', description: '数据追踪分析' },
+    { icon: $r('app.media.ic_time_weighting'), title: '时段调度', description: '智能时段阈值' },
+    { icon: $r('app.media.ic_info'), title: '专业报告', description: '数据分析报告' }
   ];
 
   aboutToAppear(): void {
@@ -280,8 +280,8 @@ export struct AdvancedFeaturesPage {
   @Builder
   private buildFeatureCard(item: FeatureCard, index: number) {
     Column({ space: DesignConstants.SPACING_XS }) {
-      Text(item.icon)
-        .fontSize(DesignConstants.FONT_SIZE_XL)
+      Image(item.icon)
+        .width(DesignConstants.ICON_SIZE_MD)
       
       Text(item.title)
         .fontSize(DesignConstants.FONT_SIZE_SM)
@@ -322,7 +322,7 @@ export struct AdvancedFeaturesPage {
         .opacity(this.useNowButtonOpacity)
         .onClick(() => {
           // 直接完成引导，进入主应用
-          this.onNext();
+          this.onComplete();
         })
         .margin({ top: DesignConstants.SPACING_2XL })
     }
