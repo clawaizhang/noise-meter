@@ -129,34 +129,50 @@ export struct MainNoiseMeter {
   }
 
   @Builder
-  private buildMembershipBadge() {
-    if (this.pk.member_ship.can()) {
-      Row({ space: 4 }) {
-        Image($r('app.media.ic_vip'))
-          .width(16)
-          .height(16)
-          .fillColor($r('sys.color.confirm'))
-        Text(`专业 · ${Math.ceil((this.pk.member_ship.expiryDate - Date.now()) / (1000 * 60 * 60 * 24))}天`)
-          .fontSize(12)
-          .fontColor($r('sys.color.confirm'))
+  private buildTitleContent() {
+    Column({ space: 2 }) {
+      // 主标题 - 在上方
+      Text(this.title)
+        .fontSize(18)
+        .fontWeight(FontWeight.Bold)
+        .fontColor($r('sys.color.font_primary'))
+        .alignSelf(ItemAlign.Start)
+      
+      // 副标题 - 在下方（会员标签）
+      if (this.pk.member_ship.can()) {
+        Row({ space: 4 }) {
+          Image($r('app.media.ic_vip'))
+            .width(14)
+            .height(14)
+            .fillColor($r('sys.color.confirm'))
+          Text(`专业版 · ${Math.ceil((this.pk.member_ship.expiryDate - Date.now()) / (1000 * 60 * 60 * 24))}天`)
+            .fontSize(11)
+            .fontColor($r('sys.color.confirm'))
+        }
+        .padding({ left: 6, right: 6, top: 2, bottom: 2 })
+        .backgroundColor($r('sys.color.comp_background_primary'))
+        .borderRadius(8)
+        .alignSelf(ItemAlign.Start)
+      } else {
+        Row({ space: 4 }) {
+          Image($r('app.media.ic_vip'))
+            .width(14)
+            .height(14)
+            .fillColor($r('sys.color.font_secondary'))
+          Text('基础版')
+            .fontSize(11)
+            .fontColor($r('sys.color.font_secondary'))
+        }
+        .padding({ left: 6, right: 6, top: 2, bottom: 2 })
+        .backgroundColor($r('sys.color.comp_background_primary'))
+        .borderRadius(8)
+        .alignSelf(ItemAlign.Start)
       }
-      .padding({ left: 8, right: 8, top: 4, bottom: 4 })
-      .backgroundColor($r('sys.color.comp_background_primary'))
-      .borderRadius(12)
-    } else {
-      Row({ space: 4 }) {
-        Image($r('app.media.ic_vip'))
-          .width(16)
-          .height(16)
-          .fillColor($r('sys.color.font_secondary'))
-        Text('免费')
-          .fontSize(12)
-          .fontColor($r('sys.color.font_secondary'))
-      }
-      .padding({ left: 8, right: 8, top: 4, bottom: 4 })
-      .backgroundColor($r('sys.color.comp_background_primary'))
-      .borderRadius(12)
     }
+    .alignItems(HorizontalAlign.Start)
+    .justifyContent(FlexAlign.Center)
+    .padding({ left: 16 }) // 左侧边距
+    .height('100%')
   }
 
   build() {
@@ -195,7 +211,7 @@ export struct MainNoiseMeter {
       .barWidth('100%')
       .animationDuration(0)
     }
-    .title(this.buildMembershipBadge, {
+    .title(this.buildTitleContent, {
       barStyle: BarStyle.STANDARD,
       backgroundBlurStyle: BlurStyle.BACKGROUND_REGULAR,
     })

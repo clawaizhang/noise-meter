@@ -85,9 +85,9 @@ export struct MembershipStatusCard {
     
     if (membership.can()) {
       const remainingDays = Math.ceil((membership.expiryDate - Date.now()) / (1000 * 60 * 60 * 24));
-      return `专业会员 · 剩余${remainingDays}天`;
+      return `专业版 · 剩余${remainingDays}天`;
     } else {
-      return '免费用户';
+      return '基础版';
     }
   }
 
@@ -167,7 +167,7 @@ export struct MembershipStatusCard {
       .alignSelf(ItemAlign.Start)
 
       // 进度条
-      Stack() {
+      Stack({ alignContent: Alignment.Start }) {
         // 背景条
         Row()
           .width('100%')
@@ -175,7 +175,7 @@ export struct MembershipStatusCard {
           .backgroundColor($r('sys.color.comp_background_primary'))
           .borderRadius(4)
 
-        // 进度条
+        // 进度条 - 从左侧开始增长
         Row()
           .width(`${this.progressPercent}%`)
           .height(8)
