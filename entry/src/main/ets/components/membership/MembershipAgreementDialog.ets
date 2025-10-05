@@ -19,6 +19,12 @@ export struct MembershipAgreementDialog {
     Column({ space: DesignConstants.SPACING_MD }) {
       // 标题区域
       Column({ space: DesignConstants.SPACING_SM }) {
+        Image($r('app.media.ic_document_edit'))
+          .width(DesignConstants.ICON_SIZE_XL)
+          .height(DesignConstants.ICON_SIZE_XL)
+          .fillColor($r('sys.color.interactive_active'))
+          .margin({ bottom: DesignConstants.SPACING_SM })
+        
         Text('会员奖励计划协议')
           .fontSize(DesignConstants.FONT_SIZE_XL)
           .fontWeight(FontWeight.Bold)
@@ -103,6 +109,11 @@ export struct MembershipAgreementDialog {
           .backgroundColor($r('sys.color.comp_background_secondary'))
           .fontColor($r('sys.color.font_primary'))
           .borderRadius(DesignConstants.BORDER_RADIUS_MD)
+          .border({
+            width: DesignConstants.BORDER_WIDTH_SM,
+            color: $r('sys.color.comp_border_color'),
+            style: BorderStyle.Solid
+          })
           .onClick(() => {
             this.onCancel();
           })
@@ -110,7 +121,7 @@ export struct MembershipAgreementDialog {
         Button('同意并继续')
           .layoutWeight(1)
           .fontSize(DesignConstants.FONT_SIZE_MD)
-          .backgroundColor($r('sys.color.ohos_id_color_palette1'))
+          .backgroundColor($r('sys.color.interactive_active'))
           .fontColor($r('sys.color.font_on_primary'))
           .borderRadius(DesignConstants.BORDER_RADIUS_MD)
           .onClick(() => {
@@ -158,7 +169,13 @@ export struct MembershipAgreementDialog {
     }
     .width('100%')
     .padding(DesignConstants.SPACING_MD)
-    .backgroundColor($r('sys.color.comp_background_secondary'))
+    .backgroundColor($r('sys.color.comp_background_primary'))
     .borderRadius(DesignConstants.BORDER_RADIUS_MD)
+    .border({
+      width: DesignConstants.BORDER_WIDTH_SM,
+      color: $r('sys.color.comp_border_color'),
+      style: BorderStyle.Solid
+    })
+    .shadow(DesignConstants.SHADOW_SM)
   }
 }

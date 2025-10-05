@@ -342,15 +342,21 @@ export struct MembershipStatusCard {
    */
   private showMembershipAgreement(): void {
     let props: MembershipAgreementDialogProps = {
-      onAgree: this.handleAgreementAgree,
-      onCancel: this.handleAgreementCancel
+      onAgree: () => {
+        this.handleAgreementAgree();
+        dialog.dismiss();
+      },
+      onCancel: () => {
+        this.handleAgreementCancel();
+        dialog.dismiss();
+      }
     };
-    DialogHub.getSheet()
+    const dialog = DialogHub.getSheet()
       .setComponentTargetId('mainId')
       .setStyle({ backgroundColor: $r('sys.color.background_secondary') })
       .setContent(wrapBuilder(MembershipAgreementDialogBuilder), props)
-      .build()
-      .show();
+      .build();
+    dialog.show();
   }
 
   /**

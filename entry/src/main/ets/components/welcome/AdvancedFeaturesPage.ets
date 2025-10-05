@@ -166,6 +166,7 @@ export struct AdvancedFeaturesPage {
         Image($r('app.media.ic_audio_analysis'))
           .width(80)
           .height(80)
+          .fillColor($r('sys.color.icon'))
           .scale({ x: this.featureIconScale, y: this.featureIconScale })
           .rotate({ angle: this.featureIconRotation })
       }

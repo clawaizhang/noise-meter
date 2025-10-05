@@ -529,15 +529,21 @@ export struct UpgradeContent {
     this.onLater();
     // 使用DialogHub显示会员协议对话框
     let props: MembershipAgreementDialogProps = {
-      onAgree: this.handleAgreementAgree,
-      onCancel: this.handleAgreementCancel,
+      onAgree: () => {
+        this.handleAgreementAgree();
+        dialog.dismiss();
+      },
+      onCancel: () => {
+        this.handleAgreementCancel();
+        dialog.dismiss();
+      }
     };
-    DialogHub.getSheet()
+    const dialog = DialogHub.getSheet()
       .setComponentTargetId('mainId')
       .setStyle({ backgroundColor: $r('sys.color.background_secondary') })
       .setContent(wrapBuilder(MembershipAgreementDialogBuilder), props)
-      .build()
-      .show();
+      .build();
+    dialog.show();
   }
 
   // 处理升级逻辑（保留原有逻辑，但暂时不使用）
