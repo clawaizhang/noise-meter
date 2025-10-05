@@ -7,6 +7,8 @@ import {
   MembershipAgreementDialogProps
 } from "./MembershipAgreementDialog";
 import { DialogHub } from "@hadss/dialoghub";
+import { MembershipRewardService } from "../../services/MembershipRewardService";
+import { ContinuousUsageManager } from "../../services/ContinuousUsageManager";
 
 // 价格方案接口
 interface PricingPlan {
@@ -581,6 +583,13 @@ export struct UpgradeContent {
     // 记录用户同意状态
     this.pk.has_agreed_membership_reward = true;
     console.info('[会员管理] 用户已同意会员奖励计划协议，同意状态已记录');
+    
+    // 应用会员奖励
+    const membershipRewardService = MembershipRewardService.getInstance();
+    const continuousUsageManager = ContinuousUsageManager.getInstance();
+    const consecutiveDays = continuousUsageManager.getConsecutiveDays();
+    membershipRewardService.applyMembershipReward(consecutiveDays);
+    
     // 这里可以添加其他逻辑，比如显示欢迎提示等
   }
 
