@@ -23,6 +23,8 @@ export struct AdvancedFeaturesPage {
   @Local private buttonScale: number = 1.0;
   @Local private cardScales: number[] = [1.0, 1.0, 1.0, 1.0, 1.0, 1.0];
   @Local private isAnimating: boolean = true;
+  @Local private useNowButtonScale: number = 0.8;
+  @Local private useNowButtonOpacity: number = 0;
 
   // 功能卡片数据
   private readonly features: FeatureCard[] = [
@@ -83,6 +85,17 @@ export struct AdvancedFeaturesPage {
         this.buttonOpacity = 1;
       });
     }, 900);
+
+    // 立即使用按钮渐显
+    setTimeout(() => {
+      animateTo({
+        duration: DesignConstants.ANIMATION_DURATION_MD,
+        curve: Curve.EaseOut
+      }, () => {
+        this.useNowButtonScale = 1.0;
+        this.useNowButtonOpacity = 1;
+      });
+    }, 1200);
   }
 
   private startSpectrumAnimation(): void {
@@ -178,6 +191,9 @@ export struct AdvancedFeaturesPage {
 
       // 功能卡片网格
       this.buildFeatureGrid()
+
+      // 立即使用按钮
+      this.buildUseNowButton()
     }
     .width('100%')
     .height('100%')
@@ -287,5 +303,30 @@ export struct AdvancedFeaturesPage {
     .shadow(DesignConstants.SHADOW_SM)
     .scale({ x: this.cardScales[index], y: this.cardScales[index] })
     .onHover((isHover: boolean) => this.handleCardHover(isHover, index))
+  }
+
+  // 构建立即使用按钮
+  @Builder
+  private buildUseNowButton() {
+    Column({ space: DesignConstants.SPACING_MD }) {
+      Button('立即使用', { type: ButtonType.Capsule })
+        .width('80%')
+        .height(56)
+        .backgroundColor($r('sys.color.interactive_active'))
+        .fontColor($r('sys.color.font_on_primary'))
+        .fontSize(DesignConstants.FONT_SIZE_XL)
+        .fontWeight(FontWeight.Bold)
+        .borderRadius(28)
+        .shadow(DesignConstants.SHADOW_MD)
+        .scale({ x: this.useNowButtonScale, y: this.useNowButtonScale })
+        .opacity(this.useNowButtonOpacity)
+        .onClick(() => {
+          // 直接完成引导，进入主应用
+          this.onNext();
+        })
+        .margin({ top: DesignConstants.SPACING_2XL })
+    }
+    .width('100%')
+    .alignItems(HorizontalAlign.Center)
   }
 }
