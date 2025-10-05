@@ -283,5 +283,8 @@ struct Index {
         .mode(NavigationMode.Stack)
       }
     }
+    .backgroundColor($r('sys.color.background_secondary'))
+    .expandSafeArea([SafeAreaType.SYSTEM], [SafeAreaEdge.TOP, SafeAreaEdge.BOTTOM])
+    .height('100%')
   }
 }
