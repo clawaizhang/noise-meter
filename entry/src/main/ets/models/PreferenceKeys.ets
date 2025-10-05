@@ -55,6 +55,11 @@ export class PreferenceKeys {
   @Trace
   privacy_agreed: boolean = PreferencesUtil.getBooleanSync('privacy_agreed', false);
   /**
+   * 隐私协议同意状态
+   */
+  @Trace
+  show_welcome_guide: boolean = PreferencesUtil.getBooleanSync('show_welcome_guide', true);
+  /**
    * 后台运行开关状态键名
    */
   @Trace

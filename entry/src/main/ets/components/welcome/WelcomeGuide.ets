@@ -1,7 +1,6 @@
 import { WelcomePage } from './WelcomePage';
 import { RealTimeDetectionPage } from './RealTimeDetectionPage';
 import { AdvancedFeaturesPage } from './AdvancedFeaturesPage';
-import { PrivacyPolicyPage } from './PrivacyPolicyPage';
 import { DesignConstants } from '../../constants/DesignConstants';
 
 @ComponentV2
@@ -10,8 +9,7 @@ export struct WelcomeGuide {
   @Event onCancel: () => void;
   
   @Local private currentPage: number = 0;
-  private totalPages: number = 4;
-  @Local private privacyAgreed: boolean = false;
+  private totalPages: number = 3;
   
   // 滑动指示器动画状态
   @Local private arrowOffset: number = 0;
@@ -110,14 +108,10 @@ export struct WelcomeGuide {
   }
 
   private handleComplete(): void {
-    if (this.currentPage === this.totalPages - 1 && this.privacyAgreed) {
-      // 用户同意隐私政策，设置隐私政策状态并完成引导
+    if (this.currentPage === this.totalPages - 1) {
+      // 用户完成欢迎引导，进入主应用
       this.onComplete();
     }
-  }
-
-  private setPrivacyAgreed(agreed: boolean): void {
-    this.privacyAgreed = agreed;
   }
 
   build() {
@@ -170,14 +164,6 @@ export struct WelcomeGuide {
       AdvancedFeaturesPage({
         onNext: () => this.goToNextPage(),
         onPrev: () => this.goToPrevPage()
-      })
-    } else if (this.currentPage == 3) {
-      PrivacyPolicyPage({
-        onAgree: () => {
-          this.setPrivacyAgreed(true);
-          this.handleComplete();
-        },
-        onPrev: () => this.goToPrevPage(),
       })
     }
   }

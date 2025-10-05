@@ -2,6 +2,7 @@ import { navigationStack } from '../constants/ProviderConstant'
 import { RelationalStoreService } from '../services/RelationalStoreService'
 import { commonEventManager } from '@kit.BasicServicesKit'
 import { WelcomeGuide } from '../components/welcome'
+import { PrivacyPolicyStandalone } from '../components/privacy/PrivacyPolicyStandalone'
 import { PreferenceKeys } from '../models/PreferenceKeys'
 import { DatabaseUpgradeConfig, DbConfig } from '../interfaces/DatabaseInterfaces'
 import hilog from '@ohos.hilog'
@@ -35,11 +36,12 @@ struct Index {
   @Provider(navigationStack) navStack: NavPathStack = new NavPathStack()
   @Local isInitialized: boolean = false;
   @Local isLoading: boolean = true;
-  @Local pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys,() => new PreferenceKeys())!;
+  @Local pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys, () => new PreferenceKeys())!;
   @Local private currentConfig: ThresholdConfig =
     PersistenceV2.connect(ThresholdConfig, () => DEFAULT_THRESHOLD_CONFIG)!;
   @Local as: AppKeys = AppStorageV2.connect(AppKeys, () => new AppKeys())!;
   usePrivacy: boolean = true;
+  @Local private showWelcomeGuide: boolean = false;
   private relationalStoreService: RelationalStoreService = RelationalStoreService.getInstance();
   private context = this.getUIContext().getHostContext() as common.UIAbilityContext;
   private readonly eventId = 'usual.event.PRIVACY_STATE_CHANGED';
@@ -79,6 +81,7 @@ struct Index {
       notificationHelper.checkAndRequestPermission();
     }
   }
+
   @Monitor('pk.system_notification_enabled')
   system_notification_enabledChange(monitor: IMonitor) {
     let system_notification_enabled = monitor.value<boolean>()?.now!;
@@ -98,19 +101,19 @@ struct Index {
     ThresholdManager.setCurrentConfig(this.currentConfig);
     FileUtils.init(this.getUIContext().getHostContext());
     this.setDisplayMode(this.pk.display_mode);
-    
+
     // 不再订阅系统隐私政策事件，使用自定义隐私政策
     // if (!this.pk.privacy_agreed) {
     //   this.subscribe();
     // }
-    
+
     // 初始化权限状态
     const permissionService = PermissionService.getInstance();
     await permissionService.initializePermissionState();
-    
+
     // 初始化DisplayManager监听
     this.initDisplayManager();
-    
+
     this.initialize();
   }
 
@@ -129,7 +132,7 @@ struct Index {
       // 使用自定义隐私政策，不再依赖系统隐私政策API
       // 隐私政策状态由用户通过自定义对话框设置
       // 这里保持隐私政策状态不变，等待用户交互
-      
+
       // 初始化数据库
       const upgradeConfigs: DatabaseUpgradeConfig[] = dbConfig.upgradeConfigs;
 
@@ -237,19 +240,37 @@ struct Index {
         // 显示正常内容
         Navigation(this.navStack) {
           if (this.pk.privacy_agreed) {
+            if (this.pk.show_welcome_guide) {
+              // 显示欢迎引导页（隐私政策已同意）
+              WelcomeGuide({
+                onComplete: () => {
+                  // 用户完成欢迎引导，进入主应用
+                  this.pk.show_welcome_guide = false;
+                  this
+                  hilog.info(DOMAIN, TAG, '用户完成欢迎引导，进入主应用');
+                },
+                onCancel: () => {
+                  // 用户取消欢迎引导，退出APP
+                  hilog.info(DOMAIN, TAG, '用户取消欢迎引导，退出APP');
+                  this.context.terminateSelf();
+                }
+              })
+            } else {
               // 直接进入主应用
               MainPage()
+            }
           } else {
-            // 直接显示欢迎引导页（包含隐私政策页面）
-            WelcomeGuide({
-              onComplete: () => {
-                // 用户完成欢迎引导并同意隐私政策，进入主应用
+            // 显示独立隐私政策页面
+            PrivacyPolicyStandalone({
+              onAgree: () => {
+                // 用户同意隐私政策，设置状态并显示欢迎引导
                 this.pk.privacy_agreed = true;
-                hilog.info(DOMAIN, TAG, '用户完成欢迎引导并同意隐私政策，进入主应用');
+                this.pk.show_welcome_guide = true;
+                hilog.info(DOMAIN, TAG, '用户同意隐私政策，显示欢迎引导');
               },
               onCancel: () => {
-                // 用户取消欢迎引导，退出APP
-                hilog.info(DOMAIN, TAG, '用户取消欢迎引导，退出APP');
+                // 用户不同意隐私政策，退出APP
+                hilog.info(DOMAIN, TAG, '用户不同意隐私政策，退出APP');
                 this.context.terminateSelf();
               }
             })
