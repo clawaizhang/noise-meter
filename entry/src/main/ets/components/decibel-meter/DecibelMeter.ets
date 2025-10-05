@@ -40,6 +40,7 @@ export struct DecibelMeter {
   @Local private currentTime: number = Date.now();
   @Local private countdownTimer?: number;
   @Local private hideForXsMd: boolean = false;
+  private animationTimeOutId: number | undefined;
   // 服务实例
   private audioControllerService: AudioControllerService = AudioControllerService.getInstance();
   @Consumer(navigationStack) navStack: NavPathStack = new NavPathStack()
@@ -367,23 +368,25 @@ export struct DecibelMeter {
   startCollapseAnimation() {
     // 获取屏幕尺寸
     const displayClass = display.getDefaultDisplaySync();
-    this.dWidthHeight = '120%';
-    // 页面内容动画
-    this.getUIContext().animateTo({
-      duration: 800,
-      curve: curves.cubicBezier(0.4, 0.0, 0.2, 1.0),
-      onFinish: () => {
-        this.dScale = 1;
-        this.translateX = 0;
-        this.translateY = 0;
-        this.bgImage = undefined;
-        this.dWidthHeight = '';
-      }
-    }, () => {
-      this.dScale = 0.05;
-      this.translateX = this.getUIContext().px2vp(displayClass.width) / 2 - 80;
-      this.translateY = -this.getUIContext().px2vp(displayClass.height) / 2 + 20;
-    });
-
+    this.dWidthHeight = '100%';
+    this.animationTimeOutId = setTimeout(() => {
+      // 页面内容动画
+      this.getUIContext().animateTo({
+        duration: 800,
+        curve: Curve.EaseIn,
+        onFinish: () => {
+          this.dScale = 1;
+          this.translateX = 0;
+          this.translateY = 0;
+          this.bgImage = undefined;
+          this.dWidthHeight = '';
+          clearTimeout(this.animationTimeOutId);
+        }
+      }, () => {
+        this.dScale = 0.05;
+        this.translateX = this.getUIContext().px2vp(displayClass.width) / 2 - 30;
+        this.translateY = -this.getUIContext().px2vp(displayClass.height) / 2 + 20;
+      });
+    }, 100)
   }
 }

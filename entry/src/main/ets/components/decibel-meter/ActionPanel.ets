@@ -131,19 +131,8 @@ export struct ActionPanel {
     let cameraManager: camera.CameraManager = camera.getCameraManager(getContext(this) as common.UIAbilityContext);
     if (cameraManager.isTorchSupported()) {
       cameraManager.setTorchMode(this.isTorchOn ? camera.TorchMode.OFF : camera.TorchMode.ON);
-      promptAction.showToast({ message: '手电筒已' + (this.isTorchOn ? '关闭' : '打开') });
       this.isTorchOn = !this.isTorchOn;
     }
-  }
-
-  // 频率加权方式切换功能
-  private onToggleWeighting(weightingType: WeightingType) {
-    this.pk.weighting_type = weightingType;
-    // 弹出提示框显示当前频率加权方式
-    promptAction.showToast({
-      message: `已切换为: ${weightingType} 计权`,
-      duration: 2000
-    });
   }
 
 }
