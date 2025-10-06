@@ -3,7 +3,7 @@
  * 主弹框组件，集成所有子组件并提供完整的交互体验
  */
 
-import { AudioAnalysisMode } from '../../common/AudioConfig';
+import { AudioAnalysisConfig, AudioAnalysisMode } from '../../common/AudioConfig';
 import { TimeWeightingConstants } from '../../constants/TimeWeightingConstants';
 import { DesignConstants } from '../../constants/DesignConstants';
 import { AcousticExplanationComp } from './AcousticExplanation';
@@ -21,16 +21,22 @@ export struct TimeWeightingDialog {
   @Param @Require currentMode: AudioAnalysisMode; // 当前模式（从外部传入）
   @Param @Require onClose: () => void; // 关闭回调
   @Event onSettingsApplied?: (mode: AudioAnalysisMode) => void; // 设置应用回调
+  @Local pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys)!;
   @Local tempSelectedMode!: AudioAnalysisMode; // 临时选中的模式
   @Local hoveredMode: AudioAnalysisMode | null = null; // 悬停的模式
   @Local isTechnicalParamsExpanded: boolean = false; // 技术参数是否展开
   @Local isAcousticTheoryExpanded: boolean = false; // 声学原理是否展开
   @Local tempCustomModeEnabled: boolean = false; // 临时自定义模式开关状态
-  @Local pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys)!;
-  
+  @Local tempCustomConfig: AudioAnalysisConfig =
+    new AudioAnalysisConfig(this.pk.custom_audio_config.fftSize, this.pk.custom_audio_config.updateInterval,
+      this.pk.custom_audio_config.smoothingFactor, this.pk.custom_audio_config.windowType,
+      this.pk.custom_audio_config.overlap, this.pk.custom_audio_config.bufferSize); // 临时自定义配置
   // 初始状态 - 用于检测是否有修改
   private initialMode: AudioAnalysisMode = this.currentMode;
   private initialCustomModeEnabled: boolean = false;
+  private initialCustomConfig: AudioAnalysisConfig = new AudioAnalysisConfig(this.pk.custom_audio_config.fftSize, this.pk.custom_audio_config.updateInterval,
+    this.pk.custom_audio_config.smoothingFactor, this.pk.custom_audio_config.windowType,
+    this.pk.custom_audio_config.overlap, this.pk.custom_audio_config.bufferSize);
 
   aboutToAppear() {
     // 初始化临时状态
@@ -49,6 +55,13 @@ export struct TimeWeightingDialog {
     }
     // 应用自定义模式设置
     this.pk.custom_audio_config_enabled = this.tempCustomModeEnabled;
+    // 应用自定义配置
+    this.pk.custom_audio_config.fftSize = this.tempCustomConfig.fftSize;
+    this.pk.custom_audio_config.updateInterval = this.tempCustomConfig.updateInterval;
+    this.pk.custom_audio_config.smoothingFactor = this.tempCustomConfig.smoothingFactor;
+    this.pk.custom_audio_config.windowType = this.tempCustomConfig.windowType;
+    this.pk.custom_audio_config.overlap = this.tempCustomConfig.overlap;
+    this.pk.custom_audio_config.bufferSize = this.tempCustomConfig.bufferSize;
     // 关闭弹窗
     this.onClose();
   }
@@ -62,7 +75,27 @@ export struct TimeWeightingDialog {
   // 检测设置是否有修改
   private hasSettingsChanged(): boolean {
     return this.tempSelectedMode !== this.initialMode ||
-           this.tempCustomModeEnabled !== this.initialCustomModeEnabled;
+      this.tempCustomModeEnabled !== this.initialCustomModeEnabled ||
+    this.hasCustomConfigChanged();
+  }
+
+  // 检测自定义配置是否有修改
+  private hasCustomConfigChanged(): boolean {
+    return this.tempCustomConfig.fftSize !== this.initialCustomConfig.fftSize ||
+      this.tempCustomConfig.updateInterval !== this.initialCustomConfig.updateInterval ||
+      this.tempCustomConfig.windowType !== this.initialCustomConfig.windowType ||
+      this.tempCustomConfig.smoothingFactor !== this.initialCustomConfig.smoothingFactor ||
+      this.tempCustomConfig.overlap !== this.initialCustomConfig.overlap;
+  }
+
+  // 处理自定义配置变化
+  private handleCustomConfigChange(config: AudioAnalysisConfig) {
+    this.tempCustomConfig.fftSize = config.fftSize;
+    this.tempCustomConfig.updateInterval = config.updateInterval;
+    this.tempCustomConfig.windowType = config.windowType;
+    this.tempCustomConfig.smoothingFactor = config.smoothingFactor;
+    this.tempCustomConfig.overlap = config.overlap;
+    this.initialCustomConfig.fftSize = config.fftSize;
   }
 
   // 处理模式选择 - 只更新临时状态
@@ -117,7 +150,7 @@ export struct TimeWeightingDialog {
     Row({ space: 0 }) {
       ForEach(TimeWeightingConstants.getAvailableModes(), (mode: AudioAnalysisMode) => {
         if (mode == AudioAnalysisMode.SLOW_TIME_WEIGHTING || mode == AudioAnalysisMode.IMPULSE_TIME_WEIGHTING) {
-          Row(){
+          Row() {
             PremiumFeature({
               featureName: TimeWeightingConstants.MODE_DISPLAY_NAMES[mode],
               featureDesc: TimeWeightingConstants.MODE_DESCRIPTIONS[mode]
@@ -291,6 +324,9 @@ export struct TimeWeightingDialog {
               onSelectedChange: () => {
                 // 自定义配置面板的更改在保存时应用
                 // 这里不需要立即生效
+              },
+              onConfigChange: (config: AudioAnalysisConfig) => {
+                this.handleCustomConfigChange(config);
               }
             })
             Blank()

@@ -3,7 +3,7 @@
  * 提供完整的音频分析参数自定义配置界面
  */
 
-import {DEFAULT_CUSTOM_CONFIG } from '../../common/AudioConfig';
+import { AudioAnalysisConfig, DEFAULT_CUSTOM_CONFIG } from '../../common/AudioConfig';
 import { DesignConstants } from '../../constants/DesignConstants';
 import { PreferenceKeys } from '../../models/PreferenceKeys';
 import { PersistenceV2 } from '@kit.ArkUI';
@@ -49,6 +49,11 @@ export struct CustomConfigPanel {
   @Local pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys)!;
   @Local display: boolean = true;
   @Event onSelectedChange: () => void;
+  @Event onConfigChange?: (config: AudioAnalysisConfig) => void; // 新增：配置变化回调
+  @Local tempCustomConfig: AudioAnalysisConfig =
+    new AudioAnalysisConfig(this.pk.custom_audio_config.fftSize, this.pk.custom_audio_config.updateInterval,
+      this.pk.custom_audio_config.smoothingFactor, this.pk.custom_audio_config.windowType,
+      this.pk.custom_audio_config.overlap, this.pk.custom_audio_config.bufferSize); // 临时配置状态
   // FFT大小选项
   private readonly fftSizeOptions: SelectOption[] = [
     { value: 1024, label: '1024', index: 0 },
@@ -95,18 +100,22 @@ export struct CustomConfigPanel {
     { value: 0.9, label: '0.9', index: 8 }
   ];
 
-  // 重置配置到默认值
+  // 重置配置到默认值 - 只更新临时状态
   private resetToDefault() {
     this.display = false;
     setTimeout(() => {
       this.display = true;
     }, 500);
-    this.pk.custom_audio_config.fftSize = DEFAULT_CUSTOM_CONFIG.fftSize;
-    this.pk.custom_audio_config.bufferSize = DEFAULT_CUSTOM_CONFIG.bufferSize;
-    this.pk.custom_audio_config.updateInterval = DEFAULT_CUSTOM_CONFIG.updateInterval;
-    this.pk.custom_audio_config.windowType = DEFAULT_CUSTOM_CONFIG.windowType;
-    this.pk.custom_audio_config.smoothingFactor = DEFAULT_CUSTOM_CONFIG.smoothingFactor;
-    this.pk.custom_audio_config.overlap = DEFAULT_CUSTOM_CONFIG.overlap;
+    this.tempCustomConfig.fftSize = DEFAULT_CUSTOM_CONFIG.fftSize;
+    this.tempCustomConfig.updateInterval = DEFAULT_CUSTOM_CONFIG.updateInterval;
+    this.tempCustomConfig.smoothingFactor = DEFAULT_CUSTOM_CONFIG.smoothingFactor;
+    this.tempCustomConfig.windowType = DEFAULT_CUSTOM_CONFIG.windowType;
+    this.tempCustomConfig.overlap = DEFAULT_CUSTOM_CONFIG.overlap;
+    this.tempCustomConfig.bufferSize = DEFAULT_CUSTOM_CONFIG.bufferSize;
+    // 通知配置变化
+    if (this.onConfigChange) {
+      this.onConfigChange(this.tempCustomConfig);
+    }
   }
 
   // 构建参数选择器
@@ -128,7 +137,10 @@ export struct CustomConfigPanel {
         .onSelect((index: number) => {
           const newValue = options[index].value;
           onValueChange(newValue);
-          this.onSelectedChange();
+          // 通知配置变化
+          if (this.onConfigChange) {
+            this.onConfigChange(this.tempCustomConfig);
+          }
         })
         .width(120)
     }
@@ -155,27 +167,27 @@ export struct CustomConfigPanel {
           .width('100%')
 
         Column({ space: DesignConstants.SPACING_XS }) {
-          Text(`FFT大小: ${this.pk.custom_audio_config.fftSize}`)
+          Text(`FFT大小: ${this.tempCustomConfig.fftSize}`)
             .fontSize(DesignConstants.FONT_SIZE_MD)
             .fontColor($r('sys.color.font_primary'))
 
-          Text(`更新间隔: ${this.pk.custom_audio_config.updateInterval}ms`)
+          Text(`更新间隔: ${this.tempCustomConfig.updateInterval}ms`)
             .fontSize(DesignConstants.FONT_SIZE_MD)
             .fontColor($r('sys.color.font_primary'))
 
-          Text(`窗函数: ${this.pk.custom_audio_config.windowType === WindowType.HANNING ? '汉宁窗' : '布莱克曼窗'}`)
+          Text(`窗函数: ${this.tempCustomConfig.windowType === WindowType.HANNING ? '汉宁窗' : '布莱克曼窗'}`)
             .fontSize(DesignConstants.FONT_SIZE_MD)
             .fontColor($r('sys.color.font_primary'))
 
-          Text(`平滑因子: ${this.pk.custom_audio_config.smoothingFactor}`)
+          Text(`平滑因子: ${this.tempCustomConfig.smoothingFactor}`)
             .fontSize(DesignConstants.FONT_SIZE_MD)
             .fontColor($r('sys.color.font_primary'))
 
-          Text(`重叠率: ${this.pk.custom_audio_config.overlap}`)
+          Text(`重叠率: ${this.tempCustomConfig.overlap}`)
             .fontSize(DesignConstants.FONT_SIZE_MD)
             .fontColor($r('sys.color.font_primary'))
 
-          Text(`缓冲区大小: ${this.pk.custom_audio_config.bufferSize}字节`)
+          Text(`缓冲区大小: ${this.tempCustomConfig.bufferSize}字节`)
             .fontSize(DesignConstants.FONT_SIZE_MD)
             .fontColor($r('sys.color.font_primary'))
         }
@@ -210,52 +222,52 @@ export struct CustomConfigPanel {
           // FFT大小选择
           this.buildParameterSelector(
             'FFT大小',
-            this.pk.custom_audio_config.fftSize,
+            this.tempCustomConfig.fftSize,
             this.fftSizeOptions,
             (newValue: number | string) => {
-              this.pk.custom_audio_config.fftSize = newValue as number;
-              this.pk.custom_audio_config.bufferSize = this.pk.custom_audio_config.fftSize * 2;
+              this.tempCustomConfig.fftSize = newValue as number;
+              this.tempCustomConfig.bufferSize = this.tempCustomConfig.fftSize * 2;
             }
           )
 
           // 更新间隔选择
           this.buildParameterSelector(
             '更新间隔',
-            this.pk.custom_audio_config.updateInterval,
+            this.tempCustomConfig.updateInterval,
             this.updateIntervalOptions,
             (newValue: number | string) => {
-              this.pk.custom_audio_config.updateInterval = newValue as number;
+              this.tempCustomConfig.updateInterval = newValue as number;
             }
           )
 
           // 窗函数类型选择
           this.buildParameterSelector(
             '窗函数类型',
-            this.pk.custom_audio_config.windowType,
+            this.tempCustomConfig.windowType,
             this.windowTypeOptions,
             (newValue: number | string) => {
-              this.pk.custom_audio_config.windowType = newValue as WindowType;
+              this.tempCustomConfig.windowType = newValue as WindowType;
             }
           )
 
           // 平滑因子选择
           this.buildParameterSelector(
             '平滑因子',
-            this.pk.custom_audio_config.smoothingFactor,
+            this.tempCustomConfig.smoothingFactor,
 
             this.smoothingFactorOptions,
             (newValue: number | string) => {
-              this.pk.custom_audio_config.smoothingFactor = newValue as number;
+              this.tempCustomConfig.smoothingFactor = newValue as number;
             }
           )
 
           // 重叠率选择
           this.buildParameterSelector(
             '重叠率',
-            this.pk.custom_audio_config.overlap,
+            this.tempCustomConfig.overlap,
             this.overlapOptions,
             (newValue: number | string) => {
-              this.pk.custom_audio_config.overlap = newValue as number;
+              this.tempCustomConfig.overlap = newValue as number;
             }
           )
         }
