@@ -50,7 +50,7 @@ export class StatisticsData {
   startTime: number = 0;
 
   constructor() {
-    this.startTime = new Date().getTime();
+    this.startTime = Date.now();
   }
 
   /**
@@ -68,7 +68,7 @@ export class StatisticsData {
       this.avgDb = Math.round(values.reduce((sum, val) => sum + val, 0) / values.length);
     }
 
-    this.duration = (Date.now() - this.startTime) / 1000;
+    this.duration = Number(((Date.now() - this.startTime) / 1000).toFixed(1));
   }
 
   /**
@@ -79,6 +79,6 @@ export class StatisticsData {
     this.maxDb = 0;
     this.avgDb = 0;
     this.duration = 0;
-    this.startTime = new Date().getTime();
+    this.startTime = Date.now();
   }
 }

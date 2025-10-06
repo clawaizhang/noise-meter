@@ -11,11 +11,9 @@ import { LocationInfo } from '../../services/LocationService';
 import { WeightingType } from '../../constants/WeightingConstants';
 import { Subject } from 'rxjs';
 import { AppKeys } from '../../models/AppKeys';
-import { DataProcessingState } from '../../models/DataProcessingState';
 import { FFTAnalyzer } from '../../utils/FFTAnalyzer';
 import { AudioControllerService } from '../../services/AudioControllerService';
 import { WindowType } from '../../common/WindowType';
-import { UIDisplayState } from '../../models/UIDisplayState';
 
 /**
  * 带时间戳的分贝值接口
@@ -46,7 +44,6 @@ export struct AudioController {
   // 音频状态
   @Local private isRecording: boolean = false
   @Local private recordingTime: number = 0
-  @Local private startTime: number = 0
   @Local private currentTime: number = Date.now();
   // 错误状态（支持多个错误同时显示）
   @Local private errorMessages: string[] = []
@@ -58,7 +55,7 @@ export struct AudioController {
   @Event onError: (errors: string[]) => void
   @Event onRecordingStateChange: (isRecording: boolean) => void
   @Event onRecordingTimeUpdate: (time: number) => void
-  @Event onAutoSaveTimeUpdate: (lastSaveTime: number) => void
+  @Event onSaveTimeUpdate: (lastSaveTime: number) => void
   // 服务实例
   private audioService: AudioService = AudioService.getInstance()
   private recordService: DecibelRecordService = new DecibelRecordService(getContext() as common.UIAbilityContext)
@@ -124,7 +121,7 @@ export struct AudioController {
 
     // 订阅重置事件
     this.audioControllerService.subscribeReset(() => {
-      this.performReset();
+      this.resetData();
     });
 
     // 订阅保存事件
@@ -168,10 +165,8 @@ export struct AudioController {
       }
 
       this.isRecording = true;
-      this.startTime = new Date().getTime();
-      this.recordingTime = 0;
-      this.timedValues = [];
-      this.timedAudioBuffers = [];
+      this.ak.dataProcessingState.statisticsData.startTime = new Date().getTime();
+      this.resetData() ;
       this.clearErrorMessage();
 
       // 创建新的记录对象
@@ -184,9 +179,6 @@ export struct AudioController {
         undefined, // location
         undefined// audioFilePath
       );
-
-      // 初始化 weightingTypes 数组
-      this.timedWeightingTypes = [];
 
       // 启动数据清理监控
       this.startDataCleanupMonitoring();
@@ -238,7 +230,7 @@ export struct AudioController {
           this.checkAlarmStatus(currentDecibel);
 
           // 更新计时器（毫秒级）
-          this.recordingTime = new Date().getTime() - this.startTime;
+          this.recordingTime = new Date().getTime() - this.ak.dataProcessingState.statisticsData.startTime;
           this.onRecordingTimeUpdate(this.recordingTime);
         })
       });
@@ -299,6 +291,7 @@ export struct AudioController {
           this.currentRecord.maxDecibel = this.ak.dataProcessingState.statisticsData.maxDb;
           this.currentRecord.avgDecibel = this.ak.dataProcessingState.statisticsData.avgDb;
           this.currentRecord.duration = this.ak.dataProcessingState.statisticsData.duration;
+          console.info('[FREQ_TRACE][Record] 创建记录对象 持续时间 '+this.ak.dataProcessingState.statisticsData.duration);
           this.currentRecord.decibelValues = this.timedValues.map(item => item.value);
           this.currentRecord.weightingTypes = this.timedWeightingTypes.map(item => item.type);
           this.currentRecord.audioFilePath = currentAudioFilePath;
@@ -347,7 +340,7 @@ export struct AudioController {
     // 重置状态
     this.timedValues = [];
     this.timedAudioBuffers = [];
-    this.startTime = new Date().getTime();
+    this.ak.dataProcessingState.statisticsData.startTime = new Date().getTime();
     this.recordingTime = 0;
 
     // 重置 weightingTypes 数组
@@ -402,23 +395,6 @@ export struct AudioController {
     Column()
   }
 
-  // 执行重置操作
-  private performReset() {
-    console.info('[FREQ_TRACE][Reset] 开始重置数据');
-
-    // 重置数据
-    this.timedValues = [];
-    this.timedAudioBuffers = [];
-    this.startTime = new Date().getTime();
-    this.recordingTime = 0;
-    this.timedWeightingTypes = [];
-
-    // 通知UI更新
-    this.onRecordingTimeUpdate(this.recordingTime);
-
-    console.info('[FREQ_TRACE][Reset] 数据重置完成');
-  }
-
   // 执行保存操作
   private performSave(comments: string) {
     console.info('[FREQ_TRACE][Save] 开始保存数据');
@@ -439,7 +415,7 @@ export struct AudioController {
     this.lastAutoSaveTime = new Date().getTime();
 
     // 通知父组件更新时间
-    this.onAutoSaveTimeUpdate(this.lastAutoSaveTime);
+    this.onSaveTimeUpdate(this.lastAutoSaveTime);
 
     // 显示保存提示
     promptAction.showToast({
@@ -450,8 +426,6 @@ export struct AudioController {
     // 调用保存逻辑
     this.performSave('自动保存');
   }
-
-  // 20分钟数据清理相关方法
 
   /**
    * 启动数据清理监控

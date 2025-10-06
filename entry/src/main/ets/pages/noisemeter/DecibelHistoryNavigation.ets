@@ -367,7 +367,7 @@ export struct DecibelHistory {
         .fontSize(14)
 
       // 检测时长
-      Text(`时长: ${Math.round(record.duration / 1000)}秒`)
+      Text(`时长: ${record.duration}秒`)
         .fontSize(14)
 
       if (record.audioFilePath) {

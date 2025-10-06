@@ -70,7 +70,7 @@ export struct NoiseChart {
             .height(this.canvasHeight)
             .onReady(() => {
               const values = this.selectedRecord!.decibelValues;
-              const duration = this.selectedRecord!.duration;
+              const totalSeconds = this.selectedRecord!.duration;
               const maxValue = Math.max(...values);
               const minValue = Math.min(...values);
 
@@ -173,7 +173,6 @@ export struct NoiseChart {
               }
 
               // 重新设计X轴刻度计算逻辑
-              const totalSeconds = duration / 1000;
               const targetXGridCount = 7;
               const extendedSeconds = Math.max(totalSeconds * 1.1, 0.1);
 

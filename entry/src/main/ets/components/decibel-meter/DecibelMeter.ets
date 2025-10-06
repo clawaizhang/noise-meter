@@ -17,8 +17,6 @@ import { AudioControllerService } from '../../services/AudioControllerService';
 @ComponentV2
 export struct DecibelMeter {
   @Param @Require meterOn: boolean = true;
-  @Local private isRecording: boolean = false
-  @Local private recordingTime: number = 0
   @Local pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys)!;
   @Local breakPoint: string = '';
   @Local dScale: number = 1; // 页面缩放比例
@@ -30,7 +28,7 @@ export struct DecibelMeter {
   @Local ak: AppKeys = AppStorageV2.connect(AppKeys)!;
   @Local private currentLocation: LocationInfo | null = null; // 当前位置信息，从LocationDisplay接收
   @Local private errorMessages: string[] = []; // 错误消息队列
-  @Local private lastAutoSaveTime: number = Date.now();
+  @Local private lastSaveTime: number = Date.now();
   @Local private currentTime: number = Date.now();
   @Local private countdownTimer?: number;
   @Local private hideForXsMd: boolean = false;
@@ -53,14 +51,8 @@ export struct DecibelMeter {
             onError: (errors: string[]) => {
               this.errorMessages = errors;
             },
-            onRecordingStateChange: (isRecording: boolean) => {
-              this.isRecording = isRecording;
-            },
-            onRecordingTimeUpdate: (time: number) => {
-              this.recordingTime = time;
-            },
-            onAutoSaveTimeUpdate: (lastSaveTime: number) => {
-              this.lastAutoSaveTime = lastSaveTime;
+            onSaveTimeUpdate: (lastSaveTime: number) => {
+              this.lastSaveTime = lastSaveTime;
             },
           })
 
@@ -195,14 +187,14 @@ export struct DecibelMeter {
 
   @Computed
   get timeDisplay(): string {
-    let elapsed = this.currentTime - this.lastAutoSaveTime;
+    let elapsed = this.currentTime - this.lastSaveTime;
     let minutes = Math.floor(elapsed / 60000);
     let seconds = Math.floor((elapsed % 60000) / 1000);
     if (!this.pk.auto_save_enabled) {
       //60 分钟循环
       if (minutes >= 60) {
-        this.lastAutoSaveTime = Date.now();
-        elapsed = this.currentTime - this.lastAutoSaveTime;
+        this.lastSaveTime = Date.now();
+        elapsed = this.currentTime - this.lastSaveTime;
         minutes = Math.floor(elapsed / 60000);
         seconds = Math.floor((elapsed % 60000) / 1000);
         return `${minutes}:${seconds.toString().padStart(2, '0')}`;
@@ -331,11 +323,12 @@ export struct DecibelMeter {
         // 通过服务触发重置事件
         this.audioControllerService.resetData();
         // 这里可以添加重置UI状态的逻辑
-        this.lastAutoSaveTime = Date.now();
+        this.lastSaveTime = Date.now();
       },
       onSave: (comments) => {
         this.bgImage = this.getUIContext().getComponentSnapshot().getSync('mainNoiseMeterDisplayId');
         // 保存功能由AudioController处理
+        this.lastSaveTime = Date.now();
         // 通过服务触发保存事件
         this.audioControllerService.saveData(comments);
         // 这里只处理UI动画

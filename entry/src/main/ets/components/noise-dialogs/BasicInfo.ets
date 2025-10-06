@@ -27,7 +27,7 @@ export struct BasicInfo {
           hour12: false
         }))
           .layoutWeight(5)
-        Text(`共${(this.selectedRecord!.duration / 1000).toFixed(1)}秒`)
+        Text(`共${this.selectedRecord!.duration}秒`)
           .layoutWeight(2)
       }
 

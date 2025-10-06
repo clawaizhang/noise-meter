@@ -35,6 +35,7 @@ export class DecibelRecord {
   minDecibel: number;
   maxDecibel: number;
   avgDecibel: number;
+  //秒
   duration: number;
   decibelValues: number[];
   location?: string;
