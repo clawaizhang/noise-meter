@@ -4,10 +4,10 @@ import { commonEventManager } from '@kit.BasicServicesKit'
 import { WelcomeGuide } from '../components/welcome'
 import { PrivacyPolicyStandalone } from '../components/privacy/PrivacyPolicyStandalone'
 import { PreferenceKeys } from '../models/PreferenceKeys'
-import { DatabaseUpgradeConfig, DbConfig } from '../interfaces/DatabaseInterfaces'
+import { DatabaseUpgradeConfig } from '../interfaces/DatabaseInterfaces'
 import hilog from '@ohos.hilog'
 import { dbConfig, MainPage } from 'entry/MainPage'
-import { common, ConfigurationConstant, Want } from '@kit.AbilityKit'
+import { common, Want } from '@kit.AbilityKit'
 import { AppStorageV2, PersistenceV2 } from '@kit.ArkUI'
 import { WindowManager } from '../utils/WindowManager'
 import { AudioAnalysisMode } from '../common/AudioConfig'
@@ -24,6 +24,7 @@ import { ThresholdManager } from '../services/ThresholdManager'
 import { UsageTrackingService } from '../services/UsageTrackingService'
 import { MembershipRewardService } from '../services/MembershipRewardService'
 import { ContinuousUsageManager } from '../services/ContinuousUsageManager'
+import { CommonEventService } from '../services/CommonEventService';
 import { showRewardCompletionDialog } from '../components/membership/RewardCompletionDialog'
 
 const TAG = 'Index';
@@ -127,6 +128,14 @@ struct Index {
   aboutToDisappear(): void {
     const windowManager = WindowManager.getInstance();
     windowManager.setKeepScreenOn(false);
+    
+    // 清理使用追踪服务资源
+    const usageTrackingService = UsageTrackingService.getInstance();
+    usageTrackingService.destroy();
+    
+    // 清理公共事件服务资源
+    const commonEventService = CommonEventService.getInstance();
+    commonEventService.destroy();
   }
 
   private setDisplayMode(displayMode: string) {
@@ -196,12 +205,17 @@ struct Index {
     const displayManager: DisplayManager = DisplayManager.getInstance();
     displayManager.onDisplay(() => {
       this.as.isDisplayApp = true;
+      
       // APP显示时恢复使用追踪
       const usageTrackingService = UsageTrackingService.getInstance();
       usageTrackingService.resumeTracking();
+      
+      // 立即检查日期变化（重要优化）
+      usageTrackingService.immediateDateCheck();
     });
     displayManager.onHidden(() => {
       this.as.isDisplayApp = false;
+      
       // APP隐藏时暂停使用追踪
       const usageTrackingService = UsageTrackingService.getInstance();
       usageTrackingService.pauseTracking();

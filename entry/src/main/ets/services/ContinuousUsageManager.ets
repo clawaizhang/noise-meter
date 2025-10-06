@@ -138,6 +138,31 @@ export class ContinuousUsageManager {
   }
 
   /**
+   * 处理日期变化
+   * @returns 前一天的连续天数，如果没有日期变化返回0
+   */
+  public handleDateChange(): number {
+    const today = this.getTodayDateString();
+    const usageData = this.pk.continuous_usage_data;
+    
+    // 如果最后使用日期不是今天，说明日期变化
+    if (usageData.lastUsageDate !== today) {
+      // 保存前一天的连续天数用于奖励计算
+      const previousConsecutiveDays = usageData.consecutiveDays;
+      
+      // 更新连续天数
+      const newConsecutiveDays = this.checkAndUpdateConsecutiveDays();
+      
+      console.info(`[连续使用] 日期变化处理: 前一天${previousConsecutiveDays}天，新连续${newConsecutiveDays}天`);
+      
+      // 返回前一天的连续天数用于奖励计算
+      return previousConsecutiveDays;
+    }
+    
+    return 0; // 没有日期变化
+  }
+
+  /**
    * 重置连续使用数据（用于测试或异常恢复）
    */
   public resetContinuousUsageData(): void {
