@@ -139,7 +139,7 @@ export struct ImprovedAutoCalibration {
           .fontSize(DesignConstants.FONT_SIZE_MD)
           .fontColor(CALIBRATION_COLORS.WARNING)
       } else {
-        Text(`校准中... ${8 - this.calibrationProgress}秒`)
+        Text(`校准中... 剩余 ${Math.ceil(8 - (this.calibrationProgress / 100 * 8))}秒`)
           .fontSize(DesignConstants.FONT_SIZE_MD)
           .fontColor(CALIBRATION_COLORS.PRIMARY)
       }

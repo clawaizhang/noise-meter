@@ -58,7 +58,9 @@ export struct AudioAnalysisSettings {
 
   private finishCalibration(averageDecibel: number) {
     this.isAutoCalibrating = false;
-    const newCalibrationValue = CALIBRATION_CONFIG.REFERENCE_LEVEL - averageDecibel;
+    const currentCalibrationValue = this.pk.calibration_value;
+    const actualEnvironmentNoise = averageDecibel - currentCalibrationValue;
+    const newCalibrationValue = currentCalibrationValue + (CALIBRATION_CONFIG.REFERENCE_LEVEL - actualEnvironmentNoise);
     this.pk.calibration_value = Math.round(newCalibrationValue * 10) / 10; // 保留1位小数
 
     promptAction.showToast({
@@ -81,9 +83,7 @@ export struct AudioAnalysisSettings {
     Column({ space: DesignConstants.SPACING_LG }) {
       // 状态反馈区域
       CalibrationStatusIndicator({
-        calibrationProgress: this.getCalibrationProgressPercent(),
-        currentDecibel: this.as.db,
-        isCalibrating: this.isAutoCalibrating
+        currentDecibel: this.as.db
       })
 
       // 核心校准控制区域

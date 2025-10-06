@@ -9,12 +9,8 @@ import { curves } from '@kit.ArkUI';
 
 @ComponentV2
 export struct CalibrationStatusIndicator {
-  @Param @Require calibrationProgress: number = 0;        // 校准进度 0-100
   @Param @Require currentDecibel: number = 0;             // 当前声级
-  @Param @Require isCalibrating: boolean = false;         // 是否正在校准
 
-  @Local private animationTime: number = 0;               // 动画时间状态
-  private animationInterval?: number;                     // 动画定时器
 
   // 获取环境噪声等级
   private getEnvironmentLevel(): EnvironmentNoiseLevel {
@@ -59,55 +55,15 @@ export struct CalibrationStatusIndicator {
     }
   }
 
-  // 启动动画定时器
-  private startAnimation() {
-    this.animationInterval = setInterval(() => {
-      this.animationTime = Date.now();
-    }, 100); // 每100ms更新一次
-  }
-
-  // 停止动画定时器
-  private stopAnimation() {
-    if (this.animationInterval) {
-      clearInterval(this.animationInterval);
-      this.animationInterval = undefined;
-    }
-  }
-
-  aboutToAppear() {
-    this.startAnimation();
-  }
-
-  aboutToDisappear() {
-    this.stopAnimation();
-  }
 
   build() {
     Column({ space: DesignConstants.SPACING_SM }) {
-      // 外环 - 校准进度
+      // 环境噪声指示器
       Stack({ alignContent: Alignment.Center }) {
-        // 背景环
+        // 环境噪声环
         Circle({ width: 80, height: 80 })
-          .stroke(CALIBRATION_COLORS.BACKGROUND)
-          .strokeWidth(8)
-          .fill(Color.Transparent)
-
-        // 进度环
-        Circle({ width: 80, height: 80 })
-          .stroke(CALIBRATION_COLORS.PRIMARY)
-          .strokeWidth(8)
-          .fill(Color.Transparent)
-          .strokeDashArray([this.calibrationProgress * 2.51, 251]) // 2πr ≈ 251
-          .rotate({ x: 0, y: 0, z: 1, angle: -90 })
-          .animation({
-            duration: 300,
-            curve: curves.springMotion()
-          })
-
-        // 内环 - 环境噪声
-        Circle({ width: 60, height: 60 })
           .stroke(this.getEnvironmentColor())
-          .strokeWidth(6)
+          .strokeWidth(8)
           .fill(Color.Transparent)
 
         // 中心数值
@@ -123,15 +79,11 @@ export struct CalibrationStatusIndicator {
         }
       }
 
-      // 状态描述
-      Column({ space: DesignConstants.SPACING_XS }) {
-        if (this.isCalibrating) {
-          Text(`校准中 ${this.calibrationProgress}%`)
-            .fontSize(DesignConstants.FONT_SIZE_MD)
-            .fontColor(CALIBRATION_COLORS.PRIMARY)
-            .fontWeight(FontWeight.Medium)
-        }
-      }
+      // 环境描述
+      Text(this.getEnvironmentDescription())
+        .fontSize(DesignConstants.FONT_SIZE_MD)
+        .fontColor(this.getEnvironmentColor())
+        .fontWeight(FontWeight.Medium)
     }
     .alignItems(HorizontalAlign.Center)
     .width('100%')

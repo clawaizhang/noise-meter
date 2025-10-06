@@ -352,6 +352,7 @@ export struct DecibelMeter {
         // 通过服务触发重置事件
         this.audioControllerService.resetData();
         // 这里可以添加重置UI状态的逻辑
+        this.lastAutoSaveTime = Date.now();
       },
       onSave: (comments) => {
         this.bgImage = this.getUIContext().getComponentSnapshot().getSync('mainNoiseMeterDisplayId');
