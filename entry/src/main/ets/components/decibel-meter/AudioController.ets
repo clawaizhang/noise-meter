@@ -11,9 +11,11 @@ import { LocationInfo } from '../../services/LocationService';
 import { WeightingType } from '../../constants/WeightingConstants';
 import { Subject } from 'rxjs';
 import { AppKeys } from '../../models/AppKeys';
+import { DataProcessingState } from '../../models/DataProcessingState';
 import { FFTAnalyzer } from '../../utils/FFTAnalyzer';
 import { AudioControllerService } from '../../services/AudioControllerService';
 import { WindowType } from '../../common/WindowType';
+import { UIDisplayState } from '../../models/UIDisplayState';
 
 /**
  * 带时间戳的分贝值接口
@@ -57,7 +59,6 @@ export struct AudioController {
   @Event onError: (errors: string[]) => void
   @Event onRecordingStateChange: (isRecording: boolean) => void
   @Event onRecordingTimeUpdate: (time: number) => void
-  @Event onMinMaxAvgCurrent: (min: number, max: number, avg: number, current: number) => void
   @Event onAutoSaveTimeUpdate: (lastSaveTime: number) => void
   // 服务实例
   private audioService: AudioService = AudioService.getInstance()
@@ -66,6 +67,11 @@ export struct AudioController {
   private audioBufferSubject = new Subject<void>();
   // 服务实例
   private audioControllerService: AudioControllerService = AudioControllerService.getInstance();
+  
+  // 双管线架构状态
+  @Local private dataProcessingState: DataProcessingState = AppStorageV2.connect(DataProcessingState,() => new DataProcessingState())!;
+  @Local private uiDisplayState: UIDisplayState = AppStorageV2.connect(UIDisplayState,() => new UIDisplayState())!;
+  
   // 自动保存相关属性
   private autoSaveTimer?: number;
   private lastAutoSaveTime: number = Date.now();
@@ -365,9 +371,9 @@ export struct AudioController {
     this.maxDecibel = 0;
     this.avgDecibel = 0;
     this.currentDecibel = 0;
+    this.uiDisplayState.reset() ;
 
     // 通知UI更新
-    this.onMinMaxAvgCurrent(this.minDecibel, this.maxDecibel, this.avgDecibel, this.currentDecibel);
     this.onRecordingTimeUpdate(this.recordingTime);
   }
 
@@ -396,8 +402,16 @@ export struct AudioController {
       this.maxDecibel = Math.max(...values);
       this.avgDecibel = Math.round(values.reduce((sum, val) => sum + val, 0) / values.length);
     }
+
+    // 双管线架构：更新数据处理状态
+    this.dataProcessingState.processingDb = currentDb;
+    this.dataProcessingState.statisticsData.updateStatistics(currentDb,values);
+    
+    // 同步到UI显示状态（仅在UI更新启用时）
+    this.uiDisplayState.syncFromProcessingState(this.dataProcessingState);
+    
+    // 保持向后兼容性（临时）
     this.ak.db = currentDb;
-    this.onMinMaxAvgCurrent(this.minDecibel, this.maxDecibel, this.avgDecibel, currentDb);
   }
 
   // 检查报警状态
@@ -436,7 +450,6 @@ export struct AudioController {
     this.currentDecibel = 0;
 
     // 通知UI更新
-    this.onMinMaxAvgCurrent(this.minDecibel, this.maxDecibel, this.avgDecibel, this.currentDecibel);
     this.onRecordingTimeUpdate(this.recordingTime);
 
     console.info('[FREQ_TRACE][Reset] 数据重置完成');

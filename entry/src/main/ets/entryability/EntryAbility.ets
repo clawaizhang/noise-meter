@@ -14,6 +14,7 @@ import { AppUtil, PermissionUtil, PreferencesUtil } from '@pura/harmony-utils';
 import { camera } from '@kit.CameraKit';
 import { AppStorageV2, PersistenceV2 } from '@kit.ArkUI';
 import { AudioPlayerGroupService } from '../services/AudioPlayerGroupService';
+import { AudioControllerService } from '../services/AudioControllerService';
 import { initializeFFTOptimizations } from '../utils/FFTOptimization';
 
 const TAG = 'EntryAbility';
@@ -130,6 +131,9 @@ export default class EntryAbility extends UIAbility {
       this.stopBackgroundRunning();
     }
 
+    // 双管线架构：恢复UI更新
+    AudioControllerService.getInstance().resumeUIUpdates();
+
     hilog.info(DOMAIN, TAG, 'Ability onForeground');
   }
 
@@ -138,13 +142,15 @@ export default class EntryAbility extends UIAbility {
     windowManager.setKeepScreenOn(false);
     DisplayManager.getInstance().onBackground();
 
+    // 双管线架构：暂停UI更新
+    AudioControllerService.getInstance().pauseUIUpdates();
+
     this.startBackgroundRunning();
 
     hilog.info(DOMAIN, TAG, 'Ability onBackground');
   }
 
   private startBackgroundRunning(): void {
-    let isPlaying = AudioPlayerGroupService.isPlaying();
     // 创建WantAgent参数
     const wantAgentInfo: wantAgent.WantAgentInfo = {
       wants: [
@@ -163,19 +169,6 @@ export default class EntryAbility extends UIAbility {
         if (err) {
           hilog.error(DOMAIN, TAG, `Get wantAgent failed, error: ${JSON.stringify(err)}`);
           return;
-        }
-        if (isPlaying) {
-          backgroundTaskManager.startBackgroundRunning(this.context,
-            backgroundTaskManager.BackgroundMode.AUDIO_PLAYBACK,
-            agent,
-            (err) => {
-              if (err) {
-                hilog.error(DOMAIN, TAG, `Start background running failed, error: ${JSON.stringify(err)}`);
-                return;
-              }
-              this.backgroundRunningRequested = true;
-              hilog.info(DOMAIN, TAG, 'Start background running successfully');
-            });
         }
         if (PersistenceV2.connect(PreferenceKeys)!.background_running) {
           backgroundTaskManager.startBackgroundRunning(this.context,

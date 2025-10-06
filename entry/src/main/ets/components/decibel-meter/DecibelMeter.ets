@@ -14,6 +14,7 @@ import { AppKeys } from '../../models/AppKeys';
 import { PermissionService } from '../../services/PermissionService';
 import { AudioController } from './AudioController';
 import { AudioControllerService } from '../../services/AudioControllerService';
+import { UIDisplayState } from '../../models/UIDisplayState';
 
 @ComponentV2
 export struct DecibelMeter {
@@ -32,10 +33,6 @@ export struct DecibelMeter {
   @Local private currentSpectrum: Float32Array = new Float32Array(); // 当前频谱数据
   @Local private currentLocation: LocationInfo | null = null; // 当前位置信息，从LocationDisplay接收
   @Local private errorMessages: string[] = []; // 错误消息队列
-  @Local private currentDecibel: number = 0;
-  @Local private avgDecibel: number = 0;
-  @Local private maxDecibel: number = 0;
-  @Local private minDecibel: number = 0;
   @Local private lastAutoSaveTime: number = Date.now();
   @Local private currentTime: number = Date.now();
   @Local private countdownTimer?: number;
@@ -43,6 +40,8 @@ export struct DecibelMeter {
   private animationTimeOutId: number | undefined;
   // 服务实例
   private audioControllerService: AudioControllerService = AudioControllerService.getInstance();
+  // 双管线架构：UI显示状态
+  @Local private uiState: UIDisplayState = AppStorageV2.connect(UIDisplayState, () => new UIDisplayState())!;
   @Consumer(navigationStack) navStack: NavPathStack = new NavPathStack()
   sysResourceManager: resourceManager.ResourceManager = resourceManager.getSystemResourceManager();
 
@@ -68,12 +67,6 @@ export struct DecibelMeter {
             onRecordingTimeUpdate: (time: number) => {
               this.recordingTime = time;
             },
-            onMinMaxAvgCurrent: (min: number, max: number, avg: number, current: number) => {
-              this.minDecibel = min;
-              this.maxDecibel = max;
-              this.avgDecibel = avg;
-              this.currentDecibel = current;
-            },
             onAutoSaveTimeUpdate: (lastSaveTime: number) => {
               this.lastAutoSaveTime = lastSaveTime;
             },
@@ -94,10 +87,10 @@ export struct DecibelMeter {
               Stack({ alignContent: Alignment.Top }) {
                 // 使用新的分贝显示组件（重新设计版）
                 DecibelDisplayComponent({
-                  currentDecibel: this.currentDecibel,
-                  minDecibel: this.minDecibel, // 这些值现在由AudioController管理
-                  maxDecibel: this.maxDecibel, // 这些值现在由AudioController管理
-                  avgDecibel: this.avgDecibel, // 这些值现在由AudioController管理
+                  currentDecibel: this.uiState.displayDb, // 使用双管线架构的UI状态
+                  minDecibel: this.uiState.displayStatistics.minDb, // 使用双管线架构的统计数据
+                  maxDecibel: this.uiState.displayStatistics.maxDb, // 使用双管线架构的统计数据
+                  avgDecibel: this.uiState.displayStatistics.avgDb, // 使用双管线架构的统计数据
                   weightingType: this.pk.weighting_type,
                   calibrationValue: this.pk.calibration_value,
                   noiseThreshold: this.pk.noise_threshold,
