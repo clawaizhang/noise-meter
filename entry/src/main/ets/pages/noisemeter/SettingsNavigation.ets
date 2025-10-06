@@ -96,13 +96,10 @@ struct Settings {
   // DialogHub实例缓存
   private audioAnalysisDialog: InfSheet | null = null;
   private alertsDialog: InfSheet | null = null;
-  private timeWeightingDialog: InfSheet | null = null;
-  private frequencyWeightingDialog: InfSheet | null = null;
   @Local pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys)!;
   @Consumer(navigationStack) navStack: NavPathStack = new NavPathStack();
   @Local analysisModeDescription: string = '';
   @Local analysisModeDetails: string[] = [];
-  @Local isModeChangeEnabled: boolean = true;
   @Local remainingTime: number = 0;
   private readonly COOLDOWN_DURATION: number = 500; // 0.5秒冷却时间
 
@@ -239,62 +236,53 @@ struct Settings {
   }
   // 打开音频分析模式选择弹框
   private openTimeWeightingDialog = () => {
-    if (!this.isModeChangeEnabled) {
-      return;
-    }
-    if (!this.timeWeightingDialog) {
-      let param: TimeWeightingDialogParams = {
-        currentMode: this.pk.audio_analysis_mode,
-        onModeChange: (selectedMode: AudioAnalysisMode) => {
-          // 即时生效：立即应用新设置
-          this.handleTimeWeightingModeChange(selectedMode);
-        },
-        onClose: () => {
-          this.timeWeightingDialog?.dismiss();
-        }
+    let timeWeightingDialog: InfSheet;
+    let param: TimeWeightingDialogParams = {
+      currentMode: this.pk.audio_analysis_mode,
+      onSettingsApplied: (selectedMode: AudioAnalysisMode) => {
+        // 即时生效：立即应用新设置
+        this.handleTimeWeightingModeChange(selectedMode);
+      },
+      onClose: () => {
+        timeWeightingDialog?.dismiss();
       }
-      this.timeWeightingDialog = DialogHub.getSheet()
-        .setStyle({
-          title: { title: '音频分析模式选择' },
-          backgroundColor: $r('sys.color.background_secondary')
-        })
-        .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS, enableOutsideInteractive: true })
-        .setComponentTargetId('mainId')
-        .setContent(wrapBuilder(TimeWeightingDialogBuilder), param)
-        .build();
-
-      // 注册Dialog到样式管理器
-      DialogStyleManager.registerDialog(this.timeWeightingDialog);
     }
-    this.timeWeightingDialog.show();
+    timeWeightingDialog = DialogHub.getSheet()
+      .setStyle({
+        showClose: false,
+        backgroundColor: $r('sys.color.background_secondary')
+      })
+      .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS, enableOutsideInteractive: true })
+      .setComponentTargetId('mainId')
+      .setContent(wrapBuilder(TimeWeightingDialogBuilder), param)
+      .build();
+
+    timeWeightingDialog.show();
   }
   // 打开频率加权模式选择弹框
   private openFrequencyWeightingDialog = () => {
-    if (!this.frequencyWeightingDialog) {
-      let param: FrequencyWeightingDialogParams = {
-        currentWeighting: this.pk.weighting_type,
-        onWeightingChange: (selectedWeighting: WeightingType) => {
-          // 即时生效：立即应用新设置
-          this.pk.weighting_type = selectedWeighting;
-        },
-        onClose: () => {
-          this.frequencyWeightingDialog?.dismiss();
-        }
+    let frequencyWeightingDialog: InfSheet;
+    let param: FrequencyWeightingDialogParams = {
+      currentWeighting: this.pk.weighting_type,
+      onSettingsApplied: (selectedWeighting: WeightingType) => {
+        // 即时生效：立即应用新设置
+        this.pk.weighting_type = selectedWeighting;
+      },
+      onClose: () => {
+        frequencyWeightingDialog?.dismiss();
       }
-      this.frequencyWeightingDialog = DialogHub.getSheet()
-        .setStyle({
-          title: { title: '频率加权模式选择' },
-          backgroundColor: $r('sys.color.background_secondary')
-        })
-        .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS, enableOutsideInteractive: true })
-        .setComponentTargetId('mainId')
-        .setContent(wrapBuilder(FrequencyWeightingDialogBuilder), param)
-        .build();
-
-      // 注册Dialog到样式管理器
-      DialogStyleManager.registerDialog(this.frequencyWeightingDialog);
     }
-    this.frequencyWeightingDialog.show();
+    frequencyWeightingDialog = DialogHub.getSheet()
+      .setStyle({
+        showClose: false,
+        backgroundColor: $r('sys.color.background_secondary')
+      })
+      .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS, enableOutsideInteractive: true })
+      .setComponentTargetId('mainId')
+      .setContent(wrapBuilder(FrequencyWeightingDialogBuilder), param)
+      .build();
+
+    frequencyWeightingDialog.show();
   }
   // 打开自动保存设置弹框
   private openAutoSaveDialog = () => {
@@ -345,12 +333,8 @@ struct Settings {
 
   // 处理音频分析模式变化
   private handleTimeWeightingModeChange(selectedMode: AudioAnalysisMode) {
-    if (!this.isModeChangeEnabled) {
-      return;
-    }
 
     // 禁用切换
-    this.isModeChangeEnabled = false;
     this.pk.audio_analysis_mode = selectedMode;
     this.updateAnalysisModeCache(selectedMode);
 
@@ -360,7 +344,6 @@ struct Settings {
       this.remainingTime -= 100;
       if (this.remainingTime <= 0) {
         clearInterval(interval);
-        this.isModeChangeEnabled = true;
         this.remainingTime = 0;
       }
     }, 100);
@@ -411,7 +394,6 @@ struct Settings {
               })
               .backgroundColor($r('sys.color.comp_background_primary'))
               .borderRadius(DesignConstants.BORDER_RADIUS_SM)
-              .enabled(this.isModeChangeEnabled)
             }
           }
           .listItemRow()

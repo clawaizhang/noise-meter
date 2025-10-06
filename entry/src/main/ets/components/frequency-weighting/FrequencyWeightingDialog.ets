@@ -12,29 +12,53 @@ import { FrequencyPreviewPanel } from './FrequencyPreviewPanel';
 import { FrequencyScenarioDisplay } from './FrequencyScenarioDisplay';
 import { CollapsibleSection } from '../time-weighting/CollapsibleSection';
 import { PremiumFeature } from '../membership/PremiumFeature';
+import { EditableLeftIconType, EditableTitleBar } from '@kit.ArkUI';
 
 @ComponentV2
 export struct FrequencyWeightingDialog {
   @Param @Require currentWeighting: WeightingType; // 当前计权类型（从外部传入）
-  @Param @Require onWeightingChange: (weighting: WeightingType) => void; // 计权类型变化回调
-  @Param @Require onClose: () => void; // 关闭回调
-  @Local selectedWeighting!: WeightingType; // 选中的计权类型
+  @Event onClose: () => void; // 关闭回调
+  @Event onSettingsApplied?: (weighting: WeightingType) => void; // 设置应用回调
+  @Local tempSelectedWeighting!: WeightingType; // 临时选中的计权类型
   @Local hoveredWeighting: WeightingType | null = null; // 悬停的计权类型
   @Local isTechnicalParamsExpanded: boolean = false; // 技术参数是否展开
   @Local isAcousticTheoryExpanded: boolean = false; // 声学原理是否展开
+  
+  // 初始状态 - 用于检测是否有修改
+  private initialWeighting: WeightingType = this.currentWeighting;
 
   aboutToAppear() {
     // 初始化选中计权类型为当前计权类型
-    this.selectedWeighting = this.currentWeighting;
+    this.tempSelectedWeighting = this.currentWeighting;
+    this.initialWeighting = this.currentWeighting;
   }
 
-  // 处理计权类型选择 - 即时生效
-  private handleWeightingSelect(weighting: WeightingType) {
-    this.selectedWeighting = weighting;
-    // 立即应用新设置
-    if (this.onWeightingChange) {
-      this.onWeightingChange(weighting);
+  // 处理保存操作
+  private handleSave() {
+    // 检测是否有修改，有修改则通过回调传递设置
+    const hasChanges = this.hasSettingsChanged();
+    if (hasChanges && this.onSettingsApplied) {
+      this.onSettingsApplied(this.tempSelectedWeighting);
     }
+    // 关闭弹窗
+    this.onClose();
+  }
+
+  // 处理取消操作
+  private handleCancel() {
+    // 直接关闭弹窗，不应用任何设置
+    this.onClose();
+  }
+
+  // 检测设置是否有修改
+  private hasSettingsChanged(): boolean {
+    return this.tempSelectedWeighting !== this.initialWeighting;
+  }
+
+  // 处理计权类型选择 - 只更新临时状态
+  private handleWeightingSelect(weighting: WeightingType) {
+    this.tempSelectedWeighting = weighting;
+    // 移除立即应用新设置的逻辑
   }
 
   // 构建固定顶部选项卡
@@ -85,7 +109,7 @@ export struct FrequencyWeightingDialog {
       Image(FrequencyWeightingConstants.getWeightingIcon(weighting))
         .width(DesignConstants.ICON_SIZE_SM)
         .height(DesignConstants.ICON_SIZE_SM)
-        .fillColor(this.selectedWeighting === weighting ?
+        .fillColor(this.tempSelectedWeighting === weighting ?
         $r('sys.color.font_on_primary') :
           (this.hoveredWeighting === weighting ?
           $r('sys.color.interactive_active') :
@@ -94,8 +118,8 @@ export struct FrequencyWeightingDialog {
       // 计权类型名称
       Text(displayName)
         .fontSize(DesignConstants.FONT_SIZE_MD)
-        .fontWeight(this.selectedWeighting === weighting ? FontWeight.Bold : FontWeight.Medium)
-        .fontColor(this.selectedWeighting === weighting ?
+        .fontWeight(this.tempSelectedWeighting === weighting ? FontWeight.Bold : FontWeight.Medium)
+        .fontColor(this.tempSelectedWeighting === weighting ?
         $r('sys.color.font_on_primary') :
           (this.hoveredWeighting === weighting ?
           $r('sys.color.interactive_active') :
@@ -104,7 +128,7 @@ export struct FrequencyWeightingDialog {
     .alignItems(VerticalAlign.Center)
     .justifyContent(FlexAlign.Center)
     .height(56)
-    .backgroundColor(this.selectedWeighting === weighting ?
+    .backgroundColor(this.tempSelectedWeighting === weighting ?
     $r('sys.color.interactive_active') :
       (this.hoveredWeighting === weighting ?
       $r('sys.color.comp_background_secondary') :
@@ -130,12 +154,12 @@ export struct FrequencyWeightingDialog {
       // 实时预览面板
       FrequencyPreviewPanel({
         currentWeighting: this.currentWeighting,
-        selectedWeighting: this.selectedWeighting
+        selectedWeighting: this.tempSelectedWeighting
       })
 
       // 场景展示
       FrequencyScenarioDisplay({
-        selectedWeighting: this.selectedWeighting
+        selectedWeighting: this.tempSelectedWeighting
       })
     }
     .width('100%')
@@ -155,7 +179,7 @@ export struct FrequencyWeightingDialog {
       }) {
         FrequencyTechnicalParamsDisplay({
           currentWeighting: this.currentWeighting,
-          selectedWeighting: this.selectedWeighting
+          selectedWeighting: this.tempSelectedWeighting
         })
       }
 
@@ -168,7 +192,7 @@ export struct FrequencyWeightingDialog {
         }
       }) {
         FrequencyAcousticExplanationComp({
-          selectedWeighting: this.selectedWeighting
+          selectedWeighting: this.tempSelectedWeighting
         })
       }
     }
@@ -176,11 +200,25 @@ export struct FrequencyWeightingDialog {
   }
 
   build() {
-    Column({ space: 8 }) {
-      this.buildFixedTabs()
+    Column({ space: 0 }) {
+      // 使用EditableTitleBar提供标准的编辑界面标题栏
+      EditableTitleBar({
+        leftIconStyle: EditableLeftIconType.Cancel,
+        title: '频率加权模式',
+        isSaveIconRequired: true,
+        onSave: () => {
+          this.handleSave();
+        },
+        onCancel: () => {
+          this.handleCancel();
+        }
+      })
+
       // 可滚动内容区域
       Scroll() {
         Column({ space: DesignConstants.SPACING_LG }) {
+          this.buildFixedTabs()
+          
           // 主要内容区域（优先显示）
           this.buildPrimaryContentArea()
 
@@ -192,16 +230,20 @@ export struct FrequencyWeightingDialog {
         .margin({ bottom: 72 })
         .padding(DesignConstants.SPACING_LG)
         .backgroundColor($r('sys.color.background_secondary'))
+        .alignItems(HorizontalAlign.Start)
       }
-      .scrollBar(BarState.Off)
+      .scrollBar(BarState.Auto)
       .scrollable(ScrollDirection.Vertical)
       .edgeEffect(EdgeEffect.Spring)
       .width('100%')
       .layoutWeight(1)
+      .align(Alignment.TopStart)
 
     }
     .width('100%')
+    .height('100%')
     .backgroundColor($r('sys.color.background_secondary'))
+    .justifyContent(FlexAlign.Start)
   }
 }
 
@@ -211,13 +253,13 @@ export function FrequencyWeightingDialogBuilder(param: FrequencyWeightingDialogP
 ) {
   FrequencyWeightingDialog({
     currentWeighting: param.currentWeighting,
-    onWeightingChange: param.onWeightingChange,
+    onSettingsApplied: param.onSettingsApplied,
     onClose: param.onClose
   })
 }
 
 export interface FrequencyWeightingDialogParams {
   currentWeighting: WeightingType;
-  onWeightingChange: (weighting: WeightingType) => void;
   onClose: () => void;
+  onSettingsApplied?: (weighting: WeightingType) => void; // 新增：设置应用回调
 }
