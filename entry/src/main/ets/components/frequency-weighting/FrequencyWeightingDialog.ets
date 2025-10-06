@@ -12,7 +12,8 @@ import { FrequencyPreviewPanel } from './FrequencyPreviewPanel';
 import { FrequencyScenarioDisplay } from './FrequencyScenarioDisplay';
 import { CollapsibleSection } from '../time-weighting/CollapsibleSection';
 import { PremiumFeature } from '../membership/PremiumFeature';
-import { EditableLeftIconType, EditableTitleBar } from '@kit.ArkUI';
+import { EditableLeftIconType, EditableTitleBar, PersistenceV2, promptAction } from '@kit.ArkUI';
+import { PreferenceKeys } from '../../models/PreferenceKeys';
 
 @ComponentV2
 export struct FrequencyWeightingDialog {
@@ -23,7 +24,8 @@ export struct FrequencyWeightingDialog {
   @Local hoveredWeighting: WeightingType | null = null; // 悬停的计权类型
   @Local isTechnicalParamsExpanded: boolean = false; // 技术参数是否展开
   @Local isAcousticTheoryExpanded: boolean = false; // 声学原理是否展开
-  
+  @Local pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys)!;
+
   // 初始状态 - 用于检测是否有修改
   private initialWeighting: WeightingType = this.currentWeighting;
 
@@ -35,11 +37,21 @@ export struct FrequencyWeightingDialog {
 
   // 处理保存操作
   private handleSave() {
-    // 检测是否有修改，有修改则通过回调传递设置
-    const hasChanges = this.hasSettingsChanged();
-    if (hasChanges && this.onSettingsApplied) {
+    // 应用计权类型设置
+    this.pk.weighting_type = this.tempSelectedWeighting;
+    
+    // 通过回调通知设置已应用
+    if (this.onSettingsApplied) {
       this.onSettingsApplied(this.tempSelectedWeighting);
     }
+    
+    // 显示保存成功提示
+    const weightingName = this.getWeightingDisplayName(this.tempSelectedWeighting);
+    promptAction.showToast({
+      message: `${weightingName}模式`,
+      duration: 2000
+    });
+    
     // 关闭弹窗
     this.onClose();
   }
@@ -50,9 +62,18 @@ export struct FrequencyWeightingDialog {
     this.onClose();
   }
 
-  // 检测设置是否有修改
-  private hasSettingsChanged(): boolean {
-    return this.tempSelectedWeighting !== this.initialWeighting;
+  // 获取计权类型显示名称
+  private getWeightingDisplayName(weighting: WeightingType): string {
+    switch (weighting) {
+      case WeightingType.A:
+        return 'A计权';
+      case WeightingType.C:
+        return 'C计权';
+      case WeightingType.Z:
+        return 'Z计权';
+      default:
+        return '未知';
+    }
   }
 
   // 处理计权类型选择 - 只更新临时状态

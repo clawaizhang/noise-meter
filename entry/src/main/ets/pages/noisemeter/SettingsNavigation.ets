@@ -196,12 +196,10 @@ struct Settings {
   private updateAnalysisModeCache(selectedMode: AudioAnalysisMode) {
     this.analysisModeDescription = this.getAnalysisModeDescription(selectedMode);
     const config = AudioPresets.getConfig(selectedMode);
-    this.analysisModeDetails = [
-      `FFT大小: ${config.fftSize}`,
-      `频率分辨率: ${(44100 / config.fftSize).toFixed(1)}Hz`,
-      `时间分辨率: ${(config.fftSize / 44100 * 1000).toFixed(1)}ms`,
-      `更新间隔: ${config.updateInterval}ms`
-    ];
+    this.analysisModeDetails[0] = `FFT大小: ${config.fftSize}`;
+    this.analysisModeDetails[1] = `频率分辨率: ${(44100 / config.fftSize).toFixed(1)}Hz`;
+    this.analysisModeDetails[2] = `时间分辨率: ${(config.fftSize / 44100 * 1000).toFixed(1)}ms`;
+    this.analysisModeDetails[3] = `更新间隔: ${config.updateInterval}ms`;
   }
 
   // 导航到音频分析设置页面
@@ -334,7 +332,6 @@ struct Settings {
   // 处理音频分析模式变化
   private handleTimeWeightingModeChange(selectedMode: AudioAnalysisMode) {
 
-    // 禁用切换
     this.pk.audio_analysis_mode = selectedMode;
     this.updateAnalysisModeCache(selectedMode);
 

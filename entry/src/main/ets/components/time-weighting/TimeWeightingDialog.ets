@@ -13,7 +13,7 @@ import { ScenarioDisplay } from './ScenarioDisplay';
 import { CollapsibleSection } from './CollapsibleSection';
 import { CustomConfigPanel } from './CustomConfigPanel';
 import { PreferenceKeys } from '../../models/PreferenceKeys';
-import { EditableLeftIconType, EditableTitleBar, PersistenceV2 } from '@kit.ArkUI';
+import { EditableLeftIconType, EditableTitleBar, PersistenceV2, promptAction } from '@kit.ArkUI';
 import { PremiumFeature } from '../membership/PremiumFeature';
 
 @ComponentV2
@@ -48,11 +48,8 @@ export struct TimeWeightingDialog {
 
   // 处理保存操作
   private handleSave() {
-    // 检测是否有修改，有修改则通过回调传递设置
-    const hasChanges = this.hasSettingsChanged();
-    if (hasChanges && this.onSettingsApplied) {
-      this.onSettingsApplied(this.tempSelectedMode);
-    }
+    // 应用模式设置
+    this.pk.audio_analysis_mode = this.tempSelectedMode;
     // 应用自定义模式设置
     this.pk.custom_audio_config_enabled = this.tempCustomModeEnabled;
     // 应用自定义配置
@@ -62,8 +59,42 @@ export struct TimeWeightingDialog {
     this.pk.custom_audio_config.windowType = this.tempCustomConfig.windowType;
     this.pk.custom_audio_config.overlap = this.tempCustomConfig.overlap;
     this.pk.custom_audio_config.bufferSize = this.tempCustomConfig.bufferSize;
+    
+    // 通过回调通知设置已应用
+    if (this.onSettingsApplied) {
+      this.onSettingsApplied(this.tempSelectedMode);
+    }
+    
+    // 显示保存成功提示，显示具体的设置结果
+    const modeName = this.getAnalysisModeDisplayName(this.tempSelectedMode);
+    let message = `${modeName}`;
+    
+    // 如果启用了自定义配置，添加相关信息
+    if (this.tempCustomModeEnabled) {
+      message += '（自定义配置已启用）';
+    }
+    
+    promptAction.showToast({
+      message: message,
+      duration: 2000
+    });
+    
     // 关闭弹窗
     this.onClose();
+  }
+
+  // 获取分析模式显示名称
+  private getAnalysisModeDisplayName(mode: AudioAnalysisMode): string {
+    switch (mode) {
+      case AudioAnalysisMode.FAST_TIME_WEIGHTING:
+        return '快速模式';
+      case AudioAnalysisMode.SLOW_TIME_WEIGHTING:
+        return '慢速模式';
+      case AudioAnalysisMode.IMPULSE_TIME_WEIGHTING:
+        return '脉冲模式';
+      default:
+        return '自定义模式';
+    }
   }
 
   // 处理取消操作
@@ -72,21 +103,6 @@ export struct TimeWeightingDialog {
     this.onClose();
   }
 
-  // 检测设置是否有修改
-  private hasSettingsChanged(): boolean {
-    return this.tempSelectedMode !== this.initialMode ||
-      this.tempCustomModeEnabled !== this.initialCustomModeEnabled ||
-    this.hasCustomConfigChanged();
-  }
-
-  // 检测自定义配置是否有修改
-  private hasCustomConfigChanged(): boolean {
-    return this.tempCustomConfig.fftSize !== this.initialCustomConfig.fftSize ||
-      this.tempCustomConfig.updateInterval !== this.initialCustomConfig.updateInterval ||
-      this.tempCustomConfig.windowType !== this.initialCustomConfig.windowType ||
-      this.tempCustomConfig.smoothingFactor !== this.initialCustomConfig.smoothingFactor ||
-      this.tempCustomConfig.overlap !== this.initialCustomConfig.overlap;
-  }
 
   // 处理自定义配置变化
   private handleCustomConfigChange(config: AudioAnalysisConfig) {
@@ -95,7 +111,6 @@ export struct TimeWeightingDialog {
     this.tempCustomConfig.windowType = config.windowType;
     this.tempCustomConfig.smoothingFactor = config.smoothingFactor;
     this.tempCustomConfig.overlap = config.overlap;
-    this.initialCustomConfig.fftSize = config.fftSize;
   }
 
   // 处理模式选择 - 只更新临时状态

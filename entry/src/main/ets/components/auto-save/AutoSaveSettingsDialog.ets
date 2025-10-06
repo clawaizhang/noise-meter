@@ -51,15 +51,26 @@ export struct AutoSaveSettingsDialog {
 
   // 处理保存操作
   private handleSave() {
-    // 检测是否有修改，有修改则通过回调传递设置
-    const hasChanges = this.hasSettingsChanged();
-    if (hasChanges && this.params.onSettingsApplied) {
+    // 应用自动保存设置
+    this.pk.auto_save_enabled = this.tempAutoSaveEnabled;
+    this.pk.auto_save_interval = this.tempInterval;
+    
+    // 通过回调通知设置已应用
+    if (this.params.onSettingsApplied) {
       const settings: AutoSaveSettings = {
         enabled: this.tempAutoSaveEnabled,
         interval: this.tempInterval
       };
       this.params.onSettingsApplied(settings);
     }
+    
+    // 显示保存成功提示
+    const statusText = this.tempAutoSaveEnabled ? `已开启，间隔${this.tempInterval}分钟` : '已关闭';
+    promptAction.showToast({
+      message: `自动保存${statusText}`,
+      duration: 2000
+    });
+    
     // 关闭弹窗
     this.params.onClose();
   }
@@ -68,12 +79,6 @@ export struct AutoSaveSettingsDialog {
   private handleCancel() {
     // 直接关闭弹窗，不应用任何设置
     this.params.onClose();
-  }
-  
-  // 检测设置是否有修改
-  private hasSettingsChanged(): boolean {
-    return this.tempAutoSaveEnabled !== this.initialAutoSaveEnabled ||
-           this.tempInterval !== this.initialInterval;
   }
 
   @Computed
