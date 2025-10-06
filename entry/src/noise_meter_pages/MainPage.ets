@@ -29,6 +29,11 @@ export const dbConfig: DbConfig = {
       version: 3,
       sqls: [
         TableCreateSql.ADD_COMMENT_COLUMN]
+    },
+    {
+      version: 4,
+      sqls: [
+        TableCreateSql.ADD_TIMESTAMP_INDEX]
     }
   ]
 }

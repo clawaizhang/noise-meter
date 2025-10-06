@@ -76,6 +76,51 @@ export class DecibelRecordService {
   }
 
   /**
+   * 分页获取历史记录，按时间倒序排列
+   * @param limit 限制返回的记录数
+   * @param offset 偏移量
+   */
+  async getRecordsPaged(limit: number = 10, offset: number = 0): Promise<DecibelRecord[]> {
+    try {
+      const sql = 'SELECT * FROM decibel_records ORDER BY timestamp DESC LIMIT ? OFFSET ?';
+      const resultSet = await this.relationalStoreService.query(sql, [limit, offset]);
+      
+      const records: DecibelRecord[] = [];
+      while (resultSet.goToNextRow()) {
+        records.push(DecibelRecord.fromResultSet(resultSet));
+      }
+      resultSet.close();
+      hilog.info(DOMAIN, TAG, '分页获取到 %{public}d 条记录 (limit: %{public}d, offset: %{public}d)',
+                records.length, limit, offset);
+      return records;
+    } catch (error) {
+      hilog.error(DOMAIN, TAG, '分页获取历史记录失败: %{public}s', error instanceof Error ? error.message : String(error));
+      throw new Error('分页获取历史记录失败');
+    }
+  }
+
+  /**
+   * 获取记录总数
+   */
+  async getTotalCount(): Promise<number> {
+    try {
+      const sql = 'SELECT COUNT(*) as total FROM decibel_records';
+      const resultSet = await this.relationalStoreService.query(sql);
+      
+      let total = 0;
+      if (resultSet.goToFirstRow()) {
+        total = resultSet.getLong(resultSet.getColumnIndex('total'));
+      }
+      resultSet.close();
+      hilog.info(DOMAIN, TAG, '总记录数: %{public}d', total);
+      return total;
+    } catch (error) {
+      hilog.error(DOMAIN, TAG, '获取记录总数失败: %{public}s', error instanceof Error ? error.message : String(error));
+      throw new Error('获取记录总数失败');
+    }
+  }
+
+  /**
    * 清空非收藏记录
    */
   async clearUnfavoriteRecords(): Promise<void> {

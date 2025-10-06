@@ -33,7 +33,7 @@ export function SettingsBuilder() {
 function itemIcon() {
   .width(DesignConstants.ICON_SIZE_MD)
   .height(DesignConstants.ICON_SIZE_MD)
-  .fillColor($r('sys.color.font_primary'))
+  .fillColor($r('sys.color.brand'))
 }
 
 @Extend(Text)
@@ -651,33 +651,6 @@ struct Settings {
         .cardStyle()
       }
 
-      // 后台运行设置
-      GridCol() {
-        Column({ space: 8 }) {
-          Row({ space: 8 }) {
-            Row() {
-              Image($r('app.media.ic_running'))
-                .itemIcon()
-
-              Text($r('app.string.background_running'))
-                .itemTitle()
-            }.layoutWeight(1)
-
-            Toggle({ type: ToggleType.Switch, isOn: this.pk.background_running })
-              .selectedColor($r('app.color.toggle_active'))
-              .switchPointColor($r('app.color.background_primary'))
-              .onChange((isOn: boolean) => {
-                this.pk.background_running = isOn;
-              })
-          }
-          .listItemRow()
-
-          Text(this.pk.background_running ? $r('app.string.background_running_desc_on') :
-          $r('app.string.background_running_desc_off'))
-            .itemDescription()
-        }
-        .cardStyle()
-      }
 
     }.padding(16).backgroundColor($r('sys.color.background_secondary'))
     .id
@@ -685,39 +658,4 @@ struct Settings {
     )
   }
 
-  @
-  Builder
-  buildListItem(param:
-    ListItemParam
-  ) {
-    GridCol({ span: 1 }) {
-      Column({ space: 8 }) {
-        Row() {
-          Row() {
-            Image(param.icon)
-              .height(20)
-              .width(20)
-              .fillColor($r('sys.color.font_primary'));
-            Text(param.title);
-          }.layoutWeight(1);
-
-          Image($r('app.media.ic_arrow_right'))
-            .fillColor($r('sys.color.font_primary'))
-            .height(24)
-            .width(24);
-        }.justifyContent(FlexAlign.End);
-
-        Text(param.desc)
-          .fontSize(14)
-          .fontColor($r('sys.color.font_secondary'));
-      }.alignItems(HorizontalAlign.Start);
-    }
-    .backgroundColor($r('sys.color.comp_background_primary'))
-    .onClick(param.action)
-    .padding(16)
-    .borderRadius(16)
-    .transition(TransitionEffect.OPACITY.animation({ curve: curves.springMotion(0.6, 0.8) }) // 透明度动画，使用springMotion曲线
-      .combine(TransitionEffect.scale({ x: 0, y: 0 })) // 组合缩放效果（从0放大到1）
-      .combine(TransitionEffect.translate({ x: -150, y: 0 }).animation({ curve: curves.springMotion() })))
-  }
 }

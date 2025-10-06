@@ -3,11 +3,10 @@ import { PersistenceV2 } from '@kit.ArkUI';
 import { ListItemBuilder } from '../common/ListItemBuilder';
 import { SettingsBuilder } from '../../pages/noisemeter/SettingsNavigation';
 import { AboutSettingsBuilder } from '../../pages/settings/AboutSettingsNavigation';
-import { DialogHub, InfSheet } from '@hadss/dialoghub';
+import { DialogHub } from '@hadss/dialoghub';
 import { common, Want } from '@kit.AbilityKit';
 import { BusinessError } from '@kit.BasicServicesKit';
 import { DisplayModeComponent } from '../display/DisplayModeComponent';
-import { DialogStyleManager } from '../../utils/DialogStyleManager';
 import { MembershipStatusCard } from '../membership/MembershipStatusCard';
 import { DesignConstants } from '../../constants/DesignConstants';
 
@@ -52,6 +51,62 @@ export struct MyContentComponent {
           }.margin({
             left: 16,
             right: 16, top: 16
+          })
+
+          // 后台运行设置
+          ListItem() {
+            Column({ space: 8 }) {
+              Row({ space: 8 }) {
+                Row() {
+                  Image($r('app.media.ic_running'))
+                    .width(24)
+                    .height(24)
+                    .fillColor($r('sys.color.font_primary'))
+                    .margin({ right: 12 })
+
+                  Text($r('app.string.background_running'))
+                    .fontSize(16)
+                    .fontColor($r('sys.color.font_primary'))
+                    .layoutWeight(1)
+                }.layoutWeight(1)
+
+                // 状态指示器
+                Toggle({ type: ToggleType.Switch, isOn: this.pk.background_running })
+                  .selectedColor($r('app.color.toggle_active'))
+                  .switchPointColor($r('app.color.background_primary'))
+                  .onChange((isOn: boolean) => {
+                    this.pk.background_running = isOn;
+                  })
+              }
+              .width('100%')
+              .height(24)
+              .alignItems(VerticalAlign.Center)
+
+              // 描述文本
+              Text(this.pk.background_running ? $r('app.string.background_running_desc_on') : $r('app.string.background_running_desc_off'))
+                .fontSize(12)
+                .fontColor($r('sys.color.font_secondary'))
+                .width('100%')
+                .textAlign(TextAlign.Start)
+            }
+            .width('100%')
+            .padding({
+              left: 16,
+              right: 16,
+              top: 12,
+              bottom: 12
+            })
+          }
+          .borderRadius(16)
+          .backgroundColor($r('sys.color.comp_background_primary'))
+          .margin({
+            top: 20,
+            left: 16,
+            right: 16
+          })
+          .onClick(() => {
+            // 切换后台运行状态
+            this.pk.background_running = !this.pk.background_running;
           })
 
           ListItemBuilder(

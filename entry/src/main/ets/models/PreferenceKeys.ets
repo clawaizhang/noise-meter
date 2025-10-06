@@ -32,7 +32,7 @@ export class PreferenceKeys {
   @Trace
   weighting_type: WeightingType = PreferencesUtil.getStringSync('weighting_type', WeightingType.A) as WeightingType;
   @Trace
-  display_mode: string = 'default';
+  display_mode: string = 'dark';
   /**
    * 音频分析模式
    */

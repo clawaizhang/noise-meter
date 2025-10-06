@@ -35,4 +35,12 @@ export class TableCreateSql {
     ALTER TABLE decibel_records
     ADD COLUMN comment TEXT
   `;
+
+  /**
+   * 为timestamp字段添加索引，加速排序查询
+   */
+  static readonly ADD_TIMESTAMP_INDEX = `
+    CREATE INDEX IF NOT EXISTS idx_decibel_records_timestamp
+    ON decibel_records(timestamp DESC)
+  `;
 }

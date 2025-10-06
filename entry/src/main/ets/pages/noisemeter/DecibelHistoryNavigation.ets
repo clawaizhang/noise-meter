@@ -24,6 +24,12 @@ class DecibelRecordDataSource implements IDataSource {
     this.records = records;
   }
 
+  appendData(records: DecibelRecord[]) {
+    const startIndex = this.records.length;
+    this.records.push(...records);
+    this.notifyDataAdd(startIndex);
+  }
+
   totalCount(): number {
     return this.records.length;
   }
@@ -47,8 +53,12 @@ class DecibelRecordDataSource implements IDataSource {
     this.listeners.forEach(listener => listener.onDataReloaded());
   }
 
-  notifyDataAdd(index: number): void {
-    this.listeners.forEach(listener => listener.onDataAdd(index));
+  notifyDataAdd(startIndex: number): void {
+    this.listeners.forEach(listener => {
+      for (let i = startIndex; i < this.records.length; i++) {
+        listener.onDataAdd(i);
+      }
+    });
   }
 
   notifyDataChange(index: number): void {
@@ -76,10 +86,16 @@ export struct DecibelHistory {
   @Local shouChangMode: boolean = false;
   @Local deleteMode: boolean = false;
   @Local as: AppKeys = AppStorageV2.connect(AppKeys)!;
+  @Local isLoading: boolean = false;
+  @Local isLoadingMore: boolean = false;
+  @Local hasMoreData: boolean = true;
+  @Local totalRecords: number = 0;
+  @Local currentOffset: number = 0;
+  private readonly PAGE_SIZE: number = 10;
   private context: Context = getContext(this)
   private recordService: DecibelRecordService = new DecibelRecordService(this.context);
   private promptAction: PromptAction = this.getUIContext().getPromptAction();
-  
+
   onPageShow() {
     this.loadRecords();
   }
@@ -117,8 +133,61 @@ export struct DecibelHistory {
   }
 
   aboutToAppear() {
-    this.loadRecords();
-    this.dataSource.notifyDataReload();
+    this.loadInitialRecords();
+  }
+
+  async loadInitialRecords() {
+    if (this.isLoading) {
+      return;
+    }
+
+    this.isLoading = true;
+    try {
+      // 获取总记录数
+      this.totalRecords = await this.recordService.getTotalCount();
+
+      // 初始加载最近50条记录
+      const initialRecords = await this.recordService.getRecordsPaged(this.PAGE_SIZE, 0);
+      this.records = initialRecords;
+      this.currentOffset = initialRecords.length;
+
+      if (this.dataSource) {
+        this.dataSource.replaceData(this.records);
+        this.dataSource.notifyDataReload();
+      } else {
+        this.dataSource = new DecibelRecordDataSource(this.records);
+      }
+
+      // 检查是否还有更多数据
+      this.hasMoreData = this.currentOffset < this.totalRecords;
+    } catch (error) {
+      console.error('加载历史记录失败:', error);
+    } finally {
+      this.isLoading = false;
+    }
+  }
+
+  async loadMoreRecords() {
+    if (this.isLoadingMore || !this.hasMoreData) {
+      return;
+    }
+
+    this.isLoadingMore = true;
+    try {
+      const moreRecords = await this.recordService.getRecordsPaged(this.PAGE_SIZE, this.currentOffset);
+      if (moreRecords.length > 0) {
+        this.records.push(...moreRecords);
+        this.currentOffset += moreRecords.length;
+        this.dataSource.appendData(moreRecords);
+      }
+
+      // 检查是否还有更多数据
+      this.hasMoreData = this.currentOffset < this.totalRecords;
+    } catch (error) {
+      console.error('加载更多记录失败:', error);
+    } finally {
+      this.isLoadingMore = false;
+    }
   }
 
   async loadRecords() {
@@ -444,12 +513,12 @@ export struct DecibelHistory {
         selectedRecord: this.selectedRecord,
         context: getContext(this),
       };
-        let detailDialog = DialogHub.getSheet()
-          .setComponentTargetId('mainId')
-          .setStyle({ backgroundColor:$r('sys.color.background_secondary') })
-          .setConfig({ enableOutsideInteractive: true, scrollSizeMode: ScrollSizeMode.CONTINUOUS })
-          .setContent(wrapBuilder(DetailDialogBuilder), params)
-          .build();
+      let detailDialog = DialogHub.getSheet()
+        .setComponentTargetId('mainId')
+        .setStyle({ backgroundColor: $r('sys.color.background_secondary') })
+        .setConfig({ enableOutsideInteractive: true, scrollSizeMode: ScrollSizeMode.CONTINUOUS })
+        .setContent(wrapBuilder(DetailDialogBuilder), params)
+        .build();
       detailDialog.show();
     } catch (error) {
       console.error('导航到详情页失败:', error);
@@ -485,7 +554,7 @@ export struct DecibelHistory {
   ListLayoutView() {
     Scroll() {
       Column({ space: 16 }) {
-        Text(`共 ${this.records.length} 条记录`)
+        Text(`共 ${this.totalRecords} 条记录，已加载 ${this.records.length} 条`)
           .fontSize(DesignConstants.FONT_SIZE_MD)
           .textAlign(TextAlign.Center)
           .alignSelf(ItemAlign.Center)
@@ -510,7 +579,57 @@ export struct DecibelHistory {
             })
           }, (record: DecibelRecord) => record.id)
         }
+
+        // 加载更多指示器
+        if (this.hasMoreData) {
+          this.LoadMoreIndicator()
+        } else if (this.totalRecords > 0) {
+          Text('已加载全部记录')
+            .fontSize(DesignConstants.FONT_SIZE_SM)
+            .fontColor($r('sys.color.font_secondary'))
+            .textAlign(TextAlign.Center)
+            .alignSelf(ItemAlign.Center)
+            .margin({ top: 16 })
+        }
       }.margin({ left: 16, right: 16 }).id('noiseHistoryMainId')
-    }.scrollBar(BarState.Off).edgeEffect(EdgeEffect.Spring).height('100%').align(Alignment.Top)
+    }
+    .scrollBar(BarState.Off)
+    .edgeEffect(EdgeEffect.Spring)
+    .height('100%')
+    .align(Alignment.Top)
+    .onScrollEdge((side: Edge) => {
+      if (side === Edge.Bottom && this.hasMoreData && !this.isLoadingMore) {
+        this.loadMoreRecords();
+      }
+    })
+  }
+
+  /**
+   * 加载更多指示器
+   */
+  @Builder
+  LoadMoreIndicator() {
+    Column() {
+      if (this.isLoadingMore) {
+        LoadingProgress()
+          .enableLoading(true)
+          .width(32)
+          .height(32)
+          .color($r('sys.color.font_primary'))
+        Text('正在加载更多记录...')
+          .fontSize(DesignConstants.FONT_SIZE_SM)
+          .fontColor($r('sys.color.font_secondary'))
+          .margin({ top: 8 })
+      } else {
+        Text('滚动加载更多记录')
+          .fontSize(DesignConstants.FONT_SIZE_SM)
+          .fontColor($r('sys.color.font_secondary'))
+      }
+    }
+    .width('100%')
+    .height(80)
+    .justifyContent(FlexAlign.Center)
+    .alignItems(HorizontalAlign.Center)
+    .margin({ top: 16 })
   }
 }

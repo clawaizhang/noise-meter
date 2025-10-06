@@ -37,7 +37,7 @@ export struct ActionPanel {
 
       // 手电筒按钮
       Button({ type: ButtonType.Circle }) {
-        Image($r('app.media.ic_flashlight'))
+        Image($r("app.media.ic_flashlight_bold"))
           .width(24)
           .height(24)
           .fillColor(this.isTorchOn ? '#ffffffff' : $r('sys.color.icon_secondary'))

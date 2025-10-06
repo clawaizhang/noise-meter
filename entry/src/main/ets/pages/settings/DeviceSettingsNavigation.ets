@@ -57,33 +57,6 @@ export struct DeviceSettings {
       breakpoints: { reference: BreakpointsReference.WindowSize }
     , gutter: 16
     }) {
-      // 后台运行设置
-      GridCol() {
-        Column({ space: 8 }) {
-          Row({ space: 8 }) {
-            Row() {
-              Image($r('app.media.ic_meter'))
-                .itemIcon()
-
-              Text($r('app.string.background_running'))
-                .itemTitle()
-            }.layoutWeight(1)
-
-            Toggle({ type: ToggleType.Switch, isOn: this.pk.background_running })
-              .selectedColor($r('app.color.toggle_active'))
-              .switchPointColor($r('app.color.background_primary'))
-              .onChange((isOn: boolean) => {
-                this.pk.background_running = isOn;
-              })
-          }
-          .listItemRow()
-
-          Text(this.pk.background_running ? $r('app.string.background_running_desc_on') :
-          $r('app.string.background_running_desc_off'))
-            .itemDescription()
-        }
-        .cardStyle()
-      }
 
       // 屏幕常亮设置
       // GridCol() {
