@@ -235,11 +235,12 @@ export struct FrequencyWeightingDialog {
         }
       })
 
+      // 固定选项卡区域
+      this.buildFixedTabs()
+
       // 可滚动内容区域
       Scroll() {
         Column({ space: DesignConstants.SPACING_LG }) {
-          this.buildFixedTabs()
-          
           // 主要内容区域（优先显示）
           this.buildPrimaryContentArea()
 
