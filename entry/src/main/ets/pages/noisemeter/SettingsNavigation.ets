@@ -1,5 +1,5 @@
 import { navigationStack } from '../../constants/ProviderConstant';
-import { curves, PersistenceV2 } from '@kit.ArkUI';
+import { curves, PersistenceV2, promptAction } from '@kit.ArkUI';
 import { DialogHub, InfSheet } from '@hadss/dialoghub';
 import { DialogStyleManager } from '../../utils/DialogStyleManager';
 import { AudioAnalysisSettingsBuilder } from '../settings/AudioAnalysisSettingsNavigation';
@@ -18,6 +18,7 @@ import {
 } from '../../components/frequency-weighting/FrequencyWeightingDialog';
 import {
   AutoSaveDialogParams,
+  AutoSaveSettings,
   AutoSaveSettingsDialogBuilder,
 } from '../../components/auto-save/AutoSaveSettingsDialog';
 import { ThresholdManager } from '../../services/ThresholdManager';
@@ -97,7 +98,6 @@ struct Settings {
   private alertsDialog: InfSheet | null = null;
   private timeWeightingDialog: InfSheet | null = null;
   private frequencyWeightingDialog: InfSheet | null = null;
-  private autoSaveDialog: InfSheet | null = null;
   @Local pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys)!;
   @Consumer(navigationStack) navStack: NavPathStack = new NavPathStack();
   @Local analysisModeDescription: string = '';
@@ -298,26 +298,49 @@ struct Settings {
   }
   // 打开自动保存设置弹框
   private openAutoSaveDialog = () => {
-    if (!this.autoSaveDialog) {
-      let param: AutoSaveDialogParams = {
-        onClose: () => {
-          this.autoSaveDialog?.dismiss();
-        }
+    let autoSaveDialog: InfSheet;
+    let param: AutoSaveDialogParams = {
+      onClose: () => {
+        autoSaveDialog?.dismiss();
+      },
+      onSettingsApplied: (settings: AutoSaveSettings) => {
+        // 应用设置并显示统一提示
+        this.applyAutoSaveSettings(settings);
       }
-      this.autoSaveDialog = DialogHub.getSheet()
-        .setStyle({
-          title: { title: '自动保存设置' },
-          backgroundColor: $r('sys.color.background_secondary')
-        })
-        .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS, enableOutsideInteractive: true })
-        .setComponentTargetId('mainId')
-        .setContent(wrapBuilder(AutoSaveSettingsDialogBuilder), param)
-        .build();
-
-      // 注册Dialog到样式管理器
-      DialogStyleManager.registerDialog(this.autoSaveDialog);
     }
-    this.autoSaveDialog.show();
+    autoSaveDialog = DialogHub.getSheet()
+      .setStyle({
+        showClose: false,
+        backgroundColor: $r('sys.color.background_secondary')
+      })
+      .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS, enableOutsideInteractive: true })
+      .setComponentTargetId('mainId')
+      .setContent(wrapBuilder(AutoSaveSettingsDialogBuilder), param)
+      .build();
+
+    autoSaveDialog.show();
+  }
+
+  // 应用自动保存设置
+  private applyAutoSaveSettings(settings: AutoSaveSettings) {
+    const pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys)!;
+
+    // 更新持久化存储
+    pk.auto_save_enabled = settings.enabled;
+    pk.auto_save_interval = settings.interval;
+
+    // 显示统一提示
+    if (settings.enabled) {
+      promptAction.showToast({
+        message: `自动保存已启用：每${settings.interval}分钟保存`,
+        duration: 2000
+      });
+    } else {
+      promptAction.showToast({
+        message: '自动保存已禁用',
+        duration: 2000
+      });
+    }
   }
 
   // 处理音频分析模式变化

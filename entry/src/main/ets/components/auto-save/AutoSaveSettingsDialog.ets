@@ -2,9 +2,16 @@ import { PreferenceKeys } from '../../models/PreferenceKeys';
 import { PersistenceV2 } from '@kit.ArkUI';
 import promptAction from '@ohos.promptAction';
 import { DesignConstants } from '../../constants/DesignConstants';
+import { EditableTitleBar, EditableLeftIconType } from '@kit.ArkUI';
 
 export interface AutoSaveDialogParams {
   onClose: () => void;
+  onSettingsApplied?: (settings: AutoSaveSettings) => void; // 新增：设置应用回调
+}
+
+export interface AutoSaveSettings {
+  enabled: boolean;
+  interval: number;
 }
 
 export interface PresetOptionParams {
@@ -17,21 +24,61 @@ export interface PresetOptionParams {
 @ComponentV2
 export struct AutoSaveSettingsDialog {
   @Local pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys)!;
-  @Local autoSaveEnabled: boolean = this.pk.auto_save_enabled;
-  @Local interval: number = this.pk.auto_save_interval;
-  @Local customInterval: number = this.interval;
+  // 临时状态变量 - 不立即持久化
+  @Local tempAutoSaveEnabled: boolean = this.pk.auto_save_enabled;
+  @Local tempInterval: number = this.pk.auto_save_interval;
+  @Local tempCustomInterval: number = this.tempInterval;
   @Param @Require params: AutoSaveDialogParams;
+  
+  // 初始状态 - 用于检测是否有修改
+  private initialAutoSaveEnabled: boolean = this.pk.auto_save_enabled;
+  private initialInterval: number = this.pk.auto_save_interval;
 
   aboutToAppear() {
-    // 确保状态正确初始化
-    this.autoSaveEnabled = this.pk.auto_save_enabled;
-    this.interval = this.pk.auto_save_interval;
-    this.customInterval = this.interval;
+    // 记录初始状态用于修改检测
+    this.init();
+  }
+
+  private init() {
+    this.initialAutoSaveEnabled = this.pk.auto_save_enabled;
+    this.initialInterval = this.pk.auto_save_interval;
+
+    // 初始化临时状态
+    this.tempAutoSaveEnabled = this.pk.auto_save_enabled;
+    this.tempInterval = this.pk.auto_save_interval;
+    this.tempCustomInterval = this.tempInterval;
+  }
+
+  // 处理保存操作
+  private handleSave() {
+    // 检测是否有修改，有修改则通过回调传递设置
+    const hasChanges = this.hasSettingsChanged();
+    if (hasChanges && this.params.onSettingsApplied) {
+      const settings: AutoSaveSettings = {
+        enabled: this.tempAutoSaveEnabled,
+        interval: this.tempInterval
+      };
+      this.params.onSettingsApplied(settings);
+    }
+    // 关闭弹窗
+    this.params.onClose();
+  }
+
+  // 处理取消操作
+  private handleCancel() {
+    // 直接关闭弹窗，不应用任何设置
+    this.params.onClose();
+  }
+  
+  // 检测设置是否有修改
+  private hasSettingsChanged(): boolean {
+    return this.tempAutoSaveEnabled !== this.initialAutoSaveEnabled ||
+           this.tempInterval !== this.initialInterval;
   }
 
   @Computed
   get selectedIndex(){
-    return this.getPresetIndex(this.interval);
+    return this.getPresetIndex(this.tempInterval);
   }
 
   private getPresetIndex(interval: number): number {
@@ -50,53 +97,30 @@ export struct AutoSaveSettingsDialog {
       case 1: return 5;
       case 2: return 10;
       case 3: return 20;
-      default: return this.customInterval;
+      default: return this.tempCustomInterval;
     }
   }
 
   private handlePresetSelect(index: number) {
-    // 立即更新所有相关状态
+    // 只更新临时状态，不立即持久化
     const newInterval = this.getPresetInterval(index);
-    this.interval = newInterval;
+    this.tempInterval = newInterval;
     if (index !== -1) {
-      this.customInterval = newInterval;
+      this.tempCustomInterval = newInterval;
     }
-    // 立即应用新设置
-    this.handleIntervalChange(newInterval);
   }
 
   private handleCustomInput(value: string) {
     const numValue = parseInt(value);
     if (!isNaN(numValue) && numValue >= 1 && numValue <= 60) {
-      this.customInterval = numValue;
-      this.interval = numValue;
-      // 立即应用新设置
-      this.handleIntervalChange(numValue);
+      this.tempCustomInterval = numValue;
+      this.tempInterval = numValue;
     }
   }
 
-  // 处理开关变化 - 即时生效
+  // 处理开关变化 - 只更新临时状态
   private handleToggleChange(isOn: boolean) {
-    this.autoSaveEnabled = isOn;
-    this.pk.auto_save_enabled = isOn;
-    
-    promptAction.showToast({
-      message: isOn ? `自动保存已启用：每${this.interval}分钟保存` : '自动保存已禁用',
-      duration: 2000
-    });
-  }
-
-  // 处理间隔变化 - 即时生效
-  private handleIntervalChange(newInterval: number) {
-    this.interval = newInterval;
-    this.pk.auto_save_interval = newInterval;
-    
-    if (this.autoSaveEnabled) {
-      promptAction.showToast({
-        message: `自动保存间隔已更新：每${newInterval}分钟保存`,
-        duration: 2000
-      });
-    }
+    this.tempAutoSaveEnabled = isOn;
   }
 
   @Builder
@@ -133,7 +157,7 @@ export struct AutoSaveSettingsDialog {
           .fontColor($r('sys.color.font_primary'))
           .layoutWeight(1)
         
-        TextInput({ text: this.customInterval.toString() })
+        TextInput({ text: this.tempCustomInterval.toString() })
           .width(80)
           .height(40)
           .type(InputType.Number)
@@ -159,71 +183,96 @@ export struct AutoSaveSettingsDialog {
   }
 
   build() {
-    Column({ space: DesignConstants.SPACING_LG }) {
-      // 开关区域
-      Row({ space: 8 }) {
-        Text('启用自动保存')
-          .fontSize(DesignConstants.FONT_SIZE_MD)
-          .fontColor($r('sys.color.font_primary'))
-          .layoutWeight(1)
-        
-        Toggle({ type: ToggleType.Switch, isOn: this.autoSaveEnabled })
-          .selectedColor($r('app.color.toggle_active'))
-          .switchPointColor($r('app.color.background_primary'))
-          .onChange((isOn: boolean) => {
-            this.handleToggleChange(isOn);
-          })
-      }
-      .width('100%')
-      .padding(DesignConstants.SPACING_MD)
-      .backgroundColor($r('sys.color.comp_background_primary'))
-      .borderRadius(DesignConstants.BORDER_RADIUS_MD)
+    Column({ space: 0 }) {
+      // 使用EditableTitleBar提供标准的编辑界面标题栏
+      EditableTitleBar({
+        leftIconStyle: EditableLeftIconType.Cancel,
+        title: '自动保存设置',
+        isSaveIconRequired: true,
+        onSave: () => {
+          this.handleSave();
+        },
+        onCancel: () => {
+          this.handleCancel();
+        }
+      })
 
-      if (this.autoSaveEnabled) {
-        // 预设选项区域
-        GridRow({ columns: 2, gutter: 12 }) {
-          GridCol({ span: 1 }) {
-            this.buildPresetOption({
-              index: 0,
-              label: '3分钟',
-              description: '工业监测',
-              selectedIndex: this.selectedIndex
-            })
+      // 内容区域 - 从顶部开始排列
+      Scroll() {
+        Column({ space: DesignConstants.SPACING_LG }) {
+          // 开关区域
+          Row({ space: 8 }) {
+            Text('启用自动保存')
+              .fontSize(DesignConstants.FONT_SIZE_MD)
+              .fontColor($r('sys.color.font_primary'))
+              .layoutWeight(1)
+            
+            Toggle({ type: ToggleType.Switch, isOn: this.tempAutoSaveEnabled })
+              .selectedColor($r('app.color.toggle_active'))
+              .switchPointColor($r('app.color.background_primary'))
+              .onChange((isOn: boolean) => {
+                this.handleToggleChange(isOn);
+              })
           }
-          GridCol({ span: 1 }) {
-            this.buildPresetOption({
-              index: 1,
-              label: '5分钟',
-              description: '综合应用',
-              selectedIndex: this.selectedIndex
-            })
-          }
-          GridCol({ span: 1 }) {
-            this.buildPresetOption({
-              index: 2,
-              label: '10分钟',
-              description: '社区投诉',
-              selectedIndex: this.selectedIndex
-            })
-          }
-          GridCol({ span: 1 }) {
-            this.buildPresetOption({
-              index: 3,
-              label: '20分钟',
-              description: '健康监测',
-              selectedIndex: this.selectedIndex
-            })
+          .width('100%')
+          .padding(DesignConstants.SPACING_MD)
+          .backgroundColor($r('sys.color.comp_background_primary'))
+          .borderRadius(DesignConstants.BORDER_RADIUS_MD)
+
+          if (this.tempAutoSaveEnabled) {
+            // 预设选项区域
+            GridRow({ columns: 2, gutter: 12 }) {
+              GridCol({ span: 1 }) {
+                this.buildPresetOption({
+                  index: 0,
+                  label: '3分钟',
+                  description: '工业监测',
+                  selectedIndex: this.selectedIndex
+                })
+              }
+              GridCol({ span: 1 }) {
+                this.buildPresetOption({
+                  index: 1,
+                  label: '5分钟',
+                  description: '综合应用',
+                  selectedIndex: this.selectedIndex
+                })
+              }
+              GridCol({ span: 1 }) {
+                this.buildPresetOption({
+                  index: 2,
+                  label: '10分钟',
+                  description: '社区投诉',
+                  selectedIndex: this.selectedIndex
+                })
+              }
+              GridCol({ span: 1 }) {
+                this.buildPresetOption({
+                  index: 3,
+                  label: '20分钟',
+                  description: '健康监测',
+                  selectedIndex: this.selectedIndex
+                })
+              }
+            }
+            .width('100%')
+
+            // 自定义输入区域
+            this.buildCustomInput()
           }
         }
         .width('100%')
-
-        // 自定义输入区域
-        this.buildCustomInput()
+        .padding(DesignConstants.SPACING_LG)
+        .alignItems(HorizontalAlign.Start) // 确保内容从左侧开始
       }
-
+      .scrollBar(BarState.Auto)
+      .scrollable(ScrollDirection.Vertical)
+      .layoutWeight(1)
+      .align(Alignment.TopStart) // 确保滚动区域从顶部开始
     }
     .width('100%')
-    .padding(DesignConstants.SPACING_LG)
+    .height('100%')
+    .justifyContent(FlexAlign.Start) // 确保整个列从顶部开始
   }
 }
 
