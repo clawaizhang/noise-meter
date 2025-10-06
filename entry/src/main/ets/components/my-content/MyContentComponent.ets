@@ -89,89 +89,97 @@ export struct MyContentComponent {
   }
 
   build() {
-    Column() {
+    // 可滚动内容区域
+    Scroll() {
+      Column() {
 
-      // 会员状态卡片
-      MembershipStatusCard()
-        .margin({ top: DesignConstants.SPACING_MD, left: 16, right: 16 })
+        // 会员状态卡片
+        MembershipStatusCard()
+          .margin({ top: DesignConstants.SPACING_MD, left: 16, right: 16 })
 
-      // 全局设置列表项
-      List() {
+        // 全局设置列表项
+        List() {
 
-        // 专业版升级选项 - 添加到第一个位置
-        ListItemBuilder(
-          $r('app.media.ic_vip'),
-          '专业版',
-          () => {
-            this.showUpgradeDialog();
-          }
-        )
+          // 专业版升级选项 - 添加到第一个位置
+          ListItemBuilder(
+            $r('app.media.ic_vip'),
+            '专业版',
+            () => {
+              this.showUpgradeDialog();
+            }
+          )
 
-        ListItem() {
-          // 显示模式组件
-          DisplayModeComponent()
-        }.margin({
-          left: 16,
-          right: 16, top: 16
-        })
+          ListItem() {
+            // 显示模式组件
+            DisplayModeComponent()
+          }.margin({
+            left: 16,
+            right: 16, top: 16
+          })
 
-        ListItemBuilder(
-          $r('app.media.ic_settings'),
-          '全局设置',
-          () => {
-            DialogHub.getSheet()
-              .setStyle({
-                title: { title: '设置' },
-                showClose: false,
-                backgroundColor: $r('sys.color.background_secondary')
-              })
-              .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS, enableOutsideInteractive: true })
-              .setComponentTargetId('mainId')
-              .setContent(wrapBuilder(SettingsBuilder))
-              .build()
-              .show();
-          },
-          20
-        )
+          ListItemBuilder(
+            $r('app.media.ic_settings'),
+            '全局设置',
+            () => {
+              DialogHub.getSheet()
+                .setStyle({
+                  title: { title: '设置' },
+                  showClose: false,
+                  backgroundColor: $r('sys.color.background_secondary')
+                })
+                .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS, enableOutsideInteractive: true })
+                .setComponentTargetId('mainId')
+                .setContent(wrapBuilder(SettingsBuilder))
+                .build()
+                .show();
+            },
+            20
+          )
 
-        // 给作者五星好评设置
-        ListItemBuilder(
-          $r('app.media.ic_smile'),
-          '五星好评',
-          () => {
-            this.navigateToAppStoreRating();
-          }
-        )
+          // 给作者五星好评设置
+          ListItemBuilder(
+            $r('app.media.ic_smile'),
+            '五星好评',
+            () => {
+              this.navigateToAppStoreRating();
+            }
+          )
 
-        // 关于列表项
-        ListItemBuilder(
-          $r('app.media.ic_info'),
-          '关于',
-          () => {
-            DialogHub.getSheet()
-              .setStyle({ title: { title: '关于' }, backgroundColor: $r('sys.color.background_secondary') })
-              .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS, enableOutsideInteractive: true })
-              .setComponentTargetId('mainId')
-              .setContent(wrapBuilder(AboutSettingsBuilder))
-              .build()
-              .show();
-          }
-        )
+          // 关于列表项
+          ListItemBuilder(
+            $r('app.media.ic_info'),
+            '关于',
+            () => {
+              DialogHub.getSheet()
+                .setStyle({ title: { title: '关于' }, backgroundColor: $r('sys.color.background_secondary') })
+                .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS, enableOutsideInteractive: true })
+                .setComponentTargetId('mainId')
+                .setContent(wrapBuilder(AboutSettingsBuilder))
+                .build()
+                .show();
+            }
+          )
+        }
+        .width('100%')
+        .alignListItem(ListItemAlign.Center)
+
       }
-      .width('100%')
-      .alignListItem(ListItemAlign.Center)
-
+      .justifyContent(FlexAlign.Start)
+      .alignItems(HorizontalAlign.Start)
+      .opacity(this.currentIndex === 2 ? 1 : 0)
+      .scale({ x: this.currentIndex === 2 ? 1 : 0.95, y: this.currentIndex === 2 ? 1 : 0.95 })
+      .animation({
+        duration: 300,
+        curve: Curve.EaseOut,
+        delay: 0,
+        iterations: 1,
+        playMode: PlayMode.Normal
+      })
     }
-    .justifyContent(FlexAlign.Start)
-    .alignItems(HorizontalAlign.Center)
-    .opacity(this.currentIndex === 2 ? 1 : 0)
-    .scale({ x: this.currentIndex === 2 ? 1 : 0.95, y: this.currentIndex === 2 ? 1 : 0.95 })
-    .animation({
-      duration: 300,
-      curve: Curve.EaseOut,
-      delay: 0,
-      iterations: 1,
-      playMode: PlayMode.Normal
-    })
+    .scrollBar(BarState.Auto)
+    .scrollable(ScrollDirection.Vertical)
+    .edgeEffect(EdgeEffect.Spring)
+    .width('100%')
+    .height('100%')
   }
 }
