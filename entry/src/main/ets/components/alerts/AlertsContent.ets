@@ -10,7 +10,7 @@ import { NotificationPreferences } from './NotificationPreferences';
 @ComponentV2
 export struct AlertsContent {
   // 通过AppKeys获取实时数据
-  @Local private as: AppKeys = AppStorageV2.connect(AppKeys)!;
+  @Local private ak: AppKeys = AppStorageV2.connect(AppKeys)!;
   @Local private pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys)!;
   // 警报状态
   @Local private isAlarmActive: boolean = false;
@@ -30,7 +30,7 @@ export struct AlertsContent {
     this.alertService.resetAlertState();
   }
 
-  @Monitor('as.db')
+  @Monitor('ak.uiDisplayState.displayDb')
   async onDbChange(monitor: IMonitor) {
     const currentDecibel = monitor.value<number>()?.now;
     if (currentDecibel !== undefined) {
@@ -99,7 +99,7 @@ export struct AlertsContent {
       }
 
       // 当前分贝值（大字体显示）
-      Text(`${this.as.db}dB`)
+      Text(`${this.ak.uiDisplayState.displayDb}dB`)
         .fontSize(48)
         .fontWeight(FontWeight.Bold)
         .fontColor(this.getStatusColor())
@@ -170,7 +170,7 @@ export struct AlertsContent {
 
   // 辅助方法：获取状态颜色
   private getStatusColor(): Resource {
-    const currentDecibel = this.as.db;
+    const currentDecibel = this.ak.uiDisplayState.displayDb;
     const threshold = ThresholdManager.getCurrentEffectiveThreshold();
 
     if (currentDecibel >= threshold) {
@@ -184,7 +184,7 @@ export struct AlertsContent {
 
   // 辅助方法：获取状态文字
   private getStatusText(): string {
-    const currentDecibel = this.as.db;
+    const currentDecibel = this.ak.uiDisplayState.displayDb;
     const threshold = ThresholdManager.getCurrentEffectiveThreshold();
 
     if (currentDecibel >= threshold) {
@@ -198,7 +198,7 @@ export struct AlertsContent {
 
   // 辅助方法：获取状态背景色
   private getStatusBackground(): Resource {
-    const currentDecibel = this.as.db;
+    const currentDecibel = this.ak.uiDisplayState.displayDb;
     const threshold = ThresholdManager.getCurrentEffectiveThreshold();
 
     if (currentDecibel >= threshold) {
@@ -227,7 +227,7 @@ export struct AlertsContent {
 
   // 辅助方法：获取环境质量评级
   private getEnvironmentQuality(): string {
-    const currentDecibel = this.as.db;
+    const currentDecibel = this.ak.uiDisplayState.displayDb;
     const threshold = ThresholdManager.getCurrentEffectiveThreshold();
 
     if (currentDecibel >= threshold) {
@@ -243,7 +243,7 @@ export struct AlertsContent {
 
   // 辅助方法：获取环境质量颜色
   private getEnvironmentColor(): Resource {
-    const currentDecibel = this.as.db;
+    const currentDecibel = this.ak.uiDisplayState.displayDb;
     const threshold = ThresholdManager.getCurrentEffectiveThreshold();
 
     if (currentDecibel >= threshold) {
@@ -259,7 +259,7 @@ export struct AlertsContent {
 
   // 辅助方法：获取环境建议
   private getEnvironmentSuggestion(): string {
-    const currentDecibel = this.as.db;
+    const currentDecibel = this.ak.uiDisplayState.displayDb;
     const threshold = ThresholdManager.getCurrentEffectiveThreshold();
 
     if (currentDecibel >= threshold) {

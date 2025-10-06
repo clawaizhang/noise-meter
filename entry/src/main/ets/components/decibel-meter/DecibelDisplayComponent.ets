@@ -30,10 +30,6 @@ interface StatisticsConfig {
 @ComponentV2
 export struct DecibelDisplayComponent {
   // 输入参数
-  @Param @Require currentDecibel: number = 0;
-  @Param @Require minDecibel: number = 0;
-  @Param @Require maxDecibel: number = 0;
-  @Param @Require avgDecibel: number = 0;
   @Param @Require weightingType: WeightingType = WeightingType.A;
   @Param @Require calibrationValue: number = 0;
   @Param @Require noiseThreshold: number = 80;
@@ -49,7 +45,7 @@ export struct DecibelDisplayComponent {
   // 定时器管理
   private noiseDescriptionUpdateIntervalId: number | null = null;
   private noiseStandardUpdateSubscription?: Subscription;
-  @Local as: AppKeys = AppStorageV2.connect(AppKeys)!;
+  @Local ak: AppKeys = AppStorageV2.connect(AppKeys)!;
   sysResourceManager: resourceManager.ResourceManager = resourceManager.getSystemResourceManager();
 
   aboutToAppear() {
@@ -78,21 +74,21 @@ export struct DecibelDisplayComponent {
       if (!this.hiddenForXsMd) {
         // 1. 噪音等级横幅（顶部）
         this.noiseLevelBanner({
-          description: DecibelService.getDecibelDescription(this.currentDecibel)
+          description: DecibelService.getDecibelDescription(this.ak.uiDisplayState.displayDb)
         })
       }
 
       // 2. 当前分贝值显示（核心区域）
       this.currentDecibelDisplay({
-        currentDecibel: this.currentDecibel
+        currentDecibel: this.ak.uiDisplayState.displayDb
       })
 
 
       // 3. 统计数据展示（最小值-平均值-最大值）
       this.statisticsDisplay({
-        minDecibel: this.minDecibel,
-        avgDecibel: this.avgDecibel,
-        maxDecibel: this.maxDecibel
+        minDecibel: this.ak.uiDisplayState.displayStatistics.minDb,
+        avgDecibel: this.ak.uiDisplayState.displayStatistics.avgDb,
+        maxDecibel: this.ak.uiDisplayState.displayStatistics.maxDb
       })
       if (!this.hiddenForXsMd) {
         // 4. 系统状态信息
@@ -114,8 +110,8 @@ export struct DecibelDisplayComponent {
 
   private changeDisplay() {
     // 获取当前窗口尺寸
-    if (this.as.windowWidthBreakpoint <= WidthBreakpoint.WIDTH_SM &&
-      this.as.windowHeightBreakpoint <= HeightBreakpoint.HEIGHT_MD) {
+    if (this.ak.windowWidthBreakpoint <= WidthBreakpoint.WIDTH_SM &&
+      this.ak.windowHeightBreakpoint <= HeightBreakpoint.HEIGHT_MD) {
       this.hiddenForXsMd = true;
     } else {
       this.hiddenForXsMd = false;
@@ -159,7 +155,7 @@ export struct DecibelDisplayComponent {
     .onClick(() => {
       if (!this.noiseDescriptionDialog) {
         this.noiseDescriptionDialog = DialogHub.getSheet()
-          .setContent(wrapBuilder(NoiseDescriptionDialogBuilder), this.as)
+          .setContent(wrapBuilder(NoiseDescriptionDialogBuilder), this.ak)
           .setStyle({ backgroundColor: $r('sys.color.background_secondary') })
           .setConfig({ enableOutsideInteractive: true, scrollSizeMode: ScrollSizeMode.CONTINUOUS })
           .setComponentTargetId('mainId')
@@ -175,7 +171,7 @@ export struct DecibelDisplayComponent {
         clearInterval(this.noiseDescriptionUpdateIntervalId);
       }
       this.noiseDescriptionUpdateIntervalId = setInterval(() => {
-        this.noiseDescriptionDialog?.updateContent(this.as);
+        this.noiseDescriptionDialog?.updateContent(this.ak);
       }, 100);
     })
   }
@@ -370,7 +366,7 @@ export struct DecibelDisplayComponent {
           .setStyle({ backgroundColor: $r('sys.color.background_secondary') })
           .setComponentTargetId('mainId')
           .setConfig({ enableOutsideInteractive: true, scrollSizeMode: ScrollSizeMode.CONTINUOUS })
-          .setContent(wrapBuilder(NoiseStandardDialogBuilder), this.as)
+          .setContent(wrapBuilder(NoiseStandardDialogBuilder), this.ak)
           .build();
 
         // 注册Dialog到样式管理器
@@ -381,7 +377,7 @@ export struct DecibelDisplayComponent {
       // 清理之前的订阅并启动新的
       this.noiseStandardUpdateSubscription?.unsubscribe();
       this.noiseStandardUpdateSubscription = interval(500).subscribe(() => {
-        this.noiseStandardDialog?.updateContent(this.as);
+        this.noiseStandardDialog?.updateContent(this.ak);
       });
     })
     .id('noiseStandardDisplayId')

@@ -48,9 +48,14 @@ export class UIDisplayState {
     this.displayPeakFreq = processingState.processingPeakFreq;
 
     // 同步统计数据
-    this.displayStatistics = processingState.statisticsData;
+    this.displayStatistics.minDb = processingState.statisticsData.minDb;
+    this.displayStatistics.maxDb = processingState.statisticsData.maxDb;
+    this.displayStatistics.avgDb = processingState.statisticsData.avgDb;
+    this.displayStatistics.duration = processingState.statisticsData.duration;
+    this.displayStatistics.startTime = processingState.statisticsData.startTime;
 
-    this.lastUpdateTime = new Date().getTime();
+
+    this.lastUpdateTime = Date.now();
   }
 
   /**

@@ -8,7 +8,7 @@ export class DataProcessingState {
   @Trace processingDb: number = 0;
 
   // 频谱数据（原始数据）
-  @Trace processingSpectrumData: number[] = [];
+  @Trace processingSpectrumData: Float32Array= new Float32Array(0);
 
   // 峰值频率（原始数据）
   @Trace processingPeakFreq: number = 0;
@@ -27,20 +27,26 @@ export class DataProcessingState {
 /**
  * 统计数据对象
  */
+@ObservedV2
 export class StatisticsData {
   // 最小分贝值
+  @Trace
   minDb: number = 0;
 
   // 最大分贝值
+  @Trace
   maxDb: number = 0;
 
   // 平均分贝值
+  @Trace
   avgDb: number = 0;
 
   // 测量时长（秒）
+  @Trace
   duration: number = 0;
 
   // 测量开始时间
+  @Trace
   startTime: number = 0;
 
   constructor() {
@@ -62,9 +68,7 @@ export class StatisticsData {
       this.avgDb = Math.round(values.reduce((sum, val) => sum + val, 0) / values.length);
     }
 
-    // 更新平均分贝值（简化计算）
-    this.avgDb = (this.avgDb * this.duration + currentDb) / (this.duration + 1);
-    this.duration = (new Date().getTime() - this.startTime) / 1000;
+    this.duration = (Date.now() - this.startTime) / 1000;
   }
 
   /**

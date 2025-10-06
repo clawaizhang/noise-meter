@@ -58,7 +58,7 @@ export function AlertsSettingsBuilder() {
 @ComponentV2
 export struct AlertsSettings {
   @Local pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys)!;
-  @Local as: AppKeys = AppStorageV2.connect(AppKeys)!;
+  @Local ak: AppKeys = AppStorageV2.connect(AppKeys)!;
   @Local gridColumns: number = 1;
   @Consumer(navigationStack) navStack: NavPathStack = new NavPathStack();
 
@@ -81,7 +81,7 @@ export struct AlertsSettings {
     Column({ space: DesignConstants.SPACING_LG }) {
       // 警报状态指示器
       AlertsStatusIndicator({
-        currentDecibel: this.as.db,
+        currentDecibel: this.ak.uiDisplayState.displayDb,
         alertThreshold: this.getCurrentEffectiveThreshold(),
         isAlertEnabled: this.pk.system_notification_enabled
       })

@@ -4,7 +4,7 @@ import { AppKeys } from '../../models/AppKeys';
 
 // 对话框构建器
 @Builder
-export function NoiseDescriptionDialogBuilder(as: AppKeys) {
+export function NoiseDescriptionDialogBuilder(ak: AppKeys) {
   NavDestination() {
     // 噪音等级列表
     Scroll() {
@@ -27,8 +27,8 @@ export function NoiseDescriptionDialogBuilder(as: AppKeys) {
             .justifyContent(FlexAlign.SpaceBetween)
             .margin({ bottom: 2 })
           }
-          .backgroundBlurStyle(as.db > db - 10 ? BlurStyle.COMPONENT_REGULAR : BlurStyle.NONE)
-          .backgroundColor(as.db > db - 10 ? DecibelService.getDecibelColor(db - 1) :
+          .backgroundBlurStyle(ak.uiDisplayState.displayDb > db - 10 ? BlurStyle.COMPONENT_REGULAR : BlurStyle.NONE)
+          .backgroundColor(ak.uiDisplayState.displayDb > db - 10 ? DecibelService.getDecibelColor(db - 1) :
           $r('sys.color.comp_background_primary'))
           .padding(12)
           .borderRadius(12)

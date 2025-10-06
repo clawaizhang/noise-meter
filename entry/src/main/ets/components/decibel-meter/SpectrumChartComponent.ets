@@ -9,7 +9,6 @@ import { PreferenceKeys } from '../../models/PreferenceKeys';
 @ComponentV2
 export struct SpectrumChartComponent {
   // 输入参数
-  @Param spectrumData: Float32Array = new Float32Array()
   sampleRate: number = 44100
   @Local pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys)!;
 
@@ -25,7 +24,7 @@ export struct SpectrumChartComponent {
   private canvasContext: CanvasRenderingContext2D = new CanvasRenderingContext2D(this.canvasSettings) // Canvas上下文
   // 依赖注入
   @Local private sysResourceManager: resourceManager.ResourceManager = resourceManager.getSystemResourceManager();
-  @Local private as: AppKeys = AppStorageV2.connect(AppKeys)!
+  @Local private ak: AppKeys = AppStorageV2.connect(AppKeys)!
   // 常量
   private readonly ASPECT_RATIO: number = 1.5
 
@@ -41,26 +40,26 @@ export struct SpectrumChartComponent {
     this.calculateCanvasDimensions();
   }
 
-  @Monitor('spectrumData')
+  @Monitor('ak.uiDisplayState.displaySpectrumData')
   onSpectrumDataChange(monitor: IMonitor) {
     const newSpectrum = monitor.value<Float32Array>()?.now;
-    if (newSpectrum && this.as.isDisplayApp) {
+    if (newSpectrum && this.ak.isDisplayApp) {
       this.drawSpectrum(newSpectrum);
     }
   }
 
   // 计算Canvas尺寸（基于横向断点的简化版本）
   private calculateCanvasDimensions(): void {
-    const widthBp = this.as.windowWidthBreakpoint;
+    const widthBp = this.ak.windowWidthBreakpoint;
 
     // 基于横向断点判断布局模式
     if (widthBp <= WidthBreakpoint.WIDTH_SM) {
       // 横向XS/SM：单列布局，频谱图占满屏幕宽度
-      this.canvasWidth = this.as.windowWidth - 32; // 减去边距
+      this.canvasWidth = this.ak.windowWidth - 32; // 减去边距
       this.canvasHeight = this.canvasWidth / this.ASPECT_RATIO;
     } else {
       // 横向MD及以上：双列布局，频谱图基于Grid分配的宽度计算
-      this.canvasWidth = (this.as.windowWidth / 2) - 32; // Grid分配半宽减去边距
+      this.canvasWidth = (this.ak.windowWidth / 2) - 32; // Grid分配半宽减去边距
       this.canvasHeight = this.canvasWidth / this.ASPECT_RATIO;
     }
 
@@ -85,7 +84,7 @@ export struct SpectrumChartComponent {
       .onReady(() => {
         // 初始化完成后开始绘制
         const emptySpectrum: Float32Array = new Float32Array(this.fftSize * 2);
-        if (this.as.isDisplayApp) {
+        if (this.ak.isDisplayApp) {
           this.drawSpectrum(emptySpectrum);
         }
       })

@@ -15,7 +15,7 @@ export struct AudioAnalysisSettings {
   @Local isAutoCalibrating: boolean = false;
   @Local countdown: number = 0;
   @Local calibrationProgress: number = 0;
-  @Local as: AppKeys = AppStorageV2.connect(AppKeys)!;
+  @Local ak: AppKeys = AppStorageV2.connect(AppKeys)!;
   @Local gridColumns: number = 1;
   @Local environmentNoise: number = 25; // 模拟环境噪声
   @Consumer(navigationStack) navStack: NavPathStack = new NavPathStack();
@@ -46,7 +46,7 @@ export struct AudioAnalysisSettings {
     // 开始校准
     const calibrationInterval = setInterval(() => {
       this.calibrationProgress += 1;
-      totalDecibel += this.as.db;
+      totalDecibel += this.ak.dataProcessingState.processingDb;
       sampleCount += 1;
 
       if (this.calibrationProgress >= calibrationDuration) {
@@ -97,7 +97,7 @@ export struct AudioAnalysisSettings {
     Column({ space: DesignConstants.SPACING_LG }) {
       // 状态反馈区域
       CalibrationStatusIndicator({
-        currentDecibel: this.as.db
+        currentDecibel: this.ak.uiDisplayState.displayDb
       })
 
       // 核心校准控制区域
@@ -119,7 +119,7 @@ export struct AudioAnalysisSettings {
           isCalibrating: this.isAutoCalibrating,
           calibrationProgress: this.getCalibrationProgressPercent(),
           countdown: this.countdown,
-          environmentNoise: this.as.db
+          environmentNoise: this.ak.uiDisplayState.displayDb
         })
       }
 

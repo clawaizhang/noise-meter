@@ -55,7 +55,6 @@ export struct AudioController {
   @Param @Require pk: PreferenceKeys
   @Param @Require currentLocation: LocationInfo | null = null
   // 事件发射器
-  @Event onSpectrumData: (spectrum: Float32Array) => void
   @Event onError: (errors: string[]) => void
   @Event onRecordingStateChange: (isRecording: boolean) => void
   @Event onRecordingTimeUpdate: (time: number) => void
@@ -67,10 +66,6 @@ export struct AudioController {
   private audioBufferSubject = new Subject<void>();
   // 服务实例
   private audioControllerService: AudioControllerService = AudioControllerService.getInstance();
-  
-  // 双管线架构状态
-  @Local private dataProcessingState: DataProcessingState = AppStorageV2.connect(DataProcessingState,() => new DataProcessingState())!;
-  @Local private uiDisplayState: UIDisplayState = AppStorageV2.connect(UIDisplayState,() => new UIDisplayState())!;
   
   // 自动保存相关属性
   private autoSaveTimer?: number;
@@ -85,10 +80,6 @@ export struct AudioController {
   private timedAudioBuffers: TimedAudioBuffer[] = []
   private originAudioBuffers: TimedAudioBuffer[] = []
   private currentRecord?: DecibelRecord
-  private minDecibel: number = 0;
-  private maxDecibel: number = 0;
-  private avgDecibel: number = 0;
-  private currentDecibel: number = 0;
   private isNoiseAlarm: boolean = false;
 
   @Computed
@@ -223,7 +214,7 @@ export struct AudioController {
           config.smoothingFactor,
           config.overlap
         ).then((spectrum) => {
-          this.onSpectrumData(spectrum);
+          // 双管线架构：频谱数据通过状态管理，不再通过事件传递
 
           // 计算分贝值
           const config = AudioPresets.getConfig(this.pk.audio_analysis_mode);
@@ -233,18 +224,18 @@ export struct AudioController {
             config.smoothingFactor,
             config.overlap
           ).calculateAverageDb(spectrum);
-          this.currentDecibel = Math.round(db);
+          let currentDecibel = Number(Math.round(db).toFixed(1));
 
           // 收集分贝值和加权类型（带时间戳）
           const currentTime = new Date().getTime();
-          this.timedValues.push({ timestamp: currentTime, value: this.currentDecibel });
+          this.timedValues.push({ timestamp: currentTime, value: currentDecibel });
           this.timedWeightingTypes.push({ timestamp: currentTime, type: this.pk.weighting_type });
 
           // 更新统计信息
-          this.updateStatistics(this.currentDecibel);
+          this.updateStatistics(currentDecibel,spectrum);
 
           // 检查报警状态
-          this.checkAlarmStatus(this.currentDecibel);
+          this.checkAlarmStatus(currentDecibel);
 
           // 更新计时器（毫秒级）
           this.recordingTime = new Date().getTime() - this.startTime;
@@ -282,10 +273,6 @@ export struct AudioController {
           console.info('[FREQ_TRACE][Location] 位置服务已关闭，不保存位置信息');
         }
 
-        // 计算检测时长
-        const duration: number = new Date().getTime() - this.startTime;
-        console.info('[FREQ_TRACE][Duration] 检测时长:', duration);
-
         // 停止处理音频数据
         this.audioService.stopProcessing();
 
@@ -308,10 +295,10 @@ export struct AudioController {
         console.info('[FREQ_TRACE][Record] 准备创建记录');
         // 更新记录对象
         if (this.currentRecord) {
-          this.currentRecord.minDecibel = this.minDecibel;
-          this.currentRecord.maxDecibel = this.maxDecibel;
-          this.currentRecord.avgDecibel = this.avgDecibel;
-          this.currentRecord.duration = duration;
+          this.currentRecord.minDecibel = this.ak.dataProcessingState.statisticsData.minDb;
+          this.currentRecord.maxDecibel = this.ak.dataProcessingState.statisticsData.maxDb;
+          this.currentRecord.avgDecibel = this.ak.dataProcessingState.statisticsData.avgDb;
+          this.currentRecord.duration = this.ak.dataProcessingState.statisticsData.duration;
           this.currentRecord.decibelValues = this.timedValues.map(item => item.value);
           this.currentRecord.weightingTypes = this.timedWeightingTypes.map(item => item.type);
           this.currentRecord.audioFilePath = currentAudioFilePath;
@@ -366,12 +353,7 @@ export struct AudioController {
     // 重置 weightingTypes 数组
     this.timedWeightingTypes = [];
 
-    // 重置统计信息
-    this.minDecibel = 0;
-    this.maxDecibel = 0;
-    this.avgDecibel = 0;
-    this.currentDecibel = 0;
-    this.uiDisplayState.reset() ;
+    this.ak.uiDisplayState.reset() ;
 
     // 通知UI更新
     this.onRecordingTimeUpdate(this.recordingTime);
@@ -390,28 +372,16 @@ export struct AudioController {
   }
 
   // 更新统计信息
-  private updateStatistics(currentDb: number): void {
+  private updateStatistics(currentDb: number,spectrumData:Float32Array): void {
     const values = this.timedValues.map(item => item.value);
 
-    if (values.length === 0) {
-      this.minDecibel = currentDb;
-      this.maxDecibel = currentDb;
-      this.avgDecibel = currentDb;
-    } else {
-      this.minDecibel = Math.min(...values);
-      this.maxDecibel = Math.max(...values);
-      this.avgDecibel = Math.round(values.reduce((sum, val) => sum + val, 0) / values.length);
-    }
-
     // 双管线架构：更新数据处理状态
-    this.dataProcessingState.processingDb = currentDb;
-    this.dataProcessingState.statisticsData.updateStatistics(currentDb,values);
+    this.ak.dataProcessingState.processingDb = currentDb;
+    this.ak.dataProcessingState.processingSpectrumData = spectrumData;
+    this.ak.dataProcessingState.statisticsData.updateStatistics(currentDb,values);
     
     // 同步到UI显示状态（仅在UI更新启用时）
-    this.uiDisplayState.syncFromProcessingState(this.dataProcessingState);
-    
-    // 保持向后兼容性（临时）
-    this.ak.db = currentDb;
+    this.ak.uiDisplayState.syncFromProcessingState(this.ak.dataProcessingState);
   }
 
   // 检查报警状态
@@ -442,12 +412,6 @@ export struct AudioController {
     this.startTime = new Date().getTime();
     this.recordingTime = 0;
     this.timedWeightingTypes = [];
-
-    // 重置统计信息
-    this.minDecibel = 0;
-    this.maxDecibel = 0;
-    this.avgDecibel = 0;
-    this.currentDecibel = 0;
 
     // 通知UI更新
     this.onRecordingTimeUpdate(this.recordingTime);

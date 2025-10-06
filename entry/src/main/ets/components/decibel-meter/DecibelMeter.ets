@@ -1,5 +1,5 @@
 import { navigationStack } from '../../constants/ProviderConstant';
-import { AppStorageV2, curves, LevelMode, PersistenceV2 } from '@kit.ArkUI';
+import { AppStorageV2, PersistenceV2 } from '@kit.ArkUI';
 import display from '@ohos.display';
 import { ActionPanel } from './ActionPanel';
 import { SpectrumChartComponent } from './SpectrumChartComponent';
@@ -7,14 +7,12 @@ import { DecibelDisplayComponent } from './DecibelDisplayComponent';
 import { PreferenceKeys } from '../../models/PreferenceKeys';
 import { LocationInfo } from '../../services/LocationService';
 import { LocationDisplay } from '../business/LocationDisplay';
-import { DialogHub, InfSheet } from '@hadss/dialoghub';
 import { resourceManager } from '@kit.LocalizationKit';
 import { image } from '@kit.ImageKit';
 import { AppKeys } from '../../models/AppKeys';
 import { PermissionService } from '../../services/PermissionService';
 import { AudioController } from './AudioController';
 import { AudioControllerService } from '../../services/AudioControllerService';
-import { UIDisplayState } from '../../models/UIDisplayState';
 
 @ComponentV2
 export struct DecibelMeter {
@@ -29,8 +27,7 @@ export struct DecibelMeter {
   @Local dOpacity: number = 1; // 页面透明度
   @Local dWidthHeight: string = ''; // 页面透明度
   @Local bgImage: image.PixelMap | undefined = undefined; // 页面透明度
-  @Local as: AppKeys = AppStorageV2.connect(AppKeys)!;
-  @Local private currentSpectrum: Float32Array = new Float32Array(); // 当前频谱数据
+  @Local ak: AppKeys = AppStorageV2.connect(AppKeys)!;
   @Local private currentLocation: LocationInfo | null = null; // 当前位置信息，从LocationDisplay接收
   @Local private errorMessages: string[] = []; // 错误消息队列
   @Local private lastAutoSaveTime: number = Date.now();
@@ -41,7 +38,6 @@ export struct DecibelMeter {
   // 服务实例
   private audioControllerService: AudioControllerService = AudioControllerService.getInstance();
   // 双管线架构：UI显示状态
-  @Local private uiState: UIDisplayState = AppStorageV2.connect(UIDisplayState, () => new UIDisplayState())!;
   @Consumer(navigationStack) navStack: NavPathStack = new NavPathStack()
   sysResourceManager: resourceManager.ResourceManager = resourceManager.getSystemResourceManager();
 
@@ -54,10 +50,6 @@ export struct DecibelMeter {
           AudioController({
             pk: this.pk,
             currentLocation: this.currentLocation,
-            onSpectrumData: (spectrum: Float32Array) => {
-              this.currentSpectrum = spectrum;
-              this.as.spectrumData = spectrum;
-            },
             onError: (errors: string[]) => {
               this.errorMessages = errors;
             },
@@ -87,10 +79,6 @@ export struct DecibelMeter {
               Stack({ alignContent: Alignment.Top }) {
                 // 使用新的分贝显示组件（重新设计版）
                 DecibelDisplayComponent({
-                  currentDecibel: this.uiState.displayDb, // 使用双管线架构的UI状态
-                  minDecibel: this.uiState.displayStatistics.minDb, // 使用双管线架构的统计数据
-                  maxDecibel: this.uiState.displayStatistics.maxDb, // 使用双管线架构的统计数据
-                  avgDecibel: this.uiState.displayStatistics.avgDb, // 使用双管线架构的统计数据
                   weightingType: this.pk.weighting_type,
                   calibrationValue: this.pk.calibration_value,
                   noiseThreshold: this.pk.noise_threshold,
@@ -106,7 +94,7 @@ export struct DecibelMeter {
                   }
 
                   // 权限提示组件 - 显示在顶部
-                  if (!this.as.microphonePermissionGranted) {
+                  if (!this.ak.microphonePermissionGranted) {
                     this.smartPermissionPrompt()
                   }
                 }.padding(16)
@@ -139,9 +127,7 @@ export struct DecibelMeter {
                 xl: 6    // 横向MD及以上：双列布局（半宽）
               }
             }) {
-              SpectrumChartComponent({
-                spectrumData: this.currentSpectrum,
-              })
+              SpectrumChartComponent()
             }
           }
         }
@@ -182,8 +168,8 @@ export struct DecibelMeter {
   }
 
   private calculateSize() {
-    if (this.as.windowWidthBreakpoint <= WidthBreakpoint.WIDTH_SM &&
-      this.as.windowHeightBreakpoint <= HeightBreakpoint.HEIGHT_MD) {
+    if (this.ak.windowWidthBreakpoint <= WidthBreakpoint.WIDTH_SM &&
+      this.ak.windowHeightBreakpoint <= HeightBreakpoint.HEIGHT_MD) {
       this.hideForXsMd = true;
     } else {
       this.hideForXsMd = false;

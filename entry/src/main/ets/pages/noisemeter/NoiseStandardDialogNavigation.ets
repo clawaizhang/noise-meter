@@ -5,7 +5,7 @@ import { DecibelService } from '../../services/DecibelService';
 import { curves } from '@kit.ArkUI';
 
 @Builder
-function buildNoiseStandardCard(standard: NoiseStandard, as: AppKeys) {
+function buildNoiseStandardCard(standard: NoiseStandard, ak: AppKeys) {
   Column({ space: 8 }) {
     // 标题
     Text(standard.typeName)
@@ -39,8 +39,8 @@ function buildNoiseStandardCard(standard: NoiseStandard, as: AppKeys) {
   }
   .padding(16)
   .width('100%')
-  .backgroundBlurStyle(as.db < standard.dayLimit ? BlurStyle.COMPONENT_ULTRA_THIN : BlurStyle.NONE)
-  .backgroundColor(as.db < standard.dayLimit ? $r('sys.color.comp_background_primary') :
+  .backgroundBlurStyle(ak.uiDisplayState.displayDb < standard.dayLimit ? BlurStyle.COMPONENT_ULTRA_THIN : BlurStyle.NONE)
+  .backgroundColor(ak.uiDisplayState.displayDb < standard.dayLimit ? $r('sys.color.comp_background_primary') :
   $r('sys.color.warning'))
   .borderRadius(16)
   .alignItems(HorizontalAlign.Start)
