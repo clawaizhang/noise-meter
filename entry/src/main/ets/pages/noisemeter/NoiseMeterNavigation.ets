@@ -67,10 +67,10 @@ export struct MainNoiseMeter {
       Image(icon)
         .width(24)
         .height(24)
-        .fillColor(this.currentIndex === index ? $r('app.color.icon_active') : $r('app.color.icon_inactive'))
+        .fillColor(this.currentIndex === index ? $r('sys.color.icon_emphasize') : $r('sys.color.icon_tertiary'))
       Text(title)
         .fontSize(12)
-        .fontColor(this.currentIndex === index ? $r('app.color.text_primary') : $r('app.color.text_secondary'))
+        .fontColor(this.currentIndex === index ? $r('sys.color.font_emphasize') : $r('sys.color.font_tertiary'))
         .margin({ top: 4 })
     }
     .justifyContent(FlexAlign.Center)
