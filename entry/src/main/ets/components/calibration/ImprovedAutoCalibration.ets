@@ -19,7 +19,7 @@ export struct ImprovedAutoCalibration {
 
   // 检查是否适合校准
   private isSuitableForCalibration(): boolean {
-    return this.environmentNoise < 25; // 只在<25dB环境中允许自动校准
+    return this.environmentNoise <= 25; // 只在<=25dB环境中允许自动校准
   }
 
   // 构建环境检测面板
@@ -265,8 +265,10 @@ export struct ImprovedAutoCalibration {
       .width('100%')
       .alignItems(VerticalAlign.Center)
 
-      // 环境检测
-      this.buildEnvironmentCheck()
+      // 环境检测 - 只在非校准状态下显示
+      if (!this.isCalibrating) {
+        this.buildEnvironmentCheck()
+      }
 
       // 主按钮区域
       PremiumFeature({ featureName: '自动校准', featureDesc: '自动计算并设置最佳校准值，确保测量准确性。' }) {

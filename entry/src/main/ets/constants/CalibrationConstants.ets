@@ -93,7 +93,7 @@ export const APPLICATION_SCENARIOS: Record<string, ApplicationScenario[]> = {
 
 // 技术参数配置
 export const TECHNICAL_PARAMS: TechnicalParams = {
-  calibrationRange: '-30dB 至 +30dB',
+  calibrationRange: '-50dB 至 +50dB', // 扩展校准范围
   frequencyRange: '20Hz - 20kHz',
   dynamicRange: '-20dB - 140dB',
   samplingRate: '44.1kHz',
@@ -132,9 +132,9 @@ export const CALIBRATION_CONFIG: CaliConfig = {
   COUNTDOWN_DURATION: 3, // 倒计时时长(秒)
   REFERENCE_LEVEL: 25, // 参考声级(dB) - 更新为25dB
   TARGET_CALIBRATION_VALUE: 25, // 目标校准值25dB
-  MIN_CALIBRATION_VALUE: -30, // 最小校准值
-  MAX_CALIBRATION_VALUE: 30, // 最大校准值
-  PRESET_VALUES: [-30, -25, -20, -15, -10, -5, 0, 5, 10, 15, 20, 25, 30] // 预设校准点
+  MIN_CALIBRATION_VALUE: -50, // 最小校准值 - 扩展为-50dB
+  MAX_CALIBRATION_VALUE: 50, // 最大校准值 - 扩展为+50dB
+  PRESET_VALUES: [-50, -40, -30, -25, -20, -15, -10, -5, 0, 5, 10, 15, 20, 25, 30, 40, 50] // 预设校准点 - 扩展范围
 };
 
 // 颜色配置

@@ -59,9 +59,23 @@ export struct AudioAnalysisSettings {
   private finishCalibration(averageDecibel: number) {
     this.isAutoCalibrating = false;
     const currentCalibrationValue = this.pk.calibration_value;
-    const actualEnvironmentNoise = averageDecibel - currentCalibrationValue;
-    const newCalibrationValue = currentCalibrationValue + (CALIBRATION_CONFIG.REFERENCE_LEVEL - actualEnvironmentNoise);
-    this.pk.calibration_value = Math.round(newCalibrationValue * 10) / 10; // 保留1位小数
+    
+    // 正确的校准计算逻辑：
+    // 设备读数 = 原始读数 + 当前校准值
+    // 因此：原始读数 = 设备读数 - 当前校准值
+    const rawDecibel = averageDecibel - currentCalibrationValue;
+    
+    // 新的校准值应该使：设备读数 ≈ 参考声级 + 新校准值
+    // 所以：新校准值 = 参考声级 - 原始读数
+    const newCalibrationValue = CALIBRATION_CONFIG.REFERENCE_LEVEL - rawDecibel;
+    
+    // 限制校准值在有效范围内
+    const clampedValue = Math.max(
+      CALIBRATION_CONFIG.MIN_CALIBRATION_VALUE,
+      Math.min(CALIBRATION_CONFIG.MAX_CALIBRATION_VALUE, newCalibrationValue)
+    );
+    
+    this.pk.calibration_value = Math.round(clampedValue * 10) / 10; // 保留1位小数
 
     promptAction.showToast({
       message: `自动校准完成，新校准值: ${this.pk.calibration_value}dB`,
