@@ -7,9 +7,6 @@ import { DialogHub, InfSheet } from '@hadss/dialoghub';
 import { common, Want } from '@kit.AbilityKit';
 import { BusinessError } from '@kit.BasicServicesKit';
 import { DisplayModeComponent } from '../display/DisplayModeComponent';
-import {
-  defaultPricingPlans, UpgradeContentBuilder, UpgradeContentProps
-} from '../membership/UpgradeContent';
 import { DialogStyleManager } from '../../utils/DialogStyleManager';
 import { MembershipStatusCard } from '../membership/MembershipStatusCard';
 import { DesignConstants } from '../../constants/DesignConstants';
@@ -22,36 +19,6 @@ import { DesignConstants } from '../../constants/DesignConstants';
 export struct MyContentComponent {
   @Param currentIndex: number = 2
   @Local pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys)!;
-  private dialog?: InfSheet;
-  private props: UpgradeContentProps = {
-    featureName: '专业版',
-    featureDesc: '解锁所有高级功能，享受更好的使用体验',
-    icon: $r('app.media.ic_vip'),
-    pricingPlans: defaultPricingPlans,
-    onUpgrade: () => {
-      // 升级成功处理
-      console.info(`功能 专业版 已解锁`);
-      // 关闭弹窗
-      if (this.dialog) {
-        this.dialog.dismiss();
-      }
-    },
-    onLater: () => {
-      // 用户选择稍后再说
-      console.info(`用户暂不升级 "专业版"`);
-      if (this.dialog) {
-        this.dialog.dismiss();
-      }
-    },
-    showTrialOption: false
-  }
-
-  @Monitor('pk.display_mode')
-  onDisplayStyleChange() {
-    DialogStyleManager.unregisterDialog(this.dialog!);
-    this.dialog = this.createDialog();
-    DialogStyleManager.registerDialog(this.dialog);
-  }
 
   // 跳转到应用商店评价页面
   private navigateToAppStoreRating = () => {
@@ -66,27 +33,6 @@ export struct MyContentComponent {
       console.error(`Failed to start App Store rating page. Code: ${err.code}, message: ${err.message}`);
     });
   }
-  // 显示专业版升级弹框
-  private showUpgradeDialog = () => {
-    this.dialog = this.createDialog();
-    this.dialog.show();
-
-  }
-
-  private createDialog() {
-    return DialogHub.getSheet()
-      .setStyle({
-        title: { title: this.pk.member_ship.can() ? '专业版' : '升级到专业版' },
-        backgroundColor: $r('sys.color.background_secondary')
-      })
-      .setConfig({
-        scrollSizeMode: ScrollSizeMode.CONTINUOUS,
-        enableOutsideInteractive: true
-      })
-      .setComponentTargetId('mainId')
-      .setContent(wrapBuilder(UpgradeContentBuilder), this.props)
-      .build();
-  }
 
   build() {
     // 可滚动内容区域
@@ -99,15 +45,6 @@ export struct MyContentComponent {
 
         // 全局设置列表项
         List() {
-
-          // 专业版升级选项 - 添加到第一个位置
-          ListItemBuilder(
-            $r('app.media.ic_vip'),
-            '专业版',
-            () => {
-              this.showUpgradeDialog();
-            }
-          )
 
           ListItem() {
             // 显示模式组件
@@ -161,7 +98,7 @@ export struct MyContentComponent {
           )
         }
         .width('100%')
-        .alignListItem(ListItemAlign.Center)
+        .alignListItem(ListItemAlign.Start)
 
       }
       .justifyContent(FlexAlign.Start)
@@ -176,6 +113,7 @@ export struct MyContentComponent {
         playMode: PlayMode.Normal
       })
     }
+    .align(Alignment.Top)
     .scrollBar(BarState.Auto)
     .scrollable(ScrollDirection.Vertical)
     .edgeEffect(EdgeEffect.Spring)

@@ -8,9 +8,11 @@ import { PersistenceV2 } from '@kit.ArkUI';
 import { PreferenceKeys } from '../../models/PreferenceKeys';
 import { ContinuousUsageManager } from '../../services/ContinuousUsageManager';
 import { DayReward, MembershipRewardService } from '../../services/MembershipRewardService';
-import { MembershipLevel } from '../../services/MembershipManager';
-import { DialogHub } from '@hadss/dialoghub';
+import { DialogHub, InfSheet } from '@hadss/dialoghub';
 import { MembershipAgreementDialogBuilder, MembershipAgreementDialogProps } from './MembershipAgreementDialog';
+import {
+  defaultPricingPlans, UpgradeContentBuilder, UpgradeContentProps
+} from './UpgradeContent';
 
 @ComponentV2
 export struct MembershipStatusCard {
@@ -23,6 +25,7 @@ export struct MembershipStatusCard {
   @Local nextMilestone: DayReward | null = null;
   private continuousUsageManager: ContinuousUsageManager = ContinuousUsageManager.getInstance();
   private membershipRewardService: MembershipRewardService = MembershipRewardService.getInstance();
+  private dialog?: InfSheet;
 
   aboutToAppear(): void {
     this.updateMembershipData();
@@ -391,6 +394,46 @@ export struct MembershipStatusCard {
     console.info('[会员管理] 用户取消了会员奖励计划协议');
   }
 
+  /**
+   * 显示专业版详情
+   */
+  private showProDetails(): void {
+    const props: UpgradeContentProps = {
+      featureName: '专业版',
+      featureDesc: '您已解锁所有高级功能',
+      icon: $r('app.media.ic_vip'),
+      pricingPlans: defaultPricingPlans,
+      onUpgrade: () => {
+        // 专业版用户不需要升级
+        console.info('[会员管理] 专业版用户查看详情');
+        if (this.dialog) {
+          this.dialog.dismiss();
+        }
+      },
+      onLater: () => {
+        // 关闭弹窗
+        if (this.dialog) {
+          this.dialog.dismiss();
+        }
+      },
+      showTrialOption: false
+    };
+
+    this.dialog = DialogHub.getSheet()
+      .setStyle({
+        title: { title: '专业版' },
+        backgroundColor: $r('sys.color.background_secondary')
+      })
+      .setConfig({
+        scrollSizeMode: ScrollSizeMode.CONTINUOUS,
+        enableOutsideInteractive: true
+      })
+      .setComponentTargetId('mainId')
+      .setContent(wrapBuilder(UpgradeContentBuilder), props)
+      .build();
+    this.dialog.show();
+  }
+
   build() {
     Column({ space: DesignConstants.SPACING_MD }) {
       if (this.pk.has_agreed_membership_reward) {
@@ -411,5 +454,11 @@ export struct MembershipStatusCard {
       color: $r('sys.color.comp_border_color')
     })
     .width('100%')
+    .onClick(() => {
+      // 仅专业版用户可以点击查看详情
+      if (this.pk.has_agreed_membership_reward && this.pk.member_ship.can()) {
+        this.showProDetails();
+      }
+    })
   }
 }
