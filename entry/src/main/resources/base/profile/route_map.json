@@ -45,11 +45,6 @@
       "buildFunction": "NoiseDescriptionDialogBuilder"
     },
     {
-      "name": "AudioAnalysisSettings",
-      "pageSourceFile": "src/main/ets/pages/settings/AudioAnalysisSettingsNavigation.ets",
-      "buildFunction": "AudioAnalysisSettingsBuilder"
-    },
-    {
       "name": "AlertsSettings",
       "pageSourceFile": "src/main/ets/pages/settings/AlertsSettingsNavigation.ets",
       "buildFunction": "AlertsSettingsBuilder"

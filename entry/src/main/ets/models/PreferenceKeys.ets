@@ -7,6 +7,7 @@ import {
 import { WeightingType } from '../constants/WeightingConstants';
 import { MembershipStatus } from '../services/MembershipManager';
 import { ContinuousUsageData } from './ContinuousUsageData';
+import { CUSTOM_THRESHOLD_CONFIG, DEFAULT_THRESHOLD_CONFIG, PresetType, ThresholdConfig } from './ThresholdConfig';
 
 /**
  * 首选项键名常量
@@ -71,30 +72,15 @@ export class PreferenceKeys {
   @Trace
   microphone_permission_requested: boolean = PreferencesUtil.getBooleanSync('microphone_permission_requested', false);
   /**
-   * 警报时段调度设置
-   */
-  @Trace
-  alert_time_scheduling_enabled: boolean = PreferencesUtil.getBooleanSync('alert_time_scheduling_enabled', false);
-  /**
-   * 白天警报阈值
-   */
-  @Trace
-  daytime_alert_threshold: number = PreferencesUtil.getNumberSync('daytime_alert_threshold', 70);
-  /**
-   * 夜间警报阈值
-   */
-  @Trace
-  nighttime_alert_threshold: number = PreferencesUtil.getNumberSync('nighttime_alert_threshold', 50);
-  /**
    * 系统通知开关（合并了原来的主开关和系统通知开关）
    */
   @Trace
   system_notification_enabled: boolean = PreferencesUtil.getBooleanSync('system_notification_enabled', true);
   /**
-   * 当前使用的预设阈值名称
+   * 阈值
    */
   @Trace
-  current_preset_threshold: string = PreferencesUtil.getStringSync('current_preset_threshold', 'custom');
+  alarm_threshold: ThresholdConfig = DEFAULT_THRESHOLD_CONFIG;
   /**
    * 是否申请过系统通知权限
    */

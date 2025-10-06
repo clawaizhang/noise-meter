@@ -2,105 +2,129 @@ import { PreferenceKeys } from '../../models/PreferenceKeys';
 import { navigationStack } from '../../constants/ProviderConstant';
 import { DesignConstants } from '../../constants/DesignConstants';
 import { AppKeys } from '../../models/AppKeys';
-import { AppStorageV2, curves, PersistenceV2 } from '@kit.ArkUI';
+import { AppStorageV2, curves, PersistenceV2, promptAction, EditableTitleBar, EditableLeftIconType } from '@kit.ArkUI';
 
 // 导入新组件
 import { AlertsStatusIndicator } from '../../components/alerts/AlertsStatusIndicator';
 import { EnhancedThresholdManager } from '../../components/alerts/EnhancedThresholdManager';
 import { NotificationPreferences } from '../../components/alerts/NotificationPreferences';
 import { AcousticExplanationPanel } from '../../components/alerts/AcousticExplanationPanel';
-import { DEFAULT_THRESHOLD_CONFIG, ThresholdConfig } from '../../models/ThresholdConfig';
-import { ThresholdManager } from '../../services/ThresholdManager';
+import { ThresholdConfig } from '../../models/ThresholdConfig';
 
-@Extend(Image)
-function itemIcon() {
-  .width(DesignConstants.ICON_SIZE_MD)
-  .height(DesignConstants.ICON_SIZE_MD)
-  .fillColor($r('sys.color.font_primary'))
-}
-
-@Extend(Text)
-function itemTitle() {
-  .fontWeight(FontWeight.Medium)
-}
-
-@Extend(Text)
-function itemDescription() {
-  .fontColor($r('sys.color.font_secondary'))
-  .fontSize(DesignConstants.FONT_SIZE_MD)
-  .textAlign(TextAlign.Start)
-  .alignSelf(ItemAlign.Start)
-}
-
-@Extend(Column)
-function cardStyle() {
-  .backgroundColor($r('sys.color.comp_background_primary'))
-  .justifyContent(FlexAlign.Start)
-  .alignItems(HorizontalAlign.Start)
-  .borderRadius(16)
-  .padding(16)
-  .transition(TransitionEffect.OPACITY.animation({ curve: curves.springMotion(0.6, 0.8) }) // 透明度动画，使用springMotion曲线
-    .combine(TransitionEffect.scale({ x: 0, y: 0 })) // 组合缩放效果（从0放大到1）
-    .combine(TransitionEffect.translate({ x: -150, y: 0 }).animation({ curve: curves.springMotion() })))
-}
-
-@Extend(Row)
-function listItemRow() {
-  .alignItems(VerticalAlign.Center)
-  .justifyContent(FlexAlign.Start)
+export interface AlertsSettingsProps {
+  onSave: () => void;
 }
 
 @Builder
-export function AlertsSettingsBuilder() {
-  AlertsSettings()
+export function AlertsSettingsBuilder(props:AlertsSettingsProps) {
+  AlertsSettings(props)
 }
 
 @ComponentV2
 export struct AlertsSettings {
+  @Event onSave: () => void;
   @Local pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys)!;
   @Local ak: AppKeys = AppStorageV2.connect(AppKeys)!;
   @Local gridColumns: number = 1;
   @Consumer(navigationStack) navStack: NavPathStack = new NavPathStack();
+  // 临时状态变量
+  @Local private tempSystemNotificationEnabled: boolean = this.pk.system_notification_enabled;
+  @Local private tempThresholdConfig: ThresholdConfig = ThresholdConfig.clone(this.pk.alarm_threshold);
 
   aboutToAppear() {
-    // 初始化阈值管理器配置
-    // 这里可以添加从持久化存储加载配置的逻辑
   }
 
-  // 获取当前有效阈值（兼容原有逻辑）
+  // 获取当前有效阈值（基于临时配置）
   private getCurrentEffectiveThreshold(): number {
-    return ThresholdManager.getCurrentEffectiveThreshold();
+    // 简化实现：返回临时配置的基础阈值
+    return this.tempThresholdConfig.baseThreshold;
   }
 
-  // 处理系统通知变化
+  // 处理系统通知变化 - 只更新临时状态
   private onSystemNotificationChange(enabled: boolean) {
-    this.pk.system_notification_enabled = enabled;
+    this.tempSystemNotificationEnabled = enabled;
+  }
+
+  // 处理阈值配置变化 - 只更新临时状态
+  private onThresholdConfigChange(config: ThresholdConfig) {
+    ThresholdConfig.copyFrom(this.tempThresholdConfig,config);
+  }
+
+  // 处理确认操作
+  private handleConfirm() {
+    // 应用临时状态到持久化存储
+    this.pk.system_notification_enabled = this.tempSystemNotificationEnabled;
+    ThresholdConfig.copyFrom(this.tempThresholdConfig, this.pk.alarm_threshold);
+
+    // 显示保存成功提示，显示具体的设置结果
+    const thresholdValue = this.getCurrentEffectiveThreshold();
+    const notificationMsg = this.tempSystemNotificationEnabled ? `警报通知已开启，阈值${thresholdValue}dB` : '警报通知已关闭';
+    promptAction.showToast({
+      message: notificationMsg,
+      duration: 2000
+    });
+
+    // 关闭弹窗
+    this.onSave();
   }
 
   build() {
-    Column({ space: DesignConstants.SPACING_LG }) {
-      // 警报状态指示器
-      AlertsStatusIndicator({
-        currentDecibel: this.ak.uiDisplayState.displayDb,
-        alertThreshold: this.getCurrentEffectiveThreshold(),
-        isAlertEnabled: this.pk.system_notification_enabled
-      })
-
-      EnhancedThresholdManager()
-
-      // 系统通知设置
-      NotificationPreferences({
-        systemNotificationEnabled: this.pk.system_notification_enabled,
-        onSystemNotificationChange: (enabled: boolean) => {
-          this.onSystemNotificationChange(enabled);
+    Column({ space: 0 }) {
+      // 使用EditableTitleBar提供标准的编辑界面标题栏
+      EditableTitleBar({
+        leftIconStyle: EditableLeftIconType.Cancel,
+        title: '警报与通知',
+        isSaveIconRequired: true,
+        onSave: () => {
+          this.handleConfirm();
+        },
+        onCancel: () => {
         }
       })
 
-      // 专业声学解释
-      AcousticExplanationPanel()
+      // 可滚动内容区域
+      Scroll() {
+        Column({ space: DesignConstants.SPACING_LG }) {
+          // 警报状态指示器
+          AlertsStatusIndicator({
+            currentDecibel: this.ak.uiDisplayState.displayDb,
+            alertThreshold: this.getCurrentEffectiveThreshold(),
+            isAlertEnabled: this.tempSystemNotificationEnabled
+          })
+
+
+          // 系统通知设置
+          NotificationPreferences({
+            systemNotificationEnabled: this.tempSystemNotificationEnabled,
+            onSystemNotificationChange: (enabled: boolean) => {
+              this.onSystemNotificationChange(enabled);
+            }
+          })
+
+          EnhancedThresholdManager({
+            currentConfig: this.tempThresholdConfig,
+            onConfigChange: (config: ThresholdConfig) => {
+              this.onThresholdConfigChange(config);
+            }
+          })
+
+
+          // 专业声学解释
+          AcousticExplanationPanel()
+        }
+        .width('100%')
+        .margin({ bottom: 72 })
+        .padding(DesignConstants.SPACING_LG)
+        .backgroundColor($r('sys.color.background_secondary'))
+        .alignItems(HorizontalAlign.Start)
+      }
+      .scrollBar(BarState.Auto)
+      .scrollable(ScrollDirection.Vertical)
+      .edgeEffect(EdgeEffect.Spring)
+      .width('100%')
+      .layoutWeight(1)
     }
     .width('100%')
-    .padding(DesignConstants.SPACING_LG)
-    .backgroundColor($r('sys.color.background_secondary'))
+    .height('100%')
   }
 }

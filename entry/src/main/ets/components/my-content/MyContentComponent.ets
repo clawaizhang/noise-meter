@@ -68,7 +68,7 @@ export struct MyContentComponent {
   }
   // 显示专业版升级弹框
   private showUpgradeDialog = () => {
-      this.dialog = this.createDialog();
+    this.dialog = this.createDialog();
     this.dialog.show();
 
   }
@@ -120,7 +120,11 @@ export struct MyContentComponent {
           '全局设置',
           () => {
             DialogHub.getSheet()
-              .setStyle({ title: { title: '设置' }, backgroundColor: $r('sys.color.background_secondary') })
+              .setStyle({
+                title: { title: '设置' },
+                showClose: false,
+                backgroundColor: $r('sys.color.background_secondary')
+              })
               .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS, enableOutsideInteractive: true })
               .setComponentTargetId('mainId')
               .setContent(wrapBuilder(SettingsBuilder))

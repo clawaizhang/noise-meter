@@ -28,7 +28,6 @@ export class ThresholdConfig {
   @Trace baseThreshold: number; // 统一阈值（时段调度关闭时）
   @Trace daytimeThreshold: number; // 白天阈值（时段调度开启时）
   @Trace nighttimeThreshold: number; // 夜间阈值（时段调度开启时）
-  @Trace lastModified: number; // 最后修改时间
 
   constructor(
     currentPreset: PresetType,
@@ -36,14 +35,30 @@ export class ThresholdConfig {
     baseThreshold: number,
     daytimeThreshold: number,
     nighttimeThreshold: number,
-    lastModified: number
   ) {
     this.currentPreset = currentPreset;
     this.timeSchedulingEnabled = timeSchedulingEnabled;
     this.baseThreshold = baseThreshold;
     this.daytimeThreshold = daytimeThreshold;
     this.nighttimeThreshold = nighttimeThreshold;
-    this.lastModified = lastModified;
+  }
+
+  static clone(config: ThresholdConfig):ThresholdConfig{
+    return new ThresholdConfig(
+      config.currentPreset,
+      config.timeSchedulingEnabled,
+      config.baseThreshold,
+      config.daytimeThreshold,
+      config.nighttimeThreshold
+    )
+  }
+
+  static copyFrom(src: ThresholdConfig, dst: ThresholdConfig){
+    dst.currentPreset = src.currentPreset;
+    dst.timeSchedulingEnabled = src.timeSchedulingEnabled;
+    dst.baseThreshold = src.baseThreshold;
+    dst.daytimeThreshold = src.daytimeThreshold;
+    dst.nighttimeThreshold = src.nighttimeThreshold;
   }
 }
 
@@ -71,7 +86,7 @@ export interface ThresholdCalculationRule {
 
 // 默认配置
 export const DEFAULT_THRESHOLD_CONFIG: ThresholdConfig =
-  new ThresholdConfig(PresetType.GENERAL_ENVIRONMENT, false, 65, 75, 55, Date.now())
+  new ThresholdConfig(PresetType.GENERAL_ENVIRONMENT, false, 65, 75, 55)
 
 // 预设阈值配置
 export const PRESET_THRESHOLDS: PresetThreshold[] = [

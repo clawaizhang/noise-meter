@@ -9,7 +9,7 @@ import { ListItemBuilder } from '../../components/common/ListItemBuilder';
 import { Subscription } from 'rxjs';
 import { PreferenceKeys } from '../../models/PreferenceKeys';
 import { AlertsContent } from '../../components/alerts/AlertsContent';
-import { AlertsSettingsBuilder } from '../settings/AlertsSettingsNavigation';
+import { AlertsSettingsBuilder, AlertsSettingsProps } from '../settings/AlertsSettingsNavigation';
 import { common, Want } from '@kit.AbilityKit';
 import { BusinessError } from '@kit.BasicServicesKit';
 import { MyContentComponent } from '../../components/my-content/MyContentComponent';
@@ -35,8 +35,6 @@ export struct MainNoiseMeter {
   @Local as: AppKeys = AppStorageV2.connect(AppKeys)!;
   @Local pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys)!;
   noiseReferSub?: Subscription
-  // DialogHub实例缓存
-  private alertsDialog: InfSheet | null = null;
 
   aboutToDisappear(): void {
     this.noiseReferSub?.unsubscribe();
@@ -93,15 +91,19 @@ export struct MainNoiseMeter {
       value: '警报设置',
       icon: $r('app.media.ic_alarm'),
       action: () => {
-        if (!this.alertsDialog) {
-          this.alertsDialog = DialogHub.getSheet()
-            .setStyle({ title: { title: '警报与通知' }, backgroundColor: $r('sys.color.background_secondary') })
-            .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS, enableOutsideInteractive: true })
-            .setComponentTargetId('mainId')
-            .setContent(wrapBuilder(AlertsSettingsBuilder))
-            .build();
+        let alertsDialog: InfSheet;
+        let props: AlertsSettingsProps = {
+          onSave: () => {
+            alertsDialog.dismiss();
+          }
         }
-        this.alertsDialog.show();
+        alertsDialog = DialogHub.getSheet()
+          .setStyle({ title: { title: '警报与通知' }, backgroundColor: $r('sys.color.background_secondary') })
+          .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS, enableOutsideInteractive: true })
+          .setComponentTargetId('mainId')
+          .setContent(wrapBuilder(AlertsSettingsBuilder), props)
+          .build();
+        alertsDialog.show();
       }
     }
   ]
@@ -137,7 +139,7 @@ export struct MainNoiseMeter {
         .fontWeight(FontWeight.Bold)
         .fontColor($r('sys.color.font_primary'))
         .alignSelf(ItemAlign.Start)
-      
+
       // 副标题 - 在下方（会员标签）
       if (this.pk.member_ship.can()) {
         Row({ space: 4 }) {
@@ -149,7 +151,12 @@ export struct MainNoiseMeter {
             .fontSize(11)
             .fontColor($r('sys.color.confirm'))
         }
-        .padding({ left: 6, right: 6, top: 2, bottom: 2 })
+        .padding({
+          left: 6,
+          right: 6,
+          top: 2,
+          bottom: 2
+        })
         .backgroundColor($r('sys.color.comp_background_primary'))
         .borderRadius(8)
         .alignSelf(ItemAlign.Start)
@@ -163,7 +170,12 @@ export struct MainNoiseMeter {
             .fontSize(11)
             .fontColor($r('sys.color.font_secondary'))
         }
-        .padding({ left: 6, right: 6, top: 2, bottom: 2 })
+        .padding({
+          left: 6,
+          right: 6,
+          top: 2,
+          bottom: 2
+        })
         .backgroundColor($r('sys.color.comp_background_primary'))
         .borderRadius(8)
         .alignSelf(ItemAlign.Start)

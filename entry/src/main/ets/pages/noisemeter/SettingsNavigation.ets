@@ -2,8 +2,8 @@ import { navigationStack } from '../../constants/ProviderConstant';
 import { curves, PersistenceV2, promptAction } from '@kit.ArkUI';
 import { DialogHub, InfSheet } from '@hadss/dialoghub';
 import { DialogStyleManager } from '../../utils/DialogStyleManager';
-import { AudioAnalysisSettingsBuilder } from '../settings/AudioAnalysisSettingsNavigation';
-import { AlertsSettingsBuilder } from '../settings/AlertsSettingsNavigation';
+import { AudioCalibrationProps, AudioCalibrationSettingsBuilder } from '../settings/AudioCalibrationNavigation';
+import { AlertsSettingsBuilder, AlertsSettingsProps } from '../settings/AlertsSettingsNavigation';
 import { PreferenceKeys } from '../../models/PreferenceKeys';
 import { DesignConstants } from '../../constants/DesignConstants';
 import { AudioAnalysisMode, AudioPresets } from '../../common/AudioConfig';
@@ -93,9 +93,6 @@ interface ListItemParam {
 
 @ComponentV2
 struct Settings {
-  // DialogHub实例缓存
-  private audioAnalysisDialog: InfSheet | null = null;
-  private alertsDialog: InfSheet | null = null;
   @Local pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys)!;
   @Consumer(navigationStack) navStack: NavPathStack = new NavPathStack();
   @Local analysisModeDescription: string = '';
@@ -204,33 +201,35 @@ struct Settings {
 
   // 导航到音频分析设置页面
   private navigateToAudioAnalysis = () => {
-    if (!this.audioAnalysisDialog) {
-      this.audioAnalysisDialog = DialogHub.getSheet()
-        .setStyle({ title: { title: '声级校准' }, backgroundColor: $r('sys.color.background_secondary') })
-        .setConfig({ scrollSizeMode: ScrollSizeMode.FOLLOW_DETENT, enableOutsideInteractive: true })
-        .setComponentTargetId('mainId')
-        .setContent(wrapBuilder(AudioAnalysisSettingsBuilder))
-        .build();
-
-      // 注册Dialog到样式管理器
-      DialogStyleManager.registerDialog(this.audioAnalysisDialog);
+    let audioAnalysisDialog: InfSheet;
+    let props: AudioCalibrationProps = {
+      onSave: () => {
+        audioAnalysisDialog.dismiss();
+      }
     }
-    this.audioAnalysisDialog.show();
+    audioAnalysisDialog = DialogHub.getSheet()
+      .setStyle({ showClose: false, backgroundColor: $r('sys.color.background_secondary') })
+      .setConfig({ scrollSizeMode: ScrollSizeMode.FOLLOW_DETENT, enableOutsideInteractive: true })
+      .setComponentTargetId('mainId')
+      .setContent(wrapBuilder(AudioCalibrationSettingsBuilder), props)
+      .build();
+    audioAnalysisDialog.show();
   }
   // 导航到警报与通知设置页面
   private navigateToAlerts = () => {
-    if (!this.alertsDialog) {
-      this.alertsDialog = DialogHub.getSheet()
-        .setStyle({ title: { title: '警报与通知' }, backgroundColor: $r('sys.color.background_secondary') })
-        .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS, enableOutsideInteractive: true })
-        .setComponentTargetId('mainId')
-        .setContent(wrapBuilder(AlertsSettingsBuilder))
-        .build();
-
-      // 注册Dialog到样式管理器
-      DialogStyleManager.registerDialog(this.alertsDialog);
+    let alertsDialog: InfSheet;
+    let props: AlertsSettingsProps = {
+      onSave: () => {
+        alertsDialog.dismiss();
+      }
     }
-    this.alertsDialog.show();
+    alertsDialog = DialogHub.getSheet()
+      .setStyle({ showClose: false, backgroundColor: $r('sys.color.background_secondary') })
+      .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS, enableOutsideInteractive: true })
+      .setComponentTargetId('mainId')
+      .setContent(wrapBuilder(AlertsSettingsBuilder), props)
+      .build();
+    alertsDialog.show();
   }
   // 打开音频分析模式选择弹框
   private openTimeWeightingDialog = () => {

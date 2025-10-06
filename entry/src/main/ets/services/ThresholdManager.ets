@@ -58,7 +58,6 @@ export class ThresholdManager {
       ThresholdManager.currentConfig.nighttimeThreshold = preset.baseValue;
     }
 
-    ThresholdManager.currentConfig.lastModified = Date.now();
   }
 
   // 设置时段调度启用状态
@@ -76,7 +75,6 @@ export class ThresholdManager {
       ThresholdManager.currentConfig.nighttimeThreshold = ThresholdManager.currentConfig.baseThreshold;
     }
 
-    ThresholdManager.currentConfig.lastModified = Date.now();
   }
 
   // 设置白天阈值
@@ -87,7 +85,6 @@ export class ThresholdManager {
     }
 
     ThresholdManager.currentConfig.daytimeThreshold = value;
-    ThresholdManager.currentConfig.lastModified = Date.now();
   }
 
   // 设置夜间阈值
@@ -98,7 +95,6 @@ export class ThresholdManager {
     }
 
     ThresholdManager.currentConfig.nighttimeThreshold = value;
-    ThresholdManager.currentConfig.lastModified = Date.now();
   }
 
   // 设置基准阈值
@@ -117,7 +113,6 @@ export class ThresholdManager {
       ThresholdManager.currentConfig.nighttimeThreshold = thresholds.nighttime;
     }
 
-    ThresholdManager.currentConfig.lastModified = Date.now();
   }
 
   // 获取当前有效阈值（基于当前时间）

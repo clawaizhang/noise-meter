@@ -8,6 +8,7 @@ import { DesignConstants } from '../../constants/DesignConstants';
 import { curves, PersistenceV2 } from '@kit.ArkUI';
 import { ThresholdManager } from '../../services/ThresholdManager';
 import { PremiumFeature } from '../membership/PremiumFeature';
+import { PreferenceKeys } from '../../models/PreferenceKeys';
 
 @ObservedV2
 class PresetConfig {
@@ -28,10 +29,18 @@ class PresetConfig {
 
 @ComponentV2
 export struct EnhancedThresholdManager {
-  @Local private currentConfig: ThresholdConfig =
-    PersistenceV2.connect(ThresholdConfig)!;
+  @Local pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys)!;
+  @Param @Require currentConfig: ThresholdConfig = ThresholdConfig.clone(this.pk.alarm_threshold);
+  @Event onConfigChange?: (config: ThresholdConfig) => void;
 
   aboutToAppear(): void {
+  }
+
+  // 更新配置并触发回调
+  private updateConfig(newConfig: ThresholdConfig) {
+    if (this.onConfigChange) {
+      this.onConfigChange(newConfig);
+    }
   }
 
   // 构建环境类型选择器
@@ -95,7 +104,17 @@ export struct EnhancedThresholdManager {
       })
       .onClick(() => {
         this.logStateChange('选择环境类型', presetType);
-        ThresholdManager.selectPreset(presetType);
+        this.currentConfig.currentPreset = presetType;
+        
+        // 根据选择的预设类型更新对应的阈值数值
+        if (presetType !== PresetType.CUSTOM) {
+          const preset = this.getPresetByType(presetType);
+          this.currentConfig.baseThreshold = preset.baseValue;
+          this.currentConfig.daytimeThreshold = preset.baseValue;
+          this.currentConfig.nighttimeThreshold = preset.baseValue - 5; // 夜间阈值比白天低5dB
+        }
+        
+        this.updateConfig(this.currentConfig);
       })
       .animation({
         duration: 200,
@@ -126,7 +145,8 @@ export struct EnhancedThresholdManager {
             Toggle({ type: ToggleType.Switch, isOn: this.currentConfig.timeSchedulingEnabled })
               .onChange((isOn: boolean) => {
                 this.logStateChange(`切换时段调度: ${isOn ? '启用' : '禁用'}`);
-                ThresholdManager.setTimeSchedulingEnabled(isOn);
+                this.currentConfig.timeSchedulingEnabled = isOn;
+                this.updateConfig(this.currentConfig);
               })
           }
           .alignItems(VerticalAlign.Center)
@@ -188,7 +208,8 @@ export struct EnhancedThresholdManager {
             description: '全天使用的统一阈值',
             value: this.currentConfig.baseThreshold,
             onChange: (value: number) => {
-              ThresholdManager.setBaseThreshold(value);
+              this.currentConfig.baseThreshold = value;
+              this.updateConfig(this.currentConfig);
             },
             color: $r('sys.color.brand'),
             timeRange: '全天统一阈值'
@@ -201,7 +222,8 @@ export struct EnhancedThresholdManager {
               description: '适用于日常活动环境',
               value: this.currentConfig.daytimeThreshold,
               onChange: (value: number) => {
-                ThresholdManager.setDaytimeThreshold(value);
+                this.currentConfig.daytimeThreshold = value;
+                this.updateConfig(this.currentConfig);
               },
               color: $r('sys.color.brand'),
               timeRange: '6:00 - 22:00'
@@ -212,7 +234,8 @@ export struct EnhancedThresholdManager {
               description: '适用于休息睡眠环境',
               value: this.currentConfig.nighttimeThreshold,
               onChange: (value: number) => {
-                ThresholdManager.setNighttimeThreshold(value);
+                this.currentConfig.nighttimeThreshold = value;
+                this.updateConfig(this.currentConfig);
               },
               color: $r('sys.color.brand'),
               timeRange: '22:00 - 6:00'
@@ -333,6 +356,7 @@ export struct EnhancedThresholdManager {
         .onChange((newValue: number) => {
           this.logStateChange(`调整阈值: ${newValue}dB`);
           config.onChange(newValue);
+          this.updateConfig(this.currentConfig);
         })
         .margin({
           top: DesignConstants.SPACING_MD,

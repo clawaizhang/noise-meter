@@ -22,6 +22,8 @@ export struct NotificationPreferences {
   private intervalId?: number;
 
   aboutToAppear() {
+    // 开关变化后更新权限状态
+    this.alertService.updateSystemPermissionStatus();
   }
 
   @Computed

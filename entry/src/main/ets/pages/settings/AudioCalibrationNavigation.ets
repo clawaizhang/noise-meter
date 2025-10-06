@@ -1,4 +1,4 @@
-import { AppStorageV2, PersistenceV2, promptAction } from '@kit.ArkUI';
+import { AppStorageV2, PersistenceV2, promptAction, EditableTitleBar, EditableLeftIconType } from '@kit.ArkUI';
 import { navigationStack } from '../../constants/ProviderConstant';
 import { DesignConstants } from '../../constants/DesignConstants';
 import { PreferenceKeys } from '../../models/PreferenceKeys';
@@ -10,7 +10,8 @@ import { CalibrationStatusIndicator } from '../../components/calibration/Calibra
 import { ProfessionalContentPanel } from '../../components/calibration/ProfessionalContentPanel';
 
 @ComponentV2
-export struct AudioAnalysisSettings {
+export struct AudioCalibrationSettings {
+  @Event onSave: () => void;
   @Local pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys)!;
   @Local isAutoCalibrating: boolean = false;
   @Local countdown: number = 0;
@@ -20,7 +21,12 @@ export struct AudioAnalysisSettings {
   @Local environmentNoise: number = 25; // 模拟环境噪声
   @Consumer(navigationStack) navStack: NavPathStack = new NavPathStack();
 
+  // 临时状态变量
+  @Local private tempCalibrationValue: number = 0;
+
   aboutToAppear() {
+    // 初始化临时状态
+    this.tempCalibrationValue = this.pk.calibration_value;
   }
 
   private startAutoCalibration() {
@@ -75,17 +81,17 @@ export struct AudioAnalysisSettings {
       Math.min(CALIBRATION_CONFIG.MAX_CALIBRATION_VALUE, newCalibrationValue)
     );
     
-    this.pk.calibration_value = Math.round(clampedValue * 10) / 10; // 保留1位小数
+    this.tempCalibrationValue = Math.round(clampedValue * 10) / 10; // 保留1位小数
 
     promptAction.showToast({
-      message: `自动校准完成，新校准值: ${this.pk.calibration_value}dB`,
+      message: `自动校准完成，新校准值: ${this.tempCalibrationValue}dB`,
       duration: 3000
     });
   }
 
-  // 手动校准值变化处理
+  // 手动校准值变化处理 - 只更新临时状态
   private onManualCalibrationChange(value: number) {
-    this.pk.calibration_value = value;
+    this.tempCalibrationValue = value;
   }
 
   // 计算校准进度百分比
@@ -94,46 +100,90 @@ export struct AudioAnalysisSettings {
   }
 
   build() {
-    Column({ space: DesignConstants.SPACING_LG }) {
-      // 状态反馈区域
-      CalibrationStatusIndicator({
-        currentDecibel: this.ak.uiDisplayState.displayDb
+    Column({ space: 0 }) {
+      // 使用EditableTitleBar提供标准的编辑界面标题栏
+      EditableTitleBar({
+        leftIconStyle: EditableLeftIconType.Cancel,
+        title: '声级校准',
+        isSaveIconRequired: true,
+        onSave: () => {
+          this.handleConfirm();
+        },
+        onCancel: () => {
+        }
       })
 
-      // 核心校准控制区域
-      Column({ space: DesignConstants.SPACING_LG }) {
-        // 手动校准组件
-        EnhancedManualCalibration({
-          calibrationValue: this.pk.calibration_value,
-          onValueChange: (value: number) => {
-            this.onManualCalibrationChange(value);
+      // 可滚动内容区域
+      Scroll() {
+        Column({ space: DesignConstants.SPACING_LG }) {
+          // 状态反馈区域
+          CalibrationStatusIndicator({
+            currentDecibel: this.ak.uiDisplayState.displayDb
+          })
+
+          // 核心校准控制区域
+          Column({ space: DesignConstants.SPACING_LG }) {
+            // 手动校准组件
+            EnhancedManualCalibration({
+              calibrationValue: this.tempCalibrationValue,
+              onValueChange: (value: number) => {
+                this.onManualCalibrationChange(value);
+              }
+            })
+
+            // 自动校准组件
+            ImprovedAutoCalibration({
+              onStartCalibration: () => {
+                this.startAutoCalibration();
+              },
+              calibrationValue: this.tempCalibrationValue,
+              isCalibrating: this.isAutoCalibrating,
+              calibrationProgress: this.getCalibrationProgressPercent(),
+              countdown: this.countdown,
+              environmentNoise: this.ak.uiDisplayState.displayDb
+            })
           }
-        })
 
-        // 自动校准组件
-        ImprovedAutoCalibration({
-          onStartCalibration: () => {
-            this.startAutoCalibration();
-          },
-          calibrationValue: this.pk.calibration_value,
-          isCalibrating: this.isAutoCalibrating,
-          calibrationProgress: this.getCalibrationProgressPercent(),
-          countdown: this.countdown,
-          environmentNoise: this.ak.uiDisplayState.displayDb
-        })
+          // 专业内容区域
+          ProfessionalContentPanel()
+        }
+        .width('100%')
+        .margin({ bottom: 72 })
+        .padding(DesignConstants.SPACING_LG)
+        .backgroundColor($r('sys.color.background_secondary'))
+        .alignItems(HorizontalAlign.Start)
       }
-
-      // 专业内容区域
-      ProfessionalContentPanel()
+      .scrollBar(BarState.Auto)
+      .scrollable(ScrollDirection.Vertical)
+      .edgeEffect(EdgeEffect.Spring)
+      .width('100%')
+      .layoutWeight(1)
     }
     .width('100%')
-    .padding(DesignConstants.SPACING_LG)
-    .backgroundColor($r('sys.color.background_secondary'))
+    .height('100%')
+  }
+
+  // 处理确认操作
+  private handleConfirm() {
+    // 应用临时状态到持久化存储
+    this.pk.calibration_value = this.tempCalibrationValue;
+    
+    // 显示保存成功提示，显示具体的设置结果
+    promptAction.showToast({
+      message: `声级校准值已设置为：${this.tempCalibrationValue}dB`,
+      duration: 2000
+    });
+    
+    // 关闭弹窗
+    this.onSave();
   }
 }
 
+export interface AudioCalibrationProps{
+  onSave: () => void;
+}
 
 @Builder
-export function AudioAnalysisSettingsBuilder() {
-  AudioAnalysisSettings()
+export function AudioCalibrationSettingsBuilder(props:AudioCalibrationProps) {
+  AudioCalibrationSettings(props)
 }
