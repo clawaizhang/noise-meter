@@ -203,17 +203,17 @@ export struct MainNoiseMeter {
               playMode: PlayMode.Normal
             })
         }
-        .tabBar(this.TabBuilder('警报', $r('app.media.ic_alarm'), 0))
+        .tabBar(this.TabBuilder('警报', $r("app.media.bell_bing_bold"), 0))
 
         TabContent() {
           this.DashboardContent()
         }
-        .tabBar(this.TabBuilder('静喵Sound', $r('app.media.ic_meter'), 1))
+        .tabBar(this.TabBuilder('静喵Sound', $r("app.media.solar_spedometer_middle_bold"), 1))
 
         TabContent() {
           MyContentComponent({ currentIndex: this.currentIndex })
         }
-        .tabBar(this.TabBuilder('我的', $r('app.media.ic_user'), 2))
+        .tabBar(this.TabBuilder('我的', $r("app.media.solar_user_circle_bold"), 2))
       }
       .scrollable(false)
       .onChange((index: number) => {

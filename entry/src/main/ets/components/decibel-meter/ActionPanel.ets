@@ -22,7 +22,7 @@ export struct ActionPanel {
     Row({ space: 32 }) {
       // 重置按钮
       Button({ type: ButtonType.Circle }) {
-        Image($r('app.media.ic_reset'))
+        Image($r("app.media.solar_restart_circle_bold"))
           .width(24)
           .height(24)
           .fillColor($r('sys.color.icon_secondary'))
@@ -53,7 +53,7 @@ export struct ActionPanel {
 
       // 保存按钮
       Button({ type: ButtonType.Circle }) {
-        Image($r('app.media.ic_save'))
+        Image($r("app.media.solar_download_square_bold"))
           .width(24)
           .height(24)
           .fillColor($r('sys.color.icon_secondary'))

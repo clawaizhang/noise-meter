@@ -143,7 +143,7 @@ export struct LocationDisplay {
   @Builder
   refreshButton() {
     Button({ type: ButtonType.Circle, stateEffect: true }) {
-      Image($r('app.media.ic_refresh'))
+      Image($r("app.media.solar_refresh_circle_bold"))
         .width(16)
         .height(16)
         .fillColor($r('sys.color.icon_secondary'))
