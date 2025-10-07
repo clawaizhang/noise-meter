@@ -67,10 +67,10 @@ export struct MainNoiseMeter {
       Image(icon)
         .width(24)
         .height(24)
-        .fillColor(this.currentIndex === index ? $r('sys.color.icon_emphasize') : $r('sys.color.icon_tertiary'))
+        .fillColor(this.currentIndex === index ? $r('sys.color.icon_emphasize') : $r('sys.color.icon_primary'))
       Text(title)
         .fontSize(12)
-        .fontColor(this.currentIndex === index ? $r('sys.color.font_emphasize') : $r('sys.color.font_tertiary'))
+        .fontColor(this.currentIndex === index ? $r('sys.color.font_emphasize') : $r('sys.color.font_primary'))
         .margin({ top: 4 })
     }
     .justifyContent(FlexAlign.Center)
@@ -203,17 +203,17 @@ export struct MainNoiseMeter {
               playMode: PlayMode.Normal
             })
         }
-        .tabBar(this.TabBuilder('警报',this.currentIndex === 0 ? $r("app.media.bell_bing_bold"):$r("app.media.ic_alarm"), 0))
+        .tabBar(this.TabBuilder('警报',this.currentIndex == 0 ? $r("app.media.bell_bing_bold"):$r("app.media.ic_alarm"), 0))
 
         TabContent() {
           this.DashboardContent()
         }
-        .tabBar(this.TabBuilder('静喵Sound',this.currentIndex === 1 ? $r("app.media.solar_spedometer_middle_bold"):$r("app.media.ic_meter"), 1))
+        .tabBar(this.TabBuilder('静喵Sound',this.currentIndex == 1 ? $r("app.media.solar_spedometer_middle_bold"):$r("app.media.ic_meter"), 1))
 
         TabContent() {
           MyContentComponent({ currentIndex: this.currentIndex })
         }
-        .tabBar(this.TabBuilder('我的', this.currentIndex === 2 ? $r("app.media.solar_user_circle_bold"):$r("app.media.ic_user"), 2))
+        .tabBar(this.TabBuilder('我的', this.currentIndex == 2 ? $r("app.media.solar_user_circle_bold"):$r("app.media.ic_user"), 2))
       }
       .scrollable(false)
       .onChange((index: number) => {
