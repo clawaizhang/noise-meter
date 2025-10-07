@@ -134,7 +134,7 @@ export const CALIBRATION_CONFIG: CaliConfig = {
   TARGET_CALIBRATION_VALUE: 25, // 目标校准值25dB
   MIN_CALIBRATION_VALUE: -50, // 最小校准值 - 扩展为-50dB
   MAX_CALIBRATION_VALUE: 50, // 最大校准值 - 扩展为+50dB
-  PRESET_VALUES: [-50, -40, -30, -25, -20, -15, -10, -5, 0, 5, 10, 15, 20, 25, 30, 40, 50] // 预设校准点 - 扩展范围
+  PRESET_VALUES: [-50, -40, -30, -20, -10, 0, 10, 20, 30, 40, 50] // 预设校准点 - 统一10dB间隔
 };
 
 // 颜色配置
