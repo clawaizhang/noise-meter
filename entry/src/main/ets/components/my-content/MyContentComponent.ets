@@ -104,10 +104,6 @@ export struct MyContentComponent {
             left: 16,
             right: 16
           })
-          .onClick(() => {
-            // 切换后台运行状态
-            this.pk.background_running = !this.pk.background_running;
-          })
 
           ListItemBuilder(
             $r('app.media.ic_settings'),
