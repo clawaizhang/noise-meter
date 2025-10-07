@@ -95,11 +95,14 @@ export struct MainNoiseMeter {
         let props: AlertsSettingsProps = {
           onSave: () => {
             alertsDialog.dismiss();
+          },
+          onClose: () => {
+            alertsDialog.dismiss();
           }
         }
         alertsDialog = DialogHub.getSheet()
           .setStyle({ showClose: false, backgroundColor: $r('sys.color.background_secondary') })
-          .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS, enableOutsideInteractive: true })
+          .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS })
           .setComponentTargetId('mainId')
           .setContent(wrapBuilder(AlertsSettingsBuilder), props)
           .build();

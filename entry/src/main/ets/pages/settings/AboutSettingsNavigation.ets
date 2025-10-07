@@ -63,8 +63,6 @@ function listItemRow() {
 export struct AboutSettings {
   @Consumer(navigationStack) navStack: NavPathStack = new NavPathStack();
   
-  // DialogHub实例缓存
-  private privacyPolicyDialog: InfSheet | null = null;
   @Local pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys)!;
   @Local showRevokeConfirmDialog: boolean = false;
 
@@ -128,15 +126,6 @@ export struct AboutSettings {
               Blank()
             }
             .listItemRow()
-            .onClick(() => {
-              if (!this.privacyPolicyDialog) {
-                this.privacyPolicyDialog = DialogHub.getSheet().setConfig({enableOutsideInteractive:true}).setStyle({backgroundColor:$r('sys.color.background_secondary')}).setContent(wrapBuilder(PrivacyPolicyViewBuilder)).build();
-                
-                // 注册Dialog到样式管理器
-                DialogStyleManager.registerDialog(this.privacyPolicyDialog);
-              }
-              this.privacyPolicyDialog.show();
-            })
 
             // 取消隐私授权
             Row({ space: 8 }) {

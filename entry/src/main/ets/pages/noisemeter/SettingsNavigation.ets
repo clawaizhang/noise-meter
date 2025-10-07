@@ -84,13 +84,6 @@ function analysisDetail() {
   .alignSelf(ItemAlign.Start)
 }
 
-interface ListItemParam {
-  icon: Resource;
-  title: string;
-  desc: string;
-  action: () => void;
-}
-
 @ComponentV2
 struct Settings {
   @Local pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys)!;
@@ -205,11 +198,14 @@ struct Settings {
     let props: AudioCalibrationProps = {
       onSave: () => {
         audioAnalysisDialog.dismiss();
+      },
+      onClose: () => {
+        audioAnalysisDialog.dismiss();
       }
     }
     audioAnalysisDialog = DialogHub.getSheet()
-      .setStyle({ showClose: false, backgroundColor: $r('sys.color.background_secondary') })
-      .setConfig({ scrollSizeMode: ScrollSizeMode.FOLLOW_DETENT, enableOutsideInteractive: true })
+      .setStyle({showClose: false,  backgroundColor: $r('sys.color.background_secondary') })
+      .setConfig({ scrollSizeMode: ScrollSizeMode.FOLLOW_DETENT })
       .setComponentTargetId('mainId')
       .setContent(wrapBuilder(AudioCalibrationSettingsBuilder), props)
       .build();
@@ -221,11 +217,14 @@ struct Settings {
     let props: AlertsSettingsProps = {
       onSave: () => {
         alertsDialog.dismiss();
+      },
+      onClose: () => {
+        alertsDialog.dismiss();
       }
     }
     alertsDialog = DialogHub.getSheet()
       .setStyle({ showClose: false, backgroundColor: $r('sys.color.background_secondary') })
-      .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS, enableOutsideInteractive: true })
+      .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS })
       .setComponentTargetId('mainId')
       .setContent(wrapBuilder(AlertsSettingsBuilder), props)
       .build();
@@ -249,7 +248,7 @@ struct Settings {
         showClose: false,
         backgroundColor: $r('sys.color.background_secondary')
       })
-      .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS, enableOutsideInteractive: true })
+      .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS })
       .setComponentTargetId('mainId')
       .setContent(wrapBuilder(TimeWeightingDialogBuilder), param)
       .build();
@@ -274,7 +273,7 @@ struct Settings {
         showClose: false,
         backgroundColor: $r('sys.color.background_secondary')
       })
-      .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS, enableOutsideInteractive: true })
+      .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS })
       .setComponentTargetId('mainId')
       .setContent(wrapBuilder(FrequencyWeightingDialogBuilder), param)
       .build();
@@ -298,7 +297,7 @@ struct Settings {
         showClose: false,
         backgroundColor: $r('sys.color.background_secondary')
       })
-      .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS, enableOutsideInteractive: true })
+      .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS })
       .setComponentTargetId('mainId')
       .setContent(wrapBuilder(AutoSaveSettingsDialogBuilder), param)
       .build();

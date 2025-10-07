@@ -184,8 +184,7 @@ export function showRewardCompletionDialog(
       title: { title: '奖励完成' }
     })
     .setConfig({
-      scrollSizeMode: ScrollSizeMode.CONTINUOUS,
-      enableOutsideInteractive: true
+      scrollSizeMode: ScrollSizeMode.CONTINUOUS
     })
     .setComponentTargetId('mainId')
     .setContent(wrapBuilder(RewardComplationBuilder), props)

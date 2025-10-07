@@ -425,8 +425,7 @@ export struct MembershipStatusCard {
         backgroundColor: $r('sys.color.background_secondary')
       })
       .setConfig({
-        scrollSizeMode: ScrollSizeMode.CONTINUOUS,
-        enableOutsideInteractive: true
+        scrollSizeMode: ScrollSizeMode.CONTINUOUS
       })
       .setComponentTargetId('mainId')
       .setContent(wrapBuilder(UpgradeContentBuilder), props)

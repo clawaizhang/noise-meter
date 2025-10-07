@@ -516,7 +516,7 @@ export struct DecibelHistory {
       let detailDialog = DialogHub.getSheet()
         .setComponentTargetId('mainId')
         .setStyle({ backgroundColor: $r('sys.color.background_secondary') })
-        .setConfig({ enableOutsideInteractive: true, scrollSizeMode: ScrollSizeMode.CONTINUOUS })
+        .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS })
         .setContent(wrapBuilder(DetailDialogBuilder), params)
         .build();
       detailDialog.show();
