@@ -270,7 +270,7 @@ export struct MembershipStatusCard {
 
           Text(`${this.nextMilestone.reward}天会员`)
             .fontSize(DesignConstants.FONT_SIZE_SM)
-            .fontColor($r('sys.color.ohos_id_color_palette1'))
+            .fontColor($r('sys.color.brand'))
             .fontWeight(FontWeight.Medium)
         }
         .width('100%')
@@ -290,7 +290,7 @@ export struct MembershipStatusCard {
         Image($r('app.media.ic_vip'))
           .width(DesignConstants.ICON_SIZE_MD)
           .height(DesignConstants.ICON_SIZE_MD)
-          .fillColor($r('sys.color.ohos_id_color_palette1'))
+          .fillColor($r('sys.color.brand'))
 
         Text('专业版免费送！')
           .fontSize(DesignConstants.FONT_SIZE_LG)
@@ -328,7 +328,7 @@ export struct MembershipStatusCard {
       Button('免费体验')
         .width('100%')
         .fontSize(DesignConstants.FONT_SIZE_MD)
-        .backgroundColor($r('sys.color.ohos_id_color_palette1'))
+        .backgroundColor($r('sys.color.brand'))
         .fontColor($r('sys.color.font_on_primary'))
         .borderRadius(DesignConstants.BORDER_RADIUS_MD)
         .onClick(() => {

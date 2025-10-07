@@ -230,6 +230,7 @@ export struct RealTimeDetectionPage {
       // 图标区域 - 固定宽度确保对齐
       Column() {
         Image(icon)
+          .fillColor($r('sys.color.brand'))
           .width(DesignConstants.ICON_SIZE_SM)
       }
       .width(32)  // 固定图标容器宽度
@@ -274,12 +275,15 @@ export struct RealTimeDetectionPage {
       // 根据场景类型选择对应的图标
       if (title === '图书馆') {
         Image($r('app.media.ic_document_edit'))
+          .fillColor($r('sys.color.brand'))
           .width(DesignConstants.ICON_SIZE_MD)
       } else if (title === '办公室') {
         Image($r('app.media.ic_user'))
+          .fillColor($r('sys.color.brand'))
           .width(DesignConstants.ICON_SIZE_MD)
       } else if (title === '街道') {
         Image($r('app.media.ic_location'))
+          .fillColor($r('sys.color.brand'))
           .width(DesignConstants.ICON_SIZE_MD)
       }
       

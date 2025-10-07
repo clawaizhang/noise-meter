@@ -149,12 +149,15 @@ export struct WelcomePage {
         // 根据价值主张选择对应的图标
         if (title.includes('保护听力健康')) {
           Image($r('app.media.ic_user'))
+            .fillColor($r('sys.color.brand'))
             .width(DesignConstants.ICON_SIZE_MD)
         } else if (title.includes('提升生活质量')) {
           Image($r('app.media.ic_smile'))
+            .fillColor($r('sys.color.brand'))
             .width(DesignConstants.ICON_SIZE_MD)
         } else if (title.includes('工作环境优化')) {
           Image($r('app.media.ic_security'))
+            .fillColor($r('sys.color.brand'))
             .width(DesignConstants.ICON_SIZE_MD)
         }
       }

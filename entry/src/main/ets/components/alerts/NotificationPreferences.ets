@@ -93,7 +93,7 @@ export struct NotificationPreferences {
         Image($r('app.media.ic_alarm'))
           .width(DesignConstants.ICON_SIZE_MD)
           .height(DesignConstants.ICON_SIZE_MD)
-          .fillColor($r('sys.color.font_primary'))
+          .fillColor($r('sys.color.brand'))
 
         Text('警报通知')
           .fontSize(DesignConstants.FONT_SIZE_XL)

@@ -166,7 +166,7 @@ export struct AdvancedFeaturesPage {
         Image($r('app.media.ic_audio_analysis'))
           .width(80)
           .height(80)
-          .fillColor($r('sys.color.icon'))
+          .fillColor($r('sys.color.brand'))
           .scale({ x: this.featureIconScale, y: this.featureIconScale })
           .rotate({ angle: this.featureIconRotation })
       }
@@ -225,6 +225,7 @@ export struct AdvancedFeaturesPage {
   private buildFeatureCard(item: FeatureCard, index: number) {
     Column({ space: DesignConstants.SPACING_XS }) {
       Image(item.icon)
+        .fillColor($r('sys.color.brand'))
         .width(DesignConstants.ICON_SIZE_MD)
       
       Text(item.title)

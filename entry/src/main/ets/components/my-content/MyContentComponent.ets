@@ -61,7 +61,7 @@ export struct MyContentComponent {
                   Image($r('app.media.ic_running'))
                     .width(24)
                     .height(24)
-                    .fillColor($r('sys.color.font_primary'))
+                    .fillColor($r('sys.color.brand'))
                     .margin({ right: 12 })
 
                   Text($r('app.string.background_running'))

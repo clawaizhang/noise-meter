@@ -12,7 +12,7 @@ import { DialogStyleManager } from '../../utils/DialogStyleManager';
 function itemIcon() {
   .width(DesignConstants.ICON_SIZE_MD)
   .height(DesignConstants.ICON_SIZE_MD)
-  .fillColor($r('sys.color.font_primary'))
+  .fillColor($r('sys.color.brand'))
 }
 
 @Extend(Text)
@@ -99,7 +99,7 @@ export struct AboutSettings {
               .textAlign(TextAlign.Center)
             
             // 版本号
-            Text('v1.0.9')
+            Text('v1.5.3')
               .fontSize(DesignConstants.FONT_SIZE_SM)
               .fontColor($r('sys.color.font_tertiary'))
               .textAlign(TextAlign.Center)
@@ -114,7 +114,7 @@ export struct AboutSettings {
             Text($r('app.string.privacy_policy_management_title'))
               .fontSize(DesignConstants.FONT_SIZE_LG)
               .fontWeight(FontWeight.Bold)
-              .fontColor($r('sys.color.font_primary'))
+              .fontColor($r('sys.color.brand'))
               .alignSelf(ItemAlign.Start)
             
             // 查看隐私政策

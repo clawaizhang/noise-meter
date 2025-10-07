@@ -133,7 +133,7 @@ export struct DisplayModeComponent {
           Image($r('app.media.ic_display'))
             .width(24)
             .height(24)
-            .fillColor($r('sys.color.font_primary'))
+            .fillColor($r('sys.color.brand'))
           Text('色彩')
             .fontSize(16)
             .fontColor($r('sys.color.font_primary'))

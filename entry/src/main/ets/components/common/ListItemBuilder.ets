@@ -15,7 +15,7 @@ export function ListItemBuilder(
       Image(icon)
         .width(24)
         .height(24)
-        .fillColor($r('sys.color.font_primary'))
+        .fillColor($r('sys.color.brand'))
         .margin({ right: 12 })
 
       // 标题文本

@@ -21,7 +21,7 @@ export struct AcousticExplanationPanel {
         Image($r('app.media.ic_info'))
           .width(DesignConstants.ICON_SIZE_MD)
           .height(DesignConstants.ICON_SIZE_MD)
-          .fillColor($r('sys.color.font_primary'))
+          .fillColor($r('sys.color.brand'))
 
         Text('技术参数')
           .fontSize(DesignConstants.FONT_SIZE_LG)
@@ -35,7 +35,7 @@ export struct AcousticExplanationPanel {
           $r('sys.media.ohos_ic_public_arrow_down'))
           .width(DesignConstants.ICON_SIZE_SM)
           .height(DesignConstants.ICON_SIZE_SM)
-          .fillColor($r('sys.color.font_secondary'))
+          .fillColor($r('sys.color.brand'))
           .onClick(() => {
             this.isTechnicalPanelExpanded = !this.isTechnicalPanelExpanded;
           })

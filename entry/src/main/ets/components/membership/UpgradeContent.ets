@@ -121,7 +121,7 @@ export struct UpgradeContent {
           Image(this.icon)
             .width(DesignConstants.ICON_SIZE_XL)
             .height(DesignConstants.ICON_SIZE_XL)
-            .fillColor($r('sys.color.ohos_id_color_palette1'))
+            .fillColor($r('sys.color.brand'))
         }
 
         Text(this.featureName)
@@ -272,7 +272,7 @@ export struct UpgradeContent {
         Button('免费体验')
           .layoutWeight(1)
           .fontSize(DesignConstants.FONT_SIZE_MD)
-          .backgroundColor($r('sys.color.ohos_id_color_palette1'))
+          .backgroundColor($r('sys.color.brand'))
           .fontColor($r('sys.color.font_on_primary'))
           .borderRadius(DesignConstants.BORDER_RADIUS_MD)
           .enabled(this.purchaseState === 'idle')
@@ -298,7 +298,7 @@ export struct UpgradeContent {
         Text('最受欢迎')
           .fontSize(10)
           .fontColor($r('sys.color.white'))
-          .backgroundColor($r('sys.color.ohos_id_color_palette1'))
+          .backgroundColor($r('sys.color.brand'))
           .borderRadius(4)
           .padding({
             left: 4,
@@ -322,7 +322,7 @@ export struct UpgradeContent {
             Text('¥0')
               .fontSize(18)
               .fontWeight(FontWeight.Bold)
-              .fontColor($r('sys.color.ohos_id_color_palette1'))
+              .fontColor($r('sys.color.brand'))
 
             Text(`¥${plans.current.price}`)
               .fontSize(12)
@@ -333,7 +333,7 @@ export struct UpgradeContent {
             Text(`¥${plans.current.price}`)
               .fontSize(18)
               .fontWeight(FontWeight.Bold)
-              .fontColor($r('sys.color.ohos_id_color_palette1'))
+              .fontColor($r('sys.color.brand'))
 
             if (plans.current.originalPrice) {
               Text(`¥${plans.current.originalPrice}`)
@@ -390,11 +390,11 @@ export struct UpgradeContent {
           Image($r('app.media.ic_favorite'))
             .width(12)
             .height(12)
-            .fillColor($r('sys.color.ohos_id_color_palette1'))
+            .fillColor($r('sys.color.brand'))
 
           Text('已选择')
             .fontSize(10)
-            .fontColor($r('sys.color.ohos_id_color_palette1'))
+            .fontColor($r('sys.color.brand'))
         }
         .justifyContent(FlexAlign.Center)
         .width('100%')
@@ -431,7 +431,7 @@ export struct UpgradeContent {
       Image(icon)
         .width(DesignConstants.ICON_SIZE_MD)
         .height(DesignConstants.ICON_SIZE_MD)
-        .fillColor($r('sys.color.ohos_id_color_palette1'))
+        .fillColor($r('sys.color.brand'))
 
       Text(title)
         .fontSize(DesignConstants.FONT_SIZE_SM)
@@ -781,7 +781,7 @@ export struct UpgradeContent {
         Button('续费升级')
           .layoutWeight(1)
           .fontSize(DesignConstants.FONT_SIZE_MD)
-          .backgroundColor($r('sys.color.ohos_id_color_palette1'))
+          .backgroundColor($r('sys.color.brand'))
           .fontColor($r('sys.color.font_on_primary'))
           .borderRadius(DesignConstants.BORDER_RADIUS_MD)
           .onClick(() => {
@@ -804,7 +804,7 @@ export struct UpgradeContent {
         LoadingProgress()
           .width(DesignConstants.ICON_SIZE_MD)
           .height(DesignConstants.ICON_SIZE_MD)
-          .color($r('sys.color.ohos_id_color_palette1'))
+          .color($r('sys.color.brand'))
 
         Text('正在处理购买...')
           .fontSize(DesignConstants.FONT_SIZE_MD)

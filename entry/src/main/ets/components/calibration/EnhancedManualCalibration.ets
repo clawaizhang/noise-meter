@@ -128,7 +128,7 @@ export struct EnhancedManualCalibration {
         Image($r('app.media.ic_calibration'))
           .width(DesignConstants.ICON_SIZE_MD)
           .height(DesignConstants.ICON_SIZE_MD)
-          .fillColor($r('sys.color.font_primary'))
+          .fillColor($r('sys.color.brand'))
 
         Text('手动校准')
           .fontSize(DesignConstants.FONT_SIZE_LG)
