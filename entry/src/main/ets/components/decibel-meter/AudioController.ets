@@ -340,6 +340,7 @@ export struct AudioController {
     // 重置状态
     this.timedValues = [];
     this.timedAudioBuffers = [];
+    this.originAudioBuffers = [];
     this.ak.dataProcessingState.statisticsData.startTime = new Date().getTime();
     this.recordingTime = 0;
 
