@@ -13,6 +13,7 @@ import { ThresholdConfig } from '../../models/ThresholdConfig';
 
 export interface AlertsSettingsProps {
   onSave: () => void;
+  onClose: () => void;
 }
 
 @Builder
@@ -23,6 +24,7 @@ export function AlertsSettingsBuilder(props:AlertsSettingsProps) {
 @ComponentV2
 export struct AlertsSettings {
   @Event onSave: () => void;
+  @Event onClose: () => void;
   @Local pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys)!;
   @Local ak: AppKeys = AppStorageV2.connect(AppKeys)!;
   @Local gridColumns: number = 1;
@@ -79,6 +81,7 @@ export struct AlertsSettings {
           this.handleConfirm();
         },
         onCancel: () => {
+          this.onClose();
         }
       })
 

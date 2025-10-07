@@ -12,6 +12,7 @@ import { ProfessionalContentPanel } from '../../components/calibration/Professio
 @ComponentV2
 export struct AudioCalibrationSettings {
   @Event onSave: () => void;
+  @Event onClose: () => void;
   @Local pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys)!;
   @Local isAutoCalibrating: boolean = false;
   @Local countdown: number = 0;
@@ -110,6 +111,7 @@ export struct AudioCalibrationSettings {
           this.handleConfirm();
         },
         onCancel: () => {
+          this.onClose();
         }
       })
 
@@ -181,6 +183,7 @@ export struct AudioCalibrationSettings {
 
 export interface AudioCalibrationProps{
   onSave: () => void;
+  onClose: () => void;
 }
 
 @Builder
