@@ -6,7 +6,7 @@
 import { DesignConstants } from '../../constants/DesignConstants';
 import { DialogHub, InfSheet } from '@hadss/dialoghub';
 import { DialogStyleManager } from '../../utils/DialogStyleManager';
-import { Debounce } from '../../utils/Debounce';
+import { Throttle } from '../../utils/Debounce';
 
 interface RewardCompletionDialogProps {
   consecutiveDays: number;
@@ -151,7 +151,7 @@ export struct RewardCompletionDialog {
         .fontColor($r('sys.color.font_on_primary'))
         .borderRadius(DesignConstants.BORDER_RADIUS_MD)
         .onClick(() => {
-          Debounce.click(() => {
+          Throttle.click(() => {
             this.onClose();
           });
         })

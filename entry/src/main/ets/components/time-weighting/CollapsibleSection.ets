@@ -4,7 +4,7 @@
  */
 
 import { DesignConstants } from '../../constants/DesignConstants';
-import { Debounce } from '../../utils/Debounce';
+import { Throttle } from '../../utils/Debounce';
 
 @ComponentV2
 export struct CollapsibleSection {
@@ -43,7 +43,7 @@ export struct CollapsibleSection {
       $r('sys.color.comp_background_primary'))
     .borderRadius(DesignConstants.BORDER_RADIUS_MD)
     .onClick(() => {
-      Debounce.click(() => {
+      Throttle.click(() => {
         this.onToggle();
       });
     })

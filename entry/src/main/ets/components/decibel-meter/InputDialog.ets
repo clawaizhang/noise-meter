@@ -1,5 +1,5 @@
 import curves from '@ohos.curves';
-import { Debounce } from '../../utils/Debounce';
+import { Throttle } from '../../utils/Debounce';
 
 @CustomDialog
 export struct InputDialog {
@@ -52,7 +52,7 @@ export struct InputDialog {
               .fontColor($r('sys.color.font_secondary'))
               .backgroundColor($r('sys.color.comp_background_secondary'))
               .onClick(() => {
-                Debounce.click(() => {
+                Throttle.click(() => {
                   this.onClose();
                 });
               })

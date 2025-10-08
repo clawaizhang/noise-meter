@@ -1,7 +1,7 @@
 import { privacyManager } from '@kit.StoreKit';
 import { common, Want } from '@kit.AbilityKit';
 import { BusinessError } from '@kit.BasicServicesKit';
-import { Debounce } from '../utils/Debounce';
+import { Throttle } from '../utils/Debounce';
 
 @Extend(Image)
 function itemIcon() {
@@ -85,7 +85,7 @@ export struct SettingsDeviceManager {
           }
           .listItemStyle()
         }.onClick(() => {
-          Debounce.click(() => {
+          Throttle.click(() => {
             animateTo({
               duration: 300,
               onFinish: () => {
@@ -119,7 +119,7 @@ export struct SettingsDeviceManager {
             }
             .listItemStyle()
           }.onClick(async () => {
-            Debounce.click(async () => {
+            Throttle.click(async () => {
               // 这里添加打开隐私政策的逻辑
               const uiContext = getContext(this) as common.UIAbilityContext;
               await privacyManager.requestAppPrivacyConsent(uiContext);
@@ -145,7 +145,7 @@ export struct SettingsDeviceManager {
         .margin({ bottom: 30, top: 12 })
         .backgroundColor($r('app.color.toggle_active'))
         .onClick(() => {
-          Debounce.click(() => {
+          Throttle.click(() => {
             const context = getContext(this) as common.UIAbilityContext;
             const want: Want = {
               action: 'ohos.want.action.appdetail',

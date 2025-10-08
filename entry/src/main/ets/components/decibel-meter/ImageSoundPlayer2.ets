@@ -1,7 +1,7 @@
 import { ImageRaw } from '../common/ImageRaw';
 import { AudioPlayerService } from '../../services/AudioPlayerService';
 import { media } from '@kit.MediaKit';
-import { Debounce } from '../../utils/Debounce';
+import { Throttle } from '../../utils/Debounce';
 
 @ComponentV2
 export struct ImageSoundPlayer2 {
@@ -33,7 +33,7 @@ export struct ImageSoundPlayer2 {
       .type(ButtonType.Circle)
       .backgroundColor(Color.Transparent)
       .onClick(async () => {
-        Debounce.click(async () => {
+        Throttle.click(async () => {
           try {
             if (this.playerState === 'playing') {
               await this.audioPlayerService.pause();

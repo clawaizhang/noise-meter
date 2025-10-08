@@ -13,7 +13,7 @@ import { MembershipAgreementDialogBuilder, MembershipAgreementDialogProps } from
 import {
   defaultPricingPlans, UpgradeContentBuilder, UpgradeContentProps
 } from './UpgradeContent';
-import { Debounce } from '../../utils/Debounce';
+import { Throttle } from '../../utils/Debounce';
 
 @ComponentV2
 export struct MembershipStatusCard {
@@ -333,7 +333,7 @@ export struct MembershipStatusCard {
         .fontColor($r('sys.color.font_on_primary'))
         .borderRadius(DesignConstants.BORDER_RADIUS_MD)
         .onClick(() => {
-          Debounce.click(() => {
+          Throttle.click(() => {
             this.showMembershipAgreement();
           });
         })

@@ -1,5 +1,5 @@
 import { DesignConstants } from "../../constants/DesignConstants"
-import { Debounce } from "../../utils/Debounce"
+import { Throttle } from "../../utils/Debounce"
 
 export interface MembershipAgreementDialogProps {
   onAgree: () => void;
@@ -126,7 +126,7 @@ export struct MembershipAgreementDialog {
             style: BorderStyle.Solid
           })
           .onClick(() => {
-            Debounce.click(() => {
+            Throttle.click(() => {
               this.onCancel();
             });
           })
@@ -138,7 +138,7 @@ export struct MembershipAgreementDialog {
           .fontColor($r('sys.color.font_on_primary'))
           .borderRadius(DesignConstants.BORDER_RADIUS_MD)
           .onClick(() => {
-            Debounce.click(() => {
+            Throttle.click(() => {
               this.onAgree();
             });
           })

@@ -11,7 +11,7 @@ import { AppStorageV2, curves, SymbolGlyphModifier } from '@kit.ArkUI';
 import { DialogHub, InfSheet } from '@hadss/dialoghub';
 import { DialogStyleManager } from '../../utils/DialogStyleManager';
 import { AppKeys } from '../../models/AppKeys';
-import { Debounce } from '../../utils/Debounce';
+import { Throttle } from '../../utils/Debounce';
 
 class DecibelRecordDataSource implements IDataSource {
   private records: DecibelRecord[];
@@ -254,7 +254,7 @@ export struct DecibelHistory {
     .borderRadius(16)
     .id("showNoiseDetailDialogFromHistory")
     .onClick(() => {
-      Debounce.click(() => {
+      Throttle.click(() => {
         this.showNoiseDetails(record);
       });
     })
@@ -283,7 +283,7 @@ export struct DecibelHistory {
               .combine(TransitionEffect.opacity(1))
               .animation({ curve: curves.springMotion(0.6, 0.8) }))
             .onClick(() => {
-              Debounce.click(() => {
+              Throttle.click(() => {
                 this.deleteRecord(record);
               });
             });
@@ -297,7 +297,7 @@ export struct DecibelHistory {
               .combine(TransitionEffect.opacity(1))
               .animation({ curve: curves.springMotion(0.6, 0.8) }))
             .onClick(() => {
-              Debounce.click(() => {
+              Throttle.click(() => {
                 this.pendingDeleteId = record.id;
               });
             });
@@ -312,7 +312,7 @@ export struct DecibelHistory {
               .combine(TransitionEffect.opacity(1))
               .animation({ curve: curves.springMotion(0.6, 0.8) }))
             .onClick(() => {
-              Debounce.click(() => {
+              Throttle.click(() => {
                 this.deleteRecordAudio(record);
               });
             });
@@ -327,7 +327,7 @@ export struct DecibelHistory {
                 .combine(TransitionEffect.opacity(1))
                 .animation({ curve: curves.springMotion(0.6, 0.8) }))
               .onClick(() => {
-                Debounce.click(() => {
+                Throttle.click(() => {
                   this.pendingDeleteAudioId = record.id;
                 });
               });
@@ -347,7 +347,7 @@ export struct DecibelHistory {
               .combine(TransitionEffect.opacity(1))
               .animation({ curve: curves.springMotion(0.6, 0.8) }))
             .onClick(() => {
-              Debounce.click(async () => {
+              Throttle.click(async () => {
                 record.isFavorite = !record.isFavorite;
                 await this.recordService.updateRecord(record);
                 // 显示操作提示

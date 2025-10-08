@@ -5,7 +5,7 @@ import { curves } from '@kit.ArkUI';
 import { AudioPlayerGroupService } from '../../services/AudioPlayerGroupService';
 import { media } from '@kit.MediaKit';
 import { Subscription, timer } from 'rxjs';
-import { Debounce } from '../../utils/Debounce';
+import { Throttle } from '../../utils/Debounce';
 
 @ComponentV2
 export struct ImageSoundPlayer {
@@ -49,7 +49,7 @@ export struct ImageSoundPlayer {
         .type(ButtonType.Circle)
         .backgroundColor(Color.Transparent)
         .onClick(async () => {
-          Debounce.click(async () => {
+          Throttle.click(async () => {
             try {
               if (this.playerState === 'playing') {
                 await this.audioPlayerService.pause();

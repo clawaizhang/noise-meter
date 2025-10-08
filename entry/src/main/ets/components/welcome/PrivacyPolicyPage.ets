@@ -1,5 +1,5 @@
 import { DesignConstants } from '../../constants/DesignConstants';
-import { Debounce } from '../../utils/Debounce';
+import { Throttle } from '../../utils/Debounce';
 
 @ComponentV2
 export struct PrivacyPolicyPage {
@@ -305,7 +305,7 @@ export struct PrivacyPolicyPage {
           .fontSize(DesignConstants.FONT_SIZE_MD)
           .fontColor(this.textColor)
           .onClick(() => {
-            Debounce.click(() => {
+            Throttle.click(() => {
               this.privacyAgreed = !this.privacyAgreed;
             });
           })
@@ -322,7 +322,7 @@ export struct PrivacyPolicyPage {
         .fontColor($r('sys.color.font_on_primary'))
         .fontSize(DesignConstants.FONT_SIZE_LG)
         .onClick(() => {
-          Debounce.click(() => {
+          Throttle.click(() => {
             this.handleAgreeClick();
           });
         })
@@ -336,7 +336,7 @@ export struct PrivacyPolicyPage {
         .fontColor($r('sys.color.font_primary'))
         .fontSize(DesignConstants.FONT_SIZE_MD)
         .onClick(() => {
-          Debounce.click(() => {
+          Throttle.click(() => {
             this.onPrev();
           });
         })

@@ -1,4 +1,4 @@
-import { Debounce } from "../../utils/Debounce"
+import { Throttle } from "../../utils/Debounce"
 
 /**
  * 通用列表项 Builder 组件
@@ -50,7 +50,7 @@ export function ListItemBuilder(
     right: 16
   })
   .onClick(() => {
-    Debounce.click(() => {
+    Throttle.click(() => {
       onClick()
     })
   })

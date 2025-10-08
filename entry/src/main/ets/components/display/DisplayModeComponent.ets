@@ -1,7 +1,7 @@
 import { PreferenceKeys } from '../../models/PreferenceKeys';
 import { PersistenceV2 } from '@kit.ArkUI';
 import { DesignConstants } from '../../constants/DesignConstants';
-import { Debounce } from '../../utils/Debounce';
+import { Throttle } from '../../utils/Debounce';
 
 /**
  * 显示模式设置组件
@@ -109,7 +109,7 @@ export struct DisplayModeComponent {
         $r('sys.color.interactive_active') : $r('sys.color.comp_background_primary'))
         .borderRadius(16)
         .onClick(() => {
-          Debounce.click(() => {
+          Throttle.click(() => {
             this.handleDisplayModeSelect(displayMode);
           });
         })

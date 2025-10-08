@@ -3,7 +3,7 @@ import hilog from '@ohos.hilog';
 import resourceManager from '@ohos.resourceManager';
 import { AudioPlayerGroupService } from '../../services/AudioPlayerGroupService';
 import media from '@ohos.multimedia.media';
-import { Debounce } from '../../utils/Debounce';
+import { Throttle } from '../../utils/Debounce';
 
 const TAG = 'AudioPlayer';
 const DOMAIN = 0x0000;
@@ -28,7 +28,7 @@ export struct AudioPlayer {
         .backgroundColor($r('sys.color.comp_background_secondary'))
         .margin({ right: 8 })
         .onClick(async () => {
-          Debounce.click(async () => {
+          Throttle.click(async () => {
             try {
               await this.audioPlayerService.stop();
             } catch (error) {
@@ -58,7 +58,7 @@ export struct AudioPlayer {
       .height(36)
       .padding({ left: 16, right: 16 })
       .onClick(async () => {
-        Debounce.click(async () => {
+        Throttle.click(async () => {
           try {
             if (this.playerState === 'playing') {
               await this.audioPlayerService.pause();

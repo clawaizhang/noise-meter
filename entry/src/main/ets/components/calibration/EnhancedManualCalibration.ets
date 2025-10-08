@@ -6,7 +6,7 @@
 import { CALIBRATION_COLORS, CALIBRATION_CONFIG } from '../../constants/CalibrationConstants';
 import { DesignConstants } from '../../constants/DesignConstants';
 import { curves } from '@kit.ArkUI';
-import { Debounce } from '../../utils/Debounce';
+import { Throttle } from '../../utils/Debounce';
 
 @ComponentV2
 export struct EnhancedManualCalibration {
@@ -102,7 +102,7 @@ export struct EnhancedManualCalibration {
         .height(32)
         .layoutWeight(1)
         .onClick(() => {
-          Debounce.click(() => {
+          Throttle.click(() => {
             this.onValueChange(0);
           });
         })
@@ -116,7 +116,7 @@ export struct EnhancedManualCalibration {
         .height(32)
         .layoutWeight(1)
         .onClick(() => {
-          Debounce.click(() => {
+          Throttle.click(() => {
             const nearestPreset = this.getNearestPresetValue(this.calibrationValue);
             this.onValueChange(nearestPreset);
           })

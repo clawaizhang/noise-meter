@@ -7,7 +7,7 @@ import { DesignConstants } from '../../constants/DesignConstants';
 import { curves, promptAction } from '@kit.ArkUI';
 import { CALIBRATION_COLORS } from '../../constants/CalibrationConstants';
 import { PremiumFeature } from '../membership/PremiumFeature';
-import { Debounce } from '../../utils/Debounce';
+import { Throttle } from '../../utils/Debounce';
 
 @ComponentV2
 export struct ImprovedAutoCalibration {
@@ -197,7 +197,7 @@ export struct ImprovedAutoCalibration {
         .height(48)
         .width('100%')
         .onClick(async () => {
-          Debounce.click(async () => {
+          Throttle.click(async () => {
             // 环境检查
             if (!this.isSuitableForCalibration()) {
               const result = await promptAction.showDialog({

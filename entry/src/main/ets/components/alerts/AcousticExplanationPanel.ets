@@ -5,7 +5,7 @@
 
 import { ACOUSTIC_EXPLANATIONS, ALERT_COLORS, TECHNICAL_PARAMS } from '../../constants/AlertsConstants';
 import { DesignConstants } from '../../constants/DesignConstants';
-import { Debounce } from '../../utils/Debounce';
+import { Throttle } from '../../utils/Debounce';
 import { curves } from '@kit.ArkUI';
 
 @ComponentV2
@@ -38,7 +38,7 @@ export struct AcousticExplanationPanel {
           .height(DesignConstants.ICON_SIZE_SM)
           .fillColor($r('sys.color.brand'))
           .onClick(() => {
-            Debounce.click(() => {
+            Throttle.click(() => {
               this.isTechnicalPanelExpanded = !this.isTechnicalPanelExpanded;
             });
           })
@@ -46,7 +46,7 @@ export struct AcousticExplanationPanel {
       .width('100%')
       .alignItems(VerticalAlign.Center)
       .onClick(() => {
-        Debounce.click(() => {
+        Throttle.click(() => {
           this.isTechnicalPanelExpanded = !this.isTechnicalPanelExpanded;
         });
       })
@@ -144,7 +144,7 @@ export struct AcousticExplanationPanel {
           .height(DesignConstants.ICON_SIZE_SM)
           .fillColor($r('sys.color.font_secondary'))
           .onClick(() => {
-            Debounce.click(() => {
+            Throttle.click(() => {
               this.isAcousticPanelExpanded = !this.isAcousticPanelExpanded;
             });
           })
@@ -152,7 +152,7 @@ export struct AcousticExplanationPanel {
       .width('100%')
       .alignItems(VerticalAlign.Center)
       .onClick(() => {
-        Debounce.click(() => {
+        Throttle.click(() => {
           this.isAcousticPanelExpanded = !this.isAcousticPanelExpanded;
         });
       })

@@ -6,7 +6,7 @@
 import { AudioAnalysisMode } from '../../common/AudioConfig';
 import { TimeWeightingConstants } from '../../constants/TimeWeightingConstants';
 import { DesignConstants } from '../../constants/DesignConstants';
-import { Debounce } from '../../utils/Debounce';
+import { Throttle } from '../../utils/Debounce';
 
 interface TitleStyle {
   fontWeight: FontWeight;
@@ -111,7 +111,7 @@ export struct EnhancedModeSelectionPanel {
     .scale({ x: this.getCardStyle(mode).scale, y: this.getCardStyle(mode).scale })
     .transition(TransitionEffect.OPACITY.animation({ duration: 200 }))
     .onClick(() => {
-      Debounce.click(() => {
+      Throttle.click(() => {
         this.onModeSelect(mode);
       });
     })

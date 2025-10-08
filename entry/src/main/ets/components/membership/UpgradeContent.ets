@@ -8,7 +8,7 @@ import {
 import { DialogHub } from "@hadss/dialoghub";
 import { MembershipRewardService } from "../../services/MembershipRewardService";
 import { ContinuousUsageManager } from "../../services/ContinuousUsageManager";
-import { Debounce } from "../../utils/Debounce";
+import { Throttle } from "../../utils/Debounce";
 
 // 价格方案接口
 interface PricingPlan {
@@ -266,7 +266,7 @@ export struct UpgradeContent {
           .fontColor($r('sys.color.font_primary'))
           .borderRadius(DesignConstants.BORDER_RADIUS_MD)
           .onClick(() => {
-            Debounce.click(() => {
+            Throttle.click(() => {
               this.onLater();
             });
           })
@@ -279,7 +279,7 @@ export struct UpgradeContent {
           .borderRadius(DesignConstants.BORDER_RADIUS_MD)
           .enabled(this.purchaseState === 'idle')
           .onClick(() => {
-            Debounce.click(() => {
+            Throttle.click(() => {
               this.handleFreeExperience();
             })
           })

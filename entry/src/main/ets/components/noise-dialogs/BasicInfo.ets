@@ -1,5 +1,5 @@
 import { DecibelRecord } from '../../models/DecibelRecord';
-import { Debounce } from '../../utils/Debounce';
+import { Throttle } from '../../utils/Debounce';
 import { InputDialog } from '../decibel-meter/InputDialog';
 
 @ComponentV2
@@ -59,7 +59,7 @@ export struct BasicInfo {
           .padding(4)
           .id('pleaseEditTheComments')
           .onClick(() => {
-            Debounce.click(() => {
+            Throttle.click(() => {
               const dialogController = new CustomDialogController({
                 builder: InputDialog({
                   title: '添加备注',

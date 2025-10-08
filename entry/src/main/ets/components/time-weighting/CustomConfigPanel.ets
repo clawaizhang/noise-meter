@@ -5,7 +5,7 @@
 
 import { AudioAnalysisConfig, DEFAULT_CUSTOM_CONFIG } from '../../common/AudioConfig';
 import { DesignConstants } from '../../constants/DesignConstants';
-import { Debounce } from '../../utils/Debounce';
+import { Throttle } from '../../utils/Debounce';
 import { PreferenceKeys } from '../../models/PreferenceKeys';
 import { PersistenceV2 } from '@kit.ArkUI';
 import { WindowType } from '../../common/WindowType';
@@ -209,7 +209,7 @@ export struct CustomConfigPanel {
         .fontColor($r('sys.color.font_on_primary'))
         .borderRadius(DesignConstants.BORDER_RADIUS_MD)
         .onClick(() => {
-          Debounce.click(() => {
+          Throttle.click(() => {
             this.resetToDefault();
           });
         })

@@ -7,7 +7,7 @@ import { PreferenceKeys } from '../../models/PreferenceKeys';
 import { PrivacyPolicyViewBuilder } from '../../components/privacy/PrivacyPolicyDialog';
 import { DialogHub, InfSheet } from '@hadss/dialoghub';
 import { DialogStyleManager } from '../../utils/DialogStyleManager';
-import { Debounce } from '../../utils/Debounce';
+import { Throttle } from '../../utils/Debounce';
 
 @Extend(Image)
 function itemIcon() {
@@ -141,7 +141,7 @@ export struct AboutSettings {
             }
             .listItemRow()
             .onClick(() => {
-              Debounce.click(() => {
+              Throttle.click(() => {
                 AlertDialog.show({
                   title: $r('app.string.revoke_privacy_confirm_title'),
                   message: $r('app.string.revoke_privacy_confirm_message'),
@@ -210,7 +210,7 @@ export struct AboutSettings {
               offsetY: 1
             })
             .onClick(() => {
-              Debounce.click(() => {
+              Throttle.click(() => {
                 const context = getContext(this) as common.UIAbilityContext;
                 const want: Want = {
                   action: 'ohos.want.action.appdetail',

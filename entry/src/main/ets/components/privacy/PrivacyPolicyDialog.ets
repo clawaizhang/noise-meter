@@ -5,7 +5,7 @@
 
 import { DesignConstants } from '../../constants/DesignConstants';
 import { common } from '@kit.AbilityKit';
-import { Debounce } from '../../utils/Debounce';
+import { Throttle } from '../../utils/Debounce';
 
 @ComponentV2
 export struct PrivacyPolicyDialog {
@@ -146,7 +146,7 @@ export struct PrivacyPolicyDialog {
         .fontWeight(FontWeight.Medium)
         .borderRadius(DesignConstants.BORDER_RADIUS_MD)
         .onClick(() => {
-          Debounce.click(() => {
+          Throttle.click(() => {
             this.handleCancel();
           });
         })
@@ -169,7 +169,7 @@ export struct PrivacyPolicyDialog {
             style: BorderStyle.Solid
           })
           .onClick(() => {
-            Debounce.click(() => {
+            Throttle.click(() => {
               this.handleCancel();
             });
           })
@@ -184,7 +184,7 @@ export struct PrivacyPolicyDialog {
           .fontWeight(FontWeight.Medium)
           .borderRadius(DesignConstants.BORDER_RADIUS_MD)
           .onClick(() => {
-            Debounce.click(() => {
+            Throttle.click(() => {
               this.handleAgree();
             });
           })

@@ -13,7 +13,7 @@ import { AppKeys } from '../../models/AppKeys';
 import { PermissionService } from '../../services/PermissionService';
 import { AudioController } from './AudioController';
 import { AudioControllerService } from '../../services/AudioControllerService';
-import { Debounce } from '../../utils/Debounce';
+import { Throttle } from '../../utils/Debounce';
 
 @ComponentV2
 export struct DecibelMeter {
@@ -256,7 +256,7 @@ export struct DecibelMeter {
             bottom: 6
           })
           .onClick(async () => {
-            Debounce.click(async () => {
+            Throttle.click(async () => {
               const permissionService = PermissionService.getInstance();
               await permissionService.requestMicrophonePermission();
             })
@@ -271,7 +271,7 @@ export struct DecibelMeter {
             bottom: 6
           })
           .onClick(async () => {
-            Debounce.click(async () => {
+            Throttle.click(async () => {
               const permissionService = PermissionService.getInstance();
               await permissionService.openPermissionSettings();
             })

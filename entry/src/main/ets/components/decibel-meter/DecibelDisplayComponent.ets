@@ -8,7 +8,7 @@ import { NoiseStandardDialogBuilder } from '../../pages/noisemeter/NoiseStandard
 import { AppKeys } from '../../models/AppKeys';
 import { AppStorageV2, curves } from '@kit.ArkUI';
 import { interval, Subscription } from 'rxjs';
-import { Debounce } from '../../utils/Debounce';
+import { Throttle } from '../../utils/Debounce';
 
 // 噪音等级横幅配置接口
 interface NoiseBannerConfig {
@@ -154,7 +154,7 @@ export struct DecibelDisplayComponent {
     .width('100%')
     .justifyContent(FlexAlign.Center)
     .onClick(() => {
-      Debounce.click(() => {
+      Throttle.click(() => {
         if (!this.noiseDescriptionDialog) {
           this.noiseDescriptionDialog = DialogHub.getSheet()
             .setContent(wrapBuilder(NoiseDescriptionDialogBuilder), this.ak)

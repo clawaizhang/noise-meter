@@ -5,7 +5,7 @@
 
 import { DEFAULT_THRESHOLD_CONFIG, PresetThreshold, PresetType, ThresholdConfig } from '../../models/ThresholdConfig';
 import { DesignConstants } from '../../constants/DesignConstants';
-import { Debounce } from '../../utils/Debounce';
+import { Throttle } from '../../utils/Debounce';
 import { curves, PersistenceV2 } from '@kit.ArkUI';
 import { ThresholdManager } from '../../services/ThresholdManager';
 import { PremiumFeature } from '../membership/PremiumFeature';
@@ -104,7 +104,7 @@ export struct EnhancedThresholdManager {
         color: this.currentConfig.currentPreset === presetType ? preset.color : $r('sys.color.background_secondary')
       })
       .onClick(() => {
-        Debounce.click(() => {
+        Throttle.click(() => {
           this.logStateChange('选择环境类型', presetType);
           this.currentConfig.currentPreset = presetType;
 

@@ -1,5 +1,5 @@
 import { navigationStack } from '../../constants/ProviderConstant';
-import { Debounce } from '../../utils/Debounce';
+import { Throttle } from '../../utils/Debounce';
 
 @Builder
 function DecibelHistoryBuilder() {
@@ -278,7 +278,7 @@ export struct NoiseInfoDialog {
             .fontColor($r('app.color.white'))
             .margin({ top: 16 })
             .onClick(() => {
-              Debounce.click(() => {
+              Throttle.click(() => {
                 this.pageStack.pop();
               });
             })

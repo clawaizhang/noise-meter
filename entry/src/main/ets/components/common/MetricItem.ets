@@ -1,6 +1,6 @@
 import { LengthUnit } from '@kit.ArkUI'
 import { DesignConstants } from '../../constants/DesignConstants'
-import { Debounce } from '../../utils/Debounce'
+import { Throttle } from '../../utils/Debounce'
 
 @ComponentV2
 export struct MetricItem {
@@ -38,7 +38,7 @@ export struct MetricItem {
     .opacity(this.isPressed ? DesignConstants.OPACITY_PRESSED : 1)
     .scale({ x: this.isPressed ? 0.95 : 1, y: this.isPressed ? 0.95 : 1 })
     .onClick(() => {
-      Debounce.click(() => {
+      Throttle.click(() => {
         if (this.onClickItem) {
           this.onClickItem()
         }

@@ -25,7 +25,7 @@ import { MembershipRewardService } from '../services/MembershipRewardService'
 import { ContinuousUsageManager } from '../services/ContinuousUsageManager'
 import { CommonEventService } from '../services/CommonEventService';
 import { showRewardCompletionDialog } from '../components/membership/RewardCompletionDialog'
-import { Debounce } from '../utils/Debounce'
+import { Throttle } from '../utils/Debounce'
 import { WelcomeGuide } from '../components/welcome/WelcomeGuide'
 
 const TAG = 'Index';
@@ -131,7 +131,7 @@ struct Index {
     windowManager.setKeepScreenOn(false);
 
     // 清理防抖队列资源
-    Debounce.unsubscribe();
+    Throttle.unsubscribe();
 
     // 清理使用追踪服务资源
     const usageTrackingService = UsageTrackingService.getInstance();
@@ -326,7 +326,7 @@ struct Index {
           Button('立即重启')
             .margin({ top: 24 })
             .onClick(async () => {
-              Debounce.click(async () => {
+              Throttle.click(async () => {
                 this.isLoading = true;
                 await this.initialize();
                 let applicationContext = this.context.getApplicationContext();

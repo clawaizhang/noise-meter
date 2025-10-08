@@ -23,7 +23,7 @@ import {
 } from '../../components/auto-save/AutoSaveSettingsDialog';
 import { ThresholdManager } from '../../services/ThresholdManager';
 import { PremiumFeature } from '../../components/membership/PremiumFeature';
-import { Debounce } from '../../utils/Debounce';
+import { Throttle } from '../../utils/Debounce';
 
 @Builder
 export function SettingsBuilder() {
@@ -403,7 +403,7 @@ struct Settings {
             })
           }.justifyContent(FlexAlign.Start)
         }.onClick(() => {
-          Debounce.click(() => {
+          Throttle.click(() => {
             this.openTimeWeightingDialog();
           });
         })
@@ -447,7 +447,7 @@ struct Settings {
           Text(getWeightingDescription(this.pk.weighting_type))
             .itemDescription()
         }.onClick(() => {
-          Debounce.click(() => {
+          Throttle.click(() => {
             this.openFrequencyWeightingDialog();
           });
         })
@@ -491,7 +491,7 @@ struct Settings {
           Text(this.getCalibrationDescription())
             .itemDescription()
         }.onClick(() => {
-          Debounce.click(() => {
+          Throttle.click(() => {
             this.navigateToAudioAnalysis();
           });
         })
@@ -535,7 +535,7 @@ struct Settings {
           Text(this.getAlertsDescription())
             .itemDescription()
         }.onClick(() => {
-          Debounce.click(() => {
+          Throttle.click(() => {
             this.navigateToAlerts();
           });
         })
@@ -580,7 +580,7 @@ struct Settings {
             Text(this.getAutoSaveDescription())
               .itemDescription()
           }.onClick(() => {
-            Debounce.click(() => {
+            Throttle.click(() => {
               this.openAutoSaveDialog();
             });
           })

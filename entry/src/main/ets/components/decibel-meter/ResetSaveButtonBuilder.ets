@@ -1,5 +1,5 @@
 import promptAction from '@ohos.promptAction';
-import { Debounce } from '../../utils/Debounce';
+import { Throttle } from '../../utils/Debounce';
 
 @ComponentV2
 export struct ResetSaveButton {
@@ -36,7 +36,7 @@ export struct ResetSaveButton {
         offsetY: 2
       })
       .onClick(() => {
-        Debounce.click(async () => {
+        Throttle.click(async () => {
           const confirmed = await promptAction.showDialog({
             title: '确认重置',
             message: '确认要重置当前数据吗？此操作不可恢复。',
@@ -70,7 +70,7 @@ export struct ResetSaveButton {
       .height(64)
       .backgroundColor(this.isUILocked ? $r( 'app.color.background_tertiary') : $r( 'app.color.background_secondary'))
       .onClick(() => {
-        Debounce.click(() => {
+        Throttle.click(() => {
           this.lockToggle();
         });
       })
@@ -101,7 +101,7 @@ export struct ResetSaveButton {
         offsetY: 2
       })
       .onClick(() => {
-        Debounce.click(async () => {
+        Throttle.click(async () => {
           const confirmed = await promptAction.showDialog({
             title: '确定保存',
             message: '确定要保存当前数据吗？',

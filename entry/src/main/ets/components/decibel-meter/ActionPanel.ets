@@ -7,7 +7,7 @@ import { camera } from '@kit.CameraKit';
 import common from '@ohos.app.ability.common';
 import { HdsActionBar, ActionBarButton, ActionBarStyle } from '@kit.UIDesignKit';
 import { deviceInfo } from '@kit.BasicServicesKit';
-import { Debounce } from '../../utils/Debounce';
+import { Throttle } from '../../utils/Debounce';
 
 @ComponentV2
 export struct ActionPanel {
@@ -47,7 +47,7 @@ export struct ActionPanel {
           accessibilityText: '重置按钮',
           accessibilityDescription: '重置当前数据',
           onClick: () => {
-            Debounce.click(() => {
+            Throttle.click(() => {
               this.onResetButtonClicked();
             })
           }
@@ -64,7 +64,7 @@ export struct ActionPanel {
           accessibilityText: '手电筒按钮',
           accessibilityDescription: '切换手电筒',
           onClick: () => {
-            Debounce.click(() => {
+            Throttle.click(() => {
               this.toggleTorch();
             });
           }
@@ -78,7 +78,7 @@ export struct ActionPanel {
           accessibilityText: '保存按钮',
           accessibilityDescription: '保存当前噪音数据',
           onClick: () => {
-            Debounce.click(() => {
+            Throttle.click(() => {
               this.onSaveButtonClicked();
             })
           }
@@ -113,7 +113,7 @@ export struct ActionPanel {
       .backgroundColor($r('sys.color.comp_background_primary'))
       .accessibilityDescription('重置当前数据')
       .onClick(() => {
-        Debounce.click(() => {
+        Throttle.click(() => {
           this.onResetButtonClicked();
         });
       })
@@ -131,7 +131,7 @@ export struct ActionPanel {
         $r('sys.color.comp_background_primary'))
       .accessibilityDescription(this.isTorchOn ? '关闭手电筒' : '打开手电筒')
       .onClick(() => {
-        Debounce.click(() => {
+        Throttle.click(() => {
           this.toggleTorch();
         });
       })
@@ -149,7 +149,7 @@ export struct ActionPanel {
       .backgroundColor($r('sys.color.comp_background_primary'))
       .accessibilityDescription('保存当前数据')
       .onClick(() => {
-        Debounce.click(() => {
+        Throttle.click(() => {
           const dialogController = new CustomDialogController({
             builder: InputDialog({
               title: '保存记录',
