@@ -383,8 +383,15 @@ export class DecibelRecordService {
 
       // 备注关键词搜索
       if (filters.textSearch?.commentKeyword) {
-        sql += ' AND comment LIKE ?';
-        params.push(`%${filters.textSearch.commentKeyword}%`);
+        // 支持搜索空备注记录（当用户明确搜索"无备注"时）
+        if (['无备注','无','无备'].includes(filters.textSearch.commentKeyword.toLowerCase())) {
+          sql += ' AND (comment IS NULL OR comment = "" OR comment LIKE ?)';
+          params.push(`%${filters.textSearch.commentKeyword}%`);
+        } else {
+          // 普通关键词搜索，包括搜索"空"等关键词本身
+          sql += ' AND comment LIKE ?';
+          params.push(`%${filters.textSearch.commentKeyword}%`);
+        }
       }
 
       sql += ' ORDER BY timestamp DESC LIMIT ? OFFSET ?';
@@ -474,8 +481,15 @@ export class DecibelRecordService {
 
       // 备注关键词搜索
       if (filters.textSearch?.commentKeyword) {
-        sql += ' AND comment LIKE ?';
-        params.push(`%${filters.textSearch.commentKeyword}%`);
+        // 支持搜索空备注记录（当用户明确搜索"无备注"时）
+        if (['无备注','无','无备'].includes(filters.textSearch.commentKeyword.toLowerCase())) {
+          sql += ' AND (comment IS NULL OR comment = "" OR comment LIKE ?)';
+          params.push(`%${filters.textSearch.commentKeyword}%`);
+        } else {
+          // 普通关键词搜索，包括搜索"空"等关键词本身
+          sql += ' AND comment LIKE ?';
+          params.push(`%${filters.textSearch.commentKeyword}%`);
+        }
       }
 
       const resultSet = await this.relationalStoreService.query(sql, params);

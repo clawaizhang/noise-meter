@@ -176,7 +176,7 @@ export struct DecibelHistory {
       .borderRadius(DesignConstants.BORDER_RADIUS_LG)
       .shadow({ radius: 16, color: '#1A000000', offsetX: 0, offsetY: 4 })
       .alignSelf(ItemAlign.Center)
-      .margin({ top: 80 })
+      .margin({ top: 16 })
     }
   }
 
@@ -225,7 +225,15 @@ export struct DecibelHistory {
 
     this.isLoadingMore = true;
     try {
-      const moreRecords = await this.recordService.getRecordsPaged(this.PAGE_SIZE, this.currentOffset);
+      let moreRecords: DecibelRecord[];
+      if (this.currentFilters.isActive) {
+        // 应用过滤器条件的分页加载
+        moreRecords = await this.recordService.getFilteredRecordsPaged(this.currentFilters, this.PAGE_SIZE, this.currentOffset);
+      } else {
+        // 普通分页加载
+        moreRecords = await this.recordService.getRecordsPaged(this.PAGE_SIZE, this.currentOffset);
+      }
+
       if (moreRecords.length > 0) {
         this.records.push(...moreRecords);
         this.currentOffset += moreRecords.length;
