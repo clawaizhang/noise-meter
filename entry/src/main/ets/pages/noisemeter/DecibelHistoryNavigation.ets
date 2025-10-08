@@ -804,9 +804,6 @@ export struct DecibelHistory {
         .margin({ bottom: DesignConstants.SPACING_LG })
       Text('暂无检测记录')
         .fontSize(DesignConstants.FONT_SIZE_LG)
-      Text('完成一次检测后即可查看记录')
-        .fontSize(DesignConstants.FONT_SIZE_MD)
-        .margin({ top: DesignConstants.SPACING_SM })
     }
 
     .layoutWeight(1)
