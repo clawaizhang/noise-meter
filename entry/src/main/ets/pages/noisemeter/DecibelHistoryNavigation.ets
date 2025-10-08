@@ -283,7 +283,7 @@ export struct DecibelHistory {
               .combine(TransitionEffect.opacity(1))
               .animation({ curve: curves.springMotion(0.6, 0.8) }))
             .onClick(() => {
-              Debounce.importantClick(() => {
+              Debounce.click(() => {
                 this.deleteRecord(record);
               });
             });
@@ -297,7 +297,7 @@ export struct DecibelHistory {
               .combine(TransitionEffect.opacity(1))
               .animation({ curve: curves.springMotion(0.6, 0.8) }))
             .onClick(() => {
-              Debounce.importantClick(() => {
+              Debounce.click(() => {
                 this.pendingDeleteId = record.id;
               });
             });
@@ -312,7 +312,7 @@ export struct DecibelHistory {
               .combine(TransitionEffect.opacity(1))
               .animation({ curve: curves.springMotion(0.6, 0.8) }))
             .onClick(() => {
-              Debounce.importantClick(() => {
+              Debounce.click(() => {
                 this.deleteRecordAudio(record);
               });
             });
@@ -327,7 +327,7 @@ export struct DecibelHistory {
                 .combine(TransitionEffect.opacity(1))
                 .animation({ curve: curves.springMotion(0.6, 0.8) }))
               .onClick(() => {
-                Debounce.importantClick(() => {
+                Debounce.click(() => {
                   this.pendingDeleteAudioId = record.id;
                 });
               });

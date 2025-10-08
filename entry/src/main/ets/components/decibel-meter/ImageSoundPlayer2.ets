@@ -1,6 +1,7 @@
 import { ImageRaw } from '../common/ImageRaw';
 import { AudioPlayerService } from '../../services/AudioPlayerService';
 import { media } from '@kit.MediaKit';
+import { Debounce } from '../../utils/Debounce';
 
 @ComponentV2
 export struct ImageSoundPlayer2 {
@@ -22,7 +23,7 @@ export struct ImageSoundPlayer2 {
       ImageRaw({ image: this.image })
       Button() {
         Image(this.playerState === 'playing' ? $r('app.media.ic_pause') :
-        $r('app.media.ic_play'))
+          $r('app.media.ic_play'))
           .fillColor(Color.White)
           .opacity(0.9)
       }
@@ -32,18 +33,20 @@ export struct ImageSoundPlayer2 {
       .type(ButtonType.Circle)
       .backgroundColor(Color.Transparent)
       .onClick(async () => {
-        try {
-          if (this.playerState === 'playing') {
-            await this.audioPlayerService.pause();
-          } else {
-            if (this.playerState === 'paused') {
-              await this.audioPlayerService.resume();
+        Debounce.click(async () => {
+          try {
+            if (this.playerState === 'playing') {
+              await this.audioPlayerService.pause();
+            } else {
+              if (this.playerState === 'paused') {
+                await this.audioPlayerService.resume();
+              }
             }
+          } catch (error) {
+            console.error('播放音频失败: %{public}s',
+              error instanceof Error ? error.message : String(error));
           }
-        } catch (error) {
-          console.error('播放音频失败: %{public}s',
-            error instanceof Error ? error.message : String(error));
-        }
+        })
       })
     }
   }

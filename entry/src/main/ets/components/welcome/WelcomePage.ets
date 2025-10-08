@@ -73,6 +73,7 @@ export struct WelcomePage {
         Image($r('app.media.app_icon_fore'))
           .width(120)
           .height(120)
+          .backgroundColor('#e5000000')
           .borderRadius(DesignConstants.BORDER_RADIUS_LG)
           .scale({ x: this.iconScale, y: this.iconScale })
           .rotate({ angle: this.iconRotation })

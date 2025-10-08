@@ -1,4 +1,5 @@
 import { DesignConstants } from '../../constants/DesignConstants';
+import { Debounce } from '../../utils/Debounce';
 
 // 功能卡片接口定义
 interface FeatureCard {
@@ -267,7 +268,9 @@ export struct AdvancedFeaturesPage {
         .opacity(this.useNowButtonOpacity)
         .onClick(() => {
           // 直接完成引导，进入主应用
-          this.onComplete();
+          Debounce.click(() => {
+            this.onComplete();
+          })
         })
         .margin({ top: DesignConstants.SPACING_2XL })
     }

@@ -6,6 +6,7 @@
 import { AudioAnalysisMode } from '../../common/AudioConfig';
 import { TimeWeightingConstants } from '../../constants/TimeWeightingConstants';
 import { DesignConstants } from '../../constants/DesignConstants';
+import { Debounce } from '../../utils/Debounce';
 
 interface TimeWeightingCardStyle {
   backgroundColor: Resource;
@@ -107,7 +108,9 @@ export struct TimeWeightingCard {
     .scale({ x:  this.getCardStyle().scale, y:  this.getCardStyle().scale })
     .transition(TransitionEffect.OPACITY.animation({ duration: 200 }))
     .onClick(() => {
-      this.onSelect(this.modeInfo);
+      Debounce.fastClick(() => {
+        this.onSelect(this.modeInfo);
+      });
     })
     .onHover((isHover: boolean) => {
       this.isHovered = isHover;

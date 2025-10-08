@@ -5,6 +5,7 @@
 
 import { DesignConstants } from '../../constants/DesignConstants';
 import { common } from '@kit.AbilityKit';
+import { Debounce } from '../../utils/Debounce';
 
 @ComponentV2
 export struct PrivacyPolicyDialog {
@@ -20,6 +21,7 @@ export struct PrivacyPolicyDialog {
       Image($r('app.media.app_icon_fore'))
         .width(80)
         .height(80)
+        .backgroundColor('#e5000000')
         .borderRadius(DesignConstants.BORDER_RADIUS_MD)
 
       Text($r('app.string.EntryAbility_label'))
@@ -144,7 +146,9 @@ export struct PrivacyPolicyDialog {
         .fontWeight(FontWeight.Medium)
         .borderRadius(DesignConstants.BORDER_RADIUS_MD)
         .onClick(() => {
-          this.handleCancel();
+          Debounce.click(() => {
+            this.handleCancel();
+          });
         })
         .height(56)
         .margin(DesignConstants.SPACING_MD)
@@ -165,7 +169,9 @@ export struct PrivacyPolicyDialog {
             style: BorderStyle.Solid
           })
           .onClick(() => {
-            this.handleCancel();
+            Debounce.click(() => {
+              this.handleCancel();
+            });
           })
           .height(56)
 
@@ -178,7 +184,9 @@ export struct PrivacyPolicyDialog {
           .fontWeight(FontWeight.Medium)
           .borderRadius(DesignConstants.BORDER_RADIUS_MD)
           .onClick(() => {
-            this.handleAgree();
+            Debounce.click(() => {
+              this.handleAgree();
+            });
           })
           .height(56)
       }

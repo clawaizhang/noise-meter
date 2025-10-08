@@ -1,4 +1,5 @@
 import { DesignConstants } from '../../constants/DesignConstants';
+import { Debounce } from '../../utils/Debounce';
 
 @ComponentV2
 export struct PrivacyPolicyPage {
@@ -215,6 +216,7 @@ export struct PrivacyPolicyPage {
         Image($r('app.media.app_icon_fore'))
           .width(80)
           .height(80)
+          .backgroundColor('#e5000000')
           .borderRadius(DesignConstants.BORDER_RADIUS_MD)
 
         Text($r('app.string.EntryAbility_label'))
@@ -303,7 +305,9 @@ export struct PrivacyPolicyPage {
           .fontSize(DesignConstants.FONT_SIZE_MD)
           .fontColor(this.textColor)
           .onClick(() => {
-            this.privacyAgreed = !this.privacyAgreed;
+            Debounce.fastClick(() => {
+              this.privacyAgreed = !this.privacyAgreed;
+            });
           })
           .translate({ x: this.checkboxShake })
           .scale({ x: this.checkboxScale, y: this.checkboxScale })
@@ -317,7 +321,11 @@ export struct PrivacyPolicyPage {
         .backgroundColor($r('sys.color.interactive_active'))
         .fontColor($r('sys.color.font_on_primary'))
         .fontSize(DesignConstants.FONT_SIZE_LG)
-        .onClick(() => this.handleAgreeClick())
+        .onClick(() => {
+          Debounce.click(() => {
+            this.handleAgreeClick();
+          });
+        })
         .opacity(this.buttonsOpacity)
 
       // 不同意按钮 - 使用更友好的文案
@@ -327,7 +335,11 @@ export struct PrivacyPolicyPage {
         .backgroundColor($r('sys.color.comp_background_primary'))
         .fontColor($r('sys.color.font_primary'))
         .fontSize(DesignConstants.FONT_SIZE_MD)
-        .onClick(() => this.onPrev())
+        .onClick(() => {
+          Debounce.click(() => {
+            this.onPrev();
+          });
+        })
         .opacity(this.buttonsOpacity)
     }
     .width('100%')

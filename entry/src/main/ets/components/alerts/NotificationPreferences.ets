@@ -5,6 +5,7 @@
 
 import { ALERT_COLORS } from '../../constants/AlertsConstants';
 import { DesignConstants } from '../../constants/DesignConstants';
+import { Debounce } from '../../utils/Debounce';
 import { AlertService } from '../../services/AlertService';
 import { AppStorageV2, PersistenceV2 } from '@kit.ArkUI';
 import { common } from '@kit.AbilityKit';
@@ -76,7 +77,9 @@ export struct NotificationPreferences {
         .fontColor(Color.White)
         .borderRadius(DesignConstants.BORDER_RADIUS_MD)
         .onClick(() => {
-          this.openSystemSettings();
+          Debounce.click(() => {
+            this.openSystemSettings();
+          });
         })
     }
     .width('100%')

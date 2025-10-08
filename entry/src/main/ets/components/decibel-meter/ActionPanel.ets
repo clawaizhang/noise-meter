@@ -47,7 +47,9 @@ export struct ActionPanel {
           accessibilityText: '重置按钮',
           accessibilityDescription: '重置当前数据',
           onClick: () => {
-            this.onResetButtonClicked();
+            Debounce.click(() => {
+              this.onResetButtonClicked();
+            })
           }
         }),
         new ActionBarButton({
@@ -62,7 +64,9 @@ export struct ActionPanel {
           accessibilityText: '手电筒按钮',
           accessibilityDescription: '切换手电筒',
           onClick: () => {
-            this.toggleTorch();
+            Debounce.fastClick(() => {
+              this.toggleTorch();
+            });
           }
         }),
         new ActionBarButton({
@@ -74,7 +78,9 @@ export struct ActionPanel {
           accessibilityText: '保存按钮',
           accessibilityDescription: '保存当前噪音数据',
           onClick: () => {
-            this.onSaveButtonClicked();
+            Debounce.click(() => {
+              this.onSaveButtonClicked();
+            })
           }
         })
       ],

@@ -6,6 +6,7 @@
 import { WeightingType } from '../../constants/WeightingConstants';
 import { FrequencyWeightingConstants } from '../../constants/FrequencyWeightingConstants';
 import { DesignConstants } from '../../constants/DesignConstants';
+import { Debounce } from '../../utils/Debounce';
 import { FrequencyAcousticExplanationComp } from './FrequencyAcousticExplanation';
 import { FrequencyTechnicalParamsDisplay } from './FrequencyTechnicalParamsDisplay';
 import { FrequencyPreviewPanel } from './FrequencyPreviewPanel';
@@ -157,7 +158,9 @@ export struct FrequencyWeightingDialog {
     .borderRadius(DesignConstants.BORDER_RADIUS_MD)
     .padding(DesignConstants.SPACING_MD)
     .onClick(() => {
-      this.handleWeightingSelect(weighting);
+      Debounce.fastClick(() => {
+        this.handleWeightingSelect(weighting);
+      });
     })
     .onHover((isHover: boolean) => {
       if (isHover) {

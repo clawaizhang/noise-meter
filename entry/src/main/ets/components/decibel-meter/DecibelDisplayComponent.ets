@@ -8,6 +8,7 @@ import { NoiseStandardDialogBuilder } from '../../pages/noisemeter/NoiseStandard
 import { AppKeys } from '../../models/AppKeys';
 import { AppStorageV2, curves } from '@kit.ArkUI';
 import { interval, Subscription } from 'rxjs';
+import { Debounce } from '../../utils/Debounce';
 
 // 噪音等级横幅配置接口
 interface NoiseBannerConfig {
@@ -153,26 +154,28 @@ export struct DecibelDisplayComponent {
     .width('100%')
     .justifyContent(FlexAlign.Center)
     .onClick(() => {
-      if (!this.noiseDescriptionDialog) {
-        this.noiseDescriptionDialog = DialogHub.getSheet()
-          .setContent(wrapBuilder(NoiseDescriptionDialogBuilder), this.ak)
-          .setStyle({ backgroundColor: $r('sys.color.background_secondary') })
-          .setConfig({  scrollSizeMode: ScrollSizeMode.CONTINUOUS })
-          .setComponentTargetId('mainId')
-          .build();
+      Debounce.click(() => {
+        if (!this.noiseDescriptionDialog) {
+          this.noiseDescriptionDialog = DialogHub.getSheet()
+            .setContent(wrapBuilder(NoiseDescriptionDialogBuilder), this.ak)
+            .setStyle({ backgroundColor: $r('sys.color.background_secondary') })
+            .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS })
+            .setComponentTargetId('mainId')
+            .build();
 
-        // 注册Dialog到样式管理器
-        DialogStyleManager.registerDialog(this.noiseDescriptionDialog);
-      }
-      this.noiseDescriptionDialog.show();
+          // 注册Dialog到样式管理器
+          DialogStyleManager.registerDialog(this.noiseDescriptionDialog);
+        }
+        this.noiseDescriptionDialog.show();
 
-      // 清理之前的定时器并启动新的
-      if (this.noiseDescriptionUpdateIntervalId) {
-        clearInterval(this.noiseDescriptionUpdateIntervalId);
-      }
-      this.noiseDescriptionUpdateIntervalId = setInterval(() => {
-        this.noiseDescriptionDialog?.updateContent(this.ak);
-      }, 100);
+        // 清理之前的定时器并启动新的
+        if (this.noiseDescriptionUpdateIntervalId) {
+          clearInterval(this.noiseDescriptionUpdateIntervalId);
+        }
+        this.noiseDescriptionUpdateIntervalId = setInterval(() => {
+          this.noiseDescriptionDialog?.updateContent(this.ak);
+        }, 100);
+      })
     })
   }
 
@@ -365,7 +368,7 @@ export struct DecibelDisplayComponent {
         this.noiseStandardDialog = DialogHub.getSheet()
           .setStyle({ backgroundColor: $r('sys.color.background_secondary') })
           .setComponentTargetId('mainId')
-          .setConfig({  scrollSizeMode: ScrollSizeMode.CONTINUOUS })
+          .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS })
           .setContent(wrapBuilder(NoiseStandardDialogBuilder), this.ak)
           .build();
 

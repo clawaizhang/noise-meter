@@ -5,17 +5,15 @@ import { debounceTime, Subject, Subscription } from 'rxjs';
  * 内部维护多个防抖队列，支持应用退出时清理
  */
 export class Debounce {
-  // 内部维护的三个防抖队列
+  // 内部维护的防抖队列
   private static normalClickSubject = new Subject<() => void>();
   private static fastClickSubject = new Subject<() => void>();
-  private static importantClickSubject = new Subject<() => void>();
 
   // 订阅管理
   private static normalSubscription: Subscription;
   private static fastSubscription: Subscription;
-  private static importantSubscription: Subscription;
 
-  // 静态初始化 - 创建三个防抖队列
+  // 静态初始化 - 创建防抖队列
   static {
     // 普通点击队列 - 300ms防抖
     Debounce.normalSubscription = Debounce.normalClickSubject.pipe(
@@ -31,12 +29,6 @@ export class Debounce {
       clickHandler();
     });
 
-    // 重要点击队列 - 500ms防抖
-    Debounce.importantSubscription = Debounce.importantClickSubject.pipe(
-      debounceTime(500)
-    ).subscribe((clickHandler:() => void) => {
-      clickHandler();
-    });
   }
 
   /**
@@ -56,14 +48,6 @@ export class Debounce {
   }
 
   /**
-   * 重要点击 - 500ms防抖
-   * 适用于确认、删除等重要操作
-   */
-  static importantClick(clickHandler: () => void): void {
-    Debounce.importantClickSubject.next(clickHandler);
-  }
-
-  /**
    * 应用退出时调用，清理所有防抖队列
    * 释放内存，防止内存泄漏
    */
@@ -75,14 +59,10 @@ export class Debounce {
     if (Debounce.fastSubscription) {
       Debounce.fastSubscription.unsubscribe();
     }
-    if (Debounce.importantSubscription) {
-      Debounce.importantSubscription.unsubscribe();
-    }
 
     // 完成所有Subject
     Debounce.normalClickSubject.complete();
     Debounce.fastClickSubject.complete();
-    Debounce.importantClickSubject.complete();
 
     console.log('防抖队列已清理，内存已释放');
   }

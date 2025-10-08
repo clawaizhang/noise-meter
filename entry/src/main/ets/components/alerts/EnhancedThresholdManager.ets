@@ -5,6 +5,7 @@
 
 import { DEFAULT_THRESHOLD_CONFIG, PresetThreshold, PresetType, ThresholdConfig } from '../../models/ThresholdConfig';
 import { DesignConstants } from '../../constants/DesignConstants';
+import { Debounce } from '../../utils/Debounce';
 import { curves, PersistenceV2 } from '@kit.ArkUI';
 import { ThresholdManager } from '../../services/ThresholdManager';
 import { PremiumFeature } from '../membership/PremiumFeature';
@@ -96,25 +97,27 @@ export struct EnhancedThresholdManager {
       .width('100%')
       .padding(DesignConstants.SPACING_MD)
       .backgroundColor(this.currentConfig.currentPreset === presetType ? preset.color :
-      $r('sys.color.comp_background_primary'))
+        $r('sys.color.comp_background_primary'))
       .borderRadius(DesignConstants.BORDER_RADIUS_MD)
       .border({
         width: this.currentConfig.currentPreset === presetType ? 2 : 1,
         color: this.currentConfig.currentPreset === presetType ? preset.color : $r('sys.color.background_secondary')
       })
       .onClick(() => {
-        this.logStateChange('选择环境类型', presetType);
-        this.currentConfig.currentPreset = presetType;
-        
-        // 根据选择的预设类型更新对应的阈值数值
-        if (presetType !== PresetType.CUSTOM) {
-          const preset = this.getPresetByType(presetType);
-          this.currentConfig.baseThreshold = preset.baseValue;
-          this.currentConfig.daytimeThreshold = preset.baseValue;
-          this.currentConfig.nighttimeThreshold = preset.baseValue - 5; // 夜间阈值比白天低5dB
-        }
-        
-        this.updateConfig(this.currentConfig);
+        Debounce.fastClick(() => {
+          this.logStateChange('选择环境类型', presetType);
+          this.currentConfig.currentPreset = presetType;
+
+          // 根据选择的预设类型更新对应的阈值数值
+          if (presetType !== PresetType.CUSTOM) {
+            const preset = this.getPresetByType(presetType);
+            this.currentConfig.baseThreshold = preset.baseValue;
+            this.currentConfig.daytimeThreshold = preset.baseValue;
+            this.currentConfig.nighttimeThreshold = preset.baseValue - 5; // 夜间阈值比白天低5dB
+          }
+
+          this.updateConfig(this.currentConfig);
+        })
       })
       .animation({
         duration: 200,

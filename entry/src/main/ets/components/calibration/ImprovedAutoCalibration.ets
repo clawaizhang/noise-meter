@@ -7,6 +7,7 @@ import { DesignConstants } from '../../constants/DesignConstants';
 import { curves, promptAction } from '@kit.ArkUI';
 import { CALIBRATION_COLORS } from '../../constants/CalibrationConstants';
 import { PremiumFeature } from '../membership/PremiumFeature';
+import { Debounce } from '../../utils/Debounce';
 
 @ComponentV2
 export struct ImprovedAutoCalibration {
@@ -196,47 +197,49 @@ export struct ImprovedAutoCalibration {
         .height(48)
         .width('100%')
         .onClick(async () => {
-          // 环境检查
-          if (!this.isSuitableForCalibration()) {
-            const result = await promptAction.showDialog({
-              title: '环境嘈杂提示',
-              message: '当前环境噪声较高，可能影响校准精度。是否继续？',
+          Debounce.click(async () => {
+            // 环境检查
+            if (!this.isSuitableForCalibration()) {
+              const result = await promptAction.showDialog({
+                title: '环境嘈杂提示',
+                message: '当前环境噪声较高，可能影响校准精度。是否继续？',
+                buttons: [
+                  {
+                    text: '取消',
+                    color: $r('sys.color.font_secondary')
+                  },
+                  {
+                    text: '继续校准',
+                    color: CALIBRATION_COLORS.PRIMARY
+                  }
+                ]
+              });
+
+              if (result.index !== 1) {
+                return;
+              }
+            }
+
+            // 开始校准确认
+            const confirmResult = await promptAction.showDialog({
+              title: '自动校准提示',
+              message: '请在安静环境中进行校准，校准过程中请保持设备稳定。',
               buttons: [
                 {
                   text: '取消',
                   color: $r('sys.color.font_secondary')
                 },
                 {
-                  text: '继续校准',
+                  text: '开始校准',
                   color: CALIBRATION_COLORS.PRIMARY
                 }
               ]
             });
 
-            if (result.index !== 1) {
-              return;
+            if (confirmResult.index === 1) {
+              this.onStartCalibration();
             }
-          }
-
-          // 开始校准确认
-          const confirmResult = await promptAction.showDialog({
-            title: '自动校准提示',
-            message: '请在安静环境中进行校准，校准过程中请保持设备稳定。',
-            buttons: [
-              {
-                text: '取消',
-                color: $r('sys.color.font_secondary')
-              },
-              {
-                text: '开始校准',
-                color: CALIBRATION_COLORS.PRIMARY
-              }
-            ]
-          });
-
-          if (confirmResult.index === 1) {
-            this.onStartCalibration();
-          }
+          })
         })
     }
   }

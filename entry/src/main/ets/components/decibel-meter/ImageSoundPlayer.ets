@@ -5,19 +5,21 @@ import { curves } from '@kit.ArkUI';
 import { AudioPlayerGroupService } from '../../services/AudioPlayerGroupService';
 import { media } from '@kit.MediaKit';
 import { Subscription, timer } from 'rxjs';
+import { Debounce } from '../../utils/Debounce';
 
 @ComponentV2
 export struct ImageSoundPlayer {
   @Param @Require image: string;
   @Param @Require file: string;
-  @Event imagePrepared: (image:PixelMap) => void = (image:PixelMap) => {};
+  @Event imagePrepared: (image: PixelMap) => void = (image: PixelMap) => {
+  };
   @Event onPlayStateChange: (state: media.AVPlayerState, playerService: AudioPlayerService) => void;
   @Local rawFileDescriptor: resourceManager.RawFileDescriptor | undefined = undefined;
   @Local playerState: media.AVPlayerState = 'idle';
   private context = getContext(this);
   private audioPlayerService: AudioPlayerService = AudioPlayerGroupService.getPlayerInstance(this.file);
   private autoStopTimeOutId: number | undefined;
-  timerStop?:Subscription ;
+  timerStop?: Subscription;
 
   aboutToAppear(): void {
     this.rawFileDescriptor = this.context.resourceManager.getRawFdSync(this.file);
@@ -33,11 +35,11 @@ export struct ImageSoundPlayer {
 
   build() {
     Stack({ alignContent: Alignment.BottomStart }) {
-      ImageRaw({ image: this.image,imagePrepared:this.imagePrepared })
+      ImageRaw({ image: this.image, imagePrepared: this.imagePrepared })
       if (this.rawFileDescriptor) {
         Button() {
           Image(this.playerState === 'playing' ? $r('app.media.ic_pause') :
-          $r('app.media.ic_play'))
+            $r('app.media.ic_play'))
             .fillColor(Color.White)
             .opacity(0.9)
         }
@@ -47,26 +49,28 @@ export struct ImageSoundPlayer {
         .type(ButtonType.Circle)
         .backgroundColor(Color.Transparent)
         .onClick(async () => {
-          try {
-            if (this.playerState === 'playing') {
-              await this.audioPlayerService.pause();
-              this.timerStop = timer(10_000).subscribe(() => {
-                this.audioPlayerService.stop();
-              });
-            } else {
-              this.timerStop?.unsubscribe();
-              if (this.playerState === 'paused') {
-                await this.audioPlayerService.resume();
+          Debounce.click(async () => {
+            try {
+              if (this.playerState === 'playing') {
+                await this.audioPlayerService.pause();
+                this.timerStop = timer(10_000).subscribe(() => {
+                  this.audioPlayerService.stop();
+                });
               } else {
-                if (this.rawFileDescriptor) {
-                  await this.audioPlayerService.playAudioFileByFd(this.rawFileDescriptor);
+                this.timerStop?.unsubscribe();
+                if (this.playerState === 'paused') {
+                  await this.audioPlayerService.resume();
+                } else {
+                  if (this.rawFileDescriptor) {
+                    await this.audioPlayerService.playAudioFileByFd(this.rawFileDescriptor);
+                  }
                 }
               }
+            } catch (error) {
+              console.error('播放音频失败: %{public}s',
+                error instanceof Error ? error.message : String(error));
             }
-          } catch (error) {
-            console.error('播放音频失败: %{public}s',
-              error instanceof Error ? error.message : String(error));
-          }
+          })
         })
       }
     }.transition(TransitionEffect.OPACITY.animation({ curve: curves.springMotion(0.6, 0.8) }) // 透明度动画，使用springMotion曲线

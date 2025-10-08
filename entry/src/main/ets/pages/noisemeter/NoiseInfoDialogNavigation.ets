@@ -1,4 +1,5 @@
 import { navigationStack } from '../../constants/ProviderConstant';
+import { Debounce } from '../../utils/Debounce';
 
 @Builder
 function DecibelHistoryBuilder() {
@@ -277,7 +278,9 @@ export struct NoiseInfoDialog {
             .fontColor($r('app.color.white'))
             .margin({ top: 16 })
             .onClick(() => {
-              this.pageStack.pop();
+              Debounce.click(() => {
+                this.pageStack.pop();
+              });
             })
         }
         .padding(16)

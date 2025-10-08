@@ -4,6 +4,7 @@
  */
 
 import { DesignConstants } from '../../constants/DesignConstants';
+import { Debounce } from '../../utils/Debounce';
 
 @ComponentV2
 export struct CollapsibleSection {
@@ -42,7 +43,9 @@ export struct CollapsibleSection {
       $r('sys.color.comp_background_primary'))
     .borderRadius(DesignConstants.BORDER_RADIUS_MD)
     .onClick(() => {
-      this.onToggle();
+      Debounce.fastClick(() => {
+        this.onToggle();
+      });
     })
     .onHover((isHover: boolean) => {
       this.isHovered = isHover;

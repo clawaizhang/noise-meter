@@ -1,4 +1,5 @@
 import { DecibelRecord } from '../../models/DecibelRecord';
+import { Debounce } from '../../utils/Debounce';
 import { InputDialog } from '../decibel-meter/InputDialog';
 
 @ComponentV2
@@ -58,24 +59,26 @@ export struct BasicInfo {
           .padding(4)
           .id('pleaseEditTheComments')
           .onClick(() => {
-            const dialogController = new CustomDialogController({
-              builder: InputDialog({
-                title: '添加备注',
-                default: this.selectedRecord!.comment,
-                onConfirm: (comment: string) => {
-                  this.comment = comment;
-                  this.commentChange(this.comment);
+            Debounce.click(() => {
+              const dialogController = new CustomDialogController({
+                builder: InputDialog({
+                  title: '添加备注',
+                  default: this.selectedRecord!.comment,
+                  onConfirm: (comment: string) => {
+                    this.comment = comment;
+                    this.commentChange(this.comment);
+                  },
+                  onClose: () => {
+                    dialogController.close();
+                  }
+                }),
+                cancel: () => {
+                  console.log('Dialog canceled');
                 },
-                onClose: () => {
-                  dialogController.close();
-                }
-              }),
-              cancel: () => {
-                console.log('Dialog canceled');
-              },
-              autoCancel: true
-            });
-            dialogController.open();
+                autoCancel: true
+              });
+              dialogController.open();
+            })
           })
       }
     }

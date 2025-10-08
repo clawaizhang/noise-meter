@@ -1,6 +1,7 @@
 import { privacyManager } from '@kit.StoreKit';
 import { common, Want } from '@kit.AbilityKit';
 import { BusinessError } from '@kit.BasicServicesKit';
+import { Debounce } from '../utils/Debounce';
 
 @Extend(Image)
 function itemIcon() {
@@ -21,7 +22,7 @@ function itemDescription() {
   .fontColor($r('app.color.text_secondary'))
 
   .textAlign(TextAlign.Start)
-  .width( '100%')
+  .width('100%')
   .margin({ left: 48 })
 }
 
@@ -67,7 +68,6 @@ export struct SettingsDeviceManager {
   aboutToAppear() {
   }
 
-
   build() {
     Column() {
 
@@ -85,13 +85,15 @@ export struct SettingsDeviceManager {
           }
           .listItemStyle()
         }.onClick(() => {
-          animateTo({
-            duration: 300,
-            onFinish: () => {
-              console.info('animation end');
-            }
-          }, () => {
-            this.isAboutExpanded = !this.isAboutExpanded;
+          Debounce.fastClick(() => {
+            animateTo({
+              duration: 300,
+              onFinish: () => {
+                console.info('animation end');
+              }
+            }, () => {
+              this.isAboutExpanded = !this.isAboutExpanded;
+            })
           })
         })
 
@@ -117,9 +119,11 @@ export struct SettingsDeviceManager {
             }
             .listItemStyle()
           }.onClick(async () => {
-            // 这里添加打开隐私政策的逻辑
-            const uiContext = getContext(this) as common.UIAbilityContext;
-            await privacyManager.requestAppPrivacyConsent(uiContext);
+            Debounce.click(async () => {
+              // 这里添加打开隐私政策的逻辑
+              const uiContext = getContext(this) as common.UIAbilityContext;
+              await privacyManager.requestAppPrivacyConsent(uiContext);
+            })
           })
 
           ListItem() {
@@ -141,20 +145,20 @@ export struct SettingsDeviceManager {
         .margin({ bottom: 30, top: 12 })
         .backgroundColor($r('app.color.toggle_active'))
         .onClick(() => {
-          const context = getContext(this) as common.UIAbilityContext;
-          const want: Want = {
-            action: 'ohos.want.action.appdetail',
-            uri: 'store://appgallery.huawei.com/app/detail?id=yu.zhang.myapplication.device_manager&action=write-review'
-          };
-          context.startAbility(want).then(() => {
-            console.info('Succeeded in starting Ability successfully.');
-          }).catch((err:BusinessError) => {
-            console.error(`Failed to start ability. Code: ${err.code}, message: ${err.message}`);
-          });
+          Debounce.click(() => {
+            const context = getContext(this) as common.UIAbilityContext;
+            const want: Want = {
+              action: 'ohos.want.action.appdetail',
+              uri: 'store://appgallery.huawei.com/app/detail?id=yu.zhang.myapplication.device_manager&action=write-review'
+            };
+            context.startAbility(want).then(() => {
+              console.info('Succeeded in starting Ability successfully.');
+            }).catch((err: BusinessError) => {
+              console.error(`Failed to start ability. Code: ${err.code}, message: ${err.message}`);
+            });
+          })
         })
     }
-
-
     .backgroundColor($r('app.color.background_tertiary'))
   }
 }

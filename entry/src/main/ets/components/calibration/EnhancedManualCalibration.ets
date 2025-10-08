@@ -6,14 +6,14 @@
 import { CALIBRATION_COLORS, CALIBRATION_CONFIG } from '../../constants/CalibrationConstants';
 import { DesignConstants } from '../../constants/DesignConstants';
 import { curves } from '@kit.ArkUI';
+import { Debounce } from '../../utils/Debounce';
 
 @ComponentV2
 export struct EnhancedManualCalibration {
-  @Param @Require calibrationValue: number = 0;           // 当前校准值
+  @Param @Require calibrationValue: number = 0; // 当前校准值
   @Param @Require onValueChange: (value: number) => void; // 值变化回调
-
-  @Local private isDragging: boolean = false;             // 是否正在拖拽
-  @Local private showValueTip: boolean = false;           // 是否显示数值提示
+  @Local private isDragging: boolean = false; // 是否正在拖拽
+  @Local private showValueTip: boolean = false; // 是否显示数值提示
 
   // 检查是否为预设点
   private isPresetValue(value: number): boolean {
@@ -39,7 +39,7 @@ export struct EnhancedManualCalibration {
             .fill(this.isPresetValue(this.calibrationValue) && this.calibrationValue === preset ?
               CALIBRATION_COLORS.PRIMARY :
               $r('sys.color.font_tertiary'))
-          
+
           // 预设值标签
           Text(preset.toString())
             .fontSize(DesignConstants.FONT_SIZE_XS)
@@ -102,7 +102,9 @@ export struct EnhancedManualCalibration {
         .height(32)
         .layoutWeight(1)
         .onClick(() => {
-          this.onValueChange(0);
+          Debounce.click(() => {
+            this.onValueChange(0);
+          });
         })
 
       // 吸附到预设点按钮
@@ -114,8 +116,10 @@ export struct EnhancedManualCalibration {
         .height(32)
         .layoutWeight(1)
         .onClick(() => {
-          const nearestPreset = this.getNearestPresetValue(this.calibrationValue);
-          this.onValueChange(nearestPreset);
+          Debounce.click(() => {
+            const nearestPreset = this.getNearestPresetValue(this.calibrationValue);
+            this.onValueChange(nearestPreset);
+          })
         })
     }
     .width('100%')
@@ -168,7 +172,7 @@ export struct EnhancedManualCalibration {
           .onDragEnd(() => {
             this.isDragging = false;
             this.showValueTip = false;
-            
+
             // 拖拽结束时自动吸附到最近的预设点
             const nearestPreset = this.getNearestPresetValue(this.calibrationValue);
             if (Math.abs(this.calibrationValue - nearestPreset) <= 1) {

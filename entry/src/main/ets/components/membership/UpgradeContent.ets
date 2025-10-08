@@ -279,7 +279,7 @@ export struct UpgradeContent {
           .borderRadius(DesignConstants.BORDER_RADIUS_MD)
           .enabled(this.purchaseState === 'idle')
           .onClick(() => {
-            Debounce.importantClick(() => {
+            Debounce.click(() => {
               this.handleFreeExperience();
             })
           })

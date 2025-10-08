@@ -2,6 +2,7 @@ import promptAction from '@ohos.promptAction';
 import { LocationInfo, LocationService } from '../../services/LocationService';
 import { PreferenceKeys } from '../../models/PreferenceKeys';
 import { PersistenceV2 } from '@kit.ArkUI';
+import { Debounce } from '../../utils/Debounce';
 
 @ComponentV2
 export struct LocationDisplay {
@@ -163,7 +164,9 @@ export struct LocationDisplay {
     .backgroundColor($r('sys.color.comp_background_primary'))
     .enabled(!this.isRefreshing)
     .onClick(() => {
-      this.startSingleLocation();
+      Debounce.click(() => {
+        this.startSingleLocation();
+      });
     })
   }
 }

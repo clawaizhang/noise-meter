@@ -13,6 +13,7 @@ import { AppKeys } from '../../models/AppKeys';
 import { PermissionService } from '../../services/PermissionService';
 import { AudioController } from './AudioController';
 import { AudioControllerService } from '../../services/AudioControllerService';
+import { Debounce } from '../../utils/Debounce';
 
 @ComponentV2
 export struct DecibelMeter {
@@ -255,8 +256,10 @@ export struct DecibelMeter {
             bottom: 6
           })
           .onClick(async () => {
-            const permissionService = PermissionService.getInstance();
-            await permissionService.requestMicrophonePermission();
+            Debounce.click(async () => {
+              const permissionService = PermissionService.getInstance();
+              await permissionService.requestMicrophonePermission();
+            })
           })
       } else {
         Button('去设置')
@@ -268,8 +271,10 @@ export struct DecibelMeter {
             bottom: 6
           })
           .onClick(async () => {
-            const permissionService = PermissionService.getInstance();
-            await permissionService.openPermissionSettings();
+            Debounce.click(async () => {
+              const permissionService = PermissionService.getInstance();
+              await permissionService.openPermissionSettings();
+            })
           })
       }
     }

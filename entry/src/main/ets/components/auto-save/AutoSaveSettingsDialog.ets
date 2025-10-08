@@ -2,6 +2,7 @@ import { PreferenceKeys } from '../../models/PreferenceKeys';
 import { PersistenceV2 } from '@kit.ArkUI';
 import promptAction from '@ohos.promptAction';
 import { DesignConstants } from '../../constants/DesignConstants';
+import { Debounce } from '../../utils/Debounce';
 import { EditableTitleBar, EditableLeftIconType } from '@kit.ArkUI';
 
 export interface AutoSaveDialogParams {
@@ -149,7 +150,9 @@ export struct AutoSaveSettingsDialog {
     .justifyContent(FlexAlign.Center)
     .alignItems(HorizontalAlign.Center)
     .onClick(() => {
-      this.handlePresetSelect(params.index);
+      Debounce.fastClick(() => {
+        this.handlePresetSelect(params.index);
+      });
     })
   }
 

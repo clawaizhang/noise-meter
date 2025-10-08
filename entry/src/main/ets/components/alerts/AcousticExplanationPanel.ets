@@ -5,6 +5,7 @@
 
 import { ACOUSTIC_EXPLANATIONS, ALERT_COLORS, TECHNICAL_PARAMS } from '../../constants/AlertsConstants';
 import { DesignConstants } from '../../constants/DesignConstants';
+import { Debounce } from '../../utils/Debounce';
 import { curves } from '@kit.ArkUI';
 
 @ComponentV2
@@ -37,13 +38,17 @@ export struct AcousticExplanationPanel {
           .height(DesignConstants.ICON_SIZE_SM)
           .fillColor($r('sys.color.brand'))
           .onClick(() => {
-            this.isTechnicalPanelExpanded = !this.isTechnicalPanelExpanded;
+            Debounce.fastClick(() => {
+              this.isTechnicalPanelExpanded = !this.isTechnicalPanelExpanded;
+            });
           })
       }
       .width('100%')
       .alignItems(VerticalAlign.Center)
       .onClick(() => {
-        this.isTechnicalPanelExpanded = !this.isTechnicalPanelExpanded;
+        Debounce.fastClick(() => {
+          this.isTechnicalPanelExpanded = !this.isTechnicalPanelExpanded;
+        });
       })
 
       // 技术参数内容
@@ -139,13 +144,17 @@ export struct AcousticExplanationPanel {
           .height(DesignConstants.ICON_SIZE_SM)
           .fillColor($r('sys.color.font_secondary'))
           .onClick(() => {
-            this.isAcousticPanelExpanded = !this.isAcousticPanelExpanded;
+            Debounce.fastClick(() => {
+              this.isAcousticPanelExpanded = !this.isAcousticPanelExpanded;
+            });
           })
       }
       .width('100%')
       .alignItems(VerticalAlign.Center)
       .onClick(() => {
-        this.isAcousticPanelExpanded = !this.isAcousticPanelExpanded;
+        Debounce.fastClick(() => {
+          this.isAcousticPanelExpanded = !this.isAcousticPanelExpanded;
+        });
       })
 
       // 声学原理内容

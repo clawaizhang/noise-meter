@@ -129,14 +129,14 @@ struct Index {
   aboutToDisappear(): void {
     const windowManager = WindowManager.getInstance();
     windowManager.setKeepScreenOn(false);
-    
+
     // 清理防抖队列资源
     Debounce.unsubscribe();
-    
+
     // 清理使用追踪服务资源
     const usageTrackingService = UsageTrackingService.getInstance();
     usageTrackingService.destroy();
-    
+
     // 清理公共事件服务资源
     const commonEventService = CommonEventService.getInstance();
     commonEventService.destroy();
@@ -209,17 +209,17 @@ struct Index {
     const displayManager: DisplayManager = DisplayManager.getInstance();
     displayManager.onDisplay(() => {
       this.as.isDisplayApp = true;
-      
+
       // APP显示时恢复使用追踪
       const usageTrackingService = UsageTrackingService.getInstance();
       usageTrackingService.resumeTracking();
-      
+
       // 立即检查日期变化（重要优化）
       usageTrackingService.immediateDateCheck();
     });
     displayManager.onHidden(() => {
       this.as.isDisplayApp = false;
-      
+
       // APP隐藏时暂停使用追踪
       const usageTrackingService = UsageTrackingService.getInstance();
       usageTrackingService.pauseTracking();
@@ -234,7 +234,7 @@ struct Index {
 
     // 初始化服务
     usageTrackingService.initialize();
-    
+
     // 检查并更新连续使用天数
     continuousUsageManager.checkAndUpdateConsecutiveDays();
 
@@ -260,7 +260,7 @@ struct Index {
 
     // 获取连续天数
     const consecutiveDays = continuousUsageManager.getConsecutiveDays();
-    
+
     // 检查用户是否已同意会员奖励协议
     if (!this.pk.has_agreed_membership_reward) {
       // 用户未同意协议，不主动弹出，只记录日志
@@ -291,7 +291,6 @@ struct Index {
     // 重新处理使用完成
     this.handleUsageCompletion();
   }
-
   /**
    * 处理会员协议取消
    */
@@ -306,6 +305,10 @@ struct Index {
         // 显示加载中
         Column() {
           Image($r('app.media.app_icon_fore'))
+            .backgroundColor('#e5000000')
+            .width(128)
+            .height(128)
+            .borderRadius(16)
           LoadingProgress()
             .width(64)
             .height(64)
@@ -323,19 +326,21 @@ struct Index {
           Button('立即重启')
             .margin({ top: 24 })
             .onClick(async () => {
-              this.isLoading = true;
-              await this.initialize();
-              let applicationContext = this.context.getApplicationContext();
-              let want: Want = {
-                bundleName: 'yu.zhang.myapplication.noise_meter_pro',
-                abilityName: 'EntryAbility'
-              };
-              try {
-                applicationContext.restartApp(want);
-                hilog.info(0x0000, 'testTag', '%{public}s', 'applicationContext.restartApp');
-              } catch (error) {
-                console.error(`restartApp fail, error: ${JSON.stringify(error)}`);
-              }
+              Debounce.click(async () => {
+                this.isLoading = true;
+                await this.initialize();
+                let applicationContext = this.context.getApplicationContext();
+                let want: Want = {
+                  bundleName: 'yu.zhang.myapplication.noise_meter_pro',
+                  abilityName: 'EntryAbility'
+                };
+                try {
+                  applicationContext.restartApp(want);
+                  hilog.info(0x0000, 'testTag', '%{public}s', 'applicationContext.restartApp');
+                } catch (error) {
+                  console.error(`restartApp fail, error: ${JSON.stringify(error)}`);
+                }
+              })
             })
         }
 
@@ -388,7 +393,7 @@ struct Index {
       }
     }
     .backgroundColor(this.pk.show_welcome_guide || !this.pk.privacy_agreed ? $r('sys.color.background_primary') :
-    $r('sys.color.background_secondary'))
+      $r('sys.color.background_secondary'))
     .expandSafeArea([SafeAreaType.SYSTEM], [SafeAreaEdge.TOP, SafeAreaEdge.BOTTOM])
     .height('100%')
   }

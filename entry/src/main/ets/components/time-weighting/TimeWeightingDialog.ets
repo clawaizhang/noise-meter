@@ -6,6 +6,7 @@
 import { AudioAnalysisConfig, AudioAnalysisMode } from '../../common/AudioConfig';
 import { TimeWeightingConstants } from '../../constants/TimeWeightingConstants';
 import { DesignConstants } from '../../constants/DesignConstants';
+import { Debounce } from '../../utils/Debounce';
 import { AcousticExplanationComp } from './AcousticExplanation';
 import { TechnicalParamsDisplay } from './TechnicalParamsDisplay';
 import { PreviewPanel } from './PreviewPanel';
@@ -220,7 +221,9 @@ export struct TimeWeightingDialog {
     .borderRadius(DesignConstants.BORDER_RADIUS_MD)
     .padding(DesignConstants.SPACING_MD)
     .onClick(() => {
-      this.handleModeSelect(mode);
+      Debounce.fastClick(() => {
+        this.handleModeSelect(mode);
+      });
     })
     .onHover((isHover: boolean) => {
       if (isHover) {

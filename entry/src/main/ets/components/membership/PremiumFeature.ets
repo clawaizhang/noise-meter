@@ -12,6 +12,7 @@ import {
 import { DialogStyleManager } from '../../utils/DialogStyleManager';
 import { PreferenceKeys } from '../../models/PreferenceKeys';
 import { PersistenceV2 } from '@kit.ArkUI';
+import { Debounce } from '../../utils/Debounce';
 
 @ComponentV2
 export struct PremiumFeature {
@@ -96,7 +97,9 @@ export struct PremiumFeature {
       .borderRadius(DesignConstants.BORDER_RADIUS_MD)
       .backgroundColor($r('sys.color.background_secondary'))
       .onClick(() => {
-        this.showUpgradeDialog();
+        Debounce.click(() => {
+          this.showUpgradeDialog();
+        });
       })
     }
   }

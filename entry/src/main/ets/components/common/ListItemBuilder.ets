@@ -1,3 +1,5 @@
+import { Debounce } from "../../utils/Debounce"
+
 /**
  * 通用列表项 Builder 组件
  * 用于创建统一的列表项布局，包含图标、标题和右侧箭头
@@ -48,6 +50,8 @@ export function ListItemBuilder(
     right: 16
   })
   .onClick(() => {
-    onClick()
+    Debounce.click(() => {
+      onClick()
+    })
   })
 }

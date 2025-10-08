@@ -3,6 +3,7 @@ import hilog from '@ohos.hilog';
 import resourceManager from '@ohos.resourceManager';
 import { AudioPlayerGroupService } from '../../services/AudioPlayerGroupService';
 import media from '@ohos.multimedia.media';
+import { Debounce } from '../../utils/Debounce';
 
 const TAG = 'AudioPlayer';
 const DOMAIN = 0x0000;
@@ -27,19 +28,21 @@ export struct AudioPlayer {
         .backgroundColor($r('sys.color.comp_background_secondary'))
         .margin({ right: 8 })
         .onClick(async () => {
-          try {
-            await this.audioPlayerService.stop();
-          } catch (error) {
-            hilog.error(DOMAIN, TAG, '停止播放失败: %{public}s',
-              error instanceof Error ? error.message : String(error));
-          }
+          Debounce.click(async () => {
+            try {
+              await this.audioPlayerService.stop();
+            } catch (error) {
+              hilog.error(DOMAIN, TAG, '停止播放失败: %{public}s',
+                error instanceof Error ? error.message : String(error));
+            }
+          })
         })
       }
 
       Button() {
         Row() {
           Image(this.playerState === 'playing' ? $r('app.media.ic_pause') :
-          $r('app.media.ic_play'))
+            $r('app.media.ic_play'))
             .width(20)
             .height(20)
             .fillColor($r('sys.color.font_primary'))
@@ -55,25 +58,27 @@ export struct AudioPlayer {
       .height(36)
       .padding({ left: 16, right: 16 })
       .onClick(async () => {
-        try {
-          if (this.playerState === 'playing') {
-            await this.audioPlayerService.pause();
-          } else {
-            if (this.playerState === 'paused') {
-              await this.audioPlayerService.resume();
+        Debounce.click(async () => {
+          try {
+            if (this.playerState === 'playing') {
+              await this.audioPlayerService.pause();
             } else {
-              if (this.audioFilePath) {
-                await this.audioPlayerService.playAudioFile(this.audioFilePath);
-              }
-              if (this.fileDescriptor) {
-                await this.audioPlayerService.playAudioFileByFd(this.fileDescriptor);
+              if (this.playerState === 'paused') {
+                await this.audioPlayerService.resume();
+              } else {
+                if (this.audioFilePath) {
+                  await this.audioPlayerService.playAudioFile(this.audioFilePath);
+                }
+                if (this.fileDescriptor) {
+                  await this.audioPlayerService.playAudioFileByFd(this.fileDescriptor);
+                }
               }
             }
+          } catch (error) {
+            hilog.error(DOMAIN, TAG, '播放音频失败: %{public}s',
+              error instanceof Error ? error.message : String(error));
           }
-        } catch (error) {
-          hilog.error(DOMAIN, TAG, '播放音频失败: %{public}s',
-            error instanceof Error ? error.message : String(error));
-        }
+        })
       })
     }
   }

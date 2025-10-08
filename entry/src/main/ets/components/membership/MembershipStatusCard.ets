@@ -13,6 +13,7 @@ import { MembershipAgreementDialogBuilder, MembershipAgreementDialogProps } from
 import {
   defaultPricingPlans, UpgradeContentBuilder, UpgradeContentProps
 } from './UpgradeContent';
+import { Debounce } from '../../utils/Debounce';
 
 @ComponentV2
 export struct MembershipStatusCard {
@@ -332,7 +333,9 @@ export struct MembershipStatusCard {
         .fontColor($r('sys.color.font_on_primary'))
         .borderRadius(DesignConstants.BORDER_RADIUS_MD)
         .onClick(() => {
-          this.showMembershipAgreement();
+          Debounce.click(() => {
+            this.showMembershipAgreement();
+          });
         })
     }
     .width('100%')

@@ -1,4 +1,5 @@
 import { DesignConstants } from "../../constants/DesignConstants"
+import { Debounce } from "../../utils/Debounce"
 
 export interface MembershipAgreementDialogProps {
   onAgree: () => void;
@@ -125,7 +126,9 @@ export struct MembershipAgreementDialog {
             style: BorderStyle.Solid
           })
           .onClick(() => {
-            this.onCancel();
+            Debounce.click(() => {
+              this.onCancel();
+            });
           })
 
         Button('同意并继续')
@@ -135,7 +138,9 @@ export struct MembershipAgreementDialog {
           .fontColor($r('sys.color.font_on_primary'))
           .borderRadius(DesignConstants.BORDER_RADIUS_MD)
           .onClick(() => {
-            this.onAgree();
+            Debounce.click(() => {
+              this.onAgree();
+            });
           })
       }
       .width('100%')
