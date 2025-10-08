@@ -89,6 +89,7 @@ export struct DecibelHistory {
   @Local deleteAudioMode: boolean = false;
   @Local showMenu: boolean = false;
   @Local as: AppKeys = AppStorageV2.connect(AppKeys)!;
+  @Local currentModeName: string = ''; // 当前模式名称
   @Local isLoading: boolean = false;
   @Local isLoadingMore: boolean = false;
   @Local hasMoreData: boolean = true;
@@ -111,7 +112,7 @@ export struct DecibelHistory {
       } else {
         this.ListLayoutView()
       }
-    }.title('历史记录').backgroundColor($r('sys.color.background_secondary')).menus([{
+    }.title(this.TitleBuilder).backgroundColor($r('sys.color.background_secondary')).menus([{
       value: '',
       icon: $r('app.media.ic_menus_more'),
       action: () => {
@@ -506,6 +507,34 @@ export struct DecibelHistory {
     }
   }
 
+  // 判断是否处于任何操作模式
+  private isInAnyMode(): boolean {
+    return this.shouChangMode || this.deleteRecordMode || this.deleteAudioMode;
+  }
+
+  // 获取当前模式名称
+  private getCurrentModeName(): string {
+    if (this.shouChangMode) return '收藏模式';
+    if (this.deleteRecordMode) return '删除记录模式';
+    if (this.deleteAudioMode) return '删除音频模式';
+    return '';
+  }
+
+  // 退出所有操作模式
+  private exitAllModes(): void {
+    this.shouChangMode = false;
+    this.deleteRecordMode = false;
+    this.deleteAudioMode = false;
+    this.pendingDeleteId = '';
+    this.pendingDeleteAudioId = '';
+    this.currentModeName = '';
+  }
+
+  // 更新当前模式名称
+  private updateCurrentModeName(): void {
+    this.currentModeName = this.getCurrentModeName();
+  }
+
   async showDetailDialog() {
     if (!this.selectedRecord) {
       return;
@@ -532,6 +561,51 @@ export struct DecibelHistory {
   /**
    * 空状态视图
    */
+  @Builder
+  TitleBuilder() {
+    if (this.isInAnyMode()) {
+      // 操作模式状态：显示模式名称和叉叉按钮，靠左对齐
+      Row({ space: 4 }) {
+        Text(this.currentModeName)
+          .fontSize(DesignConstants.FONT_SIZE_2XL) // 使用标准标题字体大小
+          .fontWeight(FontWeight.Bold)
+          .fontColor($r('sys.color.font_primary'))
+        
+        Button() {
+          Image($r('app.media.ic_close'))
+            .width(24)
+            .height(24)
+            .fillColor($r('sys.color.warning'))
+        }
+        .type(ButtonType.Circle)
+        .backgroundColor(Color.Transparent)
+        .width(32)
+        .height(32)
+        .onClick(() => {
+          Throttle.click(() => {
+            this.exitAllModes();
+          });
+        })
+      }
+      .width('100%')
+      .justifyContent(FlexAlign.Start)  // 靠左对齐
+      .alignItems(VerticalAlign.Center) // 垂直居中
+      .height('100%')                   // 确保垂直居中生效
+      .margin({ left: DesignConstants.SPACING_SM }) // 添加左侧间距
+    } else {
+      // 正常状态：显示"历史记录"，靠左对齐
+      Text('历史记录')
+        .fontSize(DesignConstants.FONT_SIZE_2XL) // 使用标准标题字体大小
+        .fontWeight(FontWeight.Bold)
+        .fontColor($r('sys.color.font_primary'))
+        .textAlign(TextAlign.Start)     // 靠左对齐
+        .width('100%')
+        .height('100%')                 // 确保垂直居中
+        .align(Alignment.Start)         // 靠左对齐
+        .margin({ left: DesignConstants.SPACING_SM }) // 添加左侧间距
+    }
+  }
+
   @Builder
   MenuBuilder() {
     Column({ space: 8 }) {
@@ -560,6 +634,9 @@ export struct DecibelHistory {
         if (this.shouChangMode) {
           this.deleteRecordMode = false;
           this.deleteAudioMode = false;
+          this.updateCurrentModeName();
+        } else {
+          this.exitAllModes();
         }
         this.showMenu = false;
       })
@@ -589,8 +666,9 @@ export struct DecibelHistory {
         if (this.deleteRecordMode) {
           this.shouChangMode = false;
           this.deleteAudioMode = false;
+          this.updateCurrentModeName();
         } else {
-          this.pendingDeleteId = '';
+          this.exitAllModes();
         }
         this.showMenu = false;
       })
@@ -620,8 +698,9 @@ export struct DecibelHistory {
         if (this.deleteAudioMode) {
           this.shouChangMode = false;
           this.deleteRecordMode = false;
+          this.updateCurrentModeName();
         } else {
-          this.pendingDeleteAudioId = '';
+          this.exitAllModes();
         }
         this.showMenu = false;
       })
