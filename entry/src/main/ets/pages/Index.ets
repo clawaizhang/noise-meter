@@ -1,7 +1,6 @@
 import { navigationStack } from '../constants/ProviderConstant'
 import { RelationalStoreService } from '../services/RelationalStoreService'
 import { commonEventManager } from '@kit.BasicServicesKit'
-import { WelcomeGuide } from '../components/welcome'
 import { PrivacyPolicyStandalone } from '../components/privacy/PrivacyPolicyStandalone'
 import { PreferenceKeys } from '../models/PreferenceKeys'
 import { DatabaseUpgradeConfig } from '../interfaces/DatabaseInterfaces'
@@ -26,6 +25,8 @@ import { MembershipRewardService } from '../services/MembershipRewardService'
 import { ContinuousUsageManager } from '../services/ContinuousUsageManager'
 import { CommonEventService } from '../services/CommonEventService';
 import { showRewardCompletionDialog } from '../components/membership/RewardCompletionDialog'
+import { Debounce } from '../utils/Debounce'
+import { WelcomeGuide } from '../components/welcome/WelcomeGuide'
 
 const TAG = 'Index';
 const DOMAIN = 0x0000;
@@ -128,6 +129,9 @@ struct Index {
   aboutToDisappear(): void {
     const windowManager = WindowManager.getInstance();
     windowManager.setKeepScreenOn(false);
+    
+    // 清理防抖队列资源
+    Debounce.unsubscribe();
     
     // 清理使用追踪服务资源
     const usageTrackingService = UsageTrackingService.getInstance();

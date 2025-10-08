@@ -23,6 +23,7 @@ import {
 } from '../../components/auto-save/AutoSaveSettingsDialog';
 import { ThresholdManager } from '../../services/ThresholdManager';
 import { PremiumFeature } from '../../components/membership/PremiumFeature';
+import { Debounce } from '../../utils/Debounce';
 
 @Builder
 export function SettingsBuilder() {
@@ -402,7 +403,9 @@ struct Settings {
             })
           }.justifyContent(FlexAlign.Start)
         }.onClick(() => {
-          this.openTimeWeightingDialog();
+          Debounce.click(() => {
+            this.openTimeWeightingDialog();
+          });
         })
         .cardStyle()
       }
@@ -444,7 +447,9 @@ struct Settings {
           Text(getWeightingDescription(this.pk.weighting_type))
             .itemDescription()
         }.onClick(() => {
-          this.openFrequencyWeightingDialog();
+          Debounce.click(() => {
+            this.openFrequencyWeightingDialog();
+          });
         })
         .cardStyle()
       }
@@ -486,7 +491,9 @@ struct Settings {
           Text(this.getCalibrationDescription())
             .itemDescription()
         }.onClick(() => {
-          this.navigateToAudioAnalysis();
+          Debounce.click(() => {
+            this.navigateToAudioAnalysis();
+          });
         })
         .cardStyle()
       }
@@ -528,7 +535,9 @@ struct Settings {
           Text(this.getAlertsDescription())
             .itemDescription()
         }.onClick(() => {
-          this.navigateToAlerts();
+          Debounce.click(() => {
+            this.navigateToAlerts();
+          });
         })
         .cardStyle()
       }
@@ -571,7 +580,9 @@ struct Settings {
             Text(this.getAutoSaveDescription())
               .itemDescription()
           }.onClick(() => {
-            this.openAutoSaveDialog();
+            Debounce.click(() => {
+              this.openAutoSaveDialog();
+            });
           })
           .cardStyle()
         }

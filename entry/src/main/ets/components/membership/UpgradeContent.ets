@@ -3,12 +3,12 @@ import { PreferenceKeys } from "../../models/PreferenceKeys";
 import { PersistenceV2 } from "@kit.ArkUI";
 import { MembershipLevel } from "../../services/MembershipManager";
 import {
-  MembershipAgreementDialogBuilder,
-  MembershipAgreementDialogProps
+  MembershipAgreementDialogBuilder, MembershipAgreementDialogProps
 } from "./MembershipAgreementDialog";
 import { DialogHub } from "@hadss/dialoghub";
 import { MembershipRewardService } from "../../services/MembershipRewardService";
 import { ContinuousUsageManager } from "../../services/ContinuousUsageManager";
+import { Debounce } from "../../utils/Debounce";
 
 // 价格方案接口
 interface PricingPlan {
@@ -266,7 +266,9 @@ export struct UpgradeContent {
           .fontColor($r('sys.color.font_primary'))
           .borderRadius(DesignConstants.BORDER_RADIUS_MD)
           .onClick(() => {
-            this.onLater();
+            Debounce.click(() => {
+              this.onLater();
+            });
           })
 
         Button('免费体验')
@@ -277,7 +279,9 @@ export struct UpgradeContent {
           .borderRadius(DesignConstants.BORDER_RADIUS_MD)
           .enabled(this.purchaseState === 'idle')
           .onClick(() => {
-            this.handleFreeExperience();
+            Debounce.importantClick(() => {
+              this.handleFreeExperience();
+            })
           })
       }
       .width('100%')
@@ -404,18 +408,18 @@ export struct UpgradeContent {
     .padding(DesignConstants.SPACING_MD)
     .border({
       width: plans.selected?.type === plans.current.type ?
-      DesignConstants.BORDER_WIDTH_MD :
-      DesignConstants.BORDER_WIDTH_SM,
+        DesignConstants.BORDER_WIDTH_MD :
+        DesignConstants.BORDER_WIDTH_SM,
       color: plans.selected?.type === plans.current.type ?
-      $r('sys.color.confirm') :
-      $r('sys.color.comp_divider')
+        $r('sys.color.confirm') :
+        $r('sys.color.comp_divider')
     })
     .borderRadius(DesignConstants.BORDER_RADIUS_LG)
     .backgroundBlurStyle(BlurStyle.COMPONENT_ULTRA_THICK)
     .backgroundColor(
       plans.selected?.type === plans.current.type ?
-      $r('sys.color.confirm') :
-      $r('sys.color.comp_background_primary')
+        $r('sys.color.confirm') :
+        $r('sys.color.comp_background_primary')
     )
     .width('30%')
     .height(150)
@@ -534,7 +538,7 @@ export struct UpgradeContent {
       this.handleAgreementAgree();
       return;
     }
-    
+
     // 关闭当前升级对话框
     this.onLater();
     // 使用DialogHub显示会员协议对话框
@@ -583,16 +587,15 @@ export struct UpgradeContent {
     // 记录用户同意状态
     this.pk.has_agreed_membership_reward = true;
     console.info('[会员管理] 用户已同意会员奖励计划协议，同意状态已记录');
-    
+
     // 应用会员奖励
     const membershipRewardService = MembershipRewardService.getInstance();
     const continuousUsageManager = ContinuousUsageManager.getInstance();
     const consecutiveDays = continuousUsageManager.getConsecutiveDays();
     membershipRewardService.applyMembershipReward(consecutiveDays);
-    
+
     // 这里可以添加其他逻辑，比如显示欢迎提示等
   }
-
   // 处理会员协议取消
   private handleAgreementCancel = () => {
     console.info('[会员管理] 用户取消了会员奖励计划协议');

@@ -11,6 +11,7 @@ import { AppStorageV2, curves, SymbolGlyphModifier } from '@kit.ArkUI';
 import { DialogHub, InfSheet } from '@hadss/dialoghub';
 import { DialogStyleManager } from '../../utils/DialogStyleManager';
 import { AppKeys } from '../../models/AppKeys';
+import { Debounce } from '../../utils/Debounce';
 
 class DecibelRecordDataSource implements IDataSource {
   private records: DecibelRecord[];
@@ -253,7 +254,9 @@ export struct DecibelHistory {
     .borderRadius(16)
     .id("showNoiseDetailDialogFromHistory")
     .onClick(() => {
-      this.showNoiseDetails(record);
+      Debounce.fastClick(() => {
+        this.showNoiseDetails(record);
+      });
     })
     .transition(TransitionEffect.scale({ x: 0, y: 0 })
       .combine(TransitionEffect.translate({ x: 150 }).animation({ curve: curves.springMotion() })))
@@ -280,7 +283,9 @@ export struct DecibelHistory {
               .combine(TransitionEffect.opacity(1))
               .animation({ curve: curves.springMotion(0.6, 0.8) }))
             .onClick(() => {
-              this.deleteRecord(record);
+              Debounce.importantClick(() => {
+                this.deleteRecord(record);
+              });
             });
         } else {
           Button('删除')
@@ -292,7 +297,9 @@ export struct DecibelHistory {
               .combine(TransitionEffect.opacity(1))
               .animation({ curve: curves.springMotion(0.6, 0.8) }))
             .onClick(() => {
-              this.pendingDeleteId = record.id;
+              Debounce.importantClick(() => {
+                this.pendingDeleteId = record.id;
+              });
             });
         }
         if (record.id === this.pendingDeleteAudioId) {
@@ -305,7 +312,9 @@ export struct DecibelHistory {
               .combine(TransitionEffect.opacity(1))
               .animation({ curve: curves.springMotion(0.6, 0.8) }))
             .onClick(() => {
-              this.deleteRecordAudio(record);
+              Debounce.importantClick(() => {
+                this.deleteRecordAudio(record);
+              });
             });
         } else {
           if (record.audioFilePath) {
@@ -318,7 +327,9 @@ export struct DecibelHistory {
                 .combine(TransitionEffect.opacity(1))
                 .animation({ curve: curves.springMotion(0.6, 0.8) }))
               .onClick(() => {
-                this.pendingDeleteAudioId = record.id;
+                Debounce.importantClick(() => {
+                  this.pendingDeleteAudioId = record.id;
+                });
               });
           }
         }
@@ -335,14 +346,16 @@ export struct DecibelHistory {
             .transition(TransitionEffect.scale({ x: 0, y: 0 })
               .combine(TransitionEffect.opacity(1))
               .animation({ curve: curves.springMotion(0.6, 0.8) }))
-            .onClick(async () => {
-              record.isFavorite = !record.isFavorite;
-              await this.recordService.updateRecord(record);
-              // 显示操作提示
-              this.promptAction.showToast({
-                message: record.isFavorite ? '已添加到收藏' : '已取消收藏',
-                duration: 2000,
-                bottom: '50%'
+            .onClick(() => {
+              Debounce.fastClick(async () => {
+                record.isFavorite = !record.isFavorite;
+                await this.recordService.updateRecord(record);
+                // 显示操作提示
+                this.promptAction.showToast({
+                  message: record.isFavorite ? '已添加到收藏' : '已取消收藏',
+                  duration: 2000,
+                  bottom: '50%'
+                });
               });
             });
         }

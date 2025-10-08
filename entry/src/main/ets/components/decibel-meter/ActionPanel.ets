@@ -7,6 +7,7 @@ import { camera } from '@kit.CameraKit';
 import common from '@ohos.app.ability.common';
 import { HdsActionBar, ActionBarButton, ActionBarStyle } from '@kit.UIDesignKit';
 import { deviceInfo } from '@kit.BasicServicesKit';
+import { Debounce } from '../../utils/Debounce';
 
 @ComponentV2
 export struct ActionPanel {
@@ -105,8 +106,10 @@ export struct ActionPanel {
       .height(48)
       .backgroundColor($r('sys.color.comp_background_primary'))
       .accessibilityDescription('重置当前数据')
-      .onClick(async () => {
-        await this.onResetButtonClicked();
+      .onClick(() => {
+        Debounce.click(() => {
+          this.onResetButtonClicked();
+        });
       })
 
       // 手电筒按钮
@@ -122,7 +125,9 @@ export struct ActionPanel {
         $r('sys.color.comp_background_primary'))
       .accessibilityDescription(this.isTorchOn ? '关闭手电筒' : '打开手电筒')
       .onClick(() => {
-        this.toggleTorch();
+        Debounce.fastClick(() => {
+          this.toggleTorch();
+        });
       })
 
       // 保存按钮
@@ -137,23 +142,25 @@ export struct ActionPanel {
       .height(48)
       .backgroundColor($r('sys.color.comp_background_primary'))
       .accessibilityDescription('保存当前数据')
-      .onClick(async () => {
-        const dialogController = new CustomDialogController({
-          builder: InputDialog({
-            title: '保存记录',
-            onConfirm: (comment: string) => {
-              this.onSave(comment);
+      .onClick(() => {
+        Debounce.click(() => {
+          const dialogController = new CustomDialogController({
+            builder: InputDialog({
+              title: '保存记录',
+              onConfirm: (comment: string) => {
+                this.onSave(comment);
+              },
+              onClose: () => {
+                dialogController.close();
+              }
+            }),
+            cancel: () => {
+              console.log('Dialog canceled');
             },
-            onClose: () => {
-              dialogController.close();
-            }
-          }),
-          cancel: () => {
-            console.log('Dialog canceled');
-          },
-          autoCancel: true
+            autoCancel: true
+          });
+          dialogController.open();
         });
-        dialogController.open();
       })
     }
     .width(224)
