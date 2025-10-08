@@ -27,12 +27,6 @@ export struct ImprovedAutoCalibration {
   @Builder
   private buildEnvironmentCheck() {
     Column({ space: DesignConstants.SPACING_SM }) {
-      Text('校准环境检测')
-        .fontSize(DesignConstants.FONT_SIZE_MD)
-        .fontWeight(FontWeight.Medium)
-        .fontColor($r('sys.color.font_primary'))
-        .alignSelf(ItemAlign.Start)
-
       if (this.environmentNoise < 20) {
         Row({ space: DesignConstants.SPACING_SM }) {
           Image($r('sys.media.ohos_ic_public_ok')) // 成功图标
@@ -93,7 +87,7 @@ export struct ImprovedAutoCalibration {
     }
     .width('100%')
     .padding(DesignConstants.SPACING_MD)
-    .backgroundColor($r('sys.color.background_secondary'))
+    .backgroundColor($r('sys.color.comp_background_primary'))
     .borderRadius(DesignConstants.BORDER_RADIUS_MD)
     .margin({ bottom: DesignConstants.SPACING_MD })
   }
@@ -191,8 +185,8 @@ export struct ImprovedAutoCalibration {
       Button('开始自动校准', { type: ButtonType.Normal })
         .fontSize(DesignConstants.FONT_SIZE_LG)
         .fontWeight(FontWeight.Medium)
-        .backgroundColor(CALIBRATION_COLORS.PRIMARY)
-        .fontColor(Color.White)
+        .backgroundColor($r('sys.color.comp_background_tertiary'))
+        .fontColor($r('sys.color.font_primary'))
         .borderRadius(DesignConstants.BORDER_RADIUS_LG)
         .height(48)
         .width('100%')

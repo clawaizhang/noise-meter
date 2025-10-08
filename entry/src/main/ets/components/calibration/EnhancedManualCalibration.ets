@@ -96,7 +96,7 @@ export struct EnhancedManualCalibration {
       // 快速重置按钮
       Button('重置为0', { type: ButtonType.Normal })
         .fontSize(DesignConstants.FONT_SIZE_MD)
-        .backgroundColor($r('sys.color.background_secondary'))
+        .backgroundColor($r('sys.color.comp_background_tertiary'))
         .fontColor($r('sys.color.font_primary'))
         .borderRadius(DesignConstants.BORDER_RADIUS_MD)
         .height(32)
@@ -110,8 +110,8 @@ export struct EnhancedManualCalibration {
       // 吸附到预设点按钮
       Button('吸附预设点', { type: ButtonType.Normal })
         .fontSize(DesignConstants.FONT_SIZE_MD)
-        .backgroundColor(CALIBRATION_COLORS.PRIMARY)
-        .fontColor(Color.White)
+        .backgroundColor($r('sys.color.comp_background_tertiary'))
+        .fontColor($r('sys.color.font_primary'))
         .borderRadius(DesignConstants.BORDER_RADIUS_MD)
         .height(32)
         .layoutWeight(1)
@@ -194,7 +194,7 @@ export struct EnhancedManualCalibration {
       this.buildQuickActions()
 
       // 说明文本
-      Text('手动校准操作：\n1. 将设备与专业声级计放置在同一位置\n2. 对照标准设备读数\n3. 调整补偿值使读数一致')
+      Text('手动校准操作：\n1. 将设备与专业声级计放置在同一位置\n2. 对照标准设备读数\n3. 调整校准值使读数一致')
         .fontSize(DesignConstants.FONT_SIZE_MD)
         .fontColor($r('sys.color.font_secondary'))
         .textAlign(TextAlign.Start)
