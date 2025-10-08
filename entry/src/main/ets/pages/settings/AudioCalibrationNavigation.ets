@@ -120,7 +120,7 @@ export struct AudioCalibrationSettings {
         Column({ space: DesignConstants.SPACING_LG }) {
           // 状态反馈区域
           CalibrationStatusIndicator({
-            currentDecibel: this.ak.uiDisplayState.displayDb + this.tempCalibrationValue
+            currentDecibel: this.ak.uiDisplayState.displayDb + this.tempCalibrationValue - this.pk.calibration_value
           })
 
           // 核心校准控制区域
