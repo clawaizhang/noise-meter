@@ -162,46 +162,13 @@ export function drawSpectrum(canvasContext: CanvasRenderingContext2D, canvasWidt
       }
     }
 
-    // 预计算频率相关的常量
-    const octaveRatio: number = Math.pow(2, 1 / 3); // 每1/3个八度的比例
+    // 预计算对数坐标常量
+    const logMinDraw: number = Math.log10(16);
+    const logMaxDraw: number = Math.log10(frequencyHigh);
+    
+    // 初始化峰值频率计算变量
     let maxValue: number = -Infinity;
     let peakFreq = 0;
-
-    // 按照八度分频计算每个频点
-    for (let i = 0; i < fftSize / 2; i++) {
-      // 使用标准频率计算方法
-      const centerFreq: number =
-        (i * sampleRate) / (2 * fftSize);
-
-      // 过滤超过频率范围的值
-      if (centerFreq > frequencyHigh) {
-        continue;
-      }
-
-      // 计算频带边界
-      const lowerFreq: number = centerFreq / Math.pow(octaveRatio, 0.5);
-      const upperFreq: number = centerFreq * Math.pow(octaveRatio, 0.5);
-
-      // 将频率转换为FFT bin索引
-      const lowerBin: number = Math.max(1, Math.floor(lowerFreq * fftSize / sampleRate));
-      const upperBin: number =
-        Math.min(Math.floor(upperFreq * fftSize / sampleRate), rawSpectrum.length - 1);
-
-      let binSpectrum = new Float32Array();
-      // 计算频段内的平均能量
-      for (let bin = lowerBin; bin <= upperBin; bin++) {
-        const value: number = rawSpectrum[bin];
-        if (isFinite(value)) {
-          // 使用绝对值来比较和存储
-          const absValue = Math.abs(value);
-          binSpectrum.fill(absValue);
-          if (absValue > maxValue) {
-            maxValue = absValue;
-            peakFreq = (bin * sampleRate / fftSize);
-          }
-        }
-      }
-    }
 
     // 绘制主频谱折线
     const spectrumPath = new Path2D(); // 创建新的Path2D对象
@@ -227,16 +194,19 @@ export function drawSpectrum(canvasContext: CanvasRenderingContext2D, canvasWidt
       }
 
       const logFreq: number = Math.log10(centerFreq);
-      const logMin: number = Math.log10(16);
-      const logMax: number = Math.log10(frequencyHigh);
-
-      const x: number =
-        ((logFreq - logMin) / (logMax - logMin)) * canvasWidth;
+      const x: number = ((logFreq - logMinDraw) / (logMaxDraw - logMinDraw)) * canvasWidth;
 
       const value: number = Math.max(minDb, Math.min(maxDb, rawSpectrum[i]));
       const normalizedValue: number = (value - minDb) / (maxDb - minDb);
       const height: number = canvasHeight * normalizedValue;
       const y: number = canvasHeight - height;
+
+      // 计算峰值频率（在主绘制循环中同时完成）
+      const absValue = Math.abs(rawSpectrum[i]);
+      if (absValue > maxValue) {
+        maxValue = absValue;
+        peakFreq = centerFreq;
+      }
 
       // 转换为整数坐标
       const intX = Math.round(x);
@@ -267,9 +237,7 @@ export function drawSpectrum(canvasContext: CanvasRenderingContext2D, canvasWidt
     // 显示峰值频率
     if (peakFreq > 0) {
       const logPeakFreq: number = Math.log10(peakFreq);
-      const logMin: number = Math.log10(16);
-      const logMax: number = Math.log10(frequencyHigh);
-      const peakX: number = ((logPeakFreq - logMin) / (logMax - logMin)) * canvasWidth;
+      const peakX: number = ((logPeakFreq - logMinDraw) / (logMaxDraw - logMinDraw)) * canvasWidth;
 
       const peakFreqY: number = canvasHeight -
         (maxValue / (maxDb - minDb)) * canvasHeight;
