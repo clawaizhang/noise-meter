@@ -43,7 +43,7 @@ export struct CollapsibleSection {
       $r('sys.color.comp_background_primary'))
     .borderRadius(DesignConstants.BORDER_RADIUS_MD)
     .onClick(() => {
-      Debounce.fastClick(() => {
+      Debounce.click(() => {
         this.onToggle();
       });
     })

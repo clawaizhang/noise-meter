@@ -129,8 +129,7 @@
         ],
         "backgroundModes": [
           // 长时任务类型的配置项
-          "audioRecording",
-          "audioPlayback"
+          "audioRecording"
         ]
       }
     ]

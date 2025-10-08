@@ -70,7 +70,7 @@ export struct ResetSaveButton {
       .height(64)
       .backgroundColor(this.isUILocked ? $r( 'app.color.background_tertiary') : $r( 'app.color.background_secondary'))
       .onClick(() => {
-        Debounce.fastClick(() => {
+        Debounce.click(() => {
           this.lockToggle();
         });
       })

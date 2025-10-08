@@ -111,7 +111,7 @@ export struct EnhancedModeSelectionPanel {
     .scale({ x: this.getCardStyle(mode).scale, y: this.getCardStyle(mode).scale })
     .transition(TransitionEffect.OPACITY.animation({ duration: 200 }))
     .onClick(() => {
-      Debounce.fastClick(() => {
+      Debounce.click(() => {
         this.onModeSelect(mode);
       });
     })

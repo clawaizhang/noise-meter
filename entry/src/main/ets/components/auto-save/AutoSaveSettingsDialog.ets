@@ -150,7 +150,7 @@ export struct AutoSaveSettingsDialog {
     .justifyContent(FlexAlign.Center)
     .alignItems(HorizontalAlign.Center)
     .onClick(() => {
-      Debounce.fastClick(() => {
+      Debounce.click(() => {
         this.handlePresetSelect(params.index);
       });
     })

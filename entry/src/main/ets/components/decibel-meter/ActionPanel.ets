@@ -64,7 +64,7 @@ export struct ActionPanel {
           accessibilityText: '手电筒按钮',
           accessibilityDescription: '切换手电筒',
           onClick: () => {
-            Debounce.fastClick(() => {
+            Debounce.click(() => {
               this.toggleTorch();
             });
           }
@@ -131,7 +131,7 @@ export struct ActionPanel {
         $r('sys.color.comp_background_primary'))
       .accessibilityDescription(this.isTorchOn ? '关闭手电筒' : '打开手电筒')
       .onClick(() => {
-        Debounce.fastClick(() => {
+        Debounce.click(() => {
           this.toggleTorch();
         });
       })

@@ -305,7 +305,7 @@ export struct PrivacyPolicyPage {
           .fontSize(DesignConstants.FONT_SIZE_MD)
           .fontColor(this.textColor)
           .onClick(() => {
-            Debounce.fastClick(() => {
+            Debounce.click(() => {
               this.privacyAgreed = !this.privacyAgreed;
             });
           })

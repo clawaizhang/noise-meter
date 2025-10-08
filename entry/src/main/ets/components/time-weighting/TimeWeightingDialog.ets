@@ -221,7 +221,7 @@ export struct TimeWeightingDialog {
     .borderRadius(DesignConstants.BORDER_RADIUS_MD)
     .padding(DesignConstants.SPACING_MD)
     .onClick(() => {
-      Debounce.fastClick(() => {
+      Debounce.click(() => {
         this.handleModeSelect(mode);
       });
     })

@@ -85,7 +85,7 @@ export struct SettingsDeviceManager {
           }
           .listItemStyle()
         }.onClick(() => {
-          Debounce.fastClick(() => {
+          Debounce.click(() => {
             animateTo({
               duration: 300,
               onFinish: () => {

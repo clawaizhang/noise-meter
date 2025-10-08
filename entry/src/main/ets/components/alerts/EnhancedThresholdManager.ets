@@ -104,7 +104,7 @@ export struct EnhancedThresholdManager {
         color: this.currentConfig.currentPreset === presetType ? preset.color : $r('sys.color.background_secondary')
       })
       .onClick(() => {
-        Debounce.fastClick(() => {
+        Debounce.click(() => {
           this.logStateChange('选择环境类型', presetType);
           this.currentConfig.currentPreset = presetType;
 

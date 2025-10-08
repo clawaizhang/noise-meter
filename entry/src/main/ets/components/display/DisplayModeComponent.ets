@@ -109,7 +109,7 @@ export struct DisplayModeComponent {
         $r('sys.color.interactive_active') : $r('sys.color.comp_background_primary'))
         .borderRadius(16)
         .onClick(() => {
-          Debounce.fastClick(() => {
+          Debounce.click(() => {
             this.handleDisplayModeSelect(displayMode);
           });
         })

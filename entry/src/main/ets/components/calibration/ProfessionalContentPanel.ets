@@ -44,7 +44,7 @@ export struct ProfessionalContentPanel {
           .height(DesignConstants.ICON_SIZE_SM)
           .fillColor($r('sys.color.brand'))
           .onClick(() => {
-            Debounce.fastClick(() => {
+            Debounce.click(() => {
               this.isTechnicalPanelExpanded = !this.isTechnicalPanelExpanded;
             });
           })
@@ -52,7 +52,7 @@ export struct ProfessionalContentPanel {
       .width('100%')
       .alignItems(VerticalAlign.Center)
       .onClick(() => {
-        Debounce.fastClick(() => {
+        Debounce.click(() => {
           this.isTechnicalPanelExpanded = !this.isTechnicalPanelExpanded;
         });
       })
@@ -160,7 +160,7 @@ export struct ProfessionalContentPanel {
           .height(DesignConstants.ICON_SIZE_SM)
           .fillColor($r('sys.color.font_secondary'))
           .onClick(() => {
-            Debounce.fastClick(() => {
+            Debounce.click(() => {
               this.isAcousticPanelExpanded = !this.isAcousticPanelExpanded;
             });
           })
@@ -168,7 +168,7 @@ export struct ProfessionalContentPanel {
       .width('100%')
       .alignItems(VerticalAlign.Center)
       .onClick(() => {
-        Debounce.fastClick(() => {
+        Debounce.click(() => {
           this.isAcousticPanelExpanded = !this.isAcousticPanelExpanded;
         });
       })

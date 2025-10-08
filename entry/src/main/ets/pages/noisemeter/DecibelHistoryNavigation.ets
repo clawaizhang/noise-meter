@@ -254,7 +254,7 @@ export struct DecibelHistory {
     .borderRadius(16)
     .id("showNoiseDetailDialogFromHistory")
     .onClick(() => {
-      Debounce.fastClick(() => {
+      Debounce.click(() => {
         this.showNoiseDetails(record);
       });
     })
@@ -347,7 +347,7 @@ export struct DecibelHistory {
               .combine(TransitionEffect.opacity(1))
               .animation({ curve: curves.springMotion(0.6, 0.8) }))
             .onClick(() => {
-              Debounce.fastClick(async () => {
+              Debounce.click(async () => {
                 record.isFavorite = !record.isFavorite;
                 await this.recordService.updateRecord(record);
                 // 显示操作提示

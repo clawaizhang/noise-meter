@@ -108,7 +108,7 @@ export struct TimeWeightingCard {
     .scale({ x:  this.getCardStyle().scale, y:  this.getCardStyle().scale })
     .transition(TransitionEffect.OPACITY.animation({ duration: 200 }))
     .onClick(() => {
-      Debounce.fastClick(() => {
+      Debounce.click(() => {
         this.onSelect(this.modeInfo);
       });
     })
