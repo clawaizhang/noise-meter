@@ -11,6 +11,8 @@ import { AppStorageV2, curves } from '@kit.ArkUI';
 import { DialogHub } from '@hadss/dialoghub';
 import { AppKeys } from '../../models/AppKeys';
 import { Throttle } from '../../utils/Debounce';
+import { FilterPanel } from '../../components/filter/FilterPanel';
+import { FilterConfig, FilterManager } from '../../models/FilterConfig';
 
 
 class DecibelRecordDataSource implements IDataSource {
@@ -88,6 +90,7 @@ export struct DecibelHistory {
   @Local deleteRecordMode: boolean = false;
   @Local deleteAudioMode: boolean = false;
   @Local showMenu: boolean = false;
+  @Local showFilterPanel: boolean = false;
   @Local as: AppKeys = AppStorageV2.connect(AppKeys)!;
   @Local currentModeName: string = ''; // 当前模式名称
   @Local isLoading: boolean = false;
@@ -95,6 +98,8 @@ export struct DecibelHistory {
   @Local hasMoreData: boolean = true;
   @Local totalRecords: number = 0;
   @Local currentOffset: number = 0;
+  @Local currentFilters: FilterConfig = new FilterConfig(false);
+  @Local filterManager: FilterManager = new FilterManager();
   private readonly PAGE_SIZE: number = 10;
   private context: Context = getContext(this)
   private recordService: DecibelRecordService = new DecibelRecordService(this.context);
@@ -106,23 +111,73 @@ export struct DecibelHistory {
 
   build() {
     NavDestination() {
-      // 内容区域
-      if (this.records.length == 0) {
-        this.EmptyStateView()
-      } else {
-        this.ListLayoutView()
+      Stack({ alignContent: Alignment.Top }) {
+        // 内容区域
+        if (this.records.length == 0) {
+          this.EmptyStateView()
+        } else {
+          this.ListLayoutView()
+        }
+
+        // 过滤器面板
+        if (this.showFilterPanel) {
+          // 半透明遮罩层
+          Column()
+            .width('100%')
+            .height('100%')
+            .backgroundColor('#80000000')
+            .onClick(() => {
+              this.showFilterPanel = false;
+            })
+
+          this.FilterPanelBuilder()
+        }
       }
-    }.title(this.TitleBuilder).backgroundColor($r('sys.color.background_secondary')).menus([{
-      value: '',
-      icon: $r('app.media.ic_menus_more'),
-      action: () => {
-        this.showMenu = true;
+      .width('100%')
+      .height('100%')
+    }.title(this.TitleBuilder).backgroundColor($r('sys.color.background_secondary')).menus([
+      {
+        value: '',
+        icon: $r('app.media.ic_filter'),
+        action: () => {
+          this.showFilterPanel = !this.showFilterPanel;
+        }
+      },
+      {
+        value: '',
+        icon: $r('app.media.ic_menus_more'),
+        action: () => {
+          this.showMenu = true;
+        }
       }
-    }])
+    ])
   }
 
   aboutToAppear() {
     this.loadInitialRecords();
+  }
+
+  @Builder
+  FilterPanelBuilder() {
+    if (this.showFilterPanel) {
+      Column() {
+        FilterPanel({
+          filterConfig: this.currentFilters,
+          onApplyFilters: (filters: FilterConfig) => {
+            this.handleApplyFilters(filters);
+          },
+          onResetFilters: () => {
+            this.handleResetFilters();
+          }
+        })
+      }
+      .width('85%')
+      .backgroundColor($r('sys.color.comp_background_primary'))
+      .borderRadius(DesignConstants.BORDER_RADIUS_LG)
+      .shadow({ radius: 16, color: '#1A000000', offsetX: 0, offsetY: 4 })
+      .alignSelf(ItemAlign.Center)
+      .margin({ top: 80 })
+    }
   }
 
   async loadInitialRecords() {
@@ -135,8 +190,15 @@ export struct DecibelHistory {
       // 获取总记录数
       this.totalRecords = await this.recordService.getTotalCount();
 
-      // 初始加载最近50条记录
-      const initialRecords = await this.recordService.getRecordsPaged(this.PAGE_SIZE, 0);
+      // 根据过滤器状态加载记录
+      let initialRecords: DecibelRecord[];
+      if (this.currentFilters.isActive) {
+        initialRecords = await this.recordService.getFilteredRecordsPaged(this.currentFilters, this.PAGE_SIZE, 0);
+        this.totalRecords = await this.recordService.getFilteredTotalCount(this.currentFilters);
+      } else {
+        initialRecords = await this.recordService.getRecordsPaged(this.PAGE_SIZE, 0);
+      }
+      
       this.records = initialRecords;
       this.currentOffset = initialRecords.length;
 
@@ -191,6 +253,20 @@ export struct DecibelHistory {
     } catch (error) {
       console.error('加载历史记录失败:', error);
     }
+  }
+
+  private handleApplyFilters(filters: FilterConfig): void {
+    this.currentFilters = filters;
+    this.showFilterPanel = false;
+    // 重新加载过滤后的数据
+    this.loadInitialRecords();
+  }
+
+  private handleResetFilters(): void {
+    this.currentFilters = new FilterConfig(false);
+    this.showFilterPanel = false;
+    // 重新加载所有数据
+    this.loadInitialRecords();
   }
 
   emptyAll = async () => {

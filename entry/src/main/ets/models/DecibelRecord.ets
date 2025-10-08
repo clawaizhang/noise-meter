@@ -5,7 +5,7 @@ import { WeightingType } from '../constants/WeightingConstants';
 /**
  * 分贝值范围定义
  */
-interface DecibelRange {
+export interface DecibelRange {
   min: number;
   max: number;
   desc: string;
