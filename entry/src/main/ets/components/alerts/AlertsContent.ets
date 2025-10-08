@@ -12,11 +12,6 @@ export struct AlertsContent {
   // 通过AppKeys获取实时数据
   @Local private ak: AppKeys = AppStorageV2.connect(AppKeys)!;
   @Local private pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys)!;
-  // 警报状态
-  @Local private isAlarmActive: boolean = false;
-  @Local private visualAlertState: string = 'normal';
-  @Local private alertStartTime: number = 0;
-  @Local private alertDuration: number = 0;
   // 警报服务
   private alertService: AlertService = AlertService.getInstance(getContext() as common.UIAbilityContext);
 
@@ -41,12 +36,15 @@ export struct AlertsContent {
   // 检查警报状态
   private async checkAlertStatus(currentDecibel: number): Promise<void> {
     const threshold = ThresholdManager.getCurrentEffectiveThreshold();
-    const shouldAlert = currentDecibel >= threshold && this.pk.system_notification_enabled;
+    const shouldAlert = currentDecibel >= threshold; // 只基于分贝值与阈值比较
 
-    if (shouldAlert && !this.isAlarmActive) {
-      // 触发警报
+    // 使用 DataProcessingState 中的警报状态
+    const isAlarmActive = this.ak.dataProcessingState.alertState.isActive;
+
+    if (shouldAlert && !isAlarmActive) {
+      // 触发警报（总是触发，不受通知设置影响）
       await this.triggerAlarm(currentDecibel);
-    } else if (!shouldAlert && this.isAlarmActive) {
+    } else if (!shouldAlert && isAlarmActive) {
       // 解除警报
       this.clearAlarm();
     } else if (!shouldAlert) {
@@ -57,24 +55,15 @@ export struct AlertsContent {
 
   // 触发警报
   private async triggerAlarm(currentDecibel: number): Promise<void> {
-    this.isAlarmActive = true;
-    this.visualAlertState = 'alert';
-    this.alertStartTime = Date.now();
-
-    // 使用AlertService触发系统通知
+    // 状态更新由 AlertService 处理
     const threshold = ThresholdManager.getCurrentEffectiveThreshold();
-
-    // 如果系统通知启用，则触发警报
-    if (this.pk.system_notification_enabled) {
-      await this.alertService.triggerAlert(currentDecibel, threshold);
-    }
+    await this.alertService.triggerAlert(currentDecibel, threshold);
   }
 
   // 解除警报
   private clearAlarm(): void {
-    this.isAlarmActive = false;
-    this.visualAlertState = 'normal';
-    this.alertDuration = Date.now() - this.alertStartTime;
+    // 状态更新由 AlertService 处理
+    this.alertService.resetAlertState();
   }
 
   // 构建状态显示区
@@ -86,9 +75,9 @@ export struct AlertsContent {
         Circle({ width: 16, height: 16 })
           .fill(this.getStatusColor())
           .animation({
-            duration: this.isAlarmActive ? 500 : 0,
+            duration: this.ak.uiDisplayState.displayAlertState.isActive ? 500 : 0,
             curve: Curve.EaseInOut,
-            iterations: this.isAlarmActive ? -1 : 1,
+            iterations: this.ak.uiDisplayState.displayAlertState.isActive ? -1 : 1,
             playMode: PlayMode.Alternate
           })
 
@@ -114,8 +103,8 @@ export struct AlertsContent {
         .fontColor($r('sys.color.font_secondary'))
 
       // 警报持续时间（如果激活）
-      if (this.isAlarmActive) {
-        Text(`持续时间: ${this.formatDuration(Date.now() - this.alertStartTime)}`)
+      if (this.ak.uiDisplayState.displayAlertState.isActive) {
+        Text(`持续时间: ${this.ak.uiDisplayState.displayAlertState.formattedDuration}`)
           .fontSize(DesignConstants.FONT_SIZE_SM)
           .fontColor($r('sys.color.alert'))
           .fontWeight(FontWeight.Medium)
@@ -207,21 +196,6 @@ export struct AlertsContent {
       return $r('sys.color.alert');
     } else {
       return $r('sys.color.comp_background_secondary');
-    }
-  }
-
-  // 辅助方法：格式化持续时间
-  private formatDuration(duration: number): string {
-    const seconds = Math.floor(duration / 1000);
-    const minutes = Math.floor(seconds / 60);
-    const hours = Math.floor(minutes / 60);
-
-    if (hours > 0) {
-      return `${hours}小时${minutes % 60}分钟`;
-    } else if (minutes > 0) {
-      return `${minutes}分钟${seconds % 60}秒`;
-    } else {
-      return `${seconds}秒`;
     }
   }
 

@@ -1,27 +1,31 @@
-/**
- * 数据处理状态模型
- * 负责后台数据处理，不触发UI刷新
- */
+# 警报持续时间刷新 - 最终设计方案
+
+## 架构设计原则
+
+### 1. 关注点分离
+- **DataProcessingState**：负责数据计算和自动更新
+- **UIDisplayState**：负责UI状态同步
+- **AlertsContent**：只负责显示，不包含业务逻辑
+
+### 2. 数据流向
+```
+DataProcessingState (自动更新) → UIDisplayState (同步) → AlertsContent (显示)
+```
+
+## 具体实现方案
+
+### 1. DataProcessingState 中的自动更新
+
+在 DataProcessingState 中添加定时器管理：
+
+```typescript
 @ObservedV2
 export class DataProcessingState {
-  // 实时分贝值（原始数据）
-  @Trace processingDb: number = 0;
-
-  // 频谱数据（原始数据）
-  @Trace processingSpectrumData: Float32Array= new Float32Array(0);
-
-  // 峰值频率（原始数据）
-  @Trace processingPeakFreq: number = 0;
-
-  // 统计数据
-  @Trace statisticsData: StatisticsData = new StatisticsData();
-
-  // 是否在后台运行
-  @Trace isBackground: boolean = false;
-
-  // 新增：警报状态（后台持续计算）
+  // 现有字段...
+  
+  // 警报状态
   @Trace alertState: AlertState = new AlertState();
-
+  
   // 警报持续时间更新定时器
   private alertDurationTimer: number = 0;
 
@@ -59,10 +63,11 @@ export class DataProcessingState {
     this.alertState.updateDuration();
   }
 }
+```
 
-/**
- * 警报状态对象（后台持续计算）
- */
+### 2. AlertState 的响应式设计
+
+```typescript
 @ObservedV2
 export class AlertState {
   // 警报是否激活
@@ -73,7 +78,7 @@ export class AlertState {
   @Trace
   startTime: number = 0;
 
-  // 当前持续时间（毫秒）
+  // 当前持续时间（毫秒）- 这个字段变化会自动触发UI更新
   @Trace
   currentDuration: number = 0;
 
@@ -105,7 +110,7 @@ export class AlertState {
   }
 
   /**
-   * 更新持续时间（后台持续调用）
+   * 更新持续时间
    */
   updateDuration(): void {
     if (this.isActive) {
@@ -124,62 +129,34 @@ export class AlertState {
     this.lastUpdateTime = Date.now();
   }
 }
+```
 
-/**
- * 统计数据对象
- */
-@ObservedV2
-export class StatisticsData {
-  // 最小分贝值
-  @Trace
-  minDb: number = 0;
+### 3. 移除 AlertsContent 中的业务逻辑
 
-  // 最大分贝值
-  @Trace
-  maxDb: number = 0;
+需要从 AlertsContent 中移除：
+- `refreshTimer` 字段
+- `startDurationRefresh()` 方法
+- `stopDurationRefresh()` 方法
+- 定时器相关的生命周期调用
 
-  // 平均分贝值
-  @Trace
-  avgDb: number = 0;
+### 4. 保持其他组件的修改
 
-  // 测量时长（秒）
-  @Trace
-  duration: number = 0;
+其他组件的修改保持不变：
+- **UIDisplayState**：同步警报显示状态
+- **AlertService**：更新 DataProcessingState 中的警报状态
+- **AudioController**：可以移除 updateAlertDuration 调用（因为 DataProcessingState 自动更新）
 
-  // 测量开始时间
-  @Trace
-  startTime: number = 0;
+## 优势
 
-  constructor() {
-    this.startTime = Date.now();
-  }
+1. **架构清晰**：数据层完全负责数据更新
+2. **性能优化**：只有一个定时器，避免重复更新
+3. **维护简单**：业务逻辑集中在 DataProcessingState
+4. **扩展性好**：易于添加其他自动更新功能
+5. **符合双管线架构**：DataProcessingState 持续运行，UIDisplayState 控制UI同步
 
-  /**
-   * 更新统计数据
-   */
-  updateStatistics(currentDb:number,values: number[]): void {
+## 实现步骤
 
-    if (values.length === 0) {
-      this.minDb = currentDb;
-      this.maxDb = currentDb;
-      this.avgDb = currentDb;
-    } else {
-      this.minDb = Math.min(...values);
-      this.maxDb = Math.max(...values);
-      this.avgDb = Math.round(values.reduce((sum, val) => sum + val, 0) / values.length);
-    }
-
-    this.duration = Number(((Date.now() - this.startTime) / 1000).toFixed(1));
-  }
-
-  /**
-   * 重置统计数据
-   */
-  reset(): void {
-    this.minDb = 0;
-    this.maxDb = 0;
-    this.avgDb = 0;
-    this.duration = 0;
-    this.startTime = Date.now();
-  }
-}
+1. 在 DataProcessingState 中添加自动更新定时器
+2. 从 AlertsContent 中移除定时器逻辑
+3. 验证响应式更新是否正常工作
+4. 测试前后台切换功能

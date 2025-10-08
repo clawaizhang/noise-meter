@@ -10,65 +10,65 @@ const TAG = 'AlertService';
 const DOMAIN = 0xFF00;
 
 /**
- * 警报频率控制器 - 管理警报触发频率
+ * 通知频率控制器 - 管理通知发送频率
  */
-interface AlertCount {
-  alertCount: number;
-  lastAlertTime: number;
+interface NotificationFrequencyStatus {
+  notificationCount: number;
+  lastNotificationTime: number;
 }
 
 class AlertFrequencyController {
-  private lastAlertTime: number = 0;
-  private alertCount: number = 0;
+  private lastNotificationTime: number = 0;
+  private notificationCount: number = 0;
   private readonly BASE_SILENT_PERIOD = 30000; // 30秒基础静默期
   private readonly PROGRESSIVE_INTERVALS = [30000, 60000, 120000, 300000]; // 渐进间隔
 
   /**
-   * 检查是否可以触发警报
+   * 检查是否可以发送通知
    */
-  canTriggerAlert(): boolean {
+  canSendNotification(): boolean {
     const now = Date.now();
     
-    if (this.lastAlertTime === 0) {
+    if (this.lastNotificationTime === 0) {
       return true;
     }
 
-    const elapsed = now - this.lastAlertTime;
+    const elapsed = now - this.lastNotificationTime;
     const currentInterval = this.getCurrentInterval();
     
     return elapsed >= currentInterval;
   }
 
   /**
-   * 获取当前警报间隔
+   * 获取当前通知间隔
    */
   private getCurrentInterval(): number {
-    const index = Math.min(this.alertCount, this.PROGRESSIVE_INTERVALS.length - 1);
+    const index = Math.min(this.notificationCount, this.PROGRESSIVE_INTERVALS.length - 1);
     return this.PROGRESSIVE_INTERVALS[index];
   }
 
   /**
-   * 记录警报触发
+   * 记录通知发送
    */
-  recordAlert(): void {
-    this.lastAlertTime = Date.now();
-    this.alertCount++;
+  recordNotificationSent(): void {
+    this.lastNotificationTime = Date.now();
+    this.notificationCount++;
   }
 
   /**
-   * 重置警报状态
+   * 重置通知状态
    */
   reset(): void {
-    this.alertCount = 0;
+    this.notificationCount = 0;
   }
 
   /**
-   * 获取警报状态信息
+   * 获取通知状态信息
    */
-  getStatus(): AlertCount {
+  getStatus(): NotificationFrequencyStatus {
     return {
-      alertCount: this.alertCount,
-      lastAlertTime: this.lastAlertTime
+      notificationCount: this.notificationCount,
+      lastNotificationTime: this.lastNotificationTime
     };
   }
 }
@@ -119,20 +119,29 @@ export class AlertService {
    * @param threshold 阈值
    */
   public async triggerAlert(currentDecibel: number, threshold: number): Promise<void> {
-    // 检查频率控制
-    if (!this.frequencyController.canTriggerAlert()) {
-      hilog.info(DOMAIN, TAG, '警报在静默期内，忽略触发');
-      return;
-    }
-
     try {
-      // 发布通知
-      await this.publishAlertNotification(currentDecibel, threshold);
+      // 1. 总是更新 DataProcessingState 中的警报状态（没有频率限制）
+      const appKeys: AppKeys = AppStorageV2.connect(AppKeys)!;
+      appKeys.dataProcessingState.alertState.triggerAlert();
       
-      // 记录警报触发
-      this.frequencyController.recordAlert();
+      // 2. 检查是否启用通知
+      if (!this.pk.system_notification_enabled) {
+        hilog.info(DOMAIN, TAG, `警报触发但通知已关闭: ${currentDecibel}dB > ${threshold}dB`);
+        return;
+      }
       
-      hilog.info(DOMAIN, TAG, `警报触发成功: ${currentDecibel}dB > ${threshold}dB, 警报次数: ${this.frequencyController.getStatus().alertCount}`);
+      // 3. 检查是否可以发送通知（有频率限制）
+      if (this.frequencyController.canSendNotification()) {
+        // 发布通知
+        await this.publishAlertNotification(currentDecibel, threshold);
+        
+        // 记录通知发送
+        this.frequencyController.recordNotificationSent();
+        
+        hilog.info(DOMAIN, TAG, `警报触发成功并发送通知: ${currentDecibel}dB > ${threshold}dB`);
+      } else {
+        hilog.info(DOMAIN, TAG, `警报触发但通知在静默期内: ${currentDecibel}dB > ${threshold}dB`);
+      }
     } catch (error) {
       const err = error as BusinessError;
       hilog.error(DOMAIN, TAG, `触发警报失败: ${err.code}, ${err.message}`);
@@ -167,14 +176,18 @@ export class AlertService {
    * 重置警报状态（当噪音恢复正常时调用）
    */
   public resetAlertState(): void {
+    // 更新 DataProcessingState 中的警报状态
+    const appKeys: AppKeys = AppStorageV2.connect(AppKeys)!;
+    appKeys.dataProcessingState.alertState.clearAlert();
+    
     this.frequencyController.reset();
     hilog.info(DOMAIN, TAG, '警报状态已重置');
   }
 
   /**
-   * 获取警报状态信息
+   * 获取通知频率状态信息
    */
-  public getAlertStatus(): AlertCount {
+  public getAlertStatus(): NotificationFrequencyStatus {
     return this.frequencyController.getStatus();
   }
 
