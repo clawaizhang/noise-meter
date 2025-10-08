@@ -7,11 +7,11 @@ import { AudioPlayer } from '../../components/business/AudioPlayer';
 import { DecibelRecord } from '../../models/DecibelRecord';
 import { FileUtils } from '../../utils/FileUtils';
 import { DesignConstants } from '../../constants/DesignConstants';
-import { AppStorageV2, curves, SymbolGlyphModifier } from '@kit.ArkUI';
-import { DialogHub, InfSheet } from '@hadss/dialoghub';
-import { DialogStyleManager } from '../../utils/DialogStyleManager';
+import { AppStorageV2, curves } from '@kit.ArkUI';
+import { DialogHub } from '@hadss/dialoghub';
 import { AppKeys } from '../../models/AppKeys';
 import { Throttle } from '../../utils/Debounce';
+
 
 class DecibelRecordDataSource implements IDataSource {
   private records: DecibelRecord[];
@@ -85,7 +85,9 @@ export struct DecibelHistory {
   @Local pendingDeleteId: string = ''; // 当前正在删除的记录ID
   @Local pendingDeleteAudioId: string = '';
   @Local shouChangMode: boolean = false;
-  @Local deleteMode: boolean = false;
+  @Local deleteRecordMode: boolean = false;
+  @Local deleteAudioMode: boolean = false;
+  @Local showMenu: boolean = false;
   @Local as: AppKeys = AppStorageV2.connect(AppKeys)!;
   @Local isLoading: boolean = false;
   @Local isLoadingMore: boolean = false;
@@ -109,26 +111,11 @@ export struct DecibelHistory {
       } else {
         this.ListLayoutView()
       }
-    }.id('rbgnolqiwuejrbgvwoi').title('历史记录').backgroundColor($r('sys.color.background_secondary')).menus([{
-      value: '收藏',
-      icon: $r('app.media.ic_favorite'),
+    }.title('历史记录').backgroundColor($r('sys.color.background_secondary')).menus([{
+      value: '',
+      icon: $r('app.media.ic_menus_more'),
       action: () => {
-        this.shouChangMode = !this.shouChangMode;
-        if (this.shouChangMode) {
-          this.deleteMode = false;
-        }
-      }
-    }, {
-      value: '编辑',
-      icon: $r('app.media.ic_document_edit'),
-      action: () => {
-        this.deleteMode = !this.deleteMode;
-        if (this.deleteMode) {
-          this.shouChangMode = false;
-        } else {
-          this.pendingDeleteId = undefined;
-          this.pendingDeleteAudioId = undefined;
-        }
+        this.showMenu = true;
       }
     }])
   }
@@ -271,7 +258,8 @@ export struct DecibelHistory {
   shouChangShanChuButton(record: DecibelRecord) {
     // 右侧按钮组
     Column({ space: 8 }) {
-      if (this.deleteMode) {
+      // 删除记录模式按钮
+      if (this.deleteRecordMode) {
         // 删除确认按钮
         if (record.id === this.pendingDeleteId) {
           Button('删除并清空检测报告')
@@ -302,6 +290,10 @@ export struct DecibelHistory {
               });
             });
         }
+      }
+
+      // 删除音频模式按钮
+      if (this.deleteAudioMode) {
         if (record.id === this.pendingDeleteAudioId) {
           Button('确认删除音频文件')
             .height(36)
@@ -333,32 +325,31 @@ export struct DecibelHistory {
               });
           }
         }
+      }
 
-      } else {
-        // 收藏按钮
-        if (this.shouChangMode) {
-          Button(record.isFavorite ? '取消收藏' : '收藏')
-            .fontColor(record.isFavorite ? '#FF4081' : Color.White)
-            .type(ButtonType.Capsule)
-            .height(36)
-            .backgroundColor(record.isFavorite ? '#FFE0EB' : '#FF4081')
-            .animation({ curve: Curve.EaseOut })
-            .transition(TransitionEffect.scale({ x: 0, y: 0 })
-              .combine(TransitionEffect.opacity(1))
-              .animation({ curve: curves.springMotion(0.6, 0.8) }))
-            .onClick(() => {
-              Throttle.click(async () => {
-                record.isFavorite = !record.isFavorite;
-                await this.recordService.updateRecord(record);
-                // 显示操作提示
-                this.promptAction.showToast({
-                  message: record.isFavorite ? '已添加到收藏' : '已取消收藏',
-                  duration: 2000,
-                  bottom: '50%'
-                });
+      // 收藏模式按钮
+      if (this.shouChangMode) {
+        Button(record.isFavorite ? '取消收藏' : '收藏')
+          .fontColor(record.isFavorite ? '#FF4081' : Color.White)
+          .type(ButtonType.Capsule)
+          .height(36)
+          .backgroundColor(record.isFavorite ? '#FFE0EB' : '#FF4081')
+          .animation({ curve: Curve.EaseOut })
+          .transition(TransitionEffect.scale({ x: 0, y: 0 })
+            .combine(TransitionEffect.opacity(1))
+            .animation({ curve: curves.springMotion(0.6, 0.8) }))
+          .onClick(() => {
+            Throttle.click(async () => {
+              record.isFavorite = !record.isFavorite;
+              await this.recordService.updateRecord(record);
+              // 显示操作提示
+              this.promptAction.showToast({
+                message: record.isFavorite ? '已添加到收藏' : '已取消收藏',
+                duration: 2000,
+                bottom: '50%'
               });
             });
-        }
+          });
       }
     }.justifyContent(FlexAlign.End).alignItems(HorizontalAlign.End).transition(TransitionEffect.opacity(1)
       .animation({ curve: curves.springMotion(0.6, 0.8) }))
@@ -542,6 +533,105 @@ export struct DecibelHistory {
    * 空状态视图
    */
   @Builder
+  MenuBuilder() {
+    Column({ space: 8 }) {
+      // 收藏菜单项
+      Button() {
+        Row() {
+          Image($r('app.media.ic_favorite'))
+            .width(20)
+            .height(20)
+            .fillColor($r('sys.color.brand'))
+            .margin({ right: 8 })
+          Text('收藏')
+            .fontSize(16)
+            .fontColor($r('sys.color.font_primary'))
+        }
+        .width('100%')
+        .justifyContent(FlexAlign.Start)
+      }
+      .width('100%')
+      .height(40)
+      .padding({ left: 16, right: 16 })
+      .backgroundColor($r('sys.color.comp_background_primary'))
+      .borderRadius(8)
+      .onClick(() => {
+        this.shouChangMode = !this.shouChangMode;
+        if (this.shouChangMode) {
+          this.deleteRecordMode = false;
+          this.deleteAudioMode = false;
+        }
+        this.showMenu = false;
+      })
+
+      // 删除记录菜单项
+      Button() {
+        Row() {
+          Image($r('app.media.ic_delete'))
+            .width(20)
+            .height(20)
+            .fillColor($r('sys.color.brand'))
+            .margin({ right: 8 })
+          Text('删除记录')
+            .fontSize(16)
+            .fontColor($r('sys.color.font_primary'))
+        }
+        .width('100%')
+        .justifyContent(FlexAlign.Start)
+      }
+      .width('100%')
+      .height(40)
+      .padding({ left: 16, right: 16 })
+      .backgroundColor($r('sys.color.comp_background_primary'))
+      .borderRadius(8)
+      .onClick(() => {
+        this.deleteRecordMode = !this.deleteRecordMode;
+        if (this.deleteRecordMode) {
+          this.shouChangMode = false;
+          this.deleteAudioMode = false;
+        } else {
+          this.pendingDeleteId = '';
+        }
+        this.showMenu = false;
+      })
+
+      // 删除音频菜单项
+      Button() {
+        Row() {
+          Image($r('app.media.ic_audio_analysis'))
+            .width(20)
+            .height(20)
+            .fillColor($r('sys.color.brand'))
+            .margin({ right: 8 })
+          Text('删除音频')
+            .fontSize(16)
+            .fontColor($r('sys.color.font_primary'))
+        }
+        .width('100%')
+        .justifyContent(FlexAlign.Start)
+      }
+      .width('100%')
+      .height(40)
+      .padding({ left: 16, right: 16 })
+      .backgroundColor($r('sys.color.comp_background_primary'))
+      .borderRadius(8)
+      .onClick(() => {
+        this.deleteAudioMode = !this.deleteAudioMode;
+        if (this.deleteAudioMode) {
+          this.shouChangMode = false;
+          this.deleteRecordMode = false;
+        } else {
+          this.pendingDeleteAudioId = '';
+        }
+        this.showMenu = false;
+      })
+    }
+    .padding(8)
+    .borderRadius(12)
+    .width(140)
+  }
+
+  @Builder
   EmptyStateView() {
     Column() {
       Image($r('app.media.ic_empty'))
@@ -565,6 +655,13 @@ export struct DecibelHistory {
    */
   @Builder
   ListLayoutView() {
+    Row().width('100%').bindContextMenu(this.showMenu, this.MenuBuilder, {
+      placement: Placement.BottomRight,
+      enableHoverMode: true,
+      onDisappear: () => {
+        this.showMenu = false;
+      }
+    })
     Scroll() {
       Column({ space: 16 }) {
         Text(`共 ${this.totalRecords} 条记录，已加载 ${this.records.length} 条`)

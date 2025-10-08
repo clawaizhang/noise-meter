@@ -170,7 +170,7 @@ export default class EntryAbility extends UIAbility {
           hilog.error(DOMAIN, TAG, `Get wantAgent failed, error: ${JSON.stringify(err)}`);
           return;
         }
-        if (PersistenceV2.connect(PreferenceKeys)!.background_running) {
+        if (PersistenceV2.connect(PreferenceKeys,() => new PreferenceKeys())!.background_running) {
           backgroundTaskManager.startBackgroundRunning(this.context,
             backgroundTaskManager.BackgroundMode.AUDIO_RECORDING,
             agent,
