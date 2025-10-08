@@ -75,9 +75,9 @@ export struct AlertsContent {
         Circle({ width: 16, height: 16 })
           .fill(this.getStatusColor())
           .animation({
-            duration: this.ak.uiDisplayState.displayAlertState.isActive ? 500 : 0,
+            duration: this.ak.isDisplayApp && this.ak.uiDisplayState.displayAlertState.isActive ? 500 : 0,
             curve: Curve.EaseInOut,
-            iterations: this.ak.uiDisplayState.displayAlertState.isActive ? -1 : 1,
+            iterations: this.ak.isDisplayApp && this.ak.uiDisplayState.displayAlertState.isActive ? -1 : 1,
             playMode: PlayMode.Alternate
           })
 
@@ -93,7 +93,7 @@ export struct AlertsContent {
         .fontWeight(FontWeight.Bold)
         .fontColor(this.getStatusColor())
         .animation({
-          duration: 300,
+          duration: this.ak.isDisplayApp ? 300 : 0,
           curve: Curve.EaseInOut
         })
 
@@ -116,7 +116,7 @@ export struct AlertsContent {
     .borderRadius(DesignConstants.BORDER_RADIUS_XL)
     .width('100%')
     .animation({
-      duration: 300,
+      duration: this.ak.isDisplayApp ? 300 : 0,
       curve: Curve.EaseInOut
     })
   }

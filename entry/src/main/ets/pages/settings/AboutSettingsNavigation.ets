@@ -98,7 +98,7 @@ export struct AboutSettings {
               .textAlign(TextAlign.Center)
 
             // 版本号
-            Text('v1.5.31')
+            Text('v1.5.32')
               .fontSize(DesignConstants.FONT_SIZE_SM)
               .fontColor($r('sys.color.font_tertiary'))
               .textAlign(TextAlign.Center)

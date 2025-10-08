@@ -34,6 +34,7 @@ export class DataProcessingState {
    * 启动警报持续时间自动更新
    */
   private startAlertDurationUpdate(): void {
+    this.stopAlertDurationUpdate();
     // 每秒更新一次警报持续时间
     this.alertDurationTimer = setInterval(() => {
       if (this.alertState.isActive) {
@@ -52,12 +53,6 @@ export class DataProcessingState {
     }
   }
 
-  /**
-   * 更新警报持续时间（供外部调用）
-   */
-  updateAlertDuration(): void {
-    this.alertState.updateDuration();
-  }
 }
 
 /**
