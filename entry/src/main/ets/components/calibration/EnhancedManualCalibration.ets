@@ -11,7 +11,7 @@ import { Throttle } from '../../utils/Debounce';
 @ComponentV2
 export struct EnhancedManualCalibration {
   @Param @Require calibrationValue: number = 0; // 当前校准值
-  @Param @Require onValueChange: (value: number) => void; // 值变化回调
+  @Event onValueChange: (value: number) => void; // 值变化回调
   @Local private isDragging: boolean = false; // 是否正在拖拽
   @Local private showValueTip: boolean = false; // 是否显示数值提示
 

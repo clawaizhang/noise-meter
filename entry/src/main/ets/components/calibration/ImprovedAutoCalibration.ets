@@ -11,7 +11,7 @@ import { Throttle } from '../../utils/Debounce';
 
 @ComponentV2
 export struct ImprovedAutoCalibration {
-  @Param @Require onStartCalibration: () => void; // 开始校准回调
+  @Event onStartCalibration: () => void; // 开始校准回调
   @Param @Require calibrationValue: number = 0; // 当前校准值
   @Param @Require isCalibrating: boolean = false; // 是否正在校准
   @Param @Require calibrationProgress: number = 0; // 校准进度
