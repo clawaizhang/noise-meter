@@ -271,6 +271,6 @@ function drawPeakFrequency(
   canvasContext.fillText(
     `${Math.round(processResult.peakFrequency)}Hz`,
     processResult.peakX,
-    processResult.peakY
+    processResult.peakY - 30
   );
 }
