@@ -722,6 +722,7 @@ export struct DecibelHistory {
         } else {
           this.exitAllModes();
         }
+        this.showFilterPanel = false;
         this.showMenu = false;
       })
 
@@ -754,6 +755,7 @@ export struct DecibelHistory {
         } else {
           this.exitAllModes();
         }
+        this.showFilterPanel = false;
         this.showMenu = false;
       })
 
@@ -786,6 +788,7 @@ export struct DecibelHistory {
         } else {
           this.exitAllModes();
         }
+        this.showFilterPanel = false;
         this.showMenu = false;
       })
     }
