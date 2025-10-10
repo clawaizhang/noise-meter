@@ -2,6 +2,7 @@ import { privacyManager } from '@kit.StoreKit';
 import { common, Want } from '@kit.AbilityKit';
 import { BusinessError } from '@kit.BasicServicesKit';
 import { Throttle } from '../utils/Debounce';
+import { CommentService } from '../services/CommentService';
 
 @Extend(Image)
 function itemIcon() {
@@ -145,17 +146,15 @@ export struct SettingsDeviceManager {
         .margin({ bottom: 30, top: 12 })
         .backgroundColor($r('app.color.toggle_active'))
         .onClick(() => {
-          Throttle.click(() => {
-            const context = getContext(this) as common.UIAbilityContext;
-            const want: Want = {
-              action: 'ohos.want.action.appdetail',
-              uri: 'store://appgallery.huawei.com/app/detail?id=yu.zhang.myapplication.device_manager&action=write-review'
-            };
-            context.startAbility(want).then(() => {
-              console.info('Succeeded in starting Ability successfully.');
-            }).catch((err: BusinessError) => {
-              console.error(`Failed to start ability. Code: ${err.code}, message: ${err.message}`);
-            });
+          Throttle.click(async () => {
+            try {
+              const context = getContext(this) as common.UIAbilityContext;
+              const commentService = CommentService.getInstance();
+              await commentService.showCommentDialog(context);
+              console.info('评论对话框显示成功');
+            } catch (error) {
+              console.error(`显示评论对话框失败: ${error instanceof Error ? error.message : String(error)}`);
+            }
           })
         })
     }

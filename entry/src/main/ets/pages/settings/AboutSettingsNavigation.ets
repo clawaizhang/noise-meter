@@ -8,6 +8,7 @@ import { PrivacyPolicyViewBuilder } from '../../components/privacy/PrivacyPolicy
 import { DialogHub, InfSheet } from '@hadss/dialoghub';
 import { DialogStyleManager } from '../../utils/DialogStyleManager';
 import { Throttle } from '../../utils/Debounce';
+import { CommentService } from '../../services/CommentService';
 
 @Extend(Image)
 function itemIcon() {
@@ -210,17 +211,15 @@ export struct AboutSettings {
               offsetY: 1
             })
             .onClick(() => {
-              Throttle.click(() => {
-                const context = getContext(this) as common.UIAbilityContext;
-                const want: Want = {
-                  action: 'ohos.want.action.appdetail',
-                  uri: 'store://appgallery.huawei.com/app/detail?id=yu.zhang.myapplication.noise_meter_pro&action=write-review'
-                };
-                context.startAbility(want).then(() => {
-                  console.info('Succeeded in starting Ability successfully.');
-                }).catch((err: BusinessError) => {
-                  console.error(`Failed to start ability. Code: ${err.code}, message: ${err.message}`);
-                });
+              Throttle.click(async () => {
+                try {
+                  const context = getContext(this) as common.UIAbilityContext;
+                  const commentService = CommentService.getInstance();
+                  await commentService.showCommentDialog(context);
+                  console.info('评论对话框显示成功');
+                } catch (error) {
+                  console.error(`显示评论对话框失败: ${error instanceof Error ? error.message : String(error)}`);
+                }
               })
             })
         }

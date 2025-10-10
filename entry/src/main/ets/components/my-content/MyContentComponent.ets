@@ -9,6 +9,8 @@ import { BusinessError } from '@kit.BasicServicesKit';
 import { DisplayModeComponent } from '../display/DisplayModeComponent';
 import { MembershipStatusCard } from '../membership/MembershipStatusCard';
 import { DesignConstants } from '../../constants/DesignConstants';
+import { Throttle } from '../../utils/Debounce';
+import { CommentService } from '../../services/CommentService';
 
 /**
  * 我的内容页面组件
@@ -19,17 +21,18 @@ export struct MyContentComponent {
   @Param currentIndex: number = 2
   @Local pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys)!;
 
-  // 跳转到应用商店评价页面
-  private navigateToAppStoreRating = () => {
-    const context = getContext(this) as common.UIAbilityContext;
-    const want: Want = {
-      action: 'ohos.want.action.appdetail',
-      uri: 'store://appgallery.huawei.com/app/detail?id=yu.zhang.myapplication.noise_meter_pro&action=write-review'
-    };
-    context.startAbility(want).then(() => {
-      console.info('Succeeded in starting App Store rating page successfully.');
-    }).catch((err: BusinessError) => {
-      console.error(`Failed to start App Store rating page. Code: ${err.code}, message: ${err.message}`);
+  // 显示评论对话框
+  private showCommentDialog = () => {
+    Throttle.click(async () => {
+      try {
+        const context = getContext(this) as common.UIAbilityContext;
+        const commentService = CommentService.getInstance();
+        await commentService.showCommentDialog(context);
+        console.info('评论对话框显示成功');
+      } catch (error) {
+        console.error(`显示评论对话框失败: ${error instanceof Error ? error.message : String(error)}`);
+        // 可以在这里添加用户友好的错误提示
+      }
     });
   }
 
@@ -128,7 +131,7 @@ export struct MyContentComponent {
             $r('app.media.ic_smile'),
             '五星好评',
             () => {
-              this.navigateToAppStoreRating();
+              this.showCommentDialog();
             }
           )
 
