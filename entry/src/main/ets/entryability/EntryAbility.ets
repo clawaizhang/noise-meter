@@ -28,7 +28,6 @@ export default class EntryAbility extends UIAbility {
 
   async onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): Promise<void> {
     hilog.info(DOMAIN, TAG, 'Ability onCreate');
-
     // 初始化FFT优化 - 预缓存窗函数
     initializeFFTOptimizations();
   }
@@ -56,6 +55,7 @@ export default class EntryAbility extends UIAbility {
     windowManager.registerWindowStage(windowStage);
     windowManager.loadContent('pages/Index', () => {
       AppUtil.init(this.context);
+      PersistenceV2.connect(PreferenceKeys,() => new PreferenceKeys());
       PersistenceV2.notifyOnError((key: string, reason: string, msg: string) => {
         console.error(`error key: ${key}, reason: ${reason}, message: ${msg}`);
       });
@@ -170,7 +170,7 @@ export default class EntryAbility extends UIAbility {
           hilog.error(DOMAIN, TAG, `Get wantAgent failed, error: ${JSON.stringify(err)}`);
           return;
         }
-        if (PersistenceV2.connect(PreferenceKeys,() => new PreferenceKeys())!.background_running) {
+        if (PersistenceV2.connect(PreferenceKeys)!.background_running) {
           backgroundTaskManager.startBackgroundRunning(this.context,
             backgroundTaskManager.BackgroundMode.AUDIO_RECORDING,
             agent,

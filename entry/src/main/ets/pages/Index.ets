@@ -42,7 +42,7 @@ struct Index {
   @Provider(navigationStack) navStack: NavPathStack = new NavPathStack()
   @Local isInitialized: boolean = false;
   @Local isLoading: boolean = true;
-  @Local pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys, () => new PreferenceKeys())!;
+  @Local pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys)!;
   @Local private currentConfig: ThresholdConfig =
     PersistenceV2.connect(ThresholdConfig, () => DEFAULT_THRESHOLD_CONFIG)!;
   @Local as: AppKeys = AppStorageV2.connect(AppKeys, () => new AppKeys())!;
