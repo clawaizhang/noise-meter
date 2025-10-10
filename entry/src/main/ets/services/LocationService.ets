@@ -1,6 +1,8 @@
 import common from '@ohos.app.ability.common';
 import { LocationUtil } from '@pura/harmony-utils';
 import { SpatialStats } from '../types/NoiseStats';
+import { deviceInfo } from '@kit.BasicServicesKit';
+import { geoLocationManager } from '@kit.LocationKit';
 
 /**
  * 位置信息
@@ -56,15 +58,28 @@ export class LocationService {
           address: '设备不支持定位服务' || ''
         };
       } else {
-        const location = await LocationUtil.getCurrentLocationEasy();
-        const geoAddress = await LocationUtil.getAddressFromLocation(location.latitude, location.longitude);
-        this.cachedLocation = {
-          coordinates: `${location.latitude},${location.longitude}`,
-          address: geoAddress.placeName || ''
-        };
+        if (deviceInfo.distributionOSApiVersion >= 60000) {
+          let geoPoi = await geoLocationManager.getPoiInfo();
+          if (geoPoi) {
+            let confidence = 0;
+            geoPoi.poiArray.forEach(poi => {
+              if (poi.confidence > confidence) {
+                confidence = poi.confidence;
+                this.cachedLocation = {
+                  coordinates: `${poi.latitude},${poi.longitude}`,
+                  address: poi.name || ''
+                };
+              }
+            });
+          } else {
+            await this.setLocationLegacy();
+          }
+        } else {
+          await this.setLocationLegacy();
+        }
       }
 
-      return this.cachedLocation;
+      return this.cachedLocation!;
     } catch (error) {
       this.cachedLocation = {
         coordinates: '未获取到位置信息',
@@ -72,6 +87,15 @@ export class LocationService {
       };
       throw new Error('获取位置信息失败');
     }
+  }
+
+  private async setLocationLegacy() {
+    const location = await LocationUtil.getCurrentLocationEasy();
+    const geoAddress = await LocationUtil.getAddressFromLocation(location.latitude, location.longitude);
+    this.cachedLocation = {
+      coordinates: `${location.latitude},${location.longitude}`,
+      address: geoAddress.placeName || ''
+    };
   }
 
   /**
