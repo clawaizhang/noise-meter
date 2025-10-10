@@ -87,7 +87,7 @@ export struct NoiseChart {
               this.canvasContext.clearRect(0, 0, this.canvasContext.width, this.canvasContext.height);
 
               // 绘制背景
-              this.canvasContext.fillStyle = "#000000";
+              this.canvasContext.fillStyle = "#0D1B2A";
               this.canvasContext.fillRect(margin.left, margin.top, chartWidth, chartHeight);
 
               // 设置字体样式
@@ -275,7 +275,7 @@ export struct NoiseChart {
               this.canvasContext.stroke();
             })
         }
-        .backgroundColor('#000000')
+        .backgroundColor('#0D1B2A')
         .height(186)
         .borderRadius(16)
         .padding(16)

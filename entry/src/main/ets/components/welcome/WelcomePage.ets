@@ -63,17 +63,12 @@ export struct WelcomePage {
     Column({ space: DesignConstants.SPACING_XL }) {
       // 动画应用图标
       Stack({ alignContent: Alignment.Center }) {
-        // 品牌色半透明背景光晕效果
-        Circle({ width: 140, height: 140 })
-          .fill($r('sys.color.brand'))
-          .opacity(0.1)
-          .scale({ x: this.iconScale, y: this.iconScale })
 
         // 应用图标 - 移除边框和阴影，更简洁现代
         Image($r('app.media.app_icon_fore'))
           .width(120)
           .height(120)
-          .backgroundColor('#e5000000')
+          .backgroundColor('#e50D1B2A')
           .borderRadius(DesignConstants.BORDER_RADIUS_LG)
           .scale({ x: this.iconScale, y: this.iconScale })
           .rotate({ angle: this.iconRotation })

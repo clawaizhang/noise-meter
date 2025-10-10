@@ -347,6 +347,7 @@ export struct AudioController {
     // 重置 weightingTypes 数组
     this.timedWeightingTypes = [];
 
+    this.ak.dataProcessingState.statisticsData.reset();
     this.ak.uiDisplayState.reset() ;
 
     // 通知UI更新
@@ -470,6 +471,17 @@ export struct AudioController {
     this.timedAudioBuffers = this.timedAudioBuffers.filter(item => item.timestamp >= cutoffTime);
 
     this.originAudioBuffers = this.originAudioBuffers.filter(item => item.timestamp >= cutoffTime);
+
+    // 如果数据被清理，重置增量统计并重新计算基于剩余数据的统计
+    if (originalValuesLength !== this.timedValues.length) {
+      this.ak.dataProcessingState.statisticsData.resetIncremental();
+      // 重新计算基于剩余数据的统计
+      const remainingValues = this.timedValues.map(item => item.value);
+      if (remainingValues.length > 0) {
+        const lastValue = remainingValues[remainingValues.length - 1];
+        this.ak.dataProcessingState.statisticsData.updateStatistics(lastValue, remainingValues);
+      }
+    }
 
     if (originalValuesLength !== this.timedValues.length ||
       originalAudioBuffersLength !== this.timedAudioBuffers.length) {

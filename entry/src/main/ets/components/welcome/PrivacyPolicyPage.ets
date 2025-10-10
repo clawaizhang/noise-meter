@@ -216,7 +216,7 @@ export struct PrivacyPolicyPage {
         Image($r('app.media.app_icon_fore'))
           .width(80)
           .height(80)
-          .backgroundColor('#e5000000')
+          .backgroundColor('#e50D1B2A')
           .borderRadius(DesignConstants.BORDER_RADIUS_MD)
 
         Text($r('app.string.EntryAbility_label'))

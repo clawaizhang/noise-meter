@@ -305,7 +305,7 @@ struct Index {
         // 显示加载中
         Column() {
           Image($r('app.media.app_icon_fore'))
-            .backgroundColor('#e5000000')
+            .backgroundColor('#e50D1B2A')
             .width(128)
             .height(128)
             .borderRadius(16)

@@ -82,7 +82,7 @@ export struct AboutSettings {
               .width(80)
               .height(80)
               .borderRadius(16)
-              .backgroundColor('#e5000000')
+              .backgroundColor('#e50D1B2A')
               .objectFit(ImageFit.Contain)
 
             // 应用名称
