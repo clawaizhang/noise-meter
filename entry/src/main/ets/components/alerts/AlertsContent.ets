@@ -92,10 +92,6 @@ export struct AlertsContent {
         .fontSize(48)
         .fontWeight(FontWeight.Bold)
         .fontColor(this.getStatusColor())
-        .animation({
-          duration: this.ak.isDisplayApp ? 300 : 0,
-          curve: Curve.EaseInOut
-        })
 
       // 阈值信息
       Text(`阈值: ${ThresholdManager.getCurrentEffectiveThreshold()}dB`)
@@ -115,10 +111,7 @@ export struct AlertsContent {
     .backgroundBlurStyle(BlurStyle.COMPONENT_THICK)
     .borderRadius(DesignConstants.BORDER_RADIUS_XL)
     .width('100%')
-    .animation({
-      duration: this.ak.isDisplayApp ? 300 : 0,
-      curve: Curve.EaseInOut
-    })
+
   }
 
   // 构建环境信息区
