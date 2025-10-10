@@ -104,7 +104,7 @@ export struct DecibelDisplayComponent {
     .borderRadius(0)
   }
 
-  @Monitor('as.windowWidth','as.windowHeight')
+  @Monitor('ak.windowWidth','ak.windowHeight')
   onWindowSizeChange(monitor: IMonitor) {
     this.changeDisplay();
   }

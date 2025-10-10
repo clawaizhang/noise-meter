@@ -45,7 +45,7 @@ struct Index {
   @Local pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys)!;
   @Local private currentConfig: ThresholdConfig =
     PersistenceV2.connect(ThresholdConfig, () => DEFAULT_THRESHOLD_CONFIG)!;
-  @Local as: AppKeys = AppStorageV2.connect(AppKeys, () => new AppKeys())!;
+  @Local ak: AppKeys = AppStorageV2.connect(AppKeys)!;
   usePrivacy: boolean = true;
   @Local private showWelcomeGuide: boolean = false;
   private relationalStoreService: RelationalStoreService = RelationalStoreService.getInstance();
@@ -208,7 +208,7 @@ struct Index {
   private initDisplayManager(): void {
     const displayManager: DisplayManager = DisplayManager.getInstance();
     displayManager.onDisplay(() => {
-      this.as.isDisplayApp = true;
+      this.ak.isDisplayApp = true;
 
       // APP显示时恢复使用追踪
       const usageTrackingService = UsageTrackingService.getInstance();
@@ -218,7 +218,7 @@ struct Index {
       usageTrackingService.immediateDateCheck();
     });
     displayManager.onHidden(() => {
-      this.as.isDisplayApp = false;
+      this.ak.isDisplayApp = false;
 
       // APP隐藏时暂停使用追踪
       const usageTrackingService = UsageTrackingService.getInstance();

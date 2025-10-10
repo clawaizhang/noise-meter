@@ -154,7 +154,7 @@ export struct DecibelMeter {
     this.stopCountdownTimer();
   }
 
-  @Monitor('as.windowWidth','as.windowHeight')
+  @Monitor('ak.windowWidth','ak.windowHeight')
   onWindowSizeChange(monitor: IMonitor) {
     // 获取当前窗口尺寸
     this.calculateSize();

@@ -18,7 +18,7 @@ export struct NotificationPreferences {
   @Param @Require systemNotificationEnabled: boolean = true; // 系统通知开关
   @Param @Require onSystemNotificationChange: (enabled: boolean) => void; // 系统通知变化回调
   @Local pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys)!;
-  @Local private as: AppKeys = AppStorageV2.connect(AppKeys)!;
+  @Local private ak: AppKeys = AppStorageV2.connect(AppKeys)!;
   private alertService: AlertService = AlertService.getInstance(getContext() as common.UIAbilityContext);
   private intervalId?: number;
 
@@ -29,7 +29,7 @@ export struct NotificationPreferences {
 
   @Computed
   get showPermissionWarning() {
-    return this.pk.system_notification_enabled && !this.as.systemNotificationPermissionGranted;
+    return this.pk.system_notification_enabled && !this.ak.systemNotificationPermissionGranted;
   }
 
   // 跳转到系统设置

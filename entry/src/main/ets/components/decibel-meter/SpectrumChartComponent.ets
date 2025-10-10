@@ -35,7 +35,7 @@ export struct SpectrumChartComponent {
   aboutToDisappear() {
   }
 
-  @Monitor('as.windowWidth','as.windowHeight')
+  @Monitor('ak.windowWidth','ak.windowHeight')
   onWindowChange(monitor: IMonitor) {
     this.calculateCanvasDimensions();
   }

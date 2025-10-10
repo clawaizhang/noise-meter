@@ -12,7 +12,7 @@ import { PreferenceKeys } from '../models/PreferenceKeys';
 import { AppKeys } from '../models/AppKeys';
 import { AppUtil, PermissionUtil, PreferencesUtil } from '@pura/harmony-utils';
 import { camera } from '@kit.CameraKit';
-import { AppStorageV2, PersistenceV2 } from '@kit.ArkUI';
+import { AppStorageV2, display, PersistenceV2 } from '@kit.ArkUI';
 import { AudioPlayerGroupService } from '../services/AudioPlayerGroupService';
 import { AudioControllerService } from '../services/AudioControllerService';
 import { initializeFFTOptimizations } from '../utils/FFTOptimization';
@@ -56,6 +56,7 @@ export default class EntryAbility extends UIAbility {
     windowManager.loadContent('pages/Index', () => {
       AppUtil.init(this.context);
       PersistenceV2.connect(PreferenceKeys,() => new PreferenceKeys());
+      AppStorageV2.connect(AppKeys, () => new AppKeys())!;
       PersistenceV2.notifyOnError((key: string, reason: string, msg: string) => {
         console.error(`error key: ${key}, reason: ${reason}, message: ${msg}`);
       });
@@ -223,6 +224,10 @@ export default class EntryAbility extends UIAbility {
       hilog.info(DOMAIN, TAG, `Window size changed: ${windowSize.width}x${windowSize.height}`);
       this.updateWindowBreakpointInfo();
     });
+    display.on('change', (displayId: number) => {
+      hilog.info(DOMAIN, TAG, `Display changed: ${displayId}`)
+      this.updateWindowBreakpointInfo();
+    })
   }
 
   // 更新窗口断点信息
@@ -244,7 +249,7 @@ export default class EntryAbility extends UIAbility {
       const isLandscape = widthVp > heightVp;
 
       // 更新到 AppStorage
-      let appKeys = AppStorageV2.connect(AppKeys,() => new AppKeys())!;
+      let appKeys = AppStorageV2.connect(AppKeys)!;
       appKeys.windowWidthBreakpoint = widthBp;
       appKeys.windowHeightBreakpoint = heightBp;
       appKeys.windowWidth = widthVp;
