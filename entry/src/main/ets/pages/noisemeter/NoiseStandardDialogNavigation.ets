@@ -50,16 +50,16 @@ function buildNoiseStandardCard(standard: NoiseStandard, ak: AppKeys) {
 }
 
 @Builder
-export function NoiseStandardDialogBuilder(as: AppKeys) {
+export function NoiseStandardDialogBuilder(ak: AppKeys) {
   NavDestination() {
     Scroll() {
       Column({ space: 8 }) {
-        buildNoiseStandardCard(NoiseStandards[0], as)
-        buildNoiseStandardCard(NoiseStandards[1], as)
-        buildNoiseStandardCard(NoiseStandards[2], as)
-        buildNoiseStandardCard(NoiseStandards[3], as)
-        buildNoiseStandardCard(NoiseStandards[4], as)
-        buildNoiseStandardCard(NoiseStandards[5], as)
+        buildNoiseStandardCard(NoiseStandards[0], ak)
+        buildNoiseStandardCard(NoiseStandards[1], ak)
+        buildNoiseStandardCard(NoiseStandards[2], ak)
+        buildNoiseStandardCard(NoiseStandards[3], ak)
+        buildNoiseStandardCard(NoiseStandards[4], ak)
+        buildNoiseStandardCard(NoiseStandards[5], ak)
       }
     }.scrollable(ScrollDirection.Vertical).scrollBar(BarState.Off).edgeEffect(EdgeEffect.Spring)
   }

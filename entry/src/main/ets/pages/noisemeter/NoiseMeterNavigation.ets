@@ -32,7 +32,7 @@ export struct MainNoiseMeter {
   @Local currentIndex: number = 1
   @Local title: string = '静喵Sound';
   @Local menuItems: Array<NavigationMenuItem> = [];
-  @Local as: AppKeys = AppStorageV2.connect(AppKeys)!;
+  @Local ak: AppKeys = AppStorageV2.connect(AppKeys)!;
   @Local pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys)!;
   noiseReferSub?: Subscription
 

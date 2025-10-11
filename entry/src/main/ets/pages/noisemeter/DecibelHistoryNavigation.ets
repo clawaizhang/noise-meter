@@ -91,7 +91,7 @@ export struct DecibelHistory {
   @Local deleteAudioMode: boolean = false;
   @Local showMenu: boolean = false;
   @Local showFilterPanel: boolean = false;
-  @Local as: AppKeys = AppStorageV2.connect(AppKeys)!;
+  @Local ak: AppKeys = AppStorageV2.connect(AppKeys)!;
   @Local currentModeName: string = ''; // 当前模式名称
   @Local isLoading: boolean = false;
   @Local isLoadingMore: boolean = false;
