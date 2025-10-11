@@ -148,6 +148,9 @@ export struct DecibelHistory {
         icon: $r('app.media.ic_menus_more'),
         action: () => {
           this.showMenu = true;
+          if (this.records?.length == 0) {
+            this.promptAction.showToast({ message: '暂无记录' })
+          }
         }
       }
     ])
@@ -174,7 +177,12 @@ export struct DecibelHistory {
       .width('85%')
       .backgroundColor($r('sys.color.comp_background_primary'))
       .borderRadius(DesignConstants.BORDER_RADIUS_LG)
-      .shadow({ radius: 16, color: '#1A000000', offsetX: 0, offsetY: 4 })
+      .shadow({
+        radius: 16,
+        color: '#1A000000',
+        offsetX: 0,
+        offsetY: 4
+      })
       .alignSelf(ItemAlign.Center)
       .margin({ top: 16 })
     }
@@ -198,7 +206,7 @@ export struct DecibelHistory {
       } else {
         initialRecords = await this.recordService.getRecordsPaged(this.PAGE_SIZE, 0);
       }
-      
+
       this.records = initialRecords;
       this.currentOffset = initialRecords.length;
 
@@ -228,7 +236,8 @@ export struct DecibelHistory {
       let moreRecords: DecibelRecord[];
       if (this.currentFilters.isActive) {
         // 应用过滤器条件的分页加载
-        moreRecords = await this.recordService.getFilteredRecordsPaged(this.currentFilters, this.PAGE_SIZE, this.currentOffset);
+        moreRecords =
+          await this.recordService.getFilteredRecordsPaged(this.currentFilters, this.PAGE_SIZE, this.currentOffset);
       } else {
         // 普通分页加载
         moreRecords = await this.recordService.getRecordsPaged(this.PAGE_SIZE, this.currentOffset);
@@ -598,9 +607,15 @@ export struct DecibelHistory {
 
   // 获取当前模式名称
   private getCurrentModeName(): string {
-    if (this.shouChangMode) return '收藏模式';
-    if (this.deleteRecordMode) return '删除记录模式';
-    if (this.deleteAudioMode) return '删除音频模式';
+    if (this.shouChangMode) {
+      return '收藏模式';
+    }
+    if (this.deleteRecordMode) {
+      return '删除记录模式';
+    }
+    if (this.deleteAudioMode) {
+      return '删除音频模式';
+    }
     return '';
   }
 
@@ -654,7 +669,7 @@ export struct DecibelHistory {
           .fontSize(DesignConstants.FONT_SIZE_2XL) // 使用标准标题字体大小
           .fontWeight(FontWeight.Bold)
           .fontColor($r('sys.color.font_primary'))
-        
+
         Button() {
           Image($r('app.media.ic_close'))
             .width(24)
@@ -672,9 +687,9 @@ export struct DecibelHistory {
         })
       }
       .width('100%')
-      .justifyContent(FlexAlign.Start)  // 靠左对齐
+      .justifyContent(FlexAlign.Start) // 靠左对齐
       .alignItems(VerticalAlign.Center) // 垂直居中
-      .height('100%')                   // 确保垂直居中生效
+      .height('100%') // 确保垂直居中生效
       .margin({ left: DesignConstants.SPACING_SM }) // 添加左侧间距
     } else {
       // 正常状态：显示"历史记录"，靠左对齐
