@@ -134,7 +134,7 @@ struct Index {
     Throttle.unsubscribe();
 
     // 清理使用追踪服务资源
-    const usageTrackingService = UsageTrackingService.getInstance();
+    const usageTrackingService = UsageTrackingService.getInstance(this.pk);
     usageTrackingService.destroy();
 
     // 清理公共事件服务资源
@@ -211,7 +211,7 @@ struct Index {
       this.ak.isDisplayApp = true;
 
       // APP显示时恢复使用追踪
-      const usageTrackingService = UsageTrackingService.getInstance();
+      const usageTrackingService = UsageTrackingService.getInstance(this.pk);
       usageTrackingService.resumeTracking();
 
       // 立即检查日期变化（重要优化）
@@ -221,15 +221,15 @@ struct Index {
       this.ak.isDisplayApp = false;
 
       // APP隐藏时暂停使用追踪
-      const usageTrackingService = UsageTrackingService.getInstance();
+      const usageTrackingService = UsageTrackingService.getInstance(this.pk);
       usageTrackingService.pauseTracking();
     });
   }
 
   // 初始化使用追踪服务
   private initUsageTracking(): void {
-    const usageTrackingService = UsageTrackingService.getInstance();
-    const continuousUsageManager = ContinuousUsageManager.getInstance();
+    const usageTrackingService = UsageTrackingService.getInstance(this.pk);
+    const continuousUsageManager = ContinuousUsageManager.getInstance(this.pk);
 
     // 初始化服务
     usageTrackingService.initialize();
@@ -254,8 +254,8 @@ struct Index {
 
   // 处理使用完成
   private async handleUsageCompletion(): Promise<void> {
-    const continuousUsageManager = ContinuousUsageManager.getInstance();
-    const membershipRewardService = MembershipRewardService.getInstance();
+    const continuousUsageManager = ContinuousUsageManager.getInstance(this.pk);
+    const membershipRewardService = MembershipRewardService.getInstance(this.pk);
 
     // 获取连续天数
     const consecutiveDays = continuousUsageManager.getConsecutiveDays();

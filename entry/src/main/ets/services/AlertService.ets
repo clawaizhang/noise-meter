@@ -81,17 +81,18 @@ export class AlertService {
   private static instance: AlertService;
   private context: common.UIAbilityContext;
   private frequencyController: AlertFrequencyController;
-  private pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys)!;
+  private pk: PreferenceKeys;
   
-  private constructor(context: common.UIAbilityContext) {
+  private constructor(context: common.UIAbilityContext, pk: PreferenceKeys) {
     this.context = context;
+    this.pk = pk;
     this.frequencyController = new AlertFrequencyController();
     this.initializeNotificationSlot();
   }
 
-  public static getInstance(context: common.UIAbilityContext): AlertService {
+  public static getInstance(context: common.UIAbilityContext,pk: PreferenceKeys): AlertService {
     if (!AlertService.instance) {
-      AlertService.instance = new AlertService(context);
+      AlertService.instance = new AlertService(context,pk);
     }
     return AlertService.instance;
   }

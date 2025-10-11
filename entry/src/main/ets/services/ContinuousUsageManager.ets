@@ -16,14 +16,20 @@ interface UsageStatus {
 
 export class ContinuousUsageManager {
   private static instance: ContinuousUsageManager | null = null;
-  private pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys)!;
+  private pk: PreferenceKeys;
+
+  constructor(pk: PreferenceKeys) {
+    this.pk = pk;
+  }
+
+
 
   /**
    * 获取 ContinuousUsageManager 实例
    */
-  public static getInstance(): ContinuousUsageManager {
+  public static getInstance(pk: PreferenceKeys): ContinuousUsageManager {
     if (!ContinuousUsageManager.instance) {
-      ContinuousUsageManager.instance = new ContinuousUsageManager();
+      ContinuousUsageManager.instance = new ContinuousUsageManager(pk);
     }
     return ContinuousUsageManager.instance;
   }
@@ -115,7 +121,7 @@ export class ContinuousUsageManager {
       const current = new Date(currentDate);
       const diffTime = current.getTime() - last.getTime();
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-      
+
       // 如果相差超过1天，说明断签
       return diffDays > 1;
     } catch (error) {
@@ -144,21 +150,21 @@ export class ContinuousUsageManager {
   public handleDateChange(): number {
     const today = this.getTodayDateString();
     const usageData = this.pk.continuous_usage_data;
-    
+
     // 如果最后使用日期不是今天，说明日期变化
     if (usageData.lastUsageDate !== today) {
       // 保存前一天的连续天数用于奖励计算
       const previousConsecutiveDays = usageData.consecutiveDays;
-      
+
       // 更新连续天数
       const newConsecutiveDays = this.checkAndUpdateConsecutiveDays();
-      
+
       console.info(`[连续使用] 日期变化处理: 前一天${previousConsecutiveDays}天，新连续${newConsecutiveDays}天`);
-      
+
       // 返回前一天的连续天数用于奖励计算
       return previousConsecutiveDays;
     }
-    
+
     return 0; // 没有日期变化
   }
 

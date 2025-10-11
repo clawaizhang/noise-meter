@@ -24,8 +24,8 @@ export struct MembershipStatusCard {
   @Local todayReward: number = 0;
   @Local tomorrowReward: number = 0;
   @Local nextMilestone: DayReward | null = null;
-  private continuousUsageManager: ContinuousUsageManager = ContinuousUsageManager.getInstance();
-  private membershipRewardService: MembershipRewardService = MembershipRewardService.getInstance();
+  private continuousUsageManager: ContinuousUsageManager = ContinuousUsageManager.getInstance(this.pk);
+  private membershipRewardService: MembershipRewardService = MembershipRewardService.getInstance(this.pk);
   private dialog?: InfSheet;
 
   aboutToAppear(): void {
@@ -382,7 +382,7 @@ export struct MembershipStatusCard {
     console.info('[会员管理] 用户已同意会员奖励计划协议，同意状态已记录');
     
     // 应用会员奖励
-    const membershipRewardService = MembershipRewardService.getInstance();
+    const membershipRewardService = MembershipRewardService.getInstance(this.pk);
     const consecutiveDays = this.continuousUsageManager.getConsecutiveDays();
     membershipRewardService.applyMembershipReward(consecutiveDays);
     

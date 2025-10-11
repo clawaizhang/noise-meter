@@ -308,11 +308,10 @@ struct Settings {
 
   // 应用自动保存设置
   private applyAutoSaveSettings(settings: AutoSaveSettings) {
-    const pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys)!;
 
     // 更新持久化存储
-    pk.auto_save_enabled = settings.enabled;
-    pk.auto_save_interval = settings.interval;
+    this.pk.auto_save_enabled = settings.enabled;
+    this.pk.auto_save_interval = settings.interval;
 
     // 显示统一提示
     if (settings.enabled) {

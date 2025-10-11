@@ -19,7 +19,7 @@ export struct NotificationPreferences {
   @Param @Require onSystemNotificationChange: (enabled: boolean) => void; // 系统通知变化回调
   @Local pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys)!;
   @Local private ak: AppKeys = AppStorageV2.connect(AppKeys)!;
-  private alertService: AlertService = AlertService.getInstance(getContext() as common.UIAbilityContext);
+  private alertService: AlertService = AlertService.getInstance(getContext() as common.UIAbilityContext, this.pk);
   private intervalId?: number;
 
   aboutToAppear() {

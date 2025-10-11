@@ -13,7 +13,7 @@ export struct AlertsContent {
   @Local private ak: AppKeys = AppStorageV2.connect(AppKeys)!;
   @Local private pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys)!;
   // 警报服务
-  private alertService: AlertService = AlertService.getInstance(getContext() as common.UIAbilityContext);
+  private alertService: AlertService = AlertService.getInstance(getContext() as common.UIAbilityContext,this.pk);
 
   aboutToAppear(): void {
     // 组件加载时更新权限状态

@@ -10,16 +10,15 @@ import { CommonEventService } from './CommonEventService';
 
 // 使用时长追踪状态
 export enum UsageTrackingState {
-  IDLE = 'IDLE',        // 空闲状态
+  IDLE = 'IDLE', // 空闲状态
   TRACKING = 'TRACKING', // 追踪中
-  PAUSED = 'PAUSED'     // 已暂停
+  PAUSED = 'PAUSED' // 已暂停
 }
 
 export class UsageTrackingService {
   private static instance: UsageTrackingService | null = null;
-  private pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys)!;
-  private continuousUsageManager: ContinuousUsageManager = ContinuousUsageManager.getInstance();
-  
+  private pk: PreferenceKeys;
+  private continuousUsageManager: ContinuousUsageManager;
   private usageTimer: number = 0;
   private currentSeconds: number = 0;
   private state: UsageTrackingState = UsageTrackingState.IDLE;
@@ -29,12 +28,18 @@ export class UsageTrackingService {
   private timeTickHandler: Function | null = null;
   private lastCheckedDate: string = '';
 
+  constructor(pk: PreferenceKeys, continuousUsageManager: ContinuousUsageManager) {
+    this.pk = pk;
+    this.continuousUsageManager = continuousUsageManager;
+  }
+
+
   /**
    * 获取 UsageTrackingService 实例
    */
-  public static getInstance(): UsageTrackingService {
+  public static getInstance(pk: PreferenceKeys): UsageTrackingService {
     if (!UsageTrackingService.instance) {
-      UsageTrackingService.instance = new UsageTrackingService();
+      UsageTrackingService.instance = new UsageTrackingService(pk, ContinuousUsageManager.getInstance(pk));
     }
     return UsageTrackingService.instance;
   }
@@ -45,18 +50,18 @@ export class UsageTrackingService {
   public initialize(): void {
     // 恢复上次的使用秒数
     this.currentSeconds = this.continuousUsageManager.getTodayUsageSeconds();
-    
+
     // 如果今日已完成使用，重置状态
     if (this.continuousUsageManager.isTodayUsageCompleted()) {
       this.currentSeconds = 60; // 设置为完成状态
     }
-    
+
     // 初始化 TIME_TICK 事件监听
     this.initTimeTickListener();
-    
+
     // 初始化最后检查日期
     this.lastCheckedDate = this.getTodayDateString();
-    
+
     console.info(`[使用追踪] 初始化完成，当前使用秒数: ${this.currentSeconds}`);
   }
 
@@ -80,13 +85,13 @@ export class UsageTrackingService {
 
     this.state = UsageTrackingState.TRACKING;
     this.notifyStateChange();
-    
+
     // 记录最后进入前台时间
     this.pk.last_app_foreground_time = Date.now();
-    
+
     // 开始计时器
     this.startUsageTimer();
-    
+
     console.info('[使用追踪] 开始追踪使用时长');
   }
 
@@ -100,13 +105,13 @@ export class UsageTrackingService {
 
     this.state = UsageTrackingState.PAUSED;
     this.notifyStateChange();
-    
+
     // 停止计时器
     this.stopUsageTimer();
-    
+
     // 保存当前进度
     this.saveUsageProgress();
-    
+
     console.info(`[使用追踪] 暂停追踪，当前使用秒数: ${this.currentSeconds}`);
   }
 
@@ -120,13 +125,13 @@ export class UsageTrackingService {
 
     this.state = UsageTrackingState.TRACKING;
     this.notifyStateChange();
-    
+
     // 更新最后进入前台时间
     this.pk.last_app_foreground_time = Date.now();
-    
+
     // 重新开始计时器
     this.startUsageTimer();
-    
+
     console.info('[使用追踪] 恢复追踪使用时长');
   }
 
@@ -136,13 +141,13 @@ export class UsageTrackingService {
   public stopTracking(): void {
     this.state = UsageTrackingState.IDLE;
     this.notifyStateChange();
-    
+
     // 停止计时器
     this.stopUsageTimer();
-    
+
     // 保存当前进度
     this.saveUsageProgress();
-    
+
     console.info('[使用追踪] 停止追踪使用时长');
   }
 
@@ -217,27 +222,27 @@ export class UsageTrackingService {
    */
   private startUsageTimer(): void {
     this.stopUsageTimer(); // 确保没有重复的计时器
-    
+
     this.usageTimer = setInterval(() => {
       if (this.state === UsageTrackingState.TRACKING) {
         this.currentSeconds++;
-        
+
         // 更新到连续使用管理器
         this.continuousUsageManager.updateTodayUsageSeconds(this.currentSeconds);
-        
+
         // 通知秒数变化
         this.notifySecondsChange();
-        
+
         // 每10秒自动保存进度
         if (this.currentSeconds % 10 === 0) {
           this.saveUsageProgress();
         }
-        
+
         // 检查是否完成使用
         if (this.currentSeconds >= 60 && !this.continuousUsageManager.isTodayUsageCompleted()) {
           this.handleUsageCompletion();
         }
-        
+
         // 检查使用时长异常
         this.handleUsageTimeException();
       }
@@ -259,16 +264,16 @@ export class UsageTrackingService {
    */
   private handleUsageCompletion(): void {
     console.info('[使用追踪] 今日使用已完成');
-    
+
     // 标记今日使用完成
     this.continuousUsageManager.markTodayUsageCompleted();
-    
+
     // 保存最终进度
     this.saveUsageProgress();
-    
+
     // 通知使用完成
     this.notifyUsageComplete();
-    
+
     // 停止追踪
     this.stopTracking();
   }
@@ -346,11 +351,11 @@ export class UsageTrackingService {
    */
   private initTimeTickListener(): void {
     const commonEventService = CommonEventService.getInstance();
-    
+
     this.timeTickHandler = () => {
       this.checkDateChange();
     };
-    
+
     commonEventService.subscribeEvent('usual.event.TIME_TICK', this.timeTickHandler);
     console.info('[使用追踪] TIME_TICK 事件监听已初始化');
   }
@@ -383,17 +388,17 @@ export class UsageTrackingService {
    */
   private handleDateChange(): void {
     const previousConsecutiveDays = this.continuousUsageManager.handleDateChange();
-    
+
     if (previousConsecutiveDays > 0) {
       // 注意：这里不应用奖励，奖励应该在使用完成时（达到60秒）才发放
       // 日期变化时只更新连续天数，不发放奖励
-      
+
       // 重置今日使用数据
       this.resetTodayUsage();
-      
+
       // 重新开始追踪新的一天的使用
       this.restartTrackingForNewDay();
-      
+
       console.info(`[使用追踪] 日期变化处理完成，前一天连续${previousConsecutiveDays}天，等待今日使用完成发放奖励`);
     }
   }
@@ -405,7 +410,7 @@ export class UsageTrackingService {
     this.currentSeconds = 0;
     this.continuousUsageManager.updateTodayUsageSeconds(0);
     this.notifySecondsChange();
-    
+
     console.info('[使用追踪] 今日使用数据已重置');
   }
 
@@ -415,20 +420,20 @@ export class UsageTrackingService {
   private restartTrackingForNewDay(): void {
     // 完全停止当前追踪（包括计时器）
     this.stopTracking();
-    
+
     // 确保计时器完全停止
     this.stopUsageTimer();
-    
+
     // 重置状态为IDLE，允许重新开始追踪
     this.state = UsageTrackingState.IDLE;
-    
+
     // 重置当前秒数
     this.currentSeconds = 0;
     this.continuousUsageManager.updateTodayUsageSeconds(0);
-    
+
     // 重新开始追踪
     this.startTracking();
-    
+
     console.info('[使用追踪] 新的一天追踪已重新开始');
   }
 

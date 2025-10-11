@@ -44,14 +44,20 @@ interface ConsecutiveRewards {
 
 export class MembershipRewardService {
   private static instance: MembershipRewardService | null = null;
-  private pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys)!;
+  private pk: PreferenceKeys;
+
+  constructor(pk: PreferenceKeys) {
+    this.pk = pk;
+  }
+
+
 
   /**
    * 获取 MembershipRewardService 实例
    */
-  public static getInstance(): MembershipRewardService {
+  public static getInstance(pk: PreferenceKeys): MembershipRewardService {
     if (!MembershipRewardService.instance) {
-      MembershipRewardService.instance = new MembershipRewardService();
+      MembershipRewardService.instance = new MembershipRewardService(pk);
     }
     return MembershipRewardService.instance;
   }
