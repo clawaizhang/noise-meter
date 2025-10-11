@@ -230,7 +230,6 @@ struct Index {
   private initUsageTracking(): void {
     const usageTrackingService = UsageTrackingService.getInstance();
     const continuousUsageManager = ContinuousUsageManager.getInstance();
-    const membershipRewardService = MembershipRewardService.getInstance();
 
     // 初始化服务
     usageTrackingService.initialize();
@@ -279,23 +278,6 @@ struct Index {
     showRewardCompletionDialog(consecutiveDays, rewardDays, expiryDate);
 
     console.info(`[使用完成] 连续${consecutiveDays}天，获得${rewardDays}天会员`);
-  }
-
-  /**
-   * 处理会员协议同意
-   */
-  private handleAgreementAgree = () => {
-    // 记录用户同意状态
-    this.pk.has_agreed_membership_reward = true;
-    console.info('[会员管理] 用户已同意会员奖励计划协议，同意状态已记录');
-    // 重新处理使用完成
-    this.handleUsageCompletion();
-  }
-  /**
-   * 处理会员协议取消
-   */
-  private handleAgreementCancel = () => {
-    console.info('[会员管理] 用户取消了会员奖励计划协议');
   }
 
   build() {
@@ -348,38 +330,35 @@ struct Index {
       } else {
         // 显示正常内容
         Navigation(this.navStack) {
-          if (this.pk.privacy_agreed) {
-            if (this.pk.show_welcome_guide) {
-              // 显示欢迎引导页（隐私政策已同意）
-              WelcomeGuide({
-                onComplete: () => {
-                  // 用户完成欢迎引导，进入主应用
-                  this.pk.show_welcome_guide = false;
-                  this
-                  hilog.info(DOMAIN, TAG, '用户完成欢迎引导，进入主应用');
-                },
-                onCancel: () => {
-                  // 用户取消欢迎引导，退出APP
-                  hilog.info(DOMAIN, TAG, '用户取消欢迎引导，退出APP');
-                  this.context.terminateSelf();
-                }
-              })
-            } else {
-              // 直接进入主应用
-              MainPage()
-            }
-          } else {
+          if (this.pk.privacy_agreed && !this.pk.show_welcome_guide) {
+            MainPage()
+          }
+          if (!this.pk.privacy_agreed) {
             // 显示独立隐私政策页面
             PrivacyPolicyStandalone({
               onAgree: () => {
                 // 用户同意隐私政策，设置状态并显示欢迎引导
                 this.pk.privacy_agreed = true;
-                this.pk.show_welcome_guide = true;
                 hilog.info(DOMAIN, TAG, '用户同意隐私政策，显示欢迎引导');
               },
               onCancel: () => {
                 // 用户不同意隐私政策，退出APP
                 hilog.info(DOMAIN, TAG, '用户不同意隐私政策，退出APP');
+                this.context.terminateSelf();
+              }
+            })
+          }
+          if (this.pk.privacy_agreed && this.pk.show_welcome_guide) {
+            // 显示欢迎引导页（隐私政策已同意）
+            WelcomeGuide({
+              onComplete: () => {
+                // 用户完成欢迎引导，进入主应用
+                this.pk.show_welcome_guide = false;
+                hilog.info(DOMAIN, TAG, '用户完成欢迎引导，进入主应用');
+              },
+              onCancel: () => {
+                // 用户取消欢迎引导，退出APP
+                hilog.info(DOMAIN, TAG, '用户取消欢迎引导，退出APP');
                 this.context.terminateSelf();
               }
             })
@@ -396,5 +375,6 @@ struct Index {
       $r('sys.color.background_secondary'))
     .expandSafeArea([SafeAreaType.SYSTEM], [SafeAreaEdge.TOP, SafeAreaEdge.BOTTOM])
     .height('100%')
+    .width('100%')
   }
 }

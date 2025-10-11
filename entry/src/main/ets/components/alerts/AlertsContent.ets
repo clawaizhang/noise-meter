@@ -73,7 +73,7 @@ export struct AlertsContent {
       // 状态指示器
       Row({ space: DesignConstants.SPACING_SM }) {
         Circle({ width: 16, height: 16 })
-          .fill(this.getStatusColor())
+          .fill(this.statusColor)
           .animation({
             duration: this.ak.isDisplayApp && this.ak.uiDisplayState.displayAlertState.isActive ? 500 : 0,
             curve: Curve.EaseInOut,
@@ -81,9 +81,9 @@ export struct AlertsContent {
             playMode: PlayMode.Alternate
           })
 
-        Text(this.getStatusText())
+        Text(this.statusText)
           .fontSize(DesignConstants.FONT_SIZE_XL)
-          .fontColor(this.getStatusColor())
+          .fontColor(this.statusColor)
           .fontWeight(FontWeight.Bold)
       }
 
@@ -91,7 +91,7 @@ export struct AlertsContent {
       Text(`${this.ak.uiDisplayState.displayDb}dB`)
         .fontSize(48)
         .fontWeight(FontWeight.Bold)
-        .fontColor(this.getStatusColor())
+        .fontColor(this.statusColor)
 
       // 阈值信息
       Text(`阈值: ${ThresholdManager.getCurrentEffectiveThreshold()}dB`)
@@ -107,7 +107,7 @@ export struct AlertsContent {
       }
     }
     .padding(DesignConstants.SPACING_XL)
-    .backgroundColor(this.getStatusBackground())
+    .backgroundColor(this.statusBackground)
     .backgroundBlurStyle(BlurStyle.COMPONENT_THICK)
     .borderRadius(DesignConstants.BORDER_RADIUS_XL)
     .width('100%')
@@ -130,14 +130,14 @@ export struct AlertsContent {
           .fontSize(DesignConstants.FONT_SIZE_MD)
           .fontColor($r('sys.color.font_primary'))
 
-        Text(this.getEnvironmentQuality())
+        Text(this.environmentQuality)
           .fontSize(DesignConstants.FONT_SIZE_MD)
-          .fontColor(this.getEnvironmentColor())
+          .fontColor(this.environmentColor)
           .fontWeight(FontWeight.Medium)
       }
 
       // 专业建议
-      Text(this.getEnvironmentSuggestion())
+      Text(this.environmentSuggestion)
         .fontSize(DesignConstants.FONT_SIZE_SM)
         .fontColor($r('sys.color.font_secondary'))
         .textAlign(TextAlign.Start)
@@ -150,8 +150,8 @@ export struct AlertsContent {
     .borderRadius(DesignConstants.BORDER_RADIUS_LG)
   }
 
-  // 辅助方法：获取状态颜色
-  private getStatusColor(): Resource {
+  @Computed
+  get statusColor(): Resource {
     const currentDecibel = this.ak.uiDisplayState.displayDb;
     const threshold = ThresholdManager.getCurrentEffectiveThreshold();
 
@@ -165,7 +165,8 @@ export struct AlertsContent {
   }
 
   // 辅助方法：获取状态文字
-  private getStatusText(): string {
+  @Computed
+  get statusText(): string {
     const currentDecibel = this.ak.uiDisplayState.displayDb;
     const threshold = ThresholdManager.getCurrentEffectiveThreshold();
 
@@ -179,7 +180,8 @@ export struct AlertsContent {
   }
 
   // 辅助方法：获取状态背景色
-  private getStatusBackground(): Resource {
+  @Computed
+  get statusBackground(): Resource {
     const currentDecibel = this.ak.uiDisplayState.displayDb;
     const threshold = ThresholdManager.getCurrentEffectiveThreshold();
 
@@ -193,7 +195,8 @@ export struct AlertsContent {
   }
 
   // 辅助方法：获取环境质量评级
-  private getEnvironmentQuality(): string {
+  @Computed
+  get environmentQuality(): string {
     const currentDecibel = this.ak.uiDisplayState.displayDb;
     const threshold = ThresholdManager.getCurrentEffectiveThreshold();
 
@@ -209,7 +212,8 @@ export struct AlertsContent {
   }
 
   // 辅助方法：获取环境质量颜色
-  private getEnvironmentColor(): Resource {
+  @Computed
+  get environmentColor(): Resource {
     const currentDecibel = this.ak.uiDisplayState.displayDb;
     const threshold = ThresholdManager.getCurrentEffectiveThreshold();
 
@@ -225,7 +229,8 @@ export struct AlertsContent {
   }
 
   // 辅助方法：获取环境建议
-  private getEnvironmentSuggestion(): string {
+  @Computed
+  get environmentSuggestion(): string {
     const currentDecibel = this.ak.uiDisplayState.displayDb;
     const threshold = ThresholdManager.getCurrentEffectiveThreshold();
 

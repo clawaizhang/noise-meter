@@ -12,7 +12,6 @@ interface FeatureCard {
 export struct AdvancedFeaturesPage {
   @Param @Require onComplete: () => void;
   @Param @Require onPrev: () => void;
-  
   @Local private contentOpacity: number = 0.8;
   @Local private titleOpacity: number = 0;
   @Local private featuresOpacity: number = 0;
@@ -23,7 +22,6 @@ export struct AdvancedFeaturesPage {
   @Local private useNowButtonOpacity: number = 0;
   @Local private featureIconScale: number = 1.0;
   @Local private featureIconRotation: number = 0;
-
   // 功能卡片数据
   private readonly features: FeatureCard[] = [
     { icon: $r('app.media.ic_stats'), title: '频谱分析', description: '多频段可视化分析' },
@@ -147,10 +145,9 @@ export struct AdvancedFeaturesPage {
     .width('100%')
     .height('100%')
     .padding(DesignConstants.SPACING_LG)
-    .justifyContent(FlexAlign.Center)  // 垂直居中
+    .justifyContent(FlexAlign.Center) // 垂直居中
     .opacity(this.contentOpacity)
   }
-
 
   @Builder
   private buildFeatureDisplay() {
@@ -170,7 +167,12 @@ export struct AdvancedFeaturesPage {
           .fillColor($r('sys.color.brand'))
           .scale({ x: this.featureIconScale, y: this.featureIconScale })
           .rotate({ angle: this.featureIconRotation })
-      }
+      } .onClick(() => {
+        // 直接完成引导，进入主应用
+        Throttle.click(() => {
+          this.onComplete();
+        })
+      })
     }
     .alignItems(HorizontalAlign.Center)
     .padding(DesignConstants.SPACING_XL)
@@ -228,7 +230,7 @@ export struct AdvancedFeaturesPage {
       Image(item.icon)
         .fillColor($r('sys.color.brand'))
         .width(DesignConstants.ICON_SIZE_MD)
-      
+
       Text(item.title)
         .fontSize(DesignConstants.FONT_SIZE_SM)
         .fontWeight(FontWeight.Medium)
