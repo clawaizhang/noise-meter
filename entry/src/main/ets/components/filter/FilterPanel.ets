@@ -1,4 +1,11 @@
-import { FilterConfig, FilterManager, DecibelRangeFilter, StatusFilter, WeightingFilter, TextSearchFilter } from '../../models/FilterConfig';
+import {
+  DecibelRangeFilter,
+  FilterConfig,
+  FilterManager,
+  StatusFilter,
+  TextSearchFilter,
+  WeightingFilter
+} from '../../models/FilterConfig';
 import { WeightingType } from '../../constants/WeightingConstants';
 import { DesignConstants } from '../../constants/DesignConstants';
 import { Throttle } from '../../utils/Debounce';

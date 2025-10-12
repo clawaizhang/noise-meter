@@ -1,5 +1,5 @@
 import { commentManager } from '@kit.AppGalleryKit';
-import { deviceInfo, BusinessError } from '@kit.BasicServicesKit';
+import { BusinessError, deviceInfo } from '@kit.BasicServicesKit';
 import { common, Want } from '@kit.AbilityKit';
 import hilog from '@ohos.hilog';
 

@@ -1,4 +1,4 @@
-import { WindowType } from "../common/WindowType";
+import { WindowType } from '../common/WindowType';
 
 /**
  * 窗函数预缓存管理器

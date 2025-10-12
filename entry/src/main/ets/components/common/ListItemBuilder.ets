@@ -1,4 +1,4 @@
-import { Throttle } from "../../utils/Debounce"
+import { Throttle } from '../../utils/Debounce'
 
 /**
  * 通用列表项 Builder 组件

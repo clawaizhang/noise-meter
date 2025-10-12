@@ -1,6 +1,6 @@
-import { PersistenceV2 } from "@kit.ArkUI";
-import { PreferenceKeys } from "../models/PreferenceKeys";
-import { WindowType } from "./WindowType";
+import { PersistenceV2 } from '@kit.ArkUI';
+import { PreferenceKeys } from '../models/PreferenceKeys';
+import { WindowType } from './WindowType';
 
 /**
  * 音频分析模式（符合GB/T 3785.1-2010标准）

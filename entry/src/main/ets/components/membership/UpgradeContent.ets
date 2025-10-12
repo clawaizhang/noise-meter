@@ -1,14 +1,12 @@
-import { DesignConstants } from "../../constants/DesignConstants"
-import { PreferenceKeys } from "../../models/PreferenceKeys";
-import { PersistenceV2 } from "@kit.ArkUI";
-import { MembershipLevel } from "../../services/MembershipManager";
-import {
-  MembershipAgreementDialogBuilder, MembershipAgreementDialogProps
-} from "./MembershipAgreementDialog";
-import { DialogHub } from "@hadss/dialoghub";
-import { MembershipRewardService } from "../../services/MembershipRewardService";
-import { ContinuousUsageManager } from "../../services/ContinuousUsageManager";
-import { Throttle } from "../../utils/Debounce";
+import { DesignConstants } from '../../constants/DesignConstants'
+import { PreferenceKeys } from '../../models/PreferenceKeys';
+import { PersistenceV2 } from '@kit.ArkUI';
+import { MembershipLevel } from '../../services/MembershipManager';
+import { MembershipAgreementDialogBuilder, MembershipAgreementDialogProps } from './MembershipAgreementDialog';
+import { DialogHub } from '@hadss/dialoghub';
+import { MembershipRewardService } from '../../services/MembershipRewardService';
+import { ContinuousUsageManager } from '../../services/ContinuousUsageManager';
+import { Throttle } from '../../utils/Debounce';
 
 // 价格方案接口
 interface PricingPlan {

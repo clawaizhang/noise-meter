@@ -2,7 +2,7 @@ import { PreferenceKeys } from '../../models/PreferenceKeys';
 import { navigationStack } from '../../constants/ProviderConstant';
 import { DesignConstants } from '../../constants/DesignConstants';
 import { AppKeys } from '../../models/AppKeys';
-import { AppStorageV2, curves, PersistenceV2, promptAction, EditableTitleBar, EditableLeftIconType } from '@kit.ArkUI';
+import { AppStorageV2, curves, EditableLeftIconType, EditableTitleBar, PersistenceV2, promptAction } from '@kit.ArkUI';
 
 // 导入新组件
 import { AlertsStatusIndicator } from '../../components/alerts/AlertsStatusIndicator';

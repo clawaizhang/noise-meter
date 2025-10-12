@@ -1,4 +1,4 @@
-import { AppStorageV2, PersistenceV2, promptAction, EditableTitleBar, EditableLeftIconType } from '@kit.ArkUI';
+import { AppStorageV2, EditableLeftIconType, EditableTitleBar, PersistenceV2, promptAction } from '@kit.ArkUI';
 import { navigationStack } from '../../constants/ProviderConstant';
 import { DesignConstants } from '../../constants/DesignConstants';
 import { PreferenceKeys } from '../../models/PreferenceKeys';

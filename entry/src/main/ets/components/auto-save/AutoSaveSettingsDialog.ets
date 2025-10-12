@@ -1,9 +1,8 @@
 import { PreferenceKeys } from '../../models/PreferenceKeys';
-import { PersistenceV2 } from '@kit.ArkUI';
+import { EditableLeftIconType, EditableTitleBar, PersistenceV2 } from '@kit.ArkUI';
 import promptAction from '@ohos.promptAction';
 import { DesignConstants } from '../../constants/DesignConstants';
 import { Throttle } from '../../utils/Debounce';
-import { EditableTitleBar, EditableLeftIconType } from '@kit.ArkUI';
 
 export interface AutoSaveDialogParams {
   onClose: () => void;

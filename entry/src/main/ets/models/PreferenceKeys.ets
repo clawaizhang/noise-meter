@@ -1,8 +1,6 @@
 import { PreferencesUtil } from '@pura/harmony-utils';
 import {
-  AudioAnalysisConfig,
-  AudioAnalysisMode,
-  DEFAULT_CUSTOM_CONFIG,
+  AudioAnalysisConfig, AudioAnalysisMode, DEFAULT_CUSTOM_CONFIG,
 } from '../common/AudioConfig';
 import { WeightingType } from '../constants/WeightingConstants';
 import { MembershipStatus } from '../services/MembershipManager';

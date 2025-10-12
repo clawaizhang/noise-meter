@@ -6,9 +6,7 @@
 
 import { DesignConstants } from '../../constants/DesignConstants';
 import { DialogHub, InfSheet } from '@hadss/dialoghub';
-import {
-  defaultPricingPlans, UpgradeContentProps, UpgradeContentBuilder
-} from './UpgradeContent';
+import { defaultPricingPlans, UpgradeContentBuilder, UpgradeContentProps } from './UpgradeContent';
 import { DialogStyleManager } from '../../utils/DialogStyleManager';
 import { PreferenceKeys } from '../../models/PreferenceKeys';
 import { PersistenceV2 } from '@kit.ArkUI';

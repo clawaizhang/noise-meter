@@ -1,4 +1,4 @@
-import { throttleTime, Subject, Subscription } from 'rxjs';
+import { Subject, Subscription, throttleTime } from 'rxjs';
 
 /**
  * 完美节流工具类

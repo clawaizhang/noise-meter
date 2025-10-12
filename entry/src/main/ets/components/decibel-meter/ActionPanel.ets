@@ -5,7 +5,7 @@ import { InputDialog } from './InputDialog';
 import { ColorMetrics, LengthMetrics, PersistenceV2 } from '@kit.ArkUI';
 import { camera } from '@kit.CameraKit';
 import common from '@ohos.app.ability.common';
-import { HdsActionBar, ActionBarButton, ActionBarStyle } from '@kit.UIDesignKit';
+import { ActionBarButton, ActionBarStyle, HdsActionBar } from '@kit.UIDesignKit';
 import { deviceInfo } from '@kit.BasicServicesKit';
 import { Throttle } from '../../utils/Debounce';
 

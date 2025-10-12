@@ -1,4 +1,4 @@
-import { DataProcessingState } from "./DataProcessingState";
+import { DataProcessingState } from './DataProcessingState';
 
 /**
  * 警报显示状态对象（UI专用）

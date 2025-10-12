@@ -1,5 +1,5 @@
-import { DesignConstants } from "../../constants/DesignConstants"
-import { Throttle } from "../../utils/Debounce"
+import { DesignConstants } from '../../constants/DesignConstants'
+import { Throttle } from '../../utils/Debounce'
 
 export interface MembershipAgreementDialogProps {
   onAgree: () => void;
