@@ -121,7 +121,6 @@ interface CaliConfig {
   AUTO_CALIBRATION_DURATION: number;
   COUNTDOWN_DURATION: number;
   REFERENCE_LEVEL: number;
-  TARGET_CALIBRATION_VALUE: number;
   MIN_CALIBRATION_VALUE: number;
   MAX_CALIBRATION_VALUE: number;
   PRESET_VALUES: number[];
@@ -130,8 +129,7 @@ interface CaliConfig {
 export const CALIBRATION_CONFIG: CaliConfig = {
   AUTO_CALIBRATION_DURATION: 8, // 自动校准时长(秒)
   COUNTDOWN_DURATION: 3, // 倒计时时长(秒)
-  REFERENCE_LEVEL: 25, // 参考声级(dB) - 更新为25dB
-  TARGET_CALIBRATION_VALUE: 25, // 目标校准值25dB
+  REFERENCE_LEVEL: 40, // 参考声级(dB) - 更新为25dB
   MIN_CALIBRATION_VALUE: -50, // 最小校准值 - 扩展为-50dB
   MAX_CALIBRATION_VALUE: 50, // 最大校准值 - 扩展为+50dB
   PRESET_VALUES: [-50, -40, -30, -20, -10, 0, 10, 20, 30, 40, 50] // 预设校准点 - 统一10dB间隔
