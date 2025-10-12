@@ -85,11 +85,10 @@ export struct MembershipStatusCard {
    * 获取会员状态文本
    * @returns 会员状态文本
    */
-  private getMembershipStatusText(): string {
-    const membership = this.pk.member_ship;
-
-    if (membership.can()) {
-      const remainingDays = Math.ceil((membership.expiryDate - Date.now()) / (1000 * 60 * 60 * 24));
+  @Computed
+  get membershipStatusText(): string {
+    if (this.pk.member_ship.can) {
+      const remainingDays = Math.ceil((this.pk.member_ship.expiryDate - Date.now()) / (1000 * 60 * 60 * 24));
       return `专业版 · 剩余${remainingDays}天`;
     } else {
       return '基础版';
@@ -100,8 +99,9 @@ export struct MembershipStatusCard {
    * 获取会员状态颜色
    * @returns 颜色资源
    */
-  private getMembershipStatusColor(): Resource {
-    return this.pk.member_ship.can() ?
+  @Computed
+  get membershipStatusColor(): Resource {
+    return this.pk.member_ship.can ?
     $r('sys.color.confirm') :
     $r('sys.color.font_secondary');
   }
@@ -117,7 +117,7 @@ export struct MembershipStatusCard {
         Image($r('app.media.ic_vip'))
           .width(DesignConstants.ICON_SIZE_MD)
           .height(DesignConstants.ICON_SIZE_MD)
-          .fillColor(this.getMembershipStatusColor())
+          .fillColor(this.membershipStatusColor)
 
         Text('会员状态')
           .fontSize(DesignConstants.FONT_SIZE_LG)
@@ -128,9 +128,9 @@ export struct MembershipStatusCard {
 
       // 会员状态和连续天数
       Row({ space: DesignConstants.SPACING_MD }) {
-        Text(this.getMembershipStatusText())
+        Text(this.membershipStatusText)
           .fontSize(DesignConstants.FONT_SIZE_MD)
-          .fontColor(this.getMembershipStatusColor())
+          .fontColor(this.membershipStatusColor)
 
         Text(`🔥连续${this.consecutiveDays}天`)
           .fontSize(DesignConstants.FONT_SIZE_SM)
@@ -192,7 +192,7 @@ export struct MembershipStatusCard {
 
       // 进度文字
       Row() {
-        if (this.continuousUsageManager.isTodayUsageCompleted()) {
+        if (this.pk.continuous_usage_data.todayUsageCompleted) {
           Text('🎉 今日使用已完成！')
             .fontSize(DesignConstants.FONT_SIZE_SM)
             .fontColor($r('sys.color.confirm'))
@@ -235,7 +235,7 @@ export struct MembershipStatusCard {
       .alignSelf(ItemAlign.Start)
 
       // 今日奖励
-      if (!this.continuousUsageManager.isTodayUsageCompleted()) {
+      if (!this.pk.continuous_usage_data.todayUsageCompleted) {
         Row() {
           Text('今日奖励：')
             .fontSize(DesignConstants.FONT_SIZE_SM)
@@ -458,7 +458,7 @@ export struct MembershipStatusCard {
     .width('100%')
     .onClick(() => {
       // 仅专业版用户可以点击查看详情
-      if (this.pk.has_agreed_membership_reward && this.pk.member_ship.can()) {
+      if (this.pk.has_agreed_membership_reward && this.pk.member_ship.can) {
         this.showProDetails();
       }
     })

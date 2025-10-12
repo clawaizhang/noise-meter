@@ -104,10 +104,7 @@ export class PreferenceKeys {
    * 自定义分析模式数据
    */
   @Trace
-  custom_audio_config: AudioAnalysisConfig =
-    new AudioAnalysisConfig(DEFAULT_CUSTOM_CONFIG.fftSize, DEFAULT_CUSTOM_CONFIG.updateInterval,
-      DEFAULT_CUSTOM_CONFIG.smoothingFactor, DEFAULT_CUSTOM_CONFIG.windowType, DEFAULT_CUSTOM_CONFIG.overlap,
-      DEFAULT_CUSTOM_CONFIG.bufferSize);
+  custom_audio_config: AudioAnalysisConfig = new AudioAnalysisConfig();
   /**
    * 会员奖励协议同意状态
    */

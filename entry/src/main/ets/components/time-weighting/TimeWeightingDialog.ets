@@ -28,23 +28,12 @@ export struct TimeWeightingDialog {
   @Local isTechnicalParamsExpanded: boolean = false; // 技术参数是否展开
   @Local isAcousticTheoryExpanded: boolean = false; // 声学原理是否展开
   @Local tempCustomModeEnabled: boolean = false; // 临时自定义模式开关状态
-  @Local tempCustomConfig: AudioAnalysisConfig =
-    new AudioAnalysisConfig(this.pk.custom_audio_config.fftSize, this.pk.custom_audio_config.updateInterval,
-      this.pk.custom_audio_config.smoothingFactor, this.pk.custom_audio_config.windowType,
-      this.pk.custom_audio_config.overlap, this.pk.custom_audio_config.bufferSize); // 临时自定义配置
-  // 初始状态 - 用于检测是否有修改
-  private initialMode: AudioAnalysisMode = this.currentMode;
-  private initialCustomModeEnabled: boolean = false;
-  private initialCustomConfig: AudioAnalysisConfig = new AudioAnalysisConfig(this.pk.custom_audio_config.fftSize, this.pk.custom_audio_config.updateInterval,
-    this.pk.custom_audio_config.smoothingFactor, this.pk.custom_audio_config.windowType,
-    this.pk.custom_audio_config.overlap, this.pk.custom_audio_config.bufferSize);
+  @Local tempCustomConfig: AudioAnalysisConfig = this.pk.custom_audio_config.clone(); // 临时自定义配置
 
   aboutToAppear() {
     // 初始化临时状态
     this.tempSelectedMode = this.currentMode;
     this.tempCustomModeEnabled = this.pk.custom_audio_config_enabled;
-    this.initialMode = this.currentMode;
-    this.initialCustomModeEnabled = this.pk.custom_audio_config_enabled;
   }
 
   // 处理保存操作

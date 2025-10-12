@@ -52,7 +52,7 @@ export class UsageTrackingService {
     this.currentSeconds = this.continuousUsageManager.getTodayUsageSeconds();
 
     // 如果今日已完成使用，重置状态
-    if (this.continuousUsageManager.isTodayUsageCompleted()) {
+    if (this.pk.continuous_usage_data.todayUsageCompleted) {
       this.currentSeconds = 60; // 设置为完成状态
     }
 
@@ -78,7 +78,7 @@ export class UsageTrackingService {
     this.stopUsageTimer();
 
     // 如果今日已完成使用，不再开始追踪
-    if (this.continuousUsageManager.isTodayUsageCompleted()) {
+    if (this.pk.continuous_usage_data.todayUsageCompleted) {
       console.info('[使用追踪] 今日使用已完成，不再开始追踪');
       return;
     }
@@ -152,48 +152,6 @@ export class UsageTrackingService {
   }
 
   /**
-   * 获取当前使用秒数
-   * @returns 使用秒数
-   */
-  public getCurrentSeconds(): number {
-    return this.currentSeconds;
-  }
-
-  /**
-   * 获取追踪状态
-   * @returns 追踪状态
-   */
-  public getTrackingState(): UsageTrackingState {
-    return this.state;
-  }
-
-  /**
-   * 检查是否完成今日使用
-   * @returns 是否完成
-   */
-  public isTodayUsageCompleted(): boolean {
-    return this.continuousUsageManager.isTodayUsageCompleted();
-  }
-
-  /**
-   * 获取今日使用进度百分比
-   * @param totalSeconds 总需要秒数
-   * @returns 进度百分比 (0-100)
-   */
-  public getProgressPercent(totalSeconds: number = 60): number {
-    return Math.min(100, Math.round((this.currentSeconds / totalSeconds) * 100));
-  }
-
-  /**
-   * 获取剩余秒数
-   * @param totalSeconds 总需要秒数
-   * @returns 剩余秒数
-   */
-  public getRemainingSeconds(totalSeconds: number = 60): number {
-    return Math.max(0, totalSeconds - this.currentSeconds);
-  }
-
-  /**
    * 注册使用秒数变化回调
    * @param callback 回调函数
    */
@@ -239,7 +197,7 @@ export class UsageTrackingService {
         }
 
         // 检查是否完成使用
-        if (this.currentSeconds >= 60 && !this.continuousUsageManager.isTodayUsageCompleted()) {
+        if (this.currentSeconds >= 60 && !this.pk.continuous_usage_data.todayUsageCompleted) {
           this.handleUsageCompletion();
         }
 

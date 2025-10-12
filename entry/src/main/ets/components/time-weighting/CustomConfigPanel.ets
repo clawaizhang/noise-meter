@@ -51,10 +51,7 @@ export struct CustomConfigPanel {
   @Local display: boolean = true;
   @Event onSelectedChange: () => void;
   @Event onConfigChange?: (config: AudioAnalysisConfig) => void; // 新增：配置变化回调
-  @Local tempCustomConfig: AudioAnalysisConfig =
-    new AudioAnalysisConfig(this.pk.custom_audio_config.fftSize, this.pk.custom_audio_config.updateInterval,
-      this.pk.custom_audio_config.smoothingFactor, this.pk.custom_audio_config.windowType,
-      this.pk.custom_audio_config.overlap, this.pk.custom_audio_config.bufferSize); // 临时配置状态
+  @Local tempCustomConfig: AudioAnalysisConfig = this.pk.custom_audio_config.clone(); // 临时配置状态
   // FFT大小选项
   private readonly fftSizeOptions: SelectOption[] = [
     { value: 1024, label: '1024', index: 0 },

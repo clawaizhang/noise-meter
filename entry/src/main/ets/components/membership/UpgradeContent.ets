@@ -80,7 +80,7 @@ export struct UpgradeContent {
 
   build() {
     Column({ space: DesignConstants.SPACING_MD }) {
-      if (this.pk.member_ship.can()) {
+      if (this.pk.member_ship.can) {
         // 显示已解锁界面
         this.buildUnlockedHeader()
         this.buildUnlockedBenefits()

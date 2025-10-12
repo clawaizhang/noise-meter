@@ -1,6 +1,5 @@
 import { navigationStack } from '../constants/ProviderConstant'
 import { RelationalStoreService } from '../services/RelationalStoreService'
-import { commonEventManager } from '@kit.BasicServicesKit'
 import { PrivacyPolicyStandalone } from '../components/privacy/PrivacyPolicyStandalone'
 import { PreferenceKeys } from '../models/PreferenceKeys'
 import { DatabaseUpgradeConfig } from '../interfaces/DatabaseInterfaces'
@@ -18,7 +17,6 @@ import { PermissionService } from '../services/PermissionService'
 import { DisplayManager } from '../utils/DisplayManager'
 import { ColorModeManager } from '../utils/ColorModeManager'
 import { DialogStyleManager } from '../utils/DialogStyleManager'
-import { DEFAULT_THRESHOLD_CONFIG, ThresholdConfig } from '../models/ThresholdConfig'
 import { ThresholdManager } from '../services/ThresholdManager'
 import { UsageTrackingService } from '../services/UsageTrackingService'
 import { MembershipRewardService } from '../services/MembershipRewardService'
@@ -43,21 +41,11 @@ struct Index {
   @Local isInitialized: boolean = false;
   @Local isLoading: boolean = true;
   @Local pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys)!;
-  @Local private currentConfig: ThresholdConfig =
-    PersistenceV2.connect(ThresholdConfig, () => DEFAULT_THRESHOLD_CONFIG)!;
   @Local ak: AppKeys = AppStorageV2.connect(AppKeys)!;
   usePrivacy: boolean = true;
-  @Local private showWelcomeGuide: boolean = false;
   private relationalStoreService: RelationalStoreService = RelationalStoreService.getInstance();
   private context = this.getUIContext().getHostContext() as common.UIAbilityContext;
-  private readonly eventId = 'usual.event.PRIVACY_STATE_CHANGED';
   private audioService: AudioService = AudioService.getInstance()
-  // 订阅者信息, 用于保存创建成功的订阅者对象，后续使用其完成订阅及退订的动作
-  private subscriber: commonEventManager.CommonEventSubscriber | undefined = undefined;
-  // 事件列表
-  private subscribeInfo: commonEventManager.CommonEventSubscribeInfo = {
-    events: [this.eventId]
-  };
 
   @Monitor('pk.display_mode')
   displayModeChange(monitor: IMonitor) {
@@ -78,10 +66,10 @@ struct Index {
     windowManager.setKeepScreenOn(keepScreenOn);
   }
 
-  @Monitor('pk.privacy_agreed')
+  @Monitor('pk.show_welcome_guide')
   privacy_agreedChange(monitor: IMonitor) {
-    let privacy_agreed = monitor.value<boolean>()?.now!;
-    if (privacy_agreed) {
+    let show_welcome_guide = monitor.value<boolean>()?.now!;
+    if (!show_welcome_guide) {
       // 请求通知权限
       const notificationHelper = NotificationHelper.getInstance(this.context);
       notificationHelper.checkAndRequestPermission();
@@ -104,14 +92,9 @@ struct Index {
     DialogStyleManager.init();
     ColorModeManager.setAppContext(this.context.getApplicationContext());
 
-    ThresholdManager.setCurrentConfig(this.currentConfig);
+    ThresholdManager.setCurrentConfig(this.pk.alarm_threshold);
     FileUtils.init(this.getUIContext().getHostContext());
     this.setDisplayMode(this.pk.display_mode);
-
-    // 不再订阅系统隐私政策事件，使用自定义隐私政策
-    // if (!this.pk.privacy_agreed) {
-    //   this.subscribe();
-    // }
 
     // 初始化权限状态
     const permissionService = PermissionService.getInstance();
@@ -149,10 +132,6 @@ struct Index {
   private async initialize() {
     try {
 
-      // 使用自定义隐私政策，不再依赖系统隐私政策API
-      // 隐私政策状态由用户通过自定义对话框设置
-      // 这里保持隐私政策状态不变，等待用户交互
-
       // 初始化数据库
       const upgradeConfigs: DatabaseUpgradeConfig[] = dbConfig.upgradeConfigs;
 
@@ -170,38 +149,6 @@ struct Index {
     } finally {
       this.isLoading = false;
     }
-  }
-
-  public subscribe(): void {
-    hilog.info(0, TAG, "subscribe");
-    // 创建订阅者
-    if (canIUse('SystemCapability.Notification.CommonEvent') && this.usePrivacy) {
-
-      commonEventManager.createSubscriber(this.subscribeInfo).then((commonEventSubscriber) => {
-        hilog.info(0, TAG, "createSubscriber");
-        this.subscriber = commonEventSubscriber;
-
-        // 订阅公共事件
-        try {
-          commonEventManager.subscribe(this.subscriber, (err, data) => {
-            if (err) {
-              hilog.error(0, TAG, `subscribe failed, code is ${err?.code}, message is ${err?.message}`);
-              return;
-            }
-
-            let result = JSON.parse(data?.data ?? '{}')?.resultType as number;
-            if (result === 1) {
-              // 隐私同意处理
-              this.pk.privacy_agreed = true;
-            }
-          });
-        } catch (error) {
-          hilog.error(0, TAG,
-            "init createSubscriber failed, exception code: " + error.code + ", exception message: " + error.message);
-        }
-      });
-    }
-
   }
 
   // 初始化DisplayManager监听

@@ -25,7 +25,6 @@ export class AppKeys {
   systemNotificationPermissionGranted: boolean = false; // 系统通知权限状态
 
   // 双管线架构状态引用
-  @Trace
   dataProcessingState: DataProcessingState = new DataProcessingState();
 
   @Trace

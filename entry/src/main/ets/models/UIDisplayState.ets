@@ -10,7 +10,6 @@ export class DisplayAlertState {
   isActive: boolean = false;
 
   // 显示持续时间（毫秒）
-  @Trace
   duration: number = 0;
 
   // 格式化后的持续时间字符串
@@ -189,11 +188,7 @@ export class UIDisplayState {
   // UI更新状态
   @Trace isUIUpdatesEnabled: boolean = true;
 
-  // 最后更新时间
-  @Trace lastUpdateTime: number = 0;
-
   constructor() {
-    this.lastUpdateTime = new Date().getTime();
   }
 
   /**
@@ -226,8 +221,6 @@ export class UIDisplayState {
     this.displayAlertState.isActive = processingState.alertState.isActive;
     this.displayAlertState.duration = processingState.alertState.currentDuration;
     this.displayAlertState.updateFormattedDuration();
-
-    this.lastUpdateTime = Date.now();
   }
 
   /**
@@ -254,6 +247,5 @@ export class UIDisplayState {
     this.displayStatistics.reset();
     this.displayAlertState.reset();
     this.isUIUpdatesEnabled = true;
-    this.lastUpdateTime = new Date().getTime();
   }
 }

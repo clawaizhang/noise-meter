@@ -69,7 +69,7 @@ export struct PremiumFeature {
 
   build() {
     // 专业版用户直接显示功能
-    if (this.pk.member_ship.can()) {
+    if (this.pk.member_ship.can) {
       this.content();
     } else {
       Stack({ alignContent: Alignment.TopEnd }) {

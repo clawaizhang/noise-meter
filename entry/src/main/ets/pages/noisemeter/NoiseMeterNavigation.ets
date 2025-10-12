@@ -144,7 +144,7 @@ export struct MainNoiseMeter {
         .alignSelf(ItemAlign.Start)
 
       // 副标题 - 在下方（会员标签）
-      if (this.pk.member_ship.can()) {
+      if (this.pk.member_ship.can) {
         Row({ space: 4 }) {
           Image($r('app.media.ic_vip'))
             .width(14)

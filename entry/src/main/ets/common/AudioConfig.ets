@@ -19,26 +19,60 @@ export enum AudioAnalysisMode {
 @ObservedV2
 export class AudioAnalysisConfig {
   @Trace
-  fftSize: number; // FFT大小（必须是2的幂次方）
+  fftSize: number = 2048; // FFT大小（必须是2的幂次方）
   @Trace
-  updateInterval: number; // 更新间隔（毫秒）
+  updateInterval: number = 200; // 更新间隔（毫秒）
   @Trace
-  smoothingFactor: number; // 平滑因子
+  smoothingFactor: number = 0.2; // 平滑因子
   @Trace
-  windowType: WindowType; // 窗函数类型
+  windowType: WindowType = WindowType.HANNING; // 窗函数类型
   @Trace
-  overlap: number; // 重叠比例 (0-1)
+  overlap: number = 0.4; // 重叠比例 (0-1)
   @Trace
-  bufferSize: number; // 音频缓冲区大小（字节），等于fftSize * 2（16位采样）
+  bufferSize: number = 4096; // 音频缓冲区大小（字节），等于fftSize * 2（16位采样）
 
-  constructor(fftSize: number, updateInterval: number, smoothingFactor: number, windowType: WindowType, overlap: number,
-    bufferSize: number) {
-    this.fftSize = fftSize;
-    this.updateInterval = updateInterval;
-    this.smoothingFactor = smoothingFactor;
-    this.windowType = windowType;
-    this.overlap = overlap;
-    this.bufferSize = bufferSize;
+  static fast() {
+    let fast = new AudioAnalysisConfig();
+    fast.fftSize = 2048;
+    fast.updateInterval = 200;
+    fast.smoothingFactor = 0.2;
+    fast.windowType = WindowType.BLACKMAN;
+    fast.overlap = 0.4;
+    fast.bufferSize = 2048 * 2;
+    return fast;
+  }
+
+  static slow() {
+    let slow = new AudioAnalysisConfig();
+    slow.fftSize = 4096;
+    slow.updateInterval = 500;
+    slow.smoothingFactor = 0.05;
+    slow.windowType = WindowType.BLACKMAN;
+    slow.overlap = 0.6;
+    slow.bufferSize = 4096 * 2;
+    return slow;
+  }
+
+  static impulse() {
+    let impulse = new AudioAnalysisConfig();
+    impulse.fftSize = 1024;
+    impulse.updateInterval = 35;
+    impulse.smoothingFactor = 0.3;
+    impulse.windowType = WindowType.BLACKMAN;
+    impulse.overlap = 0.75;
+    impulse.bufferSize = 1024 * 2;
+    return impulse;
+  }
+
+  clone() {
+    let clone = new AudioAnalysisConfig();
+    clone.fftSize = this.fftSize;
+    clone.updateInterval = this.updateInterval;
+    clone.smoothingFactor = this.smoothingFactor;
+    clone.windowType = this.windowType;
+    clone.overlap = this.overlap;
+    clone.bufferSize = this.bufferSize;
+    return clone;
   }
 }
 
@@ -53,22 +87,18 @@ export class CustomConfigKeys {
 /**
  * 默认自定义配置
  */
-export const DEFAULT_CUSTOM_CONFIG: AudioAnalysisConfig =
-  new AudioAnalysisConfig(2048, 200, 0.2, WindowType.HANNING, 0.4, 4096);
+export const DEFAULT_CUSTOM_CONFIG: AudioAnalysisConfig = new AudioAnalysisConfig();
 
 /**
  * 预设配置
  */
 export class AudioPresets {
   // 快速音频分析模式配置（F）
-  public static readonly FAST_TIME_WEIGHTING: AudioAnalysisConfig =
-    new AudioAnalysisConfig(2048, 200, 0.2, WindowType.BLACKMAN, 0.4, 2048 * 2);
+  public static readonly FAST_TIME_WEIGHTING: AudioAnalysisConfig = AudioAnalysisConfig.fast();
   // 慢速音频分析模式配置（S）
-  public static readonly SLOW_TIME_WEIGHTING: AudioAnalysisConfig =
-    new AudioAnalysisConfig(4096, 500, 0.05, WindowType.BLACKMAN, 0.6, 4096 * 2);
+  public static readonly SLOW_TIME_WEIGHTING: AudioAnalysisConfig = AudioAnalysisConfig.slow();
   // 脉冲音频分析模式配置（I）
-  public static readonly IMPULSE_TIME_WEIGHTING: AudioAnalysisConfig =
-    new AudioAnalysisConfig(1024, 35, 0.3, WindowType.BLACKMAN, 0.75, 1024 * 2);
+  public static readonly IMPULSE_TIME_WEIGHTING: AudioAnalysisConfig = AudioAnalysisConfig.impulse();
 
   /**
    * 根据模式获取配置

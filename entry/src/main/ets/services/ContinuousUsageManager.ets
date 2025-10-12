@@ -86,14 +86,6 @@ export class ContinuousUsageManager {
   }
 
   /**
-   * 检查今日是否已完成使用
-   * @returns 是否已完成
-   */
-  public isTodayUsageCompleted(): boolean {
-    return this.pk.continuous_usage_data.isTodayCompleted();
-  }
-
-  /**
    * 获取今日使用秒数
    * @returns 使用秒数
    */

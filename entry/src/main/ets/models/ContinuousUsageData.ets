@@ -11,18 +11,6 @@ export class ContinuousUsageData {
   @Trace todayUsageCompleted: boolean = false;
   @Trace totalUsageSeconds: number = 0;
   
-  constructor(
-    lastUsageDate: string = '',
-    consecutiveDays: number = 0,
-    todayUsageCompleted: boolean = false,
-    totalUsageSeconds: number = 0
-  ) {
-    this.lastUsageDate = lastUsageDate;
-    this.consecutiveDays = consecutiveDays;
-    this.todayUsageCompleted = todayUsageCompleted;
-    this.totalUsageSeconds = totalUsageSeconds;
-  }
-  
   /**
    * 重置今日使用数据（每天重置）
    */
@@ -44,14 +32,6 @@ export class ContinuousUsageData {
    */
   public markTodayCompleted(): void {
     this.todayUsageCompleted = true;
-  }
-  
-  /**
-   * 检查今日是否已完成使用
-   * @returns 是否已完成
-   */
-  public isTodayCompleted(): boolean {
-    return this.todayUsageCompleted;
   }
   
   /**
