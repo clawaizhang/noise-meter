@@ -2,25 +2,24 @@
  * 数据处理状态模型
  * 负责后台数据处理，不触发UI刷新
  */
-@ObservedV2
 export class DataProcessingState {
   // 实时分贝值（原始数据）
-  @Trace processingDb: number = 0;
+  processingDb: number = 0;
 
   // 频谱数据（原始数据）
-  @Trace processingSpectrumData: Float32Array= new Float32Array(0);
+  processingSpectrumData: Float32Array= new Float32Array(0);
 
   // 峰值频率（原始数据）
-  @Trace processingPeakFreq: number = 0;
+  processingPeakFreq: number = 0;
 
   // 统计数据
-  @Trace statisticsData: StatisticsData = new StatisticsData();
+  statisticsData: StatisticsData = new StatisticsData();
 
   // 是否在后台运行
-  @Trace isBackground: boolean = false;
+  isBackground: boolean = false;
 
   // 新增：警报状态（后台持续计算）
-  @Trace alertState: AlertState = new AlertState();
+  alertState: AlertState = new AlertState();
 
   // 警报持续时间更新定时器
   private alertDurationTimer: number = 0;
@@ -58,22 +57,17 @@ export class DataProcessingState {
 /**
  * 警报状态对象（后台持续计算）
  */
-@ObservedV2
 export class AlertState {
   // 警报是否激活
-  @Trace
   isActive: boolean = false;
 
   // 警报开始时间戳
-  @Trace
   startTime: number = 0;
 
   // 当前持续时间（毫秒）
-  @Trace
   currentDuration: number = 0;
 
   // 最后更新时间
-  @Trace
   lastUpdateTime: number = 0;
 
   constructor() {
@@ -123,26 +117,20 @@ export class AlertState {
 /**
  * 统计数据对象
  */
-@ObservedV2
 export class StatisticsData {
   // 最小分贝值
-  @Trace
   minDb: number = 0;
 
   // 最大分贝值
-  @Trace
   maxDb: number = 0;
 
   // 平均分贝值
-  @Trace
   avgDb: number = 0;
 
   // 测量时长（秒）
-  @Trace
   duration: number = 0;
 
   // 测量开始时间
-  @Trace
   startTime: number = 0;
 
   // 增量计算字段

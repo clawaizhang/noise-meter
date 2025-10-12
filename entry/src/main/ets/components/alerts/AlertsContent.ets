@@ -74,12 +74,6 @@ export struct AlertsContent {
       Row({ space: DesignConstants.SPACING_SM }) {
         Circle({ width: 16, height: 16 })
           .fill(this.statusColor)
-          .animation({
-            duration: this.ak.isDisplayApp && this.ak.uiDisplayState.displayAlertState.isActive ? 500 : 0,
-            curve: Curve.EaseInOut,
-            iterations: this.ak.isDisplayApp && this.ak.uiDisplayState.displayAlertState.isActive ? -1 : 1,
-            playMode: PlayMode.Alternate
-          })
 
         Text(this.statusText)
           .fontSize(DesignConstants.FONT_SIZE_XL)
