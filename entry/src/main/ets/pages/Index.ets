@@ -10,6 +10,7 @@ import { AppStorageV2, PersistenceV2 } from '@kit.ArkUI'
 import { WindowManager } from '../utils/WindowManager'
 import { AudioAnalysisMode } from '../common/AudioConfig'
 import { AudioService } from '../services/AudioService'
+import { AudioDeviceMonitorService } from '../services/AudioDeviceMonitorService'
 import { NotificationHelper } from '../utils/NotificationHelper'
 import { AppKeys } from '../models/AppKeys'
 import { FileUtils } from '../utils/FileUtils'
@@ -46,6 +47,7 @@ struct Index {
   private relationalStoreService: RelationalStoreService = RelationalStoreService.getInstance();
   private context = this.getUIContext().getHostContext() as common.UIAbilityContext;
   private audioService: AudioService = AudioService.getInstance()
+  private audioDeviceMonitorService: AudioDeviceMonitorService = AudioDeviceMonitorService.getInstance()
 
   @Monitor('pk.display_mode')
   displayModeChange(monitor: IMonitor) {
@@ -106,6 +108,9 @@ struct Index {
     // 初始化使用追踪服务
     this.initUsageTracking();
 
+    // 初始化音频设备监听服务
+    this.initAudioDeviceMonitoring();
+
     this.initialize();
   }
 
@@ -123,6 +128,9 @@ struct Index {
     // 清理公共事件服务资源
     const commonEventService = CommonEventService.getInstance();
     commonEventService.destroy();
+
+    // 清理音频设备监听服务资源
+    this.audioDeviceMonitorService.destroy();
   }
 
   private setDisplayMode(displayMode: string) {
@@ -171,6 +179,29 @@ struct Index {
       const usageTrackingService = UsageTrackingService.getInstance(this.pk);
       usageTrackingService.pauseTracking();
     });
+  }
+
+  // 初始化音频设备监听服务
+  private async initAudioDeviceMonitoring(): Promise<void> {
+    try {
+      // 初始化音频设备监听服务
+      await this.audioDeviceMonitorService.initialize(this.context);
+      
+      // 添加设备变更监听回调
+      this.audioDeviceMonitorService.addDeviceChangeListener((deviceInfo) => {
+        hilog.info(DOMAIN, TAG, `音频设备状态变化: ${deviceInfo.deviceName} ${deviceInfo.connectionState === 0 ? '接入' : '断开'}`);
+        
+        // 可以在这里添加UI更新逻辑
+        // 例如更新设备状态显示组件
+      });
+
+      // 开始监听设备状态变化
+      await this.audioDeviceMonitorService.startMonitoring();
+      
+      hilog.info(DOMAIN, TAG, '音频设备监听服务启动成功');
+    } catch (error) {
+      hilog.error(DOMAIN, TAG, `音频设备监听服务启动失败: ${error instanceof Error ? error.message : String(error)}`);
+    }
   }
 
   // 初始化使用追踪服务

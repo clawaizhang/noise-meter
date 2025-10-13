@@ -18,8 +18,6 @@ export struct AudioCalibrationSettings {
   @Local countdown: number = 0;
   @Local calibrationProgress: number = 0;
   @Local ak: AppKeys = AppStorageV2.connect(AppKeys)!;
-  @Local gridColumns: number = 1;
-  @Local environmentNoise: number = 25; // 模拟环境噪声
   @Consumer(navigationStack) navStack: NavPathStack = new NavPathStack();
 
   // 临时状态变量
