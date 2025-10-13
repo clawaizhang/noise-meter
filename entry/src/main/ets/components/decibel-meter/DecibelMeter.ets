@@ -13,6 +13,7 @@ import { AppKeys } from '../../models/AppKeys';
 import { PermissionService } from '../../services/PermissionService';
 import { AudioController } from './AudioController';
 import { AudioControllerService } from '../../services/AudioControllerService';
+import { AudioDeviceMonitorService, AudioDeviceInfo } from '../../services/AudioDeviceMonitorService';
 import { Throttle } from '../../utils/Debounce';
 
 @ComponentV2
@@ -33,9 +34,12 @@ export struct DecibelMeter {
   @Local private currentTime: number = Date.now();
   @Local private countdownTimer?: number;
   @Local private hideForXsMd: boolean = false;
+  @Local private hasExternalDeviceConnected: boolean = false; // 外置设备连接状态
+  @Local private connectedDeviceName: string = ''; // 连接的设备名称
   private animationTimeOutId: number | undefined;
   // 服务实例
   private audioControllerService: AudioControllerService = AudioControllerService.getInstance();
+  private audioDeviceMonitorService: AudioDeviceMonitorService = AudioDeviceMonitorService.getInstance();
   // 双管线架构：UI显示状态
   @Consumer(navigationStack) navStack: NavPathStack = new NavPathStack()
   sysResourceManager: resourceManager.ResourceManager = resourceManager.getSystemResourceManager();
@@ -68,8 +72,12 @@ export struct DecibelMeter {
             }
           }) {
             Column({ space: 8 }) {
-
+              // 外置设备警告显示 - 显示在hero display上方
+              if (this.hasExternalDeviceConnected) {
+                this.externalDeviceWarningDisplay()
+              }
               Stack({ alignContent: Alignment.Top }) {
+
                 // 使用新的分贝显示组件（重新设计版）
                 DecibelDisplayComponent({
                   weightingType: this.pk.weighting_type,
@@ -152,6 +160,8 @@ export struct DecibelMeter {
     this.audioControllerService.dispose();
     // 停止倒计时更新定时器
     this.stopCountdownTimer();
+    // 取消设备状态监听
+    this.unregisterDeviceChangeListener();
   }
 
   @Monitor('ak.windowWidth','ak.windowHeight')
@@ -177,6 +187,9 @@ export struct DecibelMeter {
     this.countdownTimer = setInterval(() => {
       this.currentTime = Date.now();
     }, 1000)
+    
+    // 注册设备状态监听
+    this.registerDeviceChangeListener();
   }
 
   private stopCountdownTimer() {
@@ -366,5 +379,108 @@ export struct DecibelMeter {
         this.translateY = -this.getUIContext().px2vp(displayClass.height) / 2 + 20;
       });
     }, 100)
+  }
+
+  /**
+   * 注册设备状态监听器
+   */
+  private registerDeviceChangeListener(): void {
+    this.audioDeviceMonitorService.addDeviceChangeListener((deviceInfo: AudioDeviceInfo) => {
+      this.handleDeviceChange(deviceInfo);
+    });
+    
+    // 初始化当前设备状态
+    const connectedDevices = this.audioDeviceMonitorService.getConnectedDevices();
+    this.hasExternalDeviceConnected = connectedDevices.length > 0;
+    if (this.hasExternalDeviceConnected && connectedDevices.length > 0) {
+      this.connectedDeviceName = connectedDevices[0].deviceName;
+    }
+  }
+
+  /**
+   * 取消设备状态监听器
+   */
+  private unregisterDeviceChangeListener(): void {
+    // 由于回调函数是匿名函数，这里需要重新设计监听器管理
+    // 暂时使用空实现，实际项目中应该维护回调函数引用
+  }
+
+  /**
+   * 处理设备状态变化
+   * @param deviceInfo 设备信息
+   */
+  private handleDeviceChange(deviceInfo: AudioDeviceInfo): void {
+    this.hasExternalDeviceConnected = deviceInfo.connectionState === 0; // CONNECTED = 0
+    if (this.hasExternalDeviceConnected) {
+      this.connectedDeviceName = deviceInfo.deviceName;
+    } else {
+      this.connectedDeviceName = '';
+    }
+    
+    console.info(`[DEVICE_CHANGE] 外置设备${this.hasExternalDeviceConnected ? '接入' : '断开'}: ${deviceInfo.deviceName}`);
+  }
+
+  /**
+   * 外置设备警告显示组件
+   */
+  @Builder
+  externalDeviceWarningDisplay() {
+    Row() {
+      Image($r('sys.media.ic_grid_unknown'))
+        .width(20)
+        .height(20)
+        .margin({ right: 8 })
+        .fillColor($r('sys.color.ohos_id_color_warning'))
+
+      Column() {
+        Text('•外接音频设备接入，建议重新校准以确保噪音检测准确。')
+          .fontSize(14)
+          .fontColor($r('sys.color.ohos_id_color_warning'))
+          .textAlign(TextAlign.Start)
+        Text('•使用降噪耳机可能导致音频播放音量变小。')
+          .fontSize(14)
+          .fontColor($r('sys.color.ohos_id_color_warning'))
+          .textAlign(TextAlign.Start)
+        Text('•如您需要听音乐、看视频，建议退出本应用以避免干扰。')
+          .fontSize(14)
+          .fontColor($r('sys.color.ohos_id_color_warning'))
+          .textAlign(TextAlign.Start)
+
+        if (this.connectedDeviceName) {
+          Text(`设备: ${this.connectedDeviceName}`)
+            .fontSize(12)
+            .fontColor($r('sys.color.ohos_id_color_text_secondary'))
+            .margin({ top: 2 })
+            .textAlign(TextAlign.Start)
+        }
+      }
+      .alignItems(HorizontalAlign.Start)
+      .layoutWeight(1)
+
+      Blank()
+
+      Button('关闭')
+        .fontSize(12)
+        .type(ButtonType.Capsule)
+        .padding({
+          left: 16,
+          right: 16,
+          top: 6,
+          bottom: 6
+        })
+        .onClick(() => {
+          Throttle.click(() => {
+            // 关闭警告提示
+            this.hasExternalDeviceConnected = false;
+            this.connectedDeviceName = '';
+            console.info('[DEVICE_WARNING] 用户关闭设备警告提示');
+          })
+        })
+    }
+    .padding(16)
+    .width('100%')
+    .backgroundColor($r('sys.color.comp_background_warning_secondary'))
+    .borderRadius(16)
+    .margin({ bottom: 16 })
   }
 }

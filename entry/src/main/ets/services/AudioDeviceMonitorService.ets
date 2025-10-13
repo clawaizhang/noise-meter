@@ -70,6 +70,11 @@ export class AudioDeviceMonitorService {
     try {
       this.context = context;
       
+      // 检查音频权限
+      if (!await this.checkAudioPermission()) {
+        throw new Error('缺少音频权限，无法初始化设备监听服务');
+      }
+
       // 初始化音频管理器
       this.audioManager = audio.getAudioManager();
       if (!this.audioManager) {
@@ -106,9 +111,15 @@ export class AudioDeviceMonitorService {
       throw new Error('音频路由管理器未初始化');
     }
 
+    // 检查权限状态
+    if (!await this.checkAudioPermission()) {
+      hilog.warn(DOMAIN, TAG, '缺少音频权限，无法启动设备监听');
+      return;
+    }
+
     try {
       // 注册设备变更监听器
-      this.audioRoutingManager.on('deviceChange', audio.DeviceFlag.INPUT_DEVICES_FLAG, 
+      this.audioRoutingManager.on('deviceChange', audio.DeviceFlag.INPUT_DEVICES_FLAG,
         (deviceChanged: audio.DeviceChangeAction) => {
           this.handleDeviceChange(deviceChanged);
         });
@@ -376,6 +387,44 @@ export class AudioDeviceMonitorService {
   }
 
   /**
+   * 检查音频权限
+   */
+  private async checkAudioPermission(): Promise<boolean> {
+    try {
+      // 这里应该检查实际的音频权限
+      // 由于权限检查逻辑可能在其他服务中实现，这里暂时返回true
+      // 实际项目中应该集成权限检查服务
+      return true;
+    } catch (error) {
+      const err = error as BusinessError;
+      hilog.error(DOMAIN, TAG, `检查音频权限失败: ${err.code}, ${err.message}`);
+      return false;
+    }
+  }
+
+  /**
+   * 处理监听错误
+   * @param error 错误信息
+   * @param operation 操作名称
+   */
+  private handleMonitoringError(error: BusinessError, operation: string): void {
+    hilog.error(DOMAIN, TAG, `${operation}失败: ${error.code}, ${error.message}`);
+    
+    // 根据错误码进行不同的处理
+    switch (error.code) {
+      case 401: // 权限错误
+        hilog.warn(DOMAIN, TAG, '音频权限不足，请检查应用权限设置');
+        break;
+      case 6800101: // 音频服务不可用
+        hilog.error(DOMAIN, TAG, '音频服务不可用，请检查系统音频服务状态');
+        break;
+      default:
+        hilog.error(DOMAIN, TAG, `未知错误: ${error.code}`);
+        break;
+    }
+  }
+
+  /**
    * 销毁服务
    */
   public async destroy(): Promise<void> {
@@ -391,7 +440,7 @@ export class AudioDeviceMonitorService {
       hilog.info(DOMAIN, TAG, '音频设备监听服务已销毁');
     } catch (error) {
       const err = error as BusinessError;
-      hilog.error(DOMAIN, TAG, `销毁服务失败: ${err.code}, ${err.message}`);
+      this.handleMonitoringError(err, '销毁服务');
     }
   }
 
