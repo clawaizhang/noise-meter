@@ -45,7 +45,7 @@ export class AudioService {
       encodingType: audio.AudioEncodingType.ENCODING_TYPE_RAW
     },
     capturerInfo: {
-      source: audio.SourceType.SOURCE_TYPE_UNPROCESSED,
+      source: audio.SourceType.SOURCE_TYPE_VOICE_RECOGNITION,
       capturerFlags: 0
     }
   };
