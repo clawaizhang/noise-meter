@@ -1,7 +1,6 @@
 import { navigationStack } from '../../constants/ProviderConstant';
 import { curves, PersistenceV2, promptAction } from '@kit.ArkUI';
 import { DialogHub, InfSheet } from '@hadss/dialoghub';
-import { DialogStyleManager } from '../../utils/DialogStyleManager';
 import { AudioCalibrationProps, AudioCalibrationSettingsBuilder } from '../settings/AudioCalibrationNavigation';
 import { AlertsSettingsBuilder, AlertsSettingsProps } from '../settings/AlertsSettingsNavigation';
 import { PreferenceKeys } from '../../models/PreferenceKeys';
@@ -21,7 +20,6 @@ import {
   AutoSaveSettings,
   AutoSaveSettingsDialogBuilder,
 } from '../../components/auto-save/AutoSaveSettingsDialog';
-import { ThresholdManager } from '../../services/ThresholdManager';
 import { PremiumFeature } from '../../components/membership/PremiumFeature';
 import { Throttle } from '../../utils/Debounce';
 
@@ -126,13 +124,12 @@ struct Settings {
   // 获取警报与通知描述（下方显示）
   private getAlertsDescription(): string {
     const enabled = this.pk.system_notification_enabled;
-    const threshold = ThresholdManager.getCurrentEffectiveThreshold();
-    const timePeriod = ThresholdManager.getCurrentTimePeriod();
+    const threshold = this.pk.alarm_threshold.currentEffectiveThreshold;
 
     if (!enabled) {
       return "警报通知已关闭，不会发送任何通知";
     } else {
-      return `当噪音超过${threshold}dB时发送${timePeriod}警报通知`;
+      return `当噪音超过${threshold}dB时发送警报通知`;
     }
   }
 

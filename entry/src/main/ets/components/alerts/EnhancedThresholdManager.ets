@@ -7,7 +7,6 @@ import { DEFAULT_THRESHOLD_CONFIG, PresetThreshold, PresetType, ThresholdConfig 
 import { DesignConstants } from '../../constants/DesignConstants';
 import { Throttle } from '../../utils/Debounce';
 import { curves, PersistenceV2 } from '@kit.ArkUI';
-import { ThresholdManager } from '../../services/ThresholdManager';
 import { PremiumFeature } from '../membership/PremiumFeature';
 import { PreferenceKeys } from '../../models/PreferenceKeys';
 

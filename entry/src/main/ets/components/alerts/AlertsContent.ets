@@ -1,7 +1,6 @@
 import { AppKeys } from '../../models/AppKeys';
 import { PreferenceKeys } from '../../models/PreferenceKeys';
 import { DesignConstants } from '../../constants/DesignConstants';
-import { ThresholdManager } from '../../services/ThresholdManager';
 import { AlertService } from '../../services/AlertService';
 import { AppStorageV2, PersistenceV2 } from '@kit.ArkUI';
 import { common } from '@kit.AbilityKit';
@@ -35,7 +34,7 @@ export struct AlertsContent {
 
   // 检查警报状态
   private async checkAlertStatus(currentDecibel: number): Promise<void> {
-    const threshold = ThresholdManager.getCurrentEffectiveThreshold();
+    const threshold = this.pk.alarm_threshold.currentEffectiveThreshold;
     const shouldAlert = currentDecibel >= threshold; // 只基于分贝值与阈值比较
 
     // 使用 DataProcessingState 中的警报状态
@@ -56,7 +55,7 @@ export struct AlertsContent {
   // 触发警报
   private async triggerAlarm(currentDecibel: number): Promise<void> {
     // 状态更新由 AlertService 处理
-    const threshold = ThresholdManager.getCurrentEffectiveThreshold();
+    const threshold = this.pk.alarm_threshold.currentEffectiveThreshold;
     await this.alertService.triggerAlert(currentDecibel, threshold);
   }
 
@@ -88,7 +87,7 @@ export struct AlertsContent {
         .fontColor(this.statusColor)
 
       // 阈值信息
-      Text(`阈值: ${ThresholdManager.getCurrentEffectiveThreshold()}dB`)
+      Text(`阈值: ${this.pk.alarm_threshold.currentEffectiveThreshold}dB`)
         .fontSize(DesignConstants.FONT_SIZE_MD)
         .fontColor($r('sys.color.font_secondary'))
 
@@ -147,7 +146,7 @@ export struct AlertsContent {
   @Computed
   get statusColor(): Resource {
     const currentDecibel = this.ak.uiDisplayState.displayDb;
-    const threshold = ThresholdManager.getCurrentEffectiveThreshold();
+    const threshold = this.pk.alarm_threshold.currentEffectiveThreshold;
 
     if (currentDecibel >= threshold) {
       return $r('sys.color.warning'); // 红色
@@ -162,7 +161,7 @@ export struct AlertsContent {
   @Computed
   get statusText(): string {
     const currentDecibel = this.ak.uiDisplayState.displayDb;
-    const threshold = ThresholdManager.getCurrentEffectiveThreshold();
+    const threshold = this.pk.alarm_threshold.currentEffectiveThreshold;
 
     if (currentDecibel >= threshold) {
       return '警报触发中';
@@ -177,7 +176,7 @@ export struct AlertsContent {
   @Computed
   get statusBackground(): Resource {
     const currentDecibel = this.ak.uiDisplayState.displayDb;
-    const threshold = ThresholdManager.getCurrentEffectiveThreshold();
+    const threshold = this.pk.alarm_threshold.currentEffectiveThreshold;
 
     if (currentDecibel >= threshold) {
       return $r('sys.color.warning');
@@ -192,7 +191,7 @@ export struct AlertsContent {
   @Computed
   get environmentQuality(): string {
     const currentDecibel = this.ak.uiDisplayState.displayDb;
-    const threshold = ThresholdManager.getCurrentEffectiveThreshold();
+    const threshold = this.pk.alarm_threshold.currentEffectiveThreshold;
 
     if (currentDecibel >= threshold) {
       return '危险';
@@ -209,7 +208,7 @@ export struct AlertsContent {
   @Computed
   get environmentColor(): Resource {
     const currentDecibel = this.ak.uiDisplayState.displayDb;
-    const threshold = ThresholdManager.getCurrentEffectiveThreshold();
+    const threshold = this.pk.alarm_threshold.currentEffectiveThreshold;
 
     if (currentDecibel >= threshold) {
       return $r('sys.color.alert');
@@ -226,7 +225,7 @@ export struct AlertsContent {
   @Computed
   get environmentSuggestion(): string {
     const currentDecibel = this.ak.uiDisplayState.displayDb;
-    const threshold = ThresholdManager.getCurrentEffectiveThreshold();
+    const threshold = this.pk.alarm_threshold.currentEffectiveThreshold;
 
     if (currentDecibel >= threshold) {
       return '当前环境噪音过高，建议立即离开或采取防护措施。长期暴露可能对听力造成损害。';

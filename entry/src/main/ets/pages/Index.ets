@@ -18,7 +18,6 @@ import { PermissionService } from '../services/PermissionService'
 import { DisplayManager } from '../utils/DisplayManager'
 import { ColorModeManager } from '../utils/ColorModeManager'
 import { DialogStyleManager } from '../utils/DialogStyleManager'
-import { ThresholdManager } from '../services/ThresholdManager'
 import { UsageTrackingService } from '../services/UsageTrackingService'
 import { MembershipRewardService } from '../services/MembershipRewardService'
 import { ContinuousUsageManager } from '../services/ContinuousUsageManager'
@@ -94,7 +93,6 @@ struct Index {
     DialogStyleManager.init();
     ColorModeManager.setAppContext(this.context.getApplicationContext());
 
-    ThresholdManager.setCurrentConfig(this.pk.alarm_threshold);
     FileUtils.init(this.getUIContext().getHostContext());
     this.setDisplayMode(this.pk.display_mode);
 

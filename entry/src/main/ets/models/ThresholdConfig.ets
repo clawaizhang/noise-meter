@@ -43,7 +43,19 @@ export class ThresholdConfig {
     this.nighttimeThreshold = nighttimeThreshold;
   }
 
-  static clone(config: ThresholdConfig):ThresholdConfig{
+  @Computed
+  // 获取当前有效阈值（基于当前时间）
+  get currentEffectiveThreshold(): number {
+    if (!this.timeSchedulingEnabled) {
+      return this.baseThreshold;
+    }
+
+    const currentHour = new Date().getHours();
+    const isDaytime = currentHour >= 6 && currentHour < 22;
+    return isDaytime ? this.daytimeThreshold : this.nighttimeThreshold;
+  }
+
+  static clone(config: ThresholdConfig): ThresholdConfig {
     return new ThresholdConfig(
       config.currentPreset,
       config.timeSchedulingEnabled,
@@ -53,7 +65,7 @@ export class ThresholdConfig {
     )
   }
 
-  static copyFrom(src: ThresholdConfig, dst: ThresholdConfig){
+  static copyFrom(src: ThresholdConfig, dst: ThresholdConfig) {
     dst.currentPreset = src.currentPreset;
     dst.timeSchedulingEnabled = src.timeSchedulingEnabled;
     dst.baseThreshold = src.baseThreshold;
