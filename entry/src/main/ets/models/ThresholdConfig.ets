@@ -28,6 +28,7 @@ export class ThresholdConfig {
   @Trace baseThreshold: number; // 统一阈值（时段调度关闭时）
   @Trace daytimeThreshold: number; // 白天阈值（时段调度开启时）
   @Trace nighttimeThreshold: number; // 夜间阈值（时段调度开启时）
+  @Trace currentEffectiveThreshold: number = 0;
 
   constructor(
     currentPreset: PresetType,
@@ -43,16 +44,16 @@ export class ThresholdConfig {
     this.nighttimeThreshold = nighttimeThreshold;
   }
 
-  @Computed
+  @Monitor('timeSchedulingEnabled','baseThreshold','daytimeThreshold','nighttimeThreshold')
   // 获取当前有效阈值（基于当前时间）
-  get currentEffectiveThreshold(): number {
+  onThresholdChange(monitor: IMonitor) {
     if (!this.timeSchedulingEnabled) {
-      return this.baseThreshold;
+      this.currentEffectiveThreshold = this.baseThreshold;
     }
 
     const currentHour = new Date().getHours();
     const isDaytime = currentHour >= 6 && currentHour < 22;
-    return isDaytime ? this.daytimeThreshold : this.nighttimeThreshold;
+    this.currentEffectiveThreshold = isDaytime ? this.daytimeThreshold : this.nighttimeThreshold;
   }
 
   static clone(config: ThresholdConfig): ThresholdConfig {

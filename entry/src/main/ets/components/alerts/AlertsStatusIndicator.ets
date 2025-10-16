@@ -17,7 +17,8 @@ export struct AlertsStatusIndicator {
   private animationInterval?: number;                     // 动画定时器
 
   // 计算进度百分比
-  private getProgressPercent(): number {
+  @Computed
+  get progressPercent(): number {
     if (this.currentDecibel >= this.alertThreshold) {
       return 100;
     }
@@ -27,7 +28,8 @@ export struct AlertsStatusIndicator {
   }
 
   // 获取环境噪声等级
-  private getEnvironmentLevel(): EnvironmentNoiseLevel {
+  @Computed
+  get environmentLevel(): EnvironmentNoiseLevel {
     if (this.currentDecibel < 30) {
       return EnvironmentNoiseLevel.EXCELLENT;
     } else if (this.currentDecibel < 50) {
@@ -42,8 +44,9 @@ export struct AlertsStatusIndicator {
   }
 
   // 获取环境颜色
-  private getEnvironmentColor(): Resource {
-    const level = this.getEnvironmentLevel();
+  @Computed
+  get environmentColor(): Resource {
+    const level = this.environmentLevel;
     switch (level) {
       case EnvironmentNoiseLevel.EXCELLENT:
         return ALERT_COLORS.SUCCESS;
@@ -59,8 +62,9 @@ export struct AlertsStatusIndicator {
   }
 
   // 获取环境描述
-  private getEnvironmentDescription(): string {
-    const level = this.getEnvironmentLevel();
+  @Computed
+  get environmentDescription(): string {
+    const level = this.environmentLevel;
     switch (level) {
       case EnvironmentNoiseLevel.EXCELLENT:
         return '环境非常安静';
@@ -76,7 +80,8 @@ export struct AlertsStatusIndicator {
   }
 
   // 获取警报状态描述
-  private getAlertStatusDescription(): string {
+  @Computed
+  get alertStatusDescription(): string {
     if (!this.isAlertEnabled) {
       return '通知已关闭';
     }
@@ -91,7 +96,8 @@ export struct AlertsStatusIndicator {
   }
 
   // 获取警报状态颜色
-  private getAlertStatusColor(): Resource {
+  @Computed
+  get alertStatusColor(): Resource {
     if (!this.isAlertEnabled) {
       return $r('sys.color.font_secondary');
     }
@@ -140,10 +146,10 @@ export struct AlertsStatusIndicator {
 
         // 进度环
         Circle({ width: 100, height: 100 })
-          .stroke(this.getEnvironmentColor())
+          .stroke(this.environmentColor)
           .strokeWidth(8)
           .fill(Color.Transparent)
-          .strokeDashArray([this.getProgressPercent() * 3.14, 314]) // 2πr ≈ 314
+          .strokeDashArray([this.progressPercent * 3.14, 314]) // 2πr ≈ 314
           .rotate({ x: 0, y: 0, z: 1, angle: -90 })
           .animation({
             duration: 300,
@@ -171,12 +177,12 @@ export struct AlertsStatusIndicator {
 
       // 状态描述
       Column({ space: DesignConstants.SPACING_XS }) {
-        Text(this.getAlertStatusDescription())
+        Text(this.alertStatusDescription)
           .fontSize(DesignConstants.FONT_SIZE_MD)
-          .fontColor(this.getAlertStatusColor())
+          .fontColor(this.alertStatusColor)
           .fontWeight(FontWeight.Medium)
 
-        Text(this.getEnvironmentDescription())
+        Text(this.environmentDescription)
           .fontSize(DesignConstants.FONT_SIZE_SM)
           .fontColor($r('sys.color.font_secondary'))
       }
