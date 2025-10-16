@@ -9,7 +9,6 @@ import { DecibelRecord } from '../../models/DecibelRecord';
 import { AudioService } from '../../services/AudioService';
 import { LocationInfo } from '../../services/LocationService';
 import { WeightingType } from '../../constants/WeightingConstants';
-import { Subject } from 'rxjs';
 import { AppKeys } from '../../models/AppKeys';
 import { FFTAnalyzer } from '../../utils/FFTAnalyzer';
 import { AudioControllerService } from '../../services/AudioControllerService';
@@ -59,8 +58,6 @@ export struct AudioController {
   // 服务实例
   private audioService: AudioService = AudioService.getInstance()
   private recordService: DecibelRecordService = new DecibelRecordService(getContext() as common.UIAbilityContext)
-  // RxJS相关
-  private audioBufferSubject = new Subject<void>();
   // 服务实例
   private audioControllerService: AudioControllerService = AudioControllerService.getInstance();
   
@@ -133,7 +130,6 @@ export struct AudioController {
 
   aboutToDisappear() {
     // 清理RxJS资源
-    this.audioBufferSubject.complete();
     this.stopAutoSaveMonitoring();
     this.stopDataCleanupMonitoring();
     this.audioService.stopProcessing();
@@ -188,8 +184,6 @@ export struct AudioController {
       })
       // 开始处理音频数据
       this.audioService.startProcessing((buffer: ArrayBuffer) => {
-        // 发出事件通知有新的音频数据到达
-        this.audioBufferSubject.next();
 
         // 存储带时间戳的音频缓冲区
         const currentTime = Date.now();

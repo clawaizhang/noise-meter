@@ -17,10 +17,10 @@ export function NoiseDescriptionDialogBuilder(ak: AppKeys) {
               Text(`${db} dB`)
                 .fontSize(16)
                 .fontWeight(FontWeight.Medium)
-                .fontColor(DecibelService.getDecibelColor(db - 1))
+                .fontColor(ak.uiDisplayState.displayColor)
                 .width('25%')
 
-              Text(DecibelService.getDecibelDescription(db - 1))
+              Text(ak.uiDisplayState.displayDescription)
                 .fontColor($r('sys.color.font_secondary'))
                 .width('75%')
             }
@@ -28,7 +28,7 @@ export function NoiseDescriptionDialogBuilder(ak: AppKeys) {
             .margin({ bottom: 2 })
           }
           .backgroundBlurStyle(ak.uiDisplayState.displayDb > db - 10 ? BlurStyle.COMPONENT_REGULAR : BlurStyle.NONE)
-          .backgroundColor(ak.uiDisplayState.displayDb > db - 10 ? DecibelService.getDecibelColor(db - 1) :
+          .backgroundColor(ak.uiDisplayState.displayDb > db - 10 ? ak.uiDisplayState.displayColor :
           $r('sys.color.comp_background_primary'))
           .padding(12)
           .borderRadius(12)

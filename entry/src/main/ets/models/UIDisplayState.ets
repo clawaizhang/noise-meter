@@ -1,3 +1,4 @@
+import { DecibelService } from '../services/DecibelService';
 import { DataProcessingState } from './DataProcessingState';
 
 /**
@@ -173,6 +174,9 @@ export class UIDisplayState {
   // 显示分贝值（UI专用）
   @Trace displayDb: number = 0;
 
+  @Trace displayDescription: string = '几乎无声';
+  @Trace displayColor: Resource = $r('sys.color.confirm');
+
   // 显示频谱数据（UI专用）
   @Trace displaySpectrumData: number[] = [];
 
@@ -201,6 +205,8 @@ export class UIDisplayState {
 
     // 同步分贝值
     this.displayDb = processingState.processingDb;
+    this.displayDescription = DecibelService.getDecibelDescription(this.displayDb);
+    this.displayColor = DecibelService.getDecibelColor(this.displayDb);
 
     // 同步频谱数据（浅拷贝）
     if (processingState.processingSpectrumData.length > 0) {

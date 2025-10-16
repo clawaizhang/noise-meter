@@ -1,17 +1,11 @@
 import { DecibelMeter } from '../../components/decibel-meter/DecibelMeter';
 import { navigationStack } from '../../constants/ProviderConstant';
 import { DialogHub, InfSheet } from '@hadss/dialoghub';
-import { SettingsBuilder } from './SettingsNavigation';
-import { AboutSettingsBuilder } from '../settings/AboutSettingsNavigation';
 import { AppKeys } from '../../models/AppKeys';
 import { AppStorageV2, PersistenceV2 } from '@kit.ArkUI';
-import { ListItemBuilder } from '../../components/common/ListItemBuilder';
-import { Subscription } from 'rxjs';
 import { PreferenceKeys } from '../../models/PreferenceKeys';
 import { AlertsContent } from '../../components/alerts/AlertsContent';
 import { AlertsSettingsBuilder, AlertsSettingsProps } from '../settings/AlertsSettingsNavigation';
-import { common, Want } from '@kit.AbilityKit';
-import { BusinessError } from '@kit.BasicServicesKit';
 import { MyContentComponent } from '../../components/my-content/MyContentComponent';
 
 // 导航菜单项接口定义
@@ -34,10 +28,8 @@ export struct MainNoiseMeter {
   @Local menuItems: Array<NavigationMenuItem> = [];
   @Local ak: AppKeys = AppStorageV2.connect(AppKeys)!;
   @Local pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys)!;
-  noiseReferSub?: Subscription
 
   aboutToDisappear(): void {
-    this.noiseReferSub?.unsubscribe();
   }
 
   aboutToAppear(): void {

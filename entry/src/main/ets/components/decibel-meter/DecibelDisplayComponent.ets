@@ -75,7 +75,7 @@ export struct DecibelDisplayComponent {
       if (!this.hiddenForXsMd) {
         // 1. 噪音等级横幅（顶部）
         this.noiseLevelBanner({
-          description: DecibelService.getDecibelDescription(this.ak.uiDisplayState.displayDb)
+          description: this.ak.uiDisplayState.displayDescription
         })
       }
 
