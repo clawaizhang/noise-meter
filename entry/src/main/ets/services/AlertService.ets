@@ -17,62 +17,6 @@ interface NotificationFrequencyStatus {
   lastNotificationTime: number;
 }
 
-class AlertFrequencyController {
-  private lastNotificationTime: number = 0;
-  private notificationCount: number = 0;
-  private readonly BASE_SILENT_PERIOD = 30000; // 30秒基础静默期
-  private readonly PROGRESSIVE_INTERVALS = [30000, 60000, 120000, 300000]; // 渐进间隔
-
-  /**
-   * 检查是否可以发送通知
-   */
-  canSendNotification(): boolean {
-    const now = Date.now();
-    
-    if (this.lastNotificationTime === 0) {
-      return true;
-    }
-
-    const elapsed = now - this.lastNotificationTime;
-    const currentInterval = this.getCurrentInterval();
-    
-    return elapsed >= currentInterval;
-  }
-
-  /**
-   * 获取当前通知间隔
-   */
-  private getCurrentInterval(): number {
-    const index = Math.min(this.notificationCount, this.PROGRESSIVE_INTERVALS.length - 1);
-    return this.PROGRESSIVE_INTERVALS[index];
-  }
-
-  /**
-   * 记录通知发送
-   */
-  recordNotificationSent(): void {
-    this.lastNotificationTime = Date.now();
-    this.notificationCount++;
-  }
-
-  /**
-   * 重置通知状态
-   */
-  reset(): void {
-    this.notificationCount = 0;
-  }
-
-  /**
-   * 获取通知状态信息
-   */
-  getStatus(): NotificationFrequencyStatus {
-    return {
-      notificationCount: this.notificationCount,
-      lastNotificationTime: this.lastNotificationTime
-    };
-  }
-}
-
 /**
  * 警报服务类 - 提供用户友好的多模态警报功能
  * 特点：使用notificationManager实现声音和振动，智能频率控制
@@ -80,13 +24,11 @@ class AlertFrequencyController {
 export class AlertService {
   private static instance: AlertService;
   private context: common.UIAbilityContext;
-  private frequencyController: AlertFrequencyController;
   private pk: PreferenceKeys;
   
   private constructor(context: common.UIAbilityContext, pk: PreferenceKeys) {
     this.context = context;
     this.pk = pk;
-    this.frequencyController = new AlertFrequencyController();
     this.initializeNotificationSlot();
   }
 
@@ -132,17 +74,11 @@ export class AlertService {
       }
       
       // 3. 检查是否可以发送通知（有频率限制）
-      if (this.frequencyController.canSendNotification()) {
         // 发布通知
         await this.publishAlertNotification(currentDecibel, threshold);
         
-        // 记录通知发送
-        this.frequencyController.recordNotificationSent();
-        
+
         hilog.info(DOMAIN, TAG, `警报触发成功并发送通知: ${currentDecibel}dB > ${threshold}dB`);
-      } else {
-        hilog.info(DOMAIN, TAG, `警报触发但通知在静默期内: ${currentDecibel}dB > ${threshold}dB`);
-      }
     } catch (error) {
       const err = error as BusinessError;
       hilog.error(DOMAIN, TAG, `触发警报失败: ${err.code}, ${err.message}`);
@@ -181,15 +117,7 @@ export class AlertService {
     const appKeys: AppKeys = AppStorageV2.connect(AppKeys)!;
     appKeys.dataProcessingState.alertState.clearAlert();
     
-    this.frequencyController.reset();
     hilog.info(DOMAIN, TAG, '警报状态已重置');
-  }
-
-  /**
-   * 获取通知频率状态信息
-   */
-  public getAlertStatus(): NotificationFrequencyStatus {
-    return this.frequencyController.getStatus();
   }
 
   /**

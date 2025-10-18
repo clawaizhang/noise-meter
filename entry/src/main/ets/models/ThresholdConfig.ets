@@ -42,11 +42,16 @@ export class ThresholdConfig {
     this.baseThreshold = baseThreshold;
     this.daytimeThreshold = daytimeThreshold;
     this.nighttimeThreshold = nighttimeThreshold;
+    this.calculateThreshold();
   }
 
   @Monitor('timeSchedulingEnabled','baseThreshold','daytimeThreshold','nighttimeThreshold')
   // 获取当前有效阈值（基于当前时间）
   onThresholdChange(monitor: IMonitor) {
+    this.calculateThreshold();
+  }
+
+  private calculateThreshold() {
     if (!this.timeSchedulingEnabled) {
       this.currentEffectiveThreshold = this.baseThreshold;
     }
