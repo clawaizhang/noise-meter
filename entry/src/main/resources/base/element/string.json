@@ -255,6 +255,82 @@
     {
       "name": "privacy_policy_link",
       "value": "https://agreement-drcn.hispace.dbankcloud.cn/index.html?lang=zh&agreementId=1772080835588051136"
+    },
+    {
+      "name": "display_mode_title",
+      "value": "色彩模式"
+    },
+    {
+      "name": "display_mode_auto_primary",
+      "value": "跟随系统"
+    },
+    {
+      "name": "display_mode_auto_secondary",
+      "value": "自动"
+    },
+    {
+      "name": "display_mode_light_primary",
+      "value": "浅色主题"
+    },
+    {
+      "name": "display_mode_light_secondary",
+      "value": "明亮"
+    },
+    {
+      "name": "display_mode_dark_primary",
+      "value": "深色主题"
+    },
+    {
+      "name": "display_mode_dark_secondary",
+      "value": "夜间"
+    },
+    {
+      "name": "display_mode_auto_desc",
+      "value": "根据系统设置自动切换浅色/深色模式，推荐使用"
+    },
+    {
+      "name": "display_mode_light_desc",
+      "value": "使用明亮的浅色界面，适合白天或光线充足的环境"
+    },
+    {
+      "name": "display_mode_dark_desc",
+      "value": "使用深色界面，减少眼睛疲劳，适合夜间或光线较暗的环境"
+    },
+    {
+      "name": "display_mode_preview_title",
+      "value": "预览效果"
+    },
+    {
+      "name": "display_mode_light_preview",
+      "value": "浅色"
+    },
+    {
+      "name": "display_mode_dark_preview",
+      "value": "深色"
+    },
+    {
+      "name": "display_mode_system_preview",
+      "value": "系统"
+    },
+    {
+      "name": "display_mode_detail_title",
+      "value": "详细信息"
+    },
+    {
+      "name": "display_mode_system_status",
+      "value": "当前系统主题：跟随系统设置"
+    },
+    {
+      "name": "display_mode_time_recommendation",
+      "value": "推荐：当前时间适合使用{0}"
+    },
+    {
+      "name": "display_mode_light_recommendation",
+      "value": "浅色模式"
+    },
+    {
+      "name": "display_mode_dark_recommendation",
+      "value": "深色模式"
     }
   ]
 }

@@ -4,8 +4,22 @@ import { DesignConstants } from '../../constants/DesignConstants';
 import { Throttle } from '../../utils/Debounce';
 
 /**
+ * 显示模式卡片参数接口
+ */
+interface DisplayModeCardParams {
+  displayMode: string;
+  isSelected: boolean;
+  isHovered: boolean;
+}
+
+@Builder
+export function DisplayModeCardBuilder(){
+  DisplayModeComponent()
+}
+
+/**
  * 显示模式设置组件
- * 提供自动、浅色、深色三种显示模式选择
+ * 提供跟随系统、浅色主题、深色主题三种显示模式选择
  */
 @ComponentV2
 export struct DisplayModeComponent {
@@ -17,45 +31,59 @@ export struct DisplayModeComponent {
     this.selectedDisplayMode = this.pk.display_mode;
   }
 
-  // 获取显示模式索引
-  getDisplayModeIndex(displayMode: string): number {
-    switch (displayMode) {
+  // 获取显示模式描述文本
+  private get displayModeDescription(): Resource {
+    switch (this.selectedDisplayMode) {
       case 'default':
-        return 0;
+        return $r('app.string.display_mode_auto_desc');
       case 'light':
-        return 1;
+        return $r('app.string.display_mode_light_desc');
       case 'dark':
-        return 2;
+        return $r('app.string.display_mode_dark_desc');
       default:
-        return 0;
+        return $r('app.string.display_mode_auto_desc');
     }
   }
 
-  // 获取显示模式文本
-  getDisplayModeText(displayMode: string): string {
+  // 获取显示模式主标签
+  private getDisplayModePrimaryText(displayMode: string): Resource {
     switch (displayMode) {
       case 'default':
-        return "自动";
+        return $r('app.string.display_mode_auto_primary');
       case 'light':
-        return "浅色";
+        return $r('app.string.display_mode_light_primary');
       case 'dark':
-        return "深色";
+        return $r('app.string.display_mode_dark_primary');
       default:
-        return "自动";
+        return $r('app.string.display_mode_auto_primary');
     }
   }
 
-  // 根据索引获取显示模式
-  getDisplayMode(index: number): string {
-    switch (index) {
-      case 0:
-        return 'default';
-      case 1:
-        return 'light';
-      case 2:
-        return 'dark';
+  // 获取显示模式副标签
+  private getDisplayModeSecondaryText(displayMode: string): Resource {
+    switch (displayMode) {
+      case 'default':
+        return $r('app.string.display_mode_auto_secondary');
+      case 'light':
+        return $r('app.string.display_mode_light_secondary');
+      case 'dark':
+        return $r('app.string.display_mode_dark_secondary');
       default:
-        return 'default';
+        return $r('app.string.display_mode_auto_secondary');
+    }
+  }
+
+  // 获取当前模式显示文本（用于列表项显示）
+  private getCurrentModeDisplayText(): Resource {
+    switch (this.selectedDisplayMode) {
+      case 'default':
+        return $r('app.string.display_mode_auto_primary');
+      case 'light':
+        return $r('app.string.display_mode_light_primary');
+      case 'dark':
+        return $r('app.string.display_mode_dark_primary');
+      default:
+        return $r('app.string.display_mode_auto_primary');
     }
   }
 
@@ -79,80 +107,117 @@ export struct DisplayModeComponent {
     this.pk.display_mode = displayMode;
   }
 
-  // 构建显示模式选项卡
+  // 构建显示模式卡片
   @Builder
-  private buildDisplayModeTabs() {
-    // 选项卡容器
-    Row({ space: 2 }) {
-      ForEach(['default', 'light', 'dark'], (displayMode: string) => {
-        // 选项卡内容
-        Row({ space: 2 }) {
-          // 显示模式图标（更小的图标）
-          Image(this.getDisplayModeIcon(displayMode))
-            .width(14)
-            .height(14)
-            .fillColor(this.selectedDisplayMode === displayMode ?
-            $r('sys.color.font_on_primary') : $r('sys.color.font_primary'))
+  private buildDisplayModeCard(params: DisplayModeCardParams) {
+    Column({ space: 8 }) {
+      // 图标区域
+      Image(this.getDisplayModeIcon(params.displayMode))
+        .width(24)
+        .height(24)
+        .fillColor(params.isSelected ? $r('sys.color.font_on_primary') : $r('sys.color.font_primary'))
 
-          // 显示模式名称（更小的字体）
-          Text(this.getDisplayModeText(displayMode))
-            .fontSize(12)
-            .fontWeight(this.selectedDisplayMode === displayMode ? FontWeight.Bold : FontWeight.Medium)
-            .fontColor(this.selectedDisplayMode === displayMode ?
-            $r('sys.color.font_on_primary') : $r('sys.color.font_primary'))
-        }
-        .alignItems(VerticalAlign.Center)
-        .justifyContent(FlexAlign.Center)
-        .height(32)
-        .padding({ left: 8, right: 8 })
-        .backgroundColor(this.selectedDisplayMode === displayMode ?
-        $r('sys.color.interactive_active') : $r('sys.color.comp_background_primary'))
-        .borderRadius(16)
-        .onClick(() => {
-          Throttle.click(() => {
-            this.handleDisplayModeSelect(displayMode);
-          });
-        })
-        .onHover((isHover: boolean) => {
-          if (isHover) {
-            this.hoveredDisplayMode = displayMode;
-          } else {
-            this.hoveredDisplayMode = null;
-          }
+      // 文本区域
+      Column({ space: 2 }) {
+        // 主标签
+        Text(this.getDisplayModePrimaryText(params.displayMode))
+          .fontSize(14)
+          .fontWeight(FontWeight.Medium)
+          .fontColor(params.isSelected ? $r('sys.color.font_on_primary') : $r('sys.color.font_primary'))
+          .textAlign(TextAlign.Center)
+
+        // 副标签
+        Text(this.getDisplayModeSecondaryText(params.displayMode))
+          .fontSize(12)
+          .fontColor(params.isSelected ? $r('sys.color.font_on_primary') : $r('sys.color.font_secondary'))
+          .textAlign(TextAlign.Center)
+      }
+    }
+    .width(80)
+    .height(80)
+    .justifyContent(FlexAlign.Center)
+    .alignItems(HorizontalAlign.Center)
+    .backgroundColor(params.isSelected ? $r('sys.color.interactive_active') : $r('sys.color.comp_background_primary'))
+    .border({
+      width: params.isSelected ? 2 : 1,
+      color: params.isSelected ? $r('sys.color.interactive_active') : $r('sys.color.comp_background_primary')
+    })
+    .borderRadius(16)
+    .shadow(params.isHovered ? {
+      radius: 8,
+      color: '#1A000000',
+      offsetX: 0,
+      offsetY: 2
+    } : null)
+    .scale({ x: params.isHovered ? 1.05 : 1, y: params.isHovered ? 1.05 : 1 })
+    .animation({
+      duration: 200,
+      curve: Curve.EaseOut
+    })
+    .onClick(() => {
+      Throttle.click(() => {
+        this.handleDisplayModeSelect(params.displayMode);
+      });
+    })
+    .onHover((isHover: boolean) => {
+      if (isHover) {
+        this.hoveredDisplayMode = params.displayMode;
+      } else {
+        this.hoveredDisplayMode = null;
+      }
+    })
+  }
+
+  // 构建显示模式选择区域
+  @Builder
+  private buildDisplayModeSelector() {
+    Row({ space: 12 }) {
+      ForEach(['default', 'light', 'dark'], (displayMode: string) => {
+        this.buildDisplayModeCard({
+          displayMode: displayMode,
+          isSelected: this.selectedDisplayMode === displayMode,
+          isHovered: this.hoveredDisplayMode === displayMode
         })
       })
     }
-    .backgroundColor($r('sys.color.comp_background_primary'))
-    .borderRadius(16)
-    .height(32)
-    .padding(2)
+    .width('100%')
+    .justifyContent(FlexAlign.SpaceEvenly)
+    .padding({ top: 8, bottom: 8 })
   }
 
   build() {
-    Column({ space: 8 }) {
-      Row() {
-        // 左侧：标题区域
-        Row({ space: 8 }) {
-          Image($r('app.media.ic_display'))
-            .width(24)
-            .height(24)
-            .fillColor($r('sys.color.brand'))
-          Text('色彩')
-            .fontSize(16)
-            .fontColor($r('sys.color.font_primary'))
-            .fontWeight(FontWeight.Medium)
-        }.layoutWeight(1)
-
-        // 右侧：按钮区域
-        this.buildDisplayModeTabs()
+    Column({ space: 16 }) {
+      // 标题区域
+      Row({ space: 8 }) {
+        Image($r('app.media.ic_display'))
+          .width(24)
+          .height(24)
+          .fillColor($r('sys.color.brand'))
+        Text($r('app.string.display_mode_title'))
+          .fontSize(16)
+          .fontColor($r('sys.color.font_primary'))
+          .fontWeight(FontWeight.Medium)
       }
+      .width('100%')
       .alignItems(VerticalAlign.Center)
-      .justifyContent(FlexAlign.SpaceBetween)
+      .justifyContent(FlexAlign.Start)
+
+      // 模式选择区域
+      this.buildDisplayModeSelector()
+
+      // 描述文本区域
+      Text(this.displayModeDescription)
+        .fontSize(12)
+        .fontColor($r('sys.color.font_secondary'))
+        .width('100%')
+        .textAlign(TextAlign.Start)
+        .lineHeight(16)
     }
     .backgroundColor($r('sys.color.comp_background_primary'))
     .justifyContent(FlexAlign.Start)
     .alignItems(HorizontalAlign.Start)
     .borderRadius(16)
-    .padding(16)
+    .padding({ top: 16, bottom: 16, left: 16, right: 16 })
+    .width('92%')
   }
 }

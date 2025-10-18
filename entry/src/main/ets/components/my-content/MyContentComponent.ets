@@ -4,9 +4,8 @@ import { ListItemBuilder } from '../common/ListItemBuilder';
 import { SettingsBuilder } from '../../pages/noisemeter/SettingsNavigation';
 import { AboutSettingsBuilder } from '../../pages/settings/AboutSettingsNavigation';
 import { DialogHub } from '@hadss/dialoghub';
-import { common, Want } from '@kit.AbilityKit';
-import { BusinessError } from '@kit.BasicServicesKit';
-import { DisplayModeComponent } from '../display/DisplayModeComponent';
+import { common } from '@kit.AbilityKit';
+import { DisplayModeCardBuilder } from '../display/DisplayModeComponent';
 import { MembershipStatusCard } from '../membership/MembershipStatusCard';
 import { DesignConstants } from '../../constants/DesignConstants';
 import { Throttle } from '../../utils/Debounce';
@@ -48,12 +47,59 @@ export struct MyContentComponent {
         // 全局设置列表项
         List() {
 
+          // 色彩模式列表项
           ListItem() {
-            // 显示模式组件
-            DisplayModeComponent()
-          }.margin({
+            Column({ space: 8 }) {
+              Row({ space: 8 }) {
+                Row() {
+                  Image($r('app.media.ic_display'))
+                    .width(24)
+                    .height(24)
+                    .fillColor($r('sys.color.brand'))
+                    .margin({ right: 12 })
+
+                  Text('色彩模式')
+                    .fontSize(16)
+                    .fontColor($r('sys.color.font_primary'))
+                    .layoutWeight(1)
+                }.layoutWeight(1)
+
+                // 当前模式显示
+                Text(this.pk.display_mode === 'default' ? '跟随系统' :
+                     this.pk.display_mode === 'light' ? '浅色主题' : '深色主题')
+                  .fontSize(14)
+                  .fontColor($r('sys.color.font_secondary'))
+              }
+              .width('100%')
+              .height(24)
+              .alignItems(VerticalAlign.Center)
+            }
+            .width('100%')
+            .padding({
+              left: 16,
+              right: 16,
+              top: 12,
+              bottom: 12
+            })
+          }
+          .borderRadius(16)
+          .backgroundColor($r('sys.color.comp_background_primary'))
+          .margin({
+            top: 20,
             left: 16,
-            right: 16, top: 16
+            right: 16
+          })
+          .onClick(() => {
+            DialogHub.getSheet()
+              .setStyle({
+                title: { title: '色彩模式' },
+                backgroundColor: $r('sys.color.background_secondary')
+              })
+              .setConfig({ scrollSizeMode: ScrollSizeMode.FOLLOW_DETENT })
+              .setComponentTargetId('mainId')
+              .setContent(wrapBuilder(DisplayModeCardBuilder))
+              .build()
+              .show();
           })
 
           // 后台运行设置
