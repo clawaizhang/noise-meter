@@ -17,6 +17,24 @@ interface DecibelRangeStats {
   percentage: number;
 }
 
+// 进度环配置接口
+interface ProgressRingConfig {
+  percentage: number;
+  color: Resource;
+}
+
+// 数据卡片配置接口
+interface DataCardConfig {
+  title: string;
+  value: string;
+  subtitle: string;
+}
+
+// 分贝分析面板配置接口
+interface DecibelAnalysisConfig {
+  stats: DecibelRangeStats[];
+}
+
 @ComponentV2
 export struct EnhancedExposureContent {
   @Local exposureData: ExposureData = new ExposureData();
@@ -138,7 +156,7 @@ export struct EnhancedExposureContent {
    * 构建增强版暴露剂量环状进度条
    */
   @Builder
-  private buildEnhancedProgressRing(percentage: number, color: Resource) {
+  private buildEnhancedProgressRing(config: ProgressRingConfig) {
     Stack({ alignContent: Alignment.Center }) {
       // 背景环
       Circle({ width: 100, height: 100 })
@@ -148,10 +166,10 @@ export struct EnhancedExposureContent {
 
       // 进度环
       Circle({ width: 100, height: 100 })
-        .stroke(color)
+        .stroke(config.color)
         .strokeWidth(8)
         .fill(Color.Transparent)
-        .opacity(percentage > 0 ? 1 : 0)
+        .opacity(config.percentage > 0 ? 1 : 0)
         .animation({
           duration: DesignConstants.ANIMATION_DURATION_MD,
           curve: Curve.EaseOut
@@ -159,7 +177,7 @@ export struct EnhancedExposureContent {
 
       // 中心文本
       Column({ space: DesignConstants.SPACING_XS }) {
-        Text(`${percentage.toFixed(1)}%`)
+        Text(`${config.percentage.toFixed(1)}%`)
           .fontSize(DesignConstants.FONT_SIZE_3XL)
           .fontWeight(FontWeight.Bold)
           .fontColor($r('sys.color.font_primary'))
@@ -178,14 +196,14 @@ export struct EnhancedExposureContent {
    * 构建分贝区间分析面板
    */
   @Builder
-  private buildDecibelAnalysisPanel() {
+  private buildDecibelAnalysisPanel(config: DecibelAnalysisConfig) {
     Column({ space: DesignConstants.SPACING_MD }) {
       Text('分贝区间分析')
         .fontSize(DesignConstants.FONT_SIZE_LG)
         .fontWeight(FontWeight.Medium)
         .fontColor($r('sys.color.font_primary'))
 
-      ForEach(this.decibelRangeStats, (stat: DecibelRangeStats) => {
+      ForEach(config.stats, (stat: DecibelRangeStats) => {
         Row({ space: DesignConstants.SPACING_MD }) {
           Column({ space: DesignConstants.SPACING_XS }) {
             Text(DecibelRangeConfigs[stat.range].label)
@@ -241,10 +259,10 @@ export struct EnhancedExposureContent {
       Column({ space: DesignConstants.SPACING_LG }) {
         // 核心指标区
         Column({ space: DesignConstants.SPACING_MD }) {
-          this.buildEnhancedProgressRing(
-            this.exposureData.exposurePercentage,
-            this.getExposureColor(this.exposureData.exposurePercentage)
-          )
+          this.buildEnhancedProgressRing({
+            percentage: this.exposureData.exposurePercentage,
+            color: this.getExposureColor(this.exposureData.exposurePercentage)
+          })
 
           Text('工业企业标准 (GBZ 2.2-2007)')
             .fontSize(DesignConstants.FONT_SIZE_MD)
@@ -259,33 +277,35 @@ export struct EnhancedExposureContent {
         // 关键数据网格
         GridRow({ columns: { sm: 1, md: 2, lg: 3 }, gutter: DesignConstants.SPACING_MD }) {
           GridCol({ span: { sm: 1, md: 1, lg: 1 } }) {
-            this.buildDataCard(
-              '剩余安全时间',
-              this.exposureData.remainingSafeTime,
-              '基于当前暴露剂量'
-            )
+            this.buildDataCard({
+              title: '剩余安全时间',
+              value: this.exposureData.remainingSafeTime,
+              subtitle: '基于当前暴露剂量'
+            })
           }
 
           GridCol({ span: { sm: 1, md: 1, lg: 1 } }) {
-            this.buildDataCard(
-              '今日峰值',
-              `${this.exposureData.todayPeak.toFixed(1)} dB`,
-              '最高噪音水平'
-            )
+            this.buildDataCard({
+              title: '今日峰值',
+              value: `${this.exposureData.todayPeak.toFixed(1)} dB`,
+              subtitle: '最高噪音水平'
+            })
           }
 
           GridCol({ span: { sm: 1, md: 1, lg: 1 } }) {
-            this.buildDataCard(
-              '今日平均值',
-              `${this.exposureData.todayAverage.toFixed(1)} dB`,
-              '平均噪音水平'
-            )
+            this.buildDataCard({
+              title: '今日平均值',
+              value: `${this.exposureData.todayAverage.toFixed(1)} dB`,
+              subtitle: '平均噪音水平'
+            })
           }
         }
         .margin({ bottom: 24 })
 
         // 分贝分析面板
-        this.buildDecibelAnalysisPanel()
+        this.buildDecibelAnalysisPanel({
+          stats: this.decibelRangeStats
+        })
       }
       .padding(24)
       .width('100%')
@@ -302,20 +322,20 @@ export struct EnhancedExposureContent {
    * 构建数据卡片
    */
   @Builder
-  private buildDataCard(title: string, value: string, subtitle: string) {
+  private buildDataCard(config: DataCardConfig) {
     Column({ space: DesignConstants.SPACING_XS }) {
-      Text(value)
+      Text(config.value)
         .fontSize(DesignConstants.FONT_SIZE_XL)
         .fontWeight(FontWeight.Bold)
         .fontColor($r('sys.color.font_primary'))
         .textAlign(TextAlign.Center)
 
-      Text(title)
+      Text(config.title)
         .fontSize(DesignConstants.FONT_SIZE_SM)
         .fontColor($r('sys.color.font_secondary'))
         .textAlign(TextAlign.Center)
 
-      Text(subtitle)
+      Text(config.subtitle)
         .fontSize(DesignConstants.FONT_SIZE_XS)
         .fontColor($r('sys.color.font_tertiary'))
         .textAlign(TextAlign.Center)
