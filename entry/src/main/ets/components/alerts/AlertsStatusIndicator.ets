@@ -164,7 +164,7 @@ export struct AlertsStatusIndicator {
 
         // 中心数值
         Column({ space: 2 }) {
-          Text(`${this.currentDecibel.toFixed(1)}`)
+          Text(`${this.currentDecibel}`)
             .fontSize(DesignConstants.FONT_SIZE_XL)
             .fontWeight(FontWeight.Bold)
             .fontColor($r('sys.color.font_primary'))

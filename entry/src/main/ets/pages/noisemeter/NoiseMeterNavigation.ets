@@ -53,6 +53,11 @@ export struct MainNoiseMeter {
     }
   }
 
+  @Computed
+  get pro() {
+    return `专业版 · ${Math.ceil((this.pk.member_ship.expiryDate - Date.now()) / (1000 * 60 * 60 * 24))}天`;
+  }
+
   @Builder
   TabBuilder(title: string, icon: Resource, index: number) {
     Column() {
@@ -142,7 +147,7 @@ export struct MainNoiseMeter {
             .width(14)
             .height(14)
             .fillColor($r('sys.color.confirm'))
-          Text(`专业版 · ${Math.ceil((this.pk.member_ship.expiryDate - Date.now()) / (1000 * 60 * 60 * 24))}天`)
+          Text(this.pro)
             .fontSize(11)
             .fontColor($r('sys.color.confirm'))
         }
