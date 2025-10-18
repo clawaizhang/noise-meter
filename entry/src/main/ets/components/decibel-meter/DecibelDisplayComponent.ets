@@ -213,7 +213,7 @@ export struct DecibelDisplayComponent {
           .textAlign(TextAlign.Center)
           .width('100%');
 
-        Text(config.minDecibel === 0 ? '-' : config.minDecibel.toString())
+        Text(config.minDecibel === 0 ? '-' : `${config.minDecibel}`)
           .fontSize(24)
           .fontWeight(FontWeight.Medium)
           .fontColor($r('sys.color.font_secondary'))
@@ -238,7 +238,7 @@ export struct DecibelDisplayComponent {
           .textAlign(TextAlign.Center)
           .width('100%');
 
-        Text(config.avgDecibel === 0 ? '-' : config.avgDecibel.toString())
+        Text(config.avgDecibel === 0 ? '-' : `${config.avgDecibel}`)
           .fontSize(24)
           .fontWeight(FontWeight.Medium)
           .fontColor($r('sys.color.font_secondary'))
@@ -263,7 +263,7 @@ export struct DecibelDisplayComponent {
           .textAlign(TextAlign.Center)
           .width('100%');
 
-        Text(config.maxDecibel === 0 ? '-' : config.maxDecibel.toString())
+        Text(config.maxDecibel === 0 ? '-' : `${config.maxDecibel}`)
           .fontSize(24)
           .fontWeight(FontWeight.Medium)
           .fontColor($r('sys.color.font_secondary'))

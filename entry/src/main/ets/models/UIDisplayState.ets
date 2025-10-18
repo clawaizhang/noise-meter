@@ -196,7 +196,7 @@ export class UIDisplayState {
   // 时间显示相关属性
   @Trace timeDisplay: string = '';
   lastSaveTime: number = Date.now();
-  currentTime: number = Date.now();
+  @Trace currentTime: number = Date.now();
 
   constructor() {
   }

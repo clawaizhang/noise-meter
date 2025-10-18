@@ -89,7 +89,7 @@ export struct AudioController {
     }
   }
 
-  @Monitor('currentTime')
+  @Monitor('ak.uiDisplayState.currentTime')
   monitorAutoSave() {
     if (this.pk.auto_save_enabled && this.isRecording) {
       console.info('[自动保存] 检测到自动保存已启用，立即检查是否需要保存');
@@ -98,7 +98,7 @@ export struct AudioController {
   }
 
   private checkAutoSaveNow() {
-    const elapsed = this.currentTime - this.lastAutoSaveTime;
+    const elapsed = this.ak.uiDisplayState.currentTime - this.lastAutoSaveTime;
     const intervalMs = this.pk.auto_save_interval * 60 * 1000;
     const remaining = Math.max(0, intervalMs - elapsed);
 
@@ -396,6 +396,11 @@ export struct AudioController {
   // 执行保存操作
   private performSave(comments: string) {
     console.info('[FREQ_TRACE][Save] 开始保存数据');
+    
+    // 更新UI显示状态中的保存时间（手动保存时）
+    const currentTime = Date.now();
+    this.audioControllerService.updateLastSaveTime(currentTime);
+    
     this.stopRecording(comments);
   }
 
