@@ -36,7 +36,7 @@ export struct AcousticExplanationPanel {
           $r('sys.media.ohos_ic_public_arrow_down'))
           .width(DesignConstants.ICON_SIZE_SM)
           .height(DesignConstants.ICON_SIZE_SM)
-          .fillColor($r('sys.color.brand'))
+          .fillColor($r('sys.color.font_primary'))
           .onClick(() => {
             Throttle.click(() => {
               this.isTechnicalPanelExpanded = !this.isTechnicalPanelExpanded;

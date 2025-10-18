@@ -130,13 +130,46 @@ export struct AlertsContent {
           .fontWeight(FontWeight.Medium)
       }
 
-      // 专业建议
-      Text(this.environmentSuggestion)
-        .fontSize(DesignConstants.FONT_SIZE_SM)
-        .fontColor($r('sys.color.font_secondary'))
-        .textAlign(TextAlign.Start)
+      // 三条分列描述
+      Column({ space: DesignConstants.SPACING_XS }) {
+        // 当前状态描述
+        Row({ space: DesignConstants.SPACING_SM }) {
+          Text('•')
+            .fontSize(DesignConstants.FONT_SIZE_SM)
+            .fontColor($r('sys.color.font_secondary'))
+          Text(this.currentStatusDescription)
+            .fontSize(DesignConstants.FONT_SIZE_SM)
+            .fontColor($r('sys.color.font_secondary'))
+            .textAlign(TextAlign.Start)
+        }
         .alignSelf(ItemAlign.Start)
-        .lineHeight(18)
+
+        // 影响描述
+        Row({ space: DesignConstants.SPACING_SM }) {
+          Text('•')
+            .fontSize(DesignConstants.FONT_SIZE_SM)
+            .fontColor($r('sys.color.font_secondary'))
+          Text(this.impactDescription)
+            .fontSize(DesignConstants.FONT_SIZE_SM)
+            .fontColor($r('sys.color.font_secondary'))
+            .textAlign(TextAlign.Start)
+        }
+        .alignSelf(ItemAlign.Start)
+
+        // 建议措施
+        Row({ space: DesignConstants.SPACING_SM }) {
+          Text('•')
+            .fontSize(DesignConstants.FONT_SIZE_SM)
+            .fontColor($r('sys.color.font_secondary'))
+          Text(this.suggestionAction)
+            .fontSize(DesignConstants.FONT_SIZE_SM)
+            .fontColor($r('sys.color.font_secondary'))
+            .textAlign(TextAlign.Start)
+        }
+        .alignSelf(ItemAlign.Start)
+      }
+      .alignSelf(ItemAlign.Start)
+      .width('100%')
     }
     .padding(DesignConstants.SPACING_LG)
     .width('100%')
@@ -219,6 +252,173 @@ export struct AlertsContent {
       return $r('sys.color.confirm');
     } else {
       return $r('sys.color.confirm');
+    }
+  }
+
+  // 辅助方法：获取当前状态描述
+  @Computed
+  get currentStatusDescription(): string {
+    const currentDecibel = this.ak.uiDisplayState.displayDb;
+    const threshold = this.pk.alarm_threshold.currentEffectiveThreshold;
+    const presetType = this.pk.alarm_threshold.currentPreset;
+    const presetName = this.getPresetDisplayName(presetType);
+
+    if (currentDecibel >= threshold) {
+      const difference = currentDecibel - threshold;
+      return `超过${presetName}阈值${difference}dB`;
+    } else if (currentDecibel >= threshold - 10) {
+      const difference = threshold - currentDecibel;
+      return `接近${presetName}阈值，仅差${difference}dB`;
+    } else if (currentDecibel >= threshold - 20) {
+      const difference = threshold - currentDecibel;
+      return `在${presetName}安全范围内，距离阈值${difference}dB`;
+    } else {
+      const difference = threshold - currentDecibel;
+      return `远低于${presetName}阈值${difference}dB`;
+    }
+  }
+
+  // 辅助方法：获取影响描述
+  @Computed
+  get impactDescription(): string {
+    const currentDecibel = this.ak.uiDisplayState.displayDb;
+    const threshold = this.pk.alarm_threshold.currentEffectiveThreshold;
+    const presetType = this.pk.alarm_threshold.currentPreset;
+
+    if (currentDecibel >= threshold) {
+      switch (presetType) {
+        case PresetType.QUIET_ENVIRONMENT:
+          return '可能影响专注度和休息质量';
+        case PresetType.GENERAL_ENVIRONMENT:
+          return '可能影响工作效率和舒适度';
+        case PresetType.NOISY_ENVIRONMENT:
+          return '长期暴露可能引起不适';
+        case PresetType.DANGEROUS_ENVIRONMENT:
+          return '长期暴露可能对听力造成损害';
+        default:
+          if (threshold <= 50) return '可能影响安静活动的质量';
+          else if (threshold <= 70) return '可能影响日常活动的舒适度';
+          else return '长期暴露可能对听力造成影响';
+      }
+    } else if (currentDecibel >= threshold - 10) {
+      switch (presetType) {
+        case PresetType.QUIET_ENVIRONMENT:
+          return '可能轻微影响安静环境';
+        case PresetType.GENERAL_ENVIRONMENT:
+          return '可能轻微影响工作学习环境';
+        case PresetType.NOISY_ENVIRONMENT:
+          return '可能引起轻微不适';
+        case PresetType.DANGEROUS_ENVIRONMENT:
+          return '需要保持警惕';
+        default:
+          return '需要适当关注环境变化';
+      }
+    } else if (currentDecibel >= threshold - 20) {
+      switch (presetType) {
+        case PresetType.QUIET_ENVIRONMENT:
+          return '适合专注和休息的环境';
+        case PresetType.GENERAL_ENVIRONMENT:
+          return '适合日常工作和学习活动';
+        case PresetType.NOISY_ENVIRONMENT:
+          return '适合短期停留的嘈杂环境';
+        case PresetType.DANGEROUS_ENVIRONMENT:
+          return '环境相对安全，建议保持防护意识';
+        default:
+          return '适合相应环境的活动';
+      }
+    } else {
+      switch (presetType) {
+        case PresetType.QUIET_ENVIRONMENT:
+          return '理想的安静环境';
+        case PresetType.GENERAL_ENVIRONMENT:
+          return '舒适的工作学习环境';
+        case PresetType.NOISY_ENVIRONMENT:
+          return '环境相对安静';
+        case PresetType.DANGEROUS_ENVIRONMENT:
+          return '环境相对安全';
+        default:
+          return '理想的环境状态';
+      }
+    }
+  }
+
+  // 辅助方法：获取建议措施
+  @Computed
+  get suggestionAction(): string {
+    const currentDecibel = this.ak.uiDisplayState.displayDb;
+    const threshold = this.pk.alarm_threshold.currentEffectiveThreshold;
+    const presetType = this.pk.alarm_threshold.currentPreset;
+
+    if (currentDecibel >= threshold) {
+      switch (presetType) {
+        case PresetType.QUIET_ENVIRONMENT:
+          return '建议寻找更安静的环境';
+        case PresetType.GENERAL_ENVIRONMENT:
+          return '建议适当调整环境';
+        case PresetType.NOISY_ENVIRONMENT:
+          return '建议减少停留时间';
+        case PresetType.DANGEROUS_ENVIRONMENT:
+          return '建议立即采取防护措施';
+        default:
+          if (threshold <= 50) return '建议寻找更安静的环境';
+          else if (threshold <= 70) return '建议适当调整环境';
+          else return '请注意防护';
+      }
+    } else if (currentDecibel >= threshold - 10) {
+      switch (presetType) {
+        case PresetType.QUIET_ENVIRONMENT:
+          return '建议保持关注环境变化';
+        case PresetType.GENERAL_ENVIRONMENT:
+          return '建议适当关注环境变化';
+        case PresetType.NOISY_ENVIRONMENT:
+          return '建议注意环境变化';
+        case PresetType.DANGEROUS_ENVIRONMENT:
+          return '建议准备必要的防护措施';
+        default:
+          return '建议保持关注环境变化';
+      }
+    } else if (currentDecibel >= threshold - 20) {
+      switch (presetType) {
+        case PresetType.QUIET_ENVIRONMENT:
+          return '适合需要专注和休息的活动';
+        case PresetType.GENERAL_ENVIRONMENT:
+          return '适合日常工作和学习活动';
+        case PresetType.NOISY_ENVIRONMENT:
+          return '适合短期停留';
+        case PresetType.DANGEROUS_ENVIRONMENT:
+          return '建议保持适当防护意识';
+        default:
+          return '适合相应环境的活动';
+      }
+    } else {
+      switch (presetType) {
+        case PresetType.QUIET_ENVIRONMENT:
+          return '适合深度专注和优质休息';
+        case PresetType.GENERAL_ENVIRONMENT:
+          return '继续保持良好环境';
+        case PresetType.NOISY_ENVIRONMENT:
+          return '适合较长时间停留';
+        case PresetType.DANGEROUS_ENVIRONMENT:
+          return '建议保持基本防护意识';
+        default:
+          return '继续保持良好环境';
+      }
+    }
+  }
+
+  // 辅助方法：获取预设类型显示名称
+  private getPresetDisplayName(presetType: PresetType): string {
+    switch (presetType) {
+      case PresetType.QUIET_ENVIRONMENT:
+        return '安静环境';
+      case PresetType.GENERAL_ENVIRONMENT:
+        return '一般环境';
+      case PresetType.NOISY_ENVIRONMENT:
+        return '嘈杂环境';
+      case PresetType.DANGEROUS_ENVIRONMENT:
+        return '危险环境';
+      default:
+        return '您设置';
     }
   }
 
