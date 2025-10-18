@@ -43,7 +43,6 @@ export struct EnhancedExposureContent {
   @Local isVisible: boolean = false;
   @Local hasError: boolean = false;
   @Local errorMessage: string = '';
-  
   private exposureService: ExposureStatisticsService = ExposureStatisticsService.getInstance();
   private updateTimer: number | null = null;
 
@@ -79,7 +78,7 @@ export struct EnhancedExposureContent {
       // 并行加载所有数据
       const exposureDataPromise = this.exposureService.calculateTodayExposure(NoiseExposureStandard.INDUSTRIAL);
       const decibelRangeStatsPromise = this.exposureService.calculateDecibelRangeStats();
-      
+
       const exposureData = await exposureDataPromise;
       const decibelRangeStats = await decibelRangeStatsPromise;
 
@@ -96,7 +95,6 @@ export struct EnhancedExposureContent {
       this.isLoading = false;
     }
   }
-
 
   /**
    * 启动自动更新
@@ -151,7 +149,6 @@ export struct EnhancedExposureContent {
     }
   }
 
-
   /**
    * 构建增强版暴露剂量环状进度条
    */
@@ -190,7 +187,6 @@ export struct EnhancedExposureContent {
     .width(100)
     .height(100)
   }
-
 
   /**
    * 构建分贝区间分析面板
@@ -232,7 +228,7 @@ export struct EnhancedExposureContent {
         .padding(DesignConstants.SPACING_MD)
         .backgroundColor($r('sys.color.comp_background_primary'))
         .borderRadius(DesignConstants.BORDER_RADIUS_MD)
-      })
+      }, (item: DecibelRangeStats, index: number) => index + '')
     }
     .padding(DesignConstants.SPACING_MD)
     .backgroundColor($r('sys.color.background_secondary'))
@@ -252,7 +248,6 @@ export struct EnhancedExposureContent {
     const remainingMinutes = minutes % 60;
     return `${hours}小时${remainingMinutes}分钟`;
   }
-
 
   build() {
     Scroll() {

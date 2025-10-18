@@ -119,18 +119,13 @@ export class ExposureStatisticsService {
         rangeStats.set(range, 0);
       });
 
-      // 计算每个记录的时间分布
+      // 计算每个记录的时间分布 - 直接使用duration字段
       let totalDuration = 0;
-      for (let i = 0; i < todayRecords.length - 1; i++) {
-        const current = todayRecords[i];
-        const next = todayRecords[i + 1];
-        const duration = next.timestamp - current.timestamp;
-
-        if (duration > 0) {
-          const range = this.getDecibelRange(current.avgDecibel);
-          rangeStats.set(range, rangeStats.get(range)! + duration);
-          totalDuration += duration;
-        }
+      for (const record of todayRecords) {
+        const range = this.getDecibelRange(record.avgDecibel);
+        const duration = record.duration; // 直接使用记录的持续时间（单位：秒）
+        rangeStats.set(range, rangeStats.get(range)! + duration);
+        totalDuration += duration;
       }
 
       // 转换为百分比
