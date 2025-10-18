@@ -7,6 +7,7 @@ import { PreferenceKeys } from '../../models/PreferenceKeys';
 import { AlertsContent } from '../../components/alerts/AlertsContent';
 import { AlertsSettingsBuilder, AlertsSettingsProps } from '../settings/AlertsSettingsNavigation';
 import { MyContentComponent } from '../../components/my-content/MyContentComponent';
+import { ExposureContent } from '../../components/exposure/ExposureContent';
 
 // 导航菜单项接口定义
 interface NavigationMenuItem {
@@ -48,6 +49,10 @@ export struct MainNoiseMeter {
       this.menuItems = this.noiseMeterMenus;
     }
     if (currentValue === 2) {
+      this.title = '暴露统计';
+      this.menuItems = this.exposureMenus;
+    }
+    if (currentValue === 3) {
       this.title = '我的';
       this.menuItems = [];
     }
@@ -104,6 +109,16 @@ export struct MainNoiseMeter {
           .setContent(wrapBuilder(AlertsSettingsBuilder), props)
           .build();
         alertsDialog.show();
+      }
+    }
+  ]
+
+  private exposureMenus: Array<NavigationMenuItem> = [
+    {
+      value: '历史趋势',
+      icon: $r('app.media.ic_history'),
+      action: () => {
+        this.navStack.pushPathByName('DecibelHistory', null);
       }
     }
   ]
@@ -211,9 +226,23 @@ export struct MainNoiseMeter {
         .tabBar(this.TabBuilder('静喵Sound',this.currentIndex == 1 ? $r("app.media.solar_spedometer_middle_bold"):$r("app.media.ic_meter"), 1))
 
         TabContent() {
+          ExposureContent()
+            .opacity(this.currentIndex === 2 ? 1 : 0)
+            .scale({ x: this.currentIndex === 2 ? 1 : 0.95, y: this.currentIndex === 2 ? 1 : 0.95 })
+            .animation({
+              duration: 300,
+              curve: Curve.EaseOut,
+              delay: 0,
+              iterations: 1,
+              playMode: PlayMode.Normal
+            })
+        }
+        .tabBar(this.TabBuilder('暴露统计', this.currentIndex == 2 ? $r("app.media.ic_stats"):$r("app.media.ic_stats"), 2))
+
+        TabContent() {
           MyContentComponent({ currentIndex: this.currentIndex })
         }
-        .tabBar(this.TabBuilder('我的', this.currentIndex == 2 ? $r("app.media.solar_user_circle_bold"):$r("app.media.ic_user"), 2))
+        .tabBar(this.TabBuilder('我的', this.currentIndex == 3 ? $r("app.media.solar_user_circle_bold"):$r("app.media.ic_user"), 3))
       }
       .scrollable(false)
       .onChange((index: number) => {

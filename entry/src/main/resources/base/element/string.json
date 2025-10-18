@@ -331,6 +331,66 @@
     {
       "name": "display_mode_dark_recommendation",
       "value": "深色模式"
+    },
+    {
+      "name": "exposure_statistics_title",
+      "value": "暴露统计"
+    },
+    {
+      "name": "exposure_dose_label",
+      "value": "暴露剂量"
+    },
+    {
+      "name": "remaining_safe_time_label",
+      "value": "剩余安全时间"
+    },
+    {
+      "name": "today_peak_label",
+      "value": "今日峰值"
+    },
+    {
+      "name": "today_average_label",
+      "value": "今日平均"
+    },
+    {
+      "name": "health_rating_label",
+      "value": "健康评级"
+    },
+    {
+      "name": "health_rating_excellent",
+      "value": "优秀"
+    },
+    {
+      "name": "health_rating_good",
+      "value": "良好"
+    },
+    {
+      "name": "health_rating_fair",
+      "value": "一般"
+    },
+    {
+      "name": "health_rating_attention",
+      "value": "需要注意"
+    },
+    {
+      "name": "exposure_exceeded",
+      "value": "已超限"
+    },
+    {
+      "name": "loading_exposure_data",
+      "value": "加载暴露数据..."
+    },
+    {
+      "name": "based_on_national_standard",
+      "value": "基于国家标准"
+    },
+    {
+      "name": "highest_noise_level",
+      "value": "最高噪音水平"
+    },
+    {
+      "name": "average_noise_level",
+      "value": "平均噪音水平"
     }
   ]
 }

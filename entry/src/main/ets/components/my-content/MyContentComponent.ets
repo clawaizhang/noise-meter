@@ -17,7 +17,7 @@ import { CommentService } from '../../services/CommentService';
  */
 @ComponentV2
 export struct MyContentComponent {
-  @Param currentIndex: number = 2
+  @Param currentIndex: number = 3
   @Local pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys)!;
 
   // 显示评论对话框
@@ -202,8 +202,8 @@ export struct MyContentComponent {
       }
       .justifyContent(FlexAlign.Start)
       .alignItems(HorizontalAlign.Start)
-      .opacity(this.currentIndex === 2 ? 1 : 0)
-      .scale({ x: this.currentIndex === 2 ? 1 : 0.95, y: this.currentIndex === 2 ? 1 : 0.95 })
+      .opacity(this.currentIndex === 3 ? 1 : 0)
+      .scale({ x: this.currentIndex === 3 ? 1 : 0.95, y: this.currentIndex === 3 ? 1 : 0.95 })
       .animation({
         duration: 300,
         curve: Curve.EaseOut,
