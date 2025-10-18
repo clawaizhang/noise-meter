@@ -5,6 +5,7 @@ import { AlertService } from '../../services/AlertService';
 import { AppStorageV2, PersistenceV2 } from '@kit.ArkUI';
 import { common } from '@kit.AbilityKit';
 import { NotificationPreferences } from './NotificationPreferences';
+import { PresetType } from '../../models/ThresholdConfig';
 
 @ComponentV2
 export struct AlertsContent {
@@ -187,7 +188,7 @@ export struct AlertsContent {
     }
   }
 
-  // 辅助方法：获取环境质量评级
+  // 辅助方法：获取环境质量评级（基于用户阈值）
   @Computed
   get environmentQuality(): string {
     const currentDecibel = this.ak.uiDisplayState.displayDb;
@@ -204,7 +205,7 @@ export struct AlertsContent {
     }
   }
 
-  // 辅助方法：获取环境质量颜色
+  // 辅助方法：获取环境质量颜色（基于用户阈值）
   @Computed
   get environmentColor(): Resource {
     const currentDecibel = this.ak.uiDisplayState.displayDb;
@@ -221,20 +222,100 @@ export struct AlertsContent {
     }
   }
 
-  // 辅助方法：获取环境建议
+  // 辅助方法：获取环境建议（基于用户阈值和阈值类型）
   @Computed
   get environmentSuggestion(): string {
     const currentDecibel = this.ak.uiDisplayState.displayDb;
     const threshold = this.pk.alarm_threshold.currentEffectiveThreshold;
+    const presetType = this.pk.alarm_threshold.currentPreset;
 
+    // 根据阈值类型和当前分贝值生成智能建议
     if (currentDecibel >= threshold) {
-      return '当前环境噪音过高，建议立即离开或采取防护措施。长期暴露可能对听力造成损害。';
+      return this.getExceedThresholdSuggestion(presetType, currentDecibel, threshold);
     } else if (currentDecibel >= threshold - 10) {
-      return '噪音水平接近警戒线，请注意防护。建议减少在此环境中的停留时间。';
+      return this.getNearThresholdSuggestion(presetType, currentDecibel, threshold);
     } else if (currentDecibel >= threshold - 20) {
-      return '环境噪音在可接受范围内，建议保持关注。适合短期停留。';
+      return this.getSafeThresholdSuggestion(presetType, currentDecibel, threshold);
     } else {
-      return '环境噪音水平良好，适合长期停留。继续保持良好环境。';
+      return this.getExcellentThresholdSuggestion(presetType, currentDecibel, threshold);
+    }
+  }
+
+  // 超过阈值的建议
+  private getExceedThresholdSuggestion(presetType: PresetType, currentDecibel: number, threshold: number): string {
+    const difference = currentDecibel - threshold;
+    
+    switch (presetType) {
+      case PresetType.QUIET_ENVIRONMENT:
+        return `当前环境噪音超过您设置的安静环境阈值${difference}dB。这可能会影响您的专注度和休息质量，建议寻找更安静的环境。`;
+      case PresetType.GENERAL_ENVIRONMENT:
+        return `当前环境噪音超过您设置的一般环境阈值${difference}dB。这可能会影响工作效率和舒适度，建议适当调整环境。`;
+      case PresetType.NOISY_ENVIRONMENT:
+        return `当前环境噪音超过您设置的嘈杂环境阈值${difference}dB。长期暴露可能引起不适，建议减少停留时间。`;
+      case PresetType.DANGEROUS_ENVIRONMENT:
+        return `当前环境噪音超过您设置的危险环境阈值${difference}dB。长期暴露可能对听力造成损害，建议立即采取防护措施。`;
+      default:
+        if (threshold <= 50) {
+          return `当前环境噪音超过您设置的阈值${difference}dB。这可能会影响安静活动的质量。`;
+        } else if (threshold <= 70) {
+          return `当前环境噪音超过您设置的阈值${difference}dB。这可能会影响日常活动的舒适度。`;
+        } else {
+          return `当前环境噪音超过您设置的阈值${difference}dB。长期暴露可能对听力造成影响，请注意防护。`;
+        }
+    }
+  }
+
+  // 接近阈值的建议
+  private getNearThresholdSuggestion(presetType: PresetType, currentDecibel: number, threshold: number): string {
+    const difference = threshold - currentDecibel;
+    
+    switch (presetType) {
+      case PresetType.QUIET_ENVIRONMENT:
+        return `噪音水平接近您设置的安静环境阈值，仅差${difference}dB。建议保持关注，避免噪音进一步升高影响安静环境。`;
+      case PresetType.GENERAL_ENVIRONMENT:
+        return `噪音水平接近您设置的一般环境阈值，仅差${difference}dB。建议适当关注环境变化，确保工作学习环境舒适。`;
+      case PresetType.NOISY_ENVIRONMENT:
+        return `噪音水平接近您设置的嘈杂环境阈值，仅差${difference}dB。建议注意环境变化，避免长时间处于嘈杂环境。`;
+      case PresetType.DANGEROUS_ENVIRONMENT:
+        return `噪音水平接近您设置的危险环境阈值，仅差${difference}dB。请保持警惕，准备必要的听力防护措施。`;
+      default:
+        return `噪音水平接近您设置的阈值，仅差${difference}dB。建议保持关注环境变化。`;
+    }
+  }
+
+  // 安全范围内的建议
+  private getSafeThresholdSuggestion(presetType: PresetType, currentDecibel: number, threshold: number): string {
+    const difference = threshold - currentDecibel;
+    
+    switch (presetType) {
+      case PresetType.QUIET_ENVIRONMENT:
+        return `环境噪音在安静环境的安全范围内，距离阈值还有${difference}dB。适合需要专注和休息的环境。`;
+      case PresetType.GENERAL_ENVIRONMENT:
+        return `环境噪音在一般环境的安全范围内，距离阈值还有${difference}dB。适合日常工作和学习活动。`;
+      case PresetType.NOISY_ENVIRONMENT:
+        return `环境噪音在嘈杂环境的安全范围内，距离阈值还有${difference}dB。适合短期停留的嘈杂环境。`;
+      case PresetType.DANGEROUS_ENVIRONMENT:
+        return `环境噪音在危险环境的安全范围内，距离阈值还有${difference}dB。但仍建议保持适当防护意识。`;
+      default:
+        return `环境噪音在安全范围内，距离您设置的阈值还有${difference}dB。适合相应环境的活动。`;
+    }
+  }
+
+  // 优秀环境的建议
+  private getExcellentThresholdSuggestion(presetType: PresetType, currentDecibel: number, threshold: number): string {
+    const difference = threshold - currentDecibel;
+    
+    switch (presetType) {
+      case PresetType.QUIET_ENVIRONMENT:
+        return `环境噪音水平优秀，远低于安静环境阈值${difference}dB。这是理想的安静环境，适合深度专注和优质休息。`;
+      case PresetType.GENERAL_ENVIRONMENT:
+        return `环境噪音水平优秀，远低于一般环境阈值${difference}dB。这是舒适的工作学习环境，继续保持。`;
+      case PresetType.NOISY_ENVIRONMENT:
+        return `环境噪音水平优秀，远低于嘈杂环境阈值${difference}dB。环境相对安静，适合较长时间停留。`;
+      case PresetType.DANGEROUS_ENVIRONMENT:
+        return `环境噪音水平优秀，远低于危险环境阈值${difference}dB。环境相对安全，但仍建议保持基本防护意识。`;
+      default:
+        return `环境噪音水平优秀，远低于您设置的阈值${difference}dB。这是理想的环境状态，继续保持。`;
     }
   }
 
