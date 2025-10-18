@@ -33,11 +33,11 @@ export default class EntryAbility extends UIAbility {
 
   async onDestroy(): Promise<void> {
     hilog.info(DOMAIN, TAG, 'Ability onDestroy');
-    
+
     // 销毁DisplayManager资源
     const displayManager = DisplayManager.getInstance();
     await displayManager.destroy();
-    
+
     PermissionUtil.checkPermissions('ohos.permission.CAMERA').then((result) => {
       if (result) {
         if (this.cameraManager.isTorchSupported()) {
@@ -54,7 +54,7 @@ export default class EntryAbility extends UIAbility {
     windowManager.registerWindowStage(windowStage);
     windowManager.loadContent('pages/Index', () => {
       AppUtil.init(this.context);
-      PersistenceV2.connect(PreferenceKeys,() => new PreferenceKeys());
+      PersistenceV2.connect(PreferenceKeys, () => new PreferenceKeys());
       AppStorageV2.connect(AppKeys, () => new AppKeys())!;
       PersistenceV2.notifyOnError((key: string, reason: string, msg: string) => {
         console.error(`error key: ${key}, reason: ${reason}, message: ${msg}`);
@@ -62,16 +62,12 @@ export default class EntryAbility extends UIAbility {
     });
 
     // 获取设备类型并设置窗口方向
-    let windowClass: window.Window | undefined = undefined;
-    windowStage.getMainWindow((err: BusinessError, data) => {
-      const errCode: number = err.code;
-      if (errCode) {
+    windowStage.getMainWindow((err: BusinessError, windowClass) => {
+      if (err.code || !windowClass) {
         hilog.error(DOMAIN, TAG, `Failed to obtain the main window. Cause code: ${err.code}, message: ${err.message}`);
         return;
       }
-      windowClass = data;
-      this.mainWindow = data;
-
+      this.mainWindow = windowClass;
       // 初始化窗口尺寸和断点信息
       this.updateWindowBreakpointInfo();
 
@@ -87,9 +83,6 @@ export default class EntryAbility extends UIAbility {
       if (widthBp <= WidthBreakpoint.WIDTH_SM) {
         // 小屏强制竖屏
         orientation = window.Orientation.PORTRAIT;
-      } else {
-        // 平板设备 ,其他设备类型（car、2in1等）保持自动旋转
-        orientation = window.Orientation.AUTO_ROTATION;
       }
       try {
         windowClass.setPreferredOrientation(orientation, (err: BusinessError) => {
@@ -107,14 +100,6 @@ export default class EntryAbility extends UIAbility {
       }
     });
 
-    // audio.getAudioManager().getVolumeManager().getAppVolumePercentage().then((volume) => {
-    //   PreferenceService.getInstance().setNumber(PreferenceKeyConstants.VOLUME, volume);
-    // });
-    // audio.getAudioManager().getVolumeManager().on('volumeChange', (volume) => {
-    //   if (volume.volumeType === audio.AudioVolumeType.MEDIA && volume.volume < 100) {
-    //     PreferenceService.getInstance().setNumber(PreferenceKeyConstants.VOLUME, volume.volume);
-    //   }
-    // });
   }
 
   onWindowStageDestroy(): void {
@@ -138,8 +123,6 @@ export default class EntryAbility extends UIAbility {
   }
 
   onBackground(): void {
-    const windowManager = WindowManager.getInstance();
-    windowManager.setKeepScreenOn(false);
     DisplayManager.getInstance().onBackground();
 
     // 双管线架构：暂停UI更新

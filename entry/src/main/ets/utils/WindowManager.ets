@@ -47,30 +47,4 @@ export class WindowManager {
     });
   }
 
-  // 设置屏幕常亮状态
-  public setKeepScreenOn(keepOn: boolean): void {
-    if (!this.windowStage) {
-      hilog.error(DOMAIN, TAG, 'WindowStage is null');
-      return;
-    }
-
-    this.windowStage.getMainWindow((err, windowClass) => {
-      if (err.code) {
-        hilog.error(DOMAIN, TAG, 'Failed to obtain the main window. Cause: %{public}s', JSON.stringify(err) ?? '');
-        return;
-      }
-
-      try {
-        let promise = windowClass.setWindowKeepScreenOn(keepOn);
-        promise.then(() => {
-          hilog.info(DOMAIN, TAG, `Succeeded in setting window keep screen on: ${keepOn}`);
-        }).catch((err: BusinessError) => {
-          hilog.error(DOMAIN, TAG, 'Failed to set window keep screen on. Cause: %{public}s', JSON.stringify(err) ?? '');
-        });
-      } catch (exception) {
-        hilog.error(DOMAIN, TAG, 'Failed to set window keep screen on. Cause: %{public}s',
-          JSON.stringify(exception) ?? '');
-      }
-    });
-  }
 }

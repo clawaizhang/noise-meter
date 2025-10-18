@@ -9,6 +9,7 @@ import { DialogHub, InfSheet } from '@hadss/dialoghub';
 import { DialogStyleManager } from '../../utils/DialogStyleManager';
 import { Throttle } from '../../utils/Debounce';
 import { CommentService } from '../../services/CommentService';
+import { privacyManager } from '@kit.StoreKit';
 
 @Extend(Image)
 function itemIcon() {
@@ -122,48 +123,21 @@ export struct AboutSettings {
               Row() {
                 Image($r('app.media.ic_info'))
                   .itemIcon()
-                Hyperlink($r('app.string.privacy_policy_link'), $r('app.string.privacy_policy_link_text'))
+                Text('撤销隐私授权')
+                  .fontColor($r('sys.color.font_emphasize'))
+                  .onClick(() => {
+                    Throttle.click(async () => {
+                      // 这里添加打开隐私政策的逻辑
+                      const uiContext = getContext(this) as common.UIAbilityContext;
+                      await privacyManager.requestAppPrivacyConsent(uiContext);
+                    })
+                  })
               }.layoutWeight(1)
 
               Blank()
             }
             .listItemRow()
 
-            // 取消隐私授权
-            Row({ space: 8 }) {
-              Row() {
-                Image($r('app.media.ic_lock'))
-                  .itemIcon()
-                Text($r('app.string.revoke_privacy_agreement'))
-                  .itemTitle()
-              }.layoutWeight(1)
-
-              Blank()
-            }
-            .listItemRow()
-            .onClick(() => {
-              Throttle.click(() => {
-                AlertDialog.show({
-                  title: $r('app.string.revoke_privacy_confirm_title'),
-                  message: $r('app.string.revoke_privacy_confirm_message'),
-                  primaryButton: {
-                    value: $r('app.string.revoke_privacy_confirm_button'),
-                    action: () => {
-                      this.revokePrivacyAgreement();
-                    }
-                  },
-                  secondaryButton: {
-                    value: $r('app.string.revoke_privacy_cancel_button'),
-                    action: () => {
-                      this.showRevokeConfirmDialog = false;
-                    }
-                  },
-                  cancel: () => {
-                    this.showRevokeConfirmDialog = false;
-                  }
-                })
-              })
-            })
           }
           .cardStyle()
         }.width('100%')
@@ -232,8 +206,6 @@ export struct AboutSettings {
 
   // 取消隐私授权
   private revokePrivacyAgreement() {
-    // 撤销隐私同意状态
-    this.pk.privacy_agreed = false;
     // 退出APP
     const context = getContext(this) as common.UIAbilityContext;
     context.terminateSelf();

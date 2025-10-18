@@ -3,7 +3,14 @@
     "name": "entry",
     "type": "entry",
     "description": "$string:module_desc",
-    "metadata": [],
+    "metadata": [ {
+      "name": "appgallery_privacy_hosted",
+      "value": "1"
+    },
+      {
+        "name": "appgallery_privacy_link_privacy_statement",
+        "value": "https://agreement-drcn.hispace.dbankcloud.cn/index.html?lang=zh&agreementId=1772080835588051136" // 必须是https网址
+      }],
     "mainElement": "EntryAbility",
     "deviceTypes": [
       "phone",

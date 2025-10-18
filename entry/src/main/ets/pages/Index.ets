@@ -60,13 +60,6 @@ struct Index {
     this.audioService.handleModeChange(mode)
   }
 
-  @Monitor('pk.keep_screen_on')
-  keepScreenOnChange(monitor: IMonitor) {
-    let keepScreenOn = monitor.value<boolean>()?.now!;
-    const windowManager = WindowManager.getInstance();
-    windowManager.setKeepScreenOn(keepScreenOn);
-  }
-
   @Monitor('pk.show_welcome_guide')
   privacy_agreedChange(monitor: IMonitor) {
     let show_welcome_guide = monitor.value<boolean>()?.now!;
@@ -113,8 +106,6 @@ struct Index {
   }
 
   aboutToDisappear(): void {
-    const windowManager = WindowManager.getInstance();
-    windowManager.setKeepScreenOn(false);
 
     // 清理防抖队列资源
     Throttle.unsubscribe();
@@ -184,18 +175,19 @@ struct Index {
     try {
       // 初始化音频设备监听服务
       await this.audioDeviceMonitorService.initialize(this.context);
-      
+
       // 添加设备变更监听回调
       this.audioDeviceMonitorService.addDeviceChangeListener((deviceInfo) => {
-        hilog.info(DOMAIN, TAG, `音频设备状态变化: ${deviceInfo.deviceName} ${deviceInfo.connectionState === 0 ? '接入' : '断开'}`);
-        
+        hilog.info(DOMAIN, TAG,
+          `音频设备状态变化: ${deviceInfo.deviceName} ${deviceInfo.connectionState === 0 ? '接入' : '断开'}`);
+
         // 可以在这里添加UI更新逻辑
         // 例如更新设备状态显示组件
       });
 
       // 开始监听设备状态变化
       await this.audioDeviceMonitorService.startMonitoring();
-      
+
       hilog.info(DOMAIN, TAG, '音频设备监听服务启动成功');
     } catch (error) {
       hilog.error(DOMAIN, TAG, `音频设备监听服务启动失败: ${error instanceof Error ? error.message : String(error)}`);
@@ -306,25 +298,10 @@ struct Index {
       } else {
         // 显示正常内容
         Navigation(this.navStack) {
-          if (this.pk.privacy_agreed && !this.pk.show_welcome_guide) {
+          if (!this.pk.show_welcome_guide) {
             MainPage()
           }
-          if (!this.pk.privacy_agreed) {
-            // 显示独立隐私政策页面
-            PrivacyPolicyStandalone({
-              onAgree: () => {
-                // 用户同意隐私政策，设置状态并显示欢迎引导
-                this.pk.privacy_agreed = true;
-                hilog.info(DOMAIN, TAG, '用户同意隐私政策，显示欢迎引导');
-              },
-              onCancel: () => {
-                // 用户不同意隐私政策，退出APP
-                hilog.info(DOMAIN, TAG, '用户不同意隐私政策，退出APP');
-                this.context.terminateSelf();
-              }
-            })
-          }
-          if (this.pk.privacy_agreed && this.pk.show_welcome_guide) {
+          if (this.pk.show_welcome_guide) {
             // 显示欢迎引导页（隐私政策已同意）
             WelcomeGuide({
               onComplete: () => {
@@ -347,7 +324,7 @@ struct Index {
         .mode(NavigationMode.Stack)
       }
     }
-    .backgroundColor(this.pk.show_welcome_guide || !this.pk.privacy_agreed ? $r('sys.color.background_primary') :
+    .backgroundColor(this.pk.show_welcome_guide ? $r('sys.color.background_primary') :
       $r('sys.color.background_secondary'))
     .expandSafeArea([SafeAreaType.SYSTEM], [SafeAreaEdge.TOP, SafeAreaEdge.BOTTOM])
     .height('100%')
