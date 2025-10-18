@@ -59,7 +59,7 @@ export struct AudioController {
   private audioService: AudioService = AudioService.getInstance()
   private recordService: DecibelRecordService = new DecibelRecordService(getContext() as common.UIAbilityContext)
   // 服务实例
-  private audioControllerService: AudioControllerService = AudioControllerService.getInstance();
+  private audioControllerService: AudioControllerService = AudioControllerService.getInstance(this.ak,this.pk);
   
   // 自动保存相关属性
   private autoSaveTimer?: number;
@@ -108,10 +108,9 @@ export struct AudioController {
   }
 
   aboutToAppear() {
-    // 每秒检查一次是否需要自动保存
-    this.autoSaveTimer = setInterval(() => {
-      this.currentTime = Date.now();
-    }, 1000);
+    // 启动时间显示更新
+    this.audioControllerService.startTimeDisplayUpdates();
+    
     if (this.ak.microphonePermissionGranted) {
       this.startRecording();
     }
@@ -129,6 +128,9 @@ export struct AudioController {
   }
 
   aboutToDisappear() {
+    // 停止时间显示更新
+    this.audioControllerService.stopTimeDisplayUpdates();
+    
     // 清理RxJS资源
     this.stopAutoSaveMonitoring();
     this.stopDataCleanupMonitoring();
@@ -412,6 +414,9 @@ export struct AudioController {
 
     // 通知父组件更新时间
     this.onSaveTimeUpdate(this.lastAutoSaveTime);
+
+    // 更新UI显示状态中的保存时间
+    this.audioControllerService.updateLastSaveTime(this.lastAutoSaveTime);
 
     // 显示保存提示
     promptAction.showToast({

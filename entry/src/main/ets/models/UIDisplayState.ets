@@ -1,5 +1,6 @@
 import { DecibelService } from '../services/DecibelService';
 import { DataProcessingState } from './DataProcessingState';
+import { PreferenceKeys } from './PreferenceKeys';
 
 /**
  * 警报显示状态对象（UI专用）
@@ -192,7 +193,70 @@ export class UIDisplayState {
   // UI更新状态
   @Trace isUIUpdatesEnabled: boolean = true;
 
+  // 时间显示相关属性
+  @Trace timeDisplay: string = '';
+  lastSaveTime: number = Date.now();
+  currentTime: number = Date.now();
+
   constructor() {
+  }
+
+  /**
+   * 更新时间显示
+   * @param pk 偏好设置
+   */
+  updateTimeDisplay(pk: PreferenceKeys): void {
+    if (!this.isUIUpdatesEnabled) {
+      return; // 后台时不更新显示
+    }
+
+    let elapsed = this.currentTime - this.lastSaveTime;
+    let minutes = Math.floor(elapsed / 60000);
+    let seconds = Math.floor((elapsed % 60000) / 1000);
+    
+    if (!pk.auto_save_enabled) {
+      // 60分钟循环
+      if (minutes >= 60) {
+        this.lastSaveTime = Date.now();
+        elapsed = this.currentTime - this.lastSaveTime;
+        minutes = Math.floor(elapsed / 60000);
+        seconds = Math.floor((elapsed % 60000) / 1000);
+        this.timeDisplay = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        return;
+      }
+      this.timeDisplay = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+      return;
+    }
+
+    // 计算剩余时间
+    const intervalMs = pk.auto_save_interval * 60 * 1000;
+    const remaining = Math.max(0, intervalMs - elapsed);
+
+    if (remaining <= 0) {
+      this.timeDisplay = '即将自动保存';
+      return;
+    }
+
+    minutes = Math.floor(remaining / 60000);
+    seconds = Math.floor((remaining % 60000) / 1000);
+
+    this.timeDisplay = `${minutes}:${seconds.toString().padStart(2, '0')} 后自动保存`;
+  }
+
+  /**
+   * 更新最后保存时间
+   * @param saveTime 保存时间戳
+   */
+  updateLastSaveTime(saveTime: number): void {
+    this.lastSaveTime = saveTime;
+  }
+
+  /**
+   * 更新当前时间
+   * @param currentTime 当前时间戳
+   */
+  updateCurrentTime(currentTime: number): void {
+    this.currentTime = currentTime;
   }
 
   /**
@@ -252,6 +316,9 @@ export class UIDisplayState {
     this.displayPeakFreq = 0;
     this.displayStatistics.reset();
     this.displayAlertState.reset();
+    this.timeDisplay = '';
+    this.lastSaveTime = Date.now();
+    this.currentTime = Date.now();
     this.isUIUpdatesEnabled = true;
   }
 }

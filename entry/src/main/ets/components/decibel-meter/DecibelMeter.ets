@@ -31,14 +31,12 @@ export struct DecibelMeter {
   @Local private currentLocation: LocationInfo | null = null; // 当前位置信息，从LocationDisplay接收
   @Local private errorMessages: string[] = []; // 错误消息队列
   @Local private lastSaveTime: number = Date.now();
-  @Local private currentTime: number = Date.now();
-  @Local private countdownTimer?: number;
   @Local private hideForXsMd: boolean = false;
   @Local private hasExternalDeviceConnected: boolean = false; // 外置设备连接状态
   @Local private connectedDeviceName: string = ''; // 连接的设备名称
   private animationTimeOutId: number | undefined;
   // 服务实例
-  private audioControllerService: AudioControllerService = AudioControllerService.getInstance();
+  private audioControllerService: AudioControllerService = AudioControllerService.getInstance(this.ak, this.pk);
   private audioDeviceMonitorService: AudioDeviceMonitorService = AudioDeviceMonitorService.getInstance();
   // 双管线架构：UI显示状态
   @Consumer(navigationStack) navStack: NavPathStack = new NavPathStack()
@@ -84,8 +82,7 @@ export struct DecibelMeter {
                   calibrationValue: this.pk.calibration_value,
                   noiseThreshold: this.pk.noise_threshold,
                   systemNotificationEnabled: this.pk.system_notification_enabled,
-                  isNoiseAlarm: false, // 报警状态由AudioController管理
-                  timeDisplay: this.timeDisplay // 传递自动保存倒计时
+                  isNoiseAlarm: false // 报警状态由AudioController管理
                 })
 
                 Column({ space: 8 }) {
@@ -158,8 +155,6 @@ export struct DecibelMeter {
   aboutToDisappear() {
     // 清理资源
     this.audioControllerService.dispose();
-    // 停止倒计时更新定时器
-    this.stopCountdownTimer();
     // 取消设备状态监听
     this.unregisterDeviceChangeListener();
   }
@@ -182,52 +177,9 @@ export struct DecibelMeter {
   aboutToAppear() {
     // 获取当前窗口尺寸
     this.calculateSize();
-    // 启动倒计时更新定时器
-    this.currentTime = Date.now();
-    this.countdownTimer = setInterval(() => {
-      this.currentTime = Date.now();
-    }, 1000)
-    
+
     // 注册设备状态监听
     this.registerDeviceChangeListener();
-  }
-
-  private stopCountdownTimer() {
-    if (this.countdownTimer) {
-      clearInterval(this.countdownTimer);
-      this.countdownTimer = undefined;
-    }
-  }
-
-  @Computed
-  get timeDisplay(): string {
-    let elapsed = this.currentTime - this.lastSaveTime;
-    let minutes = Math.floor(elapsed / 60000);
-    let seconds = Math.floor((elapsed % 60000) / 1000);
-    if (!this.pk.auto_save_enabled) {
-      //60 分钟循环
-      if (minutes >= 60) {
-        this.lastSaveTime = Date.now();
-        elapsed = this.currentTime - this.lastSaveTime;
-        minutes = Math.floor(elapsed / 60000);
-        seconds = Math.floor((elapsed % 60000) / 1000);
-        return `${minutes}:${seconds.toString().padStart(2, '0')}`;
-      }
-      return `${minutes}:${seconds.toString().padStart(2, '0')}`;
-    }
-
-    // 计算剩余时间
-    const intervalMs = this.pk.auto_save_interval * 60 * 1000;
-    const remaining = Math.max(0, intervalMs - elapsed);
-
-    if (remaining <= 0) {
-      return '即将自动保存';
-    }
-
-    minutes = Math.floor(remaining / 60000);
-    seconds = Math.floor((remaining % 60000) / 1000);
-
-    return `${minutes}:${seconds.toString().padStart(2, '0')} 后自动保存`;
   }
 
   @Builder
@@ -388,7 +340,7 @@ export struct DecibelMeter {
     this.audioDeviceMonitorService.addDeviceChangeListener((deviceInfo: AudioDeviceInfo) => {
       this.handleDeviceChange(deviceInfo);
     });
-    
+
     // 初始化当前设备状态
     const connectedDevices = this.audioDeviceMonitorService.getConnectedDevices();
     this.hasExternalDeviceConnected = connectedDevices.length > 0;
@@ -416,8 +368,9 @@ export struct DecibelMeter {
     } else {
       this.connectedDeviceName = '';
     }
-    
-    console.info(`[DEVICE_CHANGE] 外置设备${this.hasExternalDeviceConnected ? '接入' : '断开'}: ${deviceInfo.deviceName}`);
+
+    console.info(`[DEVICE_CHANGE] 外置设备${this.hasExternalDeviceConnected ? '接入' :
+      '断开'}: ${deviceInfo.deviceName}`);
   }
 
   /**

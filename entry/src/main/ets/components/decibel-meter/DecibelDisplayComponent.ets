@@ -36,7 +36,6 @@ export struct DecibelDisplayComponent {
   @Param @Require noiseThreshold: number = 80;
   @Param @Require systemNotificationEnabled: boolean = true;
   @Param @Require isNoiseAlarm: boolean = false;
-  @Param @Require timeDisplay: string = '';
   @Local hiddenForXsMd: boolean = false;
   // 内部状态
   noiseStandardSub?: Subscription;
@@ -304,15 +303,15 @@ export struct DecibelDisplayComponent {
       Blank()
 
       // 自动保存状态
-      if (this.timeDisplay) {
+      if (this.ak.uiDisplayState.timeDisplay) {
         Row({ space: 4 }) {
-          if (this.timeDisplay.includes('自动保存')) {
+          if (this.ak.uiDisplayState.timeDisplay.includes('自动保存')) {
             Image($r('app.media.ic_save'))
               .width(14)
               .height(14)
               .fillColor($r('sys.color.ohos_id_color_text_secondary'));
           }
-          Text(this.timeDisplay)
+          Text(this.ak.uiDisplayState.timeDisplay)
             .fontSize(13)
             .fontColor($r('sys.color.ohos_id_color_text_secondary'));
         }

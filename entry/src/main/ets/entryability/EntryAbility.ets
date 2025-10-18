@@ -15,6 +15,8 @@ import { camera } from '@kit.CameraKit';
 import { AppStorageV2, display, PersistenceV2 } from '@kit.ArkUI';
 import { AudioControllerService } from '../services/AudioControllerService';
 import { WindowFunctionCache } from '../utils/WindowFunctionCache';
+import { DataProcessingState } from '../models/DataProcessingState';
+import { UIDisplayState } from '../models/UIDisplayState';
 
 const TAG = 'EntryAbility';
 const DOMAIN = 0x0000;
@@ -56,6 +58,8 @@ export default class EntryAbility extends UIAbility {
       AppUtil.init(this.context);
       PersistenceV2.connect(PreferenceKeys, () => new PreferenceKeys());
       AppStorageV2.connect(AppKeys, () => new AppKeys())!;
+      AppStorageV2.connect(DataProcessingState, () => new DataProcessingState())!;
+      AppStorageV2.connect(UIDisplayState, () => new UIDisplayState())!;
       PersistenceV2.notifyOnError((key: string, reason: string, msg: string) => {
         console.error(`error key: ${key}, reason: ${reason}, message: ${msg}`);
       });
@@ -117,7 +121,7 @@ export default class EntryAbility extends UIAbility {
     }
 
     // 双管线架构：恢复UI更新
-    AudioControllerService.getInstance().resumeUIUpdates();
+    AudioControllerService.getInstancePlain()?.resumeUIUpdates();
 
     hilog.info(DOMAIN, TAG, 'Ability onForeground');
   }
@@ -126,7 +130,7 @@ export default class EntryAbility extends UIAbility {
     DisplayManager.getInstance().onBackground();
 
     // 双管线架构：暂停UI更新
-    AudioControllerService.getInstance().pauseUIUpdates();
+    AudioControllerService.getInstancePlain()?.pauseUIUpdates();
 
     this.startBackgroundRunning();
 

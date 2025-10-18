@@ -1,7 +1,8 @@
 import { Subject } from 'rxjs';
 import { UIDisplayState } from '../models/UIDisplayState';
-import { AppStorageV2 } from '@kit.ArkUI';
 import { DataProcessingState } from '../models/DataProcessingState';
+import { PreferenceKeys } from '../models/PreferenceKeys';
+import { AppKeys } from '../models/AppKeys';
 
 /**
  * AudioController服务
@@ -9,21 +10,37 @@ import { DataProcessingState } from '../models/DataProcessingState';
  */
 export class AudioControllerService {
   private static instance: AudioControllerService | null = null;
-  private dataProcessingState: DataProcessingState = AppStorageV2.connect(DataProcessingState,() => new DataProcessingState())!;
-  private uiDisplayState: UIDisplayState = AppStorageV2.connect(UIDisplayState,() => new UIDisplayState())!;
-  
+  private dataProcessingState: DataProcessingState;
+  private uiDisplayState: UIDisplayState;
   // 重置事件Subject
   private resetSubject = new Subject<void>();
   // 保存事件Subject
   private saveSubject = new Subject<string>();
+  // 时间显示定时器
+  private timeDisplayTimer?: number;
+  private pk: PreferenceKeys;
+
+  constructor(ak: AppKeys, pk: PreferenceKeys) {
+    this.dataProcessingState = ak.dataProcessingState;
+    this.uiDisplayState = ak.uiDisplayState;
+    this.pk = pk;
+  }
+
 
   /**
    * 获取单例实例
    */
-  public static getInstance(): AudioControllerService {
+  public static getInstance(ak: AppKeys, pk: PreferenceKeys): AudioControllerService {
     if (!AudioControllerService.instance) {
-      AudioControllerService.instance = new AudioControllerService();
+      AudioControllerService.instance = new AudioControllerService(ak, pk);
     }
+    return AudioControllerService.instance;
+  }
+
+  /**
+   * 获取单例实例
+   */
+  public static getInstancePlain(): AudioControllerService | null {
     return AudioControllerService.instance;
   }
 
@@ -72,6 +89,8 @@ export class AudioControllerService {
     this.dataProcessingState.isBackground = false;
     // 同步最新数据到UI
     this.uiDisplayState.syncFromProcessingState(this.dataProcessingState);
+    // 立即更新一次时间显示
+    this.uiDisplayState.updateTimeDisplay(this.pk);
     console.info('[双管线架构] UI更新已恢复');
   }
 
@@ -83,9 +102,47 @@ export class AudioControllerService {
   }
 
   /**
+   * 启动时间显示更新
+   */
+  public startTimeDisplayUpdates(): void {
+    this.stopTimeDisplayUpdates(); // 先停止之前的定时器
+
+    // 每秒更新一次时间显示
+    this.timeDisplayTimer = setInterval(() => {
+      const currentTime = Date.now();
+      this.uiDisplayState.updateCurrentTime(currentTime);
+      this.uiDisplayState.updateTimeDisplay(this.pk);
+    }, 1000);
+
+    console.info('[双管线架构] 时间显示更新已启动');
+  }
+
+  /**
+   * 停止时间显示更新
+   */
+  public stopTimeDisplayUpdates(): void {
+    if (this.timeDisplayTimer) {
+      clearInterval(this.timeDisplayTimer);
+      this.timeDisplayTimer = undefined;
+      console.info('[双管线架构] 时间显示更新已停止');
+    }
+  }
+
+  /**
+   * 更新最后保存时间
+   * @param saveTime 保存时间戳
+   */
+  public updateLastSaveTime(saveTime: number): void {
+    this.uiDisplayState.updateLastSaveTime(saveTime);
+    // 立即更新一次时间显示
+    this.uiDisplayState.updateTimeDisplay(this.pk);
+  }
+
+  /**
    * 清理资源
    */
   public dispose(): void {
+    this.stopTimeDisplayUpdates();
     this.resetSubject.complete();
     this.saveSubject.complete();
     AudioControllerService.instance = null;
