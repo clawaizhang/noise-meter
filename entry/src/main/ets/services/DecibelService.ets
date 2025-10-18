@@ -148,19 +148,22 @@ export class DecibelService {
     if (value < 70) {
       return '繁忙的餐厅';
     }
-    if (value < 80) {
+    if (value < 85) {
       return '繁忙的街道';
     }
-    if (value < 90) {
-      return '重型卡车';
-    }
     if (value < 100) {
-      return '地铁列车';
+      return '建筑工地/地铁列车/重型卡车';
     }
     if (value < 110) {
       return '摇滚音乐会';
     }
-    return '喷气发动机';
+    if (value < 130) {
+      return '飞机起飞';
+    }
+    if (value < 140) {
+      return '喷气发动机';
+    }
+    return '爆炸现场';
   }
 
   static getDetailedDecibelDescription(value: number): string {
@@ -185,19 +188,22 @@ export class DecibelService {
     if (value < 70) {
       return '可能影响交流的嘈杂环境，如繁忙的餐厅或商场';
     }
-    if (value < 80) {
+    if (value < 85) {
       return '长期暴露可能影响听力的环境，如繁忙的城市街道或地铁站';
     }
-    if (value < 90) {
-      return '需要采取听力保护措施的环境，如建筑工地或重型机械附近';
-    }
     if (value < 100) {
-      return '短期暴露即可能损伤听力的环境，如地铁列车内部或摇滚音乐会前排';
+      return '需要采取听力保护措施的环境，如建筑工地、地铁列车或重型卡车附近';
     }
     if (value < 110) {
-      return '需要专业听力保护的环境，如飞机引擎附近或大型演唱会现场';
+      return '高噪音环境，如摇滚音乐会前排，需要严格听力保护';
     }
-    return '立即损伤听力的危险水平，如喷气发动机附近或爆炸现场';
+    if (value < 130) {
+      return '极危险噪音环境，如飞机起飞区域，立即损伤听力风险';
+    }
+    if (value < 140) {
+      return '立即损伤听力的危险水平，如喷气发动机附近';
+    }
+    return '爆炸现场等极端危险环境，立即造成永久性听力损伤';
   }
 
   // 新增方法：获取频率加权方式的颜色

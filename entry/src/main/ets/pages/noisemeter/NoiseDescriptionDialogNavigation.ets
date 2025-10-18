@@ -8,18 +8,20 @@ interface DecibelDescription {
 }
 
 const decibelDescriptions: DecibelDescription[] = [
-  { description: '喷气发动机', db: 120, color: $r('sys.color.warning') },
-  { description: '摇滚音乐会', db: 110, color: $r('sys.color.warning') },
-  { description: '地铁列车', db: 100, color: $r('sys.color.warning') },
-  { description: '重型卡车', db: 90, color: $r('sys.color.warning') },
-  { description: '繁忙的街道', db: 80, color: $r('sys.color.alert') },
-  { description: '繁忙的餐厅', db: 70, color: $r('sys.color.alert') },
-  { description: '普通对话', db: 60, color: $r('sys.color.alert') },
-  { description: '安静的办公室', db: 50, color: $r('sys.color.alert') },
-  { description: '安静的图书馆', db: 40, color: $r('sys.color.confirm') },
-  { description: '耳语声', db: 30, color: $r('sys.color.confirm') },
-  { description: '安静的录音室', db: 20, color: $r('sys.color.confirm') },
-  { description: '几乎无声', db: 10, color: $r('sys.color.confirm') },
+  { description: '喷气发动机', db: 140, color: $r('app.color.decibel_unbearable') },
+  { description: '飞机起飞', db: 130, color: $r('app.color.decibel_very_noisy') },
+  { description: '摇滚音乐会', db: 110, color: $r('app.color.decibel_very_noisy') },
+  { description: '建筑工地', db: 85, color: $r('app.color.decibel_noisy') },
+  { description: '地铁列车', db: 85, color: $r('app.color.decibel_noisy') },
+  { description: '重型卡车', db: 85, color: $r('app.color.decibel_noisy') },
+  { description: '繁忙的街道', db: 80, color: $r('app.color.decibel_noisy') },
+  { description: '繁忙的餐厅', db: 70, color: $r('app.color.decibel_normal') },
+  { description: '普通对话', db: 60, color: $r('app.color.decibel_normal') },
+  { description: '安静的办公室', db: 50, color: $r('app.color.decibel_quiet') },
+  { description: '安静的图书馆', db: 40, color: $r('app.color.decibel_quiet') },
+  { description: '耳语声', db: 30, color: $r('app.color.decibel_very_quiet') },
+  { description: '安静的录音室', db: 20, color: $r('app.color.decibel_very_quiet') },
+  { description: '几乎无声', db: 10, color: $r('app.color.decibel_very_quiet') },
 ]
 
 // 对话框构建器
