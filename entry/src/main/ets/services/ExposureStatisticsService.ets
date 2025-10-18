@@ -101,39 +101,6 @@ export class ExposureStatisticsService {
     }
   }
 
-  /**
-   * 计算多标准暴露数据
-   */
-  public async calculateMultiStandardExposure(): Promise<MultiStandardExposureData[]> {
-    try {
-      const todayRecords = await this.getTodayDecibelRecords();
-
-      if (todayRecords.length === 0) {
-        return this.getEmptyMultiStandardData();
-      }
-
-      const results: MultiStandardExposureData[] = [];
-
-      // 计算每个标准的暴露数据
-      for (const standard of Object.values(NoiseExposureStandard)) {
-        const exposurePercentage = this.calculateExposurePercentage(todayRecords, standard);
-        const remainingSafeTime = this.calculateRemainingSafeTime(exposurePercentage, standard);
-        const complianceStatus = this.getComplianceStatus(exposurePercentage);
-
-        results.push({
-          standard: standard,
-          exposurePercentage: exposurePercentage,
-          remainingSafeTime: remainingSafeTime,
-          complianceStatus: complianceStatus
-        });
-      }
-
-      return results;
-    } catch (error) {
-      console.error('计算多标准暴露数据失败:', error);
-      return this.getEmptyMultiStandardData();
-    }
-  }
 
   /**
    * 计算分贝区间统计数据
@@ -346,22 +313,6 @@ export class ExposureStatisticsService {
     return 'danger';
   }
 
-  /**
-   * 获取空的多标准数据
-   */
-  private getEmptyMultiStandardData(): MultiStandardExposureData[] {
-    return Object.values(NoiseExposureStandard).map(standard => {
-      const config = StandardConfigs[standard];
-      const defaultTime = config.baseDuration >= 24 * 60 * 60 * 1000 ? '24小时' : '8小时';
-      let data: MultiStandardExposureData = {
-        standard: standard,
-        exposurePercentage: 0,
-        remainingSafeTime: defaultTime,
-        complianceStatus: 'safe'
-      };
-      return data;
-    });
-  }
 
   /**
    * 获取空的分贝区间统计数据

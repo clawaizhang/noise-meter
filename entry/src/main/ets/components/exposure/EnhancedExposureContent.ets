@@ -7,17 +7,8 @@
 import { ExposureData } from '../../models/ExposureData';
 import { ExposureStatisticsService } from '../../services/ExposureStatisticsService';
 import { DesignConstants } from '../../constants/DesignConstants';
-import { NoiseExposureStandard, DecibelRange, StandardConfigs, DecibelRangeConfigs } from '../../constants/ExposureStandardConstants';
-import { Throttle } from '../../utils/Debounce';
+import { NoiseExposureStandard, DecibelRange, DecibelRangeConfigs } from '../../constants/ExposureStandardConstants';
 import common from '@ohos.app.ability.common';
-
-// 多标准暴露数据
-interface MultiStandardExposureData {
-  standard: NoiseExposureStandard;
-  exposurePercentage: number;
-  remainingSafeTime: string;
-  complianceStatus: 'safe' | 'warning' | 'danger';
-}
 
 // 分贝区间统计数据
 interface DecibelRangeStats {
@@ -29,15 +20,11 @@ interface DecibelRangeStats {
 @ComponentV2
 export struct EnhancedExposureContent {
   @Local exposureData: ExposureData = new ExposureData();
-  @Local multiStandardData: MultiStandardExposureData[] = [];
   @Local decibelRangeStats: DecibelRangeStats[] = [];
-  @Local selectedStandard: NoiseExposureStandard = NoiseExposureStandard.INDUSTRIAL;
   @Local isLoading: boolean = true;
   @Local isVisible: boolean = false;
   @Local hasError: boolean = false;
   @Local errorMessage: string = '';
-  @Local private showStandardComparison: boolean = false;
-  @Local private showDecibelAnalysis: boolean = false;
   
   private exposureService: ExposureStatisticsService = ExposureStatisticsService.getInstance();
   private updateTimer: number | null = null;
@@ -72,17 +59,13 @@ export struct EnhancedExposureContent {
 
     try {
       // 并行加载所有数据
-      const exposureDataPromise = this.exposureService.calculateTodayExposure(this.selectedStandard);
-      const multiStandardDataPromise = this.exposureService.calculateMultiStandardExposure();
+      const exposureDataPromise = this.exposureService.calculateTodayExposure(NoiseExposureStandard.INDUSTRIAL);
       const decibelRangeStatsPromise = this.exposureService.calculateDecibelRangeStats();
       
       const exposureData = await exposureDataPromise;
-      const multiStandardData = await multiStandardDataPromise;
       const decibelRangeStats = await decibelRangeStatsPromise;
 
       exposureData.copyTo(this.exposureData);
-      this.multiStandardData.length = 0;
-      multiStandardData.forEach((data: MultiStandardExposureData) => this.multiStandardData.push(data))
       this.decibelRangeStats.length = 0;
       decibelRangeStats.forEach((data: DecibelRangeStats) => this.decibelRangeStats.push(data))
     } catch (error) {
@@ -90,20 +73,12 @@ export struct EnhancedExposureContent {
       this.hasError = true;
       this.errorMessage = '数据加载失败，请检查网络连接';
       new ExposureData(0, '8小时', 0, 0).copyTo(this.exposureData);
-      this.multiStandardData = [];
       this.decibelRangeStats = [];
     } finally {
       this.isLoading = false;
     }
   }
 
-  /**
-   * 切换标准
-   */
-  private async onStandardChange(standard: NoiseExposureStandard): Promise<void> {
-    this.selectedStandard = standard;
-    await this.loadAllData();
-  }
 
   /**
    * 启动自动更新
@@ -158,41 +133,6 @@ export struct EnhancedExposureContent {
     }
   }
 
-  /**
-   * 构建标准选择器
-   */
-  @Builder
-  private buildStandardSelector() {
-    Column({ space: DesignConstants.SPACING_SM }) {
-      Text('选择标准')
-        .fontSize(DesignConstants.FONT_SIZE_MD)
-        .fontWeight(FontWeight.Medium)
-        .fontColor($r('sys.color.font_primary'))
-        .textAlign(TextAlign.Start)
-
-      Row({ space: DesignConstants.SPACING_SM }) {
-        ForEach(Object.values(NoiseExposureStandard), (standard: NoiseExposureStandard) => {
-          Button(StandardConfigs[standard].name, { type: ButtonType.Normal })
-            .fontSize(DesignConstants.FONT_SIZE_SM)
-            .fontColor(this.selectedStandard === standard ? 
-              $r('sys.color.font_primary') : $r('sys.color.font_secondary'))
-            .backgroundColor(this.selectedStandard === standard ? 
-              $r('sys.color.comp_background_primary') : $r('sys.color.comp_background_secondary'))
-            .borderRadius(DesignConstants.BORDER_RADIUS_SM)
-            .padding({ left: 12, right: 12, top: 8, bottom: 8 })
-            .onClick(() => {
-              Throttle.click(() => this.onStandardChange(standard))
-            })
-        })
-      }
-      .width('100%')
-      .justifyContent(FlexAlign.Start)
-    }
-    .padding(DesignConstants.SPACING_MD)
-    .backgroundColor($r('sys.color.comp_background_primary'))
-    .borderRadius(DesignConstants.BORDER_RADIUS_MD)
-    .width('100%')
-  }
 
   /**
    * 构建增强版暴露剂量环状进度条
@@ -219,7 +159,7 @@ export struct EnhancedExposureContent {
 
       // 中心文本
       Column({ space: DesignConstants.SPACING_XS }) {
-        Text(`${Math.round(percentage)}%`)
+        Text(`${percentage.toFixed(1)}%`)
           .fontSize(DesignConstants.FONT_SIZE_3XL)
           .fontWeight(FontWeight.Bold)
           .fontColor($r('sys.color.font_primary'))
@@ -233,51 +173,6 @@ export struct EnhancedExposureContent {
     .height(100)
   }
 
-  /**
-   * 构建多标准对比面板
-   */
-  @Builder
-  private buildStandardComparisonPanel() {
-    Column({ space: DesignConstants.SPACING_MD }) {
-      Text('标准对比')
-        .fontSize(DesignConstants.FONT_SIZE_LG)
-        .fontWeight(FontWeight.Medium)
-        .fontColor($r('sys.color.font_primary'))
-
-      ForEach(this.multiStandardData, (data: MultiStandardExposureData) => {
-        Row({ space: DesignConstants.SPACING_MD }) {
-          Column({ space: DesignConstants.SPACING_XS }) {
-            Text(StandardConfigs[data.standard].name)
-              .fontSize(DesignConstants.FONT_SIZE_SM)
-              .fontColor($r('sys.color.font_primary'))
-              .fontWeight(FontWeight.Medium)
-
-            Text(StandardConfigs[data.standard].code)
-              .fontSize(DesignConstants.FONT_SIZE_XS)
-              .fontColor($r('sys.color.font_secondary'))
-          }
-          .layoutWeight(1)
-
-          Text(`${Math.round(data.exposurePercentage)}%`)
-            .fontSize(DesignConstants.FONT_SIZE_MD)
-            .fontColor(this.getExposureColor(data.exposurePercentage))
-            .fontWeight(FontWeight.Bold)
-
-          Text(data.remainingSafeTime)
-            .fontSize(DesignConstants.FONT_SIZE_SM)
-            .fontColor($r('sys.color.font_secondary'))
-        }
-        .width('100%')
-        .padding(DesignConstants.SPACING_MD)
-        .backgroundColor($r('sys.color.comp_background_primary'))
-        .borderRadius(DesignConstants.BORDER_RADIUS_MD)
-      })
-    }
-    .padding(DesignConstants.SPACING_MD)
-    .backgroundColor($r('sys.color.background_secondary'))
-    .borderRadius(DesignConstants.BORDER_RADIUS_MD)
-    .width('100%')
-  }
 
   /**
    * 构建分贝区间分析面板
@@ -340,46 +235,10 @@ export struct EnhancedExposureContent {
     return `${hours}小时${remainingMinutes}分钟`;
   }
 
-  /**
-   * 构建功能切换按钮
-   */
-  @Builder
-  private buildFeatureToggles() {
-    Row({ space: DesignConstants.SPACING_MD }) {
-      Button('标准对比', { type: ButtonType.Normal })
-        .fontSize(DesignConstants.FONT_SIZE_SM)
-        .fontColor(this.showStandardComparison ? 
-          $r('sys.color.font_primary') : $r('sys.color.font_secondary'))
-        .backgroundColor(this.showStandardComparison ? 
-          $r('sys.color.comp_background_primary') : $r('sys.color.comp_background_secondary'))
-        .borderRadius(DesignConstants.BORDER_RADIUS_SM)
-        .padding({ left: 12, right: 12, top: 8, bottom: 8 })
-        .onClick(() => {
-          Throttle.click(() => this.showStandardComparison = !this.showStandardComparison)
-        })
-
-      Button('分贝分析', { type: ButtonType.Normal })
-        .fontSize(DesignConstants.FONT_SIZE_SM)
-        .fontColor(this.showDecibelAnalysis ? 
-          $r('sys.color.font_primary') : $r('sys.color.font_secondary'))
-        .backgroundColor(this.showDecibelAnalysis ? 
-          $r('sys.color.comp_background_primary') : $r('sys.color.comp_background_secondary'))
-        .borderRadius(DesignConstants.BORDER_RADIUS_SM)
-        .padding({ left: 12, right: 12, top: 8, bottom: 8 })
-        .onClick(() => {
-          Throttle.click(() => this.showDecibelAnalysis = !this.showDecibelAnalysis)
-        })
-    }
-    .width('100%')
-    .justifyContent(FlexAlign.Start)
-  }
 
   build() {
     Scroll() {
       Column({ space: DesignConstants.SPACING_LG }) {
-        // 标准选择器
-        this.buildStandardSelector()
-
         // 核心指标区
         Column({ space: DesignConstants.SPACING_MD }) {
           this.buildEnhancedProgressRing(
@@ -387,7 +246,7 @@ export struct EnhancedExposureContent {
             this.getExposureColor(this.exposureData.exposurePercentage)
           )
 
-          Text(StandardConfigs[this.selectedStandard].name)
+          Text('工业企业标准 (GBZ 2.2-2007)')
             .fontSize(DesignConstants.FONT_SIZE_MD)
             .fontColor($r('sys.color.font_secondary'))
             .textAlign(TextAlign.Center)
@@ -403,14 +262,14 @@ export struct EnhancedExposureContent {
             this.buildDataCard(
               '剩余安全时间',
               this.exposureData.remainingSafeTime,
-              '基于当前标准'
+              '基于当前暴露剂量'
             )
           }
 
           GridCol({ span: { sm: 1, md: 1, lg: 1 } }) {
             this.buildDataCard(
               '今日峰值',
-              `${this.exposureData.todayPeak} dB`,
+              `${this.exposureData.todayPeak.toFixed(1)} dB`,
               '最高噪音水平'
             )
           }
@@ -418,25 +277,15 @@ export struct EnhancedExposureContent {
           GridCol({ span: { sm: 1, md: 1, lg: 1 } }) {
             this.buildDataCard(
               '今日平均值',
-              `${this.exposureData.todayAverage} dB`,
+              `${this.exposureData.todayAverage.toFixed(1)} dB`,
               '平均噪音水平'
             )
           }
         }
         .margin({ bottom: 24 })
 
-        // 功能切换按钮
-        this.buildFeatureToggles()
-
-        // 标准对比面板
-        if (this.showStandardComparison) {
-          this.buildStandardComparisonPanel()
-        }
-
         // 分贝分析面板
-        if (this.showDecibelAnalysis) {
-          this.buildDecibelAnalysisPanel()
-        }
+        this.buildDecibelAnalysisPanel()
       }
       .padding(24)
       .width('100%')
