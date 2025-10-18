@@ -6,6 +6,9 @@
 import { DecibelRecord } from '../models/DecibelRecord';
 import { ExposureData } from '../models/ExposureData';
 import { RelationalStoreService } from './RelationalStoreService';
+import { DecibelRecordService } from './DecibelRecordService';
+import common from '@ohos.app.ability.common';
+import { FilterConfig, TimeRangeFilter } from '../models/FilterConfig';
 
 // 国家噪音暴露标准 (8小时工作制)
 const DAILY_EXPOSURE_LIMIT = 85; // 85分贝，8小时
@@ -20,6 +23,8 @@ interface PeakAndAverage {
 export class ExposureStatisticsService {
   private static instance: ExposureStatisticsService | null = null;
   private relationalStoreService: RelationalStoreService = RelationalStoreService.getInstance();
+  private decibelRecordService: DecibelRecordService | null = null;
+  private context: common.Context | null = null;
 
   private constructor() {}
 
@@ -28,6 +33,16 @@ export class ExposureStatisticsService {
       ExposureStatisticsService.instance = new ExposureStatisticsService();
     }
     return ExposureStatisticsService.instance;
+  }
+
+  /**
+   * 设置上下文，用于初始化DecibelRecordService
+   */
+  public setContext(context: common.Context): void {
+    this.context = context;
+    if (context) {
+      this.decibelRecordService = new DecibelRecordService(context);
+    }
   }
 
   /**
@@ -65,23 +80,28 @@ export class ExposureStatisticsService {
   }
 
   /**
-   * 获取今日的噪音记录
+   * 获取今日的噪音记录 - 使用专门的DecibelRecordService
    */
   private async getTodayDecibelRecords(): Promise<DecibelRecord[]> {
+    if (!this.decibelRecordService) {
+      console.error('DecibelRecordService未初始化，请先调用setContext方法');
+      return [];
+    }
+
     const now = new Date();
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const todayEnd = new Date(todayStart.getTime() + 24 * 60 * 60 * 1000);
 
     try {
-      const sql = 'SELECT * FROM decibel_records WHERE timestamp >= ? AND timestamp < ? ORDER BY timestamp ASC';
-      const resultSet = await this.relationalStoreService.query(sql, [todayStart.getTime(), todayEnd.getTime()]);
+      // 创建时间范围过滤器
+      const filters = new FilterConfig(true);
+      filters.timeRange = new TimeRangeFilter(todayStart.getTime(), todayEnd.getTime());
 
-      const records: DecibelRecord[] = [];
-      while (resultSet.goToNextRow()) {
-        records.push(DecibelRecord.fromResultSet(resultSet));
-      }
-      resultSet.close();
-      return records;
+      // 直接使用过滤查询获取今日记录
+      const todayRecords = await this.decibelRecordService.getFilteredRecords(filters);
+      
+      console.info('获取到今日记录数量:', todayRecords.length);
+      return todayRecords;
     } catch (error) {
       console.error('获取今日记录失败:', error);
       return [];

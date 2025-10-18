@@ -8,6 +8,7 @@ import { ExposureData } from '../../models/ExposureData';
 import { ExposureStatisticsService } from '../../services/ExposureStatisticsService';
 import { DesignConstants } from '../../constants/DesignConstants';
 import { Throttle } from '../../utils/Debounce';
+import common from '@ohos.app.ability.common';
 
 interface Exposure {
   timeRange: string,
@@ -27,6 +28,11 @@ export struct ExposureContent {
 
   aboutToAppear(): void {
     this.isVisible = true;
+
+    // 设置ExposureStatisticsService的上下文
+    const context = this.getUIContext().getHostContext() as common.UIAbilityContext;
+    this.exposureService.setContext(context);
+
     this.loadExposureData();
     this.startAutoUpdate();
   }
@@ -50,7 +56,8 @@ export struct ExposureContent {
     this.errorMessage = '';
 
     try {
-      this.exposureData = await this.exposureService.calculateTodayExposure();
+      let exposureData = await this.exposureService.calculateTodayExposure();
+      exposureData.copyTo(this.exposureData);
     } catch (error) {
       console.error('加载暴露数据失败:', error);
       this.hasError = true;

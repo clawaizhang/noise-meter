@@ -46,6 +46,20 @@ export class WeightingFilter {
 }
 
 /**
+ * 时间范围过滤器配置
+ */
+@ObservedV2
+export class TimeRangeFilter {
+  @Trace startTime?: number = undefined;
+  @Trace endTime?: number = undefined;
+
+  constructor(startTime?: number, endTime?: number) {
+    this.startTime = startTime;
+    this.endTime = endTime;
+  }
+}
+
+/**
  * 文本搜索过滤器配置
  */
 @ObservedV2
@@ -68,6 +82,7 @@ export class FilterConfig {
   @Trace status?: StatusFilter = undefined;
   @Trace weighting?: WeightingFilter = undefined;
   @Trace textSearch?: TextSearchFilter = undefined;
+  @Trace timeRange?: TimeRangeFilter = undefined;
   @Trace isActive: boolean = false;
 
   constructor(isActive: boolean = false) {
@@ -150,6 +165,14 @@ export class FilterManager {
     if (this.currentFilters.textSearch) {
       if (this.currentFilters.textSearch.locationKeyword) count++;
       if (this.currentFilters.textSearch.commentKeyword) count++;
+    }
+
+    // 时间范围过滤器
+    if (this.currentFilters.timeRange) {
+      if (this.currentFilters.timeRange.startTime !== undefined ||
+          this.currentFilters.timeRange.endTime !== undefined) {
+        count++;
+      }
     }
 
     return count;

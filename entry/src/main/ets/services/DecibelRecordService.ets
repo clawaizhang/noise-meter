@@ -296,6 +296,18 @@ export class DecibelRecordService {
         params.push(`%${filters.textSearch.commentKeyword}%`);
       }
 
+      // 时间范围过滤
+      if (filters.timeRange) {
+        if (filters.timeRange.startTime !== undefined) {
+          sql += ' AND timestamp >= ?';
+          params.push(filters.timeRange.startTime.toString());
+        }
+        if (filters.timeRange.endTime !== undefined) {
+          sql += ' AND timestamp <= ?';
+          params.push(filters.timeRange.endTime.toString());
+        }
+      }
+
       sql += ' ORDER BY timestamp DESC';
 
       const resultSet = await this.relationalStoreService.query(sql, params);

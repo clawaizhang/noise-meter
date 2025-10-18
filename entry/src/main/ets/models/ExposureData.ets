@@ -24,6 +24,14 @@ export class ExposureData {
     this.lastUpdateTime = Date.now();
   }
 
+  copyTo(target:ExposureData){
+    target.exposurePercentage = this.exposurePercentage;
+    target.remainingSafeTime = this.remainingSafeTime;
+    target.todayPeak = this.todayPeak;
+    target.todayAverage = this.todayAverage;
+    target.lastUpdateTime = this.lastUpdateTime;
+  }
+
   /**
    * 重置数据
    */
