@@ -7,7 +7,7 @@ import { PreferenceKeys } from '../../models/PreferenceKeys';
 import { AlertsContent } from '../../components/alerts/AlertsContent';
 import { AlertsSettingsBuilder, AlertsSettingsProps } from '../settings/AlertsSettingsNavigation';
 import { MyContentComponent } from '../../components/my-content/MyContentComponent';
-import { ExposureContent } from '../../components/exposure/ExposureContent';
+import { EnhancedExposureContent } from '../../components/exposure/EnhancedExposureContent';
 
 // 导航菜单项接口定义
 interface NavigationMenuItem {
@@ -226,7 +226,7 @@ export struct MainNoiseMeter {
         .tabBar(this.TabBuilder('静喵Sound',this.currentIndex == 1 ? $r("app.media.solar_spedometer_middle_bold"):$r("app.media.ic_meter"), 1))
 
         TabContent() {
-          ExposureContent()
+          EnhancedExposureContent()
             .opacity(this.currentIndex === 2 ? 1 : 0)
             .scale({ x: this.currentIndex === 2 ? 1 : 0.95, y: this.currentIndex === 2 ? 1 : 0.95 })
             .animation({
