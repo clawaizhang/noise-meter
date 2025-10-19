@@ -4,9 +4,8 @@
  */
 
 export enum NoiseExposureStandard {
-  INDUSTRIAL = 'industrial',      // 工业企业标准 GBZ 2.2-2007
-  ENVIRONMENTAL = 'environmental', // 声环境标准 GB 3096-2008  
-  OCCUPATIONAL = 'occupational',   // 职业健康标准 GBZ 49-2014
+  WORKPLACE = 'workplace',        // 工作场所标准 GBZ 2.2-2007
+  ENVIRONMENTAL = 'environmental', // 声环境标准 GB 3096-2008
   SOCIAL = 'social'               // 社会生活标准 GB 22337-2008
 }
 
@@ -39,8 +38,8 @@ export interface DecibelRangeConfig {
 
 // 标准配置信息
 export const StandardConfigs: Record<NoiseExposureStandard, StandardConfig> = {
-  [NoiseExposureStandard.INDUSTRIAL]: {
-    name: '工业企业标准',
+  [NoiseExposureStandard.WORKPLACE]: {
+    name: '工作场所标准',
     code: 'GBZ 2.2-2007',
     baseLimit: 85, // 85分贝
     baseDuration: 8 * 60 * 60 * 1000, // 8小时
@@ -49,21 +48,14 @@ export const StandardConfigs: Record<NoiseExposureStandard, StandardConfig> = {
   [NoiseExposureStandard.ENVIRONMENTAL]: {
     name: '声环境标准',
     code: 'GB 3096-2008',
-    baseLimit: 55, // 修正：2类功能区昼间标准
+    baseLimit: 55, // 2类功能区昼间标准
     baseDuration: 24 * 60 * 60 * 1000, // 24小时
     description: '环境噪声管理标准'
-  },
-  [NoiseExposureStandard.OCCUPATIONAL]: {
-    name: '职业健康标准',
-    code: 'GBZ 49-2014',
-    baseLimit: 85, // 修正：符合国家标准要求
-    baseDuration: 8 * 60 * 60 * 1000, // 8小时
-    description: '职业健康保护标准'
   },
   [NoiseExposureStandard.SOCIAL]: {
     name: '社会生活标准',
     code: 'GB 22337-2008',
-    baseLimit: 50, // 修正：生活区域合理标准
+    baseLimit: 50, // 生活区域合理标准
     baseDuration: 24 * 60 * 60 * 1000, // 24小时
     description: '社会生活噪声标准'
   }

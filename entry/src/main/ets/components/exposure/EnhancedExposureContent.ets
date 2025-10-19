@@ -8,7 +8,12 @@
 import { ExposureData } from '../../models/ExposureData';
 import { ExposureStatisticsService } from '../../services/ExposureStatisticsService';
 import { DesignConstants } from '../../constants/DesignConstants';
-import { NoiseExposureStandard, DecibelRange, DecibelRangeConfigs, StandardConfigs } from '../../constants/ExposureStandardConstants';
+import {
+  NoiseExposureStandard,
+  DecibelRange,
+  DecibelRangeConfigs,
+  StandardConfigs
+} from '../../constants/ExposureStandardConstants';
 import common from '@ohos.app.ability.common';
 import { PremiumFeature } from '../membership/PremiumFeature';
 import promptAction from '@ohos.promptAction';
@@ -40,7 +45,7 @@ interface DecibelAnalysisConfig {
 
 @ComponentV2
 export struct EnhancedExposureContent {
-  @Local selectedStandard: NoiseExposureStandard = NoiseExposureStandard.INDUSTRIAL;
+  @Local selectedStandard: NoiseExposureStandard = NoiseExposureStandard.WORKPLACE;
   @Local exposureData: ExposureData = new ExposureData();
   @Local decibelRangeStats: DecibelRangeStats[] = [];
   @Local isLoading: boolean = true;
@@ -81,7 +86,6 @@ export struct EnhancedExposureContent {
     this.errorMessage = '';
 
     try {
-      // 并行加载所有数据
       const exposureDataPromise = this.exposureService.calculateTodayExposure(this.selectedStandard);
       const decibelRangeStatsPromise = this.exposureService.calculateDecibelRangeStats();
 
@@ -139,13 +143,13 @@ export struct EnhancedExposureContent {
 
     try {
       await this.loadAllData();
-      
+
       // 刷新完成提示
       promptAction.showToast({
         message: '数据已刷新',
         duration: 1500
       });
-      
+
 
     } catch (error) {
       console.error('刷新数据失败:', error);
@@ -155,7 +159,7 @@ export struct EnhancedExposureContent {
         message: '刷新失败，请重试',
         duration: 2000
       });
-      
+
     } finally {
       this.isRefreshing = false;
     }
@@ -167,13 +171,13 @@ export struct EnhancedExposureContent {
    */
   private getExposureColor(percentage: number): Resource {
     if (percentage < 30) {
-      return $r('app.color.health_good');      // 绿色 - 安全
+      return $r('app.color.health_good'); // 绿色 - 安全
     } else if (percentage < 60) {
-      return $r('app.color.health_warning');   // 黄色 - 警告
+      return $r('app.color.health_warning'); // 黄色 - 警告
     } else if (percentage < 100) {
-      return $r('app.color.health_bad');       // 红色 - 危险
+      return $r('app.color.health_bad'); // 红色 - 危险
     } else {
-      return $r('sys.color.alert');            // 深红色 - 严重超标
+      return $r('sys.color.alert'); // 深红色 - 严重超标
     }
   }
 
@@ -221,15 +225,6 @@ export struct EnhancedExposureContent {
               .fontWeight(FontWeight.Medium)
               .fontColor($r('sys.color.font_primary'))
 
-            // 推荐标识
-            if (this.selectedStandard === NoiseExposureStandard.INDUSTRIAL) {
-              Text('推荐')
-                .fontSize(DesignConstants.FONT_SIZE_XS)
-                .fontColor($r('sys.color.font_primary'))
-                .backgroundColor($r('sys.color.background_primary'))
-                .padding({ left: 6, right: 6, top: 2, bottom: 2 })
-                .borderRadius(12)
-            }
           }
 
           Text(StandardConfigs[this.selectedStandard].description)
@@ -237,7 +232,8 @@ export struct EnhancedExposureContent {
             .fontColor($r('sys.color.font_secondary'))
 
           // 标准参数说明
-          Text(`基准值: ${StandardConfigs[this.selectedStandard].baseLimit}dB | 时长: ${StandardConfigs[this.selectedStandard].baseDuration >= 24 * 60 * 60 * 1000 ? '24小时' : '8小时'}`)
+          Text(`基准值: ${StandardConfigs[this.selectedStandard].baseLimit}dB | 时长: ${StandardConfigs[this.selectedStandard].baseDuration >=
+            24 * 60 * 60 * 1000 ? '24小时' : '8小时'}`)
             .fontSize(DesignConstants.FONT_SIZE_SM)
             .fontColor($r('sys.color.font_tertiary'))
         }
@@ -269,15 +265,6 @@ export struct EnhancedExposureContent {
                       .fontColor($r('sys.color.font_primary'))
                       .fontWeight(FontWeight.Medium)
 
-                    // 推荐标识
-                    if (standard === NoiseExposureStandard.INDUSTRIAL) {
-                      Text('推荐')
-                        .fontSize(DesignConstants.FONT_SIZE_XS)
-                        .fontColor($r('sys.color.font_primary'))
-                        .backgroundColor($r('sys.color.background_primary'))
-                        .padding({ left: 4, right: 4, top: 1, bottom: 1 })
-                        .borderRadius(8)
-                    }
                   }
 
                   Text(StandardConfigs[standard].code)
@@ -285,7 +272,8 @@ export struct EnhancedExposureContent {
                     .fontColor($r('sys.color.font_secondary'))
 
                   // 标准参数
-                  Text(`基准: ${StandardConfigs[standard].baseLimit}dB | 时长: ${StandardConfigs[standard].baseDuration >= 24 * 60 * 60 * 1000 ? '24小时' : '8小时'}`)
+                  Text(`基准: ${StandardConfigs[standard].baseLimit}dB | 时长: ${StandardConfigs[standard].baseDuration >=
+                    24 * 60 * 60 * 1000 ? '24小时' : '8小时'}`)
                     .fontSize(DesignConstants.FONT_SIZE_XS)
                     .fontColor($r('sys.color.font_tertiary'))
                 }
@@ -300,16 +288,12 @@ export struct EnhancedExposureContent {
               }
 
               // 使用场景说明 - 为每个标准显示适用场景
-              if (standard === NoiseExposureStandard.INDUSTRIAL) {
+              if (standard === NoiseExposureStandard.WORKPLACE) {
                 Text('• 适用场景：办公室、工厂等工作环境')
                   .fontSize(DesignConstants.FONT_SIZE_SM)
                   .fontColor($r('sys.color.font_tertiary'))
               } else if (standard === NoiseExposureStandard.ENVIRONMENTAL) {
                 Text('• 适用场景：家庭、社区等生活环境')
-                  .fontSize(DesignConstants.FONT_SIZE_SM)
-                  .fontColor($r('sys.color.font_tertiary'))
-              } else if (standard === NoiseExposureStandard.OCCUPATIONAL) {
-                Text('• 适用场景：关注长期听力健康保护')
                   .fontSize(DesignConstants.FONT_SIZE_SM)
                   .fontColor($r('sys.color.font_tertiary'))
               } else if (standard === NoiseExposureStandard.SOCIAL) {
@@ -414,17 +398,19 @@ export struct EnhancedExposureContent {
       })
 
       // 剩余安全时间
-      Column({ space: DesignConstants.SPACING_XS }) {
-        Text(this.exposureData.remainingSafeTime)
-          .fontSize(DesignConstants.FONT_SIZE_2XL)
-          .fontWeight(FontWeight.Bold)
-          .fontColor(this.getExposureColor(this.exposureData.exposurePercentage))
-          .textAlign(TextAlign.Center)
+      if (this.exposureData.remainingSafeTime) {
+        Column({ space: DesignConstants.SPACING_XS }) {
+          Text(this.exposureData.remainingSafeTime)
+            .fontSize(DesignConstants.FONT_SIZE_2XL)
+            .fontWeight(FontWeight.Bold)
+            .fontColor(this.getExposureColor(this.exposureData.exposurePercentage))
+            .textAlign(TextAlign.Center)
 
-        Text('还能安全待多久')
-          .fontSize(DesignConstants.FONT_SIZE_SM)
-          .fontColor($r('sys.color.font_secondary'))
-          .textAlign(TextAlign.Center)
+          Text('还能安全待多久')
+            .fontSize(DesignConstants.FONT_SIZE_SM)
+            .fontColor($r('sys.color.font_secondary'))
+            .textAlign(TextAlign.Center)
+        }
       }
 
       // 健康状态描述
@@ -589,7 +575,7 @@ export struct EnhancedExposureContent {
             Text(DecibelRangeConfigs[stat.range].description)
               .fontSize(DesignConstants.FONT_SIZE_XS)
               .fontColor($r('sys.color.font_secondary'))
-            
+
             // 添加环境比喻
             if (stat.range === DecibelRange.VERY_QUIET) {
               Text('(图书馆环境)')

@@ -76,7 +76,7 @@ export class ExposureStatisticsService {
    * 计算今日噪音暴露数据
    * 纯粹的暴露统计，不包含其他无关数据
    */
-  public async calculateTodayExposure(standard: NoiseExposureStandard = NoiseExposureStandard.INDUSTRIAL): Promise<ExposureData> {
+  public async calculateTodayExposure(standard: NoiseExposureStandard): Promise<ExposureData> {
     try {
       // 获取今日的噪音记录
       const todayRecords = await this.getTodayDecibelRecords();
@@ -220,25 +220,23 @@ export class ExposureStatisticsService {
 
     // 根据不同的标准使用不同的专业计算算法
     switch (standard) {
-      case NoiseExposureStandard.INDUSTRIAL:
-        return this.calculateIndustrialExposure(records);
+      case NoiseExposureStandard.WORKPLACE:
+        return this.calculateWorkplaceExposure(records);
       case NoiseExposureStandard.ENVIRONMENTAL:
         return this.calculateEnvironmentalExposure(records);
-      case NoiseExposureStandard.OCCUPATIONAL:
-        return this.calculateOccupationalExposure(records);
       case NoiseExposureStandard.SOCIAL:
         return this.calculateSocialExposure(records);
       default:
-        return this.calculateIndustrialExposure(records); // 默认使用工业企业标准
+        return this.calculateWorkplaceExposure(records); // 默认使用工作场所标准
     }
   }
 
   /**
-   * 工业企业标准计算 - 3分贝减半规则
+   * 工作场所标准计算 - 3分贝减半规则
    * 专业声学原理：能量加倍原则，每增加3分贝，声能量加倍，允许暴露时间减半
    * 基于每一刻分贝值的精确计算
    */
-  private calculateIndustrialExposure(records: DecibelRecord[]): number {
+  private calculateWorkplaceExposure(records: DecibelRecord[]): number {
     let totalExposureDose = 0;
 
     for (const record of records) {
@@ -287,18 +285,20 @@ export class ExposureStatisticsService {
       // 判断白天(6:00-22:00)和夜间(22:00-6:00)
       const isDaytime = hour >= 6 && hour < 22;
       
-      const timeInterval = record.duration / record.decibelValues.length;
+      // 修正：时间单位统一为秒（声学计算标准单位）
+      const timeIntervalSeconds = (record.duration / record.decibelValues.length) / 1000;
       
       // 遍历每一个分贝值进行精确计算
       for (const decibel of record.decibelValues) {
-        const energy = Math.pow(10, decibel / 10) * timeInterval;
+        // 修正：声能量计算，时间单位使用秒
+        const energy = Math.pow(10, decibel / 10) * timeIntervalSeconds;
         
         if (isDaytime) {
           dayEnergy += energy;
-          dayDuration += timeInterval;
+          dayDuration += timeIntervalSeconds;
         } else {
           nightEnergy += energy;
-          nightDuration += timeInterval;
+          nightDuration += timeIntervalSeconds;
         }
       }
     }
@@ -324,51 +324,15 @@ export class ExposureStatisticsService {
     const config = StandardConfigs[NoiseExposureStandard.ENVIRONMENTAL];
     const standardLimit = config.baseLimit; // 55dB - 2类功能区昼间标准
     
-    // 暴露程度 = (实际声级 - 标准限值) / 标准限值 × 100%
-    // 确保结果不小于0
-    const exposurePercentage = Math.max(0, (Ldn - standardLimit) / standardLimit * 100);
+    // 修正：使用超标倍数计算暴露程度
+    // 超标倍数 = (实际声级 - 标准限值) / 10，更符合声学评估习惯
+    // 转换为百分比显示：超标倍数 × 100%
+    const exceedanceRatio = Math.max(0, (Ldn - standardLimit) / 10);
+    const exposurePercentage = Math.min(100, exceedanceRatio * 100);
     
     return Number(exposurePercentage.toFixed(2));
   }
 
-  /**
-   * 职业健康标准计算 - 累积暴露风险评估
-   * 专业声学原理：基于分贝-时间加权计算的累积暴露量
-   * 基于每一刻分贝值的精确计算
-   */
-  private calculateOccupationalExposure(records: DecibelRecord[]): number {
-    let cumulativeExposure = 0;
-    let totalDuration = 0;
-
-    for (const record of records) {
-      if (!record.decibelValues || record.decibelValues.length === 0) {
-        continue;
-      }
-
-      const timeInterval = record.duration / record.decibelValues.length;
-      
-      // 遍历每一个分贝值进行精确计算
-      for (const decibel of record.decibelValues) {
-        // 累积暴露量 = Σ(10^(分贝/10) × 时间间隔)
-        cumulativeExposure += Math.pow(10, decibel / 10) * timeInterval;
-        totalDuration += timeInterval;
-      }
-    }
-
-    if (totalDuration === 0) {
-      return 0;
-    }
-
-    // 基准暴露量 = 10^(基准限值/10) × 基准时间(秒)
-    const config = StandardConfigs[NoiseExposureStandard.OCCUPATIONAL];
-    const baseDurationSeconds = config.baseDuration / 1000; // 毫秒转秒
-    const baseExposure = Math.pow(10, config.baseLimit / 10) * baseDurationSeconds;
-
-    // 暴露剂量 = 100% × (累积暴露量 / 基准暴露量)
-    const exposurePercentage = (cumulativeExposure / baseExposure) * 100;
-    
-    return Number(exposurePercentage.toFixed(2));
-  }
 
   /**
    * 社会生活标准计算 - 基于等效声级的暴露评估
@@ -424,38 +388,21 @@ export class ExposureStatisticsService {
 
     // 只有基于能量累积的标准才计算剩余时间
     switch (standard) {
-      case NoiseExposureStandard.INDUSTRIAL:
-        return this.calculateIndustrialRemainingTime(exposurePercentage, StandardConfigs[standard]);
-      case NoiseExposureStandard.OCCUPATIONAL:
-        return this.calculateOccupationalRemainingTime(exposurePercentage, StandardConfigs[standard]);
+      case NoiseExposureStandard.WORKPLACE:
+        return this.calculateWorkplaceRemainingTime(exposurePercentage, StandardConfigs[standard]);
       case NoiseExposureStandard.ENVIRONMENTAL:
       case NoiseExposureStandard.SOCIAL:
         // 环境质量标准不计算剩余安全时间
-        return '不适用';
+        return '';
       default:
-        return '不适用';
+        return '';
     }
   }
 
   /**
-   * 工业企业标准剩余安全时间计算
+   * 工作场所标准剩余安全时间计算
    */
-  private calculateIndustrialRemainingTime(exposurePercentage: number, config: StandardConfig): string {
-    const remainingPercentage = 100 - exposurePercentage;
-    const remainingEnergyRatio = remainingPercentage / 100;
-
-    // 基于基准时间的剩余安全时间（分钟）
-    const baseDurationMinutes = config.baseDuration / (60 * 1000); // 毫秒转分钟
-    const remainingTime = baseDurationMinutes * remainingEnergyRatio;
-
-    return this.formatRemainingTime(remainingTime);
-  }
-
-
-  /**
-   * 职业健康标准剩余安全时间计算
-   */
-  private calculateOccupationalRemainingTime(exposurePercentage: number, config: StandardConfig): string {
+  private calculateWorkplaceRemainingTime(exposurePercentage: number, config: StandardConfig): string {
     const remainingPercentage = 100 - exposurePercentage;
     const remainingEnergyRatio = remainingPercentage / 100;
 
