@@ -200,12 +200,12 @@ export struct EnhancedExposureContent {
     Column({ space: DesignConstants.SPACING_SM }) {
       // 标准选择标题和说明
       Column({ space: DesignConstants.SPACING_XS }) {
-        Text('选择计算标准')
+        Text('选择计算方式')
           .fontSize(DesignConstants.FONT_SIZE_LG)
           .fontWeight(FontWeight.Medium)
           .fontColor($r('sys.color.font_primary'))
 
-        Text('不同标准适用于不同场景，计算结果会有差异')
+        Text('不同场景使用不同的计算标准')
           .fontSize(DesignConstants.FONT_SIZE_SM)
           .fontColor($r('sys.color.font_secondary'))
       }
@@ -299,21 +299,21 @@ export struct EnhancedExposureContent {
                 }
               }
 
-              // 计算说明 - 为每个标准显示专业计算特点
+              // 使用场景说明 - 为每个标准显示适用场景
               if (standard === NoiseExposureStandard.INDUSTRIAL) {
-                Text('• 专业计算：每增加3分贝，允许暴露时间减半')
+                Text('• 适用场景：办公室、工厂等工作环境')
                   .fontSize(DesignConstants.FONT_SIZE_XS)
                   .fontColor($r('sys.color.font_tertiary'))
               } else if (standard === NoiseExposureStandard.ENVIRONMENTAL) {
-                Text('• 专业计算：24小时等效声级，考虑昼夜噪声差异')
+                Text('• 适用场景：家庭、社区等生活环境')
                   .fontSize(DesignConstants.FONT_SIZE_XS)
                   .fontColor($r('sys.color.font_tertiary'))
               } else if (standard === NoiseExposureStandard.OCCUPATIONAL) {
-                Text('• 专业计算：听力保护评估，考虑累积暴露风险')
+                Text('• 适用场景：关注长期听力健康保护')
                   .fontSize(DesignConstants.FONT_SIZE_XS)
                   .fontColor($r('sys.color.font_tertiary'))
               } else if (standard === NoiseExposureStandard.SOCIAL) {
-                Text('• 专业计算：生活舒适度评估，基于生活质量标准')
+                Text('• 适用场景：日常生活舒适度评估')
                   .fontSize(DesignConstants.FONT_SIZE_XS)
                   .fontColor($r('sys.color.font_tertiary'))
               }
@@ -388,7 +388,7 @@ export struct EnhancedExposureContent {
             .fontColor($r('sys.color.font_primary'))
         }
 
-        Text('暴露剂量')
+        Text('噪音影响程度')
           .fontSize(DesignConstants.FONT_SIZE_SM)
           .fontColor($r('sys.color.font_secondary'))
       }
@@ -421,10 +421,35 @@ export struct EnhancedExposureContent {
           .fontColor(this.getExposureColor(this.exposureData.exposurePercentage))
           .textAlign(TextAlign.Center)
 
-        Text('剩余安全时间')
+        Text('还能安全待多久')
           .fontSize(DesignConstants.FONT_SIZE_SM)
           .fontColor($r('sys.color.font_secondary'))
           .textAlign(TextAlign.Center)
+      }
+
+      // 健康状态描述
+      Column({ space: DesignConstants.SPACING_XS }) {
+        if (this.exposureData.exposurePercentage < 30) {
+          Text('噪音影响程度很低，继续保持！')
+            .fontSize(DesignConstants.FONT_SIZE_SM)
+            .fontColor($r('app.color.health_good'))
+            .textAlign(TextAlign.Center)
+        } else if (this.exposureData.exposurePercentage < 60) {
+          Text('噪音影响程度中等，建议关注环境噪音')
+            .fontSize(DesignConstants.FONT_SIZE_SM)
+            .fontColor($r('app.color.health_warning'))
+            .textAlign(TextAlign.Center)
+        } else if (this.exposureData.exposurePercentage < 100) {
+          Text('噪音影响程度较高，建议减少在嘈杂环境的时间')
+            .fontSize(DesignConstants.FONT_SIZE_SM)
+            .fontColor($r('app.color.health_bad'))
+            .textAlign(TextAlign.Center)
+        } else {
+          Text('噪音影响严重超标，请立即采取保护措施')
+            .fontSize(DesignConstants.FONT_SIZE_SM)
+            .fontColor($r('sys.color.alert'))
+            .textAlign(TextAlign.Center)
+        }
       }
 
       // 并排显示今日峰值和平均值
@@ -437,7 +462,7 @@ export struct EnhancedExposureContent {
             .fontColor($r('sys.color.font_primary'))
             .textAlign(TextAlign.Center)
 
-          Text('今日峰值')
+          Text('今日最高噪音')
             .fontSize(DesignConstants.FONT_SIZE_SM)
             .fontColor($r('sys.color.font_secondary'))
             .textAlign(TextAlign.Center)
@@ -455,7 +480,7 @@ export struct EnhancedExposureContent {
             .fontColor($r('sys.color.font_primary'))
             .textAlign(TextAlign.Center)
 
-          Text('今日平均值')
+          Text('今日平均噪音')
             .fontSize(DesignConstants.FONT_SIZE_SM)
             .fontColor($r('sys.color.font_secondary'))
             .textAlign(TextAlign.Center)
@@ -505,7 +530,7 @@ export struct EnhancedExposureContent {
   @Builder
   private buildDecibelAnalysisPanel(config: DecibelAnalysisConfig) {
     Column({ space: DesignConstants.SPACING_MD }) {
-      Text('分贝区间分析')
+      Text('噪音水平分布')
         .fontSize(DesignConstants.FONT_SIZE_LG)
         .fontWeight(FontWeight.Medium)
         .fontColor($r('sys.color.font_primary'))
@@ -559,11 +584,40 @@ export struct EnhancedExposureContent {
           .width('100%')
           .alignItems(VerticalAlign.Center)
 
-          // 环境描述
-          Text(DecibelRangeConfigs[stat.range].description)
-            .fontSize(DesignConstants.FONT_SIZE_XS)
-            .fontColor($r('sys.color.font_secondary'))
-            .alignSelf(ItemAlign.Start)
+          // 环境描述 - 添加情境化描述
+          Row({ space: DesignConstants.SPACING_XS }) {
+            Text(DecibelRangeConfigs[stat.range].description)
+              .fontSize(DesignConstants.FONT_SIZE_XS)
+              .fontColor($r('sys.color.font_secondary'))
+            
+            // 添加环境比喻
+            if (stat.range === DecibelRange.VERY_QUIET) {
+              Text('(图书馆环境)')
+                .fontSize(DesignConstants.FONT_SIZE_XS)
+                .fontColor($r('sys.color.font_tertiary'))
+            } else if (stat.range === DecibelRange.QUIET) {
+              Text('(办公室环境)')
+                .fontSize(DesignConstants.FONT_SIZE_XS)
+                .fontColor($r('sys.color.font_tertiary'))
+            } else if (stat.range === DecibelRange.MODERATE) {
+              Text('(正常交谈)')
+                .fontSize(DesignConstants.FONT_SIZE_XS)
+                .fontColor($r('sys.color.font_tertiary'))
+            } else if (stat.range === DecibelRange.NOISY) {
+              Text('(交通噪音)')
+                .fontSize(DesignConstants.FONT_SIZE_XS)
+                .fontColor($r('sys.color.font_tertiary'))
+            } else if (stat.range === DecibelRange.HIGH) {
+              Text('(施工工地)')
+                .fontSize(DesignConstants.FONT_SIZE_XS)
+                .fontColor($r('sys.color.font_tertiary'))
+            } else if (stat.range === DecibelRange.VERY_HIGH) {
+              Text('(音乐会现场)')
+                .fontSize(DesignConstants.FONT_SIZE_XS)
+                .fontColor($r('sys.color.font_tertiary'))
+            }
+          }
+          .alignSelf(ItemAlign.Start)
         }
         .width('100%')
         .padding(DesignConstants.SPACING_MD)
