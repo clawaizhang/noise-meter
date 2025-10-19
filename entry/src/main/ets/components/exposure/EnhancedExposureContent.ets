@@ -371,65 +371,76 @@ export struct EnhancedExposureContent {
   }
 
   /**
-   * 构建核心指标区 - 优化版
-   * 在圆环下方添加并排的峰值和平均值显示
+   * 构建核心指标区 - 统一卡片版
+   * 将噪音影响程度、今日最高噪音和今日平均噪音合并为一张卡片
    */
   @Builder
   private buildCoreMetrics() {
-    Column({ space: DesignConstants.SPACING_MD }) {
-      // 暴露剂量环
-      this.buildEnhancedProgressRing({
-        percentage: this.exposureData.exposurePercentage,
-        color: this.getExposureColor(this.exposureData.exposurePercentage)
-      })
+    Column({ space: DesignConstants.SPACING_LG }) {
+      // 顶部：噪音影响程度环形进度条
+      Column({ space: DesignConstants.SPACING_SM }) {
+        this.buildEnhancedProgressRing({
+          percentage: this.exposureData.exposurePercentage,
+          color: this.getExposureColor(this.exposureData.exposurePercentage)
+        })
+      }
+      .width('100%')
+      .justifyContent(FlexAlign.Center)
+      .alignItems(HorizontalAlign.Center)
 
-      // 剩余安全时间
-      if (this.exposureData.remainingSafeTime) {
+      // 底部：剩余安全时间和健康状态描述
+      Column({ space: DesignConstants.SPACING_MD }) {
+        // 剩余安全时间
+        if (this.exposureData.remainingSafeTime) {
+          Column({ space: DesignConstants.SPACING_XS }) {
+            Text(this.exposureData.remainingSafeTime)
+              .fontSize(DesignConstants.FONT_SIZE_LG)
+              .fontWeight(FontWeight.Bold)
+              .fontColor(this.getExposureColor(this.exposureData.exposurePercentage))
+              .textAlign(TextAlign.Center)
+
+            Text('还能安全待多久')
+              .fontSize(DesignConstants.FONT_SIZE_SM)
+              .fontColor($r('sys.color.font_secondary'))
+              .textAlign(TextAlign.Center)
+          }
+        }
+
+        // 健康状态描述
         Column({ space: DesignConstants.SPACING_XS }) {
-          Text(this.exposureData.remainingSafeTime)
-            .fontSize(DesignConstants.FONT_SIZE_2XL)
-            .fontWeight(FontWeight.Bold)
-            .fontColor(this.getExposureColor(this.exposureData.exposurePercentage))
-            .textAlign(TextAlign.Center)
-
-          Text('还能安全待多久')
-            .fontSize(DesignConstants.FONT_SIZE_SM)
-            .fontColor($r('sys.color.font_secondary'))
-            .textAlign(TextAlign.Center)
+          if (this.exposureData.exposurePercentage < 30) {
+            Text('噪音影响程度很低，继续保持！')
+              .fontSize(DesignConstants.FONT_SIZE_MD)
+              .fontColor($r('app.color.health_good'))
+              .textAlign(TextAlign.Center)
+          } else if (this.exposureData.exposurePercentage < 60) {
+            Text('噪音影响程度中等，建议关注环境噪音')
+              .fontSize(DesignConstants.FONT_SIZE_MD)
+              .fontColor($r('app.color.health_warning'))
+              .textAlign(TextAlign.Center)
+          } else if (this.exposureData.exposurePercentage < 100) {
+            Text('噪音影响程度较高，建议减少在嘈杂环境的时间')
+              .fontSize(DesignConstants.FONT_SIZE_MD)
+              .fontColor($r('app.color.health_bad'))
+              .textAlign(TextAlign.Center)
+          } else {
+            Text('噪音影响严重超标，请立即采取保护措施')
+              .fontSize(DesignConstants.FONT_SIZE_MD)
+              .fontColor($r('sys.color.alert'))
+              .textAlign(TextAlign.Center)
+          }
         }
       }
+      .width('100%')
+      .justifyContent(FlexAlign.Center)
+      .alignItems(HorizontalAlign.Center)
 
-      // 健康状态描述
-      Column({ space: DesignConstants.SPACING_XS }) {
-        if (this.exposureData.exposurePercentage < 30) {
-          Text('噪音影响程度很低，继续保持！')
-            .fontSize(DesignConstants.FONT_SIZE_MD)
-            .fontColor($r('app.color.health_good'))
-            .textAlign(TextAlign.Center)
-        } else if (this.exposureData.exposurePercentage < 60) {
-          Text('噪音影响程度中等，建议关注环境噪音')
-            .fontSize(DesignConstants.FONT_SIZE_MD)
-            .fontColor($r('app.color.health_warning'))
-            .textAlign(TextAlign.Center)
-        } else if (this.exposureData.exposurePercentage < 100) {
-          Text('噪音影响程度较高，建议减少在嘈杂环境的时间')
-            .fontSize(DesignConstants.FONT_SIZE_MD)
-            .fontColor($r('app.color.health_bad'))
-            .textAlign(TextAlign.Center)
-        } else {
-          Text('噪音影响严重超标，请立即采取保护措施')
-            .fontSize(DesignConstants.FONT_SIZE_MD)
-            .fontColor($r('sys.color.alert'))
-            .textAlign(TextAlign.Center)
-        }
-      }
-
-      // 并排显示今日峰值和平均值
+      // 中部：今日最高噪音和今日平均噪音并排显示
       Row({ space: DesignConstants.SPACING_MD }) {
         // 今日峰值
         Column({ space: DesignConstants.SPACING_XS }) {
           Text(`${this.exposureData.todayPeak.toFixed(1)} dB`)
-            .fontSize(DesignConstants.FONT_SIZE_LG)
+            .fontSize(DesignConstants.FONT_SIZE_XL)
             .fontWeight(FontWeight.Bold)
             .fontColor($r('sys.color.font_primary'))
             .textAlign(TextAlign.Center)
@@ -441,13 +452,12 @@ export struct EnhancedExposureContent {
         }
         .layoutWeight(1)
         .padding(DesignConstants.SPACING_MD)
-        .backgroundColor($r('sys.color.comp_background_primary'))
         .borderRadius(DesignConstants.BORDER_RADIUS_MD)
 
         // 今日平均值
         Column({ space: DesignConstants.SPACING_XS }) {
           Text(`${this.exposureData.todayAverage.toFixed(1)} dB`)
-            .fontSize(DesignConstants.FONT_SIZE_LG)
+            .fontSize(DesignConstants.FONT_SIZE_XL)
             .fontWeight(FontWeight.Bold)
             .fontColor($r('sys.color.font_primary'))
             .textAlign(TextAlign.Center)
@@ -459,41 +469,19 @@ export struct EnhancedExposureContent {
         }
         .layoutWeight(1)
         .padding(DesignConstants.SPACING_MD)
-        .backgroundColor($r('sys.color.comp_background_primary'))
         .borderRadius(DesignConstants.BORDER_RADIUS_MD)
       }
       .width('100%')
 
+
+
     }
     .width('100%')
-    .justifyContent(FlexAlign.Center)
-    .alignItems(HorizontalAlign.Center)
+    .padding(DesignConstants.SPACING_LG)
+    .backgroundColor($r('sys.color.comp_background_primary'))
+    .borderRadius(DesignConstants.BORDER_RADIUS_LG)
   }
 
-  /**
-   * 构建关键数据网格 - 优化版
-   * 移除重复的暴露剂量卡片，只保留今日峰值和今日平均值
-   */
-  @Builder
-  private buildKeyDataGrid() {
-    GridRow({ columns: { sm: 1, md: 2, lg: 2 }, gutter: DesignConstants.SPACING_MD }) {
-      GridCol({ span: { sm: 1, md: 1, lg: 1 } }) {
-        this.buildDataCard({
-          title: '今日峰值',
-          value: `${this.exposureData.todayPeak.toFixed(1)} dB`,
-          subtitle: '最高噪音水平'
-        })
-      }
-
-      GridCol({ span: { sm: 1, md: 1, lg: 1 } }) {
-        this.buildDataCard({
-          title: '今日平均值',
-          value: `${this.exposureData.todayAverage.toFixed(1)} dB`,
-          subtitle: '平均噪音水平'
-        })
-      }
-    }
-  }
 
   /**
    * 构建分贝区间分析面板 - 优化版
@@ -506,6 +494,7 @@ export struct EnhancedExposureContent {
         .fontSize(DesignConstants.FONT_SIZE_LG)
         .fontWeight(FontWeight.Medium)
         .fontColor($r('sys.color.font_primary'))
+        .alignSelf(ItemAlign.Start)
 
       ForEach(config.stats, (stat: DecibelRangeStats) => {
         Column({ space: DesignConstants.SPACING_XS }) {
@@ -637,7 +626,7 @@ export struct EnhancedExposureContent {
     Scroll() {
       Column({ space: DesignConstants.SPACING_LG }) {
         // 1. 标准选择区
-        PremiumFeature({ featureName: '噪音暴露统计', featureDesc: '专业噪音暴露统计计算' }) {
+        PremiumFeature({ featureName: '噪音影响程度', featureDesc: '专业噪音影响程度计算' }) {
           this.buildStandardSelector()
         }
 
