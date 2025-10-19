@@ -342,7 +342,8 @@ export struct EnhancedExposureContent {
   }
 
   /**
-   * 构建核心指标区
+   * 构建核心指标区 - 优化版
+   * 在圆环下方添加并排的峰值和平均值显示
    */
   @Builder
   private buildCoreMetrics() {
@@ -366,6 +367,46 @@ export struct EnhancedExposureContent {
           .fontColor($r('sys.color.font_secondary'))
           .textAlign(TextAlign.Center)
       }
+
+      // 并排显示今日峰值和平均值
+      Row({ space: DesignConstants.SPACING_MD }) {
+        // 今日峰值
+        Column({ space: DesignConstants.SPACING_XS }) {
+          Text(`${this.exposureData.todayPeak.toFixed(1)} dB`)
+            .fontSize(DesignConstants.FONT_SIZE_LG)
+            .fontWeight(FontWeight.Bold)
+            .fontColor($r('sys.color.font_primary'))
+            .textAlign(TextAlign.Center)
+
+          Text('今日峰值')
+            .fontSize(DesignConstants.FONT_SIZE_SM)
+            .fontColor($r('sys.color.font_secondary'))
+            .textAlign(TextAlign.Center)
+        }
+        .layoutWeight(1)
+        .padding(DesignConstants.SPACING_MD)
+        .backgroundColor($r('sys.color.comp_background_primary'))
+        .borderRadius(DesignConstants.BORDER_RADIUS_MD)
+
+        // 今日平均值
+        Column({ space: DesignConstants.SPACING_XS }) {
+          Text(`${this.exposureData.todayAverage.toFixed(1)} dB`)
+            .fontSize(DesignConstants.FONT_SIZE_LG)
+            .fontWeight(FontWeight.Bold)
+            .fontColor($r('sys.color.font_primary'))
+            .textAlign(TextAlign.Center)
+
+          Text('今日平均值')
+            .fontSize(DesignConstants.FONT_SIZE_SM)
+            .fontColor($r('sys.color.font_secondary'))
+            .textAlign(TextAlign.Center)
+        }
+        .layoutWeight(1)
+        .padding(DesignConstants.SPACING_MD)
+        .backgroundColor($r('sys.color.comp_background_primary'))
+        .borderRadius(DesignConstants.BORDER_RADIUS_MD)
+      }
+      .width('100%')
 
       // 标准说明 - 显示详细的计算基准和特点
       Column({ space: DesignConstants.SPACING_XS }) {
@@ -410,19 +451,12 @@ export struct EnhancedExposureContent {
   }
 
   /**
-   * 构建关键数据网格
+   * 构建关键数据网格 - 优化版
+   * 移除重复的暴露剂量卡片，只保留今日峰值和今日平均值
    */
   @Builder
   private buildKeyDataGrid() {
-    GridRow({ columns: { sm: 1, md: 2, lg: 3 }, gutter: DesignConstants.SPACING_MD }) {
-      GridCol({ span: { sm: 1, md: 1, lg: 1 } }) {
-        this.buildDataCard({
-          title: '暴露剂量',
-          value: `${this.exposureData.exposurePercentage}%`,
-          subtitle: '已使用安全剂量'
-        })
-      }
-
+    GridRow({ columns: { sm: 1, md: 2, lg: 2 }, gutter: DesignConstants.SPACING_MD }) {
       GridCol({ span: { sm: 1, md: 1, lg: 1 } }) {
         this.buildDataCard({
           title: '今日峰值',
@@ -442,7 +476,8 @@ export struct EnhancedExposureContent {
   }
 
   /**
-   * 构建分贝区间分析面板
+   * 构建分贝区间分析面板 - 优化版
+   * 使用水平条形图可视化，添加具体分贝值显示
    */
   @Builder
   private buildDecibelAnalysisPanel(config: DecibelAnalysisConfig) {
@@ -453,29 +488,57 @@ export struct EnhancedExposureContent {
         .fontColor($r('sys.color.font_primary'))
 
       ForEach(config.stats, (stat: DecibelRangeStats) => {
-        Row({ space: DesignConstants.SPACING_MD }) {
-          Column({ space: DesignConstants.SPACING_XS }) {
+        Column({ space: DesignConstants.SPACING_XS }) {
+          // 区间标签和分贝范围
+          Row({ space: DesignConstants.SPACING_SM }) {
             Text(DecibelRangeConfigs[stat.range].label)
               .fontSize(DesignConstants.FONT_SIZE_SM)
               .fontColor($r('sys.color.font_primary'))
               .fontWeight(FontWeight.Medium)
 
-            Text(DecibelRangeConfigs[stat.range].description)
+            Text(`(${DecibelRangeConfigs[stat.range].min}-${DecibelRangeConfigs[stat.range].max}dB)`)
               .fontSize(DesignConstants.FONT_SIZE_XS)
-              .fontColor($r('sys.color.font_secondary'))
+              .fontColor($r('sys.color.font_tertiary'))
           }
-          .layoutWeight(1)
+          .width('100%')
+          .alignItems(VerticalAlign.Top)
 
-          Column({ space: DesignConstants.SPACING_XS }) {
-            Text(`${stat.percentage}%`)
-              .fontSize(DesignConstants.FONT_SIZE_MD)
-              .fontColor(this.getRangeColor(stat.range))
-              .fontWeight(FontWeight.Bold)
+          // 水平条形图
+          Row({ space: DesignConstants.SPACING_SM }) {
+            // 条形图背景
+            Column() {
+              // 进度条
+              Column()
+                .width(`${Math.max(stat.percentage, 5)}%`)
+                .height(8)
+                .backgroundColor(this.getRangeColor(stat.range))
+                .borderRadius(4)
+            }
+            .layoutWeight(1)
+            .height(8)
+            .backgroundColor($r('sys.color.background_tertiary'))
+            .borderRadius(4)
 
-            Text(stat.duration)
-              .fontSize(DesignConstants.FONT_SIZE_XS)
-              .fontColor($r('sys.color.font_secondary'))
+            // 百分比和时长
+            Row({ space: DesignConstants.SPACING_XS }) {
+              Text(`${stat.percentage}%`)
+                .fontSize(DesignConstants.FONT_SIZE_SM)
+                .fontColor(this.getRangeColor(stat.range))
+                .fontWeight(FontWeight.Bold)
+
+              Text(stat.duration)
+                .fontSize(DesignConstants.FONT_SIZE_XS)
+                .fontColor($r('sys.color.font_secondary'))
+            }
           }
+          .width('100%')
+          .alignItems(VerticalAlign.Center)
+
+          // 环境描述
+          Text(DecibelRangeConfigs[stat.range].description)
+            .fontSize(DesignConstants.FONT_SIZE_XS)
+            .fontColor($r('sys.color.font_secondary'))
+            .alignSelf(ItemAlign.Start)
         }
         .width('100%')
         .padding(DesignConstants.SPACING_MD)
@@ -526,13 +589,10 @@ export struct EnhancedExposureContent {
         // 1. 标准选择区
         this.buildStandardSelector()
 
-        // 2. 核心指标区
+        // 2. 核心指标区（已整合今日峰值和平均值）
         this.buildCoreMetrics()
 
-        // 3. 关键数据网格
-        this.buildKeyDataGrid()
-
-        // 4. 分贝分析面板
+        // 3. 分贝分析面板
         this.buildDecibelAnalysisPanel({
           stats: this.decibelRangeStats
         })
