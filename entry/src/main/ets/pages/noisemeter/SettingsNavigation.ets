@@ -150,8 +150,8 @@ struct Settings {
     }
   }
 
-  private getAnalysisModeDisplayName(mode: AudioAnalysisMode): string {
-    switch (mode) {
+  private get AnalysisModeDisplayName(): string {
+    switch (this.pk.audio_analysis_mode) {
       case AudioAnalysisMode.FAST_TIME_WEIGHTING:
         return '快速(F)';
       case AudioAnalysisMode.SLOW_TIME_WEIGHTING:
@@ -368,7 +368,7 @@ struct Settings {
 
               // 点击区域，触发弹框选择
               Row({ space: DesignConstants.SPACING_XS }) {
-                Text(this.getAnalysisModeDisplayName(this.pk.audio_analysis_mode))
+                Text(this.AnalysisModeDisplayName)
                   .fontSize(DesignConstants.FONT_SIZE_MD)
                   .fontColor($r('sys.color.font_primary'))
                   .fontWeight(FontWeight.Medium)

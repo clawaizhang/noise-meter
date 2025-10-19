@@ -478,7 +478,7 @@ export struct DecibelHistory {
       Column({ space: 4 }) {
         Text('最小值')
           .fontSize(DesignConstants.FONT_SIZE_SM)
-        Text(record.minDecibel.toString())
+        Text(`${record.minDecibel}`)
           .fontSize(DesignConstants.FONT_SIZE_LG)
           .fontWeight(FontWeight.Medium)
           .fontColor(DecibelService.getDecibelColor(record.minDecibel));
@@ -488,7 +488,7 @@ export struct DecibelHistory {
       Column({ space: 4 }) {
         Text('平均值')
           .fontSize(DesignConstants.FONT_SIZE_SM)
-        Text(record.avgDecibel.toString())
+        Text(`${record.avgDecibel}`)
           .fontSize(DesignConstants.FONT_SIZE_LG)
           .fontWeight(FontWeight.Medium)
           .fontColor(DecibelService.getDecibelColor(record.avgDecibel));
@@ -498,7 +498,7 @@ export struct DecibelHistory {
       Column({ space: 4 }) {
         Text('最大值')
           .fontSize(DesignConstants.FONT_SIZE_SM)
-        Text(record.maxDecibel.toString())
+        Text(`${record.maxDecibel}`)
           .fontSize(DesignConstants.FONT_SIZE_LG)
           .fontWeight(FontWeight.Medium)
           .fontColor(DecibelService.getDecibelColor(record.maxDecibel));

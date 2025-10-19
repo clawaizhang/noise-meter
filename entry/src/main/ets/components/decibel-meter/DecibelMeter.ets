@@ -20,7 +20,6 @@ import { Throttle } from '../../utils/Debounce';
 export struct DecibelMeter {
   @Param @Require meterOn: boolean = true;
   @Local pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys)!;
-  @Local breakPoint: string = '';
   @Local dScale: number = 1; // 页面缩放比例
   @Local translateX: number = 0; // X轴位移
   @Local translateY: number = 0; // Y轴位移
@@ -30,7 +29,6 @@ export struct DecibelMeter {
   @Local ak: AppKeys = AppStorageV2.connect(AppKeys)!;
   @Local private currentLocation: LocationInfo | null = null; // 当前位置信息，从LocationDisplay接收
   @Local private errorMessages: string[] = []; // 错误消息队列
-  @Local private lastSaveTime: number = Date.now();
   @Local private hideForXsMd: boolean = false;
   @Local private hasExternalDeviceConnected: boolean = false; // 外置设备连接状态
   @Local private connectedDeviceName: string = ''; // 连接的设备名称
@@ -53,10 +51,7 @@ export struct DecibelMeter {
             currentLocation: this.currentLocation,
             onError: (errors: string[]) => {
               this.errorMessages = errors;
-            },
-            onSaveTimeUpdate: (lastSaveTime: number) => {
-              this.lastSaveTime = lastSaveTime;
-            },
+            }
           })
 
           // 分贝显示面板 - 简化布局策略
@@ -292,13 +287,9 @@ export struct DecibelMeter {
         // 重置功能由AudioController处理
         // 通过服务触发重置事件
         this.audioControllerService.resetData();
-        // 这里可以添加重置UI状态的逻辑
-        this.lastSaveTime = Date.now();
       },
       onSave: (comments) => {
         this.bgImage = this.getUIContext().getComponentSnapshot().getSync('mainNoiseMeterDisplayId');
-        // 保存功能由AudioController处理
-        this.lastSaveTime = Date.now();
         // 通过服务触发保存事件
         this.audioControllerService.saveData(comments);
         // 这里只处理UI动画

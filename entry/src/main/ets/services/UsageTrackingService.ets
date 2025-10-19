@@ -99,9 +99,6 @@ export class UsageTrackingService {
    * 暂停追踪（APP进入后台）
    */
   public pauseTracking(): void {
-    if (this.state !== UsageTrackingState.TRACKING) {
-      return;
-    }
 
     this.state = UsageTrackingState.PAUSED;
     this.notifyStateChange();

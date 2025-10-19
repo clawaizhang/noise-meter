@@ -40,21 +40,16 @@ interface TimedAudioBuffer {
 
 @ComponentV2
 export struct AudioController {
-  // 音频状态
-  @Local private isRecording: boolean = false
-  @Local private recordingTime: number = 0
-  @Local private currentTime: number = Date.now();
-  // 错误状态（支持多个错误同时显示）
-  @Local private errorMessages: string[] = []
   @Local ak: AppKeys = AppStorageV2.connect(AppKeys)!;
   // 配置参数
   @Param @Require pk: PreferenceKeys
   @Param @Require currentLocation: LocationInfo | null = null
   // 事件发射器
   @Event onError: (errors: string[]) => void
-  @Event onRecordingStateChange: (isRecording: boolean) => void
-  @Event onRecordingTimeUpdate: (time: number) => void
-  @Event onSaveTimeUpdate: (lastSaveTime: number) => void
+  // 音频状态
+  private isRecording: boolean = false
+  // 错误状态（支持多个错误同时显示）
+  private errorMessages: string[] = []
   // 服务实例
   private audioService: AudioService = AudioService.getInstance()
   private recordService: DecibelRecordService = new DecibelRecordService(getContext() as common.UIAbilityContext)
@@ -225,18 +220,13 @@ export struct AudioController {
           // 检查报警状态
           this.checkAlarmStatus(currentDecibel);
 
-          // 更新计时器（毫秒级）
-          this.recordingTime = new Date().getTime() - this.ak.dataProcessingState.statisticsData.startTime;
-          this.onRecordingTimeUpdate(this.recordingTime);
         })
       });
 
-      this.onRecordingStateChange(true);
 
     } catch (error) {
       // 如果启动失败，重置状态
       this.isRecording = false;
-      this.onRecordingStateChange(false);
       this.addErrorMessage(`音频采集启动失败: ${error.message}`);
       this.resetData();
     }
@@ -245,7 +235,6 @@ export struct AudioController {
   async stopRecording(comments: string): Promise<void> {
     if (this.isRecording) {
       this.isRecording = false;
-      this.onRecordingStateChange(false);
       console.info("[FREQ_TRACE][Recording] 停止检测 - 开始");
 
       // 判断是否为自动保存
@@ -338,7 +327,6 @@ export struct AudioController {
     this.timedAudioBuffers = [];
     this.originAudioBuffers = [];
     this.ak.dataProcessingState.statisticsData.startTime = new Date().getTime();
-    this.recordingTime = 0;
 
     // 重置 weightingTypes 数组
     this.timedWeightingTypes = [];
@@ -347,7 +335,6 @@ export struct AudioController {
     this.ak.uiDisplayState.reset() ;
 
     // 通知UI更新
-    this.onRecordingTimeUpdate(this.recordingTime);
   }
 
   private addErrorMessage(message: string): void {
@@ -416,9 +403,6 @@ export struct AudioController {
 
     // 更新最后保存时间
     this.lastAutoSaveTime = new Date().getTime();
-
-    // 通知父组件更新时间
-    this.onSaveTimeUpdate(this.lastAutoSaveTime);
 
     // 更新UI显示状态中的保存时间
     this.audioControllerService.updateLastSaveTime(this.lastAutoSaveTime);
