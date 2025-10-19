@@ -317,7 +317,7 @@ export struct EnhancedExposureContent {
     Stack({ alignContent: Alignment.Center }) {
       // 背景环
       Circle({ width: 120, height: 120 })
-        .stroke($r('sys.color.background_tertiary'))
+        .stroke($r('sys.color.comp_background_tertiary'))
         .strokeWidth(10)
         .fill(Color.Transparent)
 
@@ -494,7 +494,6 @@ export struct EnhancedExposureContent {
         .fontSize(DesignConstants.FONT_SIZE_LG)
         .fontWeight(FontWeight.Medium)
         .fontColor($r('sys.color.font_primary'))
-        .alignSelf(ItemAlign.Start)
 
       ForEach(config.stats, (stat: DecibelRangeStats) => {
         Column({ space: DesignConstants.SPACING_XS }) {

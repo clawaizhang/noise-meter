@@ -260,21 +260,24 @@ export class ExposureStatisticsService {
         continue;
       }
 
-      const timeInterval = record.duration / record.decibelValues.length;
-      
+      const timeIntervalHours = record.duration / 3600 / record.decibelValues.length;
+
       // 遍历每一个分贝值进行精确计算
       for (const decibel of record.decibelValues) {
+        // 确保分贝值在合理范围内
+        if (decibel < 80) continue; // 低于80dB不计入暴露剂量
+
         // 3分贝减半规则：允许暴露时间 = 8小时 / 2^((分贝 - 85)/3)
-        const allowedTimeSeconds = 8 * 60 * 60 / Math.pow(2, (decibel - 85) / 3);
-        
-        // 暴露剂量 = 时间间隔 / 允许暴露时间
-        const exposureDose = timeInterval / allowedTimeSeconds;
+        const allowedTimeHours = 8 / Math.pow(2, (decibel - 85) / 3);
+
+        // 暴露剂量 = 时间间隔(小时) / 允许暴露时间(小时)
+        const exposureDose = timeIntervalHours / allowedTimeHours;
         totalExposureDose += exposureDose;
       }
     }
 
     // 总暴露百分比 = 总暴露剂量 × 100%
-    const exposurePercentage = totalExposureDose * 100;
+    const exposurePercentage = Math.min(100, totalExposureDose * 100); // 不超过100%
     return Number(exposurePercentage.toFixed(2));
   }
 
@@ -289,6 +292,9 @@ export class ExposureStatisticsService {
     let dayDuration = 0;
     let nightDuration = 0;
 
+    // 参考声强 (W/m²)
+    const I0 = 1e-12;
+
     for (const record of records) {
       if (!record.decibelValues || record.decibelValues.length === 0) {
         continue;
@@ -297,18 +303,18 @@ export class ExposureStatisticsService {
       const timestamp = record.timestamp;
       const date = new Date(timestamp);
       const hour = date.getHours();
-      
+
       // 判断白天(6:00-22:00)和夜间(22:00-6:00)
       const isDaytime = hour >= 6 && hour < 22;
-      
-      // 时间单位统一为秒（声学计算标准单位）
+
+      // 时间单位统一为秒
       const timeIntervalSeconds = record.duration / record.decibelValues.length;
-      
+
       // 遍历每一个分贝值进行精确计算
       for (const decibel of record.decibelValues) {
-        // 修正：声能量计算，时间单位使用秒
-        const energy = Math.pow(10, decibel / 10) * timeIntervalSeconds;
-        
+        // 修正：使用绝对声能量计算 (焦耳)
+        const energy = I0 * Math.pow(10, decibel / 10) * timeIntervalSeconds;
+
         if (isDaytime) {
           dayEnergy += energy;
           dayDuration += timeIntervalSeconds;
@@ -320,33 +326,40 @@ export class ExposureStatisticsService {
     }
 
     // 计算24小时等效声级 Ldn
-    // Ldn = 10 * log10[(15/24)*10^(Ld/10) + (9/24)*10^((Ln+10)/10)]
-    const totalDuration = dayDuration + nightDuration;
-    if (totalDuration === 0) {
-      return 0;
+    // Ldn = 10 * log10[(16/24)*10^(Ld/10) + (8/24)*10^((Ln+10)/10)]
+    let Ldn = 0;
+    let dayTerm = 0;
+    let nightTerm = 0;
+
+    // 白天等效声级计算
+    if (dayDuration > 0) {
+      const Ld = 10 * Math.log10(dayEnergy / (dayDuration * I0));
+      dayTerm = (16/24) * Math.pow(10, Ld/10);
     }
 
-    const Ld = dayDuration > 0 ? 10 * Math.log10(dayEnergy / dayDuration) : 0;
-    const Ln = nightDuration > 0 ? 10 * Math.log10(nightEnergy / nightDuration) : 0;
+    // 夜间等效声级计算（含10dB修正）
+    if (nightDuration > 0) {
+      const Ln = 10 * Math.log10(nightEnergy / (nightDuration * I0));
+      nightTerm = (8/24) * Math.pow(10, (Ln + 10)/10);
+    }
 
+    const totalTerm = dayTerm + nightTerm;
+    if (totalTerm > 0) {
+      Ldn = 10 * Math.log10(totalTerm);
+    }
 
-    // 修正后的Ldn计算 - 按实际数据时间比例计算
-    const Ldn = 10 * Math.log10(
-      16/24 * Math.pow(10, Ld/10) +
-      9/24 * Math.pow(10, (Ln + 10)/10)
-    );
-
-    // 修正：室外环境评估标准基于等效声级与标准限值的比较
-    // 符合GB 3096-2008标准要求
+    // 获取环境噪声标准限值 (GB 3096-2008)
     const config = StandardConfigs[NoiseExposureStandard.ENVIRONMENTAL];
     const standardLimit = config.baseLimit; // 55dB - 2类功能区昼间标准
-    
-    // 修正：使用超标倍数计算暴露程度
-    // 超标倍数 = (实际声级 - 标准限值) / 10，更符合声学评估习惯
-    // 转换为百分比显示：超标倍数 × 100%
-    const exceedanceRatio = Math.max(0, (Ldn - standardLimit) / 10);
-    const exposurePercentage = Math.min(100, exceedanceRatio * 100);
-    
+
+    // 计算超标百分比
+    // 当Ldn低于标准时返回0%，超过标准时按比例计算
+    let exposurePercentage = 0;
+    if (Ldn > standardLimit) {
+      // 超标百分比 = (实际值 - 标准值) / 标准值 * 100%
+      exposurePercentage = ((Ldn - standardLimit) / standardLimit) * 100;
+    }
+
     return Number(exposurePercentage.toFixed(2));
   }
 
@@ -360,16 +373,20 @@ export class ExposureStatisticsService {
     let totalEnergy = 0;
     let totalDuration = 0;
 
+    // 参考声强 (W/m²)
+    const I0 = 1e-12;
+
     for (const record of records) {
       if (!record.decibelValues || record.decibelValues.length === 0) {
         continue;
       }
 
       const timeInterval = record.duration / record.decibelValues.length;
-      
+
       // 遍历每一个分贝值进行精确计算
       for (const decibel of record.decibelValues) {
-        const energy = Math.pow(10, decibel / 10) * timeInterval;
+        // 修正：使用绝对声能量计算 (焦耳)
+        const energy = I0 * Math.pow(10, decibel / 10) * timeInterval;
         totalEnergy += energy;
         totalDuration += timeInterval;
       }
@@ -380,16 +397,21 @@ export class ExposureStatisticsService {
     }
 
     // 计算等效声级
-    const equivalentLevel = 10 * Math.log10(totalEnergy / totalDuration);
+    // 等效声级 = 10 * log10(总声能量 / (总时间 * I0))
+    const equivalentLevel = 10 * Math.log10(totalEnergy / (totalDuration * I0));
 
-    // 修正：室内生活环境标准基于等效声级与标准限值的比较
+    // 室内生活环境标准 (GB 22337-2008)
     const config = StandardConfigs[NoiseExposureStandard.SOCIAL];
     const standardLimit = config.baseLimit; // 50dB - 生活区域合理标准
-    
-    // 暴露程度 = (实际声级 - 标准限值) / 标准限值 × 100%
-    // 确保结果不小于0
-    const exposurePercentage = Math.max(0, (equivalentLevel - standardLimit) / standardLimit * 100);
-    
+
+    // 计算超标百分比
+    // 当等效声级低于标准时返回0%，超过标准时按比例计算
+    let exposurePercentage = 0;
+    if (equivalentLevel > standardLimit) {
+      // 超标百分比 = (实际值 - 标准值) / 标准值 * 100%
+      exposurePercentage = ((equivalentLevel - standardLimit) / standardLimit) * 100;
+    }
+
     return Number(exposurePercentage.toFixed(2));
   }
 
