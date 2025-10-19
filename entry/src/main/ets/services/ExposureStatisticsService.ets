@@ -319,18 +319,14 @@ export class ExposureStatisticsService {
       (9/24) * Math.pow(10, (Ln + 10)/10)
     );
 
-    // 修正：声环境标准使用基于24小时等效声级的暴露剂量计算
-    // 符合GB 3096-2008标准要求，基于声能量比计算暴露剂量
+    // 修正：声环境标准基于等效声级与标准限值的比较
+    // 符合GB 3096-2008标准要求
     const config = StandardConfigs[NoiseExposureStandard.ENVIRONMENTAL];
+    const standardLimit = config.baseLimit; // 55dB - 2类功能区昼间标准
     
-    // 实际声能量 = 10^(Ldn/10) × 24小时
-    const actualEnergy = Math.pow(10, Ldn / 10) * 24 * 3600; // 24小时转换为秒
-    
-    // 基准声能量 = 10^(基准限值/10) × 24小时
-    const baseEnergy = Math.pow(10, config.baseLimit / 10) * 24 * 3600;
-    
-    // 暴露剂量 = 100% × (实际声能量 / 基准声能量)
-    const exposurePercentage = (actualEnergy / baseEnergy) * 100;
+    // 暴露程度 = (实际声级 - 标准限值) / 标准限值 × 100%
+    // 确保结果不小于0
+    const exposurePercentage = Math.max(0, (Ldn - standardLimit) / standardLimit * 100);
     
     return Number(exposurePercentage.toFixed(2));
   }
@@ -375,8 +371,8 @@ export class ExposureStatisticsService {
   }
 
   /**
-   * 社会生活标准计算 - 基于等效声级的暴露剂量
-   * 符合GB 22337-2008标准要求，基于声能量比计算暴露剂量
+   * 社会生活标准计算 - 基于等效声级的暴露评估
+   * 符合GB 22337-2008标准要求，基于等效声级与标准限值的比较
    * 基于每一刻分贝值的精确计算
    */
   private calculateSocialExposure(records: DecibelRecord[]): number {
@@ -405,15 +401,13 @@ export class ExposureStatisticsService {
     // 计算等效声级
     const equivalentLevel = 10 * Math.log10(totalEnergy / totalDuration);
 
-    // 实际声能量 = 10^(等效声级/10) × 24小时
-    const actualEnergy = Math.pow(10, equivalentLevel / 10) * 24 * 3600; // 24小时转换为秒
-
-    // 基准声能量 = 10^(基准限值/10) × 24小时
+    // 修正：社会生活标准基于等效声级与标准限值的比较
     const config = StandardConfigs[NoiseExposureStandard.SOCIAL];
-    const baseEnergy = Math.pow(10, config.baseLimit / 10) * 24 * 3600;
-
-    // 暴露剂量 = 100% × (实际声能量 / 基准声能量)
-    const exposurePercentage = (actualEnergy / baseEnergy) * 100;
+    const standardLimit = config.baseLimit; // 50dB - 生活区域合理标准
+    
+    // 暴露程度 = (实际声级 - 标准限值) / 标准限值 × 100%
+    // 确保结果不小于0
+    const exposurePercentage = Math.max(0, (equivalentLevel - standardLimit) / standardLimit * 100);
     
     return Number(exposurePercentage.toFixed(2));
   }
@@ -421,26 +415,25 @@ export class ExposureStatisticsService {
   /**
    * 计算剩余安全时间
    * 基于不同标准的专业计算逻辑
+   * 只有基于能量累积的标准才计算剩余时间
    */
   private calculateRemainingSafeTime(exposurePercentage: number, standard: NoiseExposureStandard): string {
     if (exposurePercentage >= 100) {
       return '已超过安全限制';
     }
 
-    const config = StandardConfigs[standard];
-
-    // 根据不同的标准使用不同的剩余时间计算逻辑
+    // 只有基于能量累积的标准才计算剩余时间
     switch (standard) {
       case NoiseExposureStandard.INDUSTRIAL:
-        return this.calculateIndustrialRemainingTime(exposurePercentage, config);
-      case NoiseExposureStandard.ENVIRONMENTAL:
-        return this.calculateEnvironmentalRemainingTime(exposurePercentage, config);
+        return this.calculateIndustrialRemainingTime(exposurePercentage, StandardConfigs[standard]);
       case NoiseExposureStandard.OCCUPATIONAL:
-        return this.calculateOccupationalRemainingTime(exposurePercentage, config);
+        return this.calculateOccupationalRemainingTime(exposurePercentage, StandardConfigs[standard]);
+      case NoiseExposureStandard.ENVIRONMENTAL:
       case NoiseExposureStandard.SOCIAL:
-        return this.calculateSocialRemainingTime(exposurePercentage, config);
+        // 环境质量标准不计算剩余安全时间
+        return '不适用';
       default:
-        return this.calculateIndustrialRemainingTime(exposurePercentage, config);
+        return '不适用';
     }
   }
 
@@ -458,17 +451,6 @@ export class ExposureStatisticsService {
     return this.formatRemainingTime(remainingTime);
   }
 
-  /**
-   * 声环境标准剩余安全时间计算
-   */
-  private calculateEnvironmentalRemainingTime(exposurePercentage: number, config: StandardConfig): string {
-    const remainingPercentage = 100 - exposurePercentage;
-    
-    // 24小时标准的剩余时间计算
-    const remainingTime = (24 * 60) * (remainingPercentage / 100); // 24小时转换为分钟
-
-    return this.formatRemainingTime(remainingTime);
-  }
 
   /**
    * 职业健康标准剩余安全时间计算
@@ -484,17 +466,6 @@ export class ExposureStatisticsService {
     return this.formatRemainingTime(remainingTime);
   }
 
-  /**
-   * 社会生活标准剩余安全时间计算
-   */
-  private calculateSocialRemainingTime(exposurePercentage: number, config: StandardConfig): string {
-    const remainingPercentage = 100 - exposurePercentage;
-    
-    // 24小时生活标准的剩余时间计算
-    const remainingTime = (24 * 60) * (remainingPercentage / 100); // 24小时转换为分钟
-
-    return this.formatRemainingTime(remainingTime);
-  }
 
   /**
    * 格式化剩余时间显示
