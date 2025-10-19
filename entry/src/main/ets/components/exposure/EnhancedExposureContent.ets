@@ -11,6 +11,7 @@ import { DesignConstants } from '../../constants/DesignConstants';
 import { NoiseExposureStandard, DecibelRange, DecibelRangeConfigs, StandardConfigs } from '../../constants/ExposureStandardConstants';
 import common from '@ohos.app.ability.common';
 import { PremiumFeature } from '../membership/PremiumFeature';
+import promptAction from '@ohos.promptAction';
 
 // 分贝区间统计数据
 interface DecibelRangeStats {
@@ -47,6 +48,7 @@ export struct EnhancedExposureContent {
   @Local hasError: boolean = false;
   @Local errorMessage: string = '';
   @Local isStandardSelectorOpen: boolean = false;
+  @Local isRefreshing: boolean = false; // 刷新状态
   private exposureService: ExposureStatisticsService = ExposureStatisticsService.getInstance();
   private updateTimer: number | null = null;
 
@@ -122,6 +124,40 @@ export struct EnhancedExposureContent {
     if (this.updateTimer) {
       clearInterval(this.updateTimer);
       this.updateTimer = null;
+    }
+  }
+
+  /**
+   * 手动刷新数据
+   */
+  private async refreshData(): Promise<void> {
+    if (this.isRefreshing) {
+      return; // 防止重复刷新
+    }
+
+    this.isRefreshing = true;
+
+    try {
+      await this.loadAllData();
+      
+      // 刷新完成提示
+      promptAction.showToast({
+        message: '数据已刷新',
+        duration: 1500
+      });
+      
+
+    } catch (error) {
+      console.error('刷新数据失败:', error);
+
+      // 错误提示
+      promptAction.showToast({
+        message: '刷新失败，请重试',
+        duration: 2000
+      });
+      
+    } finally {
+      this.isRefreshing = false;
     }
   }
 
@@ -326,12 +362,31 @@ export struct EnhancedExposureContent {
           curve: Curve.EaseOut
         })
 
-      // 中心文本
+      // 中心内容
       Column({ space: DesignConstants.SPACING_XS }) {
-        Text(`${config.percentage}%`)
-          .fontSize(DesignConstants.FONT_SIZE_3XL)
-          .fontWeight(FontWeight.Bold)
-          .fontColor($r('sys.color.font_primary'))
+        if (this.isRefreshing) {
+          // 刷新状态显示旋转图标
+          Image($r('app.media.ic_refresh'))
+            .width(32)
+            .height(32)
+            .fillColor($r('sys.color.font_primary'))
+            .rotate({
+              angle: 360,
+              centerX: '50%',
+              centerY: '50%'
+            })
+            .animation({
+              duration: 1000,
+              curve: Curve.Linear,
+              iterations: -1 // 无限循环
+            })
+        } else {
+          // 正常状态显示百分比
+          Text(`${config.percentage}%`)
+            .fontSize(DesignConstants.FONT_SIZE_3XL)
+            .fontWeight(FontWeight.Bold)
+            .fontColor($r('sys.color.font_primary'))
+        }
 
         Text('暴露剂量')
           .fontSize(DesignConstants.FONT_SIZE_SM)
@@ -340,6 +395,9 @@ export struct EnhancedExposureContent {
     }
     .width(120)
     .height(120)
+    .onClick(() => {
+      this.refreshData();
+    })
   }
 
   /**
