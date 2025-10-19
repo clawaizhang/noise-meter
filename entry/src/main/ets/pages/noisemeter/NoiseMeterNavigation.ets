@@ -24,7 +24,7 @@ export function NoiseMeterBuilder() {
 @ComponentV2
 export struct MainNoiseMeter {
   @Consumer(navigationStack) navStack: NavPathStack = new NavPathStack()
-  @Local currentIndex: number = 1
+  @Local currentIndex: number = 0
   @Local title: string = '静喵Sound';
   @Local menuItems: Array<NavigationMenuItem> = [];
   @Local ak: AppKeys = AppStorageV2.connect(AppKeys)!;
@@ -41,12 +41,12 @@ export struct MainNoiseMeter {
   onTabIndexChange(monitor: IMonitor) {
     const currentValue = monitor.value<number>()?.now;
     if (currentValue === 0) {
-      this.title = '噪音警报';
-      this.menuItems = this.alertsMenus;
-    }
-    if (currentValue === 1) {
       this.title = '静喵Sound';
       this.menuItems = this.noiseMeterMenus;
+    }
+    if (currentValue === 1) {
+      this.title = '噪音警报';
+      this.menuItems = this.alertsMenus;
     }
     if (currentValue === 2) {
       this.title = '今天';
@@ -134,8 +134,8 @@ export struct MainNoiseMeter {
     .id('decibelMeterRoot')
     .justifyContent(FlexAlign.Center)
     .alignItems(HorizontalAlign.Center)
-    .opacity(this.currentIndex === 1 ? 1 : 0)
-    .scale({ x: this.currentIndex === 1 ? 1 : 0.95, y: this.currentIndex === 1 ? 1 : 0.95 })
+    .opacity(this.currentIndex === 0 ? 1 : 0)
+    .scale({ x: this.currentIndex === 0 ? 1 : 0.95, y: this.currentIndex === 0 ? 1 : 0.95 })
     .animation({
       duration: 300,
       curve: Curve.EaseOut,
@@ -205,11 +205,17 @@ export struct MainNoiseMeter {
   build() {
     NavDestination() {
       Tabs({ barPosition: BarPosition.End, index: this.currentIndex }) {
+        // 静喵Sound页面 - 使用DashboardContent组件
+        TabContent() {
+          this.DashboardContent()
+        }
+        .tabBar(this.TabBuilder('静喵Sound',this.currentIndex == 0 ? $r("app.media.solar_spedometer_middle_bold"):$r("app.media.ic_meter"), 0))
+
         // 警报页面 - 使用独立的AlertsContent组件
         TabContent() {
           AlertsContent()
-            .opacity(this.currentIndex === 0 ? 1 : 0)
-            .scale({ x: this.currentIndex === 0 ? 1 : 0.95, y: this.currentIndex === 0 ? 1 : 0.95 })
+            .opacity(this.currentIndex === 1 ? 1 : 0)
+            .scale({ x: this.currentIndex === 1 ? 1 : 0.95, y: this.currentIndex === 1 ? 1 : 0.95 })
             .animation({
               duration: 300,
               curve: Curve.EaseOut,
@@ -218,12 +224,7 @@ export struct MainNoiseMeter {
               playMode: PlayMode.Normal
             })
         }
-        .tabBar(this.TabBuilder('警报',this.currentIndex == 0 ? $r("app.media.bell_bing_bold"):$r("app.media.ic_alarm"), 0))
-
-        TabContent() {
-          this.DashboardContent()
-        }
-        .tabBar(this.TabBuilder('静喵Sound',this.currentIndex == 1 ? $r("app.media.solar_spedometer_middle_bold"):$r("app.media.ic_meter"), 1))
+        .tabBar(this.TabBuilder('警报',this.currentIndex == 1 ? $r("app.media.bell_bing_bold"):$r("app.media.ic_alarm"), 1))
 
         TabContent() {
           EnhancedExposureContent()
