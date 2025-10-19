@@ -21,7 +21,7 @@ export enum DecibelRange {
 }
 
 // 标准配置接口
-interface StandardConfig {
+export interface StandardConfig {
   name: string;
   code: string;
   baseLimit: number;
@@ -30,7 +30,7 @@ interface StandardConfig {
 }
 
 // 分贝区间配置接口
-interface DecibelRangeConfig {
+export interface DecibelRangeConfig {
   min: number;
   max: number;
   label: string;
@@ -49,7 +49,7 @@ export const StandardConfigs: Record<NoiseExposureStandard, StandardConfig> = {
   [NoiseExposureStandard.ENVIRONMENTAL]: {
     name: '声环境标准',
     code: 'GB 3096-2008',
-    baseLimit: 55, // 1类功能区标准
+    baseLimit: 65, // 调整为2类功能区标准，更符合实际生活环境
     baseDuration: 24 * 60 * 60 * 1000, // 24小时
     description: '环境噪声管理标准'
   },

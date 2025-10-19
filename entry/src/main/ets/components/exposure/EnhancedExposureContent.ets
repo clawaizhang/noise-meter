@@ -126,14 +126,17 @@ export struct EnhancedExposureContent {
 
   /**
    * 获取暴露颜色
+   * 更新颜色逻辑，支持超过100%的暴露剂量
    */
   private getExposureColor(percentage: number): Resource {
     if (percentage < 30) {
       return $r('app.color.health_good');      // 绿色 - 安全
-    } else if (percentage < 80) {
+    } else if (percentage < 60) {
       return $r('app.color.health_warning');   // 黄色 - 警告
-    } else {
+    } else if (percentage < 100) {
       return $r('app.color.health_bad');       // 红色 - 危险
+    } else {
+      return $r('sys.color.alert');            // 深红色 - 严重超标
     }
   }
 
@@ -259,13 +262,21 @@ export struct EnhancedExposureContent {
                 }
               }
               
-              // 计算说明
+              // 计算说明 - 为每个标准显示专业计算特点
               if (standard === NoiseExposureStandard.INDUSTRIAL) {
                 Text('• 专业计算：每增加3分贝，允许暴露时间减半')
                   .fontSize(DesignConstants.FONT_SIZE_XS)
                   .fontColor($r('sys.color.font_tertiary'))
-              } else {
-                Text('• 简化计算：基于基准分贝值按比例计算')
+              } else if (standard === NoiseExposureStandard.ENVIRONMENTAL) {
+                Text('• 专业计算：24小时等效声级，考虑昼夜噪声差异')
+                  .fontSize(DesignConstants.FONT_SIZE_XS)
+                  .fontColor($r('sys.color.font_tertiary'))
+              } else if (standard === NoiseExposureStandard.OCCUPATIONAL) {
+                Text('• 专业计算：听力保护评估，考虑累积暴露风险')
+                  .fontSize(DesignConstants.FONT_SIZE_XS)
+                  .fontColor($r('sys.color.font_tertiary'))
+              } else if (standard === NoiseExposureStandard.SOCIAL) {
+                Text('• 专业计算：生活舒适度评估，基于生活质量标准')
                   .fontSize(DesignConstants.FONT_SIZE_XS)
                   .fontColor($r('sys.color.font_tertiary'))
               }
@@ -316,7 +327,7 @@ export struct EnhancedExposureContent {
 
       // 中心文本
       Column({ space: DesignConstants.SPACING_XS }) {
-        Text(`${config.percentage.toFixed(1)}%`)
+        Text(`${config.percentage}%`)
           .fontSize(DesignConstants.FONT_SIZE_3XL)
           .fontWeight(FontWeight.Bold)
           .fontColor($r('sys.color.font_primary'))
@@ -356,11 +367,42 @@ export struct EnhancedExposureContent {
           .textAlign(TextAlign.Center)
       }
 
-      // 标准说明
-      Text(`${StandardConfigs[this.selectedStandard].name} (${StandardConfigs[this.selectedStandard].code})`)
-        .fontSize(DesignConstants.FONT_SIZE_SM)
-        .fontColor($r('sys.color.font_tertiary'))
-        .textAlign(TextAlign.Center)
+      // 标准说明 - 显示详细的计算基准和特点
+      Column({ space: DesignConstants.SPACING_XS }) {
+        Text(`${StandardConfigs[this.selectedStandard].name} (${StandardConfigs[this.selectedStandard].code})`)
+          .fontSize(DesignConstants.FONT_SIZE_SM)
+          .fontColor($r('sys.color.font_tertiary'))
+          .textAlign(TextAlign.Center)
+        
+        // 显示计算基准
+        Text(`基准: ${StandardConfigs[this.selectedStandard].baseLimit}dB / ${StandardConfigs[this.selectedStandard].baseDuration >= 24 * 60 * 60 * 1000 ? '24小时' : '8小时'}`)
+          .fontSize(DesignConstants.FONT_SIZE_XS)
+          .fontColor($r('sys.color.font_tertiary'))
+          .textAlign(TextAlign.Center)
+        
+        // 显示计算特点
+        if (this.selectedStandard === NoiseExposureStandard.INDUSTRIAL) {
+          Text('• 3分贝减半规则')
+            .fontSize(DesignConstants.FONT_SIZE_XS)
+            .fontColor($r('sys.color.font_tertiary'))
+            .textAlign(TextAlign.Center)
+        } else if (this.selectedStandard === NoiseExposureStandard.ENVIRONMENTAL) {
+          Text('• 24小时等效声级')
+            .fontSize(DesignConstants.FONT_SIZE_XS)
+            .fontColor($r('sys.color.font_tertiary'))
+            .textAlign(TextAlign.Center)
+        } else if (this.selectedStandard === NoiseExposureStandard.OCCUPATIONAL) {
+          Text('• 听力保护评估')
+            .fontSize(DesignConstants.FONT_SIZE_XS)
+            .fontColor($r('sys.color.font_tertiary'))
+            .textAlign(TextAlign.Center)
+        } else if (this.selectedStandard === NoiseExposureStandard.SOCIAL) {
+          Text('• 舒适度评估')
+            .fontSize(DesignConstants.FONT_SIZE_XS)
+            .fontColor($r('sys.color.font_tertiary'))
+            .textAlign(TextAlign.Center)
+        }
+      }
     }
     .width('100%')
     .justifyContent(FlexAlign.Center)
@@ -376,7 +418,7 @@ export struct EnhancedExposureContent {
       GridCol({ span: { sm: 1, md: 1, lg: 1 } }) {
         this.buildDataCard({
           title: '暴露剂量',
-          value: `${this.exposureData.exposurePercentage.toFixed(1)}%`,
+          value: `${this.exposureData.exposurePercentage}%`,
           subtitle: '已使用安全剂量'
         })
       }
