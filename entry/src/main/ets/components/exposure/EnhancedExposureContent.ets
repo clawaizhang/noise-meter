@@ -206,7 +206,7 @@ export struct EnhancedExposureContent {
           .fontColor($r('sys.color.font_primary'))
 
         Text('不同场景使用不同的计算标准')
-          .fontSize(DesignConstants.FONT_SIZE_SM)
+          .fontSize(DesignConstants.FONT_SIZE_MD)
           .fontColor($r('sys.color.font_secondary'))
       }
       .width('100%')
@@ -238,7 +238,7 @@ export struct EnhancedExposureContent {
 
           // 标准参数说明
           Text(`基准值: ${StandardConfigs[this.selectedStandard].baseLimit}dB | 时长: ${StandardConfigs[this.selectedStandard].baseDuration >= 24 * 60 * 60 * 1000 ? '24小时' : '8小时'}`)
-            .fontSize(DesignConstants.FONT_SIZE_XS)
+            .fontSize(DesignConstants.FONT_SIZE_SM)
             .fontColor($r('sys.color.font_tertiary'))
         }
         .layoutWeight(1)
@@ -302,19 +302,19 @@ export struct EnhancedExposureContent {
               // 使用场景说明 - 为每个标准显示适用场景
               if (standard === NoiseExposureStandard.INDUSTRIAL) {
                 Text('• 适用场景：办公室、工厂等工作环境')
-                  .fontSize(DesignConstants.FONT_SIZE_XS)
+                  .fontSize(DesignConstants.FONT_SIZE_SM)
                   .fontColor($r('sys.color.font_tertiary'))
               } else if (standard === NoiseExposureStandard.ENVIRONMENTAL) {
                 Text('• 适用场景：家庭、社区等生活环境')
-                  .fontSize(DesignConstants.FONT_SIZE_XS)
+                  .fontSize(DesignConstants.FONT_SIZE_SM)
                   .fontColor($r('sys.color.font_tertiary'))
               } else if (standard === NoiseExposureStandard.OCCUPATIONAL) {
                 Text('• 适用场景：关注长期听力健康保护')
-                  .fontSize(DesignConstants.FONT_SIZE_XS)
+                  .fontSize(DesignConstants.FONT_SIZE_SM)
                   .fontColor($r('sys.color.font_tertiary'))
               } else if (standard === NoiseExposureStandard.SOCIAL) {
                 Text('• 适用场景：日常生活舒适度评估')
-                  .fontSize(DesignConstants.FONT_SIZE_XS)
+                  .fontSize(DesignConstants.FONT_SIZE_SM)
                   .fontColor($r('sys.color.font_tertiary'))
               }
             }
@@ -416,7 +416,7 @@ export struct EnhancedExposureContent {
       // 剩余安全时间
       Column({ space: DesignConstants.SPACING_XS }) {
         Text(this.exposureData.remainingSafeTime)
-          .fontSize(DesignConstants.FONT_SIZE_XL)
+          .fontSize(DesignConstants.FONT_SIZE_2XL)
           .fontWeight(FontWeight.Bold)
           .fontColor(this.getExposureColor(this.exposureData.exposurePercentage))
           .textAlign(TextAlign.Center)
@@ -431,22 +431,22 @@ export struct EnhancedExposureContent {
       Column({ space: DesignConstants.SPACING_XS }) {
         if (this.exposureData.exposurePercentage < 30) {
           Text('噪音影响程度很低，继续保持！')
-            .fontSize(DesignConstants.FONT_SIZE_SM)
+            .fontSize(DesignConstants.FONT_SIZE_MD)
             .fontColor($r('app.color.health_good'))
             .textAlign(TextAlign.Center)
         } else if (this.exposureData.exposurePercentage < 60) {
           Text('噪音影响程度中等，建议关注环境噪音')
-            .fontSize(DesignConstants.FONT_SIZE_SM)
+            .fontSize(DesignConstants.FONT_SIZE_MD)
             .fontColor($r('app.color.health_warning'))
             .textAlign(TextAlign.Center)
         } else if (this.exposureData.exposurePercentage < 100) {
           Text('噪音影响程度较高，建议减少在嘈杂环境的时间')
-            .fontSize(DesignConstants.FONT_SIZE_SM)
+            .fontSize(DesignConstants.FONT_SIZE_MD)
             .fontColor($r('app.color.health_bad'))
             .textAlign(TextAlign.Center)
         } else {
           Text('噪音影响严重超标，请立即采取保护措施')
-            .fontSize(DesignConstants.FONT_SIZE_SM)
+            .fontSize(DesignConstants.FONT_SIZE_MD)
             .fontColor($r('sys.color.alert'))
             .textAlign(TextAlign.Center)
         }
@@ -593,39 +593,38 @@ export struct EnhancedExposureContent {
             // 添加环境比喻
             if (stat.range === DecibelRange.VERY_QUIET) {
               Text('(图书馆环境)')
-                .fontSize(DesignConstants.FONT_SIZE_XS)
+                .fontSize(DesignConstants.FONT_SIZE_SM)
                 .fontColor($r('sys.color.font_tertiary'))
             } else if (stat.range === DecibelRange.QUIET) {
               Text('(办公室环境)')
-                .fontSize(DesignConstants.FONT_SIZE_XS)
+                .fontSize(DesignConstants.FONT_SIZE_SM)
                 .fontColor($r('sys.color.font_tertiary'))
             } else if (stat.range === DecibelRange.MODERATE) {
               Text('(正常交谈)')
-                .fontSize(DesignConstants.FONT_SIZE_XS)
+                .fontSize(DesignConstants.FONT_SIZE_SM)
                 .fontColor($r('sys.color.font_tertiary'))
             } else if (stat.range === DecibelRange.NOISY) {
               Text('(交通噪音)')
-                .fontSize(DesignConstants.FONT_SIZE_XS)
+                .fontSize(DesignConstants.FONT_SIZE_SM)
                 .fontColor($r('sys.color.font_tertiary'))
             } else if (stat.range === DecibelRange.HIGH) {
               Text('(施工工地)')
-                .fontSize(DesignConstants.FONT_SIZE_XS)
+                .fontSize(DesignConstants.FONT_SIZE_SM)
                 .fontColor($r('sys.color.font_tertiary'))
             } else if (stat.range === DecibelRange.VERY_HIGH) {
               Text('(音乐会现场)')
-                .fontSize(DesignConstants.FONT_SIZE_XS)
+                .fontSize(DesignConstants.FONT_SIZE_SM)
                 .fontColor($r('sys.color.font_tertiary'))
             }
           }
           .alignSelf(ItemAlign.Start)
         }
         .width('100%')
-        .padding(DesignConstants.SPACING_MD)
+        .padding(DesignConstants.SPACING_LG)
         .backgroundColor($r('sys.color.comp_background_primary'))
         .borderRadius(DesignConstants.BORDER_RADIUS_MD)
       }, (item: DecibelRangeStats, index: number) => index + '')
     }
-    .padding(DesignConstants.SPACING_MD)
     .backgroundColor($r('sys.color.background_secondary'))
     .borderRadius(DesignConstants.BORDER_RADIUS_MD)
     .width('100%')
@@ -678,7 +677,7 @@ export struct EnhancedExposureContent {
           stats: this.decibelRangeStats
         })
       }
-      .padding(24)
+      .padding(16)
       .width('100%')
     }
     .scrollBar(BarState.Auto)

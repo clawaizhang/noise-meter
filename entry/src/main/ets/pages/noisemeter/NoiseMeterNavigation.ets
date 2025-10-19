@@ -56,7 +56,7 @@ export struct MainNoiseMeter {
       this.menuItems = this.alertsMenus;
     }
     if (currentValue === 2) {
-      this.title = '今天';
+      this.title = '影响';
       this.menuItems = this.exposureMenus;
     }
     if (currentValue === 3) {
@@ -245,7 +245,7 @@ export struct MainNoiseMeter {
               playMode: PlayMode.Normal
             })
         }
-        .tabBar(this.TabBuilder({ title: '今天', icon: this.currentIndex == 2 ? $r("app.media.ic_stats_bold") : $r("app.media.ic_stats"), index: 2 }))
+        .tabBar(this.TabBuilder({ title: '影响', icon: this.currentIndex == 2 ? $r("app.media.i_solar_radar_bold") : $r("app.media.i_solar_radar_outline"), index: 2 }))
 
         TabContent() {
           MyContentComponent({ currentIndex: this.currentIndex })
