@@ -13,7 +13,7 @@ import common from '@ohos.app.ability.common';
 // 分贝区间统计数据
 interface DecibelRangeStats {
   range: DecibelRange;
-  duration: number;
+  duration: string;
   percentage: number;
 }
 
@@ -219,7 +219,7 @@ export struct EnhancedExposureContent {
               .fontColor(this.getRangeColor(stat.range))
               .fontWeight(FontWeight.Bold)
 
-            Text(this.formatDuration(stat.duration))
+            Text(stat.duration)
               .fontSize(DesignConstants.FONT_SIZE_XS)
               .fontColor($r('sys.color.font_secondary'))
           }
@@ -236,18 +236,6 @@ export struct EnhancedExposureContent {
     .width('100%')
   }
 
-  /**
-   * 格式化持续时间
-   */
-  private formatDuration(milliseconds: number): string {
-    const minutes = Math.floor(milliseconds / (60 * 1000));
-    if (minutes < 60) {
-      return `${minutes}分钟`;
-    }
-    const hours = Math.floor(minutes / 60);
-    const remainingMinutes = minutes % 60;
-    return `${hours}小时${remainingMinutes}分钟`;
-  }
 
   build() {
     Scroll() {

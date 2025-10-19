@@ -49,7 +49,7 @@ export struct MainNoiseMeter {
       this.menuItems = this.noiseMeterMenus;
     }
     if (currentValue === 2) {
-      this.title = '暴露统计';
+      this.title = '今天';
       this.menuItems = this.exposureMenus;
     }
     if (currentValue === 3) {
@@ -237,7 +237,7 @@ export struct MainNoiseMeter {
               playMode: PlayMode.Normal
             })
         }
-        .tabBar(this.TabBuilder('暴露统计', this.currentIndex == 2 ? $r("app.media.ic_stats"):$r("app.media.ic_stats"), 2))
+        .tabBar(this.TabBuilder('今天', this.currentIndex == 2 ? $r("app.media.ic_stats"):$r("app.media.ic_stats"), 2))
 
         TabContent() {
           MyContentComponent({ currentIndex: this.currentIndex })

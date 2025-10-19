@@ -25,7 +25,7 @@ interface PeakAndAverage {
 // 分贝区间统计数据
 interface DecibelRangeStats {
   range: DecibelRange;
-  duration: number;
+  duration: string;
   percentage: number;
 }
 
@@ -136,7 +136,7 @@ export class ExposureStatisticsService {
         const percentage = totalDuration > 0 ? (duration / totalDuration) * 100 : 0;
         results.push({
           range: range,
-          duration: duration,
+          duration: this.formatDuration(duration),
           percentage: Math.round(percentage * 10) / 10 // 保留一位小数
         });
       }
@@ -146,6 +146,19 @@ export class ExposureStatisticsService {
       console.error('计算分贝区间统计失败:', error);
       return this.getEmptyDecibelRangeStats();
     }
+  }
+
+  /**
+   * 格式化持续时间
+   */
+  private formatDuration(seconds: number): string {
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) {
+      return `${minutes}分钟`;
+    }
+    const hours = Math.floor(minutes / 60);
+    const remainingMinutes = minutes % 60;
+    return `${hours}小时${remainingMinutes}分钟`;
   }
 
   /**
@@ -316,7 +329,7 @@ export class ExposureStatisticsService {
     return Object.values(DecibelRange).map(range => {
       let data: DecibelRangeStats = {
         range: range,
-        duration: 0,
+        duration: '0分钟',
         percentage: 0
       };
       return data;
