@@ -167,7 +167,7 @@ export struct EnhancedExposureContent {
           .fontSize(DesignConstants.FONT_SIZE_LG)
           .fontWeight(FontWeight.Medium)
           .fontColor($r('sys.color.font_primary'))
-        
+
         Text('不同标准适用于不同场景，计算结果会有差异')
           .fontSize(DesignConstants.FONT_SIZE_SM)
           .fontColor($r('sys.color.font_secondary'))
@@ -183,7 +183,7 @@ export struct EnhancedExposureContent {
               .fontSize(DesignConstants.FONT_SIZE_MD)
               .fontWeight(FontWeight.Medium)
               .fontColor($r('sys.color.font_primary'))
-            
+
             // 推荐标识
             if (this.selectedStandard === NoiseExposureStandard.INDUSTRIAL) {
               Text('推荐')
@@ -194,11 +194,11 @@ export struct EnhancedExposureContent {
                 .borderRadius(12)
             }
           }
-          
+
           Text(StandardConfigs[this.selectedStandard].description)
             .fontSize(DesignConstants.FONT_SIZE_XS)
             .fontColor($r('sys.color.font_secondary'))
-          
+
           // 标准参数说明
           Text(`基准值: ${StandardConfigs[this.selectedStandard].baseLimit}dB | 时长: ${StandardConfigs[this.selectedStandard].baseDuration >= 24 * 60 * 60 * 1000 ? '24小时' : '8小时'}`)
             .fontSize(DesignConstants.FONT_SIZE_XS)
@@ -231,7 +231,7 @@ export struct EnhancedExposureContent {
                       .fontSize(DesignConstants.FONT_SIZE_SM)
                       .fontColor($r('sys.color.font_primary'))
                       .fontWeight(FontWeight.Medium)
-                    
+
                     // 推荐标识
                     if (standard === NoiseExposureStandard.INDUSTRIAL) {
                       Text('推荐')
@@ -242,11 +242,11 @@ export struct EnhancedExposureContent {
                         .borderRadius(8)
                     }
                   }
-                  
+
                   Text(StandardConfigs[standard].code)
                     .fontSize(DesignConstants.FONT_SIZE_XS)
                     .fontColor($r('sys.color.font_secondary'))
-                  
+
                   // 标准参数
                   Text(`基准: ${StandardConfigs[standard].baseLimit}dB | 时长: ${StandardConfigs[standard].baseDuration >= 24 * 60 * 60 * 1000 ? '24小时' : '8小时'}`)
                     .fontSize(DesignConstants.FONT_SIZE_XS)
@@ -261,7 +261,7 @@ export struct EnhancedExposureContent {
                     .fillColor($r('sys.color.font_primary'))
                 }
               }
-              
+
               // 计算说明 - 为每个标准显示专业计算特点
               if (standard === NoiseExposureStandard.INDUSTRIAL) {
                 Text('• 专业计算：每增加3分贝，允许暴露时间减半')
@@ -414,13 +414,13 @@ export struct EnhancedExposureContent {
           .fontSize(DesignConstants.FONT_SIZE_SM)
           .fontColor($r('sys.color.font_tertiary'))
           .textAlign(TextAlign.Center)
-        
+
         // 显示计算基准
         Text(`基准: ${StandardConfigs[this.selectedStandard].baseLimit}dB / ${StandardConfigs[this.selectedStandard].baseDuration >= 24 * 60 * 60 * 1000 ? '24小时' : '8小时'}`)
           .fontSize(DesignConstants.FONT_SIZE_XS)
           .fontColor($r('sys.color.font_tertiary'))
           .textAlign(TextAlign.Center)
-        
+
         // 显示计算特点
         if (this.selectedStandard === NoiseExposureStandard.INDUSTRIAL) {
           Text('• 3分贝减半规则')
@@ -506,14 +506,16 @@ export struct EnhancedExposureContent {
           // 水平条形图
           Row({ space: DesignConstants.SPACING_SM }) {
             // 条形图背景
-            Column() {
+            Row() {
               // 进度条
               Column()
                 .width(`${Math.max(stat.percentage, 5)}%`)
                 .height(8)
                 .backgroundColor(this.getRangeColor(stat.range))
                 .borderRadius(4)
+              Blank()
             }
+            .justifyContent(FlexAlign.Start)
             .layoutWeight(1)
             .height(8)
             .backgroundColor($r('sys.color.background_tertiary'))
