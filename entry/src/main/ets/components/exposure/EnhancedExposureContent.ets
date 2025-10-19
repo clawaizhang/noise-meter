@@ -666,7 +666,7 @@ export struct EnhancedExposureContent {
       .padding(16)
       .width('100%')
     }
-    .scrollBar(BarState.Auto)
+    .scrollBar(BarState.Off)
     .scrollable(ScrollDirection.Vertical)
     .edgeEffect(EdgeEffect.Spring)
     .width('100%')
