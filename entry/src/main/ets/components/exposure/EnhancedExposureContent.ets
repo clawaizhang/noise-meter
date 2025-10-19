@@ -10,6 +10,7 @@ import { ExposureStatisticsService } from '../../services/ExposureStatisticsServ
 import { DesignConstants } from '../../constants/DesignConstants';
 import { NoiseExposureStandard, DecibelRange, DecibelRangeConfigs, StandardConfigs } from '../../constants/ExposureStandardConstants';
 import common from '@ohos.app.ability.common';
+import { PremiumFeature } from '../membership/PremiumFeature';
 
 // 分贝区间统计数据
 interface DecibelRangeStats {
@@ -408,42 +409,6 @@ export struct EnhancedExposureContent {
       }
       .width('100%')
 
-      // 标准说明 - 显示详细的计算基准和特点
-      Column({ space: DesignConstants.SPACING_XS }) {
-        Text(`${StandardConfigs[this.selectedStandard].name} (${StandardConfigs[this.selectedStandard].code})`)
-          .fontSize(DesignConstants.FONT_SIZE_SM)
-          .fontColor($r('sys.color.font_tertiary'))
-          .textAlign(TextAlign.Center)
-
-        // 显示计算基准
-        Text(`基准: ${StandardConfigs[this.selectedStandard].baseLimit}dB / ${StandardConfigs[this.selectedStandard].baseDuration >= 24 * 60 * 60 * 1000 ? '24小时' : '8小时'}`)
-          .fontSize(DesignConstants.FONT_SIZE_XS)
-          .fontColor($r('sys.color.font_tertiary'))
-          .textAlign(TextAlign.Center)
-
-        // 显示计算特点
-        if (this.selectedStandard === NoiseExposureStandard.INDUSTRIAL) {
-          Text('• 3分贝减半规则')
-            .fontSize(DesignConstants.FONT_SIZE_XS)
-            .fontColor($r('sys.color.font_tertiary'))
-            .textAlign(TextAlign.Center)
-        } else if (this.selectedStandard === NoiseExposureStandard.ENVIRONMENTAL) {
-          Text('• 24小时等效声级')
-            .fontSize(DesignConstants.FONT_SIZE_XS)
-            .fontColor($r('sys.color.font_tertiary'))
-            .textAlign(TextAlign.Center)
-        } else if (this.selectedStandard === NoiseExposureStandard.OCCUPATIONAL) {
-          Text('• 听力保护评估')
-            .fontSize(DesignConstants.FONT_SIZE_XS)
-            .fontColor($r('sys.color.font_tertiary'))
-            .textAlign(TextAlign.Center)
-        } else if (this.selectedStandard === NoiseExposureStandard.SOCIAL) {
-          Text('• 舒适度评估')
-            .fontSize(DesignConstants.FONT_SIZE_XS)
-            .fontColor($r('sys.color.font_tertiary'))
-            .textAlign(TextAlign.Center)
-        }
-      }
     }
     .width('100%')
     .justifyContent(FlexAlign.Center)
@@ -589,7 +554,9 @@ export struct EnhancedExposureContent {
     Scroll() {
       Column({ space: DesignConstants.SPACING_LG }) {
         // 1. 标准选择区
-        this.buildStandardSelector()
+        PremiumFeature({ featureName: '暴露统计', featureDesc: '切换暴露统计功能' }) {
+          this.buildStandardSelector()
+        }
 
         // 2. 核心指标区（已整合今日峰值和平均值）
         this.buildCoreMetrics()
