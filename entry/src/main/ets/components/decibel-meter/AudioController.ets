@@ -54,8 +54,7 @@ export struct AudioController {
   private audioService: AudioService = AudioService.getInstance()
   private recordService: DecibelRecordService = new DecibelRecordService(getContext() as common.UIAbilityContext)
   // 服务实例
-  private audioControllerService: AudioControllerService = AudioControllerService.getInstance(this.ak,this.pk);
-
+  private audioControllerService: AudioControllerService = AudioControllerService.getInstance(this.ak, this.pk);
   // 自动保存相关属性
   private autoSaveTimer?: number;
   private lastAutoSaveTime: number = Date.now();
@@ -159,7 +158,7 @@ export struct AudioController {
 
       this.isRecording = true;
       this.ak.dataProcessingState.statisticsData.startTime = new Date().getTime();
-      this.resetData() ;
+      this.resetData();
       this.clearErrorMessage();
 
       // 创建新的记录对象
@@ -215,7 +214,7 @@ export struct AudioController {
           this.timedWeightingTypes.push({ timestamp: currentTime, type: this.pk.weighting_type });
 
           // 更新统计信息
-          this.updateStatistics(currentDecibel,spectrum);
+          this.updateStatistics(currentDecibel, spectrum);
 
           // 检查报警状态
           this.checkAlarmStatus(currentDecibel);
@@ -276,7 +275,8 @@ export struct AudioController {
           this.currentRecord.maxDecibel = this.ak.dataProcessingState.statisticsData.maxDb;
           this.currentRecord.avgDecibel = this.ak.dataProcessingState.statisticsData.avgDb;
           this.currentRecord.duration = this.ak.dataProcessingState.statisticsData.duration;
-          console.info('[FREQ_TRACE][Record] 创建记录对象 持续时间 '+this.ak.dataProcessingState.statisticsData.duration);
+          console.info('[FREQ_TRACE][Record] 创建记录对象 持续时间 ' +
+          this.ak.dataProcessingState.statisticsData.duration);
           this.currentRecord.decibelValues = this.timedValues.map(item => item.value);
           this.currentRecord.weightingTypes = this.timedWeightingTypes.map(item => item.type);
           this.currentRecord.audioFilePath = currentAudioFilePath;
@@ -332,7 +332,7 @@ export struct AudioController {
     this.timedWeightingTypes = [];
 
     this.ak.dataProcessingState.statisticsData.reset();
-    this.ak.uiDisplayState.reset() ;
+    this.ak.uiDisplayState.reset();
 
   }
 
@@ -349,13 +349,13 @@ export struct AudioController {
   }
 
   // 更新统计信息
-  private updateStatistics(currentDb: number,spectrumData:Float32Array): void {
+  private updateStatistics(currentDb: number, spectrumData: Float32Array): void {
     const values = this.timedValues.map(item => item.value);
 
     // 双管线架构：更新数据处理状态
     this.ak.dataProcessingState.processingDb = currentDb;
     this.ak.dataProcessingState.processingSpectrumData = spectrumData;
-    this.ak.dataProcessingState.statisticsData.updateStatistics(currentDb,values);
+    this.ak.dataProcessingState.statisticsData.updateStatistics(currentDb, values);
 
     // 同步到UI显示状态（仅在UI更新启用时）
     this.ak.uiDisplayState.syncFromProcessingState(this.ak.dataProcessingState);
