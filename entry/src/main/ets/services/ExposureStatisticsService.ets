@@ -13,7 +13,6 @@ import {
   NoiseExposureStandard,
   DecibelRange,
   StandardConfigs,
-  DecibelRangeConfigs,
   StandardConfig
 } from '../constants/ExposureStandardConstants';
 
@@ -28,6 +27,7 @@ interface DecibelRangeStats {
   range: DecibelRange;
   duration: string;
   percentage: number;
+  exposureColor?:Resource
 }
 
 // 多标准暴露数据
@@ -155,7 +155,8 @@ export class ExposureStatisticsService {
         results.push({
           range: range,
           duration: this.formatDuration(duration),
-          percentage: Math.round(percentage * 10) / 10 // 保留一位小数
+          percentage: Math.round(percentage * 10) / 10, // 保留一位小数
+          exposureColor:this.getRangeColor(range)
         });
       }
 
@@ -163,6 +164,21 @@ export class ExposureStatisticsService {
     } catch (error) {
       console.error('计算分贝区间统计失败:', error);
       return this.getEmptyDecibelRangeStats();
+    }
+  }
+
+  /**
+   * 获取分贝区间颜色
+   */
+  private getRangeColor(range: DecibelRange): Resource {
+    if (range === DecibelRange.VERY_QUIET || range === DecibelRange.QUIET) {
+      return $r('app.color.health_good');
+    } else if (range === DecibelRange.MODERATE || range === DecibelRange.NOISY) {
+      return $r('app.color.health_warning');
+    } else if (range === DecibelRange.HIGH || range === DecibelRange.VERY_HIGH) {
+      return $r('app.color.health_bad');
+    } else {
+      return $r('app.color.health_bad'); // 使用health_bad替代health_danger
     }
   }
 
@@ -463,7 +479,7 @@ export class ExposureStatisticsService {
       let data: DecibelRangeStats = {
         range: range,
         duration: '0分钟',
-        percentage: 0
+        percentage: 0,
       };
       return data;
     });
@@ -489,8 +505,8 @@ export class ExposureStatisticsService {
       if (record.maxDecibel > peak) {
         peak = record.maxDecibel;
       }
-      sum += record.avgDecibel;
-      count++;
+      sum += record.decibelValues.reduce((acc, cur) => acc + cur, 0);
+      count += record.decibelValues.length;
     }
 
     const average = Math.round(sum / count * 10) / 10; // 保留一位小数

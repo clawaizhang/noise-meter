@@ -55,7 +55,7 @@ export struct AudioController {
   private recordService: DecibelRecordService = new DecibelRecordService(getContext() as common.UIAbilityContext)
   // 服务实例
   private audioControllerService: AudioControllerService = AudioControllerService.getInstance(this.ak,this.pk);
-  
+
   // 自动保存相关属性
   private autoSaveTimer?: number;
   private lastAutoSaveTime: number = Date.now();
@@ -105,7 +105,7 @@ export struct AudioController {
   aboutToAppear() {
     // 启动时间显示更新
     this.audioControllerService.startTimeDisplayUpdates();
-    
+
     if (this.ak.microphonePermissionGranted) {
       this.startRecording();
     }
@@ -125,7 +125,7 @@ export struct AudioController {
   aboutToDisappear() {
     // 停止时间显示更新
     this.audioControllerService.stopTimeDisplayUpdates();
-    
+
     // 清理RxJS资源
     this.stopAutoSaveMonitoring();
     this.stopDataCleanupMonitoring();
@@ -334,7 +334,6 @@ export struct AudioController {
     this.ak.dataProcessingState.statisticsData.reset();
     this.ak.uiDisplayState.reset() ;
 
-    // 通知UI更新
   }
 
   private addErrorMessage(message: string): void {
@@ -357,7 +356,7 @@ export struct AudioController {
     this.ak.dataProcessingState.processingDb = currentDb;
     this.ak.dataProcessingState.processingSpectrumData = spectrumData;
     this.ak.dataProcessingState.statisticsData.updateStatistics(currentDb,values);
-    
+
     // 同步到UI显示状态（仅在UI更新启用时）
     this.ak.uiDisplayState.syncFromProcessingState(this.ak.dataProcessingState);
   }
@@ -383,11 +382,11 @@ export struct AudioController {
   // 执行保存操作
   private performSave(comments: string) {
     console.info('[FREQ_TRACE][Save] 开始保存数据');
-    
+
     // 更新UI显示状态中的保存时间（手动保存时）
     const currentTime = Date.now();
     this.audioControllerService.updateLastSaveTime(currentTime);
-    
+
     this.stopRecording(comments);
   }
 

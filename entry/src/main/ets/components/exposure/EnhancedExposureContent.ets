@@ -23,6 +23,7 @@ interface DecibelRangeStats {
   range: DecibelRange;
   duration: string;
   percentage: number;
+  exposureColor?: Resource;
 }
 
 // 进度环配置接口
@@ -178,21 +179,6 @@ export struct EnhancedExposureContent {
       return $r('app.color.health_bad'); // 红色 - 危险
     } else {
       return $r('sys.color.alert'); // 深红色 - 严重超标
-    }
-  }
-
-  /**
-   * 获取分贝区间颜色
-   */
-  private getRangeColor(range: DecibelRange): Resource {
-    if (range === DecibelRange.VERY_QUIET || range === DecibelRange.QUIET) {
-      return $r('app.color.health_good');
-    } else if (range === DecibelRange.MODERATE || range === DecibelRange.NOISY) {
-      return $r('app.color.health_warning');
-    } else if (range === DecibelRange.HIGH || range === DecibelRange.VERY_HIGH) {
-      return $r('app.color.health_bad');
-    } else {
-      return $r('app.color.health_bad'); // 使用health_bad替代health_danger
     }
   }
 
@@ -543,9 +529,9 @@ export struct EnhancedExposureContent {
             Row() {
               // 进度条
               Column()
-                .width(`${Math.max(stat.percentage, 5)}%`)
+                .width(`${stat.percentage}%`)
                 .height(8)
-                .backgroundColor(this.getRangeColor(stat.range))
+                .backgroundColor(stat.exposureColor)
                 .borderRadius(4)
               Blank()
             }
@@ -559,7 +545,7 @@ export struct EnhancedExposureContent {
             Row({ space: DesignConstants.SPACING_XS }) {
               Text(`${stat.percentage}%`)
                 .fontSize(DesignConstants.FONT_SIZE_SM)
-                .fontColor(this.getRangeColor(stat.range))
+                .fontColor(stat.exposureColor)
                 .fontWeight(FontWeight.Bold)
 
               Text(stat.duration)
