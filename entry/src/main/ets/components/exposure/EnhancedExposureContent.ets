@@ -554,7 +554,7 @@ export struct EnhancedExposureContent {
     Scroll() {
       Column({ space: DesignConstants.SPACING_LG }) {
         // 1. 标准选择区
-        PremiumFeature({ featureName: '暴露统计', featureDesc: '专业暴露统计计算' }) {
+        PremiumFeature({ featureName: '噪音暴露统计', featureDesc: '专业噪音暴露统计计算' }) {
           this.buildStandardSelector()
         }
 
