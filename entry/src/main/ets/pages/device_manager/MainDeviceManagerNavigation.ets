@@ -9,6 +9,13 @@ export function DeviceManagerBuilder() {
   MainDeviceManager()
 }
 
+// Tab配置接口定义
+interface TabConfig {
+  title: string;
+  icon: Resource;
+  index: number;
+}
+
 @ComponentV2
 export struct MainDeviceManager {
   @Consumer(navigationStack) navStack: NavPathStack = new NavPathStack()
@@ -40,15 +47,15 @@ export struct MainDeviceManager {
 
 
   @Builder
-  TabBuilder(title: string, icon: Resource, index: number) {
+  TabBuilder(config: TabConfig) {
     Column() {
-      Image(icon)
+      Image(config.icon)
         .width(24)
         .height(24)
-        .fillColor(this.currentIndex === index ? $r('app.color.icon_active') : $r('app.color.icon_inactive'))
-      Text(title)
+        .fillColor(this.currentIndex === config.index ? $r('app.color.icon_active') : $r('app.color.icon_inactive'))
+      Text(config.title)
         .fontSize(12)
-        .fontColor(this.currentIndex === index ? $r('app.color.text_primary') : $r('app.color.text_secondary'))
+        .fontColor(this.currentIndex === config.index ? $r('app.color.text_primary') : $r('app.color.text_secondary'))
         .margin({ top: 4 })
     }
 
@@ -92,19 +99,19 @@ export struct MainDeviceManager {
           .backgroundColor($r('app.color.background_secondary'))
           .alignItems(HorizontalAlign.Center)
         }
-        .tabBar(this.TabBuilder('手机管家', $r('app.media.ic_meter'), 0))
+        .tabBar(this.TabBuilder({ title: '手机管家', icon: $r('app.media.ic_meter'), index: 0 }))
 
         TabContent() {
 
         }
-        .tabBar(this.TabBuilder('检测记录', $r('app.media.ic_history'), 1))
+        .tabBar(this.TabBuilder({ title: '检测记录', icon: $r('app.media.ic_history'), index: 1 }))
 
 
 
         TabContent() {
           SettingsDeviceManager()
         }
-        .tabBar(this.TabBuilder('设置', $r('app.media.ic_settings'), 2))
+        .tabBar(this.TabBuilder({ title: '设置', icon: $r('app.media.ic_settings'), index: 2 }))
       }
       .scrollable(false)
       .onChange((index: number) => {

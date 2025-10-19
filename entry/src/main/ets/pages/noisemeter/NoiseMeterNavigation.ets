@@ -16,6 +16,13 @@ interface NavigationMenuItem {
   action: () => void;
 }
 
+// Tab配置接口定义
+interface TabConfig {
+  title: string;
+  icon: Resource;
+  index: number;
+}
+
 @Builder
 export function NoiseMeterBuilder() {
   MainNoiseMeter()
@@ -64,15 +71,15 @@ export struct MainNoiseMeter {
   }
 
   @Builder
-  TabBuilder(title: string, icon: Resource, index: number) {
+  TabBuilder(config: TabConfig) {
     Column() {
-      Image(icon)
+      Image(config.icon)
         .width(24)
         .height(24)
-        .fillColor(this.currentIndex === index ? $r('sys.color.icon_emphasize') : $r('sys.color.icon_primary'))
-      Text(title)
+        .fillColor(this.currentIndex === config.index ? $r('sys.color.icon_emphasize') : $r('sys.color.icon_primary'))
+      Text(config.title)
         .fontSize(12)
-        .fontColor(this.currentIndex === index ? $r('sys.color.font_emphasize') : $r('sys.color.font_primary'))
+        .fontColor(this.currentIndex === config.index ? $r('sys.color.font_emphasize') : $r('sys.color.font_primary'))
         .margin({ top: 4 })
     }
     .justifyContent(FlexAlign.Center)
@@ -209,7 +216,7 @@ export struct MainNoiseMeter {
         TabContent() {
           this.DashboardContent()
         }
-        .tabBar(this.TabBuilder('静喵Sound',this.currentIndex == 0 ? $r("app.media.solar_spedometer_middle_bold"):$r("app.media.ic_meter"), 0))
+        .tabBar(this.TabBuilder({ title: '静喵Sound', icon: this.currentIndex == 0 ? $r("app.media.solar_spedometer_middle_bold") : $r("app.media.ic_meter"), index: 0 }))
 
         // 警报页面 - 使用独立的AlertsContent组件
         TabContent() {
@@ -224,7 +231,7 @@ export struct MainNoiseMeter {
               playMode: PlayMode.Normal
             })
         }
-        .tabBar(this.TabBuilder('警报',this.currentIndex == 1 ? $r("app.media.bell_bing_bold"):$r("app.media.ic_alarm"), 1))
+        .tabBar(this.TabBuilder({ title: '警报', icon: this.currentIndex == 1 ? $r("app.media.bell_bing_bold") : $r("app.media.ic_alarm"), index: 1 }))
 
         TabContent() {
           EnhancedExposureContent()
@@ -238,12 +245,12 @@ export struct MainNoiseMeter {
               playMode: PlayMode.Normal
             })
         }
-        .tabBar(this.TabBuilder('今天', this.currentIndex == 2 ? $r("app.media.ic_stats"):$r("app.media.ic_stats"), 2))
+        .tabBar(this.TabBuilder({ title: '今天', icon: this.currentIndex == 2 ? $r("app.media.ic_stats_bold") : $r("app.media.ic_stats"), index: 2 }))
 
         TabContent() {
           MyContentComponent({ currentIndex: this.currentIndex })
         }
-        .tabBar(this.TabBuilder('我的', this.currentIndex == 3 ? $r("app.media.solar_user_circle_bold"):$r("app.media.ic_user"), 3))
+        .tabBar(this.TabBuilder({ title: '我的', icon: this.currentIndex == 3 ? $r("app.media.solar_user_circle_bold") : $r("app.media.ic_user"), index: 3 }))
       }
       .scrollable(false)
       .onChange((index: number) => {
