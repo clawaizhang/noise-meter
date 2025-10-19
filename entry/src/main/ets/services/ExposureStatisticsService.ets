@@ -113,6 +113,7 @@ export class ExposureStatisticsService {
 
   /**
    * 计算分贝区间统计数据
+   * 基于每一刻分贝值的精确计算
    */
   public async calculateDecibelRangeStats(): Promise<DecibelRangeStats[]> {
     try {
@@ -128,13 +129,21 @@ export class ExposureStatisticsService {
         rangeStats.set(range, 0);
       });
 
-      // 计算每个记录的时间分布 - 直接使用duration字段
+      // 基于每一刻分贝值的精确计算
       let totalDuration = 0;
       for (const record of todayRecords) {
-        const range = this.getDecibelRange(record.avgDecibel);
-        const duration = record.duration; // 直接使用记录的持续时间（单位：秒）
-        rangeStats.set(range, rangeStats.get(range)! + duration);
-        totalDuration += duration;
+        if (!record.decibelValues || record.decibelValues.length === 0) {
+          continue;
+        }
+
+        const timeInterval = record.duration / record.decibelValues.length;
+        
+        // 遍历每一个分贝值进行精确计算
+        for (const decibel of record.decibelValues) {
+          const range = this.getDecibelRange(decibel);
+          rangeStats.set(range, rangeStats.get(range)! + timeInterval);
+          totalDuration += timeInterval;
+        }
       }
 
       // 转换为百分比
@@ -227,22 +236,27 @@ export class ExposureStatisticsService {
   /**
    * 工业企业标准计算 - 3分贝减半规则
    * 专业声学原理：能量加倍原则，每增加3分贝，声能量加倍，允许暴露时间减半
+   * 基于每一刻分贝值的精确计算
    */
   private calculateIndustrialExposure(records: DecibelRecord[]): number {
-    let totalExposureDose = 0; // 改为累加暴露剂量
+    let totalExposureDose = 0;
 
-    // 修复循环逻辑问题：处理所有记录
-    for (let i = 0; i < records.length; i++) {
-      const record = records[i];
-      const decibel = record.avgDecibel;
-      const duration = record.duration; // 单位：秒
+    for (const record of records) {
+      if (!record.decibelValues || record.decibelValues.length === 0) {
+        continue;
+      }
 
-      // 3分贝减半规则：允许暴露时间 = 8小时 / 2^((分贝 - 85)/3)
-      const allowedTimeSeconds = 8 * 60 * 60 / Math.pow(2, (decibel - 85) / 3);
+      const timeInterval = record.duration / record.decibelValues.length;
       
-      // 暴露剂量 = 实际暴露时间 / 允许暴露时间
-      const exposureDose = duration / allowedTimeSeconds;
-      totalExposureDose += exposureDose;
+      // 遍历每一个分贝值进行精确计算
+      for (const decibel of record.decibelValues) {
+        // 3分贝减半规则：允许暴露时间 = 8小时 / 2^((分贝 - 85)/3)
+        const allowedTimeSeconds = 8 * 60 * 60 / Math.pow(2, (decibel - 85) / 3);
+        
+        // 暴露剂量 = 时间间隔 / 允许暴露时间
+        const exposureDose = timeInterval / allowedTimeSeconds;
+        totalExposureDose += exposureDose;
+      }
     }
 
     // 总暴露百分比 = 总暴露剂量 × 100%
@@ -253,6 +267,7 @@ export class ExposureStatisticsService {
   /**
    * 声环境标准计算 - 24小时等效声级
    * 专业声学原理：昼夜等效声级 (Ldn)，考虑夜间噪声的额外影响
+   * 基于每一刻分贝值的精确计算
    */
   private calculateEnvironmentalExposure(records: DecibelRecord[]): number {
     let dayEnergy = 0;
@@ -260,8 +275,11 @@ export class ExposureStatisticsService {
     let dayDuration = 0;
     let nightDuration = 0;
 
-    for (let i = 0; i < records.length; i++) {
-      const record = records[i];
+    for (const record of records) {
+      if (!record.decibelValues || record.decibelValues.length === 0) {
+        continue;
+      }
+
       const timestamp = record.timestamp;
       const date = new Date(timestamp);
       const hour = date.getHours();
@@ -269,14 +287,19 @@ export class ExposureStatisticsService {
       // 判断白天(6:00-22:00)和夜间(22:00-6:00)
       const isDaytime = hour >= 6 && hour < 22;
       
-      const energy = Math.pow(10, record.avgDecibel / 10) * record.duration;
+      const timeInterval = record.duration / record.decibelValues.length;
       
-      if (isDaytime) {
-        dayEnergy += energy;
-        dayDuration += record.duration;
-      } else {
-        nightEnergy += energy;
-        nightDuration += record.duration;
+      // 遍历每一个分贝值进行精确计算
+      for (const decibel of record.decibelValues) {
+        const energy = Math.pow(10, decibel / 10) * timeInterval;
+        
+        if (isDaytime) {
+          dayEnergy += energy;
+          dayDuration += timeInterval;
+        } else {
+          nightEnergy += energy;
+          nightDuration += timeInterval;
+        }
       }
     }
 
@@ -315,19 +338,25 @@ export class ExposureStatisticsService {
   /**
    * 职业健康标准计算 - 累积暴露风险评估
    * 专业声学原理：基于分贝-时间加权计算的累积暴露量
+   * 基于每一刻分贝值的精确计算
    */
   private calculateOccupationalExposure(records: DecibelRecord[]): number {
     let cumulativeExposure = 0;
     let totalDuration = 0;
 
-    for (let i = 0; i < records.length; i++) {
-      const record = records[i];
-      const decibel = record.avgDecibel;
-      const duration = record.duration;
+    for (const record of records) {
+      if (!record.decibelValues || record.decibelValues.length === 0) {
+        continue;
+      }
 
-      // 累积暴露量 = Σ(10^(分贝/10) × 时间)
-      cumulativeExposure += Math.pow(10, decibel / 10) * duration;
-      totalDuration += duration;
+      const timeInterval = record.duration / record.decibelValues.length;
+      
+      // 遍历每一个分贝值进行精确计算
+      for (const decibel of record.decibelValues) {
+        // 累积暴露量 = Σ(10^(分贝/10) × 时间间隔)
+        cumulativeExposure += Math.pow(10, decibel / 10) * timeInterval;
+        totalDuration += timeInterval;
+      }
     }
 
     if (totalDuration === 0) {
@@ -348,17 +377,25 @@ export class ExposureStatisticsService {
   /**
    * 社会生活标准计算 - 基于等效声级的暴露剂量
    * 符合GB 22337-2008标准要求，基于声能量比计算暴露剂量
+   * 基于每一刻分贝值的精确计算
    */
   private calculateSocialExposure(records: DecibelRecord[]): number {
     let totalEnergy = 0;
     let totalDuration = 0;
 
-    // 计算总声能量和总时间
-    for (let i = 0; i < records.length; i++) {
-      const record = records[i];
-      const energy = Math.pow(10, record.avgDecibel / 10) * record.duration;
-      totalEnergy += energy;
-      totalDuration += record.duration;
+    for (const record of records) {
+      if (!record.decibelValues || record.decibelValues.length === 0) {
+        continue;
+      }
+
+      const timeInterval = record.duration / record.decibelValues.length;
+      
+      // 遍历每一个分贝值进行精确计算
+      for (const decibel of record.decibelValues) {
+        const energy = Math.pow(10, decibel / 10) * timeInterval;
+        totalEnergy += energy;
+        totalDuration += timeInterval;
+      }
     }
 
     if (totalDuration === 0) {
