@@ -289,15 +289,15 @@ export struct EnhancedExposureContent {
 
               // 使用场景说明 - 为每个标准显示适用场景
               if (standard === NoiseExposureStandard.WORKPLACE) {
-                Text('• 适用场景：办公室、工厂等工作环境')
+                Text('• 适用场景：工厂、车间、建筑工地等职业环境')
                   .fontSize(DesignConstants.FONT_SIZE_SM)
                   .fontColor($r('sys.color.font_tertiary'))
               } else if (standard === NoiseExposureStandard.ENVIRONMENTAL) {
-                Text('• 适用场景：家庭、社区等生活环境')
+                Text('• 适用场景：街道、公园、社区等室外环境')
                   .fontSize(DesignConstants.FONT_SIZE_SM)
                   .fontColor($r('sys.color.font_tertiary'))
               } else if (standard === NoiseExposureStandard.SOCIAL) {
-                Text('• 适用场景：日常生活舒适度评估')
+                Text('• 适用场景：住宅、办公室、学校等室内环境')
                   .fontSize(DesignConstants.FONT_SIZE_SM)
                   .fontColor($r('sys.color.font_tertiary'))
               }

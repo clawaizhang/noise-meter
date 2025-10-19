@@ -227,12 +227,12 @@ export class ExposureStatisticsService {
       case NoiseExposureStandard.SOCIAL:
         return this.calculateSocialExposure(records);
       default:
-        return this.calculateWorkplaceExposure(records); // 默认使用工作场所标准
+        return this.calculateWorkplaceExposure(records); // 默认使用职业听力保护标准
     }
   }
 
   /**
-   * 工作场所标准计算 - 3分贝减半规则
+   * 职业听力保护标准计算 - 3分贝减半规则
    * 专业声学原理：能量加倍原则，每增加3分贝，声能量加倍，允许暴露时间减半
    * 基于每一刻分贝值的精确计算
    */
@@ -263,7 +263,7 @@ export class ExposureStatisticsService {
   }
 
   /**
-   * 声环境标准计算 - 24小时等效声级
+   * 室外环境评估标准计算 - 24小时等效声级
    * 专业声学原理：昼夜等效声级 (Ldn)，考虑夜间噪声的额外影响
    * 基于每一刻分贝值的精确计算
    */
@@ -285,8 +285,8 @@ export class ExposureStatisticsService {
       // 判断白天(6:00-22:00)和夜间(22:00-6:00)
       const isDaytime = hour >= 6 && hour < 22;
       
-      // 修正：时间单位统一为秒（声学计算标准单位）
-      const timeIntervalSeconds = (record.duration / record.decibelValues.length) / 1000;
+      // 时间单位统一为秒（声学计算标准单位）
+      const timeIntervalSeconds = record.duration / record.decibelValues.length;
       
       // 遍历每一个分贝值进行精确计算
       for (const decibel of record.decibelValues) {
@@ -312,14 +312,15 @@ export class ExposureStatisticsService {
 
     const Ld = dayDuration > 0 ? 10 * Math.log10(dayEnergy / dayDuration) : 0;
     const Ln = nightDuration > 0 ? 10 * Math.log10(nightEnergy / nightDuration) : 0;
-    
-    // 夜间噪声加10分贝计算
+
+
+    // 修正后的Ldn计算 - 按实际数据时间比例计算
     const Ldn = 10 * Math.log10(
-      (15/24) * Math.pow(10, Ld/10) +
-      (9/24) * Math.pow(10, (Ln + 10)/10)
+      16/24 * Math.pow(10, Ld/10) +
+      9/24 * Math.pow(10, (Ln + 10)/10)
     );
 
-    // 修正：声环境标准基于等效声级与标准限值的比较
+    // 修正：室外环境评估标准基于等效声级与标准限值的比较
     // 符合GB 3096-2008标准要求
     const config = StandardConfigs[NoiseExposureStandard.ENVIRONMENTAL];
     const standardLimit = config.baseLimit; // 55dB - 2类功能区昼间标准
@@ -335,7 +336,7 @@ export class ExposureStatisticsService {
 
 
   /**
-   * 社会生活标准计算 - 基于等效声级的暴露评估
+   * 室内生活环境标准计算 - 基于等效声级的暴露评估
    * 符合GB 22337-2008标准要求，基于等效声级与标准限值的比较
    * 基于每一刻分贝值的精确计算
    */
@@ -365,7 +366,7 @@ export class ExposureStatisticsService {
     // 计算等效声级
     const equivalentLevel = 10 * Math.log10(totalEnergy / totalDuration);
 
-    // 修正：社会生活标准基于等效声级与标准限值的比较
+    // 修正：室内生活环境标准基于等效声级与标准限值的比较
     const config = StandardConfigs[NoiseExposureStandard.SOCIAL];
     const standardLimit = config.baseLimit; // 50dB - 生活区域合理标准
     
@@ -400,7 +401,7 @@ export class ExposureStatisticsService {
   }
 
   /**
-   * 工作场所标准剩余安全时间计算
+   * 职业听力保护标准剩余安全时间计算
    */
   private calculateWorkplaceRemainingTime(exposurePercentage: number, config: StandardConfig): string {
     const remainingPercentage = 100 - exposurePercentage;
