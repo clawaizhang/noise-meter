@@ -229,8 +229,7 @@ export class ExposureStatisticsService {
    * 专业声学原理：能量加倍原则，每增加3分贝，声能量加倍，允许暴露时间减半
    */
   private calculateIndustrialExposure(records: DecibelRecord[]): number {
-    let totalExposure = 0;
-    let totalDuration = 0;
+    let totalExposureDose = 0; // 改为累加暴露剂量
 
     // 修复循环逻辑问题：处理所有记录
     for (let i = 0; i < records.length; i++) {
@@ -241,19 +240,14 @@ export class ExposureStatisticsService {
       // 3分贝减半规则：允许暴露时间 = 8小时 / 2^((分贝 - 85)/3)
       const allowedTimeSeconds = 8 * 60 * 60 / Math.pow(2, (decibel - 85) / 3);
       
-      // 暴露剂量 = 100% × (实际暴露时间 / 允许暴露时间)
-      const exposurePercentage = (duration / allowedTimeSeconds) * 100;
-      totalExposure += exposurePercentage * duration;
-      totalDuration += duration;
+      // 暴露剂量 = 实际暴露时间 / 允许暴露时间
+      const exposureDose = duration / allowedTimeSeconds;
+      totalExposureDose += exposureDose;
     }
 
-    if (totalDuration === 0) {
-      return 0;
-    }
-
-    // 加权平均暴露剂量
-    const weightedExposure = totalExposure / totalDuration;
-    return Math.min(Math.max(Number(weightedExposure.toFixed(2)), 0), 200);
+    // 总暴露百分比 = 总暴露剂量 × 100%
+    const exposurePercentage = totalExposureDose * 100;
+    return Number(exposurePercentage.toFixed(2));
   }
 
   /**
@@ -302,11 +296,20 @@ export class ExposureStatisticsService {
       (9/24) * Math.pow(10, (Ln + 10)/10)
     );
 
-    // 暴露剂量 = 100% × (Ldn / 基准限值)
+    // 修正：声环境标准使用基于24小时等效声级的暴露剂量计算
+    // 符合GB 3096-2008标准要求，基于声能量比计算暴露剂量
     const config = StandardConfigs[NoiseExposureStandard.ENVIRONMENTAL];
-    const exposurePercentage = (Ldn / config.baseLimit) * 100;
     
-    return Math.min(Math.max(Number(exposurePercentage.toFixed(2)), 0), 200);
+    // 实际声能量 = 10^(Ldn/10) × 24小时
+    const actualEnergy = Math.pow(10, Ldn / 10) * 24 * 3600; // 24小时转换为秒
+    
+    // 基准声能量 = 10^(基准限值/10) × 24小时
+    const baseEnergy = Math.pow(10, config.baseLimit / 10) * 24 * 3600;
+    
+    // 暴露剂量 = 100% × (实际声能量 / 基准声能量)
+    const exposurePercentage = (actualEnergy / baseEnergy) * 100;
+    
+    return Number(exposurePercentage.toFixed(2));
   }
 
   /**
@@ -331,58 +334,51 @@ export class ExposureStatisticsService {
       return 0;
     }
 
-    // 基准暴露量 = 10^(基准限值/10) × 基准时间
+    // 基准暴露量 = 10^(基准限值/10) × 基准时间(秒)
     const config = StandardConfigs[NoiseExposureStandard.OCCUPATIONAL];
-    const baseExposure = Math.pow(10, config.baseLimit / 10) * config.baseDuration;
+    const baseDurationSeconds = config.baseDuration / 1000; // 毫秒转秒
+    const baseExposure = Math.pow(10, config.baseLimit / 10) * baseDurationSeconds;
 
     // 暴露剂量 = 100% × (累积暴露量 / 基准暴露量)
     const exposurePercentage = (cumulativeExposure / baseExposure) * 100;
     
-    return Math.min(Math.max(Number(exposurePercentage.toFixed(2)), 0), 200);
+    return Number(exposurePercentage.toFixed(2));
   }
 
   /**
-   * 社会生活标准计算 - 舒适度评估
-   * 专业声学原理：基于心理声学的舒适度评分模型
+   * 社会生活标准计算 - 基于等效声级的暴露剂量
+   * 符合GB 22337-2008标准要求，基于声能量比计算暴露剂量
    */
   private calculateSocialExposure(records: DecibelRecord[]): number {
-    let totalDiscomfort = 0;
+    let totalEnergy = 0;
     let totalDuration = 0;
 
+    // 计算总声能量和总时间
     for (let i = 0; i < records.length; i++) {
       const record = records[i];
-      const decibel = record.avgDecibel;
-      const duration = record.duration;
-
-      // 舒适度评分模型：基于分贝水平的舒适度权重
-      let discomfortWeight = 0;
-      if (decibel < 50) {
-        discomfortWeight = 0.1; // 非常舒适
-      } else if (decibel < 60) {
-        discomfortWeight = 0.3; // 舒适
-      } else if (decibel < 70) {
-        discomfortWeight = 0.6; // 一般
-      } else if (decibel < 80) {
-        discomfortWeight = 0.8; // 不舒适
-      } else {
-        discomfortWeight = 1.0; // 非常不舒适
-      }
-
-      totalDiscomfort += discomfortWeight * duration;
-      totalDuration += duration;
+      const energy = Math.pow(10, record.avgDecibel / 10) * record.duration;
+      totalEnergy += energy;
+      totalDuration += record.duration;
     }
 
     if (totalDuration === 0) {
       return 0;
     }
 
-    // 平均不舒适度
-    const averageDiscomfort = totalDiscomfort / totalDuration;
+    // 计算等效声级
+    const equivalentLevel = 10 * Math.log10(totalEnergy / totalDuration);
+
+    // 实际声能量 = 10^(等效声级/10) × 24小时
+    const actualEnergy = Math.pow(10, equivalentLevel / 10) * 24 * 3600; // 24小时转换为秒
+
+    // 基准声能量 = 10^(基准限值/10) × 24小时
+    const config = StandardConfigs[NoiseExposureStandard.SOCIAL];
+    const baseEnergy = Math.pow(10, config.baseLimit / 10) * 24 * 3600;
+
+    // 暴露剂量 = 100% × (实际声能量 / 基准声能量)
+    const exposurePercentage = (actualEnergy / baseEnergy) * 100;
     
-    // 暴露剂量 = 100% × 平均不舒适度
-    const exposurePercentage = averageDiscomfort * 100;
-    
-    return Math.min(Math.max(Number(exposurePercentage.toFixed(2)), 0), 200);
+    return Number(exposurePercentage.toFixed(2));
   }
 
   /**
@@ -418,8 +414,9 @@ export class ExposureStatisticsService {
     const remainingPercentage = 100 - exposurePercentage;
     const remainingEnergyRatio = remainingPercentage / 100;
 
-    // 基于基准时间的剩余安全时间
-    const remainingTime = (config.baseDuration / (60 * 1000)) * remainingEnergyRatio;
+    // 基于基准时间的剩余安全时间（分钟）
+    const baseDurationMinutes = config.baseDuration / (60 * 1000); // 毫秒转分钟
+    const remainingTime = baseDurationMinutes * remainingEnergyRatio;
 
     return this.formatRemainingTime(remainingTime);
   }
@@ -443,8 +440,9 @@ export class ExposureStatisticsService {
     const remainingPercentage = 100 - exposurePercentage;
     const remainingEnergyRatio = remainingPercentage / 100;
 
-    // 基于8小时工作制的剩余安全时间
-    const remainingTime = (8 * 60) * remainingEnergyRatio; // 8小时转换为分钟
+    // 基于基准时间的剩余安全时间（分钟）
+    const baseDurationMinutes = config.baseDuration / (60 * 1000); // 毫秒转分钟
+    const remainingTime = baseDurationMinutes * remainingEnergyRatio;
 
     return this.formatRemainingTime(remainingTime);
   }
