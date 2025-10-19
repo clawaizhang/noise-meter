@@ -126,7 +126,23 @@ export class AudioService {
         `缓冲区大小=${this.currentConfig.bufferSize}`);
       this.audioCapturer = await audio.createAudioCapturer(this.audioCapturerOptions);
       console.info('[音频采集] 音频采集器创建成功');
-
+      this.audioCapturer.on('audioInterrupt', async (interruptEvent: audio.InterruptEvent) => {
+        this.state = AudioServiceState.IDLE;
+        const maxRetries = 3;
+        const retryInterval = 1000; // 1秒
+        let retryCount = 0;
+        while (true) {
+          try {
+            await this.startCapture();
+            console.info('[FREQ_TRACE][Audio] 音频采集启动成功');
+            break; // 成功则退出循环
+          } catch (error) {
+            retryCount++;
+            console.error(`[FREQ_TRACE][Audio] 音频采集启动失败，重试次数：${retryCount}/${maxRetries}`, error);
+            await new Promise<void>(resolve => setTimeout(resolve, retryInterval));
+          }
+        }
+      })
       // 开始读取音频数据
       await this.startReading();
 

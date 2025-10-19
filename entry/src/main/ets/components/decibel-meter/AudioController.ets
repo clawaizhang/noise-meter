@@ -135,27 +135,7 @@ export struct AudioController {
   async startRecording(): Promise<void> {
     try {
       // 启动音频采集，带重试机制
-      const maxRetries = 3;
-      const retryInterval = 1000; // 1秒
-      let retryCount = 0;
-
-      while (true) {
-        try {
-          await this.audioService.startCapture();
-          console.info('[FREQ_TRACE][Audio] 音频采集启动成功');
-          break; // 成功则退出循环
-        } catch (error) {
-          retryCount++;
-          console.error(`[FREQ_TRACE][Audio] 音频采集启动失败，重试次数：${retryCount}/${maxRetries}`, error);
-          await new Promise<void>(resolve => setTimeout(resolve, retryInterval));
-          if (retryCount > maxRetries) {
-            // 达到最大重试次数，提示用户
-            this.addErrorMessage(`音频采集启动失败: ${error.message}`);
-            return;
-          }
-        }
-      }
-
+      await this.tryStartCapture();
       this.isRecording = true;
       this.ak.dataProcessingState.statisticsData.startTime = new Date().getTime();
       this.resetData();
@@ -228,6 +208,28 @@ export struct AudioController {
       this.isRecording = false;
       this.addErrorMessage(`音频采集启动失败: ${error.message}`);
       this.resetData();
+    }
+  }
+
+  private async tryStartCapture() {
+    const maxRetries = 3;
+    const retryInterval = 1000; // 1秒
+    let retryCount = 0;
+
+    while (true) {
+      try {
+        await this.audioService.startCapture();
+        console.info('[FREQ_TRACE][Audio] 音频采集启动成功');
+        break; // 成功则退出循环
+      } catch (error) {
+        retryCount++;
+        console.error(`[FREQ_TRACE][Audio] 音频采集启动失败，重试次数：${retryCount}/${maxRetries}`, error);
+        await new Promise<void>(resolve => setTimeout(resolve, retryInterval));
+        if (retryCount > maxRetries) {
+          // 达到最大重试次数，提示用户
+          this.addErrorMessage(`音频采集启动失败: ${error.message}`);
+        }
+      }
     }
   }
 
