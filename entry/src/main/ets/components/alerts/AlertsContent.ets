@@ -28,7 +28,7 @@ export struct AlertsContent {
   @Monitor('ak.uiDisplayState.displayDb')
   async onDbChange(monitor: IMonitor) {
     const currentDecibel = monitor.value<number>()?.now;
-    if (currentDecibel !== undefined) {
+    if (currentDecibel !== undefined && this.ak.isDisplayApp) {
       await this.checkAlertStatus(currentDecibel);
     }
   }
