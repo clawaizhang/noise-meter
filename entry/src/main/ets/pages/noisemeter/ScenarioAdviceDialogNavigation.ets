@@ -1,4 +1,4 @@
-import { curves } from '@kit.ArkUI';
+import { AppStorageV2, curves } from '@kit.ArkUI';
 import { AppKeys } from '../../models/AppKeys';
 import { DecibelService } from '../../services/DecibelService';
 
@@ -231,36 +231,10 @@ function buildScenarioAdviceCard(scenario: ScenarioData, ak: AppKeys, isCurrentS
     .combine(TransitionEffect.translate({ x: -150, y: 0 }).animation({ curve: curves.springMotion() })))
 }
 
-// 场景类型选择器
-interface GeneratedTypeLiteralInterface_1 {
+// 场景类型选择器类型定义
+interface ScenarioTypeSelectorItem {
   type: ScenarioType;
   label: string;
-}
-
-@Builder
-function buildScenarioTypeSelector(selectedScenarioType: ScenarioType, onScenarioTypeChange: (type: ScenarioType) => void) {
-  Row({ space: 8 }) {
-    ForEach([
-      { type: ScenarioType.RESIDENTIAL, label: '居住' },
-      { type: ScenarioType.WORK, label: '工作' },
-      { type: ScenarioType.ENTERTAINMENT, label: '娱乐' },
-      { type: ScenarioType.TRANSPORTATION, label: '交通' }
-    ], (item: GeneratedTypeLiteralInterface_1) => {
-      Text(item.label)
-        .fontSize(14)
-        .fontWeight(FontWeight.Medium)
-        .fontColor(selectedScenarioType === item.type ? $r('sys.color.font_primary') : $r('sys.color.font_secondary'))
-        .padding(12)
-        .backgroundColor(selectedScenarioType === item.type ? $r('sys.color.comp_background_primary') : $r('sys.color.background_secondary'))
-        .borderRadius(8)
-        .onClick(() => {
-          onScenarioTypeChange(item.type);
-        });
-    })
-  }
-  .width('100%')
-  .justifyContent(FlexAlign.Center)
-  .padding(8)
 }
 
 // 获取最适合的场景
@@ -279,11 +253,67 @@ function getBestMatchingScenario(currentDb: number): ScenarioData | null {
   return bestMatch;
 }
 
-// 场景化建议对话框构建器
-@Builder
-export function ScenarioAdviceDialogBuilder(ak: AppKeys) {
+// 场景化建议组件
+@ComponentV2
+struct ScenarioAdviceComponent {
+  @Local selectedScenarioType: ScenarioType = ScenarioType.RESIDENTIAL
+  @Local ak: AppKeys = AppStorageV2.connect(AppKeys)!;
 
-  NavDestination() {
+  aboutToAppear() {
+  }
+
+  // 获取过滤后的场景数据
+  private getFilteredScenarios(): ScenarioData[] {
+    return scenarioData.filter(scenario => scenario.scenarioType === this.selectedScenarioType)
+  }
+
+  // 获取场景类型标签
+  private getScenarioTypeLabel(scenarioType: ScenarioType): string {
+    switch (scenarioType) {
+      case ScenarioType.RESIDENTIAL:
+        return '居住'
+      case ScenarioType.WORK:
+        return '工作'
+      case ScenarioType.ENTERTAINMENT:
+        return '娱乐'
+      case ScenarioType.TRANSPORTATION:
+        return '交通'
+    }
+  }
+
+  // 获取场景类型选择器项目
+  private getScenarioTypeItems(): ScenarioTypeSelectorItem[] {
+    return [
+      { type: ScenarioType.RESIDENTIAL, label: '居住' },
+      { type: ScenarioType.WORK, label: '工作' },
+      { type: ScenarioType.ENTERTAINMENT, label: '娱乐' },
+      { type: ScenarioType.TRANSPORTATION, label: '交通' }
+    ]
+  }
+
+  // 场景类型选择器
+  @Builder
+  buildScenarioTypeSelector() {
+    Row({ space: 8 }) {
+      ForEach(this.getScenarioTypeItems(), (item: ScenarioTypeSelectorItem) => {
+        Text(item.label)
+          .fontSize(14)
+          .fontWeight(FontWeight.Medium)
+          .fontColor(this.selectedScenarioType === item.type ? $r('sys.color.font_primary') : $r('sys.color.font_secondary'))
+          .padding(12)
+          .backgroundColor(this.selectedScenarioType === item.type ? $r('sys.color.comp_background_primary') : $r('sys.color.background_secondary'))
+          .borderRadius(8)
+          .onClick(() => {
+            this.selectedScenarioType = item.type
+          })
+      })
+    }
+    .width('100%')
+    .justifyContent(FlexAlign.Center)
+    .padding(8)
+  }
+
+  build() {
     Scroll() {
       Column({ space: 16 }) {
         // 当前分贝和最佳匹配
@@ -293,25 +323,25 @@ export function ScenarioAdviceDialogBuilder(ak: AppKeys) {
               .fontSize(14)
               .fontColor($r('sys.color.font_secondary'));
 
-            Text(`${ak.uiDisplayState.displayDb} dB`)
+            Text(`${this.ak.uiDisplayState.displayDb} dB`)
               .fontSize(16)
               .fontWeight(FontWeight.Bold)
-              .fontColor(DecibelService.getDecibelColor(ak.uiDisplayState.displayDb))
+              .fontColor(DecibelService.getDecibelColor(this.ak.uiDisplayState.displayDb))
               .margin({ left: 8 });
           }
           .width('100%')
           .justifyContent(FlexAlign.SpaceBetween)
 
-          if (getBestMatchingScenario(ak.uiDisplayState.displayDb)) {
+          if (getBestMatchingScenario(this.ak.uiDisplayState.displayDb)) {
             Row() {
               Text('最适合场景:')
                 .fontSize(14)
                 .fontColor($r('sys.color.font_secondary'));
 
-              Text(getBestMatchingScenario(ak.uiDisplayState.displayDb)!.scenarioName)
+              Text(getBestMatchingScenario(this.ak.uiDisplayState.displayDb)!.scenarioName)
                 .fontSize(14)
                 .fontWeight(FontWeight.Medium)
-                .fontColor(getBestMatchingScenario(ak.uiDisplayState.displayDb)!.color)
+                .fontColor(getBestMatchingScenario(this.ak.uiDisplayState.displayDb)!.color)
                 .margin({ left: 8 });
             }
             .width('100%')
@@ -321,24 +351,32 @@ export function ScenarioAdviceDialogBuilder(ak: AppKeys) {
         .width('100%')
 
         // 场景类型选择器
-        buildScenarioTypeSelector(ScenarioType.RESIDENTIAL, (type: ScenarioType) => {
-        })
+        this.buildScenarioTypeSelector()
 
         // 场景建议列表
-        Text(`${ScenarioType.RESIDENTIAL}场景建议`)
+        Text(`${this.getScenarioTypeLabel(this.selectedScenarioType)}场景建议`)
           .fontSize(16)
           .fontWeight(FontWeight.Bold)
           .fontColor($r('sys.color.font_primary'))
           .alignSelf(ItemAlign.Start);
 
-        ForEach(scenarioData, (scenario: ScenarioData) => {
-          buildScenarioAdviceCard(scenario, ak, scenario === getBestMatchingScenario(ak.uiDisplayState.displayDb))
+        ForEach(this.getFilteredScenarios(), (scenario: ScenarioData) => {
+          buildScenarioAdviceCard(scenario, this.ak, scenario === getBestMatchingScenario(this.ak.uiDisplayState.displayDb))
         })
       }
     }
     .scrollable(ScrollDirection.Vertical)
     .scrollBar(BarState.Off)
     .edgeEffect(EdgeEffect.Spring)
+  }
+}
+
+// 场景化建议对话框构建器
+@Builder
+export function ScenarioAdviceDialogBuilder(ak: AppKeys) {
+
+  NavDestination() {
+    ScenarioAdviceComponent()
   }
   .title({ main: '场景化建议', sub: '不同场景的噪音控制参考' })
   .padding(16)
