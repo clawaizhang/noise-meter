@@ -75,157 +75,212 @@ enum AreaType {
   INDUSTRIAL = 'industrial'
 }
 
-// 构建标准对比卡片
-@Builder
-function buildStandardComparisonCard(standard: InternationalStandard, ak: AppKeys, areaType: AreaType) {
-
-  Column({ space: 8 }) {
-    // 国家和标准名称
-    Row() {
-      Text(standard.country)
-        .fontSize(16)
-        .fontWeight(FontWeight.Bold)
-        .fontColor($r('sys.color.font_primary'))
-        .layoutWeight(1);
-
-      Text(standard.standardName)
-        .fontSize(12)
-        .fontColor($r('sys.color.font_secondary'));
-    }
-    .width('100%')
-
-    // 功能区限值
-    Row() {
-      Column({ space: 4 }) {
-        Text('昼间')
-          .fontSize(12)
-          .fontColor($r('sys.color.font_secondary'));
-
-        Text(`${standard.residentialDay} dB`)
-          .fontSize(14)
-          .fontWeight(FontWeight.Medium)
-          .fontColor(DecibelService.getDecibelColor(standard.residentialDay));
-      }
-      .layoutWeight(1)
-
-      Column({ space: 4 }) {
-        Text('夜间')
-          .fontSize(12)
-          .fontColor($r('sys.color.font_secondary'));
-
-        Text(`${standard.residentialNight} dB`)
-          .fontSize(14)
-          .fontWeight(FontWeight.Medium)
-          .fontColor(DecibelService.getDecibelColor(standard.residentialNight));
-      }
-      .layoutWeight(1)
-    }
-    .width('100%')
-
-    // 符合状态
-    Row() {
-      Text('符合状态:')
-        .fontSize(12)
-        .fontColor($r('sys.color.font_secondary'));
-
-      Text(ak.uiDisplayState.displayDb <= standard.residentialDay ? '符合标准' : '超出标准')
-        .fontSize(12)
-        .fontWeight(FontWeight.Medium)
-        .fontColor(ak.uiDisplayState.displayDb <= standard.residentialDay ? $r('sys.color.confirm') : $r('sys.color.alert'))
-        .margin({ left: 8 });
-    }
-    .width('100%')
-
-    // 标准描述
-    Text(standard.description)
-      .fontSize(11)
-      .fontColor($r('sys.color.font_secondary'))
-      .width('100%')
-      .textAlign(TextAlign.Start);
-  }
-  .padding(12)
-  .width('100%')
-  .backgroundBlurStyle(ak.uiDisplayState.displayDb <= standard.residentialDay ? BlurStyle.COMPONENT_ULTRA_THIN : BlurStyle.NONE)
-  .backgroundColor(ak.uiDisplayState.displayDb <= standard.residentialDay ? $r('sys.color.comp_background_primary') : standard.color)
-  .borderRadius(12)
-  .alignItems(HorizontalAlign.Start)
-  .transition(TransitionEffect.OPACITY.animation({ curve: curves.springMotion(0.6, 0.8) })
-    .combine(TransitionEffect.scale({ x: 0, y: 0 }))
-    .combine(TransitionEffect.translate({ x: -150, y: 0 }).animation({ curve: curves.springMotion() })))
-}
-
-// 功能区选择器
-interface GeneratedTypeLiteralInterface_1 {
+// 功能区选择器类型定义
+interface AreaTypeSelectorItem {
   type: AreaType;
   label: string;
 }
 
-@Builder
-function buildAreaTypeSelector(selectedAreaType: AreaType, onAreaTypeChange: (type: AreaType) => void) {
-  Row({ space: 8 }) {
-    ForEach([
+// 功能区限值数据接口
+interface AreaLimits {
+  day: number;
+  night: number;
+}
+
+// 标准对比组件
+@Component
+struct StandardComparisonComponent {
+  @State selectedAreaType: AreaType = AreaType.RESIDENTIAL
+  @State currentDb: number = 0
+
+  aboutToAppear() {
+    // 初始化当前分贝值
+    this.currentDb = 50 // 默认值，实际应该从AppKeys获取
+  }
+
+  // 获取功能区限值
+  private getAreaLimits(standard: InternationalStandard, areaType: AreaType): AreaLimits {
+    switch (areaType) {
+      case AreaType.RESIDENTIAL:
+        return { day: standard.residentialDay, night: standard.residentialNight }
+      case AreaType.COMMERCIAL:
+        return { day: standard.commercialDay, night: standard.commercialNight }
+      case AreaType.INDUSTRIAL:
+        return { day: standard.industrialDay, night: standard.industrialNight }
+    }
+  }
+
+  // 获取功能区名称
+  private getAreaTypeLabel(areaType: AreaType): string {
+    switch (areaType) {
+      case AreaType.RESIDENTIAL:
+        return '居住区'
+      case AreaType.COMMERCIAL:
+        return '商业区'
+      case AreaType.INDUSTRIAL:
+        return '工业区'
+    }
+  }
+
+  // 功能区选择器
+  @Builder
+  buildAreaTypeSelector() {
+    Row({ space: 8 }) {
+      ForEach(this.getAreaTypeItems(), (item: AreaTypeSelectorItem) => {
+        Text(item.label)
+          .fontSize(14)
+          .fontWeight(FontWeight.Medium)
+          .fontColor(this.selectedAreaType === item.type ? $r('sys.color.font_primary') : $r('sys.color.font_secondary'))
+          .padding(12)
+          .backgroundColor(this.selectedAreaType === item.type ? $r('sys.color.comp_background_primary') : $r('sys.color.background_secondary'))
+          .borderRadius(8)
+          .onClick(() => {
+            this.selectedAreaType = item.type
+          })
+      })
+    }
+    .width('100%')
+    .justifyContent(FlexAlign.Center)
+    .padding(8)
+  }
+
+  // 获取功能区选择器项目
+  private getAreaTypeItems(): AreaTypeSelectorItem[] {
+    return [
       { type: AreaType.RESIDENTIAL, label: '居住区' },
       { type: AreaType.COMMERCIAL, label: '商业区' },
       { type: AreaType.INDUSTRIAL, label: '工业区' }
-    ], (item: GeneratedTypeLiteralInterface_1) => {
-      Text(item.label)
-        .fontSize(14)
-        .fontWeight(FontWeight.Medium)
-        .fontColor(selectedAreaType === item.type ? $r('sys.color.font_primary') : $r('sys.color.font_secondary'))
-        .padding(12)
-        .backgroundColor(selectedAreaType === item.type ? $r('sys.color.comp_background_primary') : $r('sys.color.background_secondary'))
-        .borderRadius(8)
-        .onClick(() => {
-          onAreaTypeChange(item.type);
-        });
-    })
+    ]
   }
-  .width('100%')
-  .justifyContent(FlexAlign.Center)
-  .padding(8)
-}
 
-// 标准对比对话框构建器
-@Builder
-export function StandardComparisonDialogBuilder(ak: AppKeys) {
+  // 标准对比卡片
+  @Builder
+  buildStandardComparisonCard(standard: InternationalStandard) {
+    Column({ space: 8 }) {
+      // 国家和标准名称
+      Row() {
+        Text(standard.country)
+          .fontSize(16)
+          .fontWeight(FontWeight.Bold)
+          .fontColor($r('sys.color.font_primary'))
+          .layoutWeight(1)
 
-  NavDestination() {
+        Text(standard.standardName)
+          .fontSize(12)
+          .fontColor($r('sys.color.font_secondary'))
+      }
+      .width('100%')
+
+      // 功能区限值
+      Row() {
+        Column({ space: 4 }) {
+          Text('昼间')
+            .fontSize(12)
+            .fontColor($r('sys.color.font_secondary'))
+
+          Text(`${this.getAreaLimits(standard, this.selectedAreaType).day} dB`)
+            .fontSize(14)
+            .fontWeight(FontWeight.Medium)
+            .fontColor(DecibelService.getDecibelColor(this.getAreaLimits(standard, this.selectedAreaType).day))
+        }
+        .layoutWeight(1)
+
+        Column({ space: 4 }) {
+          Text('夜间')
+            .fontSize(12)
+            .fontColor($r('sys.color.font_secondary'))
+
+          Text(`${this.getAreaLimits(standard, this.selectedAreaType).night} dB`)
+            .fontSize(14)
+            .fontWeight(FontWeight.Medium)
+            .fontColor(DecibelService.getDecibelColor(this.getAreaLimits(standard, this.selectedAreaType).night))
+        }
+        .layoutWeight(1)
+      }
+      .width('100%')
+
+      // 符合状态
+      Row() {
+        Text('符合状态:')
+          .fontSize(12)
+          .fontColor($r('sys.color.font_secondary'))
+
+        Text(this.isCompliant(standard) ? '符合标准' : '超出标准')
+          .fontSize(12)
+          .fontWeight(FontWeight.Medium)
+          .fontColor(this.isCompliant(standard) ? $r('sys.color.confirm') : $r('sys.color.alert'))
+          .margin({ left: 8 })
+      }
+      .width('100%')
+
+      // 标准描述
+      Text(standard.description)
+        .fontSize(11)
+        .fontColor($r('sys.color.font_secondary'))
+        .width('100%')
+        .textAlign(TextAlign.Start)
+    }
+    .padding(12)
+    .width('100%')
+    .backgroundBlurStyle(this.isCompliant(standard) ? BlurStyle.COMPONENT_ULTRA_THIN : BlurStyle.NONE)
+    .backgroundColor(this.isCompliant(standard) ? $r('sys.color.comp_background_primary') : standard.color)
+    .borderRadius(12)
+    .alignItems(HorizontalAlign.Start)
+    .transition(TransitionEffect.OPACITY.animation({ curve: curves.springMotion(0.6, 0.8) })
+      .combine(TransitionEffect.scale({ x: 0, y: 0 }))
+      .combine(TransitionEffect.translate({ x: -150, y: 0 }).animation({ curve: curves.springMotion() })))
+  }
+
+  // 检查是否符合标准
+  private isCompliant(standard: InternationalStandard): boolean {
+    return this.currentDb <= this.getAreaLimits(standard, this.selectedAreaType).day
+  }
+
+  build() {
     Scroll() {
       Column({ space: 16 }) {
         // 当前分贝显示
         Row() {
           Text('当前分贝值:')
             .fontSize(14)
-            .fontColor($r('sys.color.font_secondary'));
+            .fontColor($r('sys.color.font_secondary'))
 
-          Text(`${ak.uiDisplayState.displayDb} dB`)
+          Text(`${this.currentDb} dB`)
             .fontSize(16)
             .fontWeight(FontWeight.Bold)
-            .fontColor(DecibelService.getDecibelColor(ak.uiDisplayState.displayDb))
-            .margin({ left: 8 });
+            .fontColor(DecibelService.getDecibelColor(this.currentDb))
+            .margin({ left: 8 })
         }
         .width('100%')
         .justifyContent(FlexAlign.SpaceBetween)
 
         // 功能区选择器
-        buildAreaTypeSelector(AreaType.RESIDENTIAL, (type: AreaType) => {
-        })
+        this.buildAreaTypeSelector()
 
-        // 国际标准对比
-        Text('国际标准对比')
+        // 当前功能区标题
+        Text(`${this.getAreaTypeLabel(this.selectedAreaType)}标准对比`)
           .fontSize(16)
           .fontWeight(FontWeight.Bold)
           .fontColor($r('sys.color.font_primary'))
-          .alignSelf(ItemAlign.Start);
+          .alignSelf(ItemAlign.Start)
 
+        // 国际标准对比
         ForEach(internationalStandards, (standard: InternationalStandard) => {
-          buildStandardComparisonCard(standard, ak, AreaType.RESIDENTIAL)
+          this.buildStandardComparisonCard(standard)
         })
       }
     }
     .scrollable(ScrollDirection.Vertical)
     .scrollBar(BarState.Off)
     .edgeEffect(EdgeEffect.Spring)
+  }
+}
+
+// 标准对比对话框构建器
+@Builder
+export function StandardComparisonDialogBuilder(ak: AppKeys) {
+  NavDestination() {
+    StandardComparisonComponent()
   }
   .title({ main: '标准对比参考', sub: '国际噪音标准对比分析' })
   .padding(16)
