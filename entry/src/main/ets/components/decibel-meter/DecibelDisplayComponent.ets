@@ -183,13 +183,13 @@ export struct DecibelDisplayComponent {
     Row({ space: 8 }) {
       if (config.currentDecibel === 0) {
         Text('-')
-          .fontSize(64)
+          .fontSize(48)
           .fontWeight(FontWeight.Bold)
           .fontColor($r('sys.color.alert'))
           .transition(TransitionEffect.scale({ x: 0, y: 0 }).animation({ curve: curves.springMotion() }));
       } else {
         Text(`${config.currentDecibel}dB`)
-          .fontSize(64)
+          .fontSize(48)
           .fontWeight(FontWeight.Bold)
           .fontColor($r('sys.color.alert'))
           .transition(TransitionEffect.scale({ x: 0, y: 0 }).animation({ curve: curves.springMotion() }));
