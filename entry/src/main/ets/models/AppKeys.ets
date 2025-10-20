@@ -29,4 +29,7 @@ export class AppKeys {
 
   @Trace
   uiDisplayState: UIDisplayState = new UIDisplayState();
+
+  @Trace
+  currentTabIndex: number = 0; // 当前选中的Tab索引
 }
