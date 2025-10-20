@@ -1,4 +1,4 @@
-import { curves } from '@kit.ArkUI';
+import { curves, AppStorageV2 } from '@kit.ArkUI';
 import { AppKeys } from '../../models/AppKeys';
 import { DecibelService } from '../../services/DecibelService';
 
@@ -235,35 +235,158 @@ function buildLegalReferenceCard(legal: LegalReferenceData, ak: AppKeys, isCompl
     .combine(TransitionEffect.translate({ x: -150, y: 0 }).animation({ curve: curves.springMotion() })))
 }
 
-// 法规类别选择器
-interface GeneratedTypeLiteralInterface_1 {
+// 法规类别选择器类型定义
+interface CategorySelectorItem {
   category: LegalCategory;
   label: string;
 }
 
-@Builder
-function buildCategorySelector(selectedCategory: LegalCategory, onCategoryChange: (category: LegalCategory) => void) {
-  Row({ space: 8 }) {
-    ForEach([
+// 法规政策参考组件
+interface GeneratedTypeLiteralInterface_1 {
+  total: number;
+  compliant: number;
+  nonCompliant: number;
+}
+
+@ComponentV2
+struct LegalReferenceComponent {
+  @Local selectedCategory: LegalCategory = LegalCategory.NATIONAL
+  @Local ak: AppKeys = AppStorageV2.connect(AppKeys)!;
+
+  aboutToAppear() {
+  }
+
+  // 获取过滤后的法规数据
+  private getFilteredLegalData(): LegalReferenceData[] {
+    return legalReferenceData.filter(data => data.category === this.selectedCategory)
+  }
+
+  // 获取法规类别标签
+  private getCategoryLabel(category: LegalCategory): string {
+    switch (category) {
+      case LegalCategory.NATIONAL:
+        return '国家标准'
+      case LegalCategory.LOCAL:
+        return '地方法规'
+      case LegalCategory.INDUSTRY:
+        return '行业标准'
+    }
+  }
+
+  // 获取类别选择器项目
+  private getCategoryItems(): CategorySelectorItem[] {
+    return [
       { category: LegalCategory.NATIONAL, label: '国家标准' },
       { category: LegalCategory.LOCAL, label: '地方法规' },
       { category: LegalCategory.INDUSTRY, label: '行业标准' }
-    ], (item: GeneratedTypeLiteralInterface_1) => {
-      Text(item.label)
-        .fontSize(14)
-        .fontWeight(FontWeight.Medium)
-        .fontColor(selectedCategory === item.category ? $r('sys.color.font_primary') : $r('sys.color.font_secondary'))
-        .padding(8)
-        .backgroundColor(selectedCategory === item.category ? $r('sys.color.comp_background_primary') : $r('sys.color.background_secondary'))
-        .borderRadius(8)
-        .onClick(() => {
-          onCategoryChange(item.category);
-        });
-    })
+    ]
   }
-  .width('100%')
-  .justifyContent(FlexAlign.Center)
-  .padding(8)
+
+  // 获取合规统计
+  private getComplianceStats(currentDb: number): GeneratedTypeLiteralInterface_1 {
+    const total = legalReferenceData.length;
+    const compliant = legalReferenceData.filter(legal => currentDb <= legal.dayLimit).length;
+    const nonCompliant = total - compliant;
+    
+    return { total, compliant, nonCompliant };
+  }
+
+  // 类别选择器
+  @Builder
+  buildCategorySelector() {
+    Row({ space: 8 }) {
+      ForEach(this.getCategoryItems(), (item: CategorySelectorItem) => {
+        Text(item.label)
+          .fontSize(14)
+          .fontWeight(FontWeight.Medium)
+          .fontColor(this.selectedCategory === item.category ? $r('sys.color.font_primary') : $r('sys.color.font_secondary'))
+          .padding(8)
+          .backgroundColor(this.selectedCategory === item.category ? $r('sys.color.comp_background_primary') : $r('sys.color.background_secondary'))
+          .borderRadius(8)
+          .onClick(() => {
+            this.selectedCategory = item.category
+          })
+      })
+    }
+    .width('100%')
+    .justifyContent(FlexAlign.Center)
+    .padding(8)
+  }
+
+  build() {
+    Scroll() {
+      Column({ space: 16 }) {
+        // 合规统计
+        Column({ space: 8 }) {
+          Text('法规合规统计')
+            .fontSize(16)
+            .fontWeight(FontWeight.Bold)
+            .fontColor($r('sys.color.font_primary'))
+            .alignSelf(ItemAlign.Start);
+
+          Row({ space: 12 }) {
+            Column({ space: 4 }) {
+              Text(this.getComplianceStats(this.ak.uiDisplayState.displayDb).compliant.toString())
+                .fontSize(18)
+                .fontWeight(FontWeight.Bold)
+                .fontColor($r('sys.color.confirm'));
+
+              Text('合规')
+                .fontSize(12)
+                .fontColor($r('sys.color.font_secondary'));
+            }
+            .layoutWeight(1)
+
+            Column({ space: 4 }) {
+              Text(this.getComplianceStats(this.ak.uiDisplayState.displayDb).nonCompliant.toString())
+                .fontSize(18)
+                .fontWeight(FontWeight.Bold)
+                .fontColor($r('sys.color.alert'));
+
+              Text('不合规')
+                .fontSize(12)
+                .fontColor($r('sys.color.font_secondary'));
+            }
+            .layoutWeight(1)
+
+            Column({ space: 4 }) {
+              Text(this.getComplianceStats(this.ak.uiDisplayState.displayDb).total.toString())
+                .fontSize(18)
+                .fontWeight(FontWeight.Bold)
+                .fontColor($r('sys.color.font_primary'));
+
+              Text('总计')
+                .fontSize(12)
+                .fontColor($r('sys.color.font_secondary'));
+            }
+            .layoutWeight(1)
+          }
+          .width('100%')
+          .padding(12)
+          .backgroundColor($r('sys.color.comp_background_primary'))
+          .borderRadius(12)
+        }
+        .width('100%')
+
+        // 法规类别选择器
+        this.buildCategorySelector()
+
+        // 法规列表
+        Text(`${this.getCategoryLabel(this.selectedCategory)}法规`)
+          .fontSize(16)
+          .fontWeight(FontWeight.Bold)
+          .fontColor($r('sys.color.font_primary'))
+          .alignSelf(ItemAlign.Start);
+
+        ForEach(this.getFilteredLegalData(), (legal: LegalReferenceData) => {
+          buildLegalReferenceCard(legal, this.ak, this.ak.uiDisplayState.displayDb <= legal.dayLimit)
+        })
+      }
+    }
+    .scrollable(ScrollDirection.Vertical)
+    .scrollBar(BarState.Off)
+    .edgeEffect(EdgeEffect.Spring)
+  }
 }
 
 // 获取合规统计
@@ -286,79 +409,7 @@ function getComplianceStats(currentDb: number): GeneratedTypeLiteralInterface_2 
 export function LegalReferenceDialogBuilder(ak: AppKeys) {
 
   NavDestination() {
-    Scroll() {
-      Column({ space: 16 }) {
-        // 合规统计
-        Column({ space: 8 }) {
-          Text('法规合规统计')
-            .fontSize(16)
-            .fontWeight(FontWeight.Bold)
-            .fontColor($r('sys.color.font_primary'))
-            .alignSelf(ItemAlign.Start);
-
-          Row({ space: 12 }) {
-            Column({ space: 4 }) {
-              Text(getComplianceStats(ak.uiDisplayState.displayDb).compliant.toString())
-                .fontSize(18)
-                .fontWeight(FontWeight.Bold)
-                .fontColor($r('sys.color.confirm'));
-
-              Text('合规')
-                .fontSize(12)
-                .fontColor($r('sys.color.font_secondary'));
-            }
-            .layoutWeight(1)
-
-            Column({ space: 4 }) {
-              Text(getComplianceStats(ak.uiDisplayState.displayDb).nonCompliant.toString())
-                .fontSize(18)
-                .fontWeight(FontWeight.Bold)
-                .fontColor($r('sys.color.alert'));
-
-              Text('不合规')
-                .fontSize(12)
-                .fontColor($r('sys.color.font_secondary'));
-            }
-            .layoutWeight(1)
-
-            Column({ space: 4 }) {
-              Text(getComplianceStats(ak.uiDisplayState.displayDb).total.toString())
-                .fontSize(18)
-                .fontWeight(FontWeight.Bold)
-                .fontColor($r('sys.color.font_primary'));
-
-              Text('总计')
-                .fontSize(12)
-                .fontColor($r('sys.color.font_secondary'));
-            }
-            .layoutWeight(1)
-          }
-          .width('100%')
-          .padding(12)
-          .backgroundColor($r('sys.color.comp_background_primary'))
-          .borderRadius(12)
-        }
-        .width('100%')
-
-        // 法规类别选择器
-        buildCategorySelector(LegalCategory.NATIONAL, (category: LegalCategory) => {
-        })
-
-        // 法规列表
-        Text(`${LegalCategory.NATIONAL}法规`)
-          .fontSize(16)
-          .fontWeight(FontWeight.Bold)
-          .fontColor($r('sys.color.font_primary'))
-          .alignSelf(ItemAlign.Start);
-
-        ForEach(legalReferenceData, (legal: LegalReferenceData) => {
-          buildLegalReferenceCard(legal, ak, ak.uiDisplayState.displayDb <= legal.dayLimit)
-        })
-      }
-    }
-    .scrollable(ScrollDirection.Vertical)
-    .scrollBar(BarState.Off)
-    .edgeEffect(EdgeEffect.Spring)
+    LegalReferenceComponent()
   }
   .title({ main: '法规政策参考', sub: '噪音相关法律法规参考' })
   .padding(16)
