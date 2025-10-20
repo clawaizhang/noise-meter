@@ -51,7 +51,7 @@ interface DecibelAnalysisConfig {
 
 @ComponentV2
 export struct EnhancedExposureContent {
-  @Local selectedStandard: NoiseExposureStandard = NoiseExposureStandard.WORKPLACE;
+  @Local selectedStandard: NoiseExposureStandard = NoiseExposureStandard.SOCIAL;
   @Local exposureData: ExposureData = new ExposureData();
   @Local decibelRangeStats: DecibelRangeStats[] = [];
   @Local isLoading: boolean = true;
