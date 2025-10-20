@@ -1,4 +1,4 @@
-import { curves } from '@kit.ArkUI';
+import { AppStorageV2, curves } from '@kit.ArkUI';
 import { AppKeys } from '../../models/AppKeys';
 import { DecibelService } from '../../services/DecibelService';
 
@@ -88,14 +88,12 @@ interface AreaLimits {
 }
 
 // 标准对比组件
-@Component
+@ComponentV2
 struct StandardComparisonComponent {
-  @State selectedAreaType: AreaType = AreaType.RESIDENTIAL
-  @State currentDb: number = 0
+  @Local selectedAreaType: AreaType = AreaType.RESIDENTIAL
+  @Local ak: AppKeys = AppStorageV2.connect(AppKeys)!;
 
   aboutToAppear() {
-    // 初始化当前分贝值
-    this.currentDb = 50 // 默认值，实际应该从AppKeys获取
   }
 
   // 获取功能区限值
@@ -233,7 +231,7 @@ struct StandardComparisonComponent {
 
   // 检查是否符合标准
   private isCompliant(standard: InternationalStandard): boolean {
-    return this.currentDb <= this.getAreaLimits(standard, this.selectedAreaType).day
+    return this.ak.uiDisplayState.displayDb <= this.getAreaLimits(standard, this.selectedAreaType).day
   }
 
   build() {
@@ -245,10 +243,10 @@ struct StandardComparisonComponent {
             .fontSize(14)
             .fontColor($r('sys.color.font_secondary'))
 
-          Text(`${this.currentDb} dB`)
+          Text(`${this.ak.uiDisplayState.displayDb} dB`)
             .fontSize(16)
             .fontWeight(FontWeight.Bold)
-            .fontColor(DecibelService.getDecibelColor(this.currentDb))
+            .fontColor(DecibelService.getDecibelColor(this.ak.uiDisplayState.displayDb))
             .margin({ left: 8 })
         }
         .width('100%')
