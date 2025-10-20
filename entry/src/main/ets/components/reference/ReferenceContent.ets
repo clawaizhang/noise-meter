@@ -6,6 +6,12 @@ import { navigationStack } from '../../constants/ProviderConstant';
 import { DialogHub, InfSheet } from '@hadss/dialoghub';
 import { NoiseDescriptionDialogBuilder } from '../../pages/noisemeter/NoiseDescriptionDialogNavigation';
 import { NoiseStandardDialogBuilder } from '../../pages/noisemeter/NoiseStandardDialogNavigation';
+import { HealthImpactDialogBuilder } from '../../pages/noisemeter/HealthImpactDialogNavigation';
+import { StandardComparisonDialogBuilder } from '../../pages/noisemeter/StandardComparisonDialogNavigation';
+import { ScenarioAdviceDialogBuilder } from '../../pages/noisemeter/ScenarioAdviceDialogNavigation';
+import { AcousticParamsDialogBuilder } from '../../pages/noisemeter/AcousticParamsDialogNavigation';
+import { DevicePerformanceDialogBuilder } from '../../pages/noisemeter/DevicePerformanceDialogNavigation';
+import { LegalReferenceDialogBuilder } from '../../pages/noisemeter/LegalReferenceDialogNavigation';
 import { Throttle } from '../../utils/Debounce';
 import { DecibelService } from '../../services/DecibelService';
 import { NoiseStandards } from '../../constants/NoiseStandardConstants';
@@ -57,6 +63,12 @@ export struct ReferenceContent {
   // 定时器管理
   private noiseDescriptionUpdateIntervalId: number | null = null;
   private noiseStandardUpdateSubscription: Subscription | undefined;
+  private healthImpactUpdateSubscription: Subscription | undefined;
+  private standardComparisonUpdateSubscription: Subscription | undefined;
+  private scenarioAdviceUpdateSubscription: Subscription | undefined;
+  private acousticParamsUpdateSubscription: Subscription | undefined;
+  private devicePerformanceUpdateSubscription: Subscription | undefined;
+  private legalReferenceUpdateSubscription: Subscription | undefined;
 
   aboutToDisappear() {
     // 清理定时器
@@ -68,6 +80,18 @@ export struct ReferenceContent {
     // 清理订阅
     this.noiseStandardUpdateSubscription?.unsubscribe();
     this.noiseStandardUpdateSubscription = undefined;
+    this.healthImpactUpdateSubscription?.unsubscribe();
+    this.healthImpactUpdateSubscription = undefined;
+    this.standardComparisonUpdateSubscription?.unsubscribe();
+    this.standardComparisonUpdateSubscription = undefined;
+    this.scenarioAdviceUpdateSubscription?.unsubscribe();
+    this.scenarioAdviceUpdateSubscription = undefined;
+    this.acousticParamsUpdateSubscription?.unsubscribe();
+    this.acousticParamsUpdateSubscription = undefined;
+    this.devicePerformanceUpdateSubscription?.unsubscribe();
+    this.devicePerformanceUpdateSubscription = undefined;
+    this.legalReferenceUpdateSubscription?.unsubscribe();
+    this.legalReferenceUpdateSubscription = undefined;
   }
 
   build() {
@@ -654,28 +678,135 @@ export struct ReferenceContent {
     return $r('sys.color.alert');
   }
 
-  // 对话框打开方法（占位实现）
+  // 健康影响参考对话框
   private openHealthImpactDialog() {
-    // TODO: 实现健康影响参考对话框
+    Throttle.click(() => {
+      const healthImpactDialog = DialogHub.getSheet()
+        .setStyle({ backgroundColor: $r('sys.color.background_secondary') })
+        .setComponentTargetId('mainId')
+        .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS })
+        .setContent(wrapBuilder(HealthImpactDialogBuilder), this.ak)
+        .build();
+
+      // 注册Dialog到样式管理器
+      DialogStyleManager.registerDialog(healthImpactDialog);
+      healthImpactDialog.show();
+
+      // 添加实时更新机制 - 每500ms更新
+      this.healthImpactUpdateSubscription?.unsubscribe();
+      this.healthImpactUpdateSubscription = interval(500).subscribe(() => {
+        healthImpactDialog.updateContent(this.ak);
+      });
+    })
   }
 
+  // 标准对比参考对话框
   private openStandardComparisonDialog() {
-    // TODO: 实现标准对比参考对话框
+    Throttle.click(() => {
+      const standardComparisonDialog = DialogHub.getSheet()
+        .setStyle({ backgroundColor: $r('sys.color.background_secondary') })
+        .setComponentTargetId('mainId')
+        .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS })
+        .setContent(wrapBuilder(StandardComparisonDialogBuilder), this.ak)
+        .build();
+
+      // 注册Dialog到样式管理器
+      DialogStyleManager.registerDialog(standardComparisonDialog);
+      standardComparisonDialog.show();
+
+      // 添加实时更新机制 - 每500ms更新
+      this.standardComparisonUpdateSubscription?.unsubscribe();
+      this.standardComparisonUpdateSubscription = interval(500).subscribe(() => {
+        standardComparisonDialog.updateContent(this.ak);
+      });
+    })
   }
 
+  // 场景化建议对话框
   private openScenarioAdviceDialog() {
-    // TODO: 实现场景化建议对话框
+    Throttle.click(() => {
+      const scenarioAdviceDialog = DialogHub.getSheet()
+        .setStyle({ backgroundColor: $r('sys.color.background_secondary') })
+        .setComponentTargetId('mainId')
+        .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS })
+        .setContent(wrapBuilder(ScenarioAdviceDialogBuilder), this.ak)
+        .build();
+
+      // 注册Dialog到样式管理器
+      DialogStyleManager.registerDialog(scenarioAdviceDialog);
+      scenarioAdviceDialog.show();
+
+      // 添加实时更新机制 - 每500ms更新
+      this.scenarioAdviceUpdateSubscription?.unsubscribe();
+      this.scenarioAdviceUpdateSubscription = interval(500).subscribe(() => {
+        scenarioAdviceDialog.updateContent(this.ak);
+      });
+    })
   }
 
+  // 声学参数参考对话框
   private openAcousticParamsDialog() {
-    // TODO: 实现声学参数参考对话框
+    Throttle.click(() => {
+      const acousticParamsDialog = DialogHub.getSheet()
+        .setStyle({ backgroundColor: $r('sys.color.background_secondary') })
+        .setComponentTargetId('mainId')
+        .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS })
+        .setContent(wrapBuilder(AcousticParamsDialogBuilder), this.ak)
+        .build();
+
+      // 注册Dialog到样式管理器
+      DialogStyleManager.registerDialog(acousticParamsDialog);
+      acousticParamsDialog.show();
+
+      // 添加实时更新机制 - 每1000ms更新
+      this.acousticParamsUpdateSubscription?.unsubscribe();
+      this.acousticParamsUpdateSubscription = interval(1000).subscribe(() => {
+        acousticParamsDialog.updateContent(this.ak);
+      });
+    })
   }
 
+  // 设备性能参考对话框
   private openDevicePerformanceDialog() {
-    // TODO: 实现设备性能参考对话框
+    Throttle.click(() => {
+      const devicePerformanceDialog = DialogHub.getSheet()
+        .setStyle({ backgroundColor: $r('sys.color.background_secondary') })
+        .setComponentTargetId('mainId')
+        .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS })
+        .setContent(wrapBuilder(DevicePerformanceDialogBuilder), this.ak)
+        .build();
+
+      // 注册Dialog到样式管理器
+      DialogStyleManager.registerDialog(devicePerformanceDialog);
+      devicePerformanceDialog.show();
+
+      // 添加实时更新机制 - 每1000ms更新
+      this.devicePerformanceUpdateSubscription?.unsubscribe();
+      this.devicePerformanceUpdateSubscription = interval(1000).subscribe(() => {
+        devicePerformanceDialog.updateContent(this.ak);
+      });
+    })
   }
 
+  // 法规政策参考对话框
   private openLegalReferenceDialog() {
-    // TODO: 实现法规政策参考对话框
+    Throttle.click(() => {
+      const legalReferenceDialog = DialogHub.getSheet()
+        .setStyle({ backgroundColor: $r('sys.color.background_secondary') })
+        .setComponentTargetId('mainId')
+        .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS })
+        .setContent(wrapBuilder(LegalReferenceDialogBuilder), this.ak)
+        .build();
+
+      // 注册Dialog到样式管理器
+      DialogStyleManager.registerDialog(legalReferenceDialog);
+      legalReferenceDialog.show();
+
+      // 添加实时更新机制 - 每500ms更新
+      this.legalReferenceUpdateSubscription?.unsubscribe();
+      this.legalReferenceUpdateSubscription = interval(500).subscribe(() => {
+        legalReferenceDialog.updateContent(this.ak);
+      });
+    })
   }
 }
