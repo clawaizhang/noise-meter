@@ -256,7 +256,7 @@ export struct MainNoiseMeter {
         TabContent() {
           this.HomeContent()
         }
-        .tabBar(this.TabBuilder({ title: '主页', icon: $r("app.media.ic_home"), index: 0 }))
+        .tabBar(this.TabBuilder({ title: '主页', icon:this.currentIndex == 0 ? $r("app.media.ic_home_bold"): $r("app.media.ic_home"), index: 0 }))
 
         // 静喵Sound页面 - 使用DashboardContent组件
         TabContent() {
