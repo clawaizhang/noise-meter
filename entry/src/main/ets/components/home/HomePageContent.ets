@@ -5,6 +5,7 @@ import { DesignConstants } from '../../constants/DesignConstants';
 import { navigationStack } from '../../constants/ProviderConstant';
 import { Throttle } from '../../utils/Debounce';
 import { common } from '@kit.AbilityKit';
+import { DecibelRecordService } from '../../services/DecibelRecordService';
 
 // 功能卡片配置接口
 interface FunctionCardConfig {
@@ -28,6 +29,7 @@ export struct HomePageContent {
   @Local pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys)!;
   @Consumer(navigationStack) navStack: NavPathStack = new NavPathStack();
   @Local private context: common.UIAbilityContext = getContext(this) as common.UIAbilityContext;
+  private decibelRecordService: DecibelRecordService = new DecibelRecordService(this.context);
 
   build() {
     Column({ space: DesignConstants.SPACING_LG }) {
@@ -158,7 +160,7 @@ export struct HomePageContent {
         })
       }
       
-      // 历史记录入口 - 显示最近记录时间
+      // 历史记录入口 - 显示最近记录时间，记录总数显示在徽章中
       GridCol({ span: 1 }) {
         this.buildFunctionCard({
           title: '历史',
@@ -166,6 +168,7 @@ export struct HomePageContent {
           description: '检测记录查看',
           dataDisplay: this.lastRecordTime,
           dataColor: $r('sys.color.font_secondary'),
+          badgeCount: this.ak.totalRecordsCount,
           onTap: () => {
             Throttle.click(() => {
               this.navStack.pushPathByName('DecibelHistory', null);
@@ -376,9 +379,48 @@ export struct HomePageContent {
   // 历史数据 - 最近记录时间
   @Computed
   get lastRecordTime(): string {
-    // 模拟数据 - 实际应该从DecibelRecordService获取
-    const now = new Date();
-    const minutesAgo = Math.floor(Math.random() * 60); // 模拟0-59分钟前
-    return `${minutesAgo}分钟前`;
+    const lastTimestamp = this.ak.lastRecordTimestamp;
+    if (lastTimestamp) {
+      return this.formatTimeAgo(lastTimestamp);
+    }
+    return '暂无记录';
+  }
+
+
+  // 格式化时间差
+  private formatTimeAgo(timestamp: number): string {
+    const now = Date.now();
+    const diffMs = now - timestamp;
+    const diffMins = Math.floor(diffMs / 60000);
+    
+    if (diffMins < 1) return '刚刚';
+    if (diffMins < 60) return `${diffMins}分钟前`;
+    
+    const diffHours = Math.floor(diffMins / 60);
+    if (diffHours < 24) return `${diffHours}小时前`;
+    
+    const diffDays = Math.floor(diffHours / 24);
+    return `${diffDays}天前`;
+  }
+
+  // 初始化记录信息
+  private async initializeRecordInfo(): Promise<void> {
+    try {
+      // 初始化最后记录时间
+      const records = await this.decibelRecordService.getRecordsPaged(1, 0);
+      if (records.length > 0) {
+        this.ak.lastRecordTimestamp = records[0].timestamp;
+      }
+      
+      // 初始化记录总数
+      const totalCount = await this.decibelRecordService.getTotalCount();
+      this.ak.totalRecordsCount = totalCount;
+    } catch (error) {
+      console.error('初始化记录信息失败:', error);
+    }
+  }
+
+  aboutToAppear(): void {
+    this.initializeRecordInfo();
   }
 }

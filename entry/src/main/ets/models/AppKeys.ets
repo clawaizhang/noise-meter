@@ -32,4 +32,10 @@ export class AppKeys {
 
   @Trace
   currentTabIndex: number = 0; // 当前选中的Tab索引
+
+  @Trace
+  lastRecordTimestamp: number = 0; // 最后记录时间戳
+
+  @Trace
+  totalRecordsCount: number = 0; // 记录总数
 }

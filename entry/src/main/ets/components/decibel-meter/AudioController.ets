@@ -316,6 +316,11 @@ export struct AudioController {
           await this.recordService.saveRecord(this.currentRecord);
           console.info('[FREQ_TRACE][Record] 记录保存成功');
 
+          // 更新最后记录时间和记录总数
+          this.ak.lastRecordTimestamp = Date.now();
+          const totalCount = await this.recordService.getTotalCount();
+          this.ak.totalRecordsCount = totalCount;
+
           // 显示详情对话框
           if (isAutoSave) {
             promptAction.showToast({
