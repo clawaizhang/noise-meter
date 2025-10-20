@@ -11,6 +11,9 @@ interface FunctionCardConfig {
   title: string;
   icon: Resource;
   description: string;
+  dataDisplay?: string;
+  dataColor?: Resource;
+  badgeCount?: number;
   onTap: () => void;
 }
 
@@ -118,43 +121,52 @@ export struct HomePageContent {
   @Builder
   private buildFunctionCards() {
     GridRow({ columns: 2, gutter: DesignConstants.SPACING_MD }) {
-      // 仪表盘入口
+      // 仪表盘入口 - 显示趋势数据
       GridCol({ span: 1 }) {
         this.buildFunctionCard({
           title: '仪表盘',
           icon: $r('app.media.ic_meter'),
           description: '完整噪音检测',
+          dataDisplay: this.dashboardTrend,
+          dataColor: this.dashboardTrendColor,
           onTap: () => { this.switchToTab(1) }
         })
       }
       
-      // 警报入口
+      // 警报入口 - 显示活跃警报数量
       GridCol({ span: 1 }) {
         this.buildFunctionCard({
           title: '警报',
           icon: $r('app.media.ic_alarm'),
           description: '噪音警报管理',
+          badgeCount: this.activeAlertsCount,
+          dataDisplay: this.activeAlertsCount > 0 ? '警报中' : '正常',
+          dataColor: this.activeAlertsCount > 0 ? $r('sys.color.alert') : $r('sys.color.confirm'),
           onTap: () => { this.switchToTab(2) }
         })
       }
       
-      // 影响入口
+      // 影响入口 - 显示暴露指数
       GridCol({ span: 1 }) {
         this.buildFunctionCard({
           title: '影响',
           icon: $r('app.media.i_solar_radar_outline'),
           description: '暴露统计分析',
+          dataDisplay: this.exposureIndex,
+          dataColor: this.exposureColor,
           onTap: () => { this.switchToTab(3) }
         })
       }
       
-      // 历史记录入口
+      // 历史记录入口 - 显示最近记录时间
       GridCol({ span: 1 }) {
         this.buildFunctionCard({
           title: '历史',
           icon: $r('app.media.ic_history'),
           description: '检测记录查看',
-          onTap: () => { 
+          dataDisplay: this.lastRecordTime,
+          dataColor: $r('sys.color.font_secondary'),
+          onTap: () => {
             Throttle.click(() => {
               this.navStack.pushPathByName('DecibelHistory', null);
             })
@@ -167,27 +179,76 @@ export struct HomePageContent {
 
   @Builder
   private buildFunctionCard(config: FunctionCardConfig) {
-    Column({ space: DesignConstants.SPACING_SM }) {
-      Image(config.icon)
-        .width(32)
-        .height(32)
-        .fillColor($r('sys.color.icon_primary'))
-      
-      Text(config.title)
-        .fontSize(DesignConstants.FONT_SIZE_MD)
-        .fontWeight(FontWeight.Medium)
-        .fontColor($r('sys.color.font_primary'))
-      
-      Text(config.description)
-        .fontSize(DesignConstants.FONT_SIZE_SM)
-        .fontColor($r('sys.color.font_secondary'))
+    Row({ space: DesignConstants.SPACING_MD }) {
+      // 左侧图标区域
+      Stack({ alignContent: Alignment.TopEnd }) {
+        Image(config.icon)
+          .width(32)
+          .height(32)
+          .fillColor($r('sys.color.icon_primary'))
+        
+        // 徽章计数 - 放在图标右上角
+        if (config.badgeCount && config.badgeCount > 0) {
+          Text(config.badgeCount.toString())
+            .fontSize(DesignConstants.FONT_SIZE_XS)
+            .fontColor(Color.White)
+            .backgroundColor($r('sys.color.alert'))
+            .borderRadius(DesignConstants.BORDER_RADIUS_FULL)
+            .padding({ left: 6, right: 6, top: 2, bottom: 2 })
+            .margin({ top: -4, right: -4 })
+        }
+      }
+      .width(32)
+      .height(32)
+
+      // 右侧内容区域
+      Column({ space: DesignConstants.SPACING_XS }) {
+        // 标题行
+        Row() {
+          Text(config.title)
+            .fontSize(DesignConstants.FONT_SIZE_MD)
+            .fontWeight(FontWeight.Medium)
+            .fontColor($r('sys.color.font_primary'))
+          
+          Blank()
+        }
+        .width('100%')
+
+        // 描述行
+        Row() {
+          Text(config.description)
+            .fontSize(DesignConstants.FONT_SIZE_SM)
+            .fontColor($r('sys.color.font_secondary'))
+          
+          Blank()
+        }
+        .width('100%')
+
+        // 数据展示区域
+        if (config.dataDisplay) {
+          Row() {
+            Text(config.dataDisplay)
+              .fontSize(DesignConstants.FONT_SIZE_SM)
+              .fontWeight(FontWeight.Medium)
+              .fontColor(config.dataColor || $r('sys.color.font_primary'))
+            
+            Blank()
+          }
+          .width('100%')
+          .margin({ top: DesignConstants.SPACING_XS })
+        }
+      }
+      .layoutWeight(1)
+      .alignItems(HorizontalAlign.Start)
     }
     .width('100%')
+    .height(80)
     .padding(DesignConstants.SPACING_MD)
     .backgroundColor($r('sys.color.comp_background_primary'))
     .borderRadius(DesignConstants.BORDER_RADIUS_LG)
     .justifyContent(FlexAlign.Center)
-    .alignItems(HorizontalAlign.Center)
+    .alignItems(VerticalAlign.Center)
+    .shadow(DesignConstants.SHADOW_SM)
     .onClick(config.onTap)
   }
 
@@ -257,5 +318,67 @@ export struct HomePageContent {
     if (db < 60) return '环境舒适';
     if (db < 80) return '有些嘈杂';
     return '噪音较大';
+  }
+
+  // 仪表盘数据 - 趋势指示器
+  @Computed
+  get dashboardTrend(): string {
+    const currentDb = this.ak.uiDisplayState.displayDb;
+    const previousDb = this.ak.uiDisplayState.previousDb || currentDb;
+    const diff = currentDb - previousDb;
+    
+    if (diff > 5) return `↗ +${diff.toFixed(1)}dB`;
+    if (diff < -5) return `↘ ${diff.toFixed(1)}dB`;
+    return '→ 稳定';
+  }
+
+  @Computed
+  get dashboardTrendColor(): Resource {
+    const currentDb = this.ak.uiDisplayState.displayDb;
+    const previousDb = this.ak.uiDisplayState.previousDb || currentDb;
+    const diff = currentDb - previousDb;
+    
+    if (diff > 1) return $r('sys.color.alert');
+    if (diff < -1) return $r('sys.color.confirm');
+    return $r('sys.color.font_secondary');
+  }
+
+  // 警报数据 - 活跃警报数量
+  @Computed
+  get activeAlertsCount(): number {
+    // 模拟数据 - 实际应该从AlertService获取
+    const db = this.ak.uiDisplayState.displayDb;
+    const threshold = this.pk.alarm_threshold.baseThreshold || 70;
+    
+    if (db > threshold) return 1;
+    return 0;
+  }
+
+  // 影响数据 - 暴露指数
+  @Computed
+  get exposureIndex(): string {
+    const db = this.ak.uiDisplayState.displayDb;
+    if (db < 40) return '低风险';
+    if (db < 60) return '中风险';
+    if (db < 80) return '高风险';
+    return '极高风险';
+  }
+
+  @Computed
+  get exposureColor(): Resource {
+    const db = this.ak.uiDisplayState.displayDb;
+    if (db < 40) return $r('sys.color.confirm');
+    if (db < 60) return $r('sys.color.warning');
+    if (db < 80) return $r('sys.color.alert');
+    return $r('sys.color.alert');
+  }
+
+  // 历史数据 - 最近记录时间
+  @Computed
+  get lastRecordTime(): string {
+    // 模拟数据 - 实际应该从DecibelRecordService获取
+    const now = new Date();
+    const minutesAgo = Math.floor(Math.random() * 60); // 模拟0-59分钟前
+    return `${minutesAgo}分钟前`;
   }
 }

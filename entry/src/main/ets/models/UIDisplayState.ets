@@ -174,6 +174,9 @@ export class UiStatisticsData {
 export class UIDisplayState {
   // 显示分贝值（UI专用）
   @Trace displayDb: number = 0;
+  
+  // 前一个分贝值（用于趋势计算）
+  @Trace previousDb: number = 0;
 
   @Trace displayDescription: string = '几乎无声';
   @Trace displayColor: Resource = $r('sys.color.confirm');
@@ -266,6 +269,9 @@ export class UIDisplayState {
     if (!this.isUIUpdatesEnabled) {
       return;
     }
+
+    // 更新前一个分贝值
+    this.previousDb = this.displayDb;
 
     // 同步分贝值
     this.displayDb = processingState.processingDb;
