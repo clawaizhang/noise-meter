@@ -94,8 +94,7 @@ export struct DecibelDisplayComponent {
         // 4. 系统状态信息
         this.systemStatusDisplay()
 
-        // 5. 噪音参考标准
-        this.noiseStandardDisplay()
+        // 噪音参考标准已移动到参考Tab，这里不再显示
       }
     }
     .width('100%')

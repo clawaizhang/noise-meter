@@ -87,18 +87,7 @@ export struct DecibelMeter {
                 }.padding(16)
               }
 
-              if (!this.hideForXsMd) {
-                // 位置显示 - 调整UI展现方式以适应新设计
-                LocationDisplay({
-                  onLocationUpdate: (locationInfo: LocationInfo | null) => {
-                    // 更新本地位置状态
-                    this.currentLocation = locationInfo;
-                    console.info('[FREQ_TRACE][Location] 位置更新事件接收:', locationInfo);
-                    // 通过RxJS发布位置信息
-                    this.audioControllerService.updateLocation(locationInfo);
-                  }
-                }).padding({ left: 16, right: 16, bottom: 16 })
-              }
+              // 位置信息已移动到工具Tab，这里不再显示
 
             }
           }

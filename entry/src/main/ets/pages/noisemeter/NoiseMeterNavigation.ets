@@ -10,6 +10,8 @@ import { MyContentComponent } from '../../components/my-content/MyContentCompone
 import { EnhancedExposureContent } from '../../components/exposure/EnhancedExposureContent';
 import { HomePageContent } from '../../components/home/HomePageContent';
 import { AudioController } from '../../components/decibel-meter/AudioController';
+import { ReferenceContent } from '../../components/reference/ReferenceContent';
+import { ToolsContent } from '../../components/tools/ToolsContent';
 
 // 导航菜单项接口定义
 interface NavigationMenuItem {
@@ -34,7 +36,7 @@ export function NoiseMeterBuilder() {
 export struct MainNoiseMeter {
   @Consumer(navigationStack) navStack: NavPathStack = new NavPathStack()
   @Local currentIndex: number = 0
-  @Local title: string = '静喵Sound';
+  @Local title: string = '主页';
   @Local menuItems: Array<NavigationMenuItem> = [];
   @Local ak: AppKeys = AppStorageV2.connect(AppKeys)!;
   @Local pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys)!;
@@ -50,7 +52,7 @@ export struct MainNoiseMeter {
   onTabIndexChange(monitor: IMonitor) {
     const currentValue = monitor.value<number>()?.now;
     if (currentValue === 0) {
-      this.title = '静喵Sound';
+      this.title = '主页';
       this.menuItems = this.homeMenus;
     }
     if (currentValue === 1) {
@@ -66,6 +68,14 @@ export struct MainNoiseMeter {
       this.menuItems = this.exposureMenus;
     }
     if (currentValue === 4) {
+      this.title = '参考';
+      this.menuItems = this.referenceMenus;
+    }
+    if (currentValue === 5) {
+      this.title = '工具';
+      this.menuItems = this.toolsMenus;
+    }
+    if (currentValue === 6) {
       this.title = '我的';
       this.menuItems = [];
     }
@@ -112,7 +122,6 @@ export struct MainNoiseMeter {
       }
     }
   ]
-
   private noiseMeterMenus: Array<NavigationMenuItem> = [
     {
       value: '历史记录',
@@ -146,13 +155,31 @@ export struct MainNoiseMeter {
       }
     }
   ]
-
   private exposureMenus: Array<NavigationMenuItem> = [
     {
       value: '历史趋势',
       icon: $r('app.media.ic_history'),
       action: () => {
         this.navStack.pushPathByName('DecibelHistory', null);
+      }
+    }
+  ]
+  private referenceMenus: Array<NavigationMenuItem> = [
+    {
+      value: '刷新',
+      icon: $r('app.media.ic_refresh'),
+      action: () => {
+        // 参考页面刷新功能
+        console.info('参考页面刷新');
+      }
+    }
+  ]
+  private toolsMenus: Array<NavigationMenuItem> = [
+    {
+      value: '设置',
+      icon: $r('app.media.ic_settings'),
+      action: () => {
+        this.navStack.pushPathByName('Settings', null);
       }
     }
   ]
@@ -259,13 +286,21 @@ export struct MainNoiseMeter {
         TabContent() {
           this.HomeContent()
         }
-        .tabBar(this.TabBuilder({ title: '静喵Sound', icon:this.currentIndex == 0 ? $r("app.media.ic_home_bold"): $r("app.media.ic_home"), index: 0 }))
+        .tabBar(this.TabBuilder({
+          title: '主页',
+          icon: this.currentIndex == 0 ? $r("app.media.ic_home_bold") : $r("app.media.ic_home"),
+          index: 0
+        }))
 
-        // 静喵Sound页面 - 使用DashboardContent组件
+        // 主页页面 - 使用DashboardContent组件
         TabContent() {
           this.DashboardContent()
         }
-        .tabBar(this.TabBuilder({ title: '仪表盘', icon: this.currentIndex == 1 ? $r("app.media.solar_spedometer_middle_bold") : $r("app.media.ic_meter"), index: 1 }))
+        .tabBar(this.TabBuilder({
+          title: '仪表盘',
+          icon: this.currentIndex == 1 ? $r("app.media.solar_spedometer_middle_bold") : $r("app.media.ic_meter"),
+          index: 1
+        }))
 
         // 警报页面 - 使用独立的AlertsContent组件
         TabContent() {
@@ -280,7 +315,11 @@ export struct MainNoiseMeter {
               playMode: PlayMode.Normal
             })
         }
-        .tabBar(this.TabBuilder({ title: '警报', icon: this.currentIndex == 2 ? $r("app.media.bell_bing_bold") : $r("app.media.ic_alarm"), index: 2 }))
+        .tabBar(this.TabBuilder({
+          title: '警报',
+          icon: this.currentIndex == 2 ? $r("app.media.bell_bing_bold") : $r("app.media.ic_alarm"),
+          index: 2
+        }))
 
         TabContent() {
           EnhancedExposureContent()
@@ -294,12 +333,59 @@ export struct MainNoiseMeter {
               playMode: PlayMode.Normal
             })
         }
-        .tabBar(this.TabBuilder({ title: '影响', icon: this.currentIndex == 3 ? $r("app.media.i_solar_radar_bold") : $r("app.media.i_solar_radar_outline"), index: 3 }))
+        .tabBar(this.TabBuilder({
+          title: '影响',
+          icon: this.currentIndex == 3 ? $r("app.media.i_solar_radar_bold") : $r("app.media.i_solar_radar_outline"),
+          index: 3
+        }))
+
+        // 参考页面 - 使用ReferenceContent组件
+        TabContent() {
+          ReferenceContent()
+            .opacity(this.currentIndex === 4 ? 1 : 0)
+            .scale({ x: this.currentIndex === 4 ? 1 : 0.95, y: this.currentIndex === 4 ? 1 : 0.95 })
+            .animation({
+              duration: 300,
+              curve: Curve.EaseOut,
+              delay: 0,
+              iterations: 1,
+              playMode: PlayMode.Normal
+            })
+        }
+        .tabBar(this.TabBuilder({
+          title: '参考',
+          icon: this.currentIndex == 4 ? $r("app.media.ic_book2_bold") : $r("app.media.ic_book2"),
+          index: 4
+        }))
+
+        // 工具页面 - 使用ToolsContent组件
+        TabContent() {
+          ToolsContent()
+            .opacity(this.currentIndex === 5 ? 1 : 0)
+            .scale({ x: this.currentIndex === 5 ? 1 : 0.95, y: this.currentIndex === 5 ? 1 : 0.95 })
+            .animation({
+              duration: 300,
+              curve: Curve.EaseOut,
+              delay: 0,
+              iterations: 1,
+              playMode: PlayMode.Normal
+            })
+        }
+        .tabBar(this.TabBuilder({
+          title: '工具',
+          icon: this.currentIndex == 5 ? $r("app.media.ic_atom_bold") : $r("app.media.ic_atom"),
+          index: 5
+        }))
 
         TabContent() {
-          MyContentComponent({ currentIndex: this.currentIndex })
+          MyContentComponent().opacity(this.currentIndex === 6 ? 1 : 0)
+            .scale({ x: this.currentIndex === 6 ? 1 : 0.95, y: this.currentIndex === 6 ? 1 : 0.95 })
         }
-        .tabBar(this.TabBuilder({ title: '我的', icon: this.currentIndex == 4 ? $r("app.media.solar_user_circle_bold") : $r("app.media.ic_user"), index: 4 }))
+        .tabBar(this.TabBuilder({
+          title: '我的',
+          icon: this.currentIndex == 6 ? $r("app.media.solar_user_circle_bold") : $r("app.media.ic_user"),
+          index: 6
+        }))
       }
       .scrollable(false)
       .onChange((index: number) => {

@@ -52,23 +52,7 @@ export struct ActionPanel {
             })
           }
         }),
-        new ActionBarButton({
-          baseIcon: $r('app.media.ic_flashlight_bold'),
-          iconSize: LengthMetrics.vp(24),
-          iconFillColor: this.isTorchOn ? ColorMetrics.resourceColor($r('sys.color.font_on_primary')) :
-            ColorMetrics.resourceColor($r('sys.color.icon_secondary')),
-          width: LengthMetrics.vp(48),
-          backgroundColor: this.isTorchOn ? ColorMetrics.resourceColor($r('sys.color.background_emphasize')) :
-            ColorMetrics.resourceColor($r('sys.color.comp_background_primary')),
-          hoverTips: this.isTorchOn ? '关闭手电筒' : '打开手电筒',
-          accessibilityText: '手电筒按钮',
-          accessibilityDescription: '切换手电筒',
-          onClick: () => {
-            Throttle.click(() => {
-              this.toggleTorch();
-            });
-          }
-        }),
+        // 手电筒功能已移动到工具Tab，这里不再显示
         new ActionBarButton({
           baseIcon: $r('app.media.solar_download_square_bold'),
           iconSize: LengthMetrics.vp(24),
@@ -118,23 +102,7 @@ export struct ActionPanel {
         });
       })
 
-      // 手电筒按钮
-      Button({ type: ButtonType.Circle }) {
-        Image($r("app.media.ic_flashlight_bold"))
-          .width(24)
-          .height(24)
-          .fillColor(this.isTorchOn ? '#ffffffff' : $r('sys.color.icon_secondary'))
-      }
-      .width(48)
-      .height(48)
-      .backgroundColor(this.isTorchOn ? $r('sys.color.background_emphasize') :
-        $r('sys.color.comp_background_primary'))
-      .accessibilityDescription(this.isTorchOn ? '关闭手电筒' : '打开手电筒')
-      .onClick(() => {
-        Throttle.click(() => {
-          this.toggleTorch();
-        });
-      })
+      // 手电筒功能已移动到工具Tab，这里不再显示
 
       // 保存按钮
       Button({ type: ButtonType.Circle }) {
@@ -237,12 +205,5 @@ export struct ActionPanel {
     }
   }
 
-  // 手电筒切换功能
-  private toggleTorch() {
-    let cameraManager: camera.CameraManager = camera.getCameraManager(getContext(this) as common.UIAbilityContext);
-    if (cameraManager.isTorchSupported()) {
-      cameraManager.setTorchMode(this.isTorchOn ? camera.TorchMode.OFF : camera.TorchMode.ON);
-      this.isTorchOn = !this.isTorchOn;
-    }
-  }
+  // 手电筒功能已移动到工具Tab，这里不再提供
 }

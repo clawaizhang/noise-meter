@@ -17,7 +17,6 @@ import { CommentService } from '../../services/CommentService';
  */
 @ComponentV2
 export struct MyContentComponent {
-  @Param currentIndex: number = 4
   @Local pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys)!;
 
   // 显示评论对话框
@@ -202,8 +201,6 @@ export struct MyContentComponent {
       }
       .justifyContent(FlexAlign.Start)
       .alignItems(HorizontalAlign.Start)
-      .opacity(this.currentIndex === 4 ? 1 : 0)
-      .scale({ x: this.currentIndex === 4 ? 1 : 0.95, y: this.currentIndex === 4 ? 1 : 0.95 })
       .animation({
         duration: 300,
         curve: Curve.EaseOut,
