@@ -14,6 +14,7 @@ import { PermissionService } from '../../services/PermissionService';
 import { AudioController } from './AudioController';
 import { AudioControllerService } from '../../services/AudioControllerService';
 import { AudioDeviceMonitorService, AudioDeviceInfo } from '../../services/AudioDeviceMonitorService';
+import { Subscription } from 'rxjs';
 import { Throttle } from '../../utils/Debounce';
 
 @ComponentV2
@@ -36,6 +37,8 @@ export struct DecibelMeter {
   // 服务实例
   private audioControllerService: AudioControllerService = AudioControllerService.getInstance(this.ak, this.pk);
   private audioDeviceMonitorService: AudioDeviceMonitorService = AudioDeviceMonitorService.getInstance();
+  // RxJS订阅管理
+  private errorSubscription?: Subscription;
   // 双管线架构：UI显示状态
   @Consumer(navigationStack) navStack: NavPathStack = new NavPathStack()
   sysResourceManager: resourceManager.ResourceManager = resourceManager.getSystemResourceManager();
@@ -44,15 +47,6 @@ export struct DecibelMeter {
     Stack({ alignContent: Alignment.Bottom }) {
       Scroll() {
         GridRow({ columns: 12, breakpoints: { reference: BreakpointsReference.WindowSize }, gutter: 16 }) {
-
-          // 音频控制器（逻辑组件，不渲染UI）
-          AudioController({
-            pk: this.pk,
-            currentLocation: this.currentLocation,
-            onError: (errors: string[]) => {
-              this.errorMessages = errors;
-            }
-          })
 
           // 分贝显示面板 - 简化布局策略
           GridCol({
@@ -100,6 +94,8 @@ export struct DecibelMeter {
                     // 更新本地位置状态
                     this.currentLocation = locationInfo;
                     console.info('[FREQ_TRACE][Location] 位置更新事件接收:', locationInfo);
+                    // 通过RxJS发布位置信息
+                    this.audioControllerService.updateLocation(locationInfo);
                   }
                 }).padding({ left: 16, right: 16, bottom: 16 })
               }
@@ -148,6 +144,10 @@ export struct DecibelMeter {
   }
 
   aboutToDisappear() {
+    // 清理RxJS订阅
+    if (this.errorSubscription) {
+      this.errorSubscription.unsubscribe();
+    }
     // 清理资源
     this.audioControllerService.dispose();
     // 取消设备状态监听
@@ -175,6 +175,14 @@ export struct DecibelMeter {
 
     // 注册设备状态监听
     this.registerDeviceChangeListener();
+
+    // 订阅错误信息流
+    this.errorSubscription = this.audioControllerService.getError$().subscribe(
+      (errors: string[]) => {
+        this.errorMessages = errors;
+        console.info('[RxJS] DecibelMeter接收到错误信息:', errors);
+      }
+    );
   }
 
   @Builder

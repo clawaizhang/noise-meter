@@ -1,6 +1,6 @@
 import { DecibelRecordService } from '../../services/DecibelRecordService';
 import common from '@ohos.app.ability.common';
-import { AppStorageV2, promptAction } from '@kit.ArkUI';
+import { AppStorageV2, PersistenceV2, promptAction } from '@kit.ArkUI';
 import { taskpool } from '@kit.ArkTS';
 import { concurrentCalculateSpectrum } from '../../concurrent/ConcurrentFftAnalyzer';
 import { AudioPresets } from '../../common/AudioConfig';
@@ -13,6 +13,7 @@ import { AppKeys } from '../../models/AppKeys';
 import { FFTAnalyzer } from '../../utils/FFTAnalyzer';
 import { AudioControllerService } from '../../services/AudioControllerService';
 import { WindowType } from '../../common/WindowType';
+import { Subscription } from 'rxjs';
 
 /**
  * 带时间戳的分贝值接口
@@ -42,14 +43,16 @@ interface TimedAudioBuffer {
 export struct AudioController {
   @Local ak: AppKeys = AppStorageV2.connect(AppKeys)!;
   // 配置参数
-  @Param @Require pk: PreferenceKeys
-  @Param @Require currentLocation: LocationInfo | null = null
-  // 事件发射器
-  @Event onError: (errors: string[]) => void
+  @Local pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys)!;
+  // RxJS订阅管理
+  private locationSubscription?: Subscription;
+  private errorSubscription?: Subscription;
   // 音频状态
   private isRecording: boolean = false
   // 错误状态（支持多个错误同时显示）
   private errorMessages: string[] = []
+  // 当前位置信息
+  private currentLocation: LocationInfo | null = null;
   // 服务实例
   private audioService: AudioService = AudioService.getInstance()
   private recordService: DecibelRecordService = new DecibelRecordService(getContext() as common.UIAbilityContext)
@@ -119,11 +122,35 @@ export struct AudioController {
       this.performSave(comments);
     });
 
+    // 订阅位置数据流
+    this.locationSubscription = this.audioControllerService.getLocation$().subscribe(
+      (location: LocationInfo | null) => {
+        this.currentLocation = location;
+        console.info('[RxJS] 位置信息已更新:', location);
+      }
+    );
+
+    // 订阅错误数据流
+    this.errorSubscription = this.audioControllerService.getError$().subscribe(
+      (errors: string[]) => {
+        this.errorMessages = errors;
+        console.info('[RxJS] 错误信息已更新:', errors);
+      }
+    );
+
   }
 
   aboutToDisappear() {
     // 停止时间显示更新
     this.audioControllerService.stopTimeDisplayUpdates();
+
+    // 清理RxJS订阅
+    if (this.locationSubscription) {
+      this.locationSubscription.unsubscribe();
+    }
+    if (this.errorSubscription) {
+      this.errorSubscription.unsubscribe();
+    }
 
     // 清理RxJS资源
     this.stopAutoSaveMonitoring();
@@ -341,13 +368,15 @@ export struct AudioController {
   private addErrorMessage(message: string): void {
     if (!this.errorMessages.includes(message)) {
       this.errorMessages.push(message);
-      this.onError([...this.errorMessages]);
+      // 通过RxJS发布错误信息
+      this.audioControllerService.publishError([...this.errorMessages]);
     }
   }
 
   private clearErrorMessage(): void {
     this.errorMessages = [];
-    this.onError([]);
+    // 通过RxJS清除错误信息
+    this.audioControllerService.publishError([]);
   }
 
   // 更新统计信息

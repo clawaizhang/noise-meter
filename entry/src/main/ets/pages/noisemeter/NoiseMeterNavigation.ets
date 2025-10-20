@@ -9,6 +9,7 @@ import { AlertsSettingsBuilder, AlertsSettingsProps } from '../settings/AlertsSe
 import { MyContentComponent } from '../../components/my-content/MyContentComponent';
 import { EnhancedExposureContent } from '../../components/exposure/EnhancedExposureContent';
 import { HomePageContent } from '../../components/home/HomePageContent';
+import { AudioController } from '../../components/decibel-meter/AudioController';
 
 // 导航菜单项接口定义
 interface NavigationMenuItem {
@@ -49,11 +50,11 @@ export struct MainNoiseMeter {
   onTabIndexChange(monitor: IMonitor) {
     const currentValue = monitor.value<number>()?.now;
     if (currentValue === 0) {
-      this.title = '主页';
+      this.title = '静喵Sound';
       this.menuItems = this.homeMenus;
     }
     if (currentValue === 1) {
-      this.title = '静喵Sound';
+      this.title = '仪表盘';
       this.menuItems = this.noiseMeterMenus;
     }
     if (currentValue === 2) {
@@ -251,18 +252,20 @@ export struct MainNoiseMeter {
 
   build() {
     NavDestination() {
+      // 音频控制器（逻辑组件，不渲染UI）- 使用RxJS数据流
+      AudioController()
       Tabs({ barPosition: BarPosition.End, index: this.currentIndex }) {
         // 主页 - 使用HomeContent组件
         TabContent() {
           this.HomeContent()
         }
-        .tabBar(this.TabBuilder({ title: '主页', icon:this.currentIndex == 0 ? $r("app.media.ic_home_bold"): $r("app.media.ic_home"), index: 0 }))
+        .tabBar(this.TabBuilder({ title: '静喵Sound', icon:this.currentIndex == 0 ? $r("app.media.ic_home_bold"): $r("app.media.ic_home"), index: 0 }))
 
         // 静喵Sound页面 - 使用DashboardContent组件
         TabContent() {
           this.DashboardContent()
         }
-        .tabBar(this.TabBuilder({ title: '静喵Sound', icon: this.currentIndex == 1 ? $r("app.media.solar_spedometer_middle_bold") : $r("app.media.ic_meter"), index: 1 }))
+        .tabBar(this.TabBuilder({ title: '仪表盘', icon: this.currentIndex == 1 ? $r("app.media.solar_spedometer_middle_bold") : $r("app.media.ic_meter"), index: 1 }))
 
         // 警报页面 - 使用独立的AlertsContent组件
         TabContent() {

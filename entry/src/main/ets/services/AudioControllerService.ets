@@ -1,8 +1,9 @@
-import { Subject } from 'rxjs';
+import { Subject, BehaviorSubject } from 'rxjs';
 import { UIDisplayState } from '../models/UIDisplayState';
 import { DataProcessingState } from '../models/DataProcessingState';
 import { PreferenceKeys } from '../models/PreferenceKeys';
 import { AppKeys } from '../models/AppKeys';
+import { LocationInfo } from '../services/LocationService';
 
 /**
  * AudioController服务
@@ -16,6 +17,10 @@ export class AudioControllerService {
   private resetSubject = new Subject<void>();
   // 保存事件Subject
   private saveSubject = new Subject<string>();
+  // 位置数据Subject
+  private locationSubject = new BehaviorSubject<LocationInfo | null>(null);
+  // 错误数据Subject
+  private errorSubject = new Subject<string[]>();
   // 时间显示定时器
   private timeDisplayTimer?: number;
   private pk: PreferenceKeys;
@@ -70,6 +75,34 @@ export class AudioControllerService {
    */
   public subscribeSave(callback: (comments: string) => void): void {
     this.saveSubject.subscribe(callback);
+  }
+
+  /**
+   * 更新位置信息
+   */
+  public updateLocation(location: LocationInfo | null): void {
+    this.locationSubject.next(location);
+  }
+
+  /**
+   * 获取位置Observable
+   */
+  public getLocation$() {
+    return this.locationSubject.asObservable();
+  }
+
+  /**
+   * 发布错误信息
+   */
+  public publishError(errors: string[]): void {
+    this.errorSubject.next(errors);
+  }
+
+  /**
+   * 获取错误Observable
+   */
+  public getError$() {
+    return this.errorSubject.asObservable();
   }
 
   /**
@@ -145,6 +178,8 @@ export class AudioControllerService {
     this.stopTimeDisplayUpdates();
     this.resetSubject.complete();
     this.saveSubject.complete();
+    this.locationSubject.complete();
+    this.errorSubject.complete();
     AudioControllerService.instance = null;
   }
 }
