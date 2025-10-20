@@ -1,4 +1,4 @@
-import { curves } from '@kit.ArkUI';
+import { curves, AppStorageV2 } from '@kit.ArkUI';
 import { AppKeys } from '../../models/AppKeys';
 
 // 声学参数数据接口
@@ -185,95 +185,110 @@ function buildAcousticParamCard(param: AcousticParameter, ak: AppKeys) {
     .combine(TransitionEffect.translate({ x: -150, y: 0 }).animation({ curve: curves.springMotion() })))
 }
 
-// 参数类别选择器
-interface GeneratedTypeLiteralInterface_1 {
+// 参数类别选择器类型定义
+interface CategorySelectorItem {
   category: ParameterCategory;
   label: string;
 }
 
-@Builder
-function buildCategorySelector(selectedCategory: ParameterCategory, onCategoryChange: (category: ParameterCategory) => void) {
-  Row({ space: 8 }) {
-    ForEach([
+// 声学参数参考组件
+@ComponentV2
+struct AcousticParamsComponent {
+  @Local selectedCategory: ParameterCategory = ParameterCategory.FREQUENCY_WEIGHTING
+  @Local ak: AppKeys = AppStorageV2.connect(AppKeys)!;
+
+  aboutToAppear() {
+  }
+
+  // 获取过滤后的参数数据
+  private getFilteredParameters(): AcousticParameter[] {
+    return acousticParameters.filter(param => param.category === this.selectedCategory)
+  }
+
+  // 获取参数类别标签
+  private getCategoryLabel(category: ParameterCategory): string {
+    switch (category) {
+      case ParameterCategory.FREQUENCY_WEIGHTING:
+        return '频率加权'
+      case ParameterCategory.TIME_WEIGHTING:
+        return '时间加权'
+      case ParameterCategory.TECHNICAL_PARAMS:
+        return '技术参数'
+    }
+  }
+
+  // 获取类别选择器项目
+  private getCategoryItems(): CategorySelectorItem[] {
+    return [
       { category: ParameterCategory.FREQUENCY_WEIGHTING, label: '频率加权' },
       { category: ParameterCategory.TIME_WEIGHTING, label: '时间加权' },
       { category: ParameterCategory.TECHNICAL_PARAMS, label: '技术参数' }
-    ], (item: GeneratedTypeLiteralInterface_1) => {
-      Text(item.label)
-        .fontSize(14)
-        .fontWeight(FontWeight.Medium)
-        .fontColor(selectedCategory === item.category ? $r('sys.color.font_primary') : $r('sys.color.font_secondary'))
-        .padding(12)
-        .backgroundColor(selectedCategory === item.category ? $r('sys.color.comp_background_primary') : $r('sys.color.background_secondary'))
-        .borderRadius(8)
-        .onClick(() => {
-          onCategoryChange(item.category);
-        });
-    })
+    ]
   }
-  .width('100%')
-  .justifyContent(FlexAlign.Center)
-  .padding(8)
-}
 
-// 获取当前使用的参数
-function getCurrentParameters(): AcousticParameter[] {
-  // 这里可以根据实际应用状态返回当前使用的参数
-  // 目前返回频率加权和时间加权的参数作为示例
-  return acousticParameters.filter(param => 
-    param.category === '频率加权' || param.category === '时间加权'
-  );
-}
+  // 获取当前使用的参数
+  private getCurrentParameters(): AcousticParameter[] {
+    // 这里可以根据实际应用状态返回当前使用的参数
+    // 目前返回频率加权和时间加权的参数作为示例
+    return acousticParameters.filter(param =>
+      param.category === '频率加权' || param.category === '时间加权'
+    );
+  }
 
-// 声学参数参考对话框构建器
-@Builder
-export function AcousticParamsDialogBuilder(ak: AppKeys) {
+  // 类别选择器
+  @Builder
+  buildCategorySelector() {
+    Row({ space: 8 }) {
+      ForEach(this.getCategoryItems(), (item: CategorySelectorItem) => {
+        Text(item.label)
+          .fontSize(14)
+          .fontWeight(FontWeight.Medium)
+          .fontColor(this.selectedCategory === item.category ? $r('sys.color.font_primary') : $r('sys.color.font_secondary'))
+          .padding(12)
+          .backgroundColor(this.selectedCategory === item.category ? $r('sys.color.comp_background_primary') : $r('sys.color.background_secondary'))
+          .borderRadius(8)
+          .onClick(() => {
+            this.selectedCategory = item.category
+          })
+      })
+    }
+    .width('100%')
+    .justifyContent(FlexAlign.Center)
+    .padding(8)
+  }
 
-  NavDestination() {
+  build() {
     Scroll() {
       Column({ space: 16 }) {
-        // 当前使用参数
-        if (getCurrentParameters().length > 0) {
-          Column({ space: 8 }) {
-            Text('当前使用参数')
-              .fontSize(16)
-              .fontWeight(FontWeight.Bold)
-              .fontColor($r('sys.color.font_primary'))
-              .alignSelf(ItemAlign.Start);
-
-            ForEach(getCurrentParameters(), (param: AcousticParameter) => {
-              buildAcousticParamCard(param, ak)
-            })
-          }
-          .width('100%')
-          .padding({ bottom: 16 })
-
-          // 分隔线
-          Divider()
-            .strokeWidth(1)
-            .color($r('sys.color.comp_divider'))
-            .margin({ bottom: 16 })
-        }
 
         // 参数类别选择器
-        buildCategorySelector(ParameterCategory.FREQUENCY_WEIGHTING, (category: ParameterCategory) => {
-        })
+        this.buildCategorySelector()
 
         // 参数列表
-        Text(`${ParameterCategory.FREQUENCY_WEIGHTING}参数`)
+        Text(`${this.getCategoryLabel(this.selectedCategory)}参数`)
           .fontSize(16)
           .fontWeight(FontWeight.Bold)
           .fontColor($r('sys.color.font_primary'))
           .alignSelf(ItemAlign.Start);
 
-        ForEach(acousticParameters, (param: AcousticParameter) => {
-          buildAcousticParamCard(param, ak)
+        ForEach(this.getFilteredParameters(), (param: AcousticParameter) => {
+          buildAcousticParamCard(param, this.ak)
         })
       }
     }
     .scrollable(ScrollDirection.Vertical)
     .scrollBar(BarState.Off)
     .edgeEffect(EdgeEffect.Spring)
+  }
+}
+
+
+// 声学参数参考对话框构建器
+@Builder
+export function AcousticParamsDialogBuilder(ak: AppKeys) {
+
+  NavDestination() {
+    AcousticParamsComponent()
   }
   .title({ main: '声学参数参考', sub: '专业声学测量参数说明' })
   .padding(16)
