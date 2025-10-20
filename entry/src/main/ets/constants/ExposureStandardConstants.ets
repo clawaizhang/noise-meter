@@ -67,7 +67,7 @@ export const DecibelRangeConfigs: Record<DecibelRange, DecibelRangeConfig> = {
     min: 40,
     max: 50,
     label: '非常安静',
-    description: '图书馆、病房等环境'
+    description: '图书馆等环境'
   },
   [DecibelRange.QUIET]: {
     min: 50,

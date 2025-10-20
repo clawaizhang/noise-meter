@@ -19,10 +19,15 @@ import { PremiumFeature } from '../membership/PremiumFeature';
 import promptAction from '@ohos.promptAction';
 
 // 分贝区间统计数据
-interface DecibelRangeStats {
-  range: DecibelRange;
-  duration: string;
-  percentage: number;
+@ObservedV2
+class DecibelRangeStats {
+  @Trace
+  range: DecibelRange = DecibelRange.VERY_QUIET;
+  @Trace
+  duration: string = '';
+  @Trace
+  percentage: number =  0;
+  @Trace
   exposureColor?: Resource;
 }
 
@@ -170,12 +175,13 @@ export struct EnhancedExposureContent {
    * 获取暴露颜色
    * 更新颜色逻辑，支持超过100%的暴露剂量
    */
-  private getExposureColor(percentage: number): Resource {
-    if (percentage < 30) {
+  @Computed
+  private get ExposureColor(): Resource {
+    if (this.exposureData.exposurePercentage < 30) {
       return $r('app.color.health_good'); // 绿色 - 安全
-    } else if (percentage < 60) {
+    } else if (this.exposureData.exposurePercentage < 60) {
       return $r('app.color.health_warning'); // 黄色 - 警告
-    } else if (percentage < 100) {
+    } else if (this.exposureData.exposurePercentage < 100) {
       return $r('app.color.health_bad'); // 红色 - 危险
     } else {
       return $r('sys.color.alert'); // 深红色 - 严重超标
@@ -381,7 +387,7 @@ export struct EnhancedExposureContent {
       Column({ space: DesignConstants.SPACING_SM }) {
         this.buildEnhancedProgressRing({
           percentage: this.exposureData.exposurePercentage,
-          color: this.getExposureColor(this.exposureData.exposurePercentage)
+          color: this.ExposureColor
         })
       }
       .width('100%')
@@ -396,7 +402,7 @@ export struct EnhancedExposureContent {
             Text(this.exposureData.remainingSafeTime)
               .fontSize(DesignConstants.FONT_SIZE_LG)
               .fontWeight(FontWeight.Bold)
-              .fontColor(this.getExposureColor(this.exposureData.exposurePercentage))
+              .fontColor(this.ExposureColor)
               .textAlign(TextAlign.Center)
 
             Text('还能安全待多久')
@@ -583,7 +589,7 @@ export struct EnhancedExposureContent {
         .padding(DesignConstants.SPACING_LG)
         .backgroundColor($r('sys.color.comp_background_primary'))
         .borderRadius(DesignConstants.BORDER_RADIUS_MD)
-      }, (item: DecibelRangeStats, index: number) => index + '')
+      })
     }
     .backgroundColor($r('sys.color.background_secondary'))
     .borderRadius(DesignConstants.BORDER_RADIUS_MD)
