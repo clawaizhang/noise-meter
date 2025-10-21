@@ -184,6 +184,9 @@ export class UIDisplayState {
   // 显示频谱数据（UI专用）
   @Trace displaySpectrumData: number[] = [];
 
+  // 显示时域波形数据（UI专用）
+  @Trace displayTimeDomainData: number[] = [];
+
   // 显示峰值频率（UI专用）
   @Trace displayPeakFreq: number = 0;
 

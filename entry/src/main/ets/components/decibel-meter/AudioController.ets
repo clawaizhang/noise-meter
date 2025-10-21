@@ -191,6 +191,10 @@ export struct AudioController {
         // 存储带时间戳的音频缓冲区
         const currentTime = Date.now();
         this.timedAudioBuffers.push({ timestamp: currentTime, buffer: buffer.slice(0) });
+        
+        // 处理时域波形数据
+        this.processTimeDomainData(buffer);
+        
         let config = AudioPresets.getConfig(this.pk.audio_analysis_mode);
         // 计算频谱数据（用于频谱图显示）
         taskpool.execute<[ArrayBuffer, WeightingType, number, number, WindowType, number, number], Float32Array>(
@@ -395,6 +399,38 @@ export struct AudioController {
 
     // 同步到UI显示状态（仅在UI更新启用时）
     this.ak.uiDisplayState.syncFromProcessingState(this.ak.dataProcessingState);
+  }
+
+  /**
+   * 处理时域波形数据
+   * @param buffer 音频数据缓冲区
+   */
+  private processTimeDomainData(buffer: ArrayBuffer): void {
+    try {
+      // 将ArrayBuffer转换为Int16Array
+      const samples = new Int16Array(buffer);
+      
+      // 限制数据点数量以提高性能（每4个样本取1个）
+      const downsampledData: number[] = [];
+      const step = Math.max(1, Math.floor(samples.length / 512)); // 目标512个数据点
+      
+      for (let i = 0; i < samples.length; i += step) {
+        if (downsampledData.length >= 512) break; // 限制最大数据点数量
+        
+        // 归一化到[-1, 1]范围
+        const normalizedValue = samples[i] / 32768.0;
+        downsampledData.push(normalizedValue);
+      }
+      
+      // 更新UI显示状态
+      if (this.ak.uiDisplayState.isUIUpdatesEnabled) {
+        this.ak.uiDisplayState.displayTimeDomainData = downsampledData;
+      }
+      
+      console.debug(`[时域处理] 处理了${downsampledData.length}个数据点`);
+    } catch (error) {
+      console.error(`[时域处理] 处理时域数据时出错: ${error instanceof Error ? error.message : String(error)}`);
+    }
   }
 
   // 检查报警状态

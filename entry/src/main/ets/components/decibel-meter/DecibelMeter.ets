@@ -4,6 +4,7 @@ import display from '@ohos.display';
 import { ActionPanel } from './ActionPanel';
 import { SpectrumChartComponent } from './SpectrumChartComponent';
 import { DecibelDisplayComponent } from './DecibelDisplayComponent';
+import { TimeDomainChartComponent } from './TimeDomainChartComponent';
 import { PreferenceKeys } from '../../models/PreferenceKeys';
 import { LocationInfo } from '../../services/LocationService';
 import { LocationDisplay } from '../business/LocationDisplay';
@@ -106,6 +107,19 @@ export struct DecibelMeter {
               }
             }) {
               SpectrumChartComponent()
+            }
+
+            // 时域波形图 - 简化布局策略
+            GridCol({
+              span: {
+                xs: 12, // 横向XS/SM：单列布局（全宽）
+                sm: 12, // 横向XS/SM：单列布局（全宽）
+                md: 6, // 横向MD及以上：双列布局（半宽）
+                lg: 6, // 横向MD及以上：双列布局（半宽）
+                xl: 6    // 横向MD及以上：双列布局（半宽）
+              }
+            }) {
+              TimeDomainChartComponent()
             }
           }
         }
