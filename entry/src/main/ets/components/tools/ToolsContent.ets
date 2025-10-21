@@ -20,6 +20,11 @@ import {
   AutoSaveSettings,
   AutoSaveSettingsDialogBuilder,
 } from '../auto-save/AutoSaveSettingsDialog';
+import {
+  TimeWeightingDialogBuilder,
+  TimeWeightingDialogParams,
+} from '../time-weighting/TimeWeightingDialog';
+import { AudioAnalysisMode } from '../../common/AudioConfig';
 
 // 工具功能卡片配置
 interface ToolCardConfig {
@@ -95,6 +100,30 @@ export struct ToolsContent {
           status: `当前: ${this.getWeightingDisplayName(this.pk.weighting_type)}`,
           statusColor: $r('sys.color.font_primary'),
           onTap: () => { this.navigateToFrequencyWeighting() }
+        })
+      }
+      
+      // 音频分析模式
+      GridCol({ span: 1 }) {
+        this.buildToolCard({
+          title: '音频分析模式',
+          icon: $r('app.media.ic_time_weighting'),
+          description: '快速/慢速/脉冲',
+          status: `当前: ${this.getAnalysisModeDisplayName(this.pk.audio_analysis_mode)}`,
+          statusColor: $r('sys.color.font_primary'),
+          onTap: () => { this.navigateToAudioAnalysisMode() }
+        })
+      }
+      
+      // 音频记录开关
+      GridCol({ span: 1 }) {
+        this.buildToolCard({
+          title: '音频记录',
+          icon: $r('app.media.ic_mic'),
+          description: '保存原始音频',
+          status: this.pk.record_enabled ? '已开启' : '已关闭',
+          statusColor: this.pk.record_enabled ? $r('sys.color.confirm') : $r('sys.color.font_secondary'),
+          onTap: () => { this.toggleAudioRecording() }
         })
       }
       
@@ -366,5 +395,52 @@ export struct ToolsContent {
     Throttle.click(() => {
       this.pk.location_enabled = !this.pk.location_enabled;
     })
+  }
+
+  // 导航到音频分析模式设置
+  private navigateToAudioAnalysisMode = () => {
+    let audioAnalysisDialog: InfSheet;
+    let param: TimeWeightingDialogParams = {
+      currentMode: this.pk.audio_analysis_mode,
+      onSettingsApplied: (selectedMode: AudioAnalysisMode) => {
+        // 即时生效：立即应用新设置
+        this.pk.audio_analysis_mode = selectedMode;
+      },
+      onClose: () => {
+        audioAnalysisDialog?.dismiss();
+      }
+    }
+    audioAnalysisDialog = DialogHub.getSheet()
+      .setStyle({
+        showClose: false,
+        backgroundColor: $r('sys.color.background_secondary')
+      })
+      .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS })
+      .setComponentTargetId('mainId')
+      .setContent(wrapBuilder(TimeWeightingDialogBuilder), param)
+      .build();
+
+    audioAnalysisDialog.show();
+  }
+
+  // 音频记录开关切换
+  private toggleAudioRecording() {
+    Throttle.click(() => {
+      this.pk.record_enabled = !this.pk.record_enabled;
+    })
+  }
+
+  // 获取音频分析模式显示名称
+  private getAnalysisModeDisplayName(mode: AudioAnalysisMode): string {
+    switch (mode) {
+      case AudioAnalysisMode.FAST_TIME_WEIGHTING:
+        return '快速(F)';
+      case AudioAnalysisMode.SLOW_TIME_WEIGHTING:
+        return '慢速(S)';
+      case AudioAnalysisMode.IMPULSE_TIME_WEIGHTING:
+        return '脉冲(I)';
+      default:
+        return '自定义模式';
+    }
   }
 }

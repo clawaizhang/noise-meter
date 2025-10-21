@@ -1,7 +1,6 @@
 import { PreferenceKeys } from '../../models/PreferenceKeys';
 import { PersistenceV2 } from '@kit.ArkUI';
 import { ListItemBuilder } from '../common/ListItemBuilder';
-import { SettingsBuilder } from '../../pages/noisemeter/SettingsNavigation';
 import { AboutSettingsBuilder } from '../../pages/settings/AboutSettingsNavigation';
 import { DialogHub } from '@hadss/dialoghub';
 import { common } from '@kit.AbilityKit';
@@ -153,23 +152,6 @@ export struct MyContentComponent {
             right: 16
           })
 
-          ListItemBuilder(
-            $r('app.media.ic_settings'),
-            '全局设置',
-            () => {
-              DialogHub.getSheet()
-                .setStyle({
-                  title: { title: '设置' },
-                  backgroundColor: $r('sys.color.background_secondary')
-                })
-                .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS })
-                .setComponentTargetId('mainId')
-                .setContent(wrapBuilder(SettingsBuilder))
-                .build()
-                .show();
-            },
-            20
-          )
 
           // 给作者五星好评设置
           ListItemBuilder(
