@@ -101,15 +101,26 @@ export struct HomePageContent {
   @Builder
   private buildDecibelDisplay() {
     Column({ space: DesignConstants.SPACING_SM }) {
-      // 大字体分贝值
+      // 环境质量评级 - 突出显示
+      Row({ space: DesignConstants.SPACING_SM }) {
+        Circle({ width: 12, height: 12 })
+          .fill(this.environmentColor)
+        
+        Text(this.environmentQuality)
+          .fontSize(DesignConstants.FONT_SIZE_XL)
+          .fontWeight(FontWeight.Bold)
+          .fontColor(this.environmentColor)
+      }
+      
+      // 分贝值 - 缩小字体作为状态指示器
       Text(`${this.ak.uiDisplayState.displayDb}dB`)
-        .fontSize(64)
-        .fontWeight(FontWeight.Bold)
+        .fontSize(32)
+        .fontWeight(FontWeight.Medium)
         .fontColor(this.decibelColor)
       
       // 分贝等级描述
       Text(this.decibelDescription)
-        .fontSize(DesignConstants.FONT_SIZE_LG)
+        .fontSize(DesignConstants.FONT_SIZE_MD)
         .fontColor($r('sys.color.font_secondary'))
     }
     .width('100%')

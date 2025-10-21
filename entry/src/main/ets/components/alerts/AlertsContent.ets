@@ -70,10 +70,16 @@ export struct AlertsContent {
   @Builder
   private buildStatusDisplay() {
     Column({ space: DesignConstants.SPACING_MD }) {
-      // 状态指示器
+      // 状态指示器 - 强化显示
       Row({ space: DesignConstants.SPACING_SM }) {
-        Circle({ width: 16, height: 16 })
+        Circle({ width: 20, height: 20 })
           .fill(this.statusColor)
+          .shadow({
+            radius: 8,
+            color: this.statusColor,
+            offsetX: 0,
+            offsetY: 2
+          })
 
         Text(this.statusText)
           .fontSize(DesignConstants.FONT_SIZE_XL)
@@ -81,23 +87,55 @@ export struct AlertsContent {
           .fontWeight(FontWeight.Bold)
       }
 
-      // 当前分贝值（大字体显示）
-      Text(`${this.ak.uiDisplayState.displayDb}dB`)
-        .fontSize(48)
-        .fontWeight(FontWeight.Bold)
-        .fontColor(this.statusColor)
+      // 分贝值与阈值对比显示
+      Row({ space: DesignConstants.SPACING_LG }) {
+        // 当前分贝值
+        Column({ space: DesignConstants.SPACING_XS }) {
+          Text('当前')
+            .fontSize(DesignConstants.FONT_SIZE_MD)
+            .fontColor($r('sys.color.font_secondary'))
+          Text(`${this.ak.uiDisplayState.displayDb}dB`)
+            .fontSize(48)
+            .fontWeight(FontWeight.Bold)
+            .fontColor(this.statusColor)
+        }
 
-      // 阈值信息
-      Text(`阈值: ${this.pk.alarm_threshold.currentEffectiveThreshold}dB`)
-        .fontSize(DesignConstants.FONT_SIZE_MD)
-        .fontColor($r('sys.color.font_secondary'))
+        // 对比符号
+        Text(this.getComparisonSymbol())
+          .fontSize(32)
+          .fontColor($r('sys.color.font_secondary'))
+          .fontWeight(FontWeight.Bold)
+
+        // 阈值
+        Column({ space: DesignConstants.SPACING_XS }) {
+          Text('阈值')
+            .fontSize(DesignConstants.FONT_SIZE_MD)
+            .fontColor($r('sys.color.font_secondary'))
+          Text(`${this.pk.alarm_threshold.currentEffectiveThreshold}dB`)
+            .fontSize(48)
+            .fontWeight(FontWeight.Bold)
+            .fontColor($r('sys.color.font_primary'))
+        }
+      }
+
+      // 差值显示
+      Text(this.getDifferenceText())
+        .fontSize(DesignConstants.FONT_SIZE_LG)
+        .fontColor(this.statusColor)
+        .fontWeight(FontWeight.Medium)
 
       // 警报持续时间（如果激活）
       if (this.ak.uiDisplayState.displayAlertState.isActive) {
-        Text(`持续时间: ${this.ak.uiDisplayState.displayAlertState.formattedDuration}`)
-          .fontSize(DesignConstants.FONT_SIZE_SM)
-          .fontColor($r('sys.color.alert'))
-          .fontWeight(FontWeight.Medium)
+        Row({ space: DesignConstants.SPACING_SM }) {
+          Image($r('app.media.ic_alarm'))
+            .width(16)
+            .height(16)
+            .fillColor($r('sys.color.alert'))
+          Text(`持续时间: ${this.ak.uiDisplayState.displayAlertState.formattedDuration}`)
+            .fontSize(DesignConstants.FONT_SIZE_MD)
+            .fontColor($r('sys.color.alert'))
+            .fontWeight(FontWeight.Medium)
+        }
       }
     }
     .padding(DesignConstants.SPACING_XL)
@@ -105,7 +143,7 @@ export struct AlertsContent {
     .backgroundBlurStyle(BlurStyle.COMPONENT_THICK)
     .borderRadius(DesignConstants.BORDER_RADIUS_XL)
     .width('100%')
-
+    .alignItems(HorizontalAlign.Center)
   }
 
   // 构建环境信息区
@@ -403,6 +441,35 @@ export struct AlertsContent {
         default:
           return '继续保持良好环境';
       }
+    }
+  }
+
+  // 辅助方法：获取对比符号
+  private getComparisonSymbol(): string {
+    const currentDecibel = this.ak.uiDisplayState.displayDb;
+    const threshold = this.pk.alarm_threshold.currentEffectiveThreshold;
+    
+    if (currentDecibel > threshold) {
+      return '>';
+    } else if (currentDecibel < threshold) {
+      return '<';
+    } else {
+      return '=';
+    }
+  }
+
+  // 辅助方法：获取差值文本
+  private getDifferenceText(): string {
+    const currentDecibel = this.ak.uiDisplayState.displayDb;
+    const threshold = this.pk.alarm_threshold.currentEffectiveThreshold;
+    const difference = Math.abs(currentDecibel - threshold);
+    
+    if (currentDecibel > threshold) {
+      return `超过阈值 ${difference}dB`;
+    } else if (currentDecibel < threshold) {
+      return `低于阈值 ${difference}dB`;
+    } else {
+      return '等于阈值';
     }
   }
 

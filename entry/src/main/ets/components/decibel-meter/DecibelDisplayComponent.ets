@@ -179,25 +179,34 @@ export struct DecibelDisplayComponent {
 
   @Builder
   currentDecibelDisplay(config: CurrentDecibelConfig) {
-    Row({ space: 8 }) {
-      if (config.currentDecibel === 0) {
-        Text('-')
-          .fontSize(48)
-          .fontWeight(FontWeight.Bold)
-          .fontColor($r('sys.color.alert'))
-          .transition(TransitionEffect.scale({ x: 0, y: 0 }).animation({ curve: curves.springMotion() }));
-      } else {
-        Text(`${config.currentDecibel}dB`)
-          .fontSize(48)
-          .fontWeight(FontWeight.Bold)
-          .fontColor($r('sys.color.alert'))
-          .transition(TransitionEffect.scale({ x: 0, y: 0 }).animation({ curve: curves.springMotion() }));
+    Column({ space: 4 }) {
+      // 技术参数标题
+      Text('实时分贝')
+        .fontSize(14)
+        .fontColor($r('sys.color.ohos_id_color_text_secondary'))
+        .fontWeight(FontWeight.Medium)
+      
+      // 分贝值 - 缩小字体作为技术参考
+      Row({ space: 8 }) {
+        if (config.currentDecibel === 0) {
+          Text('-')
+            .fontSize(36)
+            .fontWeight(FontWeight.Bold)
+            .fontColor($r('sys.color.alert'))
+            .transition(TransitionEffect.scale({ x: 0, y: 0 }).animation({ curve: curves.springMotion() }));
+        } else {
+          Text(`${config.currentDecibel}dB`)
+            .fontSize(36)
+            .fontWeight(FontWeight.Bold)
+            .fontColor($r('sys.color.alert'))
+            .transition(TransitionEffect.scale({ x: 0, y: 0 }).animation({ curve: curves.springMotion() }));
+        }
       }
     }
     .padding({ top: 8, bottom: 8 })
     .width('100%')
     .justifyContent(FlexAlign.Center)
-    .alignItems(VerticalAlign.Bottom)
+    .alignItems(HorizontalAlign.Center)
     .id('currentDbComp')
   }
 
