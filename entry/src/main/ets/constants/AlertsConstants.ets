@@ -13,11 +13,13 @@ export enum AlertType {
 
 // 警报状态枚举
 export enum AlertStatus {
-  IDLE = 'idle',          // 空闲状态
-  MONITORING = 'monitoring', // 监控中
-  WARNING = 'warning',    // 警告状态
-  ALERT = 'alert',        // 警报状态
-  MUTED = 'muted'         // 静音状态
+  IDLE = 'idle',              // 空闲状态
+  MONITORING = 'monitoring',   // 监控中
+  WARNING = 'warning',        // 接近阈值警告
+  ALERT_ACTIVE = 'alert_active', // 警报激活
+  ALERT_PERSISTENT = 'alert_persistent', // 警报持续
+  ALERT_ESCALATED = 'alert_escalated', // 警报升级
+  MUTED = 'muted'             // 静音状态
 }
 
 // 环境噪声等级
@@ -177,4 +179,74 @@ export const ALERT_COLORS: AlertColors = {
   ERROR: $r('sys.color.alert'),
   BACKGROUND: $r('sys.color.background_secondary'),
   CARD_BACKGROUND: $r('sys.color.comp_background_primary')
+};
+
+// ==================== 状态机相关定义 ====================
+
+// 状态转换事件
+export enum AlertEvent {
+  START_MONITORING = 'start_monitoring',
+  STOP_MONITORING = 'stop_monitoring',
+  NOISE_LEVEL_CHANGED = 'noise_level_changed',
+  THRESHOLD_CHANGED = 'threshold_changed',
+  MANUAL_RESET = 'manual_reset',
+  MUTE_ALERTS = 'mute_alerts',
+  UNMUTE_ALERTS = 'unmute_alerts'
+}
+
+// 状态上下文
+export interface AlertStateContext {
+  currentDecibel: number;
+  threshold: number;
+  startTime: number;
+  duration: number;
+  previousState: AlertStatus;
+  stateHistory: StateTransition[];
+}
+
+// 状态转换记录
+export interface StateTransition {
+  from: AlertStatus;
+  to: AlertStatus;
+  event: AlertEvent;
+  timestamp: number;
+  context: AlertStateContext;
+}
+
+// 状态机配置
+export interface StateMachineConfig {
+  warningThresholdOffset: number;    // 警告阈值偏移量
+  persistentAlertDuration: number;   // 持续警报持续时间(ms)
+  escalationThresholdOffset: number; // 升级阈值偏移量
+  debounceTime: number;              // 防抖时间(ms)
+}
+
+// 默认状态机配置
+export const DEFAULT_STATE_MACHINE_CONFIG: StateMachineConfig = {
+  warningThresholdOffset: 0,    // 警告阈值偏移0dB
+  persistentAlertDuration: 30000, // 持续警报30秒
+  escalationThresholdOffset: 10, // 升级阈值偏移10dB
+  debounceTime: 1000             // 防抖1秒
+};
+
+// 状态描述映射
+export const ALERT_STATUS_DESCRIPTIONS: Record<AlertStatus, string> = {
+  [AlertStatus.IDLE]: '空闲',
+  [AlertStatus.MONITORING]: '监控中',
+  [AlertStatus.WARNING]: '接近阈值',
+  [AlertStatus.ALERT_ACTIVE]: '警报激活',
+  [AlertStatus.ALERT_PERSISTENT]: '警报持续',
+  [AlertStatus.ALERT_ESCALATED]: '警报升级',
+  [AlertStatus.MUTED]: '静音'
+};
+
+// 状态颜色映射
+export const ALERT_STATUS_COLORS: Record<AlertStatus, Resource> = {
+  [AlertStatus.IDLE]: $r('sys.color.font_secondary'),
+  [AlertStatus.MONITORING]: $r('sys.color.confirm'),
+  [AlertStatus.WARNING]: $r('sys.color.warning'),
+  [AlertStatus.ALERT_ACTIVE]: $r('sys.color.alert'),
+  [AlertStatus.ALERT_PERSISTENT]: $r('sys.color.alert'),
+  [AlertStatus.ALERT_ESCALATED]: $r('sys.color.alert'),
+  [AlertStatus.MUTED]: $r('sys.color.font_secondary')
 };

@@ -6,6 +6,8 @@ import { AppStorageV2, PersistenceV2 } from '@kit.ArkUI';
 import { common } from '@kit.AbilityKit';
 import { NotificationPreferences } from './NotificationPreferences';
 import { PresetType } from '../../models/ThresholdConfig';
+import { AlertStateMachine } from '../../utils/AlertStateMachine';
+import { AlertEvent, AlertStatus } from '../../constants/AlertsConstants';
 
 @ComponentV2
 export struct AlertsContent {
@@ -14,42 +16,63 @@ export struct AlertsContent {
   @Local private pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys)!;
   // 警报服务
   private alertService: AlertService = AlertService.getInstance(getContext() as common.UIAbilityContext,this.pk);
+  // 状态机
+  private stateMachine: AlertStateMachine = new AlertStateMachine();
 
   aboutToAppear(): void {
     // 组件加载时更新权限状态
     this.alertService.updateSystemPermissionStatus();
+    // 启动状态机监控
+    this.stateMachine.handleEvent(AlertEvent.START_MONITORING);
   }
 
   aboutToDisappear(): void {
     // 组件销毁时重置警报状态
     this.alertService.resetAlertState();
+    // 停止状态机监控
+    this.stateMachine.handleEvent(AlertEvent.STOP_MONITORING);
+    this.stateMachine.destroy();
   }
 
   @Monitor('ak.uiDisplayState.displayDb')
   async onDbChange(monitor: IMonitor) {
     const currentDecibel = monitor.value<number>()?.now;
     if (currentDecibel !== undefined && this.ak.isDisplayApp) {
-      await this.checkAlertStatus(currentDecibel);
+      // 使用状态机处理状态转换
+      const threshold = this.pk.alarm_threshold.currentEffectiveThreshold;
+      const transitionOccurred = this.stateMachine.handleEvent(
+        AlertEvent.NOISE_LEVEL_CHANGED,
+        { currentDecibel, threshold }
+      );
+      
+      if (transitionOccurred) {
+        await this.updateAlertState();
+      }
     }
   }
 
-  // 检查警报状态
-  private async checkAlertStatus(currentDecibel: number): Promise<void> {
-    const threshold = this.pk.alarm_threshold.currentEffectiveThreshold;
-    const shouldAlert = currentDecibel >= threshold; // 只基于分贝值与阈值比较
-
-    // 使用 DataProcessingState 中的警报状态
-    const isAlarmActive = this.ak.dataProcessingState.alertState.isActive;
-
-    if (shouldAlert && !isAlarmActive) {
-      // 触发警报（总是触发，不受通知设置影响）
-      await this.triggerAlarm(currentDecibel);
-    } else if (!shouldAlert && isAlarmActive) {
-      // 解除警报
-      this.clearAlarm();
-    } else if (!shouldAlert) {
-      // 噪音恢复正常，重置警报状态
-      this.alertService.resetAlertState();
+  // 更新警报状态（基于状态机）
+  private async updateAlertState(): Promise<void> {
+    const currentState = this.stateMachine.CurrentState;
+    const context = this.stateMachine.getContext();
+    
+    switch (currentState) {
+      case AlertStatus.ALERT_ACTIVE:
+      case AlertStatus.ALERT_PERSISTENT:
+      case AlertStatus.ALERT_ESCALATED:
+        // 触发警报
+        await this.triggerAlarm(context.currentDecibel);
+        break;
+      case AlertStatus.MONITORING:
+      case AlertStatus.WARNING:
+        // 解除警报
+        this.clearAlarm();
+        break;
+      case AlertStatus.IDLE:
+      case AlertStatus.MUTED:
+        // 重置警报状态
+        this.alertService.resetAlertState();
+        break;
     }
   }
 
@@ -217,79 +240,109 @@ export struct AlertsContent {
 
   @Computed
   get statusColor(): Resource {
-    const currentDecibel = this.ak.uiDisplayState.displayDb;
-    const threshold = this.pk.alarm_threshold.currentEffectiveThreshold;
-
-    if (currentDecibel >= threshold) {
-      return $r('sys.color.warning'); // 红色
-    } else if (currentDecibel >= threshold - 10) {
-      return $r('sys.color.alert'); // 黄色
-    } else {
-      return $r('sys.color.confirm'); // 绿色
+    const currentState = this.stateMachine.CurrentState;
+    
+    switch (currentState) {
+      case AlertStatus.ALERT_ACTIVE:
+      case AlertStatus.ALERT_PERSISTENT:
+      case AlertStatus.ALERT_ESCALATED:
+        return $r('sys.color.alert'); // 红色
+      case AlertStatus.WARNING:
+        return $r('sys.color.warning'); // 黄色
+      case AlertStatus.MONITORING:
+        return $r('sys.color.confirm'); // 绿色
+      case AlertStatus.IDLE:
+      case AlertStatus.MUTED:
+      default:
+        return $r('sys.color.font_secondary'); // 灰色
     }
   }
 
   // 辅助方法：获取状态文字
   @Computed
   get statusText(): string {
-    const currentDecibel = this.ak.uiDisplayState.displayDb;
-    const threshold = this.pk.alarm_threshold.currentEffectiveThreshold;
-
-    if (currentDecibel >= threshold) {
-      return '警报触发中';
-    } else if (currentDecibel >= threshold - 10) {
-      return '接近阈值';
-    } else {
-      return '环境安全';
+    const currentState = this.stateMachine.CurrentState;
+    
+    switch (currentState) {
+      case AlertStatus.ALERT_ACTIVE:
+        return '警报触发中';
+      case AlertStatus.ALERT_PERSISTENT:
+        return '警报持续中';
+      case AlertStatus.ALERT_ESCALATED:
+        return '警报升级';
+      case AlertStatus.WARNING:
+        return '接近阈值';
+      case AlertStatus.MONITORING:
+        return '环境安全';
+      case AlertStatus.IDLE:
+        return '空闲状态';
+      case AlertStatus.MUTED:
+        return '静音状态';
+      default:
+        return '未知状态';
     }
   }
 
   // 辅助方法：获取状态背景色
   @Computed
   get statusBackground(): Resource {
-    const currentDecibel = this.ak.uiDisplayState.displayDb;
-    const threshold = this.pk.alarm_threshold.currentEffectiveThreshold;
-
-    if (currentDecibel >= threshold) {
-      return $r('sys.color.warning');
-    } else if (currentDecibel >= threshold - 10) {
-      return $r('sys.color.alert');
-    } else {
-      return $r('sys.color.comp_background_secondary');
+    const currentState = this.stateMachine.CurrentState;
+    
+    switch (currentState) {
+      case AlertStatus.ALERT_ACTIVE:
+      case AlertStatus.ALERT_PERSISTENT:
+      case AlertStatus.ALERT_ESCALATED:
+        return $r('sys.color.warning');
+      case AlertStatus.WARNING:
+        return $r('sys.color.alert');
+      case AlertStatus.MONITORING:
+        return $r('sys.color.comp_background_secondary');
+      case AlertStatus.IDLE:
+      case AlertStatus.MUTED:
+      default:
+        return $r('sys.color.comp_background_primary');
     }
   }
 
-  // 辅助方法：获取环境质量评级（基于用户阈值）
+  // 辅助方法：获取环境质量评级（基于状态机状态）
   @Computed
   get environmentQuality(): string {
-    const currentDecibel = this.ak.uiDisplayState.displayDb;
-    const threshold = this.pk.alarm_threshold.currentEffectiveThreshold;
-
-    if (currentDecibel >= threshold) {
-      return '危险';
-    } else if (currentDecibel >= threshold - 10) {
-      return '警告';
-    } else if (currentDecibel >= threshold - 20) {
-      return '良好';
-    } else {
-      return '优秀';
+    const currentState = this.stateMachine.CurrentState;
+    
+    switch (currentState) {
+      case AlertStatus.ALERT_ACTIVE:
+      case AlertStatus.ALERT_PERSISTENT:
+      case AlertStatus.ALERT_ESCALATED:
+        return '危险';
+      case AlertStatus.WARNING:
+        return '警告';
+      case AlertStatus.MONITORING:
+        return '良好';
+      case AlertStatus.IDLE:
+      case AlertStatus.MUTED:
+      default:
+        return '优秀';
     }
   }
 
-  // 辅助方法：获取环境质量颜色（基于用户阈值）
+  // 辅助方法：获取环境质量颜色（基于状态机状态）
   @Computed
   get environmentColor(): Resource {
-    const currentDecibel = this.ak.uiDisplayState.displayDb;
-    const threshold = this.pk.alarm_threshold.currentEffectiveThreshold;
-
-    if (currentDecibel >= threshold) {
-      return $r('sys.color.alert');
-    } else if (currentDecibel >= threshold - 10) {
-      return $r('sys.color.warning');
-    } else if (currentDecibel >= threshold - 20) {
-      return $r('sys.color.confirm');
-    } else {
-      return $r('sys.color.confirm');
+    const currentState = this.stateMachine.CurrentState;
+    
+    switch (currentState) {
+      case AlertStatus.ALERT_ACTIVE:
+      case AlertStatus.ALERT_PERSISTENT:
+      case AlertStatus.ALERT_ESCALATED:
+        return $r('sys.color.alert');
+      case AlertStatus.WARNING:
+        return $r('sys.color.warning');
+      case AlertStatus.MONITORING:
+        return $r('sys.color.confirm');
+      case AlertStatus.IDLE:
+      case AlertStatus.MUTED:
+      default:
+        return $r('sys.color.confirm');
     }
   }
 
