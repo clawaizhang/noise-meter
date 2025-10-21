@@ -40,50 +40,45 @@ export struct MyContentComponent {
 
         // 会员状态卡片
         MembershipStatusCard()
-          .margin({ top: DesignConstants.SPACING_MD, left: 16, right: 16 })
+          .margin({ top: DesignConstants.SPACING_LG, left: 16, right: 16 })
 
         // 全局设置列表项
         List() {
 
           // 色彩模式列表项
           ListItem() {
-            Column({ space: 8 }) {
-              Row({ space: 8 }) {
-                Row() {
-                  Image($r('app.media.ic_display'))
-                    .width(24)
-                    .height(24)
-                    .fillColor($r('sys.color.brand'))
-                    .margin({ right: 12 })
+            Row({ space: 8 }) {
+              Row() {
+                Image($r('app.media.ic_display'))
+                  .width(24)
+                  .height(24)
+                  .fillColor($r('sys.color.brand'))
+                  .margin({ right: 12 })
 
-                  Text('色彩模式')
-                    .fontSize(16)
-                    .fontColor($r('sys.color.font_primary'))
-                    .layoutWeight(1)
-                }.layoutWeight(1)
+                Text('色彩模式')
+                  .fontSize(16)
+                  .fontColor($r('sys.color.font_primary'))
+                  .layoutWeight(1)
+              }.layoutWeight(1)
 
-                // 当前模式显示
-                Text(this.pk.display_mode === 'default' ? '跟随系统' :
-                     this.pk.display_mode === 'light' ? '浅色主题' : '深色主题')
-                  .fontSize(14)
-                  .fontColor($r('sys.color.font_secondary'))
-              }
-              .width('100%')
-              .height(24)
-              .alignItems(VerticalAlign.Center)
+              // 当前模式显示
+              Text(this.pk.display_mode === 'default' ? '跟随系统' :
+                   this.pk.display_mode === 'light' ? '浅色主题' : '深色主题')
+                .fontSize(14)
+                .fontColor($r('sys.color.font_secondary'))
             }
             .width('100%')
+            .height(56)
             .padding({
               left: 16,
-              right: 16,
-              top: 12,
-              bottom: 12
+              right: 16
             })
+            .alignItems(VerticalAlign.Center)
           }
           .borderRadius(16)
           .backgroundColor($r('sys.color.comp_background_primary'))
           .margin({
-            top: 20,
+            top: DesignConstants.SPACING_LG,
             left: 16,
             right: 16
           })
@@ -102,7 +97,8 @@ export struct MyContentComponent {
 
           // 后台运行设置
           ListItem() {
-            Column({ space: 8 }) {
+            Column() {
+              // 主内容区域
               Row({ space: 8 }) {
                 Row() {
                   Image($r('app.media.ic_running'))
@@ -126,28 +122,32 @@ export struct MyContentComponent {
                   })
               }
               .width('100%')
-              .height(24)
+              .height(56)
+              .padding({
+                left: 16,
+                right: 16
+              })
               .alignItems(VerticalAlign.Center)
 
-              // 描述文本
+              // 描述文本区域（使用间距分隔）
               Text(this.pk.background_running ? $r('app.string.background_running_desc_on') : $r('app.string.background_running_desc_off'))
-                .fontSize(12)
+                .fontSize(DesignConstants.FONT_SIZE_SM)
                 .fontColor($r('sys.color.font_secondary'))
                 .width('100%')
                 .textAlign(TextAlign.Start)
+                .padding({
+                  left: 16,
+                  right: 16,
+                  top: 0,
+                  bottom: DesignConstants.SPACING_MD
+                })
             }
             .width('100%')
-            .padding({
-              left: 16,
-              right: 16,
-              top: 12,
-              bottom: 12
-            })
           }
           .borderRadius(16)
           .backgroundColor($r('sys.color.comp_background_primary'))
           .margin({
-            top: 20,
+            top: DesignConstants.SPACING_LG,
             left: 16,
             right: 16
           })
@@ -159,7 +159,8 @@ export struct MyContentComponent {
             '五星好评',
             () => {
               this.showCommentDialog();
-            }
+            },
+            DesignConstants.SPACING_LG
           )
 
           // 关于列表项
@@ -174,7 +175,8 @@ export struct MyContentComponent {
                 .setContent(wrapBuilder(AboutSettingsBuilder))
                 .build()
                 .show();
-            }
+            },
+            DesignConstants.SPACING_LG
           )
         }
         .width('100%')
