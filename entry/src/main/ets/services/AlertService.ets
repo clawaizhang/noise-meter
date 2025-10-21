@@ -63,7 +63,7 @@ export class AlertService {
    */
   public async triggerAlert(currentDecibel: number, threshold: number): Promise<void> {
     try {
-      // 1. 总是更新 DataProcessingState 中的警报状态（没有频率限制）
+      // 1. 更新 DataProcessingState 中的警报状态标记（持续时间由状态机管理）
       const appKeys: AppKeys = AppStorageV2.connect(AppKeys)!;
       appKeys.dataProcessingState.alertState.triggerAlert();
       
@@ -73,12 +73,10 @@ export class AlertService {
         return;
       }
       
-      // 3. 检查是否可以发送通知（有频率限制）
-        // 发布通知
-        await this.publishAlertNotification(currentDecibel, threshold);
-        
-
-        hilog.info(DOMAIN, TAG, `警报触发成功并发送通知: ${currentDecibel}dB > ${threshold}dB`);
+      // 3. 发布通知
+      await this.publishAlertNotification(currentDecibel, threshold);
+      
+      hilog.info(DOMAIN, TAG, `警报触发成功并发送通知: ${currentDecibel}dB > ${threshold}dB`);
     } catch (error) {
       const err = error as BusinessError;
       hilog.error(DOMAIN, TAG, `触发警报失败: ${err.code}, ${err.message}`);

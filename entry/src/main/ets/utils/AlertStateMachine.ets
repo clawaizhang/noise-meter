@@ -20,6 +20,10 @@ export class AlertStateMachine {
   private lastTransitionTime: number = Date.now();
   private debounceTimer: number = 0;
   
+  // 警报持续时间管理
+  private alertStartTime: number = 0;
+  private alertDuration: number = 0;
+  
   // 状态转换表
   private transitionTable: Map<AlertStatus, Map<AlertEvent, AlertStatus>> = new Map();
   
@@ -192,9 +196,12 @@ export class AlertStateMachine {
     const fromState = this.currentState;
     const timestamp = Date.now();
     
+    // 更新警报持续时间管理
+    this.updateAlertDurationManagement(fromState, toState, timestamp);
+    
     // 更新上下文
     this.context.previousState = fromState;
-    this.context.startTime = toState === AlertStatus.ALERT_ACTIVE ? timestamp : this.context.startTime;
+    this.context.startTime = timestamp;
     
     // 记录状态转换
     const transition: StateTransition = {
@@ -216,6 +223,33 @@ export class AlertStateMachine {
     
     console.log(`状态转换: ${fromState} -> ${toState}, 事件: ${event}`);
     return true;
+  }
+  
+  /**
+   * 更新警报持续时间管理
+   */
+  private updateAlertDurationManagement(fromState: AlertStatus, toState: AlertStatus, timestamp: number): void {
+    const isEnteringAlert = this.isAlertState(toState) && !this.isAlertState(fromState);
+    const isExitingAlert = this.isAlertState(fromState) && !this.isAlertState(toState);
+    
+    if (isEnteringAlert) {
+      // 进入警报状态，设置开始时间
+      this.alertStartTime = timestamp;
+      this.alertDuration = 0;
+    } else if (isExitingAlert) {
+      // 退出警报状态，保存持续时间
+      this.alertDuration = timestamp - this.alertStartTime;
+      this.alertStartTime = 0;
+    }
+  }
+  
+  /**
+   * 检查是否为警报状态
+   */
+  private isAlertState(state: AlertStatus): boolean {
+    return state === AlertStatus.ALERT_ACTIVE ||
+           state === AlertStatus.ALERT_PERSISTENT ||
+           state === AlertStatus.ALERT_ESCALATED;
   }
   
   /**
@@ -248,12 +282,16 @@ export class AlertStateMachine {
     this.context = this.createDefaultContext();
     this.stateHistory = [];
     this.lastTransitionTime = Date.now();
+    // 重置警报持续时间
+    this.alertStartTime = 0;
+    this.alertDuration = 0;
   }
   
   /**
    * 检查是否处于警报状态
    */
-  public isAlertActive(): boolean {
+  @Computed
+  public get AlertActive(): boolean {
     return this.currentState === AlertStatus.ALERT_ACTIVE ||
            this.currentState === AlertStatus.ALERT_PERSISTENT ||
            this.currentState === AlertStatus.ALERT_ESCALATED;
@@ -278,6 +316,36 @@ export class AlertStateMachine {
    */
   public getStateDuration(): number {
     return Date.now() - this.context.startTime;
+  }
+  
+  /**
+   * 获取警报持续时间
+   */
+  @Computed
+  public get AlertDuration(): number {
+    if (this.AlertActive) {
+      return Date.now() - this.alertStartTime;
+    }
+    return this.alertDuration;
+  }
+  
+  /**
+   * 获取格式化警报持续时间
+   */
+  @Computed
+  public get FormattedAlertDuration(): string {
+    const duration = this.AlertDuration;
+    const seconds = Math.floor(duration / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const hours = Math.floor(minutes / 60);
+
+    if (hours > 0) {
+      return `${hours}小时${minutes % 60}分钟`;
+    } else if (minutes > 0) {
+      return `${minutes}分钟${seconds % 60}秒`;
+    } else {
+      return `${seconds}秒`;
+    }
   }
   
   /**

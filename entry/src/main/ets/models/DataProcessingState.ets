@@ -18,38 +18,11 @@ export class DataProcessingState {
   // 是否在后台运行
   isBackground: boolean = false;
 
-  // 新增：警报状态（后台持续计算）
+  // 新增：警报状态（现在只作为状态标记，持续时间由状态机管理）
   alertState: AlertState = new AlertState();
 
-  // 警报持续时间更新定时器
-  private alertDurationTimer: number = 0;
-
   constructor() {
-    // 初始化状态
-    this.startAlertDurationUpdate();
-  }
-
-  /**
-   * 启动警报持续时间自动更新
-   */
-  private startAlertDurationUpdate(): void {
-    this.stopAlertDurationUpdate();
-    // 每秒更新一次警报持续时间
-    this.alertDurationTimer = setInterval(() => {
-      if (this.alertState.isActive) {
-        this.alertState.updateDuration();
-      }
-    }, 1000);
-  }
-
-  /**
-   * 停止警报持续时间更新（如果需要）
-   */
-  private stopAlertDurationUpdate(): void {
-    if (this.alertDurationTimer) {
-      clearInterval(this.alertDurationTimer);
-      this.alertDurationTimer = 0;
-    }
+    // 不再需要独立的持续时间计时器
   }
 
 }

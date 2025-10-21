@@ -148,13 +148,13 @@ export struct AlertsContent {
         .fontWeight(FontWeight.Medium)
 
       // 警报持续时间（如果激活）
-      if (this.ak.uiDisplayState.displayAlertState.isActive) {
+      if (this.stateMachine.AlertActive) {
         Row({ space: DesignConstants.SPACING_SM }) {
           Image($r('app.media.ic_alarm'))
             .width(16)
             .height(16)
             .fillColor($r('sys.color.alert'))
-          Text(`持续时间: ${this.ak.uiDisplayState.displayAlertState.formattedDuration}`)
+          Text(`持续时间: ${this.stateMachine.FormattedAlertDuration}`)
             .fontSize(DesignConstants.FONT_SIZE_MD)
             .fontColor($r('sys.color.alert'))
             .fontWeight(FontWeight.Medium)

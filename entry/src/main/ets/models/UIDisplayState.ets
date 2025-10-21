@@ -293,10 +293,9 @@ export class UIDisplayState {
     this.displayStatistics.duration = processingState.statisticsData.duration;
     this.displayStatistics.startTime = processingState.statisticsData.startTime;
 
-    // 新增：同步警报状态
+    // 新增：同步警报状态（现在只同步激活状态，持续时间由状态机管理）
     this.displayAlertState.isActive = processingState.alertState.isActive;
-    this.displayAlertState.duration = processingState.alertState.currentDuration;
-    this.displayAlertState.updateFormattedDuration();
+    // 持续时间现在由状态机直接管理，不再需要同步
   }
 
   /**
