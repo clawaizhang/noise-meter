@@ -3,6 +3,7 @@
  * 负责管理警报状态的转换和验证
  */
 import { AlertStatus, AlertEvent, StateMachineConfig, DEFAULT_STATE_MACHINE_CONFIG, AlertStateContext, StateTransition } from '../constants/AlertsConstants';
+import { SecondTimerService } from '../services/SecondTimerService';
 
 // 噪音水平数据类型
 interface NoiseLevelData {
@@ -23,6 +24,12 @@ export class AlertStateMachine {
   // 警报持续时间管理
   private alertStartTime: number = 0;
   private alertDuration: number = 0;
+  @Trace
+  private currentTime: number = 0;
+
+  // 秒定时器服务
+  private secondTimerService: SecondTimerService = SecondTimerService.getInstance();
+  private secondTickHandler: (() => void) | null = null;
   
   // 状态转换表
   private transitionTable: Map<AlertStatus, Map<AlertEvent, AlertStatus>> = new Map();
@@ -31,6 +38,7 @@ export class AlertStateMachine {
     this.context = this.createDefaultContext();
     this.config = this.mergeConfig(DEFAULT_STATE_MACHINE_CONFIG, config);
     this.initializeTransitionTable();
+    this.initializeSecondTimer();
   }
   
   /**
@@ -47,6 +55,20 @@ export class AlertStateMachine {
     };
   }
   
+  /**
+   * 初始化秒定时器
+   */
+  private initializeSecondTimer(): void {
+    this.secondTickHandler = () => {
+      this.currentTime = Date.now() + 1000;
+    };
+    
+    // 订阅秒事件
+    this.secondTimerService.subscribe(this.secondTickHandler);
+    
+  }
+
+
   /**
    * 初始化状态转换表
    */
@@ -326,7 +348,7 @@ export class AlertStateMachine {
   @Computed
   public get AlertDuration(): number {
     if (this.AlertActive) {
-      return Date.now() - this.alertStartTime;
+      return this.currentTime - this.alertStartTime;
     }
     return this.alertDuration;
   }
@@ -401,6 +423,13 @@ export class AlertStateMachine {
       clearTimeout(this.debounceTimer);
       this.debounceTimer = 0;
     }
+    
+    // 取消订阅秒定时器事件
+    if (this.secondTickHandler) {
+      this.secondTimerService.unsubscribe(this.secondTickHandler);
+      this.secondTickHandler = null;
+    }
+    
     this.stateHistory = [];
   }
 }

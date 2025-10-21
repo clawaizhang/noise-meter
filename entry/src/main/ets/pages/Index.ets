@@ -22,6 +22,7 @@ import { UsageTrackingService } from '../services/UsageTrackingService'
 import { MembershipRewardService } from '../services/MembershipRewardService'
 import { ContinuousUsageManager } from '../services/ContinuousUsageManager'
 import { CommonEventService } from '../services/CommonEventService';
+import { SecondTimerService } from '../services/SecondTimerService';
 import { showRewardCompletionDialog } from '../components/membership/RewardCompletionDialog'
 import { Throttle } from '../utils/Debounce'
 import { WelcomeGuide } from '../components/welcome/WelcomeGuide'
@@ -102,6 +103,10 @@ struct Index {
     // 初始化音频设备监听服务
     this.initAudioDeviceMonitoring();
 
+    // 启动全局秒定时器服务
+    const secondTimerService = SecondTimerService.getInstance();
+    secondTimerService.start();
+
     this.initialize();
   }
 
@@ -117,6 +122,10 @@ struct Index {
     // 清理公共事件服务资源
     const commonEventService = CommonEventService.getInstance();
     commonEventService.destroy();
+    
+    // 清理秒定时器服务资源
+    const secondTimerService = SecondTimerService.getInstance();
+    secondTimerService.destroy();
 
     // 清理音频设备监听服务资源
     this.audioDeviceMonitorService.destroy();
