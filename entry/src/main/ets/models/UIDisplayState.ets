@@ -190,9 +190,6 @@ export class UIDisplayState {
   // 显示统计数据
   @Trace displayStatistics: UiStatisticsData = new UiStatisticsData();
 
-  // 新增：警报显示状态（UI专用）
-  @Trace displayAlertState: DisplayAlertState = new DisplayAlertState();
-
   // UI更新状态
   @Trace isUIUpdatesEnabled: boolean = true;
 
@@ -293,9 +290,6 @@ export class UIDisplayState {
     this.displayStatistics.duration = processingState.statisticsData.duration;
     this.displayStatistics.startTime = processingState.statisticsData.startTime;
 
-    // 新增：同步警报状态（现在只同步激活状态，持续时间由状态机管理）
-    this.displayAlertState.isActive = processingState.alertState.isActive;
-    // 持续时间现在由状态机直接管理，不再需要同步
   }
 
   /**
@@ -320,7 +314,6 @@ export class UIDisplayState {
     this.displaySpectrumData = [];
     this.displayPeakFreq = 0;
     this.displayStatistics.reset();
-    this.displayAlertState.reset();
     this.timeDisplay = '';
     this.lastSaveTime = Date.now();
     this.currentTime = Date.now();

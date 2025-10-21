@@ -28,52 +28,29 @@ export class DataProcessingState {
 }
 
 /**
- * 警报状态对象（后台持续计算）
+ * 警报状态对象（简化版本，现在只作为状态标记）
+ * 警报状态和持续时间由 AlertStateMachine 管理
  */
 export class AlertState {
-  // 警报是否激活
+  // 警报是否激活（只读状态标记）
   isActive: boolean = false;
 
-  // 警报开始时间戳
-  startTime: number = 0;
-
-  // 当前持续时间（毫秒）
-  currentDuration: number = 0;
-
-  // 最后更新时间
-  lastUpdateTime: number = 0;
-
   constructor() {
-    this.lastUpdateTime = Date.now();
+    // 不再需要持续时间管理
   }
 
   /**
-   * 触发警报
+   * 触发警报（设置状态标记）
    */
   triggerAlert(): void {
     this.isActive = true;
-    this.startTime = Date.now();
-    this.currentDuration = 0;
-    this.lastUpdateTime = Date.now();
   }
 
   /**
-   * 解除警报
+   * 解除警报（清除状态标记）
    */
   clearAlert(): void {
     this.isActive = false;
-    this.currentDuration = Date.now() - this.startTime;
-    this.lastUpdateTime = Date.now();
-  }
-
-  /**
-   * 更新持续时间（后台持续调用）
-   */
-  updateDuration(): void {
-    if (this.isActive) {
-      this.currentDuration = Date.now() - this.startTime;
-      this.lastUpdateTime = Date.now();
-    }
   }
 
   /**
@@ -81,9 +58,6 @@ export class AlertState {
    */
   reset(): void {
     this.isActive = false;
-    this.startTime = 0;
-    this.currentDuration = 0;
-    this.lastUpdateTime = Date.now();
   }
 }
 

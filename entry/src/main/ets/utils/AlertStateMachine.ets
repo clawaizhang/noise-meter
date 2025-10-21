@@ -144,7 +144,7 @@ export class AlertStateMachine {
       return AlertStatus.ALERT_ESCALATED;
     } else if (currentDecibel >= threshold) {
       // 检查是否应该升级到持续警报
-      if (this.currentState === AlertStatus.ALERT_ACTIVE && 
+      if (this.isAlertState(this.currentState) &&
           context.duration >= this.config.persistentAlertDuration) {
         return AlertStatus.ALERT_PERSISTENT;
       }
@@ -227,20 +227,22 @@ export class AlertStateMachine {
   
   /**
    * 更新警报持续时间管理
+   * 修复：只在真正进入/退出警报状态时才更新持续时间
    */
   private updateAlertDurationManagement(fromState: AlertStatus, toState: AlertStatus, timestamp: number): void {
-    const isEnteringAlert = this.isAlertState(toState) && !this.isAlertState(fromState);
-    const isExitingAlert = this.isAlertState(fromState) && !this.isAlertState(toState);
+    const wasInAlert = this.isAlertState(fromState);
+    const isInAlert = this.isAlertState(toState);
     
-    if (isEnteringAlert) {
-      // 进入警报状态，设置开始时间
+    if (!wasInAlert && isInAlert) {
+      // 首次进入警报状态，设置开始时间
       this.alertStartTime = timestamp;
       this.alertDuration = 0;
-    } else if (isExitingAlert) {
-      // 退出警报状态，保存持续时间
+    } else if (wasInAlert && !isInAlert) {
+      // 完全退出警报状态，保存持续时间
       this.alertDuration = timestamp - this.alertStartTime;
       this.alertStartTime = 0;
     }
+    // 在警报状态之间切换时（如 ALERT_ACTIVE -> ALERT_PERSISTENT），不重置开始时间
   }
   
   /**

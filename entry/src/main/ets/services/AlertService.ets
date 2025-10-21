@@ -63,17 +63,13 @@ export class AlertService {
    */
   public async triggerAlert(currentDecibel: number, threshold: number): Promise<void> {
     try {
-      // 1. 更新 DataProcessingState 中的警报状态标记（持续时间由状态机管理）
-      const appKeys: AppKeys = AppStorageV2.connect(AppKeys)!;
-      appKeys.dataProcessingState.alertState.triggerAlert();
-      
-      // 2. 检查是否启用通知
+      // 1. 检查是否启用通知（警报状态由状态机管理）
       if (!this.pk.system_notification_enabled) {
         hilog.info(DOMAIN, TAG, `警报触发但通知已关闭: ${currentDecibel}dB > ${threshold}dB`);
         return;
       }
       
-      // 3. 发布通知
+      // 2. 发布通知
       await this.publishAlertNotification(currentDecibel, threshold);
       
       hilog.info(DOMAIN, TAG, `警报触发成功并发送通知: ${currentDecibel}dB > ${threshold}dB`);
@@ -111,11 +107,8 @@ export class AlertService {
    * 重置警报状态（当噪音恢复正常时调用）
    */
   public resetAlertState(): void {
-    // 更新 DataProcessingState 中的警报状态
-    const appKeys: AppKeys = AppStorageV2.connect(AppKeys)!;
-    appKeys.dataProcessingState.alertState.clearAlert();
-    
-    hilog.info(DOMAIN, TAG, '警报状态已重置');
+    // 警报状态由状态机管理，这里只负责通知相关的清理
+    hilog.info(DOMAIN, TAG, '警报通知状态已重置');
   }
 
   /**

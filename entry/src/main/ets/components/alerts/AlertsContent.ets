@@ -60,17 +60,17 @@ export struct AlertsContent {
       case AlertStatus.ALERT_ACTIVE:
       case AlertStatus.ALERT_PERSISTENT:
       case AlertStatus.ALERT_ESCALATED:
-        // 触发警报
+        // 触发警报通知
         await this.triggerAlarm(context.currentDecibel);
         break;
       case AlertStatus.MONITORING:
       case AlertStatus.WARNING:
-        // 解除警报
+        // 解除警报通知
         this.clearAlarm();
         break;
       case AlertStatus.IDLE:
       case AlertStatus.MUTED:
-        // 重置警报状态
+        // 重置警报通知状态
         this.alertService.resetAlertState();
         break;
     }
@@ -78,14 +78,14 @@ export struct AlertsContent {
 
   // 触发警报
   private async triggerAlarm(currentDecibel: number): Promise<void> {
-    // 状态更新由 AlertService 处理
+    // 状态更新由状态机处理，AlertService 只负责通知
     const threshold = this.pk.alarm_threshold.currentEffectiveThreshold;
     await this.alertService.triggerAlert(currentDecibel, threshold);
   }
 
   // 解除警报
   private clearAlarm(): void {
-    // 状态更新由 AlertService 处理
+    // 状态更新由状态机处理，AlertService 只负责重置通知状态
     this.alertService.resetAlertState();
   }
 
