@@ -33,9 +33,6 @@ export struct HomePageContent {
 
   build() {
     Column({ space: DesignConstants.SPACING_LG }) {
-      // 顶部状态区
-      this.buildStatusHeader()
-      
       // 核心分贝显示区
       this.buildDecibelDisplay()
       
@@ -49,79 +46,15 @@ export struct HomePageContent {
     .justifyContent(FlexAlign.Start)
   }
 
-  @Builder
-  private buildStatusHeader() {
-    Row() {
-      // 当前时间
-      Column({ space: DesignConstants.SPACING_XS }) {
-        Text(this.currentTime)
-          .fontSize(DesignConstants.FONT_SIZE_MD)
-          .fontWeight(FontWeight.Medium)
-          .fontColor($r('sys.color.font_primary'))
-        Text(this.currentDate)
-          .fontSize(DesignConstants.FONT_SIZE_SM)
-          .fontColor($r('sys.color.font_secondary'))
-      }
-      .alignItems(HorizontalAlign.Start)
-
-      Blank()
-
-      // 环境质量评级
-      Column({ space: DesignConstants.SPACING_XS }) {
-        Text(this.environmentQuality)
-          .fontSize(DesignConstants.FONT_SIZE_MD)
-          .fontWeight(FontWeight.Medium)
-          .fontColor(this.environmentColor)
-        Text('环境质量')
-          .fontSize(DesignConstants.FONT_SIZE_SM)
-          .fontColor($r('sys.color.font_secondary'))
-      }
-      .alignItems(HorizontalAlign.Center)
-
-      Blank()
-
-      // 会员状态
-      Column({ space: DesignConstants.SPACING_XS }) {
-        Text(this.membershipStatus)
-          .fontSize(DesignConstants.FONT_SIZE_MD)
-          .fontWeight(FontWeight.Medium)
-          .fontColor(this.membershipColor)
-        Text('会员状态')
-          .fontSize(DesignConstants.FONT_SIZE_SM)
-          .fontColor($r('sys.color.font_secondary'))
-      }
-      .alignItems(HorizontalAlign.End)
-    }
-    .width('100%')
-    .padding(DesignConstants.SPACING_MD)
-    .backgroundColor($r('sys.color.comp_background_primary'))
-    .borderRadius(DesignConstants.BORDER_RADIUS_LG)
-  }
 
   @Builder
   private buildDecibelDisplay() {
     Column({ space: DesignConstants.SPACING_SM }) {
-      // 环境质量评级 - 突出显示
-      Row({ space: DesignConstants.SPACING_SM }) {
-        Circle({ width: 12, height: 12 })
-          .fill(this.environmentColor)
-        
-        Text(this.environmentQuality)
-          .fontSize(DesignConstants.FONT_SIZE_XL)
-          .fontWeight(FontWeight.Bold)
-          .fontColor(this.environmentColor)
-      }
-      
-      // 分贝值 - 缩小字体作为状态指示器
+      // 分贝值 - 核心显示
       Text(`${this.ak.uiDisplayState.displayDb}dB`)
-        .fontSize(32)
-        .fontWeight(FontWeight.Medium)
+        .fontSize(48)
+        .fontWeight(FontWeight.Bold)
         .fontColor(this.decibelColor)
-      
-      // 分贝等级描述
-      Text(this.decibelDescription)
-        .fontSize(DesignConstants.FONT_SIZE_MD)
-        .fontColor($r('sys.color.font_secondary'))
     }
     .width('100%')
     .padding(DesignConstants.SPACING_XL)
@@ -273,65 +206,12 @@ export struct HomePageContent {
   }
 
   @Computed
-  get currentTime(): string {
-    return new Date().toLocaleTimeString('zh-CN', { 
-      hour: '2-digit', 
-      minute: '2-digit' 
-    });
-  }
-
-  @Computed
-  get currentDate(): string {
-    return new Date().toLocaleDateString('zh-CN', {
-      month: 'long',
-      day: 'numeric'
-    });
-  }
-
-  @Computed
-  get environmentQuality(): string {
-    const db = this.ak.uiDisplayState.displayDb;
-    if (db < 40) return '优秀';
-    if (db < 60) return '良好';
-    if (db < 80) return '一般';
-    return '较差';
-  }
-
-  @Computed
-  get environmentColor(): Resource {
-    const db = this.ak.uiDisplayState.displayDb;
-    if (db < 40) return $r('sys.color.confirm');
-    if (db < 60) return $r('sys.color.font_primary');
-    if (db < 80) return $r('sys.color.warning');
-    return $r('sys.color.alert');
-  }
-
-  @Computed
-  get membershipStatus(): string {
-    return this.pk.member_ship.can ? '专业版' : '基础版';
-  }
-
-  @Computed
-  get membershipColor(): Resource {
-    return this.pk.member_ship.can ? $r('sys.color.confirm') : $r('sys.color.font_secondary');
-  }
-
-  @Computed
   get decibelColor(): Resource {
     const db = this.ak.uiDisplayState.displayDb;
     if (db < 40) return $r('sys.color.confirm');
     if (db < 60) return $r('sys.color.font_primary');
     if (db < 80) return $r('sys.color.warning');
     return $r('sys.color.alert');
-  }
-
-  @Computed
-  get decibelDescription(): string {
-    const db = this.ak.uiDisplayState.displayDb;
-    if (db < 40) return '非常安静';
-    if (db < 60) return '环境舒适';
-    if (db < 80) return '有些嘈杂';
-    return '噪音较大';
   }
 
   // 仪表盘数据 - 趋势指示器
