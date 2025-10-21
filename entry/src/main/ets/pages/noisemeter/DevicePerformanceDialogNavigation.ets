@@ -95,41 +95,13 @@ const devicePerformanceData: DevicePerformanceData[] = [
     status: '良好',
     color: $r('sys.color.font_primary')
   },
-  {
-    category: '系统状态',
-    parameterName: '校准状态',
-    value: '已校准',
-    unit: '',
-    description: '设备校准状态',
-    status: '正常',
-    color: $r('sys.color.confirm')
-  },
-  {
-    category: '系统状态',
-    parameterName: '电池状态',
-    value: '85',
-    unit: '%',
-    description: '设备电池剩余电量',
-    status: '良好',
-    color: $r('sys.color.warning')
-  },
-  {
-    category: '系统状态',
-    parameterName: '存储空间',
-    value: '256',
-    unit: 'MB',
-    description: '可用存储空间',
-    status: '充足',
-    color: $r('sys.color.confirm')
-  }
 ];
 
 // 设备类别
 enum DeviceCategory {
   BASIC_SPECS = '基本规格',
   ACCURACY = '精度指标',
-  SENSOR = '传感器信息',
-  SYSTEM = '系统状态'
+  SENSOR = '传感器信息'
 }
 
 // 构建设备性能卡片
@@ -233,8 +205,6 @@ struct DevicePerformanceComponent {
         return '精度指标'
       case DeviceCategory.SENSOR:
         return '传感器信息'
-      case DeviceCategory.SYSTEM:
-        return '系统状态'
     }
   }
 
@@ -243,8 +213,7 @@ struct DevicePerformanceComponent {
     return [
       { category: DeviceCategory.BASIC_SPECS, label: '基本规格' },
       { category: DeviceCategory.ACCURACY, label: '精度指标' },
-      { category: DeviceCategory.SENSOR, label: '传感器' },
-      { category: DeviceCategory.SYSTEM, label: '系统状态' }
+      { category: DeviceCategory.SENSOR, label: '传感器' }
     ]
   }
 
