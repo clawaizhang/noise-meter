@@ -122,6 +122,16 @@ export struct AudioController {
       this.performSave(comments);
     });
 
+    // 订阅开始检测事件
+    this.audioControllerService.subscribeStartDetection(() => {
+      this.startRecording();
+    });
+
+    // 订阅暂停检测事件
+    this.audioControllerService.subscribePauseDetection(() => {
+      this.stopRecording('手动暂停');
+    });
+
     // 订阅位置数据流
     this.locationSubscription = this.audioControllerService.getLocation$().subscribe(
       (location: LocationInfo | null) => {

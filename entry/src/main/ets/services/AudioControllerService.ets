@@ -17,6 +17,10 @@ export class AudioControllerService {
   private resetSubject = new Subject<void>();
   // 保存事件Subject
   private saveSubject = new Subject<string>();
+  // 开始检测事件Subject
+  private startDetectionSubject = new Subject<void>();
+  // 暂停检测事件Subject
+  private pauseDetectionSubject = new Subject<void>();
   // 位置数据Subject
   private locationSubject = new BehaviorSubject<LocationInfo | null>(null);
   // 错误数据Subject
@@ -38,14 +42,20 @@ export class AudioControllerService {
   public static getInstance(ak: AppKeys, pk: PreferenceKeys): AudioControllerService {
     if (!AudioControllerService.instance) {
       AudioControllerService.instance = new AudioControllerService(ak, pk);
+      console.info('[AudioControllerService] 创建新实例');
+    } else {
+      console.info('[AudioControllerService] 返回现有实例');
     }
     return AudioControllerService.instance;
   }
 
   /**
-   * 获取单例实例
+   * 获取单例实例（不创建新实例）
    */
   public static getInstancePlain(): AudioControllerService | null {
+    if (!AudioControllerService.instance) {
+      console.warn('[AudioControllerService] 实例尚未初始化，返回null');
+    }
     return AudioControllerService.instance;
   }
 
@@ -64,6 +74,20 @@ export class AudioControllerService {
   }
 
   /**
+   * 触发开始检测事件
+   */
+  public startDetection(): void {
+    this.startDetectionSubject.next();
+  }
+
+  /**
+   * 触发暂停检测事件
+   */
+  public pauseDetection(): void {
+    this.pauseDetectionSubject.next();
+  }
+
+  /**
    * 订阅重置事件
    */
   public subscribeReset(callback: () => void): void {
@@ -75,6 +99,20 @@ export class AudioControllerService {
    */
   public subscribeSave(callback: (comments: string) => void): void {
     this.saveSubject.subscribe(callback);
+  }
+
+  /**
+   * 订阅开始检测事件
+   */
+  public subscribeStartDetection(callback: () => void): void {
+    this.startDetectionSubject.subscribe(callback);
+  }
+
+  /**
+   * 订阅暂停检测事件
+   */
+  public subscribePauseDetection(callback: () => void): void {
+    this.pauseDetectionSubject.subscribe(callback);
   }
 
   /**
@@ -178,6 +216,8 @@ export class AudioControllerService {
     this.stopTimeDisplayUpdates();
     this.resetSubject.complete();
     this.saveSubject.complete();
+    this.startDetectionSubject.complete();
+    this.pauseDetectionSubject.complete();
     this.locationSubject.complete();
     this.errorSubject.complete();
     AudioControllerService.instance = null;

@@ -30,6 +30,13 @@ export class AppKeys {
   @Trace
   uiDisplayState: UIDisplayState = new UIDisplayState();
 
+  // 初始化方法，确保状态正确同步
+  initialize(): void {
+    console.info('[AppKeys] 初始化AppKeys状态');
+    // 确保数据同步状态正确
+    this.uiDisplayState.syncFromProcessingState(this.dataProcessingState);
+  }
+
   @Trace
   currentTabIndex: number = 0; // 当前选中的Tab索引
 

@@ -107,6 +107,9 @@ struct Index {
     const secondTimerService = SecondTimerService.getInstance();
     secondTimerService.start();
 
+    // 初始化AppKeys状态同步
+    this.ak.initialize();
+
     this.initialize();
   }
 

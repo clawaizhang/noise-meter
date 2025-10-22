@@ -6,6 +6,7 @@ import { navigationStack } from '../../constants/ProviderConstant';
 import { Throttle } from '../../utils/Debounce';
 import { common } from '@kit.AbilityKit';
 import { DecibelRecordService } from '../../services/DecibelRecordService';
+import { AudioControllerService } from '../../services/AudioControllerService';
 
 // 功能卡片配置接口
 interface FunctionCardConfig {
@@ -49,12 +50,23 @@ export struct HomePageContent {
 
   @Builder
   private buildDecibelDisplay() {
-    Column({ space: DesignConstants.SPACING_SM }) {
-      // 分贝值 - 核心显示
+    Column({ space: DesignConstants.SPACING_MD }) {
+      // 分贝值 - 核心显示（大字体）
       Text(`${this.ak.uiDisplayState.displayDb}dB`)
-        .fontSize(48)
+        .fontSize(56)
         .fontWeight(FontWeight.Bold)
         .fontColor(this.decibelColor)
+      
+      // 分贝描述
+      Text(this.ak.uiDisplayState.displayDescription)
+        .fontSize(DesignConstants.FONT_SIZE_MD)
+        .fontColor($r('sys.color.font_secondary'))
+      
+      // 统计数据行
+      this.buildStatisticsRow()
+      
+      // 系统状态概要
+      this.buildSystemStatus()
     }
     .width('100%')
     .padding(DesignConstants.SPACING_XL)
@@ -205,6 +217,85 @@ export struct HomePageContent {
     console.info(`切换到Tab: ${index}`);
   }
 
+  @Builder
+  private buildStatisticsRow() {
+    Row({ space: DesignConstants.SPACING_LG }) {
+      // 最小值
+      Column({ space: DesignConstants.SPACING_XS }) {
+        Text('最小值')
+          .fontSize(DesignConstants.FONT_SIZE_SM)
+          .fontColor($r('sys.color.font_secondary'))
+        Text(`${this.ak.uiDisplayState.displayStatistics.minDb.toFixed(1)}dB`)
+          .fontSize(DesignConstants.FONT_SIZE_MD)
+          .fontWeight(FontWeight.Medium)
+          .fontColor($r('sys.color.confirm'))
+      }
+      
+      // 平均值
+      Column({ space: DesignConstants.SPACING_XS }) {
+        Text('平均值')
+          .fontSize(DesignConstants.FONT_SIZE_SM)
+          .fontColor($r('sys.color.font_secondary'))
+        Text(`${this.ak.uiDisplayState.displayStatistics.avgDb.toFixed(1)}dB`)
+          .fontSize(DesignConstants.FONT_SIZE_MD)
+          .fontWeight(FontWeight.Medium)
+          .fontColor($r('sys.color.font_primary'))
+      }
+      
+      // 最大值
+      Column({ space: DesignConstants.SPACING_XS }) {
+        Text('最大值')
+          .fontSize(DesignConstants.FONT_SIZE_SM)
+          .fontColor($r('sys.color.font_secondary'))
+        Text(`${this.ak.uiDisplayState.displayStatistics.maxDb.toFixed(1)}dB`)
+          .fontSize(DesignConstants.FONT_SIZE_MD)
+          .fontWeight(FontWeight.Medium)
+          .fontColor($r('sys.color.alert'))
+      }
+    }
+    .margin({ top: DesignConstants.SPACING_MD })
+  }
+
+  @Builder
+  private buildSystemStatus() {
+    Row({ space: DesignConstants.SPACING_LG }) {
+      // 测量时长
+      Column({ space: DesignConstants.SPACING_XS }) {
+        Text('测量时长')
+          .fontSize(DesignConstants.FONT_SIZE_SM)
+          .fontColor($r('sys.color.font_secondary'))
+        Text(this.measurementDuration)
+          .fontSize(DesignConstants.FONT_SIZE_SM)
+          .fontWeight(FontWeight.Medium)
+          .fontColor($r('sys.color.font_primary'))
+      }
+      
+      // 系统状态
+      Column({ space: DesignConstants.SPACING_XS }) {
+        Text('系统状态')
+          .fontSize(DesignConstants.FONT_SIZE_SM)
+          .fontColor($r('sys.color.font_secondary'))
+        Text(this.systemStatus)
+          .fontSize(DesignConstants.FONT_SIZE_SM)
+          .fontWeight(FontWeight.Medium)
+          .fontColor(this.systemStatusColor)
+      }
+      
+      // 记录数量
+      Column({ space: DesignConstants.SPACING_XS }) {
+        Text('记录数量')
+          .fontSize(DesignConstants.FONT_SIZE_SM)
+          .fontColor($r('sys.color.font_secondary'))
+        Text(this.ak.totalRecordsCount.toString())
+          .fontSize(DesignConstants.FONT_SIZE_SM)
+          .fontWeight(FontWeight.Medium)
+          .fontColor($r('sys.color.font_primary'))
+      }
+    }
+    .margin({ top: DesignConstants.SPACING_MD })
+    .padding({ top: DesignConstants.SPACING_MD })
+  }
+
   @Computed
   get decibelColor(): Resource {
     const db = this.ak.uiDisplayState.displayDb;
@@ -212,6 +303,44 @@ export struct HomePageContent {
     if (db < 60) return $r('sys.color.font_primary');
     if (db < 80) return $r('sys.color.warning');
     return $r('sys.color.alert');
+  }
+
+  @Computed
+  get measurementDuration(): string {
+    const duration = this.ak.uiDisplayState.displayStatistics.duration;
+    if (duration < 60) {
+      return `${Math.floor(duration)}秒`;
+    } else if (duration < 3600) {
+      return `${Math.floor(duration / 60)}分钟`;
+    } else {
+      return `${Math.floor(duration / 3600)}小时`;
+    }
+  }
+
+  @Computed
+  get systemStatus(): string {
+    try {
+      const audioControllerService = AudioControllerService.getInstance(this.ak, this.pk);
+      if (audioControllerService && audioControllerService.isInBackground()) {
+        return '后台运行';
+      }
+    } catch (error) {
+      console.error('获取AudioControllerService实例失败:', error);
+    }
+    return '正常运行';
+  }
+
+  @Computed
+  get systemStatusColor(): Resource {
+    try {
+      const audioControllerService = AudioControllerService.getInstance(this.ak, this.pk);
+      if (audioControllerService && audioControllerService.isInBackground()) {
+        return $r('sys.color.warning');
+      }
+    } catch (error) {
+      console.error('获取AudioControllerService实例失败:', error);
+    }
+    return $r('sys.color.confirm');
   }
 
   // 仪表盘数据 - 趋势指示器

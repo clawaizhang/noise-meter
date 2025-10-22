@@ -1,9 +1,7 @@
 import { navigationStack } from '../../constants/ProviderConstant';
 import { AppStorageV2, PersistenceV2 } from '@kit.ArkUI';
 import display from '@ohos.display';
-import { ActionPanel } from './ActionPanel';
 import { SpectrumChartComponent } from './SpectrumChartComponent';
-import { DecibelDisplayComponent } from './DecibelDisplayComponent';
 import { TimeDomainChartComponent } from './TimeDomainChartComponent';
 import { PreferenceKeys } from '../../models/PreferenceKeys';
 import { LocationInfo } from '../../services/LocationService';
@@ -45,58 +43,33 @@ export struct DecibelMeter {
   sysResourceManager: resourceManager.ResourceManager = resourceManager.getSystemResourceManager();
 
   build() {
-    Stack({ alignContent: Alignment.Bottom }) {
+    Stack({ alignContent: Alignment.Top }) {
       Scroll() {
         GridRow({ columns: 12, breakpoints: { reference: BreakpointsReference.WindowSize }, gutter: 16 }) {
 
-          // 分贝显示面板 - 简化布局策略
-          GridCol({
-            span: {
-              xs: 12, // 横向XS/SM：单列布局（全宽）
-              sm: 12, // 横向XS/SM：单列布局（全宽）
-              md: 6, // 横向MD及以上：双列布局（半宽）
-              lg: 6, // 横向MD及以上：双列布局（半宽）
-              xl: 6    // 横向MD及以上：双列布局（半宽）
-            }
-          }) {
-            Column({ space: 8 }) {
-              // 外置设备警告显示 - 显示在hero display上方
-              if (this.hasExternalDeviceConnected) {
-                this.externalDeviceWarningDisplay()
-              }
-              Stack({ alignContent: Alignment.Top }) {
-
-                // 使用新的分贝显示组件（重新设计版）
-                DecibelDisplayComponent({
-                  weightingType: this.pk.weighting_type,
-                  calibrationValue: this.pk.calibration_value,
-                  noiseThreshold: this.pk.noise_threshold,
-                  systemNotificationEnabled: this.pk.system_notification_enabled,
-                  isNoiseAlarm: false // 报警状态由AudioController管理
-                })
-
-                Column({ space: 8 }) {
-                  // 错误消息显示区域（支持多个错误同时显示）
-                  if (this.errorMessages.length > 0) {
-                    this.errorMessagesDisplay()
-                  }
-
-                  // 权限提示组件 - 显示在顶部
-                  if (!this.ak.microphonePermissionGranted) {
-                    this.smartPermissionPrompt()
-                  }
-                }.padding(16)
-              }
-
-              // 位置信息已移动到工具Tab，这里不再显示
-
+          // 权限提示组件 - 显示在顶部
+          if (!this.ak.microphonePermissionGranted) {
+            GridCol({ span: { xs: 12, sm: 12, md: 12, lg: 12, xl: 12 } }) {
+              this.smartPermissionPrompt()
             }
           }
-          .backgroundColor($r('sys.color.comp_background_primary'))
-          .borderRadius(16)
+
+          // 外置设备警告显示
+          if (this.hasExternalDeviceConnected) {
+            GridCol({ span: { xs: 12, sm: 12, md: 12, lg: 12, xl: 12 } }) {
+              this.externalDeviceWarningDisplay()
+            }
+          }
+
+          // 错误消息显示区域
+          if (this.errorMessages.length > 0) {
+            GridCol({ span: { xs: 12, sm: 12, md: 12, lg: 12, xl: 12 } }) {
+              this.errorMessagesDisplay()
+            }
+          }
 
           if (!this.hideForXsMd) {
-            // 频谱图 - 简化布局策略
+            // 频谱图 - 优化布局，占据更多空间
             GridCol({
               span: {
                 xs: 12, // 横向XS/SM：单列布局（全宽）
@@ -108,8 +81,11 @@ export struct DecibelMeter {
             }) {
               SpectrumChartComponent()
             }
+            .backgroundColor($r('sys.color.comp_background_primary'))
+            .borderRadius(16)
+            .padding(16)
 
-            // 时域波形图 - 简化布局策略
+            // 时域波形图 - 优化布局，占据更多空间
             GridCol({
               span: {
                 xs: 12, // 横向XS/SM：单列布局（全宽）
@@ -121,9 +97,11 @@ export struct DecibelMeter {
             }) {
               TimeDomainChartComponent()
             }
+            .backgroundColor($r('sys.color.comp_background_primary'))
+            .borderRadius(16)
+            .padding(16)
           }
         }
-        .padding({ bottom: 80 }) // 增加底部内边距为操作按钮留出空间
         .id('mainNoiseMeterDisplayId')
         .onBreakpointChange(breakPoints => {
           // 断点信息现在由 AppStorage 统一管理，这里不再需要处理
@@ -139,10 +117,6 @@ export struct DecibelMeter {
         .backgroundImage(this.bgImage)
         .scale({ x: this.dScale, y: this.dScale })
         .translate({ x: this.translateX, y: this.translateY })
-
-      if (!this.hideForXsMd) {
-        this.actionPanel()
-      }
     }.margin({ top: 16 })
   }
 
@@ -186,6 +160,10 @@ export struct DecibelMeter {
         console.info('[RxJS] DecibelMeter接收到错误信息:', errors);
       }
     );
+
+    // 确保AudioControllerService已正确初始化
+    console.info('[DecibelMeter] AudioControllerService实例状态:',
+      this.audioControllerService ? '已初始化' : '未初始化');
   }
 
   @Builder
@@ -290,24 +268,6 @@ export struct DecibelMeter {
     }.margin({ top: 16 })
   }
 
-  @Builder
-  actionPanel() {
-    ActionPanel({
-      weightingType: this.pk.weighting_type,
-      onReset: () => {
-        // 重置功能由AudioController处理
-        // 通过服务触发重置事件
-        this.audioControllerService.resetData();
-      },
-      onSave: (comments) => {
-        this.bgImage = this.getUIContext().getComponentSnapshot().getSync('mainNoiseMeterDisplayId');
-        // 通过服务触发保存事件
-        this.audioControllerService.saveData(comments);
-        // 这里只处理UI动画
-        this.startCollapseAnimation();
-      }
-    })
-  }
 
   // 启动折叠动画
   startCollapseAnimation() {

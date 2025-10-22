@@ -9,7 +9,10 @@ import common from '@ohos.app.ability.common';
 import { Throttle } from '../../utils/Debounce';
 import { WeightingType } from '../../constants/WeightingConstants';
 import { DialogHub, InfSheet } from '@hadss/dialoghub';
-import { AudioCalibrationProps, AudioCalibrationSettingsBuilder } from '../../pages/settings/AudioCalibrationNavigation';
+import {
+  AudioCalibrationProps,
+  AudioCalibrationSettingsBuilder
+} from '../../pages/settings/AudioCalibrationNavigation';
 import { AlertsSettingsBuilder, AlertsSettingsProps } from '../../pages/settings/AlertsSettingsNavigation';
 import {
   FrequencyWeightingDialogBuilder,
@@ -21,10 +24,12 @@ import {
   AutoSaveSettingsDialogBuilder,
 } from '../auto-save/AutoSaveSettingsDialog';
 import {
-  TimeWeightingDialogBuilder,
-  TimeWeightingDialogParams,
+  TimeWeightingDialogBuilder, TimeWeightingDialogParams,
 } from '../time-weighting/TimeWeightingDialog';
 import { AudioAnalysisMode } from '../../common/AudioConfig';
+import { AudioControllerService } from '../../services/AudioControllerService';
+import { AudioService, AudioServiceState } from '../../services/AudioService';
+import { InputDialog } from '../decibel-meter/InputDialog';
 
 // 工具功能卡片配置
 interface ToolCardConfig {
@@ -42,12 +47,39 @@ export struct ToolsContent {
   @Local pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys)!;
   @Local isTorchOn: boolean = false;
   @Local private currentLocation: LocationInfo | null = null;
+  @Local private isDetecting: boolean = false;
+  @Local private audioServiceState: AudioServiceState = AudioServiceState.IDLE;
+  @Local private isSaving: boolean = false;
+  @Local private saveAnimationOpacity: number = 1.0;
+  @Local private inputDialogController: CustomDialogController = new CustomDialogController({
+    builder: this.buildInputDialog,
+    cancel: () => {
+      console.info('[ToolsContent] 输入对话框已取消');
+    },
+    autoCancel: true
+  });
+  @Local private confirmDialogController: CustomDialogController = new CustomDialogController({
+    builder: this.buildConfirmDialog,
+    cancel: () => {
+      console.info('[ToolsContent] 确认对话框已取消');
+    },
+    autoCancel: true
+  });
+
+  aboutToAppear(): void {
+  }
+
+  aboutToDisappear(): void {
+  }
 
   build() {
     Column({ space: DesignConstants.SPACING_LG }) {
       // 页面标题
       this.buildPageHeader()
-      
+
+      // 操作按钮区域
+      this.buildActionButtons()
+
       // 工具功能卡片区
       this.buildToolsCards()
     }
@@ -65,10 +97,107 @@ export struct ToolsContent {
         .fontSize(DesignConstants.FONT_SIZE_XL)
         .fontWeight(FontWeight.Bold)
         .fontColor($r('sys.color.font_primary'))
-      
+
       Text('辅助功能和设备管理')
         .fontSize(DesignConstants.FONT_SIZE_MD)
         .fontColor($r('sys.color.font_secondary'))
+    }
+    .width('100%')
+    .padding(DesignConstants.SPACING_MD)
+    .backgroundColor($r('sys.color.comp_background_primary'))
+    .borderRadius(DesignConstants.BORDER_RADIUS_LG)
+  }
+
+  @Builder
+  private buildActionButtons() {
+    Column({ space: DesignConstants.SPACING_MD }) {
+      Text('音频检测控制')
+        .fontSize(DesignConstants.FONT_SIZE_MD)
+        .fontWeight(FontWeight.Medium)
+        .fontColor($r('sys.color.font_primary'))
+        .alignSelf(ItemAlign.Start)
+
+      Row({ space: DesignConstants.SPACING_MD }) {
+        // 开始检测按钮
+        Button('开始检测', { type: ButtonType.Capsule })
+          .backgroundColor(this.isDetecting ? $r('sys.color.font_secondary') : $r('sys.color.font_emphasize'))
+          .fontColor(Color.White)
+          .fontSize(DesignConstants.FONT_SIZE_SM)
+          .padding({
+            left: 16,
+            right: 16,
+            top: 8,
+            bottom: 8
+          })
+          .enabled(!this.isDetecting)
+          .onClick(() => {
+            this.startDetection();
+          })
+
+        // 暂停按钮
+        Button('暂停', { type: ButtonType.Capsule })
+          .backgroundColor(this.isDetecting ? $r('sys.color.alert') : $r('sys.color.font_secondary'))
+          .fontColor(Color.White)
+          .fontSize(DesignConstants.FONT_SIZE_SM)
+          .padding({
+            left: 16,
+            right: 16,
+            top: 8,
+            bottom: 8
+          })
+          .enabled(this.isDetecting)
+          .onClick(() => {
+            this.pauseDetection();
+          })
+
+        // 重置按钮
+        Button('重置', { type: ButtonType.Capsule })
+          .backgroundColor($r('sys.color.comp_background_secondary'))
+          .fontColor($r('sys.color.font_primary'))
+          .fontSize(DesignConstants.FONT_SIZE_SM)
+          .padding({
+            left: 16,
+            right: 16,
+            top: 8,
+            bottom: 8
+          })
+          .onClick(() => {
+            this.showResetConfirmation();
+          })
+
+        // 保存按钮
+        Button(this.isSaving ? '保存中...' : '保存', { type: ButtonType.Capsule })
+          .backgroundColor(this.isSaving ? $r('sys.color.font_secondary') : $r('sys.color.confirm'))
+          .fontColor(Color.White)
+          .fontSize(DesignConstants.FONT_SIZE_SM)
+          .padding({
+            left: 16,
+            right: 16,
+            top: 8,
+            bottom: 8
+          })
+          .enabled(!this.isSaving)
+          .opacity(this.saveAnimationOpacity)
+          .onClick(() => {
+            this.showSaveDialog();
+          })
+      }
+      .width('100%')
+      .justifyContent(FlexAlign.SpaceBetween)
+
+      // 状态显示
+      Row({ space: DesignConstants.SPACING_SM }) {
+        Text('状态:')
+          .fontSize(DesignConstants.FONT_SIZE_SM)
+          .fontColor($r('sys.color.font_secondary'))
+
+        Text(this.getDetectionStatusText())
+          .fontSize(DesignConstants.FONT_SIZE_SM)
+          .fontColor(this.getDetectionStatusColor())
+          .fontWeight(FontWeight.Medium)
+      }
+      .width('100%')
+      .justifyContent(FlexAlign.Start)
     }
     .width('100%')
     .padding(DesignConstants.SPACING_MD)
@@ -87,10 +216,12 @@ export struct ToolsContent {
           description: '自动和手动校准',
           status: `当前: ${this.pk.calibration_value}dB`,
           statusColor: $r('sys.color.font_primary'),
-          onTap: () => { this.navigateToAudioCalibration() }
+          onTap: () => {
+            this.navigateToAudioCalibration()
+          }
         })
       }
-      
+
       // 分析工具
       GridCol({ span: 1 }) {
         this.buildToolCard({
@@ -99,10 +230,12 @@ export struct ToolsContent {
           description: 'A/C/Z计权设置',
           status: `当前: ${this.getWeightingDisplayName(this.pk.weighting_type)}`,
           statusColor: $r('sys.color.font_primary'),
-          onTap: () => { this.navigateToFrequencyWeighting() }
+          onTap: () => {
+            this.navigateToFrequencyWeighting()
+          }
         })
       }
-      
+
       // 音频分析模式
       GridCol({ span: 1 }) {
         this.buildToolCard({
@@ -111,10 +244,12 @@ export struct ToolsContent {
           description: '快速/慢速/脉冲',
           status: `当前: ${this.getAnalysisModeDisplayName(this.pk.audio_analysis_mode)}`,
           statusColor: $r('sys.color.font_primary'),
-          onTap: () => { this.navigateToAudioAnalysisMode() }
+          onTap: () => {
+            this.navigateToAudioAnalysisMode()
+          }
         })
       }
-      
+
       // 音频记录开关
       GridCol({ span: 1 }) {
         this.buildToolCard({
@@ -123,10 +258,12 @@ export struct ToolsContent {
           description: '保存原始音频',
           status: this.pk.record_enabled ? '已开启' : '已关闭',
           statusColor: this.pk.record_enabled ? $r('sys.color.confirm') : $r('sys.color.font_secondary'),
-          onTap: () => { this.toggleAudioRecording() }
+          onTap: () => {
+            this.toggleAudioRecording()
+          }
         })
       }
-      
+
       // 警报工具
       GridCol({ span: 1 }) {
         this.buildToolCard({
@@ -135,10 +272,12 @@ export struct ToolsContent {
           description: '阈值和通知管理',
           status: `阈值: ${this.pk.alarm_threshold.currentEffectiveThreshold}dB`,
           statusColor: $r('sys.color.font_primary'),
-          onTap: () => { this.navigateToAlerts() }
+          onTap: () => {
+            this.navigateToAlerts()
+          }
         })
       }
-      
+
       // 数据工具
       GridCol({ span: 1 }) {
         this.buildToolCard({
@@ -147,10 +286,12 @@ export struct ToolsContent {
           description: '自动保存设置',
           status: this.pk.auto_save_enabled ? '已开启' : '已关闭',
           statusColor: this.pk.auto_save_enabled ? $r('sys.color.confirm') : $r('sys.color.font_secondary'),
-          onTap: () => { this.navigateToAutoSave() }
+          onTap: () => {
+            this.navigateToAutoSave()
+          }
         })
       }
-      
+
       // 系统工具
       GridCol({ span: 1 }) {
         this.buildToolCard({
@@ -159,10 +300,12 @@ export struct ToolsContent {
           description: '当前位置显示',
           status: this.pk.location_enabled ? '已开启' : '已关闭',
           statusColor: this.pk.location_enabled ? $r('sys.color.confirm') : $r('sys.color.font_secondary'),
-          onTap: () => { this.toggleLocation() }
+          onTap: () => {
+            this.toggleLocation()
+          }
         })
       }
-      
+
       GridCol({ span: 1 }) {
         this.buildToolCard({
           title: '手电筒',
@@ -170,7 +313,9 @@ export struct ToolsContent {
           description: '开启/关闭手电筒',
           status: this.isTorchOn ? '开启' : '关闭',
           statusColor: this.isTorchOn ? $r('sys.color.confirm') : $r('sys.color.font_secondary'),
-          onTap: () => { this.toggleTorch() }
+          onTap: () => {
+            this.toggleTorch()
+          }
         })
       }
     }
@@ -199,7 +344,7 @@ export struct ToolsContent {
             .fontSize(DesignConstants.FONT_SIZE_MD)
             .fontWeight(FontWeight.Medium)
             .fontColor($r('sys.color.font_primary'))
-          
+
           Blank()
         }
         .width('100%')
@@ -209,7 +354,7 @@ export struct ToolsContent {
           Text(config.description)
             .fontSize(DesignConstants.FONT_SIZE_SM)
             .fontColor($r('sys.color.font_secondary'))
-          
+
           Blank()
         }
         .width('100%')
@@ -221,7 +366,7 @@ export struct ToolsContent {
               .fontSize(DesignConstants.FONT_SIZE_SM)
               .fontWeight(FontWeight.Medium)
               .fontColor(config.statusColor || $r('sys.color.font_primary'))
-            
+
             Blank()
           }
           .width('100%')
@@ -266,7 +411,6 @@ export struct ToolsContent {
     .borderRadius(DesignConstants.BORDER_RADIUS_LG)
   }
 
-
   // 导航到声级校准设置
   private navigateToAudioCalibration = () => {
     let calibrationDialog: InfSheet;
@@ -286,7 +430,6 @@ export struct ToolsContent {
       .build();
     calibrationDialog.show();
   }
-
   // 导航到警报与通知设置
   private navigateToAlerts = () => {
     let alertsDialog: InfSheet;
@@ -306,7 +449,6 @@ export struct ToolsContent {
       .build();
     alertsDialog.show();
   }
-
   // 导航到频率加权设置
   private navigateToFrequencyWeighting = () => {
     let frequencyDialog: InfSheet;
@@ -332,7 +474,6 @@ export struct ToolsContent {
 
     frequencyDialog.show();
   }
-
   // 导航到自动保存设置
   private navigateToAutoSave = () => {
     let autoSaveDialog: InfSheet;
@@ -441,6 +582,190 @@ export struct ToolsContent {
         return '脉冲(I)';
       default:
         return '自定义模式';
+    }
+  }
+
+  // 构建输入对话框
+  @Builder
+  private buildInputDialog() {
+    InputDialog({
+      title: '保存数据',
+      default: '',
+      onConfirm: (comment: string) => {
+        this.saveCurrentData(comment);
+        this.inputDialogController.close();
+      },
+      onClose: () => {
+        console.info('[ToolsContent] 输入对话框已关闭');
+        this.inputDialogController.close();
+      }
+    })
+  }
+
+  // 构建确认对话框
+  @Builder
+  private buildConfirmDialog() {
+    Column({ space: DesignConstants.SPACING_MD }) {
+      Text('确认重置')
+        .fontSize(DesignConstants.FONT_SIZE_LG)
+        .fontWeight(FontWeight.Bold)
+        .fontColor($r('sys.color.font_primary'))
+
+      Text('确定要重置所有检测数据吗？此操作不可撤销。')
+        .fontSize(DesignConstants.FONT_SIZE_MD)
+        .fontColor($r('sys.color.font_secondary'))
+        .textAlign(TextAlign.Center)
+
+      Row({ space: DesignConstants.SPACING_MD }) {
+        Button('取消', { type: ButtonType.Normal })
+          .layoutWeight(1)
+          .backgroundColor($r('sys.color.comp_background_secondary'))
+          .fontColor($r('sys.color.font_primary'))
+          .onClick(() => {
+            this.confirmDialogController.close();
+          })
+
+        Button('确认重置', { type: ButtonType.Normal })
+          .layoutWeight(1)
+          .backgroundColor($r('sys.color.alert'))
+          .fontColor(Color.White)
+          .onClick(() => {
+            this.resetData();
+            this.confirmDialogController.close();
+          })
+      }
+      .width('100%')
+    }
+    .width('100%')
+    .padding(DesignConstants.SPACING_MD)
+  }
+
+  // 开始检测
+  private startDetection(): void {
+    Throttle.click(() => {
+      try {
+        const audioController = AudioControllerService.getInstance(this.ak, this.pk);
+        // 通过AudioControllerService发送开始检测事件
+        audioController.startDetection();
+        this.isDetecting = true;
+        this.audioServiceState = AudioServiceState.CAPTURING;
+        console.info('[ToolsContent] 开始检测事件已发送');
+      } catch (error) {
+        console.error('[ToolsContent] 发送开始检测事件失败:', error);
+        // 可以在这里添加错误提示
+      }
+    });
+  }
+
+  // 暂停检测
+  private pauseDetection(): void {
+    Throttle.click(() => {
+      try {
+        const audioController = AudioControllerService.getInstance(this.ak, this.pk);
+        // 通过AudioControllerService发送暂停检测事件
+        audioController.pauseDetection();
+        this.isDetecting = false;
+        this.audioServiceState = AudioServiceState.IDLE;
+        console.info('[ToolsContent] 暂停检测事件已发送');
+      } catch (error) {
+        console.error('[ToolsContent] 发送暂停检测事件失败:', error);
+      }
+    });
+  }
+
+  // 显示重置确认对话框
+  private showResetConfirmation(): void {
+    Throttle.click(() => {
+      this.confirmDialogController.open();
+    });
+  }
+
+  // 重置数据
+  private resetData(): void {
+    Throttle.click(() => {
+      const audioController = AudioControllerService.getInstance(this.ak, this.pk);
+      audioController.resetData();
+      // 同时停止音频检测
+      this.isDetecting = false;
+      this.audioServiceState = AudioServiceState.IDLE;
+      console.info('[ToolsContent] 数据已重置');
+    });
+  }
+
+  // 显示保存对话框
+  private showSaveDialog(): void {
+    Throttle.click(() => {
+      this.inputDialogController.open();
+    });
+  }
+
+  // 保存当前数据
+  private saveCurrentData(comment: string): void {
+    Throttle.click(() => {
+      this.startSaveAnimation();
+      const audioController = AudioControllerService.getInstance(this.ak, this.pk);
+      audioController.saveData(comment);
+      console.info('[ToolsContent] 数据已保存，备注:', comment);
+      // 延迟结束动画，让用户看到保存效果
+      setTimeout(() => {
+        this.endSaveAnimation();
+      }, 1000);
+    });
+  }
+
+  // 开始保存动画
+  private startSaveAnimation(): void {
+    this.isSaving = true;
+    this.getUIContext().animateTo({
+      duration: 300,
+      curve: Curve.EaseInOut
+    }, () => {
+      this.saveAnimationOpacity = 0.7;
+    });
+    console.info('[ToolsContent] 开始保存动画');
+  }
+
+  // 结束保存动画
+  private endSaveAnimation(): void {
+    this.getUIContext().animateTo({
+      duration: 300,
+      curve: Curve.EaseInOut
+    }, () => {
+      this.saveAnimationOpacity = 1.0;
+    });
+    this.isSaving = false;
+    console.info('[ToolsContent] 结束保存动画');
+  }
+
+  // 获取检测状态文本
+  private getDetectionStatusText(): string {
+    switch (this.audioServiceState) {
+      case AudioServiceState.IDLE:
+        return '空闲';
+      case AudioServiceState.STARTING:
+        return '启动中...';
+      case AudioServiceState.CAPTURING:
+        return '检测中';
+      case AudioServiceState.STOPPING:
+        return '停止中...';
+      case AudioServiceState.SWITCHING_MODE:
+        return '切换模式中...';
+      default:
+        return '未知状态';
+    }
+  }
+
+  // 获取检测状态颜色
+  private getDetectionStatusColor(): Resource {
+    switch (this.audioServiceState) {
+      case AudioServiceState.CAPTURING:
+        return $r('sys.color.confirm');
+      case AudioServiceState.STARTING:
+      case AudioServiceState.STOPPING:
+      case AudioServiceState.SWITCHING_MODE:
+        return $r('sys.color.alert');
+      default:
+        return $r('sys.color.font_secondary');
     }
   }
 }
