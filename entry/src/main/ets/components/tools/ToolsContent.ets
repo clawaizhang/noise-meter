@@ -160,6 +160,10 @@ export struct ToolsContent {
   // 状态监听初始化
   private initializeStateListener(): void {
     const audioController = AudioControllerService.getInstance(this.ak, this.pk);
+    
+    // 确保状态机已初始化
+    audioController.initializeStateMachine();
+    
     audioController.onStateChangeFromExternal((event: StateTransitionEvent) => {
       this.controllerState = event.toState;
       // 更新按钮状态
@@ -800,6 +804,10 @@ export struct ToolsContent {
         const audioController = AudioControllerService.getInstance(this.ak, this.pk);
         await audioController.stopRecordingFromExternal(comment);
         console.info('[ToolsContent] 数据已通过状态机保存，备注:', comment);
+        
+        // 等待状态转换完成或超时
+        await this.waitForStateTransition();
+        
         // 延迟结束动画，让用户看到保存效果
         setTimeout(() => {
           this.endSaveAnimation();
@@ -824,6 +832,37 @@ export struct ToolsContent {
       this.saveAnimationOpacity = 0.7;
     });
     console.info('[ToolsContent] 开始保存动画');
+  }
+
+  // 等待状态转换完成
+  private async waitForStateTransition(): Promise<void> {
+    return new Promise<void>((resolve) => {
+      const maxWaitTime = 5000; // 最大等待5秒
+      const checkInterval = 100; // 每100毫秒检查一次
+      let elapsedTime = 0;
+      
+      const checkState = () => {
+        // 如果状态已经变为IDLE或ERROR，则完成
+        if (this.controllerState === AudioControllerLifecycleState.CONTROLLER_IDLE ||
+            this.controllerState === AudioControllerLifecycleState.CONTROLLER_ERROR) {
+          console.info('[ToolsContent] 状态转换完成:', this.controllerState);
+          resolve();
+          return;
+        }
+        
+        // 如果超时，强制完成
+        if (elapsedTime >= maxWaitTime) {
+          console.warn('[ToolsContent] 状态转换超时，强制完成');
+          resolve();
+          return;
+        }
+        
+        elapsedTime += checkInterval;
+        setTimeout(checkState, checkInterval);
+      };
+      
+      checkState();
+    });
   }
 
   // 结束保存动画

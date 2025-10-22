@@ -678,6 +678,15 @@ interface StateChangeEventWithPayload extends AudioControllerEvent {
         // 停止处理音频数据
         this.audioService.stopProcessing();
 
+        // 停止音频采集，触发状态机状态转换
+        try {
+          await this.audioService.stopCapture();
+          console.info('[AudioController] 音频采集已停止，状态机将转换到IDLE状态');
+        } catch (error) {
+          console.error('[AudioController] 停止音频采集失败:', error);
+          this.addErrorMessage(`停止音频采集失败: ${error.message}`);
+        }
+
         // 如果启用了录音功能，获取并保存音频文件
         let currentAudioFilePath: string = '';
 
