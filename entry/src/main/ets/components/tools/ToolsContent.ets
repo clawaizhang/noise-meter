@@ -88,7 +88,7 @@ class ButtonStates {
   }
   
   // 根据控制器状态更新所有按钮状态
-  updateStates(controllerState: AudioControllerLifecycleState, isSaving: boolean): void {
+  updateStates(controllerState: AudioControllerLifecycleState): void {
     // 开始按钮状态
     this.startButton.update(
       controllerState === AudioControllerLifecycleState.CONTROLLER_IDLE ||
@@ -118,8 +118,8 @@ class ButtonStates {
     // 保存按钮状态
     this.saveButton.update(
       controllerState === AudioControllerLifecycleState.CONTROLLER_RECORDING,
-      isSaving ? '保存中...' : '保存',
-      isSaving ? $r('sys.color.font_secondary') : $r('sys.color.confirm')
+      '保存',
+      $r('sys.color.confirm')
     );
   }
 }
@@ -131,7 +131,6 @@ export struct ToolsContent {
   @Local isTorchOn: boolean = false;
   @Local private currentLocation: LocationInfo | null = null;
   @Local private controllerState: AudioControllerLifecycleState = AudioControllerService.getInstance(this.ak, this.pk).getStateMachine()?.getCurrentState()!;
-  @Local private isSaving: boolean = false;
   @Local private saveAnimationOpacity: number = 1.0;
   @Local private buttonStates: ButtonStates = new ButtonStates();
   @Local private inputDialogController: CustomDialogController = new CustomDialogController({
@@ -152,7 +151,7 @@ export struct ToolsContent {
   aboutToAppear(): void {
     this.initializeStateListener();
     // 初始化按钮状态
-    this.buttonStates.updateStates(this.controllerState, this.isSaving);
+    this.buttonStates.updateStates(this.controllerState);
   }
 
   aboutToDisappear(): void {
@@ -164,7 +163,7 @@ export struct ToolsContent {
     audioController.onStateChangeFromExternal((event: StateTransitionEvent) => {
       this.controllerState = event.toState;
       // 更新按钮状态
-      this.buttonStates.updateStates(this.controllerState, this.isSaving);
+      this.buttonStates.updateStates(this.controllerState);
       console.info(`[ToolsContent] 状态机状态变更: ${event.fromState} -> ${event.toState}`);
     });
   }
@@ -275,7 +274,7 @@ export struct ToolsContent {
             top: 8,
             bottom: 8
           })
-          .enabled(this.buttonStates.saveButton.enabled && !this.isSaving)
+          .enabled(this.buttonStates.saveButton.enabled)
           .opacity(this.saveAnimationOpacity)
           .onClick(() => {
             this.showSaveDialog();
@@ -816,9 +815,8 @@ export struct ToolsContent {
 
   // 开始保存动画
   private startSaveAnimation(): void {
-    this.isSaving = true;
     // 更新按钮状态
-    this.buttonStates.updateStates(this.controllerState, this.isSaving);
+    this.buttonStates.updateStates(this.controllerState);
     this.getUIContext().animateTo({
       duration: 300,
       curve: Curve.EaseInOut
@@ -836,9 +834,8 @@ export struct ToolsContent {
     }, () => {
       this.saveAnimationOpacity = 1.0;
     });
-    this.isSaving = false;
     // 更新按钮状态
-    this.buttonStates.updateStates(this.controllerState, this.isSaving);
+    this.buttonStates.updateStates(this.controllerState);
     console.info('[ToolsContent] 结束保存动画');
   }
 

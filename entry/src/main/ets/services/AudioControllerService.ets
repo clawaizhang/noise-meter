@@ -356,6 +356,12 @@ export class AudioControllerService {
       // 设置事件路由
       this.setupEventRouting();
 
+      // 注册AudioService状态监听器 - 修复状态同步问题
+      const audioService = AudioService.getInstance();
+      audioService.addStateChangeListener((audioState: AudioServiceState) => {
+        this.handleAudioServiceStateChange(audioState);
+      });
+
       console.info('[AudioControllerService] 状态机初始化完成（事件驱动架构）');
     }
   }
