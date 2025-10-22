@@ -436,9 +436,7 @@ export struct AudioController {
    */
   private initializeStateMachine(): void {
     // 通过AudioControllerService初始化状态机（不再传入this实例）
-    this
-      .audioControllerService
-      .initializeStateMachine();
+    this .audioControllerService .initializeStateMachine();
 
     // 监听状态机事件
     this.audioControllerService.onEvent((event) => {

@@ -110,28 +110,28 @@ export class AudioControllerService {
    * 订阅重置事件
    */
   public subscribeReset(callback: () => void): void {
-    this.resetSubject.subscribe(callback);
+    this.onResetData(callback);
   }
 
   /**
    * 订阅保存事件
    */
   public subscribeSave(callback: (comments: string) => void): void {
-    this.saveSubject.subscribe(callback);
+    this.onStopRecording(callback);
   }
 
   /**
    * 订阅开始检测事件
    */
   public subscribeStartDetection(callback: () => void): void {
-    this.startDetectionSubject.subscribe(callback);
+    this.onStartRecording(callback);
   }
 
   /**
    * 订阅暂停检测事件
    */
   public subscribePauseDetection(callback: () => void): void {
-    this.pauseDetectionSubject.subscribe(callback);
+    this.onPauseRecording(callback);
   }
 
   /**
@@ -288,7 +288,7 @@ export class AudioControllerService {
    * 设置事件路由
    */
   private setupEventRouting(): void {
-    // 将状态机事件路由到现有的Subject
+    // 将事件总线事件路由到现有的Subject，保持向后兼容性
     this.onStartRecording(() => {
       console.info('[事件路由] 触发开始检测事件');
       this.startDetectionSubject.next();

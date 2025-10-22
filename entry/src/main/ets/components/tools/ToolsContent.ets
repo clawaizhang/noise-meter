@@ -30,6 +30,14 @@ import { AudioAnalysisMode } from '../../common/AudioConfig';
 import { AudioControllerService } from '../../services/AudioControllerService';
 import { AudioService, AudioServiceState } from '../../services/AudioService';
 import { InputDialog } from '../decibel-meter/InputDialog';
+import {
+  AudioControllerEventType,
+  StartRecordingEvent,
+  PauseRecordingEvent,
+  ResetDataEvent,
+  StopRecordingEvent,
+  StopRecordingPayload
+} from '../../models/AudioControllerEvents';
 
 // 工具功能卡片配置
 interface ToolCardConfig {
@@ -645,11 +653,15 @@ export struct ToolsContent {
     Throttle.click(() => {
       try {
         const audioController = AudioControllerService.getInstance(this.ak, this.pk);
-        // 通过AudioControllerService发送开始检测事件
-        audioController.startDetection();
+        // 通过事件总线发送开始检测事件
+        const startEvent: StartRecordingEvent = {
+          type: AudioControllerEventType.START_RECORDING,
+          timestamp: Date.now()
+        };
+        audioController.publishEvent(startEvent);
         this.isDetecting = true;
         this.audioServiceState = AudioServiceState.CAPTURING;
-        console.info('[ToolsContent] 开始检测事件已发送');
+        console.info('[ToolsContent] 开始检测事件已通过事件总线发送');
       } catch (error) {
         console.error('[ToolsContent] 发送开始检测事件失败:', error);
         // 可以在这里添加错误提示
@@ -662,11 +674,15 @@ export struct ToolsContent {
     Throttle.click(() => {
       try {
         const audioController = AudioControllerService.getInstance(this.ak, this.pk);
-        // 通过AudioControllerService发送暂停检测事件
-        audioController.pauseDetection();
+        // 通过事件总线发送暂停检测事件
+        const pauseEvent: PauseRecordingEvent = {
+          type: AudioControllerEventType.PAUSE_RECORDING,
+          timestamp: Date.now()
+        };
+        audioController.publishEvent(pauseEvent);
         this.isDetecting = false;
         this.audioServiceState = AudioServiceState.IDLE;
-        console.info('[ToolsContent] 暂停检测事件已发送');
+        console.info('[ToolsContent] 暂停检测事件已通过事件总线发送');
       } catch (error) {
         console.error('[ToolsContent] 发送暂停检测事件失败:', error);
       }
@@ -684,11 +700,16 @@ export struct ToolsContent {
   private resetData(): void {
     Throttle.click(() => {
       const audioController = AudioControllerService.getInstance(this.ak, this.pk);
-      audioController.resetData();
+      // 通过事件总线发送重置数据事件
+      const resetEvent: ResetDataEvent = {
+        type: AudioControllerEventType.RESET_DATA,
+        timestamp: Date.now()
+      };
+      audioController.publishEvent(resetEvent);
       // 同时停止音频检测
       this.isDetecting = false;
       this.audioServiceState = AudioServiceState.IDLE;
-      console.info('[ToolsContent] 数据已重置');
+      console.info('[ToolsContent] 数据已通过事件总线重置');
     });
   }
 
@@ -704,11 +725,20 @@ export struct ToolsContent {
     Throttle.click(() => {
       this.startSaveAnimation();
       const audioController = AudioControllerService.getInstance(this.ak, this.pk);
-      audioController.saveData(comment);
-      console.info('[ToolsContent] 数据已保存，备注:', comment);
+      // 通过事件总线发送停止录制事件（保存数据）
+      const stopEvent: StopRecordingEvent = {
+        type: AudioControllerEventType.STOP_RECORDING,
+        timestamp: Date.now(),
+        payload: {
+          comments: comment
+        }
+      };
+      audioController.publishEvent(stopEvent);
+      console.info('[ToolsContent] 数据已通过事件总线保存，备注:', comment);
       // 延迟结束动画，让用户看到保存效果
       setTimeout(() => {
         this.endSaveAnimation();
+        this.startDetection() ;
       }, 1000);
     });
   }
