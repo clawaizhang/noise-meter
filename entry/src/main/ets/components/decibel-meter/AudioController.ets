@@ -14,6 +14,8 @@ import { FFTAnalyzer } from '../../utils/FFTAnalyzer';
 import { AudioControllerService } from '../../services/AudioControllerService';
 import { WindowType } from '../../common/WindowType';
 import { Subscription } from 'rxjs';
+import { AudioControllerLifecycleState, StateTransitionEvent } from '../../models/AudioControllerLifecycleState';
+import { AudioControllerEvent, AudioControllerEventType } from '../../models/AudioControllerEvents';
 
 /**
  * 带时间戳的分贝值接口
@@ -72,6 +74,9 @@ export struct AudioController {
   private originAudioBuffers: TimedAudioBuffer[] = []
   private currentRecord?: DecibelRecord
   private isNoiseAlarm: boolean = false;
+  // 状态机相关属性
+  private stateMachineSubscription?: Subscription;
+  private eventSubscription?: Subscription;
 
   @Computed
   get fft_size() {
@@ -107,6 +112,9 @@ export struct AudioController {
   aboutToAppear() {
     // 启动时间显示更新
     this.audioControllerService.startTimeDisplayUpdates();
+
+    // 初始化状态机
+    this.initializeStateMachine();
 
     if (this.ak.microphonePermissionGranted) {
       this.startRecording();
@@ -161,6 +169,12 @@ export struct AudioController {
     if (this.errorSubscription) {
       this.errorSubscription.unsubscribe();
     }
+    if (this.stateMachineSubscription) {
+      this.stateMachineSubscription.unsubscribe();
+    }
+    if (this.eventSubscription) {
+      this.eventSubscription.unsubscribe();
+    }
 
     // 清理RxJS资源
     this.stopAutoSaveMonitoring();
@@ -171,84 +185,17 @@ export struct AudioController {
 
   async startRecording(): Promise<void> {
     try {
-      // 启动音频采集，带重试机制
-      await this.tryStartCapture();
-      this.isRecording = true;
-      this.ak.dataProcessingState.statisticsData.startTime = new Date().getTime();
-      this.resetData();
-      this.clearErrorMessage();
-
-      // 创建新的记录对象
-      this.currentRecord = new DecibelRecord(
-        0, // minDecibel
-        0, // maxDecibel
-        0, // avgDecibel
-        0, // duration
-        [], // decibelValues
-        undefined, // location
-        undefined// audioFilePath
-      );
-
-      // 启动数据清理监控
-      this.startDataCleanupMonitoring();
-
-      this.audioService.registerOriginAudioDataCallBack((buffer: ArrayBuffer) => {
-        this.originAudioBuffers.push({ timestamp: Date.now(), buffer: buffer.slice(0) });
-      })
-      // 开始处理音频数据
-      this.audioService.startProcessing((buffer: ArrayBuffer) => {
-
-        // 存储带时间戳的音频缓冲区
-        const currentTime = Date.now();
-        this.timedAudioBuffers.push({ timestamp: currentTime, buffer: buffer.slice(0) });
-        
-        // 处理时域波形数据
-        this.processTimeDomainData(buffer);
-        
-        let config = AudioPresets.getConfig(this.pk.audio_analysis_mode);
-        // 计算频谱数据（用于频谱图显示）
-        taskpool.execute<[ArrayBuffer, WeightingType, number, number, WindowType, number, number], Float32Array>(
-          concurrentCalculateSpectrum,
-          buffer.slice(0),
-          this.pk.weighting_type,
-          this.pk.calibration_value,
-          config.fftSize,
-          config.windowType,
-          config.smoothingFactor,
-          config.overlap
-        ).then((spectrum) => {
-          // 双管线架构：频谱数据通过状态管理，不再通过事件传递
-
-          // 计算分贝值
-          const config = AudioPresets.getConfig(this.pk.audio_analysis_mode);
-          const db: number = new FFTAnalyzer(
-            config.fftSize,
-            config.windowType,
-            config.smoothingFactor,
-            config.overlap
-          ).calculateAverageDb(spectrum);
-          let currentDecibel = Number(Math.round(db).toFixed(1));
-
-          // 收集分贝值和加权类型（带时间戳）
-          const currentTime = new Date().getTime();
-          this.timedValues.push({ timestamp: currentTime, value: currentDecibel });
-          this.timedWeightingTypes.push({ timestamp: currentTime, type: this.pk.weighting_type });
-
-          // 更新统计信息
-          this.updateStatistics(currentDecibel, spectrum);
-
-          // 检查报警状态
-          this.checkAlarmStatus(currentDecibel);
-
-        })
-      });
-
-
+      // 使用状态机控制录制
+      const stateMachine = this.audioControllerService.getStateMachine();
+      if (stateMachine) {
+        await stateMachine.startRecording();
+      } else {
+        // 回退到原有逻辑
+        await this.originalStartRecording();
+      }
     } catch (error) {
-      // 如果启动失败，重置状态
-      this.isRecording = false;
-      this.addErrorMessage(`音频采集启动失败: ${error.message}`);
-      this.resetData();
+      console.error('[AudioController] 启动录制失败:', error);
+      throw new Error('启动录制失败');
     }
   }
 
@@ -275,91 +222,18 @@ export struct AudioController {
   }
 
   async stopRecording(comments: string): Promise<void> {
-    if (this.isRecording) {
-      this.isRecording = false;
-      console.info("[FREQ_TRACE][Recording] 停止检测 - 开始");
-
-      // 判断是否为自动保存
-      const isAutoSave = comments === '自动保存';
-
-      try {
-        let locationInfo: LocationInfo | null = null;
-
-        if (this.pk.location_enabled) {
-          locationInfo = this.currentLocation;
-          console.info('[FREQ_TRACE][Location] 位置信息:', locationInfo);
-        } else {
-          console.info('[FREQ_TRACE][Location] 位置服务已关闭，不保存位置信息');
-        }
-
-        // 停止处理音频数据
-        this.audioService.stopProcessing();
-
-        // 如果启用了录音功能，获取并保存音频文件
-        let currentAudioFilePath: string = '';
-
-        if (this.pk.record_enabled) {
-          try {
-            // 获取音频数据
-            const recentAudioBuffers = this.originAudioBuffers.map(item => item.buffer);
-            console.info(`[音频保存] 使用最近${this.pk.auto_save_interval}分钟的音频数据，缓冲区数量: ${recentAudioBuffers.length}`);
-
-            currentAudioFilePath = await this.audioService.stopRecordingAndGetWavData(recentAudioBuffers);
-          } catch (error) {
-            console.error('[FREQ_TRACE][Audio] 获取或保存WAV音频数据失败:', error);
-            this.addErrorMessage(`音频文件保存失败: ${error.message}`);
-          }
-        }
-
-        console.info('[FREQ_TRACE][Record] 准备创建记录');
-        // 更新记录对象
-        if (this.currentRecord) {
-          this.currentRecord.minDecibel = this.ak.dataProcessingState.statisticsData.minDb;
-          this.currentRecord.maxDecibel = this.ak.dataProcessingState.statisticsData.maxDb;
-          this.currentRecord.avgDecibel = this.ak.dataProcessingState.statisticsData.avgDb;
-          this.currentRecord.duration = this.ak.dataProcessingState.statisticsData.duration;
-          console.info('[FREQ_TRACE][Record] 创建记录对象 持续时间 ' +
-          this.ak.dataProcessingState.statisticsData.duration);
-          this.currentRecord.decibelValues = this.timedValues.map(item => item.value);
-          this.currentRecord.weightingTypes = this.timedWeightingTypes.map(item => item.type);
-          this.currentRecord.audioFilePath = currentAudioFilePath;
-          this.currentRecord.location = locationInfo?.address;
-          this.currentRecord.comment = comments;
-
-          // 保存记录
-          await this.recordService.saveRecord(this.currentRecord);
-          console.info('[FREQ_TRACE][Record] 记录保存成功');
-
-          // 更新最后记录时间和记录总数
-          this.ak.lastRecordTimestamp = Date.now();
-          const totalCount = await this.recordService.getTotalCount();
-          this.ak.totalRecordsCount = totalCount;
-
-          // 显示详情对话框
-          if (isAutoSave) {
-            promptAction.showToast({
-              message: '自动保存记录成功',
-              duration: 3000
-            });
-          }
-        }
-
-        // 重置状态
-        this.resetData();
-
-        // 自动开始新的检测
-        setTimeout(() => {
-          this.startRecording();
-        }, 500); // 延迟500ms后开始新的检测
-
-      } catch (error) {
-        console.error('[FREQ_TRACE][Record] 保存记录失败:', error);
-        this.addErrorMessage(`记录保存失败: ${error.message}`);
-        // 即使保存失败也开始新的检测
-        setTimeout(() => {
-          this.startRecording();
-        }, 500);
+    try {
+      // 使用状态机控制停止
+      const stateMachine = this.audioControllerService.getStateMachine();
+      if (stateMachine) {
+        await stateMachine.stopRecording(comments);
+      } else {
+        // 回退到原有逻辑
+        await this.originalStopRecording(comments);
       }
+    } catch (error) {
+      console.error('[AudioController] 停止录制失败:', error);
+      throw new Error('停止录制失败');
     }
   }
 
@@ -419,24 +293,26 @@ export struct AudioController {
     try {
       // 将ArrayBuffer转换为Int16Array
       const samples = new Int16Array(buffer);
-      
+
       // 限制数据点数量以提高性能（每4个样本取1个）
       const downsampledData: number[] = [];
       const step = Math.max(1, Math.floor(samples.length / 512)); // 目标512个数据点
-      
+
       for (let i = 0; i < samples.length; i += step) {
-        if (downsampledData.length >= 512) break; // 限制最大数据点数量
-        
+        if (downsampledData.length >= 512) {
+          break;
+        } // 限制最大数据点数量
+
         // 归一化到[-1, 1]范围
         const normalizedValue = samples[i] / 32768.0;
         downsampledData.push(normalizedValue);
       }
-      
+
       // 更新UI显示状态
       if (this.ak.uiDisplayState.isUIUpdatesEnabled) {
         this.ak.uiDisplayState.displayTimeDomainData = downsampledData;
       }
-      
+
       console.debug(`[时域处理] 处理了${downsampledData.length}个数据点`);
     } catch (error) {
       console.error(`[时域处理] 处理时域数据时出错: ${error instanceof Error ? error.message : String(error)}`);
@@ -551,12 +427,324 @@ export struct AudioController {
         this.ak.dataProcessingState.statisticsData.updateStatistics(lastValue, remainingValues);
       }
     }
+  }
 
-    if (originalValuesLength !== this.timedValues.length ||
-      originalAudioBuffersLength !== this.timedAudioBuffers.length) {
-      console.info(`[数据清理] 清理了${originalValuesLength -
-      this.timedValues.length}条分贝数据，${originalAudioBuffersLength -
-      this.timedAudioBuffers.length}条音频数据，保留${this.timedValues.length}条分贝数据，${this.timedAudioBuffers.length}条音频数据`);
+  // ========== 状态机相关方法 ==========
+
+  /**
+   * 初始化状态机
+   */
+  private initializeStateMachine(): void {
+    // 通过AudioControllerService初始化状态机（不再传入this实例）
+    this
+      .audioControllerService
+      .initializeStateMachine();
+
+    // 监听状态机事件
+    this.audioControllerService.onEvent((event) => {
+      this.handleStateMachineEvent(event);
+    });
+
+    console.info('[AudioController] 状态机事件监听已设置');
+  }
+
+  /**
+   * 处理状态机事件
+   */
+  private handleStateMachineEvent(event: AudioControllerEvent): void {
+    switch (event.type) {
+      case AudioControllerEventType.START_RECORDING:
+        this.handleStartRecordingEvent();
+        break;
+/**
+ * 停止录制事件payload接口
+ */
+interface StopRecordingPayload {
+  comments: string;
+}
+
+/**
+ * 停止录制事件接口
+ */
+interface StopRecordingEventWithPayload extends AudioControllerEvent {
+  payload: StopRecordingPayload;
+}
+
+      case AudioControllerEventType.STOP_RECORDING:
+        const stopEvent = event as StopRecordingEventWithPayload;
+        this.handleStopRecordingEvent((stopEvent.payload as StopRecordingPayload).comments);
+        break;
+      case AudioControllerEventType.PAUSE_RECORDING:
+        this.handlePauseRecordingEvent();
+        break;
+      case AudioControllerEventType.RESET_DATA:
+        this.handleResetDataEvent();
+        break;
+/**
+ * 状态变更事件接口
+ */
+interface StateChangeEventWithPayload extends AudioControllerEvent {
+  payload: StateTransitionEvent;
+}
+
+      case AudioControllerEventType.STATE_CHANGE:
+        const stateEvent = event as StateChangeEventWithPayload;
+        this.handleStateChange(stateEvent.payload as StateTransitionEvent);
+        break;
+    }
+  }
+
+  /**
+   * 处理启动录制事件
+   */
+  private async handleStartRecordingEvent(): Promise<void> {
+    try {
+      await this.originalStartRecording();
+      console.info('[AudioController] 通过事件启动录制成功');
+    } catch (error) {
+      console.error('[AudioController] 通过事件启动录制失败:', error);
+      this.audioControllerService.publishError([`启动录制失败: ${error.message}`]);
+    }
+  }
+
+  /**
+   * 处理停止录制事件
+   */
+  private async handleStopRecordingEvent(comments: string): Promise<void> {
+    try {
+      await this.originalStopRecording(comments);
+      console.info('[AudioController] 通过事件停止录制成功');
+    } catch (error) {
+      console.error('[AudioController] 通过事件停止录制失败:', error);
+      this.audioControllerService.publishError([`停止录制失败: ${error.message}`]);
+    }
+  }
+
+  /**
+   * 处理暂停录制事件
+   */
+  private async handlePauseRecordingEvent(): Promise<void> {
+    try {
+      await this.originalStopRecording('手动暂停');
+      console.info('[AudioController] 通过事件暂停录制成功');
+    } catch (error) {
+      console.error('[AudioController] 通过事件暂停录制失败:', error);
+      this.audioControllerService.publishError([`暂停录制失败: ${error.message}`]);
+    }
+  }
+
+  /**
+   * 处理重置数据事件
+   */
+  private handleResetDataEvent(): void {
+    this.resetData();
+    console.info('[AudioController] 通过事件重置数据成功');
+  }
+
+  /**
+   * 处理状态变更
+   */
+  private handleStateChange(event: StateTransitionEvent): void {
+    console.info(`[状态机] 状态变更: ${event.fromState} -> ${event.toState}`);
+
+    // 根据状态变更执行相应操作
+    switch (event.toState) {
+      case AudioControllerLifecycleState.CONTROLLER_RECORDING:
+        // 录制开始，更新UI状态
+        this.isRecording = true;
+        break;
+
+      case AudioControllerLifecycleState.CONTROLLER_IDLE:
+        // 录制停止，更新UI状态
+        this.isRecording = false;
+        break;
+
+      case AudioControllerLifecycleState.CONTROLLER_ERROR:
+        // 错误状态，可能需要显示错误信息
+        console.error('[状态机] 进入错误状态:', event.error);
+        if (event.error) {
+          this.addErrorMessage(event.error);
+        }
+        break;
+    }
+  }
+
+  /**
+   * 原有的启动录制逻辑（作为回退方案）
+   */
+  private async originalStartRecording(): Promise<void> {
+    try {
+      // 原有的启动录制逻辑...
+      await this.tryStartCapture();
+      this.isRecording = true;
+      this.ak.dataProcessingState.statisticsData.startTime = new Date().getTime();
+      this.resetData();
+      this.clearErrorMessage();
+
+      // 创建新的记录对象...
+      this.currentRecord = new DecibelRecord(
+        0, // minDecibel
+        0, // maxDecibel
+        0, // avgDecibel
+        0, // duration
+        [], // decibelValues
+        undefined, // location
+        undefined// audioFilePath
+      );
+
+      // 启动数据清理监控...
+      this.startDataCleanupMonitoring();
+
+      // 注册音频数据回调...
+      this.audioService.registerOriginAudioDataCallBack((buffer: ArrayBuffer) => {
+        this.originAudioBuffers.push({ timestamp: Date.now(), buffer: buffer.slice(0) });
+      });
+
+      // 开始处理音频数据...
+      this.audioService.startProcessing((buffer: ArrayBuffer) => {
+        // 原有的音频处理逻辑...
+        const currentTime = Date.now();
+        this.timedAudioBuffers.push({ timestamp: currentTime, buffer: buffer.slice(0) });
+
+        // 处理时域波形数据
+        this.processTimeDomainData(buffer);
+
+        let config = AudioPresets.getConfig(this.pk.audio_analysis_mode);
+        // 计算频谱数据（用于频谱图显示）
+        taskpool.execute<[ArrayBuffer, WeightingType, number, number, WindowType, number, number], Float32Array>(
+          concurrentCalculateSpectrum,
+          buffer.slice(0),
+          this.pk.weighting_type,
+          this.pk.calibration_value,
+          config.fftSize,
+          config.windowType,
+          config.smoothingFactor,
+          config.overlap
+        ).then((spectrum) => {
+          // 双管线架构：频谱数据通过状态管理，不再通过事件传递
+
+          // 计算分贝值
+          const config = AudioPresets.getConfig(this.pk.audio_analysis_mode);
+          const db: number = new FFTAnalyzer(
+            config.fftSize,
+            config.windowType,
+            config.smoothingFactor,
+            config.overlap
+          ).calculateAverageDb(spectrum);
+          let currentDecibel = Number(Math.round(db).toFixed(1));
+
+          // 收集分贝值和加权类型（带时间戳）
+          const currentTime = new Date().getTime();
+          this.timedValues.push({ timestamp: currentTime, value: currentDecibel });
+          this.timedWeightingTypes.push({ timestamp: currentTime, type: this.pk.weighting_type });
+
+          // 更新统计信息
+          this.updateStatistics(currentDecibel, spectrum);
+
+          // 检查报警状态
+          this.checkAlarmStatus(currentDecibel);
+
+        });
+      });
+
+    } catch (error) {
+      this.isRecording = false;
+      this.addErrorMessage(`音频采集启动失败: ${error.message}`);
+      this.resetData();
+      throw new Error(`音频采集停止失败: ${error.message}`);
+    }
+  }
+
+  /**
+   * 原有的停止录制逻辑（作为回退方案）
+   */
+  private async originalStopRecording(comments: string): Promise<void> {
+    // 原有的停止录制逻辑...
+    if (this.isRecording) {
+      this.isRecording = false;
+      console.info("[FREQ_TRACE][Recording] 停止检测 - 开始");
+
+      // 判断是否为自动保存
+      const isAutoSave = comments === '自动保存';
+
+      try {
+        let locationInfo: LocationInfo | null = null;
+
+        if (this.pk.location_enabled) {
+          locationInfo = this.currentLocation;
+          console.info('[FREQ_TRACE][Location] 位置信息:', locationInfo);
+        } else {
+          console.info('[FREQ_TRACE][Location] 位置服务已关闭，不保存位置信息');
+        }
+
+        // 停止处理音频数据
+        this.audioService.stopProcessing();
+
+        // 如果启用了录音功能，获取并保存音频文件
+        let currentAudioFilePath: string = '';
+
+        if (this.pk.record_enabled) {
+          try {
+            // 获取音频数据
+            const recentAudioBuffers = this.originAudioBuffers.map(item => item.buffer);
+            console.info(`[音频保存] 使用最近${this.pk.auto_save_interval}分钟的音频数据，缓冲区数量: ${recentAudioBuffers.length}`);
+
+            currentAudioFilePath = await this.audioService.stopRecordingAndGetWavData(recentAudioBuffers);
+          } catch (error) {
+            console.error('[FREQ_TRACE][Audio] 获取或保存WAV音频数据失败:', error);
+            this.addErrorMessage(`音频文件保存失败: ${error.message}`);
+          }
+        }
+
+        console.info('[FREQ_TRACE][Record] 准备创建记录');
+        // 更新记录对象
+        if (this.currentRecord) {
+          this.currentRecord.minDecibel = this.ak.dataProcessingState.statisticsData.minDb;
+          this.currentRecord.maxDecibel = this.ak.dataProcessingState.statisticsData.maxDb;
+          this.currentRecord.avgDecibel = this.ak.dataProcessingState.statisticsData.avgDb;
+          this.currentRecord.duration = this.ak.dataProcessingState.statisticsData.duration;
+          console.info('[FREQ_TRACE][Record] 创建记录对象 持续时间 ' +
+          this.ak.dataProcessingState.statisticsData.duration);
+          this.currentRecord.decibelValues = this.timedValues.map(item => item.value);
+          this.currentRecord.weightingTypes = this.timedWeightingTypes.map(item => item.type);
+          this.currentRecord.audioFilePath = currentAudioFilePath;
+          this.currentRecord.location = locationInfo?.address;
+          this.currentRecord.comment = comments;
+
+          // 保存记录
+          await this.recordService.saveRecord(this.currentRecord);
+          console.info('[FREQ_TRACE][Record] 记录保存成功');
+
+          // 更新最后记录时间和记录总数
+          this.ak.lastRecordTimestamp = Date.now();
+          const totalCount = await this.recordService.getTotalCount();
+          this.ak.totalRecordsCount = totalCount;
+
+          // 显示详情对话框
+          if (isAutoSave) {
+            promptAction.showToast({
+              message: '自动保存记录成功',
+              duration: 3000
+            });
+          }
+        }
+
+        // 重置状态
+        this.resetData();
+
+        // 自动开始新的检测
+        setTimeout(() => {
+          this.startRecording();
+        }, 500); // 延迟500ms后开始新的检测
+
+      } catch (error) {
+        console.error('[FREQ_TRACE][Record] 保存记录失败:', error);
+        this.addErrorMessage(`记录保存失败: ${error.message}`);
+        // 即使保存失败也开始新的检测
+        setTimeout(() => {
+          this.startRecording();
+        }, 500);
+      }
     }
   }
 }
