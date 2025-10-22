@@ -328,13 +328,15 @@ export class AudioControllerService {
   public initializeStateMachine(): void {
     if (!this.stateMachine) {
 
-      // 创建事件发布器适配器
+      // 创建事件发布器适配器 - 使用箭头函数避免 this 绑定问题
       const eventPublisher: AudioControllerEventPublisher = {
-        publishEvent(event: AudioControllerEvent): void {
-          this.publishEvent(event);
+        publishEvent: (event: AudioControllerEvent): void => {
+          // 直接使用 eventSubject 发布事件，避免递归调用
+          this.eventSubject.next(event);
+          console.info(`[事件总线] 发布事件: ${event.type}`, event);
         },
-        onEvent(callback: (event: AudioControllerEvent) => void): void {
-          this.onEvent(callback);
+        onEvent: (callback: (event: AudioControllerEvent) => void): void => {
+          this.eventSubject.subscribe(callback);
         }
       };
 
