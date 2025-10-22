@@ -50,19 +50,78 @@ interface ToolCardConfig {
   onTap: () => void;
 }
 
-// 按钮状态配置
-interface ButtonState {
-  enabled: boolean;
-  text: string;
-  backgroundColor: Resource;
+// 按钮状态配置类
+@ObservedV2
+class ButtonState {
+  @Trace enabled: boolean = false;
+  @Trace text: string = '';
+  @Trace backgroundColor: Resource = $r('sys.color.font_secondary');
+  
+  constructor(enabled: boolean, text: string, backgroundColor: Resource) {
+    this.enabled = enabled;
+    this.text = text;
+    this.backgroundColor = backgroundColor;
+  }
+  
+  // 更新按钮状态
+  update(enabled: boolean, text: string, backgroundColor: Resource): void {
+    this.enabled = enabled;
+    this.text = text;
+    this.backgroundColor = backgroundColor;
+  }
 }
 
-// 按钮状态集合
-interface ButtonStates {
-  startButton: ButtonState;
-  pauseButton: ButtonState;
-  resetButton: ButtonState;
-  saveButton: ButtonState;
+// 按钮状态集合类
+@ObservedV2
+class ButtonStates {
+  @Trace startButton: ButtonState;
+  @Trace pauseButton: ButtonState;
+  @Trace resetButton: ButtonState;
+  @Trace saveButton: ButtonState;
+  
+  constructor() {
+    // 初始化默认状态
+    this.startButton = new ButtonState(false, '开始检测', $r('sys.color.font_secondary'));
+    this.pauseButton = new ButtonState(false, '暂停', $r('sys.color.font_secondary'));
+    this.resetButton = new ButtonState(false, '重置', $r('sys.color.comp_background_secondary'));
+    this.saveButton = new ButtonState(false, '保存', $r('sys.color.font_secondary'));
+  }
+  
+  // 根据控制器状态更新所有按钮状态
+  updateStates(controllerState: AudioControllerLifecycleState, isSaving: boolean): void {
+    // 开始按钮状态
+    this.startButton.update(
+      controllerState === AudioControllerLifecycleState.CONTROLLER_IDLE ||
+      controllerState === AudioControllerLifecycleState.CONTROLLER_ERROR,
+      '开始检测',
+      controllerState === AudioControllerLifecycleState.CONTROLLER_IDLE ?
+        $r('sys.color.font_emphasize') : $r('sys.color.font_secondary')
+    );
+    
+    // 暂停按钮状态
+    this.pauseButton.update(
+      controllerState === AudioControllerLifecycleState.CONTROLLER_RECORDING,
+      '暂停',
+      controllerState === AudioControllerLifecycleState.CONTROLLER_RECORDING ?
+        $r('sys.color.alert') : $r('sys.color.font_secondary')
+    );
+    
+    // 重置按钮状态
+    this.resetButton.update(
+      controllerState === AudioControllerLifecycleState.CONTROLLER_IDLE ||
+      controllerState === AudioControllerLifecycleState.CONTROLLER_RECORDING ||
+      controllerState === AudioControllerLifecycleState.CONTROLLER_ERROR,
+      '重置',
+      $r('sys.color.comp_background_secondary')
+    );
+    
+    // 保存按钮状态
+    this.saveButton.update(
+      controllerState === AudioControllerLifecycleState.CONTROLLER_RECORDING,
+      isSaving ? '保存中...' : '保存',
+      isSaving ? $r('sys.color.font_secondary') : $r('sys.color.confirm')
+    );
+  }
 }
 
 @ComponentV2
@@ -71,9 +130,10 @@ export struct ToolsContent {
   @Local pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys)!;
   @Local isTorchOn: boolean = false;
   @Local private currentLocation: LocationInfo | null = null;
-  @Local private controllerState: AudioControllerLifecycleState = AudioControllerLifecycleState.CONTROLLER_IDLE;
+  @Local private controllerState: AudioControllerLifecycleState = AudioControllerService.getInstance(this.ak, this.pk).getStateMachine()?.getCurrentState()!;
   @Local private isSaving: boolean = false;
   @Local private saveAnimationOpacity: number = 1.0;
+  @Local private buttonStates: ButtonStates = new ButtonStates();
   @Local private inputDialogController: CustomDialogController = new CustomDialogController({
     builder: this.buildInputDialog,
     cancel: () => {
@@ -91,6 +151,8 @@ export struct ToolsContent {
 
   aboutToAppear(): void {
     this.initializeStateListener();
+    // 初始化按钮状态
+    this.buttonStates.updateStates(this.controllerState, this.isSaving);
   }
 
   aboutToDisappear(): void {
@@ -101,51 +163,12 @@ export struct ToolsContent {
     const audioController = AudioControllerService.getInstance(this.ak, this.pk);
     audioController.onStateChangeFromExternal((event: StateTransitionEvent) => {
       this.controllerState = event.toState;
+      // 更新按钮状态
+      this.buttonStates.updateStates(this.controllerState, this.isSaving);
       console.info(`[ToolsContent] 状态机状态变更: ${event.fromState} -> ${event.toState}`);
     });
   }
 
-  // 按钮状态计算函数
-  @Computed
-  private get ButtonStates(): ButtonStates {
-    const startButton: ButtonState = {
-      enabled: this.controllerState === AudioControllerLifecycleState.CONTROLLER_IDLE ||
-               this.controllerState === AudioControllerLifecycleState.CONTROLLER_ERROR,
-      text: '开始检测',
-      backgroundColor: this.controllerState === AudioControllerLifecycleState.CONTROLLER_IDLE ?
-                      $r('sys.color.font_emphasize') : $r('sys.color.font_secondary')
-    };
-    
-    const pauseButton: ButtonState = {
-      enabled: this.controllerState === AudioControllerLifecycleState.CONTROLLER_RECORDING,
-      text: '暂停',
-      backgroundColor: this.controllerState === AudioControllerLifecycleState.CONTROLLER_RECORDING ?
-                      $r('sys.color.alert') : $r('sys.color.font_secondary')
-    };
-    
-    const resetButton: ButtonState = {
-      enabled: this.controllerState === AudioControllerLifecycleState.CONTROLLER_IDLE ||
-               this.controllerState === AudioControllerLifecycleState.CONTROLLER_RECORDING ||
-               this.controllerState === AudioControllerLifecycleState.CONTROLLER_ERROR,
-      text: '重置',
-      backgroundColor: $r('sys.color.comp_background_secondary')
-    };
-    
-    const saveButton: ButtonState = {
-      enabled: this.controllerState === AudioControllerLifecycleState.CONTROLLER_RECORDING,
-      text: this.isSaving ? '保存中...' : '保存',
-      backgroundColor: this.isSaving ? $r('sys.color.font_secondary') : $r('sys.color.confirm')
-    };
-    
-    const buttonStates: ButtonStates = {
-      startButton: startButton,
-      pauseButton: pauseButton,
-      resetButton: resetButton,
-      saveButton: saveButton
-    };
-    
-    return buttonStates;
-  }
 
   build() {
     Column({ space: DesignConstants.SPACING_LG }) {
@@ -194,8 +217,8 @@ export struct ToolsContent {
 
       Row({ space: DesignConstants.SPACING_MD }) {
         // 开始检测按钮
-        Button(this.ButtonStates.startButton.text, { type: ButtonType.Capsule })
-          .backgroundColor(this.ButtonStates.startButton.backgroundColor)
+        Button(this.buttonStates.startButton.text, { type: ButtonType.Capsule })
+          .backgroundColor(this.buttonStates.startButton.backgroundColor)
           .fontColor(Color.White)
           .fontSize(DesignConstants.FONT_SIZE_SM)
           .padding({
@@ -204,14 +227,14 @@ export struct ToolsContent {
             top: 8,
             bottom: 8
           })
-          .enabled(this.ButtonStates.startButton.enabled)
+          .enabled(this.buttonStates.startButton.enabled)
           .onClick(() => {
             this.startDetection();
           })
 
         // 暂停按钮
-        Button(this.ButtonStates.pauseButton.text, { type: ButtonType.Capsule })
-          .backgroundColor(this.ButtonStates.pauseButton.backgroundColor)
+        Button(this.buttonStates.pauseButton.text, { type: ButtonType.Capsule })
+          .backgroundColor(this.buttonStates.pauseButton.backgroundColor)
           .fontColor(Color.White)
           .fontSize(DesignConstants.FONT_SIZE_SM)
           .padding({
@@ -220,14 +243,14 @@ export struct ToolsContent {
             top: 8,
             bottom: 8
           })
-          .enabled(this.ButtonStates.pauseButton.enabled)
+          .enabled(this.buttonStates.pauseButton.enabled)
           .onClick(() => {
             this.pauseDetection();
           })
 
         // 重置按钮
-        Button(this.ButtonStates.resetButton.text, { type: ButtonType.Capsule })
-          .backgroundColor(this.ButtonStates.resetButton.backgroundColor)
+        Button(this.buttonStates.resetButton.text, { type: ButtonType.Capsule })
+          .backgroundColor(this.buttonStates.resetButton.backgroundColor)
           .fontColor($r('sys.color.font_primary'))
           .fontSize(DesignConstants.FONT_SIZE_SM)
           .padding({
@@ -236,14 +259,14 @@ export struct ToolsContent {
             top: 8,
             bottom: 8
           })
-          .enabled(this.ButtonStates.resetButton.enabled)
+          .enabled(this.buttonStates.resetButton.enabled)
           .onClick(() => {
             this.showResetConfirmation();
           })
 
         // 保存按钮
-        Button(this.ButtonStates.saveButton.text, { type: ButtonType.Capsule })
-          .backgroundColor(this.ButtonStates.saveButton.backgroundColor)
+        Button(this.buttonStates.saveButton.text, { type: ButtonType.Capsule })
+          .backgroundColor(this.buttonStates.saveButton.backgroundColor)
           .fontColor(Color.White)
           .fontSize(DesignConstants.FONT_SIZE_SM)
           .padding({
@@ -252,7 +275,7 @@ export struct ToolsContent {
             top: 8,
             bottom: 8
           })
-          .enabled(this.ButtonStates.saveButton.enabled && !this.isSaving)
+          .enabled(this.buttonStates.saveButton.enabled && !this.isSaving)
           .opacity(this.saveAnimationOpacity)
           .onClick(() => {
             this.showSaveDialog();
@@ -794,6 +817,8 @@ export struct ToolsContent {
   // 开始保存动画
   private startSaveAnimation(): void {
     this.isSaving = true;
+    // 更新按钮状态
+    this.buttonStates.updateStates(this.controllerState, this.isSaving);
     this.getUIContext().animateTo({
       duration: 300,
       curve: Curve.EaseInOut
@@ -812,6 +837,8 @@ export struct ToolsContent {
       this.saveAnimationOpacity = 1.0;
     });
     this.isSaving = false;
+    // 更新按钮状态
+    this.buttonStates.updateStates(this.controllerState, this.isSaving);
     console.info('[ToolsContent] 结束保存动画');
   }
 
