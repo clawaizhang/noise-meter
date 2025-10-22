@@ -38,6 +38,7 @@ import {
   StopRecordingEvent,
   StopRecordingPayload
 } from '../../models/AudioControllerEvents';
+import { AudioControllerLifecycleState, StateTransitionEvent } from '../../models/AudioControllerLifecycleState';
 
 // 工具功能卡片配置
 interface ToolCardConfig {
@@ -49,14 +50,28 @@ interface ToolCardConfig {
   onTap: () => void;
 }
 
+// 按钮状态配置
+interface ButtonState {
+  enabled: boolean;
+  text: string;
+  backgroundColor: Resource;
+}
+
+// 按钮状态集合
+interface ButtonStates {
+  startButton: ButtonState;
+  pauseButton: ButtonState;
+  resetButton: ButtonState;
+  saveButton: ButtonState;
+}
+
 @ComponentV2
 export struct ToolsContent {
   @Local ak: AppKeys = AppStorageV2.connect(AppKeys)!;
   @Local pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys)!;
   @Local isTorchOn: boolean = false;
   @Local private currentLocation: LocationInfo | null = null;
-  @Local private isDetecting: boolean = false;
-  @Local private audioServiceState: AudioServiceState = AudioServiceState.IDLE;
+  @Local private controllerState: AudioControllerLifecycleState = AudioControllerLifecycleState.CONTROLLER_IDLE;
   @Local private isSaving: boolean = false;
   @Local private saveAnimationOpacity: number = 1.0;
   @Local private inputDialogController: CustomDialogController = new CustomDialogController({
@@ -75,9 +90,61 @@ export struct ToolsContent {
   });
 
   aboutToAppear(): void {
+    this.initializeStateListener();
   }
 
   aboutToDisappear(): void {
+  }
+
+  // 状态监听初始化
+  private initializeStateListener(): void {
+    const audioController = AudioControllerService.getInstance(this.ak, this.pk);
+    audioController.onStateChangeFromExternal((event: StateTransitionEvent) => {
+      this.controllerState = event.toState;
+      console.info(`[ToolsContent] 状态机状态变更: ${event.fromState} -> ${event.toState}`);
+    });
+  }
+
+  // 按钮状态计算函数
+  @Computed
+  private get ButtonStates(): ButtonStates {
+    const startButton: ButtonState = {
+      enabled: this.controllerState === AudioControllerLifecycleState.CONTROLLER_IDLE ||
+               this.controllerState === AudioControllerLifecycleState.CONTROLLER_ERROR,
+      text: '开始检测',
+      backgroundColor: this.controllerState === AudioControllerLifecycleState.CONTROLLER_IDLE ?
+                      $r('sys.color.font_emphasize') : $r('sys.color.font_secondary')
+    };
+    
+    const pauseButton: ButtonState = {
+      enabled: this.controllerState === AudioControllerLifecycleState.CONTROLLER_RECORDING,
+      text: '暂停',
+      backgroundColor: this.controllerState === AudioControllerLifecycleState.CONTROLLER_RECORDING ?
+                      $r('sys.color.alert') : $r('sys.color.font_secondary')
+    };
+    
+    const resetButton: ButtonState = {
+      enabled: this.controllerState === AudioControllerLifecycleState.CONTROLLER_IDLE ||
+               this.controllerState === AudioControllerLifecycleState.CONTROLLER_RECORDING ||
+               this.controllerState === AudioControllerLifecycleState.CONTROLLER_ERROR,
+      text: '重置',
+      backgroundColor: $r('sys.color.comp_background_secondary')
+    };
+    
+    const saveButton: ButtonState = {
+      enabled: this.controllerState === AudioControllerLifecycleState.CONTROLLER_RECORDING,
+      text: this.isSaving ? '保存中...' : '保存',
+      backgroundColor: this.isSaving ? $r('sys.color.font_secondary') : $r('sys.color.confirm')
+    };
+    
+    const buttonStates: ButtonStates = {
+      startButton: startButton,
+      pauseButton: pauseButton,
+      resetButton: resetButton,
+      saveButton: saveButton
+    };
+    
+    return buttonStates;
   }
 
   build() {
@@ -127,8 +194,8 @@ export struct ToolsContent {
 
       Row({ space: DesignConstants.SPACING_MD }) {
         // 开始检测按钮
-        Button('开始检测', { type: ButtonType.Capsule })
-          .backgroundColor(this.isDetecting ? $r('sys.color.font_secondary') : $r('sys.color.font_emphasize'))
+        Button(this.ButtonStates.startButton.text, { type: ButtonType.Capsule })
+          .backgroundColor(this.ButtonStates.startButton.backgroundColor)
           .fontColor(Color.White)
           .fontSize(DesignConstants.FONT_SIZE_SM)
           .padding({
@@ -137,14 +204,14 @@ export struct ToolsContent {
             top: 8,
             bottom: 8
           })
-          .enabled(!this.isDetecting)
+          .enabled(this.ButtonStates.startButton.enabled)
           .onClick(() => {
             this.startDetection();
           })
 
         // 暂停按钮
-        Button('暂停', { type: ButtonType.Capsule })
-          .backgroundColor(this.isDetecting ? $r('sys.color.alert') : $r('sys.color.font_secondary'))
+        Button(this.ButtonStates.pauseButton.text, { type: ButtonType.Capsule })
+          .backgroundColor(this.ButtonStates.pauseButton.backgroundColor)
           .fontColor(Color.White)
           .fontSize(DesignConstants.FONT_SIZE_SM)
           .padding({
@@ -153,14 +220,14 @@ export struct ToolsContent {
             top: 8,
             bottom: 8
           })
-          .enabled(this.isDetecting)
+          .enabled(this.ButtonStates.pauseButton.enabled)
           .onClick(() => {
             this.pauseDetection();
           })
 
         // 重置按钮
-        Button('重置', { type: ButtonType.Capsule })
-          .backgroundColor($r('sys.color.comp_background_secondary'))
+        Button(this.ButtonStates.resetButton.text, { type: ButtonType.Capsule })
+          .backgroundColor(this.ButtonStates.resetButton.backgroundColor)
           .fontColor($r('sys.color.font_primary'))
           .fontSize(DesignConstants.FONT_SIZE_SM)
           .padding({
@@ -169,13 +236,14 @@ export struct ToolsContent {
             top: 8,
             bottom: 8
           })
+          .enabled(this.ButtonStates.resetButton.enabled)
           .onClick(() => {
             this.showResetConfirmation();
           })
 
         // 保存按钮
-        Button(this.isSaving ? '保存中...' : '保存', { type: ButtonType.Capsule })
-          .backgroundColor(this.isSaving ? $r('sys.color.font_secondary') : $r('sys.color.confirm'))
+        Button(this.ButtonStates.saveButton.text, { type: ButtonType.Capsule })
+          .backgroundColor(this.ButtonStates.saveButton.backgroundColor)
           .fontColor(Color.White)
           .fontSize(DesignConstants.FONT_SIZE_SM)
           .padding({
@@ -184,7 +252,7 @@ export struct ToolsContent {
             top: 8,
             bottom: 8
           })
-          .enabled(!this.isSaving)
+          .enabled(this.ButtonStates.saveButton.enabled && !this.isSaving)
           .opacity(this.saveAnimationOpacity)
           .onClick(() => {
             this.showSaveDialog();
@@ -650,20 +718,13 @@ export struct ToolsContent {
 
   // 开始检测
   private startDetection(): void {
-    Throttle.click(() => {
+    Throttle.click(async () => {
       try {
         const audioController = AudioControllerService.getInstance(this.ak, this.pk);
-        // 通过事件总线发送开始检测事件
-        const startEvent: StartRecordingEvent = {
-          type: AudioControllerEventType.START_RECORDING,
-          timestamp: Date.now()
-        };
-        audioController.publishEvent(startEvent);
-        this.isDetecting = true;
-        this.audioServiceState = AudioServiceState.CAPTURING;
-        console.info('[ToolsContent] 开始检测事件已通过事件总线发送');
+        await audioController.startRecordingFromExternal();
+        console.info('[ToolsContent] 开始检测请求已通过状态机发送');
       } catch (error) {
-        console.error('[ToolsContent] 发送开始检测事件失败:', error);
+        console.error('[ToolsContent] 启动检测失败:', error);
         // 可以在这里添加错误提示
       }
     });
@@ -671,20 +732,13 @@ export struct ToolsContent {
 
   // 暂停检测
   private pauseDetection(): void {
-    Throttle.click(() => {
+    Throttle.click(async () => {
       try {
         const audioController = AudioControllerService.getInstance(this.ak, this.pk);
-        // 通过事件总线发送暂停检测事件
-        const pauseEvent: PauseRecordingEvent = {
-          type: AudioControllerEventType.PAUSE_RECORDING,
-          timestamp: Date.now()
-        };
-        audioController.publishEvent(pauseEvent);
-        this.isDetecting = false;
-        this.audioServiceState = AudioServiceState.IDLE;
-        console.info('[ToolsContent] 暂停检测事件已通过事件总线发送');
+        await audioController.pauseRecordingFromExternal();
+        console.info('[ToolsContent] 暂停检测请求已通过状态机发送');
       } catch (error) {
-        console.error('[ToolsContent] 发送暂停检测事件失败:', error);
+        console.error('[ToolsContent] 暂停检测失败:', error);
       }
     });
   }
@@ -698,18 +752,14 @@ export struct ToolsContent {
 
   // 重置数据
   private resetData(): void {
-    Throttle.click(() => {
-      const audioController = AudioControllerService.getInstance(this.ak, this.pk);
-      // 通过事件总线发送重置数据事件
-      const resetEvent: ResetDataEvent = {
-        type: AudioControllerEventType.RESET_DATA,
-        timestamp: Date.now()
-      };
-      audioController.publishEvent(resetEvent);
-      // 同时停止音频检测
-      this.isDetecting = false;
-      this.audioServiceState = AudioServiceState.IDLE;
-      console.info('[ToolsContent] 数据已通过事件总线重置');
+    Throttle.click(async () => {
+      try {
+        const audioController = AudioControllerService.getInstance(this.ak, this.pk);
+        await audioController.resetStateFromExternal();
+        console.info('[ToolsContent] 数据已通过状态机重置');
+      } catch (error) {
+        console.error('[ToolsContent] 重置数据失败:', error);
+      }
     });
   }
 
@@ -722,24 +772,22 @@ export struct ToolsContent {
 
   // 保存当前数据
   private saveCurrentData(comment: string): void {
-    Throttle.click(() => {
+    Throttle.click(async () => {
       this.startSaveAnimation();
-      const audioController = AudioControllerService.getInstance(this.ak, this.pk);
-      // 通过事件总线发送停止录制事件（保存数据）
-      const stopEvent: StopRecordingEvent = {
-        type: AudioControllerEventType.STOP_RECORDING,
-        timestamp: Date.now(),
-        payload: {
-          comments: comment
-        }
-      };
-      audioController.publishEvent(stopEvent);
-      console.info('[ToolsContent] 数据已通过事件总线保存，备注:', comment);
-      // 延迟结束动画，让用户看到保存效果
-      setTimeout(() => {
+      try {
+        const audioController = AudioControllerService.getInstance(this.ak, this.pk);
+        await audioController.stopRecordingFromExternal(comment);
+        console.info('[ToolsContent] 数据已通过状态机保存，备注:', comment);
+        // 延迟结束动画，让用户看到保存效果
+        setTimeout(() => {
+          this.endSaveAnimation();
+          // 保存完成后自动重新开始检测
+          this.startDetection();
+        }, 1000);
+      } catch (error) {
+        console.error('[ToolsContent] 保存数据失败:', error);
         this.endSaveAnimation();
-        this.startDetection() ;
-      }, 1000);
+      }
     });
   }
 
@@ -769,17 +817,19 @@ export struct ToolsContent {
 
   // 获取检测状态文本
   private getDetectionStatusText(): string {
-    switch (this.audioServiceState) {
-      case AudioServiceState.IDLE:
+    switch (this.controllerState) {
+      case AudioControllerLifecycleState.CONTROLLER_IDLE:
         return '空闲';
-      case AudioServiceState.STARTING:
+      case AudioControllerLifecycleState.CONTROLLER_STARTING:
         return '启动中...';
-      case AudioServiceState.CAPTURING:
+      case AudioControllerLifecycleState.CONTROLLER_RECORDING:
         return '检测中';
-      case AudioServiceState.STOPPING:
+      case AudioControllerLifecycleState.CONTROLLER_STOPPING:
         return '停止中...';
-      case AudioServiceState.SWITCHING_MODE:
-        return '切换模式中...';
+      case AudioControllerLifecycleState.CONTROLLER_PAUSING:
+        return '暂停中...';
+      case AudioControllerLifecycleState.CONTROLLER_ERROR:
+        return '错误 - 点击开始重试';
       default:
         return '未知状态';
     }
@@ -787,12 +837,14 @@ export struct ToolsContent {
 
   // 获取检测状态颜色
   private getDetectionStatusColor(): Resource {
-    switch (this.audioServiceState) {
-      case AudioServiceState.CAPTURING:
+    switch (this.controllerState) {
+      case AudioControllerLifecycleState.CONTROLLER_RECORDING:
         return $r('sys.color.confirm');
-      case AudioServiceState.STARTING:
-      case AudioServiceState.STOPPING:
-      case AudioServiceState.SWITCHING_MODE:
+      case AudioControllerLifecycleState.CONTROLLER_STARTING:
+      case AudioControllerLifecycleState.CONTROLLER_STOPPING:
+      case AudioControllerLifecycleState.CONTROLLER_PAUSING:
+        return $r('sys.color.alert');
+      case AudioControllerLifecycleState.CONTROLLER_ERROR:
         return $r('sys.color.alert');
       default:
         return $r('sys.color.font_secondary');
