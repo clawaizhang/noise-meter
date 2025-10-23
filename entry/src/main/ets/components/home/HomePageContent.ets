@@ -104,6 +104,18 @@ export struct HomePageContent {
         })
       }
       
+      // 工具入口 - 显示工具状态
+      GridCol({ span: 1 }) {
+        this.buildFunctionCard({
+          title: '工具',
+          icon: $r('app.media.ic_atom'),
+          description: '校准和设置',
+          dataDisplay: this.toolsStatus,
+          dataColor: this.toolsStatusColor,
+          onTap: () => { this.switchToTab(2) }
+        })
+      }
+      
       // 影响入口 - 显示暴露指数
       GridCol({ span: 1 }) {
         this.buildFunctionCard({
@@ -112,10 +124,10 @@ export struct HomePageContent {
           description: '暴露统计分析',
           dataDisplay: this.exposureIndex,
           dataColor: this.exposureColor,
-          onTap: () => { this.switchToTab(3) }
+          onTap: () => { this.switchToTab(4) }
         })
       }
-      
+
       // 历史记录入口 - 显示最近记录时间，记录总数显示在徽章中
       GridCol({ span: 1 }) {
         this.buildFunctionCard({
@@ -375,6 +387,19 @@ export struct HomePageContent {
     
     if (db > threshold) return 1;
     return 0;
+  }
+
+  // 工具数据 - 工具状态
+  @Computed
+  get toolsStatus(): string {
+    return '已配置';
+  }
+
+  @Computed
+  get toolsStatusColor(): Resource {
+    const calibrationValue = this.pk.calibration_value || 0;
+    if (calibrationValue === 0) return $r('sys.color.alert');
+    return $r('sys.color.confirm');
   }
 
   // 影响数据 - 暴露指数

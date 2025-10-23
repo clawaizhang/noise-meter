@@ -60,20 +60,20 @@ export struct MainNoiseMeter {
       this.menuItems = this.noiseMeterMenus;
     }
     if (currentValue === 2) {
-      this.title = '噪音警报';
-      this.menuItems = this.alertsMenus;
+      this.title = '工具';
+      this.menuItems = this.toolsMenus;
     }
     if (currentValue === 3) {
+      this.title = '警报';
+      this.menuItems = this.alertsMenus;
+    }
+    if (currentValue === 4) {
       this.title = '影响';
       this.menuItems = this.exposureMenus;
     }
-    if (currentValue === 4) {
+    if (currentValue === 5) {
       this.title = '参考';
       this.menuItems = this.referenceMenus;
-    }
-    if (currentValue === 5) {
-      this.title = '工具';
-      this.menuItems = this.toolsMenus;
     }
     if (currentValue === 6) {
       this.title = '我的';
@@ -302,9 +302,9 @@ export struct MainNoiseMeter {
           index: 1
         }))
 
-        // 警报页面 - 使用独立的AlertsContent组件
+        // 工具页面 - 使用ToolsContent组件
         TabContent() {
-          AlertsContent()
+          ToolsContent()
             .opacity(this.currentIndex === 2 ? 1 : 0)
             .scale({ x: this.currentIndex === 2 ? 1 : 0.95, y: this.currentIndex === 2 ? 1 : 0.95 })
             .animation({
@@ -316,13 +316,14 @@ export struct MainNoiseMeter {
             })
         }
         .tabBar(this.TabBuilder({
-          title: '警报',
-          icon: this.currentIndex == 2 ? $r("app.media.bell_bing_bold") : $r("app.media.ic_alarm"),
+          title: '工具',
+          icon: this.currentIndex == 2 ? $r("app.media.ic_atom_bold") : $r("app.media.ic_atom"),
           index: 2
         }))
 
+        // 警报页面 - 使用独立的AlertsContent组件
         TabContent() {
-          EnhancedExposureContent()
+          AlertsContent()
             .opacity(this.currentIndex === 3 ? 1 : 0)
             .scale({ x: this.currentIndex === 3 ? 1 : 0.95, y: this.currentIndex === 3 ? 1 : 0.95 })
             .animation({
@@ -334,14 +335,13 @@ export struct MainNoiseMeter {
             })
         }
         .tabBar(this.TabBuilder({
-          title: '影响',
-          icon: this.currentIndex == 3 ? $r("app.media.i_solar_radar_bold") : $r("app.media.i_solar_radar_outline"),
+          title: '警报',
+          icon: this.currentIndex == 3 ? $r("app.media.bell_bing_bold") : $r("app.media.ic_alarm"),
           index: 3
         }))
 
-        // 参考页面 - 使用ReferenceContent组件
         TabContent() {
-          ReferenceContent()
+          EnhancedExposureContent()
             .opacity(this.currentIndex === 4 ? 1 : 0)
             .scale({ x: this.currentIndex === 4 ? 1 : 0.95, y: this.currentIndex === 4 ? 1 : 0.95 })
             .animation({
@@ -353,14 +353,14 @@ export struct MainNoiseMeter {
             })
         }
         .tabBar(this.TabBuilder({
-          title: '参考',
-          icon: this.currentIndex == 4 ? $r("app.media.ic_book2_bold") : $r("app.media.ic_book2"),
+          title: '影响',
+          icon: this.currentIndex == 4 ? $r("app.media.i_solar_radar_bold") : $r("app.media.i_solar_radar_outline"),
           index: 4
         }))
 
-        // 工具页面 - 使用ToolsContent组件
+        // 参考页面 - 使用ReferenceContent组件
         TabContent() {
-          ToolsContent()
+          ReferenceContent()
             .opacity(this.currentIndex === 5 ? 1 : 0)
             .scale({ x: this.currentIndex === 5 ? 1 : 0.95, y: this.currentIndex === 5 ? 1 : 0.95 })
             .animation({
@@ -372,8 +372,8 @@ export struct MainNoiseMeter {
             })
         }
         .tabBar(this.TabBuilder({
-          title: '工具',
-          icon: this.currentIndex == 5 ? $r("app.media.ic_atom_bold") : $r("app.media.ic_atom"),
+          title: '参考',
+          icon: this.currentIndex == 5 ? $r("app.media.ic_book2_bold") : $r("app.media.ic_book2"),
           index: 5
         }))
 
