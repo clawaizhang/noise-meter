@@ -17,7 +17,7 @@ export function drawTimeDomain(
   canvasHeight: number,
   timeDomainData: number[],
   sysResourceManager: resourceManager.ResourceManager,
-  fontSize: number = 12
+  fontSize: number = 16
 ): void {
   console.info(`[时域绘制] 开始绘制时域波形，数据长度=${timeDomainData.length}`);
   
@@ -57,7 +57,7 @@ function drawGridAndAxes(
   canvasContext.strokeStyle = gridColor;
   canvasContext.lineWidth = 0.5;
   canvasContext.fillStyle = textColor;
-  canvasContext.font = `${vp2px(fontSize)}px sans-serif`;
+  canvasContext.font = `${vp2px(fontSize + 2)}px sans-serif`;
 
   // 绘制中心线（零线）
   const centerY = canvasHeight / 2;
@@ -101,8 +101,8 @@ function drawGridAndAxes(
 
   // 绘制标题
   canvasContext.textAlign = 'center';
-  canvasContext.font = `bold ${vp2px(fontSize + 2)}px sans-serif`;
-  canvasContext.fillText('时域波形', canvasWidth / 2, 20);
+  canvasContext.font = `bold ${vp2px(fontSize + 4)}px sans-serif`;
+  canvasContext.fillText('时域波形', canvasWidth / 2, 25);
 }
 
 /**

@@ -184,17 +184,17 @@ export struct StatisticsChartComponent {
       // 绘制计数标签（如果计数大于0）
       if (distribution[i] > 0) {
         ctx.fillStyle = this.sysResourceManager.getColorSync($r('sys.color.font_on_tertiary').id);
-        ctx.font = '10px sans-serif';
+        ctx.font = `${this.vp2px(14)}px sans-serif`;
         ctx.textAlign = 'center';
-        ctx.fillText(distribution[i].toString(), x + barWidth / 2, y - 5);
+        ctx.fillText(distribution[i].toString(), x + barWidth / 2, y - this.vp2px(8));
       }
 
       // 绘制分贝区间标签
       ctx.fillStyle = this.sysResourceManager.getColorSync($r('sys.color.font_on_tertiary').id);
-      ctx.font = '10px sans-serif';
+      ctx.font = `${this.vp2px(14)}px sans-serif`;
       ctx.textAlign = 'center';
       const dbRange: string = i === 10 ? '100+' : `${i * 10}-${(i + 1) * 10}`;
-      ctx.fillText(dbRange, x + barWidth / 2, this.canvasHeight - margin.bottom + 15);
+      ctx.fillText(dbRange, x + barWidth / 2, this.canvasHeight - margin.bottom + this.vp2px(20));
     }
   }
 
@@ -228,25 +228,25 @@ export struct StatisticsChartComponent {
     const stats = this.ak.uiDisplayState.displayStatistics;
 
     ctx.fillStyle = this.sysResourceManager.getColorSync($r('sys.color.font_on_tertiary').id);
-    ctx.font = '12px sans-serif';
+    ctx.font = `${this.vp2px(16)}px sans-serif`;
     ctx.textAlign = 'left';
 
     // 绘制统计信息标题
-    ctx.font = 'bold 14px sans-serif';
-    ctx.fillText('统计指标', 10, 20);
+    ctx.font = `bold ${this.vp2px(18)}px sans-serif`;
+    ctx.fillText('统计指标', this.vp2px(10), this.vp2px(25));
 
     // 绘制具体统计值
-    ctx.font = '12px sans-serif';
-    ctx.fillText(`平均值: ${stats.avgDb.toFixed(1)} dB`, 10, 40);
-    ctx.fillText(`最大值: ${stats.maxDb.toFixed(1)} dB`, 10, 60);
-    ctx.fillText(`最小值: ${stats.minDb.toFixed(1)} dB`, 10, 80);
+    ctx.font = `${this.vp2px(16)}px sans-serif`;
+    ctx.fillText(`平均值: ${stats.avgDb.toFixed(1)} dB`, this.vp2px(10), this.vp2px(50));
+    ctx.fillText(`最大值: ${stats.maxDb.toFixed(1)} dB`, this.vp2px(10), this.vp2px(75));
+    ctx.fillText(`最小值: ${stats.minDb.toFixed(1)} dB`, this.vp2px(10), this.vp2px(100));
 
     // 计算标准差（简化版本）
     const stdDev = this.calculateStandardDeviation();
-    ctx.fillText(`标准差: ${stdDev.toFixed(1)} dB`, 10, 100);
+    ctx.fillText(`标准差: ${stdDev.toFixed(1)} dB`, this.vp2px(10), this.vp2px(125));
 
     // 绘制持续时间
-    ctx.fillText(`时长: ${stats.duration.toFixed(1)}s`, 10, 120);
+    ctx.fillText(`时长: ${stats.duration.toFixed(1)}s`, this.vp2px(10), this.vp2px(150));
   }
 
   // 计算标准差（简化版本）
@@ -290,25 +290,25 @@ export struct StatisticsChartComponent {
 
     // 绘制标题
     ctx.fillStyle = this.sysResourceManager.getColorSync($r('sys.color.font_on_tertiary').id);
-    ctx.font = 'bold 16px sans-serif';
+    ctx.font = `bold ${this.vp2px(20)}px sans-serif`;
     ctx.textAlign = 'center';
-    ctx.fillText('分贝值分布统计', this.canvasWidth / 2, 25);
+    ctx.fillText('分贝值分布统计', this.canvasWidth / 2, this.vp2px(30));
 
     // 绘制Y轴标签
     ctx.save();
-    ctx.translate(15, this.canvasHeight / 2);
+    ctx.translate(this.vp2px(20), this.canvasHeight / 2);
     ctx.rotate(-Math.PI / 2);
     ctx.fillStyle = this.sysResourceManager.getColorSync($r('sys.color.font_on_tertiary').id);
-    ctx.font = '12px sans-serif';
+    ctx.font = `${this.vp2px(16)}px sans-serif`;
     ctx.textAlign = 'center';
     ctx.fillText('出现次数', 0, 0);
     ctx.restore();
 
     // 绘制X轴标签
     ctx.fillStyle = this.sysResourceManager.getColorSync($r('sys.color.font_on_tertiary').id);
-    ctx.font = '12px sans-serif';
+    ctx.font = `${this.vp2px(16)}px sans-serif`;
     ctx.textAlign = 'center';
-    ctx.fillText('分贝区间 (dB)', this.canvasWidth / 2, this.canvasHeight - 10);
+    ctx.fillText('分贝区间 (dB)', this.canvasWidth / 2, this.canvasHeight - this.vp2px(15));
   }
 
   @Builder
@@ -338,5 +338,12 @@ export struct StatisticsChartComponent {
 
   build() {
     this.StatisticsChart()
+  }
+
+  /**
+   * 虚拟像素转物理像素
+   */
+  private vp2px(vp: number): number {
+    return vp2px(vp);
   }
 }

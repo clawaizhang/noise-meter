@@ -244,11 +244,11 @@ export function drawSpectrum(canvasContext: CanvasRenderingContext2D, canvasWidt
       canvasContext.fillStyle =
         sysResourceManager.getColorSync($r('sys.color.font_on_secondary').id);
       canvasContext.textAlign = 'center';
-      canvasContext.font = `bold ${vp2px(fontSize)}px sans-serif`;
+      canvasContext.font = `bold ${vp2px(fontSize + 2)}px sans-serif`;
       canvasContext.fillText(
         `${Math.round(peakFreq)}Hz`,
         peakX,
-        peakFreqY - 30 // 稍微抬高标签位置
+        peakFreqY - 35 // 稍微抬高标签位置
       );
     }
   }
