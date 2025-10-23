@@ -240,8 +240,8 @@ export struct StatisticsChartComponent {
       ctx.fillStyle = this.sysResourceManager.getColorSync($r('sys.color.font_on_tertiary').id);
       ctx.font = `${this.vp2px(layout.fontSize.axis)}px sans-serif`;
       ctx.textAlign = 'center';
-      const dbRange: string = i === 10 ? '100+' : `${i * 10}-${(i + 1) * 10}`;
-      ctx.fillText(dbRange, x + barWidth / 2, layout.margin.top + layout.chartHeight + this.vp2px(15));
+      const dbRange: string = i === 10 ? '100+' : `${i * 10}`;
+      ctx.fillText(dbRange, x, layout.margin.top + layout.chartHeight + this.vp2px(15));
     }
 
     // 绘制坐标轴标签
