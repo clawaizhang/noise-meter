@@ -394,8 +394,8 @@ export struct DecibelMeter {
       Button('全屏查看')
         .fontSize(12)
         .type(ButtonType.Capsule)
-        .backgroundColor($r('sys.color.ohos_id_color_primary'))
-        .fontColor(Color.White)
+        .backgroundColor($r('sys.color.comp_background_tertiary'))
+        .fontColor($r('sys.color.font_on_tertiary'))
         .padding({
           left: 12,
           right: 12,
