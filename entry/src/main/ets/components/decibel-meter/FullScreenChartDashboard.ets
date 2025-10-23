@@ -3,10 +3,6 @@
  * 提供单图全屏显示功能，支持底部标签栏切换和手势滑动切换
  */
 
-import { AppStorageV2, PersistenceV2 } from '@kit.ArkUI';
-import { resourceManager } from '@kit.LocalizationKit';
-import { AppKeys } from '../../models/AppKeys';
-import { PreferenceKeys } from '../../models/PreferenceKeys';
 import { SpectrumChartComponent } from './SpectrumChartComponent';
 import { TimeDomainChartComponent } from './TimeDomainChartComponent';
 import { StatisticsChartComponent } from '../statistics/StatisticsChartComponent';
@@ -27,7 +23,6 @@ export struct FullScreenChartDashboard {
   @Param canvasHeight: number = 0;
   @Param initialChartType: string = '频谱图'; // 初始图表类型
   @Event onExitFullScreen: () => void;
-
   // 组件状态
   @Local private currentChartType: ChartType = ChartType.SPECTRUM;
   @Local private isAnimating: boolean = false;
@@ -35,7 +30,6 @@ export struct FullScreenChartDashboard {
   @Local private swipeStartX: number = 0;
   @Local private swipeEndX: number = 0;
   @Local private swipeOffset: number = 0;
-
 
   aboutToAppear() {
     console.info('[全屏仪表盘] 组件初始化完成');
@@ -94,7 +88,7 @@ export struct FullScreenChartDashboard {
       onFinish: () => {
         // 切换图表类型
         this.currentChartType = targetChartType;
-        
+
         // 淡入动画
         this.getUIContext().animateTo({
           duration: 200,
@@ -116,8 +110,10 @@ export struct FullScreenChartDashboard {
    * 处理手势滑动开始
    */
   private handleSwipeStart(event: GestureEvent): void {
-    if (this.isAnimating) return;
-    
+    if (this.isAnimating) {
+      return;
+    }
+
     this.swipeStartX = event.offsetX;
     this.swipeEndX = event.offsetX;
     this.swipeOffset = 0;
@@ -127,8 +123,10 @@ export struct FullScreenChartDashboard {
    * 处理手势滑动更新
    */
   private handleSwipeUpdate(event: GestureEvent): void {
-    if (this.isAnimating) return;
-    
+    if (this.isAnimating) {
+      return;
+    }
+
     this.swipeEndX = event.offsetX;
     this.swipeOffset = this.swipeEndX - this.swipeStartX;
   }
@@ -137,7 +135,9 @@ export struct FullScreenChartDashboard {
    * 处理手势滑动结束
    */
   private handleSwipeEnd(event: GestureEvent): void {
-    if (this.isAnimating) return;
+    if (this.isAnimating) {
+      return;
+    }
 
     const swipeDistance = this.swipeEndX - this.swipeStartX;
     const minSwipeDistance = 50; // 最小滑动距离阈值
@@ -163,7 +163,7 @@ export struct FullScreenChartDashboard {
     const chartTypes = [ChartType.SPECTRUM, ChartType.TIME_DOMAIN, ChartType.STATISTICS];
     const currentIndex = chartTypes.indexOf(this.currentChartType);
     const nextIndex = (currentIndex + 1) % chartTypes.length;
-    
+
     this.switchToChart(chartTypes[nextIndex]);
   }
 
@@ -174,7 +174,7 @@ export struct FullScreenChartDashboard {
     const chartTypes = [ChartType.SPECTRUM, ChartType.TIME_DOMAIN, ChartType.STATISTICS];
     const currentIndex = chartTypes.indexOf(this.currentChartType);
     const prevIndex = (currentIndex - 1 + chartTypes.length) % chartTypes.length;
-    
+
     this.switchToChart(chartTypes[prevIndex]);
   }
 
@@ -233,7 +233,7 @@ export struct FullScreenChartDashboard {
             $r('sys.color.ohos_id_color_primary') :
             $r('sys.color.ohos_id_color_text_secondary'))
           .fontWeight(this.currentChartType === ChartType.SPECTRUM ? FontWeight.Medium : FontWeight.Normal)
-        
+
         // 选中指示器
         if (this.currentChartType === ChartType.SPECTRUM) {
           Row()
@@ -263,7 +263,7 @@ export struct FullScreenChartDashboard {
             $r('sys.color.ohos_id_color_primary') :
             $r('sys.color.ohos_id_color_text_secondary'))
           .fontWeight(this.currentChartType === ChartType.TIME_DOMAIN ? FontWeight.Medium : FontWeight.Normal)
-        
+
         // 选中指示器
         if (this.currentChartType === ChartType.TIME_DOMAIN) {
           Row()
@@ -293,7 +293,7 @@ export struct FullScreenChartDashboard {
             $r('sys.color.ohos_id_color_primary') :
             $r('sys.color.ohos_id_color_text_secondary'))
           .fontWeight(this.currentChartType === ChartType.STATISTICS ? FontWeight.Medium : FontWeight.Normal)
-        
+
         // 选中指示器
         if (this.currentChartType === ChartType.STATISTICS) {
           Row()
@@ -332,43 +332,37 @@ export struct FullScreenChartDashboard {
     Column() {
       // 顶部标题栏
       this.buildTitleBar()
-      
+
       // 图表内容区域
       Stack({ alignContent: Alignment.Center }) {
         // 频谱图
         if (this.currentChartType === ChartType.SPECTRUM) {
-          Column() {
-            SpectrumChartComponent({ canvasWidthInput: this.canvasWidth, canvasHeightInput: this.canvasHeight })
-          }
-          .width('100%')
-          .height('100%')
-          .opacity(this.chartOpacity)
-          .translate({ x: this.swipeOffset })
-          .padding({ bottom: 8 }) // 添加底部间距，避免被标签栏遮挡
+          SpectrumChartComponent({ canvasWidthInput: this.canvasWidth, canvasHeightInput: this.canvasHeight })
+            .width('100%')
+            .height('100%')
+            .opacity(this.chartOpacity)
+            .translate({ x: this.swipeOffset })
+            .padding({ bottom: 8 }) // 添加底部间距，避免被标签栏遮挡
         }
 
         // 时域图
         if (this.currentChartType === ChartType.TIME_DOMAIN) {
-          Column() {
-            TimeDomainChartComponent({ canvasWidthInput: this.canvasWidth, canvasHeightInput: this.canvasHeight })
-          }
-          .width('100%')
-          .height('100%')
-          .opacity(this.chartOpacity)
-          .translate({ x: this.swipeOffset })
-          .padding({ bottom: 8 }) // 添加底部间距，避免被标签栏遮挡
+          TimeDomainChartComponent({ canvasWidthInput: this.canvasWidth, canvasHeightInput: this.canvasHeight })
+            .width('100%')
+            .height('100%')
+            .opacity(this.chartOpacity)
+            .translate({ x: this.swipeOffset })
+            .padding({ bottom: 8 }) // 添加底部间距，避免被标签栏遮挡
         }
 
         // 统计分布图
         if (this.currentChartType === ChartType.STATISTICS) {
-          Column() {
-            StatisticsChartComponent({ canvasWidthInput: this.canvasWidth, canvasHeightInput: this.canvasHeight })
-          }
-          .width('100%')
-          .height('100%')
-          .opacity(this.chartOpacity)
-          .translate({ x: this.swipeOffset })
-          .padding({ bottom: 8 }) // 添加底部间距，避免被标签栏遮挡
+          StatisticsChartComponent({ canvasWidthInput: this.canvasWidth, canvasHeightInput: this.canvasHeight })
+            .width('100%')
+            .height('100%')
+            .opacity(this.chartOpacity)
+            .translate({ x: this.swipeOffset })
+            .padding({ bottom: 8 }) // 添加底部间距，避免被标签栏遮挡
         }
       }
       .width('100%')
