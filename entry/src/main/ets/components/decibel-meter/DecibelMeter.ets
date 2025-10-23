@@ -51,7 +51,7 @@ export struct DecibelMeter {
       if (this.isFullScreenMode) {
         FullScreenChartDashboard({
           canvasWidth: this.ak.windowWidth - 32,
-          canvasHeight: this.ak.windowHeight - 120,
+          canvasHeight: this.ak.windowHeight - 330, // 重新计算高度：120 + 底部标签栏56px
           onExitFullScreen: () => {
             this.exitFullScreenMode();
           },

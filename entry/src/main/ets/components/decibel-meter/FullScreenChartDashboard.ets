@@ -204,8 +204,8 @@ export struct FullScreenChartDashboard {
       Column({ space: 4 }) {
         Text('频谱图')
           .fontSize(14)
-          .fontColor(this.currentChartType === ChartType.SPECTRUM ? 
-            $r('sys.color.ohos_id_color_primary') : 
+          .fontColor(this.currentChartType === ChartType.SPECTRUM ?
+            $r('sys.color.ohos_id_color_primary') :
             $r('sys.color.ohos_id_color_text_secondary'))
           .fontWeight(this.currentChartType === ChartType.SPECTRUM ? FontWeight.Medium : FontWeight.Normal)
         
@@ -234,8 +234,8 @@ export struct FullScreenChartDashboard {
       Column({ space: 4 }) {
         Text('时域图')
           .fontSize(14)
-          .fontColor(this.currentChartType === ChartType.TIME_DOMAIN ? 
-            $r('sys.color.ohos_id_color_primary') : 
+          .fontColor(this.currentChartType === ChartType.TIME_DOMAIN ?
+            $r('sys.color.ohos_id_color_primary') :
             $r('sys.color.ohos_id_color_text_secondary'))
           .fontWeight(this.currentChartType === ChartType.TIME_DOMAIN ? FontWeight.Medium : FontWeight.Normal)
         
@@ -264,8 +264,8 @@ export struct FullScreenChartDashboard {
       Column({ space: 4 }) {
         Text('统计分布图')
           .fontSize(14)
-          .fontColor(this.currentChartType === ChartType.STATISTICS ? 
-            $r('sys.color.ohos_id_color_primary') : 
+          .fontColor(this.currentChartType === ChartType.STATISTICS ?
+            $r('sys.color.ohos_id_color_primary') :
             $r('sys.color.ohos_id_color_text_secondary'))
           .fontWeight(this.currentChartType === ChartType.STATISTICS ? FontWeight.Medium : FontWeight.Normal)
         
@@ -319,6 +319,7 @@ export struct FullScreenChartDashboard {
           .height('100%')
           .opacity(this.chartOpacity)
           .translate({ x: this.swipeOffset })
+          .padding({ bottom: 8 }) // 添加底部间距，避免被标签栏遮挡
         }
 
         // 时域图
@@ -330,6 +331,7 @@ export struct FullScreenChartDashboard {
           .height('100%')
           .opacity(this.chartOpacity)
           .translate({ x: this.swipeOffset })
+          .padding({ bottom: 8 }) // 添加底部间距，避免被标签栏遮挡
         }
 
         // 统计分布图
@@ -341,11 +343,13 @@ export struct FullScreenChartDashboard {
           .height('100%')
           .opacity(this.chartOpacity)
           .translate({ x: this.swipeOffset })
+          .padding({ bottom: 8 }) // 添加底部间距，避免被标签栏遮挡
         }
       }
       .width('100%')
       .height('100%')
       .layoutWeight(1)
+      .padding({ bottom: 8 }) // 为整个图表区域添加底部间距
       .gesture(
         PanGesture({ direction: PanDirection.Horizontal, distance: 5 })
           .onActionStart((event: GestureEvent) => {
