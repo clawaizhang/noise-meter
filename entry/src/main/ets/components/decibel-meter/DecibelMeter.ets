@@ -4,6 +4,7 @@ import display from '@ohos.display';
 import { SpectrumChartComponent } from './SpectrumChartComponent';
 import { TimeDomainChartComponent } from './TimeDomainChartComponent';
 import { StatisticsChartComponent } from '../statistics/StatisticsChartComponent';
+import { FullScreenChartDashboard } from './FullScreenChartDashboard';
 import { PreferenceKeys } from '../../models/PreferenceKeys';
 import { LocationInfo } from '../../services/LocationService';
 import { LocationDisplay } from '../business/LocationDisplay';
@@ -33,6 +34,7 @@ export struct DecibelMeter {
   @Local private hideForXsMd: boolean = false;
   @Local private hasExternalDeviceConnected: boolean = false; // 外置设备连接状态
   @Local private connectedDeviceName: string = ''; // 连接的设备名称
+  @Local private isFullScreenMode: boolean = false; // 全屏模式状态
   private animationTimeOutId: number | undefined;
   // 服务实例
   private audioControllerService: AudioControllerService = AudioControllerService.getInstance(this.ak, this.pk);
@@ -45,8 +47,19 @@ export struct DecibelMeter {
 
   build() {
     Stack({ alignContent: Alignment.Top }) {
-      Scroll() {
-        GridRow({ columns: 12, breakpoints: { reference: BreakpointsReference.WindowSize }, gutter: 16 }) {
+      // 全屏模式显示
+      if (this.isFullScreenMode) {
+        FullScreenChartDashboard()
+          .width('100%')
+          .height('100%')
+          .onClick(() => {
+            // 点击任意位置退出全屏
+            this.exitFullScreenMode();
+          })
+      } else {
+        // 正常模式显示
+        Scroll() {
+          GridRow({ columns: 12, breakpoints: { reference: BreakpointsReference.WindowSize }, gutter: 16 }) {
 
           // 权限提示组件 - 显示在顶部
           if (!this.ak.microphonePermissionGranted) {
@@ -80,7 +93,12 @@ export struct DecibelMeter {
                 xl: 6    // 横向MD及以上：双列布局（半宽）
               }
             }) {
-              SpectrumChartComponent()
+              Column() {
+                SpectrumChartComponent()
+                
+                // 全屏按钮
+                this.buildFullScreenButton('频谱图')
+              }
             }
             .backgroundColor($r('sys.color.comp_background_primary'))
             .borderRadius(16)
@@ -96,7 +114,12 @@ export struct DecibelMeter {
                 xl: 6    // 横向MD及以上：双列布局（半宽）
               }
             }) {
-              TimeDomainChartComponent()
+              Column() {
+                TimeDomainChartComponent()
+                
+                // 全屏按钮
+                this.buildFullScreenButton('时域图')
+              }
             }
             .backgroundColor($r('sys.color.comp_background_primary'))
             .borderRadius(16)
@@ -112,7 +135,12 @@ export struct DecibelMeter {
                 xl: 6    // 横向MD及以上：双列布局（半宽）
               }
             }) {
-              StatisticsChartComponent()
+              Column() {
+                StatisticsChartComponent()
+                
+                // 全屏按钮
+                this.buildFullScreenButton('统计分布图')
+              }
             }
             .backgroundColor($r('sys.color.comp_background_primary'))
             .borderRadius(16)
@@ -127,6 +155,7 @@ export struct DecibelMeter {
       }
       .scrollBar(BarState.Off)
       .edgeEffect(EdgeEffect.Spring)
+        }
 
       Column()
         .width(this.dWidthHeight)
@@ -350,6 +379,51 @@ export struct DecibelMeter {
 
     console.info(`[DEVICE_CHANGE] 外置设备${this.hasExternalDeviceConnected ? '接入' :
       '断开'}: ${deviceInfo.deviceName}`);
+  }
+
+  /**
+   * 构建全屏按钮
+   */
+  @Builder
+  buildFullScreenButton(chartType: string) {
+    Row() {
+      Blank()
+      
+      Button('全屏查看')
+        .fontSize(12)
+        .type(ButtonType.Capsule)
+        .backgroundColor($r('sys.color.ohos_id_color_primary'))
+        .fontColor(Color.White)
+        .padding({
+          left: 12,
+          right: 12,
+          top: 6,
+          bottom: 6
+        })
+        .onClick(() => {
+          Throttle.click(() => {
+            this.enterFullScreenMode(chartType);
+          })
+        })
+    }
+    .width('100%')
+    .margin({ top: 8 })
+  }
+
+  /**
+   * 进入全屏模式
+   */
+  private enterFullScreenMode(chartType: string): void {
+    console.info(`[全屏模式] 进入全屏模式，图表类型: ${chartType}`);
+    this.isFullScreenMode = true;
+  }
+
+  /**
+   * 退出全屏模式
+   */
+  private exitFullScreenMode(): void {
+    console.info('[全屏模式] 退出全屏模式');
+    this.isFullScreenMode = false;
   }
 
   /**
