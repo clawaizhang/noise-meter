@@ -1,5 +1,5 @@
 /**
- * 实时统计图组件 - 优化版本
+ * 实时统计图组件 - 基于BaseChartComponent重构版本
  * 采用垂直分离布局，避免内容重叠，优化响应式设计
  * 遵循双管线数据架构，使用Monitor监测数据变化
  */
@@ -8,6 +8,8 @@ import { DesignConstants } from '../../constants/DesignConstants';
 import { AppKeys } from '../../models/AppKeys';
 import { AppStorageV2 } from '@kit.ArkUI';
 import { resourceManager } from '@kit.LocalizationKit';
+import { BaseChartComponent } from '../common/charts/BaseChartComponent';
+import { ChartConfig, ChartType, DefaultChartConfig } from '../common/charts/ChartConfig';
 
 // 布局配置接口
 interface MarginConfig {
@@ -36,197 +38,120 @@ export struct StatisticsChartComponent {
   // 输入参数
   @Param canvasWidthInput: number = 0;
   @Param canvasHeightInput: number = 0;
-  @Local canvasWidth: number = 0;
-  @Local canvasHeight: number = 0;
+  
   // 依赖注入
   @Local private ak: AppKeys = AppStorageV2.connect(AppKeys)!;
   @Local private sysResourceManager: resourceManager.ResourceManager = resourceManager.getSystemResourceManager();
-  // Canvas相关属性
-  private canvasSettings: RenderingContextSettings = new RenderingContextSettings(true);
-  private canvasContext: CanvasRenderingContext2D = new CanvasRenderingContext2D(this.canvasSettings);
 
-  aboutToAppear() {
-    // 如果外部没有传入尺寸，则使用默认计算
-    if (this.canvasWidthInput === 0 || this.canvasHeightInput === 0) {
-      this.calculateCanvasDimensions();
-    } else {
-      this.canvasWidth = this.canvasWidthInput;
-      this.canvasHeight = this.canvasHeightInput;
-    }
+  @Computed
+  get chartConfig(): ChartConfig {
+    return {
+      margin: DefaultChartConfig.margin,
+      aspectRatio: 1.2, // 统计图表需要更高的宽高比来容纳统计信息
+      backgroundColor: DefaultChartConfig.backgroundColor,
+      gridColor: DefaultChartConfig.gridColor,
+      textColor: DefaultChartConfig.textColor,
+      fontSize: DefaultChartConfig.fontSize,
+      chartType: ChartType.STATISTICS,
+      responsive: DefaultChartConfig.responsive
+    };
   }
 
-  @Monitor('canvasWidthInput','canvasHeightInput')
-  onCanvasSizeChange(monitor: IMonitor) {
-    this.canvasWidth = monitor.value<number>()?.now!;
-    this.canvasHeight = monitor.value<number>()?.now!;
-  }
-
-  @Monitor('ak.windowWidthBreakpoint')
-  onWindowChange(monitor: IMonitor) {
-    // 如果外部没有传入尺寸，则响应窗口变化
-    if (this.canvasWidthInput === 0 || this.canvasHeightInput === 0) {
-      this.calculateCanvasDimensions();
-    }
-  }
-
-  @Monitor('ak.uiDisplayState.displayStatisticsDistribution')
-  onStatisticsDistributionChange(monitor: IMonitor) {
-    const distribution = monitor.value<number[]>()?.now;
-    console.debug(`[统计图表] 分布数据变化: [${distribution?.join(', ') || '空'}]`);
-    this.drawStatisticsChart();
-  }
-
-  @Monitor('ak.uiDisplayState.displayDb')
-  onStatisticsChange(monitor: IMonitor) {
-    const displayDb = monitor.value<number>()?.now;
-    console.debug(`[统计图表] 统计数据变化: 当前=${displayDb}dB`);
-    this.drawStatisticsChart();
-  }
-
-  // 计算Canvas尺寸（响应式布局）- 优化版本
-  private calculateCanvasDimensions(): void {
-    const widthBp = this.ak.windowWidthBreakpoint;
-    const isFullScreen = widthBp >= 3;
-
-    if (widthBp <= 1) { // XS/SM断点
-      // 小屏幕：占满宽度，紧凑高度
-      const availableWidth = this.ak.windowWidth - 32;
-      this.canvasWidth = availableWidth;
-      this.canvasHeight = 180; // 减少60px，更紧凑
-    } else if (isFullScreen) {
-      // 全屏/大屏幕：充分利用空间
-      const availableWidth = Math.min(this.ak.windowWidth - 48, 400);
-      this.canvasWidth = availableWidth;
-      this.canvasHeight = 220; // 减少40px，但相对较大
-    } else {
-      // 中等屏幕：固定宽度，紧凑高度
-      this.canvasWidth = 280; // 略微减小
-      this.canvasHeight = 200; // 减少60px，更紧凑
-    }
-
-    // 重新绘制图表
-    this.drawStatisticsChart();
-  }
-
-  // 获取布局配置 - 优化版本（减少垂直间距）
-  private getLayoutConfig(): LayoutConfig {
+  // 获取布局配置 - 适配BaseChartComponent版本
+  private getLayoutConfig(canvasWidth: number, canvasHeight: number): LayoutConfig {
     const isSmallScreen = this.ak.windowWidthBreakpoint <= 1;
-    const isFullScreen = this.ak.windowWidthBreakpoint >= 3; // 大屏幕或全屏模式
+    const isFullScreen = this.ak.windowWidthBreakpoint >= 3;
     
     if (isSmallScreen) {
       // 小屏幕：紧凑布局
       const margin: MarginConfig = {
-        top: 25,    // 减少20px
+        top: 25,
         right: 10,
-        bottom: 50, // 减少30px
-        left: 35    // 减少10px
+        bottom: 50,
+        left: 35
       };
       const fontSize: FontSizeConfig = {
-        title: 14,  // 减小字体
+        title: 14,
         axis: 11,
         stats: 12,
         small: 9
       };
       const layout: LayoutConfig = {
         margin: margin,
-        chartHeight: 100,  // 减少20px
-        statsHeight: 45,   // 减少15px
+        chartHeight: 100,
+        statsHeight: 45,
         fontSize: fontSize
       };
       return layout;
     } else if (isFullScreen) {
       // 全屏/大屏幕：充分利用空间
       const margin: MarginConfig = {
-        top: 35,    // 相对较小的固定边距
+        top: 35,
         right: 25,
-        bottom: 65, // 减少25px
+        bottom: 65,
         left: 45
       };
       const fontSize: FontSizeConfig = {
         title: 18,
         axis: 14,
-        stats: 15,  // 略微减小
+        stats: 15,
         small: 11
       };
       const layout: LayoutConfig = {
         margin: margin,
-        chartHeight: 150,  // 增加10px以利用空间
-        statsHeight: 60,   // 减少10px
+        chartHeight: 150,
+        statsHeight: 60,
         fontSize: fontSize
       };
       return layout;
     } else {
       // 中等屏幕：平衡布局
       const margin: MarginConfig = {
-        top: 30,    // 减少20px
+        top: 30,
         right: 15,
-        bottom: 55, // 减少35px
-        left: 40    // 减少10px
+        bottom: 55,
+        left: 40
       };
       const fontSize: FontSizeConfig = {
-        title: 16,  // 略微减小
+        title: 16,
         axis: 13,
         stats: 14,
         small: 10
       };
       const layout: LayoutConfig = {
         margin: margin,
-        chartHeight: 120,  // 减少20px
-        statsHeight: 55,   // 减少15px
+        chartHeight: 120,
+        statsHeight: 55,
         fontSize: fontSize
       };
       return layout;
     }
   }
 
-  // 绘制统计图表
-  private drawStatisticsChart(): void {
-    if (!this.canvasContext) {
-      return;
-    }
-
-    console.debug(`[统计图表] 开始绘制: 画布尺寸=${this.canvasWidth}x${this.canvasHeight}`);
-
-    // 清除画布
-    this.canvasContext.clearRect(0, 0, this.canvasWidth, this.canvasHeight);
-
-    // 绘制背景
-    this.drawBackground();
+  // 统计分布图绘制函数 - 适配BaseChartComponent
+  private drawStatisticsChart(ctx: CanvasRenderingContext2D, canvasWidth: number, canvasHeight: number): void {
+    console.debug(`[统计图表] 开始绘制: 画布尺寸=${canvasWidth}x${canvasHeight}`);
 
     // 绘制直方图
-    this.drawHistogram();
+    this.drawHistogram(ctx, canvasWidth, canvasHeight);
 
     // 绘制统计指标（在直方图下方）
-    this.drawStatisticsInfo();
+    this.drawStatisticsInfo(ctx, canvasWidth, canvasHeight);
 
     console.debug(`[统计图表] 绘制完成`);
   }
 
-  // 绘制背景
-  private drawBackground(): void {
-    const ctx = this.canvasContext;
-
-    // 绘制背景矩形
-    ctx.fillStyle = '#ff191a1c';
-    ctx.fillRect(0, 0, this.canvasWidth, this.canvasHeight);
-
-    // 绘制边框
-    ctx.strokeStyle = this.sysResourceManager.getColorSync($r('sys.color.font_on_tertiary').id);
-    ctx.lineWidth = 1;
-    ctx.strokeRect(0, 0, this.canvasWidth, this.canvasHeight);
-  }
 
   // 绘制直方图
-  private drawHistogram(): void {
-    const ctx = this.canvasContext;
+  private drawHistogram(ctx: CanvasRenderingContext2D, canvasWidth: number, canvasHeight: number): void {
     const distribution = this.ak.uiDisplayState.displayStatisticsDistribution;
-    const layout = this.getLayoutConfig();
+    const layout = this.getLayoutConfig(canvasWidth, canvasHeight);
 
     if (distribution.length === 0) {
       return;
     }
 
-    const chartWidth = this.canvasWidth - layout.margin.left - layout.margin.right;
+    const chartWidth = canvasWidth - layout.margin.left - layout.margin.right;
     const barCount = distribution.length;
     const barWidth = chartWidth / barCount;
     const maxCount = Math.max(...distribution, 1); // 避免除零
@@ -318,14 +243,13 @@ export struct StatisticsChartComponent {
     ctx.fillStyle = this.sysResourceManager.getColorSync($r('sys.color.font_on_tertiary').id);
     ctx.font = `${this.vp2px(layout.fontSize.axis)}px sans-serif`;
     ctx.textAlign = 'center';
-    ctx.fillText('分贝区间 (dB)', this.canvasWidth / 2, layout.margin.top + layout.chartHeight + this.vp2px(25)); // 减少10vp
+    ctx.fillText('分贝区间 (dB)', this.canvasWidthInput / 2, layout.margin.top + layout.chartHeight + this.vp2px(25));
   }
 
-  // 绘制统计指标 - 优化版本（紧凑布局）
-  private drawStatisticsInfo(): void {
-    const ctx = this.canvasContext;
+  // 绘制统计指标 - 适配BaseChartComponent版本
+  private drawStatisticsInfo(ctx: CanvasRenderingContext2D, canvasWidth: number, canvasHeight: number): void {
     const stats = this.ak.uiDisplayState.displayStatistics;
-    const layout = this.getLayoutConfig();
+    const layout = this.getLayoutConfig(canvasWidth, canvasHeight);
 
     // 减少统计指标起始位置的距离
     const statsStartY = layout.margin.top/2 + layout.chartHeight + this.vp2px(25); // 减少25vp
@@ -335,7 +259,7 @@ export struct StatisticsChartComponent {
 
     // 绘制统计信息标题
     ctx.font = `bold ${this.vp2px(layout.fontSize.stats)}px sans-serif`;
-    ctx.fillText('统计指标', this.canvasWidth / 2, statsStartY);
+    ctx.fillText('统计指标', canvasWidth / 2, statsStartY);
 
     // 绘制具体统计值 - 紧凑排列
     ctx.font = `${this.vp2px(layout.fontSize.stats)}px sans-serif`;
@@ -346,22 +270,22 @@ export struct StatisticsChartComponent {
     if (isSmallScreen) {
       // 小屏幕：紧凑两行显示，减少行间距
       const stdDev = this.calculateStandardDeviation();
-      ctx.fillText(`平均值: ${stats.avgDb.toFixed(1)} dB`, this.canvasWidth / 4, statsStartY + this.vp2px(12)); // 减少8vp
-      ctx.fillText(`最大值: ${stats.maxDb.toFixed(1)} dB`, this.canvasWidth * 3 / 4, statsStartY + this.vp2px(12));
-      ctx.fillText(`最小值: ${stats.minDb.toFixed(1)} dB`, this.canvasWidth / 4, statsStartY + this.vp2px(24)); // 减少16vp
-      ctx.fillText(`标准差: ${stdDev.toFixed(1)} dB`, this.canvasWidth * 3 / 4, statsStartY + this.vp2px(24));
+      ctx.fillText(`平均值: ${stats.avgDb.toFixed(1)} dB`, canvasWidth / 4, statsStartY + this.vp2px(12));
+      ctx.fillText(`最大值: ${stats.maxDb.toFixed(1)} dB`, canvasWidth * 3 / 4, statsStartY + this.vp2px(12));
+      ctx.fillText(`最小值: ${stats.minDb.toFixed(1)} dB`, canvasWidth / 4, statsStartY + this.vp2px(24));
+      ctx.fillText(`标准差: ${stdDev.toFixed(1)} dB`, canvasWidth * 3 / 4, statsStartY + this.vp2px(24));
     } else if (isFullScreen) {
       // 全屏模式：两行紧凑显示，充分利用空间
       const stdDev = this.calculateStandardDeviation();
       ctx.fillText(`平均值: ${stats.avgDb.toFixed(1)} dB | 最大值: ${stats.maxDb.toFixed(1)} dB`,
-                   this.canvasWidth / 2, statsStartY + this.vp2px(15));
+                   canvasWidth / 2, statsStartY + this.vp2px(15));
       ctx.fillText(`最小值: ${stats.minDb.toFixed(1)} dB | 标准差: ${stdDev.toFixed(1)} dB`,
-                   this.canvasWidth / 2, statsStartY + this.vp2px(30));
+                   canvasWidth / 2, statsStartY + this.vp2px(30));
     } else {
       // 中等屏幕：单行紧凑显示
       const stdDev = this.calculateStandardDeviation();
       ctx.fillText(`平均值: ${stats.avgDb.toFixed(1)} dB | 最大值: ${stats.maxDb.toFixed(1)} dB | 最小值: ${stats.minDb.toFixed(1)} dB | 标准差: ${stdDev.toFixed(1)} dB`,
-                   this.canvasWidth / 2, statsStartY + this.vp2px(15)); // 减少5vp
+                   canvasWidth / 2, statsStartY + this.vp2px(15));
     }
   }
 
@@ -394,33 +318,16 @@ export struct StatisticsChartComponent {
     return Math.sqrt(variance);
   }
 
-  @Builder
-  StatisticsChart() {
-    Column({ space: DesignConstants.SPACING_SM }) {
-      // 图表容器
-      Canvas(this.canvasContext)
-        .width(this.canvasWidth)
-        .height(this.canvasHeight)
-        .backgroundColor('#ff191a1c')
-        .borderRadius(DesignConstants.BORDER_RADIUS_MD)
-        .shadow(DesignConstants.SHADOW_SM)
-        .onAreaChange((oldArea: Area, newArea: Area) => {
-          // 响应式尺寸调整
-          this.canvasWidth = newArea.width as number;
-          this.canvasHeight = newArea.height as number;
-          this.drawStatisticsChart();
-        })
-        .onReady(() => {
-          this.drawStatisticsChart();
-        })
-    }
-    .width('100%')
-    .alignItems(HorizontalAlign.Center)
-    .padding(DesignConstants.SPACING_MD)
-  }
-
   build() {
-    this.StatisticsChart()
+    // 使用基础图表组件，传入统计分布图特定的绘制函数
+    BaseChartComponent({
+      canvasWidthInput: this.canvasWidthInput,
+      canvasHeightInput: this.canvasHeightInput,
+      chartConfig: this.chartConfig,
+      onDrawChart: (ctx: CanvasRenderingContext2D, width: number, height: number) => {
+        this.drawStatisticsChart(ctx, width, height);
+      }
+    })
   }
 
   /**
