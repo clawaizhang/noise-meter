@@ -6,12 +6,14 @@
 import { SpectrumChartComponent } from './SpectrumChartComponent';
 import { TimeDomainChartComponent } from './TimeDomainChartComponent';
 import { StatisticsChartComponent } from '../statistics/StatisticsChartComponent';
+import { WaterfallChartComponent } from './WaterfallChartComponent';
 
 // 图表类型枚举
 enum ChartType {
   SPECTRUM = 'spectrum',
   TIME_DOMAIN = 'time_domain',
-  STATISTICS = 'statistics'
+  STATISTICS = 'statistics',
+  WATERFALL = 'waterfall'
 }
 
 @ComponentV2
@@ -55,6 +57,9 @@ export struct FullScreenChartDashboard {
         break;
       case '统计分布图':
         this.currentChartType = ChartType.STATISTICS;
+        break;
+      case '频谱瀑布图':
+        this.currentChartType = ChartType.WATERFALL;
         break;
       default:
         console.warn(`[全屏仪表盘] 未知的图表类型: ${this.initialChartType}, 使用默认频谱图`);
@@ -160,7 +165,7 @@ export struct FullScreenChartDashboard {
    * 切换到下一个图表
    */
   private switchToNextChart(): void {
-    const chartTypes = [ChartType.SPECTRUM, ChartType.TIME_DOMAIN, ChartType.STATISTICS];
+    const chartTypes = [ChartType.SPECTRUM, ChartType.TIME_DOMAIN, ChartType.STATISTICS, ChartType.WATERFALL];
     const currentIndex = chartTypes.indexOf(this.currentChartType);
     const nextIndex = (currentIndex + 1) % chartTypes.length;
 
@@ -171,7 +176,7 @@ export struct FullScreenChartDashboard {
    * 切换到上一个图表
    */
   private switchToPreviousChart(): void {
-    const chartTypes = [ChartType.SPECTRUM, ChartType.TIME_DOMAIN, ChartType.STATISTICS];
+    const chartTypes = [ChartType.SPECTRUM, ChartType.TIME_DOMAIN, ChartType.STATISTICS, ChartType.WATERFALL];
     const currentIndex = chartTypes.indexOf(this.currentChartType);
     const prevIndex = (currentIndex - 1 + chartTypes.length) % chartTypes.length;
 
@@ -189,6 +194,8 @@ export struct FullScreenChartDashboard {
         return '时域图';
       case ChartType.STATISTICS:
         return '统计分布图';
+      case ChartType.WATERFALL:
+        return '频谱瀑布图';
       default:
         return '未知图表';
     }
@@ -205,6 +212,8 @@ export struct FullScreenChartDashboard {
         return '时域波形';
       case ChartType.STATISTICS:
         return '统计分布';
+      case ChartType.WATERFALL:
+        return '频谱瀑布图';
       default:
         return '未知图表';
     }
@@ -314,6 +323,36 @@ export struct FullScreenChartDashboard {
       .onClick(() => {
         this.switchToChart(ChartType.STATISTICS);
       })
+
+      // 频谱瀑布图标签
+      Column({ space: 4 }) {
+        Text('频谱瀑布图')
+          .fontSize(14)
+          .fontColor(this.currentChartType === ChartType.WATERFALL ?
+            $r('sys.color.ohos_id_color_primary') :
+            $r('sys.color.ohos_id_color_text_secondary'))
+          .fontWeight(this.currentChartType === ChartType.WATERFALL ? FontWeight.Medium : FontWeight.Normal)
+
+        // 选中指示器
+        if (this.currentChartType === ChartType.WATERFALL) {
+          Row()
+            .width(24)
+            .height(3)
+            .backgroundColor($r('sys.color.ohos_id_color_primary'))
+            .borderRadius(2)
+        } else {
+          Row()
+            .width(24)
+            .height(3)
+            .backgroundColor(Color.Transparent)
+        }
+      }
+      .layoutWeight(1)
+      .height(56)
+      .justifyContent(FlexAlign.Center)
+      .onClick(() => {
+        this.switchToChart(ChartType.WATERFALL);
+      })
     }
     .width('100%')
     .backgroundColor($r('sys.color.comp_background_primary'))
@@ -358,6 +397,16 @@ export struct FullScreenChartDashboard {
         // 统计分布图
         if (this.currentChartType === ChartType.STATISTICS) {
           StatisticsChartComponent({ canvasWidthInput: this.canvasWidth, canvasHeightInput: this.canvasHeight })
+            .width('100%')
+            .height('100%')
+            .opacity(this.chartOpacity)
+            .translate({ x: this.swipeOffset })
+            .padding({ bottom: 8 }) // 添加底部间距，避免被标签栏遮挡
+        }
+
+        // 频谱瀑布图
+        if (this.currentChartType === ChartType.WATERFALL) {
+          WaterfallChartComponent({ canvasWidthInput: this.canvasWidth, canvasHeightInput: this.canvasHeight })
             .width('100%')
             .height('100%')
             .opacity(this.chartOpacity)
