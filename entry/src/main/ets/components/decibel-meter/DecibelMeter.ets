@@ -3,6 +3,7 @@ import { AppStorageV2, PersistenceV2 } from '@kit.ArkUI';
 import display from '@ohos.display';
 import { SpectrumChartComponent } from './SpectrumChartComponent';
 import { TimeDomainChartComponent } from './TimeDomainChartComponent';
+import { StatisticsChartComponent } from '../statistics/StatisticsChartComponent';
 import { PreferenceKeys } from '../../models/PreferenceKeys';
 import { LocationInfo } from '../../services/LocationService';
 import { LocationDisplay } from '../business/LocationDisplay';
@@ -96,6 +97,22 @@ export struct DecibelMeter {
               }
             }) {
               TimeDomainChartComponent()
+            }
+            .backgroundColor($r('sys.color.comp_background_primary'))
+            .borderRadius(16)
+            .padding(16)
+
+            // 统计分布图 - 新增统计图表组件
+            GridCol({
+              span: {
+                xs: 12, // 横向XS/SM：单列布局（全宽）
+                sm: 12, // 横向XS/SM：单列布局（全宽）
+                md: 6, // 横向MD及以上：双列布局（半宽）
+                lg: 6, // 横向MD及以上：双列布局（半宽）
+                xl: 6    // 横向MD及以上：双列布局（半宽）
+              }
+            }) {
+              StatisticsChartComponent()
             }
             .backgroundColor($r('sys.color.comp_background_primary'))
             .borderRadius(16)

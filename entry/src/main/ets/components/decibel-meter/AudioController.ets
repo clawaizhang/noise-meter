@@ -283,6 +283,8 @@ export struct AudioController {
 
     // 同步到UI显示状态（仅在UI更新启用时）
     this.ak.uiDisplayState.syncFromProcessingState(this.ak.dataProcessingState);
+    
+    console.debug(`[统计更新] 分贝值: ${currentDb}dB, 历史数据点: ${values.length}, 统计分布: [${this.ak.uiDisplayState.displayStatisticsDistribution.join(', ')}]`);
   }
 
   /**

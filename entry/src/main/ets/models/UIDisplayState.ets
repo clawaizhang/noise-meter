@@ -193,6 +193,9 @@ export class UIDisplayState {
   // 显示统计数据
   @Trace displayStatistics: UiStatisticsData = new UiStatisticsData();
 
+  // 显示统计分布数据（用于直方图）
+  @Trace displayStatisticsDistribution: number[] = [];
+
   // UI更新状态
   @Trace isUIUpdatesEnabled: boolean = true;
 
@@ -293,6 +296,29 @@ export class UIDisplayState {
     this.displayStatistics.duration = processingState.statisticsData.duration;
     this.displayStatistics.startTime = processingState.statisticsData.startTime;
 
+    // 更新统计分布数据（用于直方图）
+    this.updateStatisticsDistribution(this.displayDb);
+
+  }
+
+  /**
+   * 更新统计分布数据
+   */
+  private updateStatisticsDistribution(currentDb: number): void {
+    // 初始化分布数组（10个分贝区间：0-10, 10-20, ..., 90-100, 100+）
+    if (this.displayStatisticsDistribution.length === 0) {
+      this.displayStatisticsDistribution = new Array(11).fill(0);
+    }
+
+    // 计算分贝值对应的区间索引
+    const dbIndex = Math.min(Math.floor(currentDb / 10), 10);
+    
+    // 增加对应区间的计数
+    if (dbIndex >= 0 && dbIndex < this.displayStatisticsDistribution.length) {
+      this.displayStatisticsDistribution[dbIndex]++;
+    }
+    
+    console.debug(`[统计分布] 更新分布数据: ${currentDb}dB -> 区间${dbIndex}, 分布: [${this.displayStatisticsDistribution.join(', ')}]`);
   }
 
   /**
@@ -317,6 +343,7 @@ export class UIDisplayState {
     this.displaySpectrumData = [];
     this.displayPeakFreq = 0;
     this.displayStatistics.reset();
+    this.displayStatisticsDistribution = [];
     this.timeDisplay = '';
     this.lastSaveTime = Date.now();
     this.currentTime = Date.now();
