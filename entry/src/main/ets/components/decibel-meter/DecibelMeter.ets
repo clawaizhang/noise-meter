@@ -35,6 +35,7 @@ export struct DecibelMeter {
   @Local private hasExternalDeviceConnected: boolean = false; // 外置设备连接状态
   @Local private connectedDeviceName: string = ''; // 连接的设备名称
   @Local private isFullScreenMode: boolean = false; // 全屏模式状态
+  @Local private currentFullScreenChartType: string = '频谱图'; // 当前全屏显示的图表类型
   private animationTimeOutId: number | undefined;
   // 服务实例
   private audioControllerService: AudioControllerService = AudioControllerService.getInstance(this.ak, this.pk);
@@ -52,6 +53,7 @@ export struct DecibelMeter {
         FullScreenChartDashboard({
           canvasWidth: this.ak.windowWidth - 32,
           canvasHeight: this.ak.windowHeight - 330, // 重新计算高度：120 + 底部标签栏56px
+          initialChartType: this.currentFullScreenChartType,
           onExitFullScreen: () => {
             this.exitFullScreenMode();
           },
@@ -418,6 +420,8 @@ export struct DecibelMeter {
   private enterFullScreenMode(chartType: string): void {
     console.info(`[全屏模式] 进入全屏模式，图表类型: ${chartType}`);
     this.isFullScreenMode = true;
+    // 将图表类型传递给全屏组件
+    this.currentFullScreenChartType = chartType;
   }
 
   /**

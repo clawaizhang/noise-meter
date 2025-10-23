@@ -25,6 +25,7 @@ export struct FullScreenChartDashboard {
   // 输入参数
   @Param canvasWidth: number = 0;
   @Param canvasHeight: number = 0;
+  @Param initialChartType: string = '频谱图'; // 初始图表类型
   @Event onExitFullScreen: () => void;
 
   // 组件状态
@@ -38,10 +39,34 @@ export struct FullScreenChartDashboard {
 
   aboutToAppear() {
     console.info('[全屏仪表盘] 组件初始化完成');
+    // 根据传入的图表类型设置初始显示
+    this.setInitialChartType();
   }
 
   aboutToDisappear() {
     console.info('[全屏仪表盘] 组件即将销毁');
+  }
+
+  /**
+   * 根据传入的图表类型设置初始显示
+   */
+  private setInitialChartType(): void {
+    console.info(`[全屏仪表盘] 设置初始图表类型: ${this.initialChartType}`);
+    switch (this.initialChartType) {
+      case '频谱图':
+        this.currentChartType = ChartType.SPECTRUM;
+        break;
+      case '时域图':
+        this.currentChartType = ChartType.TIME_DOMAIN;
+        break;
+      case '统计分布图':
+        this.currentChartType = ChartType.STATISTICS;
+        break;
+      default:
+        console.warn(`[全屏仪表盘] 未知的图表类型: ${this.initialChartType}, 使用默认频谱图`);
+        this.currentChartType = ChartType.SPECTRUM;
+        break;
+    }
   }
 
   /**
