@@ -21,9 +21,11 @@ enum ChartType {
 @ComponentV2
 export struct FullScreenChartDashboard {
   // 依赖注入
-  @Local private ak: AppKeys = AppStorageV2.connect(AppKeys)!;
-  @Local private pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys)!;
-  @Local private sysResourceManager: resourceManager.ResourceManager = resourceManager.getSystemResourceManager();
+
+  // 输入参数
+  @Param canvasWidth: number = 0;
+  @Param canvasHeight: number = 0;
+  @Event onExitFullScreen: () => void;
 
   // 组件状态
   @Local private currentChartType: ChartType = ChartType.SPECTRUM;
@@ -168,6 +170,31 @@ export struct FullScreenChartDashboard {
   }
 
   /**
+   * 获取图表类型对应的标题
+   */
+  private getChartTitle(chartType: ChartType): string {
+    switch (chartType) {
+      case ChartType.SPECTRUM:
+        return '频谱分析';
+      case ChartType.TIME_DOMAIN:
+        return '时域波形';
+      case ChartType.STATISTICS:
+        return '统计分布';
+      default:
+        return '未知图表';
+    }
+  }
+
+  /**
+   * 退出全屏模式
+   */
+  private exitFullScreen(): void {
+    console.info('[全屏仪表盘] 退出全屏模式');
+    // 触发父组件的退出全屏逻辑
+    this.onExitFullScreen();
+  }
+
+  /**
    * 构建底部标签栏
    */
   @Builder
@@ -277,65 +304,113 @@ export struct FullScreenChartDashboard {
    */
   @Builder
   private buildChartArea() {
-    Stack({ alignContent: Alignment.Center }) {
-      // 频谱图
-      if (this.currentChartType === ChartType.SPECTRUM) {
-        Column() {
-          SpectrumChartComponent()
+    Column() {
+      // 顶部标题栏
+      this.buildTitleBar()
+      
+      // 图表内容区域
+      Stack({ alignContent: Alignment.Center }) {
+        // 频谱图
+        if (this.currentChartType === ChartType.SPECTRUM) {
+          Column() {
+            SpectrumChartComponent({ canvasWidthInput: this.canvasWidth, canvasHeightInput: this.canvasHeight })
+          }
+          .width('100%')
+          .height('100%')
+          .opacity(this.chartOpacity)
+          .translate({ x: this.swipeOffset })
         }
-        .width('100%')
-        .height('100%')
-        .opacity(this.chartOpacity)
-        .translate({ x: this.swipeOffset })
-      }
 
-      // 时域图
-      if (this.currentChartType === ChartType.TIME_DOMAIN) {
-        Column() {
-          TimeDomainChartComponent()
+        // 时域图
+        if (this.currentChartType === ChartType.TIME_DOMAIN) {
+          Column() {
+            TimeDomainChartComponent({ canvasWidthInput: this.canvasWidth, canvasHeightInput: this.canvasHeight })
+          }
+          .width('100%')
+          .height('100%')
+          .opacity(this.chartOpacity)
+          .translate({ x: this.swipeOffset })
         }
-        .width('100%')
-        .height('100%')
-        .opacity(this.chartOpacity)
-        .translate({ x: this.swipeOffset })
-      }
 
-      // 统计分布图
-      if (this.currentChartType === ChartType.STATISTICS) {
-        Column() {
-          StatisticsChartComponent()
+        // 统计分布图
+        if (this.currentChartType === ChartType.STATISTICS) {
+          Column() {
+            StatisticsChartComponent({ canvasWidthInput: this.canvasWidth, canvasHeightInput: this.canvasHeight })
+          }
+          .width('100%')
+          .height('100%')
+          .opacity(this.chartOpacity)
+          .translate({ x: this.swipeOffset })
         }
-        .width('100%')
-        .height('100%')
-        .opacity(this.chartOpacity)
-        .translate({ x: this.swipeOffset })
       }
+      .width('100%')
+      .height('100%')
+      .layoutWeight(1)
+      .gesture(
+        PanGesture({ direction: PanDirection.Horizontal, distance: 5 })
+          .onActionStart((event: GestureEvent) => {
+            this.handleSwipeStart(event);
+          })
+          .onActionUpdate((event: GestureEvent) => {
+            this.handleSwipeUpdate(event);
+          })
+          .onActionEnd((event: GestureEvent) => {
+            this.handleSwipeEnd(event);
+          })
+          .onActionCancel(() => {
+            this.swipeOffset = 0;
+          })
+      )
     }
     .width('100%')
     .height('100%')
     .layoutWeight(1)
-    .gesture(
-      PanGesture({ direction: PanDirection.Horizontal, distance: 5 })
-        .onActionStart((event: GestureEvent) => {
-          this.handleSwipeStart(event);
-        })
-        .onActionUpdate((event: GestureEvent) => {
-          this.handleSwipeUpdate(event);
-        })
-        .onActionEnd((event: GestureEvent) => {
-          this.handleSwipeEnd(event);
-        })
-        .onActionCancel(() => {
-          this.swipeOffset = 0;
-        })
-    )
+  }
+
+  /**
+   * 构建顶部标题栏
+   */
+  @Builder
+  private buildTitleBar() {
+    Row() {
+      // 图表标题
+      Text(this.getChartTitle(this.currentChartType))
+        .fontSize(20)
+        .fontColor($r('sys.color.ohos_id_color_text_primary'))
+        .fontWeight(FontWeight.Medium)
+        .layoutWeight(1)
+        .textAlign(TextAlign.Center)
+
+      // 退出全屏按钮
+      Button() {
+        Image($r('app.media.ic_close'))
+          .width(20)
+          .height(20)
+          .fillColor($r('sys.color.ohos_id_color_text_primary'))
+      }
+      .type(ButtonType.Circle)
+      .backgroundColor($r('sys.color.comp_background_tertiary'))
+      .width(40)
+      .height(40)
+      .onClick(() => {
+        this.exitFullScreen();
+      })
+    }
+    .width('100%')
+    .height(60)
+    .padding({ left: 16, right: 16 })
+    .backgroundColor($r('sys.color.comp_background_primary'))
+    .border({
+      width: { bottom: 1 },
+      color: $r('sys.color.comp_border_color'),
+      style: BorderStyle.Solid
+    })
   }
 
   build() {
     Column() {
       // 图表显示区域
       this.buildChartArea()
-
 
       // 底部标签栏
       this.buildTabBar()

@@ -49,13 +49,15 @@ export struct DecibelMeter {
     Stack({ alignContent: Alignment.Top }) {
       // 全屏模式显示
       if (this.isFullScreenMode) {
-        FullScreenChartDashboard()
+        FullScreenChartDashboard({
+          canvasWidth: this.ak.windowWidth - 32,
+          canvasHeight: this.ak.windowHeight - 120,
+          onExitFullScreen: () => {
+            this.exitFullScreenMode();
+          },
+        })
           .width('100%')
           .height('100%')
-          .onClick(() => {
-            // 点击任意位置退出全屏
-            this.exitFullScreenMode();
-          })
       } else {
         // 正常模式显示
         Scroll() {

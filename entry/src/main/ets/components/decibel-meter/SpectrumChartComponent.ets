@@ -9,7 +9,11 @@ import { PreferenceKeys } from '../../models/PreferenceKeys';
 @ComponentV2
 export struct SpectrumChartComponent {
   // 输入参数
-  sampleRate: number = 44100
+  @Param sampleRate: number = 44100
+  @Param canvasWidthInput: number = 0
+  @Param canvasHeightInput: number = 0
+  @Local canvasWidth: number = 0
+  @Local canvasHeight: number = 0
   @Local pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys)!;
 
   @Computed
@@ -17,19 +21,27 @@ export struct SpectrumChartComponent {
     return AudioPresets.getConfig(this.pk.audio_analysis_mode).fftSize;
   }
 
+  @Monitor('canvasWidthInput','canvasHeightInput')
+  onCanvasSizeChange(monitor: IMonitor) {
+    this.canvasWidth = monitor.value<number>()?.now!;
+    this.canvasHeight = monitor.value<number>()?.now!;
+  }
+
   // 本地状态
-  @Local private canvasWidth: number = 0
-  @Local private canvasHeight: number = 0
   private canvasSettings: RenderingContextSettings = new RenderingContextSettings(true) // Canvas设置
   private canvasContext: CanvasRenderingContext2D = new CanvasRenderingContext2D(this.canvasSettings) // Canvas上下文
   // 依赖注入
   @Local private sysResourceManager: resourceManager.ResourceManager = resourceManager.getSystemResourceManager();
   @Local private ak: AppKeys = AppStorageV2.connect(AppKeys)!
-  // 常量
-  private readonly ASPECT_RATIO: number = 1.5
 
   aboutToAppear() {
-    this.calculateCanvasDimensions();
+    // 如果外部没有传入尺寸，则使用默认计算
+    if (this.canvasWidthInput === 0 || this.canvasHeightInput === 0) {
+      this.calculateCanvasDimensions();
+    } else {
+      this.canvasWidth = this.canvasWidthInput;
+      this.canvasHeight = this.canvasHeightInput;
+    }
   }
 
   aboutToDisappear() {
@@ -37,7 +49,10 @@ export struct SpectrumChartComponent {
 
   @Monitor('ak.windowWidth','ak.windowHeight')
   onWindowChange(monitor: IMonitor) {
-    this.calculateCanvasDimensions();
+    // 如果外部没有传入尺寸，则响应窗口变化
+    if (this.canvasWidthInput === 0 || this.canvasHeightInput === 0) {
+      this.calculateCanvasDimensions();
+    }
   }
 
   @Monitor('ak.uiDisplayState.displaySpectrumData')
@@ -51,16 +66,17 @@ export struct SpectrumChartComponent {
   // 计算Canvas尺寸（基于横向断点的简化版本）
   private calculateCanvasDimensions(): void {
     const widthBp = this.ak.windowWidthBreakpoint;
+    const ASPECT_RATIO: number = 1.5;
 
     // 基于横向断点判断布局模式
     if (widthBp <= WidthBreakpoint.WIDTH_SM) {
       // 横向XS/SM：单列布局，频谱图占满屏幕宽度
       this.canvasWidth = this.ak.windowWidth - 32; // 减去边距
-      this.canvasHeight = this.canvasWidth / this.ASPECT_RATIO;
+      this.canvasHeight = this.canvasWidth / ASPECT_RATIO;
     } else {
       // 横向MD及以上：双列布局，频谱图基于Grid分配的宽度计算
       this.canvasWidth = (this.ak.windowWidth / 2) - 32; // Grid分配半宽减去边距
-      this.canvasHeight = this.canvasWidth / this.ASPECT_RATIO;
+      this.canvasHeight = this.canvasWidth / ASPECT_RATIO;
     }
 
     console.info(`[FREQ_TRACE][Canvas] 响应式Canvas尺寸: ${this.canvasWidth}x${this.canvasHeight}, 横向断点: ${widthBp}`);
