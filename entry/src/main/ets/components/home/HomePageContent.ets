@@ -7,6 +7,7 @@ import { Throttle } from '../../utils/Debounce';
 import { common } from '@kit.AbilityKit';
 import { DecibelRecordService } from '../../services/DecibelRecordService';
 import { AudioControllerService } from '../../services/AudioControllerService';
+import { LocationInfo, LocationService } from '../../services/LocationService';
 
 // 功能卡片配置接口
 interface FunctionCardConfig {
@@ -30,7 +31,10 @@ export struct HomePageContent {
   @Local pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys)!;
   @Consumer(navigationStack) navStack: NavPathStack = new NavPathStack();
   @Local private context: common.UIAbilityContext = getContext(this) as common.UIAbilityContext;
+  @Local private currentLocation: LocationInfo | null = null;
+  @Local private isLocationRefreshing: boolean = false;
   private decibelRecordService: DecibelRecordService = new DecibelRecordService(this.context);
+  private locationService: LocationService = LocationService.getInstance();
 
   build() {
     Column({ space: DesignConstants.SPACING_LG }) {
@@ -107,7 +111,7 @@ export struct HomePageContent {
       // 工具入口 - 显示工具状态
       GridCol({ span: 1 }) {
         this.buildFunctionCard({
-          title: '工具',
+          title: '操作台',
           icon: $r('app.media.ic_atom'),
           description: '校准和设置',
           dataDisplay: this.toolsStatus,
@@ -270,42 +274,67 @@ export struct HomePageContent {
 
   @Builder
   private buildSystemStatus() {
-    Row({ space: DesignConstants.SPACING_LG }) {
-      // 测量时长
-      Column({ space: DesignConstants.SPACING_XS }) {
-        Text('测量时长')
-          .fontSize(DesignConstants.FONT_SIZE_SM)
-          .fontColor($r('sys.color.font_secondary'))
-        Text(this.measurementDuration)
-          .fontSize(DesignConstants.FONT_SIZE_SM)
-          .fontWeight(FontWeight.Medium)
-          .fontColor($r('sys.color.font_primary'))
+    Column({ space: DesignConstants.SPACING_MD }) {
+      // 第一行：系统状态信息
+      Row({ space: DesignConstants.SPACING_LG }) {
+        // 测量时长
+        Column({ space: DesignConstants.SPACING_XS }) {
+          Text('测量时长')
+            .fontSize(DesignConstants.FONT_SIZE_SM)
+            .fontColor($r('sys.color.font_secondary'))
+          Text(this.measurementDuration)
+            .fontSize(DesignConstants.FONT_SIZE_SM)
+            .fontWeight(FontWeight.Medium)
+            .fontColor($r('sys.color.font_primary'))
+        }
+        
+        // 系统状态
+        Column({ space: DesignConstants.SPACING_XS }) {
+          Text('系统状态')
+            .fontSize(DesignConstants.FONT_SIZE_SM)
+            .fontColor($r('sys.color.font_secondary'))
+          Text(this.systemStatus)
+            .fontSize(DesignConstants.FONT_SIZE_SM)
+            .fontWeight(FontWeight.Medium)
+            .fontColor(this.systemStatusColor)
+        }
+        
+        // 记录数量
+        Column({ space: DesignConstants.SPACING_XS }) {
+          Text('记录数量')
+            .fontSize(DesignConstants.FONT_SIZE_SM)
+            .fontColor($r('sys.color.font_secondary'))
+          Text(this.ak.totalRecordsCount.toString())
+            .fontSize(DesignConstants.FONT_SIZE_SM)
+            .fontWeight(FontWeight.Medium)
+            .fontColor($r('sys.color.font_primary'))
+        }
       }
+      .width('100%')
       
-      // 系统状态
-      Column({ space: DesignConstants.SPACING_XS }) {
-        Text('系统状态')
-          .fontSize(DesignConstants.FONT_SIZE_SM)
-          .fontColor($r('sys.color.font_secondary'))
-        Text(this.systemStatus)
-          .fontSize(DesignConstants.FONT_SIZE_SM)
-          .fontWeight(FontWeight.Medium)
-          .fontColor(this.systemStatusColor)
-      }
-      
-      // 记录数量
-      Column({ space: DesignConstants.SPACING_XS }) {
-        Text('记录数量')
-          .fontSize(DesignConstants.FONT_SIZE_SM)
-          .fontColor($r('sys.color.font_secondary'))
-        Text(this.ak.totalRecordsCount.toString())
-          .fontSize(DesignConstants.FONT_SIZE_SM)
-          .fontWeight(FontWeight.Medium)
-          .fontColor($r('sys.color.font_primary'))
-      }
+      // 第二行：独立位置信息行
+      this.buildLocationInfo()
     }
     .margin({ top: DesignConstants.SPACING_MD })
     .padding({ top: DesignConstants.SPACING_MD })
+  }
+
+  @Builder
+  private buildLocationInfo() {
+    Row({ space: DesignConstants.SPACING_SM }) {
+      Image($r('app.media.ic_location'))
+        .width(14)
+        .height(14)
+        .fillColor($r('sys.color.icon_secondary'))
+      Text(this.locationStatus)
+        .fontSize(DesignConstants.FONT_SIZE_SM)
+        .fontColor(this.locationStatusColor)
+        .maxLines(1)
+        .textOverflow({ overflow: TextOverflow.Ellipsis })
+        .layoutWeight(1)
+    }
+    .width('100%')
+    // 移除点击事件，改为只读显示
   }
 
   @Computed
@@ -465,7 +494,104 @@ export struct HomePageContent {
     }
   }
 
+  // 位置状态计算属性
+  @Computed
+  get locationStatus(): string {
+    if (!this.pk.location_enabled) {
+      return '位置服务已关闭';
+    }
+    
+    if (this.isLocationRefreshing) {
+      return '正在获取位置信息...';
+    }
+    
+    if (this.currentLocation) {
+      // 简化地址显示，避免过长
+      const address = this.currentLocation.address || '';
+      if (address.length > 30) {
+        return address.substring(0, 27) + '...';
+      }
+      return address;
+    }
+    
+    return '位置服务已开启';
+  }
+
+  @Computed
+  get locationStatusColor(): Resource {
+    if (!this.pk.location_enabled) {
+      return $r('sys.color.font_secondary');
+    }
+    
+    if (this.isLocationRefreshing) {
+      return $r('sys.color.warning');
+    }
+    
+    if (this.currentLocation) {
+      return $r('sys.color.confirm');
+    }
+    
+    return $r('sys.color.font_primary');
+  }
+
+  // 位置服务开关方法 - 已移除，现在只在操作台控制
+
+  // 刷新位置信息方法
+  private async refreshLocation(): Promise<void> {
+    if (!this.pk.location_enabled || this.isLocationRefreshing) {
+      return;
+    }
+
+    try {
+      this.isLocationRefreshing = true;
+      
+      // 检查定位服务是否开启
+      const isServiceEnabled = this.locationService.checkLocationEnabled();
+      if (!isServiceEnabled) {
+        this.currentLocation = null;
+        return;
+      }
+
+      // 检查定位权限
+      const hasPermission = await this.locationService.requestLocationPermission();
+      if (!hasPermission) {
+        this.currentLocation = null;
+        this.pk.location_enabled = false;
+        return;
+      }
+
+      // 获取位置信息
+      const locationInfo: LocationInfo = await this.locationService.requestSingleLocation();
+      this.currentLocation = locationInfo;
+    } catch (error) {
+      console.error('获取位置信息失败:', error);
+      this.currentLocation = null;
+    } finally {
+      this.isLocationRefreshing = false;
+    }
+  }
+
+  // 监听位置服务开关变化
+  @Monitor('pk.location_enabled')
+  onLocationEnabledChange(monitor: IMonitor) {
+    const beforeEnabled = monitor.value<boolean>()?.before;
+    const newEnabled = monitor.value<boolean>()?.now;
+    if (newEnabled !== beforeEnabled) {
+      if (newEnabled) {
+        // 开启时自动刷新位置
+        this.refreshLocation();
+      } else {
+        // 关闭时清空位置信息
+        this.currentLocation = null;
+      }
+    }
+  }
+
   aboutToAppear(): void {
     this.initializeRecordInfo();
+    // 如果位置服务已开启，自动获取位置
+    if (this.pk.location_enabled) {
+      this.refreshLocation();
+    }
   }
 }

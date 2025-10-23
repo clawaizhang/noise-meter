@@ -2,8 +2,6 @@ import { AppKeys } from '../../models/AppKeys';
 import { PreferenceKeys } from '../../models/PreferenceKeys';
 import { AppStorageV2, PersistenceV2 } from '@kit.ArkUI';
 import { DesignConstants } from '../../constants/DesignConstants';
-import { LocationInfo } from '../../services/LocationService';
-import { LocationDisplay } from '../business/LocationDisplay';
 import { camera } from '@kit.CameraKit';
 import common from '@ohos.app.ability.common';
 import { Throttle } from '../../utils/Debounce';
@@ -39,6 +37,7 @@ import {
   StopRecordingPayload
 } from '../../models/AudioControllerEvents';
 import { AudioControllerLifecycleState, StateTransitionEvent } from '../../models/AudioControllerLifecycleState';
+import { LocationInfo, LocationService } from '../../services/LocationService';
 
 // 工具功能卡片配置
 interface ToolCardConfig {
@@ -129,10 +128,12 @@ export struct ToolsContent {
   @Local ak: AppKeys = AppStorageV2.connect(AppKeys)!;
   @Local pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys)!;
   @Local isTorchOn: boolean = false;
-  @Local private currentLocation: LocationInfo | null = null;
   @Local private controllerState: AudioControllerLifecycleState = AudioControllerService.getInstance(this.ak, this.pk).getStateMachine()?.getCurrentState()!;
   @Local private saveAnimationOpacity: number = 1.0;
   @Local private buttonStates: ButtonStates = new ButtonStates();
+  @Local private currentLocation: LocationInfo | null = null;
+  @Local private isLocationRefreshing: boolean = false;
+  private locationService: LocationService = LocationService.getInstance();
   @Local private inputDialogController: CustomDialogController = new CustomDialogController({
     builder: this.buildInputDialog,
     cancel: () => {
@@ -152,6 +153,10 @@ export struct ToolsContent {
     this.initializeStateListener();
     // 初始化按钮状态
     this.buttonStates.updateStates(this.controllerState);
+    // 如果位置服务已开启，自动获取位置
+    if (this.pk.location_enabled) {
+      this.refreshLocation();
+    }
   }
 
   aboutToDisappear(): void {
@@ -194,12 +199,12 @@ export struct ToolsContent {
   @Builder
   private buildPageHeader() {
     Column({ space: DesignConstants.SPACING_XS }) {
-      Text('实用工具')
+      Text('操作控制台')
         .fontSize(DesignConstants.FONT_SIZE_XL)
         .fontWeight(FontWeight.Bold)
         .fontColor($r('sys.color.font_primary'))
 
-      Text('辅助功能和设备管理')
+      Text('检测控制和系统设置')
         .fontSize(DesignConstants.FONT_SIZE_MD)
         .fontColor($r('sys.color.font_secondary'))
     }
@@ -394,20 +399,21 @@ export struct ToolsContent {
         })
       }
 
-      // 系统工具
+      // 位置服务卡片
       GridCol({ span: 1 }) {
         this.buildToolCard({
           title: '位置服务',
           icon: $r('app.media.ic_location'),
-          description: '当前位置显示',
-          status: this.pk.location_enabled ? '已开启' : '已关闭',
-          statusColor: this.pk.location_enabled ? $r('sys.color.confirm') : $r('sys.color.font_secondary'),
+          description: '记录位置信息',
+          status: this.locationStatus,
+          statusColor: this.locationStatusColor,
           onTap: () => {
-            this.toggleLocation()
+            this.toggleLocationService()
           }
         })
       }
 
+      // 手电筒卡片
       GridCol({ span: 1 }) {
         this.buildToolCard({
           title: '手电筒',
@@ -422,11 +428,6 @@ export struct ToolsContent {
       }
     }
     .width('100%')
-
-    // 位置显示区域（如果位置服务开启）
-    if (this.pk.location_enabled) {
-      this.buildLocationDisplay()
-    }
   }
 
   @Builder
@@ -489,29 +490,6 @@ export struct ToolsContent {
     .onClick(config.onTap)
   }
 
-  @Builder
-  private buildLocationDisplay() {
-    Column({ space: DesignConstants.SPACING_SM }) {
-      Text('当前位置信息')
-        .fontSize(DesignConstants.FONT_SIZE_MD)
-        .fontWeight(FontWeight.Medium)
-        .fontColor($r('sys.color.font_primary'))
-        .alignSelf(ItemAlign.Start)
-
-      LocationDisplay({
-        onLocationUpdate: (locationInfo: LocationInfo | null) => {
-          // 更新本地位置状态
-          this.currentLocation = locationInfo;
-          console.info('[TOOLS][Location] 位置更新事件接收:', locationInfo);
-        }
-      })
-    }
-    .width('100%')
-    .padding(DesignConstants.SPACING_MD)
-    .margin({ top: DesignConstants.SPACING_MD })
-    .backgroundColor($r('sys.color.comp_background_primary'))
-    .borderRadius(DesignConstants.BORDER_RADIUS_LG)
-  }
 
   // 导航到声级校准设置
   private navigateToAudioCalibration = () => {
@@ -630,13 +608,6 @@ export struct ToolsContent {
         cameraManager.setTorchMode(this.isTorchOn ? camera.TorchMode.OFF : camera.TorchMode.ON);
         this.isTorchOn = !this.isTorchOn;
       }
-    })
-  }
-
-  // 位置服务切换
-  private toggleLocation() {
-    Throttle.click(() => {
-      this.pk.location_enabled = !this.pk.location_enabled;
     })
   }
 
@@ -911,6 +882,82 @@ export struct ToolsContent {
         return $r('sys.color.alert');
       default:
         return $r('sys.color.font_secondary');
+    }
+  }
+
+  // 位置状态计算属性 - 操作台只显示开启/关闭状态
+  @Computed
+  get locationStatus(): string {
+    return this.pk.location_enabled ? '已开启' : '已关闭';
+  }
+
+  @Computed
+  get locationStatusColor(): Resource {
+    return this.pk.location_enabled ? $r('sys.color.confirm') : $r('sys.color.font_secondary');
+  }
+
+  // 位置服务开关方法
+  private toggleLocationService(): void {
+    Throttle.click(() => {
+      this.pk.location_enabled = !this.pk.location_enabled;
+      // 如果开启位置服务，自动获取位置
+      if (this.pk.location_enabled) {
+        this.refreshLocation();
+      } else {
+        // 关闭位置服务时清空位置信息
+        this.currentLocation = null;
+      }
+    });
+  }
+
+  // 刷新位置信息方法
+  private async refreshLocation(): Promise<void> {
+    if (!this.pk.location_enabled || this.isLocationRefreshing) {
+      return;
+    }
+
+    try {
+      this.isLocationRefreshing = true;
+      
+      // 检查定位服务是否开启
+      const isServiceEnabled = this.locationService.checkLocationEnabled();
+      if (!isServiceEnabled) {
+        this.currentLocation = null;
+        return;
+      }
+
+      // 检查定位权限
+      const hasPermission = await this.locationService.requestLocationPermission();
+      if (!hasPermission) {
+        this.currentLocation = null;
+        this.pk.location_enabled = false;
+        return;
+      }
+
+      // 获取位置信息
+      const locationInfo: LocationInfo = await this.locationService.requestSingleLocation();
+      this.currentLocation = locationInfo;
+    } catch (error) {
+      console.error('获取位置信息失败:', error);
+      this.currentLocation = null;
+    } finally {
+      this.isLocationRefreshing = false;
+    }
+  }
+
+  // 监听位置服务开关变化
+  @Monitor('pk.location_enabled')
+  onLocationEnabledChange(monitor: IMonitor) {
+    const beforeEnabled = monitor.value<boolean>()?.before;
+    const newEnabled = monitor.value<boolean>()?.now;
+    if (newEnabled !== beforeEnabled) {
+      if (newEnabled) {
+        // 开启时自动刷新位置
+        this.refreshLocation();
+      } else {
+        // 关闭时清空位置信息
+        this.currentLocation = null;
+      }
     }
   }
 }

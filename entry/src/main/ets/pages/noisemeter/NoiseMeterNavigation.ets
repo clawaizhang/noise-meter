@@ -60,7 +60,7 @@ export struct MainNoiseMeter {
       this.menuItems = this.noiseMeterMenus;
     }
     if (currentValue === 2) {
-      this.title = '工具';
+      this.title = '操作台';
       this.menuItems = this.toolsMenus;
     }
     if (currentValue === 3) {
@@ -316,7 +316,7 @@ export struct MainNoiseMeter {
             })
         }
         .tabBar(this.TabBuilder({
-          title: '工具',
+          title: '操作台',
           icon: this.currentIndex == 2 ? $r("app.media.ic_atom_bold") : $r("app.media.ic_atom"),
           index: 2
         }))
