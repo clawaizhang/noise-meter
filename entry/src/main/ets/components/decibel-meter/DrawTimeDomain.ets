@@ -99,10 +99,6 @@ function drawGridAndAxes(
     canvasContext.fillText(`${amplitude}`, 5, y + 5);
   }
 
-  // 绘制标题
-  canvasContext.textAlign = 'center';
-  canvasContext.font = `bold ${vp2px(fontSize + 4)}px sans-serif`;
-  canvasContext.fillText('时域波形', canvasWidth / 2, 25);
 }
 
 /**

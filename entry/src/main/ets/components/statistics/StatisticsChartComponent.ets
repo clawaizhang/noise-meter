@@ -1,6 +1,6 @@
 /**
- * 实时统计图组件
- * 用于显示分贝值的实时统计分布直方图和关键统计指标
+ * 实时统计图组件 - 优化版本
+ * 采用垂直分离布局，避免内容重叠，优化响应式设计
  * 遵循双管线数据架构，使用Monitor监测数据变化
  */
 
@@ -9,12 +9,26 @@ import { AppKeys } from '../../models/AppKeys';
 import { AppStorageV2 } from '@kit.ArkUI';
 import { resourceManager } from '@kit.LocalizationKit';
 
-// 边距配置接口
+// 布局配置接口
 interface MarginConfig {
   top: number;
   right: number;
   bottom: number;
   left: number;
+}
+
+interface FontSizeConfig {
+  title: number;
+  axis: number;
+  stats: number;
+  small: number;
+}
+
+interface LayoutConfig {
+  margin: MarginConfig;
+  chartHeight: number;
+  statsHeight: number;
+  fontSize: FontSizeConfig;
 }
 
 @ComponentV2
@@ -74,17 +88,65 @@ export struct StatisticsChartComponent {
     const widthBp = this.ak.windowWidthBreakpoint;
 
     if (widthBp <= 1) { // XS/SM断点
-      // 小屏幕：占满宽度
-      this.canvasWidth = this.ak.windowWidth - 32;
-      this.canvasHeight = 200;
+      // 小屏幕：占满宽度，增加高度以容纳统计指标
+      const availableWidth = this.ak.windowWidth - 32;
+      this.canvasWidth = availableWidth;
+      this.canvasHeight = 240; // 增加高度以容纳垂直分离布局
     } else {
-      // 中等及以上屏幕：固定宽度
-      this.canvasWidth = 280;
-      this.canvasHeight = 200;
+      // 中等及以上屏幕：固定宽度，增加高度
+      this.canvasWidth = 300;
+      this.canvasHeight = 260; // 增加高度以容纳垂直分离布局
     }
 
     // 重新绘制图表
     this.drawStatisticsChart();
+  }
+
+  // 获取布局配置
+  private getLayoutConfig(): LayoutConfig {
+    const isSmallScreen = this.ak.windowWidthBreakpoint <= 1;
+    
+    if (isSmallScreen) {
+      const margin: MarginConfig = {
+        top: 45,
+        right: 15,
+        bottom: 80, // 增加底部边距以容纳统计指标
+        left: 45
+      };
+      const fontSize: FontSizeConfig = {
+        title: 16,
+        axis: 12,
+        stats: 14,
+        small: 10
+      };
+      const layout: LayoutConfig = {
+        margin: margin,
+        chartHeight: 120,
+        statsHeight: 60,
+        fontSize: fontSize
+      };
+      return layout;
+    } else {
+      const margin: MarginConfig = {
+        top: 50,
+        right: 20,
+        bottom: 90, // 增加底部边距以容纳统计指标
+        left: 50
+      };
+      const fontSize: FontSizeConfig = {
+        title: 18,
+        axis: 14,
+        stats: 16,
+        small: 12
+      };
+      const layout: LayoutConfig = {
+        margin: margin,
+        chartHeight: 140,
+        statsHeight: 70,
+        fontSize: fontSize
+      };
+      return layout;
+    }
   }
 
   // 绘制统计图表
@@ -93,12 +155,7 @@ export struct StatisticsChartComponent {
       return;
     }
 
-    console.debug(`[统计图表] 开始绘制: 画布尺寸=${this.canvasWidth}x${this.canvasHeight}, 分布数据长度=${this.ak.uiDisplayState.displayStatisticsDistribution.length}, 统计数据=${JSON.stringify({
-      avg: this.ak.uiDisplayState.displayStatistics.avgDb,
-      max: this.ak.uiDisplayState.displayStatistics.maxDb,
-      min: this.ak.uiDisplayState.displayStatistics.minDb,
-      duration: this.ak.uiDisplayState.displayStatistics.duration
-    })}`);
+    console.debug(`[统计图表] 开始绘制: 画布尺寸=${this.canvasWidth}x${this.canvasHeight}`);
 
     // 清除画布
     this.canvasContext.clearRect(0, 0, this.canvasWidth, this.canvasHeight);
@@ -109,11 +166,8 @@ export struct StatisticsChartComponent {
     // 绘制直方图
     this.drawHistogram();
 
-    // 绘制统计指标
+    // 绘制统计指标（在直方图下方）
     this.drawStatisticsInfo();
-
-    // 绘制标题和坐标轴
-    this.drawTitleAndAxes();
 
     console.debug(`[统计图表] 绘制完成`);
   }
@@ -122,11 +176,11 @@ export struct StatisticsChartComponent {
   private drawBackground(): void {
     const ctx = this.canvasContext;
 
-    // 绘制背景矩形 - 使用与其他图表一致的深色背景
-    ctx.fillStyle = '#ff191a1c'; // 使用与频谱图相同的背景色
+    // 绘制背景矩形
+    ctx.fillStyle = '#ff191a1c';
     ctx.fillRect(0, 0, this.canvasWidth, this.canvasHeight);
 
-    // 绘制边框 - 使用与其他图表一致的边框颜色
+    // 绘制边框
     ctx.strokeStyle = this.sysResourceManager.getColorSync($r('sys.color.font_on_tertiary').id);
     ctx.lineWidth = 1;
     ctx.strokeRect(0, 0, this.canvasWidth, this.canvasHeight);
@@ -136,31 +190,25 @@ export struct StatisticsChartComponent {
   private drawHistogram(): void {
     const ctx = this.canvasContext;
     const distribution = this.ak.uiDisplayState.displayStatisticsDistribution;
+    const layout = this.getLayoutConfig();
 
     if (distribution.length === 0) {
       return;
     }
 
-    const margin: MarginConfig = {
-      top: 40,
-      right: 20,
-      bottom: 60,
-      left: 50
-    };
-    const chartWidth = this.canvasWidth - margin.left - margin.right;
-    const chartHeight = this.canvasHeight - margin.top - margin.bottom;
+    const chartWidth = this.canvasWidth - layout.margin.left - layout.margin.right;
     const barCount = distribution.length;
     const barWidth = chartWidth / barCount;
     const maxCount = Math.max(...distribution, 1); // 避免除零
 
     // 绘制网格
-    this.drawGrid(ctx, margin, chartWidth, chartHeight);
+    this.drawGrid(ctx, layout, chartWidth);
 
     // 绘制直方图柱子
     for (let i = 0; i < barCount; i++) {
-      const barHeight = (distribution[i] / maxCount) * chartHeight * 0.8;
-      const x = margin.left + i * barWidth;
-      const y = margin.top + chartHeight - barHeight;
+      const barHeight = (distribution[i] / maxCount) * layout.chartHeight * 0.8;
+      const x = layout.margin.left + i * barWidth;
+      const y = layout.margin.top + layout.chartHeight - barHeight;
 
       // 根据分贝区间设置不同颜色
       let barColor: string = '#4CAF50'; // 低分贝 - 绿色
@@ -176,77 +224,105 @@ export struct StatisticsChartComponent {
       ctx.fillRect(x + 2, y, barWidth - 4, barHeight);
 
       // 绘制柱子边框
-      ctx.strokeStyle =
-        this.sysResourceManager.getColorSync($r('sys.color.font_on_tertiary').id);
+      ctx.strokeStyle = this.sysResourceManager.getColorSync($r('sys.color.font_on_tertiary').id);
       ctx.lineWidth = 1;
       ctx.strokeRect(x + 2, y, barWidth - 4, barHeight);
 
       // 绘制计数标签（如果计数大于0）
       if (distribution[i] > 0) {
         ctx.fillStyle = this.sysResourceManager.getColorSync($r('sys.color.font_on_tertiary').id);
-        ctx.font = `${this.vp2px(14)}px sans-serif`;
+        ctx.font = `${this.vp2px(layout.fontSize.small)}px sans-serif`;
         ctx.textAlign = 'center';
-        ctx.fillText(distribution[i].toString(), x + barWidth / 2, y - this.vp2px(8));
+        ctx.fillText(distribution[i].toString(), x + barWidth / 2, y - this.vp2px(6));
       }
 
       // 绘制分贝区间标签
       ctx.fillStyle = this.sysResourceManager.getColorSync($r('sys.color.font_on_tertiary').id);
-      ctx.font = `${this.vp2px(14)}px sans-serif`;
+      ctx.font = `${this.vp2px(layout.fontSize.axis)}px sans-serif`;
       ctx.textAlign = 'center';
       const dbRange: string = i === 10 ? '100+' : `${i * 10}-${(i + 1) * 10}`;
-      ctx.fillText(dbRange, x + barWidth / 2, this.canvasHeight - margin.bottom + this.vp2px(20));
+      ctx.fillText(dbRange, x + barWidth / 2, layout.margin.top + layout.chartHeight + this.vp2px(15));
     }
+
+    // 绘制坐标轴标签
+    this.drawAxisLabels(ctx, layout, chartWidth);
   }
 
   // 绘制网格
-  private drawGrid(ctx: CanvasRenderingContext2D, margin: MarginConfig, chartWidth: number, chartHeight: number): void {
+  private drawGrid(ctx: CanvasRenderingContext2D, layout: LayoutConfig, chartWidth: number): void {
     ctx.strokeStyle = this.sysResourceManager.getColorSync($r('sys.color.font_on_tertiary').id);
     ctx.lineWidth = 0.5;
 
     // 水平网格线
     for (let i = 0; i <= 5; i++) {
-      const y = margin.top + (chartHeight / 5) * i;
+      const y = layout.margin.top + (layout.chartHeight / 5) * i;
       ctx.beginPath();
-      ctx.moveTo(margin.left, y);
-      ctx.lineTo(margin.left + chartWidth, y);
+      ctx.moveTo(layout.margin.left, y);
+      ctx.lineTo(layout.margin.left + chartWidth, y);
       ctx.stroke();
     }
 
     // 垂直网格线
     for (let i = 0; i <= 10; i++) {
-      const x = margin.left + (chartWidth / 10) * i;
+      const x = layout.margin.left + (chartWidth / 10) * i;
       ctx.beginPath();
-      ctx.moveTo(x, margin.top);
-      ctx.lineTo(x, margin.top + chartHeight);
+      ctx.moveTo(x, layout.margin.top);
+      ctx.lineTo(x, layout.margin.top + layout.chartHeight);
       ctx.stroke();
     }
+  }
+
+  // 绘制坐标轴标签
+  private drawAxisLabels(ctx: CanvasRenderingContext2D, layout: LayoutConfig, chartWidth: number): void {
+    // 绘制Y轴标签
+    ctx.save();
+    ctx.translate(this.vp2px(15), layout.margin.top + layout.chartHeight / 2);
+    ctx.rotate(-Math.PI / 2);
+    ctx.fillStyle = this.sysResourceManager.getColorSync($r('sys.color.font_on_tertiary').id);
+    ctx.font = `${this.vp2px(layout.fontSize.axis)}px sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.fillText('出现次数', 0, 0);
+    ctx.restore();
+
+    // 绘制X轴标签
+    ctx.fillStyle = this.sysResourceManager.getColorSync($r('sys.color.font_on_tertiary').id);
+    ctx.font = `${this.vp2px(layout.fontSize.axis)}px sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.fillText('分贝区间 (dB)', this.canvasWidth / 2, layout.margin.top + layout.chartHeight + this.vp2px(35));
   }
 
   // 绘制统计指标
   private drawStatisticsInfo(): void {
     const ctx = this.canvasContext;
     const stats = this.ak.uiDisplayState.displayStatistics;
+    const layout = this.getLayoutConfig();
 
+    const statsStartY = layout.margin.top + layout.chartHeight + this.vp2px(50);
+    
     ctx.fillStyle = this.sysResourceManager.getColorSync($r('sys.color.font_on_tertiary').id);
-    ctx.font = `${this.vp2px(16)}px sans-serif`;
-    ctx.textAlign = 'left';
+    ctx.textAlign = 'center';
 
     // 绘制统计信息标题
-    ctx.font = `bold ${this.vp2px(18)}px sans-serif`;
-    ctx.fillText('统计指标', this.vp2px(10), this.vp2px(25));
+    ctx.font = `bold ${this.vp2px(layout.fontSize.stats)}px sans-serif`;
+    ctx.fillText('统计指标', this.canvasWidth / 2, statsStartY);
 
-    // 绘制具体统计值
-    ctx.font = `${this.vp2px(16)}px sans-serif`;
-    ctx.fillText(`平均值: ${stats.avgDb.toFixed(1)} dB`, this.vp2px(10), this.vp2px(50));
-    ctx.fillText(`最大值: ${stats.maxDb.toFixed(1)} dB`, this.vp2px(10), this.vp2px(75));
-    ctx.fillText(`最小值: ${stats.minDb.toFixed(1)} dB`, this.vp2px(10), this.vp2px(100));
-
-    // 计算标准差（简化版本）
-    const stdDev = this.calculateStandardDeviation();
-    ctx.fillText(`标准差: ${stdDev.toFixed(1)} dB`, this.vp2px(10), this.vp2px(125));
-
-    // 绘制持续时间
-    ctx.fillText(`时长: ${stats.duration.toFixed(1)}s`, this.vp2px(10), this.vp2px(150));
+    // 绘制具体统计值 - 水平排列
+    ctx.font = `${this.vp2px(layout.fontSize.stats)}px sans-serif`;
+    
+    const isSmallScreen = this.ak.windowWidthBreakpoint <= 1;
+    if (isSmallScreen) {
+      // 小屏幕：两行显示
+      const stdDev = this.calculateStandardDeviation();
+      ctx.fillText(`平均值: ${stats.avgDb.toFixed(1)} dB`, this.canvasWidth / 4, statsStartY + this.vp2px(20));
+      ctx.fillText(`最大值: ${stats.maxDb.toFixed(1)} dB`, this.canvasWidth * 3 / 4, statsStartY + this.vp2px(20));
+      ctx.fillText(`最小值: ${stats.minDb.toFixed(1)} dB`, this.canvasWidth / 4, statsStartY + this.vp2px(40));
+      ctx.fillText(`标准差: ${stdDev.toFixed(1)} dB`, this.canvasWidth * 3 / 4, statsStartY + this.vp2px(40));
+    } else {
+      // 中等屏幕：一行显示所有关键指标
+      const stdDev = this.calculateStandardDeviation();
+      ctx.fillText(`平均值: ${stats.avgDb.toFixed(1)} dB | 最大值: ${stats.maxDb.toFixed(1)} dB | 最小值: ${stats.minDb.toFixed(1)} dB | 标准差: ${stdDev.toFixed(1)} dB`, 
+                   this.canvasWidth / 2, statsStartY + this.vp2px(20));
+    }
   }
 
   // 计算标准差（简化版本）
@@ -278,47 +354,14 @@ export struct StatisticsChartComponent {
     return Math.sqrt(variance);
   }
 
-  // 绘制标题和坐标轴
-  private drawTitleAndAxes(): void {
-    const ctx = this.canvasContext;
-    const margin: MarginConfig = {
-      top: 40,
-      right: 20,
-      bottom: 60,
-      left: 50
-    };
-
-    // 绘制标题
-    ctx.fillStyle = this.sysResourceManager.getColorSync($r('sys.color.font_on_tertiary').id);
-    ctx.font = `bold ${this.vp2px(20)}px sans-serif`;
-    ctx.textAlign = 'center';
-    ctx.fillText('分贝值分布统计', this.canvasWidth / 2, this.vp2px(30));
-
-    // 绘制Y轴标签
-    ctx.save();
-    ctx.translate(this.vp2px(20), this.canvasHeight / 2);
-    ctx.rotate(-Math.PI / 2);
-    ctx.fillStyle = this.sysResourceManager.getColorSync($r('sys.color.font_on_tertiary').id);
-    ctx.font = `${this.vp2px(16)}px sans-serif`;
-    ctx.textAlign = 'center';
-    ctx.fillText('出现次数', 0, 0);
-    ctx.restore();
-
-    // 绘制X轴标签
-    ctx.fillStyle = this.sysResourceManager.getColorSync($r('sys.color.font_on_tertiary').id);
-    ctx.font = `${this.vp2px(16)}px sans-serif`;
-    ctx.textAlign = 'center';
-    ctx.fillText('分贝区间 (dB)', this.canvasWidth / 2, this.canvasHeight - this.vp2px(15));
-  }
-
   @Builder
   StatisticsChart() {
     Column({ space: DesignConstants.SPACING_SM }) {
-      // 图表容器 - 使用与其他图表一致的背景色
+      // 图表容器
       Canvas(this.canvasContext)
         .width(this.canvasWidth)
         .height(this.canvasHeight)
-        .backgroundColor('#ff191a1c') // 使用与频谱图相同的背景色
+        .backgroundColor('#ff191a1c')
         .borderRadius(DesignConstants.BORDER_RADIUS_MD)
         .shadow(DesignConstants.SHADOW_SM)
         .onAreaChange((oldArea: Area, newArea: Area) => {
