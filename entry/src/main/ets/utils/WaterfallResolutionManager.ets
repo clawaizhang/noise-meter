@@ -125,13 +125,13 @@ export class WaterfallResolutionManager {
     const rowSpacing = this.calculateRowSpacing(pixelSize);
     const maxDisplayRows = this.calculateDisplayRows(canvasHeight, rowSpacing);
     const gapSize = this.config.enableGap ? pixelSize * this.config.gapRatio : 0;
-
+    
     const result: ResolutionResult = {
-      pixelSize:vp2px(pixelSize),
-      rowSpacing: vp2px(rowSpacing),
+      pixelSize,
+      rowSpacing,
       maxDisplayRows,
       actualRows: maxDisplayRows,
-      gapSize: vp2px(gapSize),
+      gapSize
     };
 
     // 更新缓存
