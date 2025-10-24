@@ -26,6 +26,11 @@ export struct WaterfallChartComponent {
   @Local private sysResourceManager: resourceManager.ResourceManager = resourceManager.getSystemResourceManager();
   @Local private ak: AppKeys = AppStorageV2.connect(AppKeys)!
 
+  // 异步绘制状态
+  @Local private isDrawing: boolean = false;
+  @Local private lastDrawTime: number = 0;
+  @Local private drawError: string = '';
+
   @Computed
   get fftSize() {
     return AudioPresets.getConfig(this.pk.audio_analysis_mode).fftSize;
@@ -64,13 +69,23 @@ export struct WaterfallChartComponent {
   }
 
   // 瀑布图绘制函数
-  private drawWaterfallChart(ctx: CanvasRenderingContext2D, canvasWidth: number, canvasHeight: number): void {
+  private async drawWaterfallChart(ctx: CanvasRenderingContext2D, canvasWidth: number, canvasHeight: number): Promise<void> {
     const waterfallData = this.ak.uiDisplayState.displayWaterfallData;
     
     if (waterfallData.spectrumHistory.length === 0) {
       this.drawEmptyState(ctx, canvasWidth, canvasHeight);
       return;
     }
+
+    // 防止过于频繁的绘制
+    const now = Date.now();
+    if (now - this.lastDrawTime < 50) { // 最小绘制间隔50ms
+      return;
+    }
+
+    // 设置绘制状态
+    this.isDrawing = true;
+    this.drawError = '';
 
     // 使用自定义的瀑布图绘制配置
     const drawConfig: WaterfallDrawConfig = {
@@ -81,7 +96,7 @@ export struct WaterfallChartComponent {
     };
 
     try {
-      drawWaterfall(
+      await drawWaterfall(
         ctx,
         canvasWidth,
         canvasHeight,
@@ -89,10 +104,22 @@ export struct WaterfallChartComponent {
         this.sysResourceManager,
         drawConfig
       );
+      this.lastDrawTime = now;
     } catch (error) {
       console.error('[瀑布图] 绘制失败:', error);
-      this.drawErrorState(ctx, canvasWidth, canvasHeight, error.message);
+      this.drawError = (error as Error).message;
+      this.drawErrorState(ctx, canvasWidth, canvasHeight, (error as Error).message);
+    } finally {
+      this.isDrawing = false;
     }
+  }
+
+  // 同步包装函数，用于BaseChartComponent的回调
+  private drawWaterfallChartSync(ctx: CanvasRenderingContext2D, canvasWidth: number, canvasHeight: number): void {
+    // 异步绘制，但不等待完成
+    this.drawWaterfallChart(ctx, canvasWidth, canvasHeight).catch((error: Error) => {
+      console.error('[瀑布图] 异步绘制失败:', error);
+    });
   }
 
   // 绘制空状态
@@ -148,7 +175,7 @@ export struct WaterfallChartComponent {
       canvasHeightInput: this.canvasHeightInput,
       chartConfig: this.chartConfig,
       onDrawChart: (ctx: CanvasRenderingContext2D, width: number, height: number) => {
-        this.drawWaterfallChart(ctx, width, height);
+        this.drawWaterfallChartSync(ctx, width, height);
       }
     })
   }
