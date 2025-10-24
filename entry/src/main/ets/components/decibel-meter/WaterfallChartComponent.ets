@@ -98,6 +98,13 @@ export struct WaterfallChartComponent {
       return;
     }
 
+    // 验证分辨率参数是否有效
+    if (!this.resolutionManager.validateResolution(canvasWidth, canvasHeight)) {
+      console.warn(`[组件调试] 分辨率参数验证失败，跳过绘制`);
+      this.drawErrorState(ctx, canvasWidth, canvasHeight, '分辨率参数无效');
+      return;
+    }
+
     // 计算动态分辨率参数
     const resolution = this.resolutionManager.calculateResolution(canvasWidth, canvasHeight);
     console.info(`[组件调试] 动态分辨率参数:`, {

@@ -244,15 +244,15 @@ export async function drawWaterfall(
     console.info('[瀑布图绘制] 分辨率管理器已初始化');
   }
 
+  // 验证分辨率参数是否有效
+  if (!resolutionManager.validateResolution(canvasWidth, canvasHeight)) {
+    console.warn(`[瀑布图绘制] 分辨率参数验证失败，跳过绘制`);
+    return;
+  }
+
   // 计算动态分辨率参数
   const resolution = resolutionManager.calculateResolution(canvasWidth, canvasHeight);
-  console.info(`[瀑布图绘制] 动态分辨率参数:`, {
-    pixelSize: resolution.pixelSize,
-    rowSpacing: resolution.rowSpacing,
-    maxDisplayRows: resolution.maxDisplayRows,
-    actualRows: resolution.actualRows,
-    chartHeight: chartHeight
-  });
+  console.info(`[瀑布图绘制] 动态分辨率参数:`, JSON.stringify(resolution));
 
   // 初始化预渲染配置
   if (!preRenderConfig ||
@@ -268,6 +268,7 @@ export async function drawWaterfall(
     preRenderConfig.axisColor = '#333333'; // 使用硬编码颜色值
     preRenderConfig.backgroundColor = '#FFFFFF'; // 使用硬编码颜色值
     preRenderConfig.fontSize = 12;
+    console.info(`[瀑布图绘制] 预渲染配置已初始化`);
   }
 
   // 初始化ImageData渲染器
@@ -535,9 +536,8 @@ function drawProcessedFrames(
   const pixels: PixelData[] = [];
   // 使用动态分辨率参数，如果没有提供则使用配置的默认值
   const pixelSize = resolution?.pixelSize ?? drawConfig.perspective.rowSpacing;
-  const rowSpacing = resolution?.rowSpacing ?? drawConfig.perspective.rowSpacing;
   
-  console.info(`[像素绘制调试] 使用像素大小: ${pixelSize}, 行间距: ${rowSpacing}, 处理帧数: ${processedFrames.length}`);
+  console.info(`[像素绘制调试] 使用像素大小: ${pixelSize}, 处理帧数: ${processedFrames.length}`);
   
   let totalValidBins = 0;
   let totalInvalidBins = 0;
@@ -655,13 +655,12 @@ function drawWaterfallDataDirect(
   }
 
   // 使用动态分辨率参数，如果没有提供则使用配置的默认值
-  const rowSpacing = resolution?.rowSpacing ?? drawConfig.perspective.rowSpacing;
   const pixelSize = resolution?.pixelSize ?? drawConfig.perspective.rowSpacing;
   
-  console.info(`[直接绘制] 使用行间距: ${rowSpacing}, 像素大小: ${pixelSize}`);
+  console.info(`[直接绘制] 使用像素大小: ${pixelSize}`);
 
-  // 计算每行的高度（考虑透视效果）
-  const maxRows = Math.floor(chartHeight / rowSpacing);
+  // 计算每行的高度（使用像素大小）
+  const maxRows = Math.floor(chartHeight / pixelSize);
   const rowsToDraw = Math.min(spectrumHistory.length, maxRows);
 
   console.info(`[高度调试] 可绘制行数: ${rowsToDraw}, 最大行数: ${maxRows}, 数据帧数: ${spectrumHistory.length}`);
@@ -675,8 +674,8 @@ function drawWaterfallDataDirect(
       continue;
     }
 
-    // 计算当前行的Y坐标（从底部开始）- 使用动态行间距
-    const y = chartHeight - (rowIndex * rowSpacing);
+    // 计算当前行的Y坐标（从底部开始）- 使用像素大小
+    const y = chartHeight - (rowIndex * pixelSize);
 
     // 计算透视效果：越远的行透明度越低
     const depthFactor = 1 - (rowIndex / rowsToDraw) * drawConfig.perspective.depthScale;

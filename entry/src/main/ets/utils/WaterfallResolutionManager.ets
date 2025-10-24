@@ -54,12 +54,12 @@ export class CacheStats {
 
 /**
  * 默认分辨率配置
- * 优化参数让瀑布图填满Canvas高度
+ * 只限制目标行数，让像素大小自适应Canvas高度
  */
 export const DefaultResolutionConfig: ResolutionConfig = {
-  minPixelSize: 2,      // 降低最小像素大小，让更多行可以显示
-  maxPixelSize: 8,      // 降低最大像素大小，避免过度放大
-  targetRows: 80,       // 降低目标行数，让像素大小更合理
+  minPixelSize: 1,      // 保留最小像素大小作为保护
+  maxPixelSize: 20,     // 大幅提高最大像素大小，让像素大小自适应
+  targetRows: 120,      // 固定目标行数，像素大小将基于Canvas高度计算
   enableGap: false,     // 默认不启用间隙
   gapRatio: 0.1,        // 10%间隙比例
   performanceMode: 'balanced'
@@ -67,26 +67,27 @@ export const DefaultResolutionConfig: ResolutionConfig = {
 
 /**
  * 性能模式配置预设
+ * 只限制目标行数，让像素大小自适应Canvas高度
  */
 export const PerformanceConfigs: Record<'quality' | 'performance' | 'balanced', Partial<ResolutionConfig>> = {
   "quality": {
-    minPixelSize: 3,
-    maxPixelSize: 12,
-    targetRows: 60,
-    enableGap: true,
-    gapRatio: 0.15
+    minPixelSize: 1,
+    maxPixelSize: 20,
+    targetRows: 100,    // 高质量模式：较少行数，较大像素
+    enableGap: false,
+    gapRatio: 0.1
   },
   "performance": {
     minPixelSize: 1,
-    maxPixelSize: 6,
-    targetRows: 100,
+    maxPixelSize: 20,
+    targetRows: 180,    // 性能模式：较多行数，较小像素
     enableGap: false,
     gapRatio: 0
   },
   "balanced": {
-    minPixelSize: 2,
-    maxPixelSize: 8,
-    targetRows: 80,
+    minPixelSize: 1,
+    maxPixelSize: 20,
+    targetRows: 120,    // 平衡模式：中等行数
     enableGap: false,
     gapRatio: 0.1
   }
@@ -114,6 +115,7 @@ export class WaterfallResolutionManager {
         this.lastCanvasSize && 
         this.lastCanvasSize.width === canvasWidth && 
         this.lastCanvasSize.height === canvasHeight) {
+      console.debug(`[分辨率管理器] 使用缓存结果`);
       return this.lastResult;
     }
 
@@ -125,11 +127,11 @@ export class WaterfallResolutionManager {
     const gapSize = this.config.enableGap ? pixelSize * this.config.gapRatio : 0;
 
     const result: ResolutionResult = {
-      pixelSize,
-      rowSpacing,
+      pixelSize:vp2px(pixelSize),
+      rowSpacing: vp2px(rowSpacing),
       maxDisplayRows,
       actualRows: maxDisplayRows,
-      gapSize
+      gapSize: vp2px(gapSize),
     };
 
     // 更新缓存
@@ -143,13 +145,15 @@ export class WaterfallResolutionManager {
 
   /**
    * 计算像素大小
+   * 基于Canvas高度和目标行数计算，让像素大小自适应
    */
   private calculatePixelSize(canvasHeight: number): number {
     const baseSize = canvasHeight / this.config.targetRows;
-    const clampedSize = Math.max(this.config.minPixelSize, Math.min(this.config.maxPixelSize, baseSize));
-    const roundedSize = Math.round(clampedSize);
+    // 只应用最小保护，不限制最大像素大小，让像素大小自适应Canvas高度
+    const protectedSize = Math.max(this.config.minPixelSize, baseSize);
+    const roundedSize = Math.round(protectedSize);
     
-    console.debug(`[分辨率管理器] 像素大小计算: base=${baseSize.toFixed(2)}, clamped=${clampedSize.toFixed(2)}, rounded=${roundedSize}`);
+    console.debug(`[分辨率管理器] 像素大小计算: base=${baseSize.toFixed(2)}, protected=${protectedSize.toFixed(2)}, rounded=${roundedSize}`);
     
     return roundedSize;
   }
@@ -259,8 +263,9 @@ export class WaterfallResolutionManager {
 
     const resolution = this.calculateResolution(canvasWidth, canvasHeight);
     
-    if (resolution.pixelSize < this.config.minPixelSize || resolution.pixelSize > this.config.maxPixelSize) {
-      console.warn(`[分辨率管理器] 像素大小超出范围: ${resolution.pixelSize}`);
+    // 只检查最小像素大小，不限制最大像素大小
+    if (resolution.pixelSize < this.config.minPixelSize) {
+      console.warn(`[分辨率管理器] 像素大小过小: ${resolution.pixelSize}`);
       return false;
     }
 

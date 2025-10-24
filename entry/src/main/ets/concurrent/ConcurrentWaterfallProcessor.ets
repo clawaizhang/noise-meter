@@ -55,8 +55,8 @@ export function concurrentProcessAllWaterfallFrames(
   colorMapType: string,
   colorMapOpacity: number
 ): ProcessedFrame[] {
-  // 计算最大可显示行数 - 使用Canvas高度和行间距
-  const maxDisplayRows = Math.floor(chartHeight / rowSpacing);
+  // 计算最大可显示行数 - 使用Canvas高度和像素大小
+  const maxDisplayRows = Math.floor(chartHeight / pixelSize);
   // 使用所有可用数据，但不超过Canvas能显示的最大行数
   const rowsToProcess = Math.min(spectrumHistory.length, maxDisplayRows);
   const processedFrames: ProcessedFrame[] = new Array(rowsToProcess);
@@ -120,8 +120,8 @@ export function concurrentProcessAllWaterfallFrames(
       };
     }
     
-    // 计算Y坐标（从底部开始）- 使用动态行间距，确保填满Canvas高度
-    const y = chartHeight - (rowIndex * rowSpacing);
+    // 计算Y坐标（从底部开始）- 使用像素大小，确保填满Canvas高度
+    const y = chartHeight - (rowIndex * pixelSize);
     
     processedFrames[rowIndex] = {
       rowIndex,
