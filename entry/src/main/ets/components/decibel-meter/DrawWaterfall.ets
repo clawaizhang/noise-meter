@@ -11,6 +11,7 @@ import { concurrentProcessAllWaterfallFrames, ProcessedFrame } from '../../concu
 import { ImageDataRenderer, PixelData, DefaultImageDataRenderConfig } from '../../utils/ImageDataRenderer';
 import { CanvasCacheManager, PreRenderConfig, PreRenderElementType, DefaultCacheConfig } from '../../utils/CanvasCacheManager';
 import { ColorMapOptimizer, ColorMapType } from '../../utils/ColorMapOptimizer';
+import { WaterfallResolutionManager, ResolutionResult, createDefaultResolutionManager } from '../../utils/WaterfallResolutionManager';
 
 /**
  * 边距配置接口
@@ -90,9 +91,10 @@ export const DefaultMarginConfig: MarginConfig = {
 
 /**
  * 默认透视效果配置
+ * 减小行间距让瀑布图填满整个Canvas高度
  */
 export const DefaultPerspectiveConfig: PerspectiveConfig = {
-  rowSpacing: 2,
+  rowSpacing: 1, // 从2减小到1，让更多行数据可以显示
   depthScale: 0.8,
   opacityDecay: 0.05
 };
@@ -129,6 +131,9 @@ let canvasCacheManager: CanvasCacheManager | null = null;
 // 颜色映射优化器
 let colorMapOptimizer: ColorMapOptimizer | null = null;
 
+// 分辨率管理器
+let resolutionManager: WaterfallResolutionManager | null = null;
+
 // 渲染器配置接口
 interface RendererConfig {
   width: number;
@@ -148,15 +153,7 @@ let rendererConfig: RendererConfig = {
 };
 
 // 预渲染配置
-let preRenderConfig: PreRenderConfig = {
-  width: 0,
-  height: 0,
-  margin: {left: 0, top: 0, right: 0, bottom: 0},
-  gridColor: '',
-  axisColor: '',
-  backgroundColor: '',
-  fontSize: 12
-};
+let preRenderConfig: PreRenderConfig = new PreRenderConfig();
 
 /**
  * 绘制频谱瀑布图
@@ -183,14 +180,19 @@ export async function drawWaterfall(
     maxDb: waterfallData.colorMap.maxDb,
     opacity: waterfallData.colorMap.opacity
   }));
+  console.info(`[瀑布图调试] 透视配置:`, JSON.stringify({
+    rowSpacing: drawConfig.perspective.rowSpacing,
+    depthScale: drawConfig.perspective.depthScale,
+    opacityDecay: drawConfig.perspective.opacityDecay
+  }));
 
   // 检查数据有效性
   if (waterfallData.spectrumHistory.length > 0) {
     const firstFrame = waterfallData.spectrumHistory[0];
     console.info(`[瀑布图调试] 第一帧数据长度: ${firstFrame.length}`);
     if (firstFrame.length > 0) {
-      const minValue = Math.min(...firstFrame);
-      const maxValue = Math.max(...firstFrame);
+      const minValue = calculateMinValue(firstFrame);
+      const maxValue = calculateMaxValue(firstFrame);
       console.info(`[瀑布图调试] 第一帧数据范围: ${minValue.toFixed(2)} ~ ${maxValue.toFixed(2)}`);
     }
   }
@@ -234,6 +236,20 @@ export async function drawWaterfall(
     colorMapOptimizer.precomputeAllMaps(256);
   }
 
+  // 初始化分辨率管理器
+  if (!resolutionManager) {
+    resolutionManager = createDefaultResolutionManager();
+    console.info('[瀑布图绘制] 分辨率管理器已初始化');
+  }
+
+  // 计算动态分辨率参数
+  const resolution = resolutionManager.calculateResolution(canvasWidth, canvasHeight);
+  console.info(`[瀑布图绘制] 动态分辨率参数:`, {
+    pixelSize: resolution.pixelSize,
+    rowSpacing: resolution.rowSpacing,
+    maxDisplayRows: resolution.maxDisplayRows
+  });
+
   // 初始化预渲染配置
   if (!preRenderConfig ||
       preRenderConfig.width !== canvasWidth ||
@@ -244,9 +260,9 @@ export async function drawWaterfall(
     preRenderConfig.margin.right = drawConfig.margin.right;
     preRenderConfig.margin.bottom = drawConfig.margin.bottom;
     preRenderConfig.margin.left = drawConfig.margin.left;
-    preRenderConfig.gridColor = sysResourceManager.getColorSync($r('sys.color.font_on_tertiary').id).toString();
-    preRenderConfig.axisColor = sysResourceManager.getColorSync($r('sys.color.font_on_primary').id).toString();
-    preRenderConfig.backgroundColor = sysResourceManager.getColorSync($r('sys.color.ohos_id_color_background').id).toString();
+    preRenderConfig.gridColor = '#CCCCCC'; // 使用硬编码颜色值
+    preRenderConfig.axisColor = '#333333'; // 使用硬编码颜色值
+    preRenderConfig.backgroundColor = '#FFFFFF'; // 使用硬编码颜色值
     preRenderConfig.fontSize = 12;
   }
 
@@ -287,7 +303,8 @@ export async function drawWaterfall(
     chartHeight,
     waterfallData,
     drawConfig,
-    sysResourceManager
+    sysResourceManager,
+    resolution
   );
   const endTime = Date.now();
 
@@ -307,7 +324,8 @@ async function drawLayeredWaterfall(
   chartHeight: number,
   waterfallData: WaterfallData,
   drawConfig: WaterfallDrawConfig,
-  sysResourceManager: resourceManager.ResourceManager
+  sysResourceManager: resourceManager.ResourceManager,
+  resolution: ResolutionResult
 ): Promise<void> {
   // 绘制背景
   // canvasContext.fillStyle = sysResourceManager.getColorSync($r('sys.color.ohos_id_color_background').id).toString();
@@ -331,7 +349,8 @@ async function drawLayeredWaterfall(
         chartHeight,
         waterfallData,
         drawConfig,
-        sysResourceManager
+        sysResourceManager,
+        resolution
       );
       console.info(`[分层渲染] 并行计算绘制完成`);
     } catch (error) {
@@ -363,8 +382,7 @@ function drawGrid(
   drawConfig: WaterfallDrawConfig,
   sysResourceManager: resourceManager.ResourceManager
 ): void {
-  const gridColor = sysResourceManager.getColorSync($r('sys.color.font_on_tertiary').id);
-  canvasContext.strokeStyle = gridColor.toString();
+  canvasContext.strokeStyle = '#CCCCCC'; // 使用硬编码颜色值
   canvasContext.lineWidth = 0.5;
 
   // 水平网格线 - 使用整个Canvas高度
@@ -395,7 +413,8 @@ async function drawWaterfallDataWithParallel(
   chartHeight: number,
   waterfallData: WaterfallData,
   drawConfig: WaterfallDrawConfig,
-  sysResourceManager: resourceManager.ResourceManager
+  sysResourceManager: resourceManager.ResourceManager,
+  resolution: ResolutionResult
 ): Promise<void> {
   const spectrumHistory = waterfallData.spectrumHistory;
   const colorMapConfig = waterfallData.colorMap;
@@ -442,13 +461,15 @@ async function drawWaterfallDataWithParallel(
 
     // 并行处理所有帧数据
     console.info(`[并行计算调试] 开始并行处理 ${spectrumHistory.length} 帧数据`);
+    console.info(`[并行计算调试] 动态分辨率参数: rowSpacing=${resolution.rowSpacing}, pixelSize=${resolution.pixelSize}`);
     const processedFrames: ProcessedFrame[] = await taskpool.execute(
       concurrentProcessAllWaterfallFrames,
       spectrumHistory,
       chartWidth,
       chartHeight,
       cacheState.colorMap,
-      drawConfig.perspective.rowSpacing,
+      resolution.rowSpacing, // 使用动态计算的行间距
+      resolution.pixelSize,  // 传递像素大小参数
       0, // 左边距设为0，使用整个Canvas宽度
       colorMapConfig.minDb,
       colorMapConfig.maxDb,
@@ -466,8 +487,8 @@ async function drawWaterfallDataWithParallel(
       }
     }
 
-    // 使用处理后的数据进行绘制
-    drawProcessedFrames(canvasContext, processedFrames, drawConfig);
+    // 使用处理后的数据进行绘制（传递分辨率参数）
+    drawProcessedFrames(canvasContext, processedFrames, drawConfig, resolution);
 
     // 更新缓存
     cacheState.processedFrames = processedFrames;
@@ -494,20 +515,26 @@ async function drawWaterfallDataWithParallel(
 function drawProcessedFrames(
   canvasContext: CanvasRenderingContext2D,
   processedFrames: ProcessedFrame[],
-  drawConfig: WaterfallDrawConfig
+  drawConfig: WaterfallDrawConfig,
+  resolution?: ResolutionResult
 ): void {
   console.info(`[像素绘制调试] 开始绘制 ${processedFrames.length} 个处理帧`);
   
   if (!imageDataRenderer) {
     console.warn('[像素绘制调试] ImageData渲染器未初始化，使用回退绘制');
-    drawProcessedFramesFallback(canvasContext, processedFrames, drawConfig);
+    drawProcessedFramesFallback(canvasContext, processedFrames, drawConfig, resolution);
     return;
   }
 
   console.info(`[像素绘制调试] ImageData渲染器状态: 已初始化`);
 
   const pixels: PixelData[] = [];
-  const rowSpacing = drawConfig.perspective.rowSpacing;
+  // 使用动态分辨率参数，如果没有提供则使用配置的默认值
+  const pixelSize = resolution?.pixelSize ?? drawConfig.perspective.rowSpacing;
+  const rowSpacing = resolution?.rowSpacing ?? drawConfig.perspective.rowSpacing;
+  
+  console.info(`[像素绘制调试] 使用像素大小: ${pixelSize}, 行间距: ${rowSpacing}`);
+  
   let totalValidBins = 0;
   let totalInvalidBins = 0;
 
@@ -536,12 +563,12 @@ function drawProcessedFrames(
       const b = parseInt(colorMatch[3]);
       const a = parseFloat(colorMatch[4]) * 255; // 转换为0-255范围
 
-      // 创建矩形像素数据
+      // 创建矩形像素数据 - 使用动态像素大小
       const rectPixels = imageDataRenderer.createRectPixels(
         bin.x,
         frame.y,
-        rowSpacing,
-        rowSpacing,
+        pixelSize,  // 使用动态像素大小作为宽度
+        pixelSize,  // 使用动态像素大小作为高度
         r, g, b, a
       );
 
@@ -574,8 +601,14 @@ function drawProcessedFrames(
 function drawProcessedFramesFallback(
   canvasContext: CanvasRenderingContext2D,
   processedFrames: ProcessedFrame[],
-  drawConfig: WaterfallDrawConfig
+  drawConfig: WaterfallDrawConfig,
+  resolution?: ResolutionResult
 ): void {
+  // 使用动态分辨率参数，如果没有提供则使用配置的默认值
+  const pixelSize = resolution?.pixelSize ?? drawConfig.perspective.rowSpacing;
+  
+  console.info(`[回退绘制] 使用像素大小: ${pixelSize}`);
+  
   for (const frame of processedFrames) {
     if (!frame || !frame.bins) {
       continue;
@@ -591,8 +624,8 @@ function drawProcessedFramesFallback(
       canvasContext.fillRect(
         bin.x,
         frame.y,
-        drawConfig.perspective.rowSpacing,
-        drawConfig.perspective.rowSpacing
+        pixelSize,  // 使用动态像素大小作为宽度
+        pixelSize   // 使用动态像素大小作为高度
       );
     }
   }
@@ -607,7 +640,8 @@ function drawWaterfallDataDirect(
   chartHeight: number,
   waterfallData: WaterfallData,
   drawConfig: WaterfallDrawConfig,
-  sysResourceManager: resourceManager.ResourceManager
+  sysResourceManager: resourceManager.ResourceManager,
+  resolution?: ResolutionResult
 ): void {
   const spectrumHistory = waterfallData.spectrumHistory;
   const colorMap = waterfallData.colorMap;
@@ -616,9 +650,17 @@ function drawWaterfallDataDirect(
     return;
   }
 
+  // 使用动态分辨率参数，如果没有提供则使用配置的默认值
+  const rowSpacing = resolution?.rowSpacing ?? drawConfig.perspective.rowSpacing;
+  const pixelSize = resolution?.pixelSize ?? drawConfig.perspective.rowSpacing;
+  
+  console.info(`[直接绘制] 使用行间距: ${rowSpacing}, 像素大小: ${pixelSize}`);
+
   // 计算每行的高度（考虑透视效果）
-  const maxRows = Math.floor(chartHeight / drawConfig.perspective.rowSpacing);
+  const maxRows = Math.floor(chartHeight / rowSpacing);
   const rowsToDraw = Math.min(spectrumHistory.length, maxRows);
+
+  console.info(`[高度调试] 可绘制行数: ${rowsToDraw}, 最大行数: ${maxRows}, 数据帧数: ${spectrumHistory.length}`);
 
   // 从最新数据开始绘制（从底部向上）
   for (let rowIndex = 0; rowIndex < rowsToDraw; rowIndex++) {
@@ -629,8 +671,8 @@ function drawWaterfallDataDirect(
       continue;
     }
 
-    // 计算当前行的Y坐标（从底部开始）- 使用整个Canvas高度
-    const y = chartHeight - (rowIndex * drawConfig.perspective.rowSpacing);
+    // 计算当前行的Y坐标（从底部开始）- 使用动态行间距
+    const y = chartHeight - (rowIndex * rowSpacing);
 
     // 计算透视效果：越远的行透明度越低
     const depthFactor = 1 - (rowIndex / rowsToDraw) * drawConfig.perspective.depthScale;
@@ -645,7 +687,8 @@ function drawWaterfallDataDirect(
       drawConfig,
       colorMap,
       opacity,
-      sysResourceManager
+      sysResourceManager,
+      pixelSize  // 传递像素大小参数
     );
   }
 }
@@ -661,10 +704,14 @@ function drawWaterfallRow(
   drawConfig: WaterfallDrawConfig,
   colorMap: ColorMapConfig,
   opacity: number,
-  sysResourceManager: resourceManager.ResourceManager
+  sysResourceManager: resourceManager.ResourceManager,
+  pixelSize?: number
 ): void {
   const binCount = spectrum.length;
   const binWidth = chartWidth / binCount;
+
+  // 使用动态像素大小，如果没有提供则使用配置的默认值
+  const actualPixelSize = pixelSize ?? drawConfig.perspective.rowSpacing;
 
   // 对数频率坐标映射（与频谱图保持一致）
   const logMin = Math.log10(16);
@@ -687,9 +734,9 @@ function drawWaterfallRow(
     // 计算颜色
     const color = getColorForDb(db, colorMap, opacity, sysResourceManager);
 
-    // 绘制单个数据点（使用矩形或线段）
+    // 绘制单个数据点（使用矩形或线段）- 使用动态像素大小
     canvasContext.fillStyle = color;
-    canvasContext.fillRect(x, y, binWidth, drawConfig.perspective.rowSpacing);
+    canvasContext.fillRect(x, y, binWidth, actualPixelSize);
   }
 }
 
@@ -793,8 +840,7 @@ function drawAxes(
   drawConfig: WaterfallDrawConfig,
   sysResourceManager: resourceManager.ResourceManager
 ): void {
-  const textColor = sysResourceManager.getColorSync($r('sys.color.font_on_tertiary').id);
-  canvasContext.fillStyle = textColor.toString();
+  canvasContext.fillStyle = '#333333'; // 使用硬编码颜色值
   canvasContext.font = '12px sans-serif';
   canvasContext.textAlign = 'center';
 
@@ -831,4 +877,29 @@ function drawAxes(
 function vp2px(vp: number): number {
   // 这是一个简化的转换，实际项目中应该使用系统提供的转换函数
   return Math.round(vp * 2); // 假设2倍缩放
+}
+/**
+ * 计算Float32Array中的最小值
+ */
+function calculateMinValue(array: Float32Array): number {
+  let min = Infinity;
+  for (let i = 0; i < array.length; i++) {
+    if (array[i] < min) {
+      min = array[i];
+    }
+  }
+  return min;
+}
+
+/**
+ * 计算Float32Array中的最大值
+ */
+function calculateMaxValue(array: Float32Array): number {
+  let max = -Infinity;
+  for (let i = 0; i < array.length; i++) {
+    if (array[i] > max) {
+      max = array[i];
+    }
+  }
+  return max;
 }

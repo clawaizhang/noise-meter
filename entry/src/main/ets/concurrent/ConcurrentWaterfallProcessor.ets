@@ -34,6 +34,7 @@ export interface ProcessedBin {
  * @param chartHeight 图表高度
  * @param colorMap 颜色映射表
  * @param rowSpacing 行间距
+ * @param pixelSize 像素大小
  * @param marginLeft 左边距
  * @param minDb 最小分贝值
  * @param maxDb 最大分贝值
@@ -47,6 +48,7 @@ export function concurrentProcessAllWaterfallFrames(
   chartHeight: number,
   colorMap: string[],
   rowSpacing: number,
+  pixelSize: number,
   marginLeft: number,
   minDb: number,
   maxDb: number,
@@ -60,6 +62,8 @@ export function concurrentProcessAllWaterfallFrames(
   // 预计算对数坐标映射参数
   const logMin = Math.log10(16);
   const logMax = Math.log10(16000);
+  
+  console.debug(`[并行处理器] 处理参数: rowsToProcess=${rowsToProcess}, rowSpacing=${rowSpacing}, pixelSize=${pixelSize}`);
   
   // 并行处理所有帧
   for (let rowIndex = 0; rowIndex < rowsToProcess; rowIndex++) {
@@ -114,7 +118,7 @@ export function concurrentProcessAllWaterfallFrames(
       };
     }
     
-    // 计算Y坐标（从底部开始）
+    // 计算Y坐标（从底部开始）- 使用动态行间距
     const y = chartHeight - (rowIndex * rowSpacing);
     
     processedFrames[rowIndex] = {

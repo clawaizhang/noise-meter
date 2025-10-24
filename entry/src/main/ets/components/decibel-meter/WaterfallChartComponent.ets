@@ -13,6 +13,7 @@ import { PreferenceKeys } from '../../models/PreferenceKeys';
 import { BaseChartComponent } from '../common/charts/BaseChartComponent';
 import { ChartConfig, ChartType, DefaultChartConfig } from '../common/charts/ChartConfig';
 import { ColorMapConfig } from '../../models/WaterfallData';
+import { WaterfallResolutionManager, ResolutionConfig, DefaultResolutionConfig, createDefaultResolutionManager } from '../../utils/WaterfallResolutionManager';
 
 @ComponentV2
 export struct WaterfallChartComponent {
@@ -27,9 +28,10 @@ export struct WaterfallChartComponent {
   @Local private ak: AppKeys = AppStorageV2.connect(AppKeys)!
 
   // 异步绘制状态
-  @Local private isDrawing: boolean = false;
   @Local private lastDrawTime: number = 0;
-  @Local private drawError: string = '';
+
+  // 分辨率管理器
+  private resolutionManager: WaterfallResolutionManager = createDefaultResolutionManager();
 
   @Computed
   get fftSize() {
@@ -96,9 +98,14 @@ export struct WaterfallChartComponent {
       return;
     }
 
-    // 设置绘制状态
-    this.isDrawing = true;
-    this.drawError = '';
+    // 计算动态分辨率参数
+    const resolution = this.resolutionManager.calculateResolution(canvasWidth, canvasHeight);
+    console.info(`[组件调试] 动态分辨率参数:`, {
+      pixelSize: resolution.pixelSize,
+      rowSpacing: resolution.rowSpacing,
+      maxDisplayRows: resolution.maxDisplayRows,
+      actualRows: resolution.actualRows
+    });
 
     // 使用自定义的瀑布图绘制配置
     const drawConfig: WaterfallDrawConfig = {
@@ -125,10 +132,8 @@ export struct WaterfallChartComponent {
     } catch (error) {
       console.error('[组件调试] 绘制失败:', error);
       console.error('[组件调试] 错误堆栈:', (error as Error).stack);
-      this.drawError = (error as Error).message;
       this.drawErrorState(ctx, canvasWidth, canvasHeight, (error as Error).message);
     } finally {
-      this.isDrawing = false;
     }
   }
 

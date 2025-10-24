@@ -51,26 +51,43 @@ export enum PreRenderElementType {
 }
 
 /**
- * 边距配置接口
+ * 边距配置类
  */
-export interface MarginConfig {
-  top: number;
-  right: number;
-  bottom: number;
-  left: number;
+export class MarginConfig {
+  top: number = 0;
+  right: number = 0;
+  bottom: number = 0;
+  left: number = 0;
+
+  constructor(top?: number, right?: number, bottom?: number, left?: number) {
+    if (top !== undefined) this.top = top;
+    if (right !== undefined) this.right = right;
+    if (bottom !== undefined) this.bottom = bottom;
+    if (left !== undefined) this.left = left;
+  }
 }
 
 /**
- * 预渲染配置接口
+ * 预渲染配置类
  */
-export interface PreRenderConfig {
-  width: number;
-  height: number;
-  margin: MarginConfig;
-  gridColor: string;
-  axisColor: string;
-  backgroundColor: string;
-  fontSize: number;
+export class PreRenderConfig {
+  width: number = 0;
+  height: number = 0;
+  margin: MarginConfig = new MarginConfig();
+  gridColor: string = '';
+  axisColor: string = '';
+  backgroundColor: string = '';
+  fontSize: number = 12;
+
+  constructor(width?: number, height?: number, margin?: MarginConfig, gridColor?: string, axisColor?: string, backgroundColor?: string, fontSize?: number) {
+    if (width !== undefined) this.width = width;
+    if (height !== undefined) this.height = height;
+    if (margin !== undefined) this.margin = margin;
+    if (gridColor !== undefined) this.gridColor = gridColor;
+    if (axisColor !== undefined) this.axisColor = axisColor;
+    if (backgroundColor !== undefined) this.backgroundColor = backgroundColor;
+    if (fontSize !== undefined) this.fontSize = fontSize;
+  }
 }
 
 /**

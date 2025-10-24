@@ -51,7 +51,7 @@ export class WaterfallData {
     @Trace currentTimeIndex: number = 0;
     
     // 最大历史帧数
-    @Trace maxHistorySize: number = 100;
+    @Trace maxHistorySize: number = 300; // 从100增加到300，让瀑布图可以显示更多历史数据
     
     // 颜色映射配置
     @Trace colorMap: ColorMapConfig = new ColorMapConfig();
