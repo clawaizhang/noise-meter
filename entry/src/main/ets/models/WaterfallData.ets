@@ -102,62 +102,72 @@ export class WaterfallData {
      * @param spectrum 频谱数据
      */
     addSpectrumFrame(spectrum: Float32Array): void {
-        if (!this.isValidSpectrum(spectrum)) {
-            console.warn('[WaterfallData] 无效的频谱数据');
-            return;
-        }
-        
-        // 应用动态分辨率调整
-        const processedSpectrum = this.applyDynamicResolution(spectrum);
-        
-        // 检查是否需要压缩（使用动态压缩比例）
-        const currentCompressionRatio = this.resolutionManager.getCompressionRatio();
-        if (this.enableCompression && this.currentTimeIndex % currentCompressionRatio !== 0) {
-            this.currentTimeIndex++;
-            return;
-        }
-        
-        // 使用响应式更新模式
-        const newHistory = [...this.spectrumHistory];
-        const newTimestamps = [...this.timestamps];
-        
-        // 动态调整最大历史大小
-        const currentMaxHistorySize = this.resolutionManager.getMaxHistorySize();
-        if (currentMaxHistorySize !== this.maxHistorySize) {
-            this.maxHistorySize = currentMaxHistorySize;
-        }
-        
-        // 如果达到最大历史大小，移除最旧的数据并释放内存
-        if (newHistory.length >= this.maxHistorySize) {
-            const removedSpectrum = newHistory.shift();
-            newTimestamps.shift();
-            
-            // 释放被移除的频谱数据到内存池
-            if (removedSpectrum) {
-                this.spectrumPool.release(removedSpectrum);
-            }
-        }
-        
-        // 使用内存池获取新的Float32Array
-        const newSpectrum = this.spectrumPool.acquire(processedSpectrum.length) as Float32Array;
-        newSpectrum.set(processedSpectrum); // 复制处理后的数据
-        
-        // 添加新数据
-        newHistory.push(newSpectrum);
-        newTimestamps.push(Date.now());
-        
-        // 更新响应式数据
-        this.spectrumHistory = newHistory;
-        this.timestamps = newTimestamps;
+      console.info(`[数据流调试] 添加频谱帧，原始长度: ${spectrum.length}`);
+      
+      if (!this.isValidSpectrum(spectrum)) {
+        console.warn('[数据流调试] 无效的频谱数据');
+        return;
+      }
+      
+      console.info(`[数据流调试] 数据有效性: 有效`);
+      
+      // 应用动态分辨率调整
+      const processedSpectrum = this.applyDynamicResolution(spectrum);
+      console.info(`[数据流调试] 处理后长度: ${processedSpectrum.length}`);
+      
+      // 检查是否需要压缩（使用动态压缩比例）
+      const currentCompressionRatio = this.resolutionManager.getCompressionRatio();
+      console.info(`[数据流调试] 压缩比例: ${currentCompressionRatio}`);
+      
+      if (this.enableCompression && this.currentTimeIndex % currentCompressionRatio !== 0) {
+        console.info(`[数据流调试] 跳过此帧（压缩）`);
         this.currentTimeIndex++;
+        return;
+      }
+      
+      // 使用响应式更新模式
+      const newHistory = [...this.spectrumHistory];
+      const newTimestamps = [...this.timestamps];
+      
+      // 动态调整最大历史大小
+      const currentMaxHistorySize = this.resolutionManager.getMaxHistorySize();
+      if (currentMaxHistorySize !== this.maxHistorySize) {
+        this.maxHistorySize = currentMaxHistorySize;
+        console.info(`[数据流调试] 更新最大历史大小: ${this.maxHistorySize}`);
+      }
+      
+      // 如果达到最大历史大小，移除最旧的数据并释放内存
+      if (newHistory.length >= this.maxHistorySize) {
+        const removedSpectrum = newHistory.shift();
+        newTimestamps.shift();
         
-        // 更新滑动窗口
-        this.slidingWindowManager.addData(newSpectrum);
-        
-        // 更新性能指标
-        this.updatePerformanceMetrics();
-        
-        console.debug(`[WaterfallData] 添加频谱帧，当前历史大小: ${this.spectrumHistory.length}, 压缩后大小: ${processedSpectrum.length}`);
+        // 释放被移除的频谱数据到内存池
+        if (removedSpectrum) {
+          this.spectrumPool.release(removedSpectrum);
+          console.info(`[数据流调试] 移除最旧数据帧`);
+        }
+      }
+      
+      // 使用内存池获取新的Float32Array
+      const newSpectrum = this.spectrumPool.acquire(processedSpectrum.length) as Float32Array;
+      newSpectrum.set(processedSpectrum); // 复制处理后的数据
+      
+      // 添加新数据
+      newHistory.push(newSpectrum);
+      newTimestamps.push(Date.now());
+      
+      // 更新响应式数据
+      this.spectrumHistory = newHistory;
+      this.timestamps = newTimestamps;
+      this.currentTimeIndex++;
+      
+      // 更新滑动窗口
+      this.slidingWindowManager.addData(newSpectrum);
+      
+      // 更新性能指标
+      this.updatePerformanceMetrics();
+      
+      console.info(`[数据流调试] 添加频谱帧完成，当前历史大小: ${this.spectrumHistory.length}, 压缩后大小: ${processedSpectrum.length}`);
     }
     
     /**

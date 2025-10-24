@@ -70,16 +70,24 @@ export struct WaterfallChartComponent {
 
   // 瀑布图绘制函数
   private async drawWaterfallChart(ctx: CanvasRenderingContext2D, canvasWidth: number, canvasHeight: number): Promise<void> {
+    console.info(`[组件调试] 开始绘制瀑布图，画布尺寸: ${canvasWidth}x${canvasHeight}`);
     const waterfallData = this.ak.uiDisplayState.displayWaterfallData;
     
+    console.info(`[组件调试] 数据状态: ${waterfallData.spectrumHistory.length > 0 ? '有数据' : '无数据'}`);
+    
     if (waterfallData.spectrumHistory.length === 0) {
+      console.info(`[组件调试] 数据为空，绘制空状态`);
       this.drawEmptyState(ctx, canvasWidth, canvasHeight);
       return;
     }
 
     // 防止过于频繁的绘制
     const now = Date.now();
-    if (now - this.lastDrawTime < 50) { // 最小绘制间隔50ms
+    const timeSinceLastDraw = now - this.lastDrawTime;
+    console.info(`[组件调试] 绘制间隔: ${timeSinceLastDraw}ms`);
+    
+    if (timeSinceLastDraw < 50) { // 最小绘制间隔50ms
+      console.info(`[组件调试] 跳过绘制（间隔过短）`);
       return;
     }
 
@@ -95,7 +103,10 @@ export struct WaterfallChartComponent {
       options: DefaultWaterfallDrawConfig.options
     };
 
+    console.info(`[组件调试] 绘制配置:`, JSON.stringify(drawConfig));
+
     try {
+      console.info(`[组件调试] 调用drawWaterfall函数`);
       await drawWaterfall(
         ctx,
         canvasWidth,
@@ -105,8 +116,10 @@ export struct WaterfallChartComponent {
         drawConfig
       );
       this.lastDrawTime = now;
+      console.info(`[组件调试] 绘制完成`);
     } catch (error) {
-      console.error('[瀑布图] 绘制失败:', error);
+      console.error('[组件调试] 绘制失败:', error);
+      console.error('[组件调试] 错误堆栈:', (error as Error).stack);
       this.drawError = (error as Error).message;
       this.drawErrorState(ctx, canvasWidth, canvasHeight, (error as Error).message);
     } finally {

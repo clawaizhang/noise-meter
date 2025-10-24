@@ -139,7 +139,7 @@ interface RendererConfig {
 }
 
 // 渲染器配置
-const rendererConfig: RendererConfig = {
+let rendererConfig: RendererConfig = {
   width: 800,
   height: 400,
   pixelRatio: 1.0,
@@ -175,10 +175,33 @@ export async function drawWaterfall(
   sysResourceManager: resourceManager.ResourceManager,
   drawConfig: WaterfallDrawConfig = DefaultWaterfallDrawConfig
 ): Promise<void> {
-  console.info(`[瀑布图绘制] 开始绘制，数据帧数: ${waterfallData.spectrumHistory.length}`);
+  console.info(`[瀑布图调试] 开始绘制，画布尺寸: ${canvasWidth}x${canvasHeight}`);
+  console.info(`[瀑布图调试] 数据帧数: ${waterfallData.spectrumHistory.length}`);
+  console.info(`[瀑布图调试] 颜色映射配置:`, JSON.stringify({
+    type: waterfallData.colorMap.colorMapType,
+    minDb: waterfallData.colorMap.minDb,
+    maxDb: waterfallData.colorMap.maxDb,
+    opacity: waterfallData.colorMap.opacity
+  }));
 
-  if (!canvasContext || waterfallData.spectrumHistory.length === 0) {
-    console.warn('[瀑布图绘制] Canvas上下文无效或数据为空');
+  // 检查数据有效性
+  if (waterfallData.spectrumHistory.length > 0) {
+    const firstFrame = waterfallData.spectrumHistory[0];
+    console.info(`[瀑布图调试] 第一帧数据长度: ${firstFrame.length}`);
+    if (firstFrame.length > 0) {
+      const minValue = Math.min(...firstFrame);
+      const maxValue = Math.max(...firstFrame);
+      console.info(`[瀑布图调试] 第一帧数据范围: ${minValue.toFixed(2)} ~ ${maxValue.toFixed(2)}`);
+    }
+  }
+
+  if (!canvasContext) {
+    console.error('[瀑布图调试] Canvas上下文无效');
+    return;
+  }
+
+  if (waterfallData.spectrumHistory.length === 0) {
+    console.warn('[瀑布图调试] 频谱数据为空');
     return;
   }
 
@@ -229,6 +252,7 @@ export async function drawWaterfall(
 
   // 初始化ImageData渲染器
   if (!imageDataRenderer) {
+    console.info(`[ImageData调试] 创建新的ImageData渲染器，尺寸: ${canvasWidth}x${canvasHeight}`);
     imageDataRenderer = new ImageDataRenderer({
       width: canvasWidth,
       height: canvasHeight,
@@ -237,15 +261,26 @@ export async function drawWaterfall(
       maxFramesPerRender: rendererConfig.maxFramesPerRender
     });
     imageDataRenderer.initialize(canvasContext);
+    console.info(`[ImageData调试] ImageData渲染器初始化完成`);
   } else {
-    // 更新渲染器尺寸
-    imageDataRenderer.updateConfig({
-      width: canvasWidth,
-      height: canvasHeight
-    });
+    // 检查是否需要更新尺寸
+    const currentConfig = imageDataRenderer.getStats();
+    if (currentConfig.isInitialized &&
+        (canvasWidth !== rendererConfig.width || canvasHeight !== rendererConfig.height)) {
+      console.info(`[ImageData调试] 更新ImageData渲染器尺寸: ${canvasWidth}x${canvasHeight}`);
+      imageDataRenderer.updateConfig({
+        width: canvasWidth,
+        height: canvasHeight
+      });
+      rendererConfig.width = canvasWidth;
+      rendererConfig.height = canvasHeight;
+    } else {
+      console.info(`[ImageData调试] 使用现有ImageData渲染器，尺寸: ${canvasWidth}x${canvasHeight}`);
+    }
   }
 
   // 分层渲染：先绘制静态元素，再绘制动态数据
+  const startTime = Date.now();
   await drawLayeredWaterfall(
     canvasContext,
     chartWidth,
@@ -254,13 +289,14 @@ export async function drawWaterfall(
     drawConfig,
     sysResourceManager
   );
+  const endTime = Date.now();
 
   // 绘制坐标轴
   if (drawConfig.options.showTimeAxis || drawConfig.options.showFrequencyAxis) {
     drawAxes(canvasContext, chartWidth, chartHeight, drawConfig, sysResourceManager);
   }
 
-  console.info('[瀑布图绘制] 绘制完成');
+  console.info(`[瀑布图调试] 绘制完成，总耗时: ${endTime - startTime}ms`);
 }
 /**
  * 分层绘制瀑布图
@@ -285,11 +321,33 @@ async function drawLayeredWaterfall(
   // 绘制频谱数据
   const spectrumHistory = waterfallData.spectrumHistory;
   if (spectrumHistory.length > 0) {
-    // 使用ImageData渲染器绘制频谱数据
-    if (imageDataRenderer) {
-      // 调用flush方法清空缓冲区并渲染
-      imageDataRenderer.flush();
+    console.info(`[分层渲染] 开始绘制频谱数据，帧数: ${spectrumHistory.length}`);
+    
+    try {
+      // 使用并行计算处理频谱数据
+      await drawWaterfallDataWithParallel(
+        canvasContext,
+        chartWidth,
+        chartHeight,
+        waterfallData,
+        drawConfig,
+        sysResourceManager
+      );
+      console.info(`[分层渲染] 并行计算绘制完成`);
+    } catch (error) {
+      console.error(`[分层渲染] 并行计算失败，使用回退绘制:`, error);
+      // 回退到直接绘制
+      drawWaterfallDataDirect(
+        canvasContext,
+        chartWidth,
+        chartHeight,
+        waterfallData,
+        drawConfig,
+        sysResourceManager
+      );
     }
+  } else {
+    console.warn(`[分层渲染] 频谱数据为空，跳过绘制`);
   }
 
   console.info('[分层渲染] 瀑布图分层绘制完成');
@@ -360,9 +418,12 @@ async function drawWaterfallDataWithParallel(
         currentColorMapParams.maxDb !== cacheState.lastColorMapParams.maxDb ||
         currentColorMapParams.opacity !== cacheState.lastColorMapParams.opacity;
 
+    console.info(`[并行计算调试] 颜色映射更新检查: ${shouldUpdateColorMap ? '需要更新' : '使用缓存'}`);
+    console.info(`[并行计算调试] 颜色映射参数: type=${colorMapConfig.colorMapType}, minDb=${colorMapConfig.minDb}, maxDb=${colorMapConfig.maxDb}, opacity=${colorMapConfig.opacity}`);
+
     // 并行生成颜色映射表（如果需要更新）
     if (shouldUpdateColorMap || cacheState.colorMap.length === 0) {
-      console.info('[瀑布图] 更新颜色映射表');
+      console.info('[并行计算调试] 开始并行生成颜色映射表');
       cacheState.colorMap = await taskpool.execute<[string, number, number,number], string[]>(
         concurrentGenerateColorMap,
         colorMapConfig.colorMapType,
@@ -370,14 +431,17 @@ async function drawWaterfallDataWithParallel(
         colorMapConfig.maxDb,
         colorMapConfig.opacity
       );
+      console.info(`[并行计算调试] 颜色映射表生成完成，长度: ${cacheState.colorMap.length}`);
       cacheState.lastColorMapParams.type = currentColorMapParams.type;
       cacheState.lastColorMapParams.minDb = currentColorMapParams.minDb;
       cacheState.lastColorMapParams.maxDb = currentColorMapParams.maxDb;
       cacheState.lastColorMapParams.opacity = currentColorMapParams.opacity;
+    } else {
+      console.info(`[并行计算调试] 使用缓存的颜色映射表，长度: ${cacheState.colorMap.length}`);
     }
 
     // 并行处理所有帧数据
-    console.info(`[瀑布图] 并行处理 ${spectrumHistory.length} 帧数据`);
+    console.info(`[并行计算调试] 开始并行处理 ${spectrumHistory.length} 帧数据`);
     const processedFrames: ProcessedFrame[] = await taskpool.execute(
       concurrentProcessAllWaterfallFrames,
       spectrumHistory,
@@ -392,12 +456,23 @@ async function drawWaterfallDataWithParallel(
       colorMapConfig.opacity
     ) as ProcessedFrame[];
 
+    console.info(`[并行计算调试] 并行处理完成，返回帧数: ${processedFrames?.length || 0}`);
+    if (processedFrames && processedFrames.length > 0) {
+      const firstFrame = processedFrames[0];
+      console.info(`[并行计算调试] 第一处理帧包含 ${firstFrame.bins?.length || 0} 个bin`);
+      if (firstFrame.bins && firstFrame.bins.length > 0) {
+        const firstBin = firstFrame.bins[0];
+        console.info(`[并行计算调试] 第一个bin数据: db=${firstBin.db}, color=${firstBin.color}, x=${firstBin.x}`);
+      }
+    }
+
     // 使用处理后的数据进行绘制
     drawProcessedFrames(canvasContext, processedFrames, drawConfig);
 
     // 更新缓存
     cacheState.processedFrames = processedFrames;
     cacheState.lastProcessTime = Date.now();
+    console.info(`[并行计算调试] 缓存更新完成`);
 
   } catch (error) {
     console.error('[瀑布图] 并行计算失败，回退到直接绘制:', error);
@@ -421,28 +496,40 @@ function drawProcessedFrames(
   processedFrames: ProcessedFrame[],
   drawConfig: WaterfallDrawConfig
 ): void {
+  console.info(`[像素绘制调试] 开始绘制 ${processedFrames.length} 个处理帧`);
+  
   if (!imageDataRenderer) {
-    console.warn('[瀑布图] ImageData渲染器未初始化，使用回退绘制');
+    console.warn('[像素绘制调试] ImageData渲染器未初始化，使用回退绘制');
     drawProcessedFramesFallback(canvasContext, processedFrames, drawConfig);
     return;
   }
 
+  console.info(`[像素绘制调试] ImageData渲染器状态: 已初始化`);
+
   const pixels: PixelData[] = [];
   const rowSpacing = drawConfig.perspective.rowSpacing;
+  let totalValidBins = 0;
+  let totalInvalidBins = 0;
 
   for (const frame of processedFrames) {
     if (!frame || !frame.bins) {
+      console.warn(`[像素绘制调试] 跳过无效帧`);
       continue;
     }
 
     for (const bin of frame.bins) {
       if (!bin || !isFinite(bin.db) || bin.db < drawConfig.colorMap.minDb) {
+        totalInvalidBins++;
         continue;
       }
 
       // 解析颜色值
       const colorMatch = bin.color.match(/rgba\((\d+),\s*(\d+),\s*(\d+),\s*([\d.]+)\)/);
-      if (!colorMatch) continue;
+      if (!colorMatch) {
+        console.warn(`[像素绘制调试] 颜色解析失败: ${bin.color}`);
+        totalInvalidBins++;
+        continue;
+      }
 
       const r = parseInt(colorMatch[1]);
       const g = parseInt(colorMatch[2]);
@@ -459,14 +546,26 @@ function drawProcessedFrames(
       );
 
       pixels.push(...rectPixels);
+      totalValidBins++;
     }
   }
 
-  // 批量添加像素数据
-  imageDataRenderer.addPixels(pixels);
+  console.info(`[像素绘制调试] 有效bin数: ${totalValidBins}, 无效bin数: ${totalInvalidBins}`);
+  console.info(`[像素绘制调试] 总像素数: ${pixels.length}`);
 
-  // 智能渲染
-  imageDataRenderer.smartRender();
+  // 批量添加像素数据
+  if (pixels.length > 0) {
+    console.info(`[像素绘制调试] 开始添加像素数据到渲染器`);
+    imageDataRenderer.addPixels(pixels);
+    console.info(`[像素绘制调试] 像素数据添加完成`);
+
+    // 智能渲染
+    console.info(`[像素绘制调试] 开始智能渲染`);
+    imageDataRenderer.smartRender();
+    console.info(`[像素绘制调试] 智能渲染完成`);
+  } else {
+    console.warn(`[像素绘制调试] 没有有效像素数据可绘制`);
+  }
 }
 
 /**

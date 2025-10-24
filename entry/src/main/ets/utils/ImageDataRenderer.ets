@@ -80,17 +80,21 @@ export class ImageDataRenderer {
    * 初始化渲染器
    */
   initialize(canvasContext: CanvasRenderingContext2D): void {
+    console.info(`[ImageData渲染器调试] 开始初始化渲染器`);
     this.canvasContext = canvasContext;
     
     // 创建ImageData对象
     const width = Math.floor(this.config.width * this.config.pixelRatio);
     const height = Math.floor(this.config.height * this.config.pixelRatio);
     
+    console.info(`[ImageData渲染器调试] 创建ImageData，尺寸: ${width}x${height}`);
     this.imageData = canvasContext.createImageData(width, height);
     this.data = this.imageData.data;
     this.isInitialized = true;
     
-    console.info(`[ImageDataRenderer] 初始化完成，尺寸: ${width}x${height}`);
+    console.info(`[ImageData渲染器调试] 初始化完成，ImageData状态: ${this.imageData ? '成功' : '失败'}`);
+    console.info(`[ImageData渲染器调试] 数据缓冲区状态: ${this.data ? '成功' : '失败'}`);
+    console.info(`[ImageData渲染器调试] 渲染器状态: ${this.isInitialized ? '已初始化' : '未初始化'}`);
   }
 
   /**
@@ -149,17 +153,37 @@ export class ImageDataRenderer {
    * 清空缓冲区并渲染
    */
   flush(): void {
-    if (!this.isInitialized || !this.canvasContext || !this.imageData || this.pixelBuffer.length === 0) {
+    console.info(`[ImageData渲染器调试] 开始flush操作`);
+    
+    if (!this.isInitialized) {
+      console.warn(`[ImageData渲染器调试] 渲染器未初始化`);
+      return;
+    }
+    if (!this.canvasContext) {
+      console.warn(`[ImageData渲染器调试] Canvas上下文无效`);
+      return;
+    }
+    if (!this.imageData) {
+      console.warn(`[ImageData渲染器调试] ImageData无效`);
+      return;
+    }
+    if (this.pixelBuffer.length === 0) {
+      console.info(`[ImageData渲染器调试] 像素缓冲区为空，跳过渲染`);
       return;
     }
 
+    console.info(`[ImageData渲染器调试] 准备渲染 ${this.pixelBuffer.length} 个像素`);
     const startTime = Date.now();
 
     // 批量设置像素
+    console.info(`[ImageData渲染器调试] 开始批量设置像素`);
     this.setPixels(this.pixelBuffer);
+    console.info(`[ImageData渲染器调试] 像素设置完成`);
 
     // 使用putImageData一次性绘制
+    console.info(`[ImageData渲染器调试] 开始putImageData操作`);
     this.canvasContext.putImageData(this.imageData, 0, 0);
+    console.info(`[ImageData渲染器调试] putImageData完成`);
 
     // 清空缓冲区
     this.pixelBuffer = [];
@@ -167,9 +191,7 @@ export class ImageDataRenderer {
     this.lastRenderTime = Date.now() - startTime;
     this.totalRenderTime += this.lastRenderTime;
 
-    if (this.renderCount % 10 === 0) {
-      console.debug(`[ImageDataRenderer] 渲染完成，耗时: ${this.lastRenderTime}ms, 总渲染次数: ${this.renderCount}`);
-    }
+    console.info(`[ImageData渲染器调试] 渲染完成，耗时: ${this.lastRenderTime}ms, 总渲染次数: ${this.renderCount}`);
   }
 
   /**
