@@ -139,7 +139,7 @@ export struct WaterfallChartComponent {
   private drawEmptyState(ctx: CanvasRenderingContext2D, canvasWidth: number, canvasHeight: number): void {
     // 清除画布
     ctx.clearRect(0, 0, canvasWidth, canvasHeight);
-    
+
     // 绘制背景
     ctx.fillStyle = this.sysResourceManager.getColorSync($r('sys.color.background_primary').id);
     ctx.fillRect(0, 0, canvasWidth, canvasHeight);

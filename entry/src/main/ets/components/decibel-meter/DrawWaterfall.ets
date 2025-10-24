@@ -310,8 +310,8 @@ async function drawLayeredWaterfall(
   sysResourceManager: resourceManager.ResourceManager
 ): Promise<void> {
   // 绘制背景
-  canvasContext.fillStyle = sysResourceManager.getColorSync($r('sys.color.ohos_id_color_background').id).toString();
-  canvasContext.fillRect(0, 0, chartWidth, chartHeight);
+  // canvasContext.fillStyle = sysResourceManager.getColorSync($r('sys.color.ohos_id_color_background').id).toString();
+  // canvasContext.fillRect(0, 0, chartWidth, chartHeight);
 
   // 绘制网格
   if (drawConfig.options.showGrid) {
