@@ -219,6 +219,8 @@ export async function drawWaterfall(
     return;
   }
 
+  console.info(`[瀑布图绘制] 绘制区域尺寸: ${chartWidth}x${chartHeight}`);
+
   // 绘制背景和网格
   if (drawConfig.options.showGrid) {
     drawGrid(canvasContext, chartWidth, chartHeight, drawConfig, sysResourceManager);
@@ -247,7 +249,9 @@ export async function drawWaterfall(
   console.info(`[瀑布图绘制] 动态分辨率参数:`, {
     pixelSize: resolution.pixelSize,
     rowSpacing: resolution.rowSpacing,
-    maxDisplayRows: resolution.maxDisplayRows
+    maxDisplayRows: resolution.maxDisplayRows,
+    actualRows: resolution.actualRows,
+    chartHeight: chartHeight
   });
 
   // 初始化预渲染配置
@@ -533,7 +537,7 @@ function drawProcessedFrames(
   const pixelSize = resolution?.pixelSize ?? drawConfig.perspective.rowSpacing;
   const rowSpacing = resolution?.rowSpacing ?? drawConfig.perspective.rowSpacing;
   
-  console.info(`[像素绘制调试] 使用像素大小: ${pixelSize}, 行间距: ${rowSpacing}`);
+  console.info(`[像素绘制调试] 使用像素大小: ${pixelSize}, 行间距: ${rowSpacing}, 处理帧数: ${processedFrames.length}`);
   
   let totalValidBins = 0;
   let totalInvalidBins = 0;
@@ -563,7 +567,7 @@ function drawProcessedFrames(
       const b = parseInt(colorMatch[3]);
       const a = parseFloat(colorMatch[4]) * 255; // 转换为0-255范围
 
-      // 创建矩形像素数据 - 使用动态像素大小
+      // 创建矩形像素数据 - 使用动态像素大小，确保填满Canvas高度
       const rectPixels = imageDataRenderer.createRectPixels(
         bin.x,
         frame.y,

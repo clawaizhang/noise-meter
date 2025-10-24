@@ -101,46 +101,10 @@ export struct BaseChartComponent {
       ChartUtils.getSystemColor(this.sysResourceManager, $r('sys.color.font_on_tertiary'))
     );
 
-    // 绘制网格
-    this.drawGrid();
-
     // 调用具体的图表绘制回调
     if (this.onDrawChart) {
       this.onDrawChart(this.canvasContext, this.canvasWidth, this.canvasHeight);
     }
-  }
-
-  /**
-   * 绘制网格
-   */
-  private drawGrid(): void {
-    // 瀑布图在DrawWaterfall组件中处理网格绘制，这里跳过
-    if (this.chartConfig.chartType === ChartType.WATERFALL) {
-      return;
-    }
-
-    const margin = this.chartConfig.margin;
-    const gridColor = ChartUtils.getSystemColor(this.sysResourceManager, $r('sys.color.font_on_tertiary'));
-
-    // 绘制水平网格线
-    ChartUtils.drawHorizontalGridLines(
-      this.canvasContext,
-      this.canvasWidth,
-      this.canvasHeight,
-      margin,
-      5,
-      gridColor
-    );
-
-    // 绘制垂直网格线
-    ChartUtils.drawVerticalGridLines(
-      this.canvasContext,
-      this.canvasWidth,
-      this.canvasHeight,
-      margin,
-      8,
-      gridColor
-    );
   }
 
   /**

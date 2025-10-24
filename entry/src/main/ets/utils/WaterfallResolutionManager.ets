@@ -54,11 +54,12 @@ export class CacheStats {
 
 /**
  * 默认分辨率配置
+ * 优化参数让瀑布图填满Canvas高度
  */
 export const DefaultResolutionConfig: ResolutionConfig = {
-  minPixelSize: 4,      // 确保可见性
-  maxPixelSize: 16,      // 避免过度放大
-  targetRows: 160,       // 平衡显示效果和性能
+  minPixelSize: 2,      // 降低最小像素大小，让更多行可以显示
+  maxPixelSize: 8,      // 降低最大像素大小，避免过度放大
+  targetRows: 80,       // 降低目标行数，让像素大小更合理
   enableGap: false,     // 默认不启用间隙
   gapRatio: 0.1,        // 10%间隙比例
   performanceMode: 'balanced'
@@ -69,23 +70,23 @@ export const DefaultResolutionConfig: ResolutionConfig = {
  */
 export const PerformanceConfigs: Record<'quality' | 'performance' | 'balanced', Partial<ResolutionConfig>> = {
   "quality": {
-    minPixelSize: 6,
-    maxPixelSize: 24,
-    targetRows: 120,
+    minPixelSize: 3,
+    maxPixelSize: 12,
+    targetRows: 60,
     enableGap: true,
     gapRatio: 0.15
   },
   "performance": {
-    minPixelSize: 2,
-    maxPixelSize: 8,
-    targetRows: 200,
+    minPixelSize: 1,
+    maxPixelSize: 6,
+    targetRows: 100,
     enableGap: false,
     gapRatio: 0
   },
   "balanced": {
-    minPixelSize: 4,
-    maxPixelSize: 16,
-    targetRows: 160,
+    minPixelSize: 2,
+    maxPixelSize: 8,
+    targetRows: 80,
     enableGap: false,
     gapRatio: 0.1
   }

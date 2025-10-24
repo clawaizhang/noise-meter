@@ -6,11 +6,6 @@
       "buildFunction": "NoiseMeterBuilder"
     },
     {
-      "name": "DeviceManager",
-      "pageSourceFile": "src/main/ets/pages/device_manager/MainDeviceManagerNavigation.ets",
-      "buildFunction": "DeviceManagerBuilder"
-    },
-    {
       "name": "DecibelHistory",
       "pageSourceFile": "src/main/ets/pages/noisemeter/DecibelHistoryNavigation.ets",
       "buildFunction": "DecibelHistoryBuilder"

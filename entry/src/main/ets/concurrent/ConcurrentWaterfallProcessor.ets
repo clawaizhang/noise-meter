@@ -55,15 +55,17 @@ export function concurrentProcessAllWaterfallFrames(
   colorMapType: string,
   colorMapOpacity: number
 ): ProcessedFrame[] {
-  const maxRows = Math.floor(chartHeight / rowSpacing);
-  const rowsToProcess = Math.min(spectrumHistory.length, maxRows);
+  // 计算最大可显示行数 - 使用Canvas高度和行间距
+  const maxDisplayRows = Math.floor(chartHeight / rowSpacing);
+  // 使用所有可用数据，但不超过Canvas能显示的最大行数
+  const rowsToProcess = Math.min(spectrumHistory.length, maxDisplayRows);
   const processedFrames: ProcessedFrame[] = new Array(rowsToProcess);
   
   // 预计算对数坐标映射参数
   const logMin = Math.log10(16);
   const logMax = Math.log10(16000);
   
-  console.debug(`[并行处理器] 处理参数: rowsToProcess=${rowsToProcess}, rowSpacing=${rowSpacing}, pixelSize=${pixelSize}`);
+  console.debug(`[并行处理器] 处理参数: rowsToProcess=${rowsToProcess}, maxDisplayRows=${maxDisplayRows}, rowSpacing=${rowSpacing}, pixelSize=${pixelSize}, chartHeight=${chartHeight}`);
   
   // 并行处理所有帧
   for (let rowIndex = 0; rowIndex < rowsToProcess; rowIndex++) {
@@ -118,7 +120,7 @@ export function concurrentProcessAllWaterfallFrames(
       };
     }
     
-    // 计算Y坐标（从底部开始）- 使用动态行间距
+    // 计算Y坐标（从底部开始）- 使用动态行间距，确保填满Canvas高度
     const y = chartHeight - (rowIndex * rowSpacing);
     
     processedFrames[rowIndex] = {
@@ -129,5 +131,6 @@ export function concurrentProcessAllWaterfallFrames(
     };
   }
   
+  console.debug(`[并行处理器] 处理完成，返回 ${processedFrames.length} 帧数据`);
   return processedFrames;
 }
