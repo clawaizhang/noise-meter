@@ -8,6 +8,9 @@ import { taskpool } from '@kit.ArkTS';
 import { WaterfallData, ColorMapConfig } from '../../models/WaterfallData';
 import { concurrentGenerateColorMap } from '../../concurrent/ConcurrentColorMapGenerator';
 import { concurrentProcessAllWaterfallFrames, ProcessedFrame } from '../../concurrent/ConcurrentWaterfallProcessor';
+import { ImageDataRenderer, PixelData, DefaultImageDataRenderConfig } from '../../utils/ImageDataRenderer';
+import { CanvasCacheManager, PreRenderConfig, PreRenderElementType, DefaultCacheConfig } from '../../utils/CanvasCacheManager';
+import { ColorMapOptimizer, ColorMapType } from '../../utils/ColorMapOptimizer';
 
 /**
  * 边距配置接口
@@ -117,6 +120,44 @@ export const DefaultWaterfallDrawConfig: WaterfallDrawConfig = {
 // 缓存状态
 let cacheState: WaterfallCacheState = new WaterfallCacheState();
 
+// ImageData渲染器
+let imageDataRenderer: ImageDataRenderer | null = null;
+
+// Canvas缓存管理器
+let canvasCacheManager: CanvasCacheManager | null = null;
+
+// 颜色映射优化器
+let colorMapOptimizer: ColorMapOptimizer | null = null;
+
+// 渲染器配置接口
+interface RendererConfig {
+  width: number;
+  height: number;
+  pixelRatio: number;
+  enableAntialiasing: boolean;
+  maxFramesPerRender: number;
+}
+
+// 渲染器配置
+const rendererConfig: RendererConfig = {
+  width: 800,
+  height: 400,
+  pixelRatio: 1.0,
+  enableAntialiasing: true,
+  maxFramesPerRender: 100
+};
+
+// 预渲染配置
+let preRenderConfig: PreRenderConfig = {
+  width: 0,
+  height: 0,
+  margin: {left: 0, top: 0, right: 0, bottom: 0},
+  gridColor: '',
+  axisColor: '',
+  backgroundColor: '',
+  fontSize: 12
+};
+
 /**
  * 绘制频谱瀑布图
  * @param canvasContext Canvas上下文
@@ -158,8 +199,54 @@ export async function drawWaterfall(
     drawGrid(canvasContext, chartWidth, chartHeight, drawConfig, sysResourceManager);
   }
 
-  // 使用并行计算绘制瀑布图数据
-  await drawWaterfallDataWithParallel(
+  // 初始化Canvas缓存管理器
+  if (!canvasCacheManager) {
+    canvasCacheManager = new CanvasCacheManager(DefaultCacheConfig);
+  }
+
+  // 初始化颜色映射优化器
+  if (!colorMapOptimizer) {
+    colorMapOptimizer = new ColorMapOptimizer();
+    // 预计算常用颜色映射
+    colorMapOptimizer.precomputeAllMaps(256);
+  }
+
+  // 初始化预渲染配置
+  if (!preRenderConfig ||
+      preRenderConfig.width !== canvasWidth ||
+      preRenderConfig.height !== canvasHeight) {
+    preRenderConfig.width = canvasWidth;
+    preRenderConfig.height = canvasHeight;
+    preRenderConfig.margin.top = drawConfig.margin.top;
+    preRenderConfig.margin.right = drawConfig.margin.right;
+    preRenderConfig.margin.bottom = drawConfig.margin.bottom;
+    preRenderConfig.margin.left = drawConfig.margin.left;
+    preRenderConfig.gridColor = sysResourceManager.getColorSync($r('sys.color.font_on_tertiary').id).toString();
+    preRenderConfig.axisColor = sysResourceManager.getColorSync($r('sys.color.font_on_primary').id).toString();
+    preRenderConfig.backgroundColor = sysResourceManager.getColorSync($r('sys.color.ohos_id_color_background').id).toString();
+    preRenderConfig.fontSize = 12;
+  }
+
+  // 初始化ImageData渲染器
+  if (!imageDataRenderer) {
+    imageDataRenderer = new ImageDataRenderer({
+      width: canvasWidth,
+      height: canvasHeight,
+      pixelRatio: rendererConfig.pixelRatio,
+      enableAntialiasing: rendererConfig.enableAntialiasing,
+      maxFramesPerRender: rendererConfig.maxFramesPerRender
+    });
+    imageDataRenderer.initialize(canvasContext);
+  } else {
+    // 更新渲染器尺寸
+    imageDataRenderer.updateConfig({
+      width: canvasWidth,
+      height: canvasHeight
+    });
+  }
+
+  // 分层渲染：先绘制静态元素，再绘制动态数据
+  await drawLayeredWaterfall(
     canvasContext,
     chartWidth,
     chartHeight,
@@ -175,6 +262,38 @@ export async function drawWaterfall(
 
   console.info('[瀑布图绘制] 绘制完成');
 }
+/**
+ * 分层绘制瀑布图
+ */
+async function drawLayeredWaterfall(
+  canvasContext: CanvasRenderingContext2D,
+  chartWidth: number,
+  chartHeight: number,
+  waterfallData: WaterfallData,
+  drawConfig: WaterfallDrawConfig,
+  sysResourceManager: resourceManager.ResourceManager
+): Promise<void> {
+  // 绘制背景
+  canvasContext.fillStyle = sysResourceManager.getColorSync($r('sys.color.ohos_id_color_background').id).toString();
+  canvasContext.fillRect(0, 0, chartWidth, chartHeight);
+
+  // 绘制网格
+  if (drawConfig.options.showGrid) {
+    drawGrid(canvasContext, chartWidth, chartHeight, drawConfig, sysResourceManager);
+  }
+
+  // 绘制频谱数据
+  const spectrumHistory = waterfallData.spectrumHistory;
+  if (spectrumHistory.length > 0) {
+    // 使用ImageData渲染器绘制频谱数据
+    if (imageDataRenderer) {
+      // 调用flush方法清空缓冲区并渲染
+      imageDataRenderer.flush();
+    }
+  }
+
+  console.info('[分层渲染] 瀑布图分层绘制完成');
+}
 
 /**
  * 绘制网格
@@ -187,7 +306,7 @@ function drawGrid(
   sysResourceManager: resourceManager.ResourceManager
 ): void {
   const gridColor = sysResourceManager.getColorSync($r('sys.color.font_on_tertiary').id);
-  canvasContext.strokeStyle = gridColor;
+  canvasContext.strokeStyle = gridColor.toString();
   canvasContext.lineWidth = 0.5;
 
   // 水平网格线
@@ -295,9 +414,65 @@ async function drawWaterfallDataWithParallel(
 }
 
 /**
- * 绘制处理后的帧数据
+ * 绘制处理后的帧数据（使用ImageData优化版本）
  */
 function drawProcessedFrames(
+  canvasContext: CanvasRenderingContext2D,
+  processedFrames: ProcessedFrame[],
+  drawConfig: WaterfallDrawConfig
+): void {
+  if (!imageDataRenderer) {
+    console.warn('[瀑布图] ImageData渲染器未初始化，使用回退绘制');
+    drawProcessedFramesFallback(canvasContext, processedFrames, drawConfig);
+    return;
+  }
+
+  const pixels: PixelData[] = [];
+  const rowSpacing = drawConfig.perspective.rowSpacing;
+
+  for (const frame of processedFrames) {
+    if (!frame || !frame.bins) {
+      continue;
+    }
+
+    for (const bin of frame.bins) {
+      if (!bin || !isFinite(bin.db) || bin.db < drawConfig.colorMap.minDb) {
+        continue;
+      }
+
+      // 解析颜色值
+      const colorMatch = bin.color.match(/rgba\((\d+),\s*(\d+),\s*(\d+),\s*([\d.]+)\)/);
+      if (!colorMatch) continue;
+
+      const r = parseInt(colorMatch[1]);
+      const g = parseInt(colorMatch[2]);
+      const b = parseInt(colorMatch[3]);
+      const a = parseFloat(colorMatch[4]) * 255; // 转换为0-255范围
+
+      // 创建矩形像素数据
+      const rectPixels = imageDataRenderer.createRectPixels(
+        bin.x,
+        frame.y,
+        rowSpacing,
+        rowSpacing,
+        r, g, b, a
+      );
+
+      pixels.push(...rectPixels);
+    }
+  }
+
+  // 批量添加像素数据
+  imageDataRenderer.addPixels(pixels);
+
+  // 智能渲染
+  imageDataRenderer.smartRender();
+}
+
+/**
+ * 回退绘制方法（保持兼容性）
+ */
+function drawProcessedFramesFallback(
   canvasContext: CanvasRenderingContext2D,
   processedFrames: ProcessedFrame[],
   drawConfig: WaterfallDrawConfig
@@ -520,7 +695,7 @@ function drawAxes(
   sysResourceManager: resourceManager.ResourceManager
 ): void {
   const textColor = sysResourceManager.getColorSync($r('sys.color.font_on_tertiary').id);
-  canvasContext.fillStyle = textColor;
+  canvasContext.fillStyle = textColor.toString();
   canvasContext.font = '12px sans-serif';
   canvasContext.textAlign = 'center';
 

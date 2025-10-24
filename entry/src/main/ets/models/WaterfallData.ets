@@ -1,7 +1,11 @@
 /**
  * 频谱瀑布图数据模型
  * 基于响应式数据管理，存储历史频谱数据用于瀑布图显示
+ * 使用内存对象池优化内存分配和GC性能
+ * 集成动态分辨率管理和滑动窗口功能
  */
+import { GlobalMemoryPoolManager, Float32ArrayPool } from '../utils/MemoryPool';
+import { DynamicResolutionManager, SlidingWindowManager, PerformanceLevel } from '../utils/DynamicResolutionManager';
 /**
  * 频谱统计信息接口
  */
@@ -61,7 +65,26 @@ export class WaterfallData {
     // 压缩比例（每n帧保留1帧）
     @Trace compressionRatio: number = 2;
     
+    // 内存池管理器
+    private memoryPoolManager: GlobalMemoryPoolManager;
+    private spectrumPool: Float32ArrayPool; // 使用具体类型替代any
+    
+    // 动态分辨率管理器
+    private resolutionManager: DynamicResolutionManager;
+    
+    // 滑动窗口管理器
+    private slidingWindowManager: SlidingWindowManager;
+    
+    // 性能监控
+    private lastFrameTime: number = 0;
+    private frameCount: number = 0;
+    private droppedFrames: number = 0;
+    
     constructor() {
+        this.memoryPoolManager = GlobalMemoryPoolManager.getInstance();
+        this.spectrumPool = this.memoryPoolManager.getSpectrumPool();
+        this.resolutionManager = new DynamicResolutionManager();
+        this.slidingWindowManager = new SlidingWindowManager(this.maxHistorySize);
         this.initialize();
     }
     
@@ -75,7 +98,7 @@ export class WaterfallData {
     }
     
     /**
-     * 添加新的频谱数据帧
+     * 添加新的频谱数据帧（集成动态分辨率优化）
      * @param spectrum 频谱数据
      */
     addSpectrumFrame(spectrum: Float32Array): void {
@@ -84,8 +107,12 @@ export class WaterfallData {
             return;
         }
         
-        // 检查是否需要压缩
-        if (this.enableCompression && this.currentTimeIndex % this.compressionRatio !== 0) {
+        // 应用动态分辨率调整
+        const processedSpectrum = this.applyDynamicResolution(spectrum);
+        
+        // 检查是否需要压缩（使用动态压缩比例）
+        const currentCompressionRatio = this.resolutionManager.getCompressionRatio();
+        if (this.enableCompression && this.currentTimeIndex % currentCompressionRatio !== 0) {
             this.currentTimeIndex++;
             return;
         }
@@ -94,14 +121,29 @@ export class WaterfallData {
         const newHistory = [...this.spectrumHistory];
         const newTimestamps = [...this.timestamps];
         
-        // 如果达到最大历史大小，移除最旧的数据
-        if (newHistory.length >= this.maxHistorySize) {
-            newHistory.shift();
-            newTimestamps.shift();
+        // 动态调整最大历史大小
+        const currentMaxHistorySize = this.resolutionManager.getMaxHistorySize();
+        if (currentMaxHistorySize !== this.maxHistorySize) {
+            this.maxHistorySize = currentMaxHistorySize;
         }
         
+        // 如果达到最大历史大小，移除最旧的数据并释放内存
+        if (newHistory.length >= this.maxHistorySize) {
+            const removedSpectrum = newHistory.shift();
+            newTimestamps.shift();
+            
+            // 释放被移除的频谱数据到内存池
+            if (removedSpectrum) {
+                this.spectrumPool.release(removedSpectrum);
+            }
+        }
+        
+        // 使用内存池获取新的Float32Array
+        const newSpectrum = this.spectrumPool.acquire(processedSpectrum.length) as Float32Array;
+        newSpectrum.set(processedSpectrum); // 复制处理后的数据
+        
         // 添加新数据
-        newHistory.push(new Float32Array(spectrum)); // 深拷贝数据
+        newHistory.push(newSpectrum);
         newTimestamps.push(Date.now());
         
         // 更新响应式数据
@@ -109,7 +151,49 @@ export class WaterfallData {
         this.timestamps = newTimestamps;
         this.currentTimeIndex++;
         
-        console.debug(`[WaterfallData] 添加频谱帧，当前历史大小: ${this.spectrumHistory.length}`);
+        // 更新滑动窗口
+        this.slidingWindowManager.addData(newSpectrum);
+        
+        // 更新性能指标
+        this.updatePerformanceMetrics();
+        
+        console.debug(`[WaterfallData] 添加频谱帧，当前历史大小: ${this.spectrumHistory.length}, 压缩后大小: ${processedSpectrum.length}`);
+    }
+    
+    /**
+     * 应用动态分辨率处理
+     */
+    private applyDynamicResolution(spectrum: Float32Array): Float32Array {
+        // 应用对数频率压缩
+        return this.resolutionManager.applyLogCompression(spectrum);
+    }
+    
+    /**
+     * 更新性能指标
+     */
+    private updatePerformanceMetrics(): void {
+        const currentTime = Date.now();
+        
+        // 计算帧时间
+        if (this.lastFrameTime > 0) {
+            const frameTime = currentTime - this.lastFrameTime;
+            const fps = 1000 / frameTime;
+            
+            // 计算内存使用量
+            const memoryStats = this.getMemoryUsage();
+            const memoryUsageMB = memoryStats.estimatedSize / (1024 * 1024);
+            
+            // 更新性能指标
+            this.resolutionManager.updateMetrics({
+                frameTime,
+                memoryUsage: memoryUsageMB,
+                fps,
+                droppedFrames: this.droppedFrames
+            });
+        }
+        
+        this.lastFrameTime = currentTime;
+        this.frameCount++;
     }
     
     /**
@@ -185,6 +269,11 @@ export class WaterfallData {
      * 清空历史数据
      */
     clear(): void {
+        // 释放所有频谱数据到内存池
+        for (const spectrum of this.spectrumHistory) {
+            this.spectrumPool.release(spectrum);
+        }
+        
         this.spectrumHistory = [];
         this.timestamps = [];
         this.currentTimeIndex = 0;
