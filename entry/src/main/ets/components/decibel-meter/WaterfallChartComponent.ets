@@ -39,7 +39,12 @@ export struct WaterfallChartComponent {
   @Computed
   get chartConfig(): ChartConfig {
     return {
-      margin: DefaultChartConfig.margin,
+      margin: {
+        top: 0,
+        right: 0,
+        bottom: 0,
+        left: 0
+      }, // 瀑布图使用0边距，填满整个Canvas
       aspectRatio: 1.8, // 瀑布图需要更高的宽高比来显示时间维度
       backgroundColor: DefaultChartConfig.backgroundColor,
       gridColor: DefaultChartConfig.gridColor,

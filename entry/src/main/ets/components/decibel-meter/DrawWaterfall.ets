@@ -79,13 +79,13 @@ class WaterfallCacheState {
 }
 
 /**
- * 默认边距配置
+ * 默认边距配置 - 调整为0让瀑布图填满整个Canvas
  */
 export const DefaultMarginConfig: MarginConfig = {
-  top: 20,
-  right: 15,
-  bottom: 40,
-  left: 35
+  top: 0,
+  right: 0,
+  bottom: 0,
+  left: 0
 };
 
 /**
@@ -208,9 +208,9 @@ export async function drawWaterfall(
   // 清除画布
   canvasContext.clearRect(0, 0, canvasWidth, canvasHeight);
 
-  // 计算绘制区域
-  const chartWidth = canvasWidth - drawConfig.margin.left - drawConfig.margin.right;
-  const chartHeight = canvasHeight - drawConfig.margin.top - drawConfig.margin.bottom;
+  // 计算绘制区域 - 使用整个Canvas尺寸，不再减去边距
+  const chartWidth = canvasWidth;
+  const chartHeight = canvasHeight;
 
   if (chartWidth <= 0 || chartHeight <= 0) {
     console.warn('[瀑布图绘制] 绘制区域无效');
@@ -367,21 +367,21 @@ function drawGrid(
   canvasContext.strokeStyle = gridColor.toString();
   canvasContext.lineWidth = 0.5;
 
-  // 水平网格线
+  // 水平网格线 - 使用整个Canvas高度
   for (let i = 0; i <= 5; i++) {
-    const y = drawConfig.margin.top + (chartHeight / 5) * i;
+    const y = (chartHeight / 5) * i;
     canvasContext.beginPath();
-    canvasContext.moveTo(drawConfig.margin.left, y);
-    canvasContext.lineTo(drawConfig.margin.left + chartWidth, y);
+    canvasContext.moveTo(0, y);
+    canvasContext.lineTo(chartWidth, y);
     canvasContext.stroke();
   }
 
-  // 垂直网格线
+  // 垂直网格线 - 使用整个Canvas宽度
   for (let i = 0; i <= 8; i++) {
-    const x = drawConfig.margin.left + (chartWidth / 8) * i;
+    const x = (chartWidth / 8) * i;
     canvasContext.beginPath();
-    canvasContext.moveTo(x, drawConfig.margin.top);
-    canvasContext.lineTo(x, drawConfig.margin.top + chartHeight);
+    canvasContext.moveTo(x, 0);
+    canvasContext.lineTo(x, chartHeight);
     canvasContext.stroke();
   }
 }
@@ -449,7 +449,7 @@ async function drawWaterfallDataWithParallel(
       chartHeight,
       cacheState.colorMap,
       drawConfig.perspective.rowSpacing,
-      drawConfig.margin.left,
+      0, // 左边距设为0，使用整个Canvas宽度
       colorMapConfig.minDb,
       colorMapConfig.maxDb,
       colorMapConfig.colorMapType,
@@ -629,8 +629,8 @@ function drawWaterfallDataDirect(
       continue;
     }
 
-    // 计算当前行的Y坐标（从底部开始）
-    const y = drawConfig.margin.top + chartHeight - (rowIndex * drawConfig.perspective.rowSpacing);
+    // 计算当前行的Y坐标（从底部开始）- 使用整个Canvas高度
+    const y = chartHeight - (rowIndex * drawConfig.perspective.rowSpacing);
 
     // 计算透视效果：越远的行透明度越低
     const depthFactor = 1 - (rowIndex / rowsToDraw) * drawConfig.perspective.depthScale;
@@ -671,10 +671,10 @@ function drawWaterfallRow(
   const logMax = Math.log10(16000);
 
   for (let binIndex = 0; binIndex < binCount; binIndex++) {
-    // 计算频率对应的X坐标（对数坐标）
+    // 计算频率对应的X坐标（对数坐标）- 使用整个Canvas宽度
     const frequency = (binIndex * 16000) / binCount; // 假设最大频率16kHz
     const logFreq = Math.log10(Math.max(16, frequency));
-    const x = drawConfig.margin.left + ((logFreq - logMin) / (logMax - logMin)) * chartWidth;
+    const x = ((logFreq - logMin) / (logMax - logMin)) * chartWidth;
 
     // 获取分贝值
     const db = spectrum[binIndex];
@@ -784,7 +784,7 @@ function hslToRgb(h: number, s: number, l: number, a: number): string {
 }
 
 /**
- * 绘制坐标轴
+ * 绘制坐标轴 - 调整坐标轴标签位置到Canvas外部
  */
 function drawAxes(
   canvasContext: CanvasRenderingContext2D,
@@ -798,7 +798,7 @@ function drawAxes(
   canvasContext.font = '12px sans-serif';
   canvasContext.textAlign = 'center';
 
-  // 频率轴标签（底部）
+  // 频率轴标签（底部）- 显示在Canvas外部
   if (drawConfig.options.showFrequencyAxis) {
     const frequencies = [16, 63, 250, 1000, 4000, 16000];
     const logMin = Math.log10(16);
@@ -806,20 +806,19 @@ function drawAxes(
 
     for (const freq of frequencies) {
       const logFreq = Math.log10(freq);
-      const x = drawConfig.margin.left + ((logFreq - logMin) / (logMax - logMin)) * chartWidth;
+      const x = ((logFreq - logMin) / (logMax - logMin)) * chartWidth;
       const label = freq >= 1000 ? `${freq / 1000}k` : freq.toString();
-      canvasContext.fillText(label, x, drawConfig.margin.top + chartHeight + 15);
+      canvasContext.fillText(label, x, chartHeight + 15);
     }
 
-    // 频率轴标题
-    canvasContext.fillText('频率 (Hz)', drawConfig.margin.left + chartWidth / 2,
-      drawConfig.margin.top + chartHeight + 30);
+    // 频率轴标题 - 显示在Canvas外部
+    canvasContext.fillText('频率 (Hz)', chartWidth / 2, chartHeight + 30);
   }
 
-  // 时间轴标签（左侧）
+  // 时间轴标签（左侧）- 显示在Canvas外部
   if (drawConfig.options.showTimeAxis) {
     canvasContext.save();
-    canvasContext.translate(10, drawConfig.margin.top + chartHeight / 2);
+    canvasContext.translate(-15, chartHeight / 2);
     canvasContext.rotate(-Math.PI / 2);
     canvasContext.fillText('时间', 0, 0);
     canvasContext.restore();

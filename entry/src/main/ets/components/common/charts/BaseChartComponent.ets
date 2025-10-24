@@ -7,7 +7,7 @@
 import { AppStorageV2 } from '@kit.ArkUI';
 import { resourceManager } from '@kit.LocalizationKit';
 import { AppKeys } from '../../../models/AppKeys';
-import { ChartConfig, DefaultChartConfig } from './ChartConfig';
+import { ChartConfig, ChartType, DefaultChartConfig } from './ChartConfig';
 import { ChartUtils } from './ChartUtils';
 
 @ComponentV2
@@ -114,6 +114,11 @@ export struct BaseChartComponent {
    * 绘制网格
    */
   private drawGrid(): void {
+    // 瀑布图在DrawWaterfall组件中处理网格绘制，这里跳过
+    if (this.chartConfig.chartType === ChartType.WATERFALL) {
+      return;
+    }
+
     const margin = this.chartConfig.margin;
     const gridColor = ChartUtils.getSystemColor(this.sysResourceManager, $r('sys.color.font_on_tertiary'));
 
