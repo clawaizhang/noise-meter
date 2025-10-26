@@ -217,7 +217,7 @@ export async function drawWaterfall(
     return;
   }
 
-  // 清除画布
+  // 清除画布 - 修复闪烁问题
   canvasContext.clearRect(0, 0, canvasWidth, canvasHeight);
 
   // 计算绘制区域 - 使用整个Canvas尺寸，不再减去边距
@@ -230,6 +230,11 @@ export async function drawWaterfall(
   }
 
   console.info(`[瀑布图绘制] 绘制区域尺寸: ${chartWidth}x${chartHeight}`);
+
+  // 重置ImageData渲染器，避免残留数据导致闪烁
+  if (imageDataRenderer) {
+    imageDataRenderer.reset();
+  }
 
   // 绘制背景和网格
   if (drawConfig.options.showGrid) {
@@ -369,6 +374,11 @@ async function drawLayeredWaterfall(
         resolution
       );
       console.info(`[分层渲染] 并行计算绘制完成`);
+      
+      // 确保ImageData渲染器立即刷新，避免闪烁
+      if (imageDataRenderer) {
+        imageDataRenderer.flush();
+      }
     } catch (error) {
       console.error(`[分层渲染] 并行计算失败，使用回退绘制:`, error);
       // 回退到直接绘制
@@ -378,7 +388,8 @@ async function drawLayeredWaterfall(
         chartHeight,
         waterfallData,
         drawConfig,
-        sysResourceManager
+        sysResourceManager,
+        resolution
       );
     }
   } else {
@@ -521,7 +532,7 @@ async function drawWaterfallDataWithParallel(
       }
     } catch (error) {
       console.error(`[并行计算] 并行计算失败，回退到直接绘制: ${error}`);
-      console.info(`[并行计算] 回退到直接绘制模式`);
+      console.info(`[并行计算] 回退到直接绘制模`);
       // 并行计算失败时回退到直接绘制
       return;
     }
@@ -624,10 +635,10 @@ function drawProcessedFrames(
     imageDataRenderer.addPixels(pixels);
     console.info(`[像素绘制调试] 像素数据添加完成`);
 
-    // 智能渲染
-    console.info(`[像素绘制调试] 开始智能渲染`);
-    imageDataRenderer.smartRender();
-    console.info(`[像素绘制调试] 智能渲染完成`);
+    // 强制渲染 - 修复闪烁问题
+    console.info(`[像素绘制调试] 开始强制渲染`);
+    imageDataRenderer.flush();
+    console.info(`[像素绘制调试] 强制渲染完成`);
   } else {
     console.warn(`[像素绘制调试] 没有有效像素数据可绘制`);
   }
@@ -709,7 +720,8 @@ function drawWaterfallDataDirect(
     }
 
     // 计算当前行的Y坐标（从底部开始）- 使用像素大小
-    const y = chartHeight - (rowIndex * pixelSize);
+    // 与并行处理器保持一致的计算逻辑
+    const y = chartHeight - ((rowIndex + 1) * pixelSize);
 
     // 计算透视效果：越远的行透明度越低
     const depthFactor = 1 - (rowIndex / rowsToDraw) * drawConfig.perspective.depthScale;

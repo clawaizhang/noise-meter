@@ -59,6 +59,8 @@ export function concurrentProcessAllWaterfallFrames(
   const maxDisplayRows = Math.floor(chartHeight / pixelSize);
   // 使用所有可用数据，但不超过Canvas能显示的最大行数
   const rowsToProcess = Math.min(spectrumHistory.length, maxDisplayRows);
+  
+  console.debug(`[并行处理器] 行数计算: maxDisplayRows=${maxDisplayRows}, rowsToProcess=${rowsToProcess}, pixelSize=${pixelSize}, chartHeight=${chartHeight}`);
   const processedFrames: ProcessedFrame[] = new Array(rowsToProcess);
   
   // 预计算对数坐标映射参数
@@ -121,9 +123,10 @@ export function concurrentProcessAllWaterfallFrames(
     }
     
     // 计算Y坐标（从底部开始）- 使用像素大小，确保填满Canvas高度
-    const y = chartHeight - (rowIndex * pixelSize);
+    // 注意：这里使用像素大小作为行高，确保每行数据紧密排列
+    const y = chartHeight - ((rowIndex + 1) * pixelSize);
 
-    console.debug(`[并行处理器] 处理帧: rowIndex=${rowIndex}, y=${y}, opacity=${opacity} ,pixelSize = ${pixelSize}`);
+    console.debug(`[并行处理器] 处理帧: rowIndex=${rowIndex}, y=${y}, opacity=${opacity}, pixelSize=${pixelSize}, chartHeight=${chartHeight}`);
     processedFrames[rowIndex] = {
       rowIndex,
       y,

@@ -145,15 +145,18 @@ export class WaterfallResolutionManager {
 
   /**
    * 计算像素大小
-   * 基于Canvas高度和目标行数计算，让像素大小自适应
+   * 基于Canvas高度和目标行数计算，确保像素大小能填满Canvas高度
    */
   private calculatePixelSize(canvasHeight: number): number {
-    const baseSize = canvasHeight / this.config.targetRows;
-    // 只应用最小保护，不限制最大像素大小，让像素大小自适应Canvas高度
-    const protectedSize = Math.max(this.config.minPixelSize, baseSize);
-    const roundedSize = Math.round(protectedSize);
+    // 确保至少显示1行数据
+    const effectiveTargetRows = Math.max(1, this.config.targetRows);
+    const baseSize = canvasHeight / effectiveTargetRows;
     
-    console.debug(`[分辨率管理器] 像素大小计算: base=${baseSize.toFixed(2)}, protected=${protectedSize.toFixed(2)}, rounded=${roundedSize}`);
+    // 应用最小和最大保护，确保像素大小在合理范围内
+    const protectedSize = Math.max(this.config.minPixelSize, Math.min(this.config.maxPixelSize, baseSize));
+    const roundedSize = Math.max(1, Math.round(protectedSize));
+    
+    console.debug(`[分辨率管理器] 像素大小计算: canvasHeight=${canvasHeight}, targetRows=${effectiveTargetRows}, base=${baseSize.toFixed(2)}, protected=${protectedSize.toFixed(2)}, rounded=${roundedSize}`);
     
     return roundedSize;
   }
@@ -177,12 +180,14 @@ export class WaterfallResolutionManager {
 
   /**
    * 计算显示行数
+   * 确保能充分利用Canvas高度，不限制最大行数
    */
   private calculateDisplayRows(canvasHeight: number, rowSpacing: number): number {
     const rows = Math.floor(canvasHeight / rowSpacing);
-    const clampedRows = Math.max(20, Math.min(200, rows)); // 限制在合理范围内
+    // 确保至少显示1行，不限制最大行数，让数据充分利用Canvas高度
+    const clampedRows = Math.max(1, rows);
     
-    console.debug(`[分辨率管理器] 显示行数计算: raw=${rows}, clamped=${clampedRows}`);
+    console.debug(`[分辨率管理器] 显示行数计算: canvasHeight=${canvasHeight}, rowSpacing=${rowSpacing}, raw=${rows}, clamped=${clampedRows}`);
     
     return clampedRows;
   }

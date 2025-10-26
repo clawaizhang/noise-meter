@@ -128,19 +128,24 @@ export class ImageDataRenderer {
 
   /**
    * 批量设置像素
+   * 修复坐标转换问题，确保像素位置准确
    */
   private setPixels(pixels: PixelData[]): void {
-    if (!this.data) return;
+    if (!this.data || !this.imageData) return;
 
-    const width = this.imageData!.width;
+    const width = this.imageData.width;
+    const height = this.imageData.height;
     
     for (const pixel of pixels) {
+      // 应用像素比例缩放
       const x = Math.floor(pixel.x * this.config.pixelRatio);
       const y = Math.floor(pixel.y * this.config.pixelRatio);
       
-      if (x >= 0 && x < width && y >= 0 && y < this.imageData!.height) {
+      // 确保坐标在有效范围内
+      if (x >= 0 && x < width && y >= 0 && y < height) {
         const index = (y * width + x) * 4;
         
+        // 设置像素颜色值
         this.data[index] = pixel.r;     // R
         this.data[index + 1] = pixel.g; // G
         this.data[index + 2] = pixel.b; // B
@@ -150,7 +155,7 @@ export class ImageDataRenderer {
   }
 
   /**
-   * 清空缓冲区并渲染
+   * 清空缓冲区并渲染 - 修复闪烁问题
    */
   flush(): void {
     console.info(`[ImageData渲染器调试] 开始flush操作`);
@@ -175,6 +180,11 @@ export class ImageDataRenderer {
     console.info(`[ImageData渲染器调试] 准备渲染 ${this.pixelBuffer.length} 个像素`);
     const startTime = Date.now();
 
+    // 清空ImageData，避免残留像素导致闪烁
+    if (this.data) {
+      this.data.fill(0);
+    }
+
     // 批量设置像素
     console.info(`[ImageData渲染器调试] 开始批量设置像素`);
     this.setPixels(this.pixelBuffer);
@@ -195,14 +205,11 @@ export class ImageDataRenderer {
   }
 
   /**
-   * 智能渲染 - 根据时间间隔决定是否渲染
+   * 智能渲染 - 修复闪烁问题，强制立即渲染
    */
   smartRender(): void {
-    const currentTime = Date.now();
-    const timeSinceLastRender = currentTime - this.lastRenderTime;
-
-    // 如果距离上次渲染超过16ms（约60fps）或者缓冲区较大，则渲染
-    if (timeSinceLastRender > 16 || this.pixelBuffer.length > 500) {
+    // 强制立即渲染，避免闪烁问题
+    if (this.pixelBuffer.length > 0) {
       this.flush();
     }
   }
@@ -218,29 +225,27 @@ export class ImageDataRenderer {
   }
 
   /**
-   * 创建矩形区域像素数据（优化版本）
+   * 创建矩形区域像素数据（修复版本）
+   * 修复像素坐标转换问题，确保位置准确
    */
   createRectPixels(
-    x: number, y: number, 
-    width: number, height: number, 
+    x: number, y: number,
+    width: number, height: number,
     r: number, g: number, b: number, a: number
   ): PixelData[] {
     const pixels: PixelData[] = [];
-    const endX = x + width;
-    const endY = y + height;
+    
+    // 直接使用原始坐标，避免双重转换
+    // 在setPixels方法中会进行正确的缩放
+    const endX = Math.ceil(x + width);
+    const endY = Math.ceil(y + height);
 
-    // 预计算缩放后的坐标
-    const scaledX = Math.floor(x * this.config.pixelRatio);
-    const scaledY = Math.floor(y * this.config.pixelRatio);
-    const scaledWidth = Math.floor(width * this.config.pixelRatio);
-    const scaledHeight = Math.floor(height * this.config.pixelRatio);
-
-    // 批量生成像素数据
-    for (let py = scaledY; py < scaledY + scaledHeight; py++) {
-      for (let px = scaledX; px < scaledX + scaledWidth; px++) {
+    // 批量生成像素数据 - 使用原始坐标
+    for (let py = Math.floor(y); py < endY; py++) {
+      for (let px = Math.floor(x); px < endX; px++) {
         pixels.push({
-          x: px / this.config.pixelRatio,
-          y: py / this.config.pixelRatio,
+          x: px,
+          y: py,
           r, g, b, a
         });
       }
