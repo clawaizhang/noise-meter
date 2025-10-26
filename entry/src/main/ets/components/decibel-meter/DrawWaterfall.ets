@@ -9,9 +9,19 @@ import { WaterfallData, ColorMapConfig } from '../../models/WaterfallData';
 import { concurrentGenerateColorMap } from '../../concurrent/ConcurrentColorMapGenerator';
 import { concurrentProcessAllWaterfallFrames, ProcessedFrame } from '../../concurrent/ConcurrentWaterfallProcessor';
 import { ImageDataRenderer, PixelData, DefaultImageDataRenderConfig } from '../../utils/ImageDataRenderer';
-import { CanvasCacheManager, PreRenderConfig, PreRenderElementType, DefaultCacheConfig } from '../../utils/CanvasCacheManager';
+import {
+  CanvasCacheManager,
+  PreRenderConfig,
+  PreRenderElementType,
+  DefaultCacheConfig
+} from '../../utils/CanvasCacheManager';
 import { ColorMapOptimizer, ColorMapType } from '../../utils/ColorMapOptimizer';
-import { WaterfallResolutionManager, ResolutionResult, createDefaultResolutionManager } from '../../utils/WaterfallResolutionManager';
+import {
+  WaterfallResolutionManager,
+  ResolutionResult,
+  createDefaultResolutionManager
+} from '../../utils/WaterfallResolutionManager';
+import { ArrayConversionUtils } from '../../utils/ArrayConversionUtils';
 
 /**
  * 边距配置接口
@@ -256,8 +266,8 @@ export async function drawWaterfall(
 
   // 初始化预渲染配置
   if (!preRenderConfig ||
-      preRenderConfig.width !== canvasWidth ||
-      preRenderConfig.height !== canvasHeight) {
+    preRenderConfig.width !== canvasWidth ||
+    preRenderConfig.height !== canvasHeight) {
     preRenderConfig.width = canvasWidth;
     preRenderConfig.height = canvasHeight;
     preRenderConfig.margin.top = drawConfig.margin.top;
@@ -287,7 +297,7 @@ export async function drawWaterfall(
     // 检查是否需要更新尺寸
     const currentConfig = imageDataRenderer.getStats();
     if (currentConfig.isInitialized &&
-        (canvasWidth !== rendererConfig.width || canvasHeight !== rendererConfig.height)) {
+      (canvasWidth !== rendererConfig.width || canvasHeight !== rendererConfig.height)) {
       console.info(`[ImageData调试] 更新ImageData渲染器尺寸: ${canvasWidth}x${canvasHeight}`);
       imageDataRenderer.updateConfig({
         width: canvasWidth,
@@ -320,6 +330,7 @@ export async function drawWaterfall(
 
   console.info(`[瀑布图调试] 绘制完成，总耗时: ${endTime - startTime}ms`);
 }
+
 /**
  * 分层绘制瀑布图
  */
@@ -345,7 +356,7 @@ async function drawLayeredWaterfall(
   const spectrumHistory = waterfallData.spectrumHistory;
   if (spectrumHistory.length > 0) {
     console.info(`[分层渲染] 开始绘制频谱数据，帧数: ${spectrumHistory.length}`);
-    
+
     try {
       // 使用并行计算处理频谱数据
       await drawWaterfallDataWithParallel(
@@ -448,7 +459,7 @@ async function drawWaterfallDataWithParallel(
     // 并行生成颜色映射表（如果需要更新）
     if (shouldUpdateColorMap || cacheState.colorMap.length === 0) {
       console.info('[并行计算调试] 开始并行生成颜色映射表');
-      cacheState.colorMap = await taskpool.execute<[string, number, number,number], string[]>(
+      cacheState.colorMap = await taskpool.execute<[string, number, number, number], string[]>(
         concurrentGenerateColorMap,
         colorMapConfig.colorMapType,
         colorMapConfig.minDb,
@@ -467,29 +478,52 @@ async function drawWaterfallDataWithParallel(
     // 并行处理所有帧数据
     console.info(`[并行计算调试] 开始并行处理 ${spectrumHistory.length} 帧数据`);
     console.info(`[并行计算调试] 动态分辨率参数: rowSpacing=${resolution.rowSpacing}, pixelSize=${resolution.pixelSize}`);
-    const processedFrames: ProcessedFrame[] = await taskpool.execute(
-      concurrentProcessAllWaterfallFrames,
-      spectrumHistory,
-      chartWidth,
-      chartHeight,
-      cacheState.colorMap,
-      resolution.rowSpacing, // 使用动态计算的行间距
-      resolution.pixelSize,  // 传递像素大小参数
-      0, // 左边距设为0，使用整个Canvas宽度
-      colorMapConfig.minDb,
-      colorMapConfig.maxDb,
-      colorMapConfig.colorMapType,
-      colorMapConfig.opacity
-    ) as ProcessedFrame[];
 
-    console.info(`[并行计算调试] 并行处理完成，返回帧数: ${processedFrames?.length || 0}`);
-    if (processedFrames && processedFrames.length > 0) {
-      const firstFrame = processedFrames[0];
-      console.info(`[并行计算调试] 第一处理帧包含 ${firstFrame.bins?.length || 0} 个bin`);
-      if (firstFrame.bins && firstFrame.bins.length > 0) {
-        const firstBin = firstFrame.bins[0];
-        console.info(`[并行计算调试] 第一个bin数据: db=${firstBin.db}, color=${firstBin.color}, x=${firstBin.x}`);
+    let processedFrames: ProcessedFrame[] = [];
+    try {
+      // 将Float32Array[]转换为普通二维数组，解决taskpool序列化问题
+      const serializableSpectrumHistory = ArrayConversionUtils.float32ArrayArrayTo2DArray(spectrumHistory);
+      console.info(`[并行计算调试] 数据转换完成，原始数据长度: ${spectrumHistory.length}, 转换后长度: ${serializableSpectrumHistory.length}`);
+
+      processedFrames = await taskpool.execute<[number[][],
+        number,
+        number,
+        string[],
+        number,
+        number,
+        number,
+        number,
+        number,
+        string,
+        number], ProcessedFrame[]>(
+        concurrentProcessAllWaterfallFrames,
+        serializableSpectrumHistory,
+        chartWidth,
+        chartHeight,
+        cacheState.colorMap,
+        resolution.rowSpacing, // 使用动态计算的行间距
+        resolution.pixelSize, // 传递像素大小参数
+        0, // 左边距设为0，使用整个Canvas宽度
+        colorMapConfig.minDb,
+        colorMapConfig.maxDb,
+        colorMapConfig.colorMapType,
+        colorMapConfig.opacity
+      ) as ProcessedFrame[];
+
+      console.info(`[并行计算调试] 并行处理完成，返回帧数: ${processedFrames?.length || 0}`);
+      if (processedFrames && processedFrames.length > 0) {
+        const firstFrame = processedFrames[0];
+        console.info(`[并行计算调试] 第一处理帧包含 ${firstFrame.bins?.length || 0} 个bin`);
+        if (firstFrame.bins && firstFrame.bins.length > 0) {
+          const firstBin = firstFrame.bins[0];
+          console.info(`[并行计算调试] 第一个bin数据: db=${firstBin.db}, color=${firstBin.color}, x=${firstBin.x}`);
+        }
       }
+    } catch (error) {
+      console.error(`[并行计算] 并行计算失败，回退到直接绘制: ${error}`);
+      console.info(`[并行计算] 回退到直接绘制模式`);
+      // 并行计算失败时回退到直接绘制
+      return;
     }
 
     // 使用处理后的数据进行绘制（传递分辨率参数）
@@ -524,7 +558,7 @@ function drawProcessedFrames(
   resolution?: ResolutionResult
 ): void {
   console.info(`[像素绘制调试] 开始绘制 ${processedFrames.length} 个处理帧`);
-  
+
   if (!imageDataRenderer) {
     console.warn('[像素绘制调试] ImageData渲染器未初始化，使用回退绘制');
     drawProcessedFramesFallback(canvasContext, processedFrames, drawConfig, resolution);
@@ -536,9 +570,9 @@ function drawProcessedFrames(
   const pixels: PixelData[] = [];
   // 使用动态分辨率参数，如果没有提供则使用配置的默认值
   const pixelSize = resolution?.pixelSize ?? drawConfig.perspective.rowSpacing;
-  
+
   console.info(`[像素绘制调试] 使用像素大小: ${pixelSize}, 处理帧数: ${processedFrames.length}`);
-  
+
   let totalValidBins = 0;
   let totalInvalidBins = 0;
 
@@ -571,8 +605,8 @@ function drawProcessedFrames(
       const rectPixels = imageDataRenderer.createRectPixels(
         bin.x,
         frame.y,
-        pixelSize,  // 使用动态像素大小作为宽度
-        pixelSize,  // 使用动态像素大小作为高度
+        pixelSize, // 使用动态像素大小作为宽度
+        pixelSize, // 使用动态像素大小作为高度
         r, g, b, a
       );
 
@@ -610,9 +644,9 @@ function drawProcessedFramesFallback(
 ): void {
   // 使用动态分辨率参数，如果没有提供则使用配置的默认值
   const pixelSize = resolution?.pixelSize ?? drawConfig.perspective.rowSpacing;
-  
+
   console.info(`[回退绘制] 使用像素大小: ${pixelSize}`);
-  
+
   for (const frame of processedFrames) {
     if (!frame || !frame.bins) {
       continue;
@@ -628,7 +662,7 @@ function drawProcessedFramesFallback(
       canvasContext.fillRect(
         bin.x,
         frame.y,
-        pixelSize,  // 使用动态像素大小作为宽度
+        pixelSize, // 使用动态像素大小作为宽度
         pixelSize   // 使用动态像素大小作为高度
       );
     }
@@ -656,7 +690,7 @@ function drawWaterfallDataDirect(
 
   // 使用动态分辨率参数，如果没有提供则使用配置的默认值
   const pixelSize = resolution?.pixelSize ?? drawConfig.perspective.rowSpacing;
-  
+
   console.info(`[直接绘制] 使用像素大小: ${pixelSize}`);
 
   // 计算每行的高度（使用像素大小）
@@ -881,6 +915,7 @@ function vp2px(vp: number): number {
   // 这是一个简化的转换，实际项目中应该使用系统提供的转换函数
   return Math.round(vp * 2); // 假设2倍缩放
 }
+
 /**
  * 计算Float32Array中的最小值
  */

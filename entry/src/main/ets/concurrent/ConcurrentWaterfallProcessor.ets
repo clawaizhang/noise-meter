@@ -29,7 +29,7 @@ export interface ProcessedBin {
 
 /**
  * 批量并行处理所有瀑布图帧数据
- * @param spectrumHistory 历史频谱数据
+ * @param spectrumHistory 历史频谱数据（普通二维数组，用于taskpool序列化）
  * @param chartWidth 图表宽度
  * @param chartHeight 图表高度
  * @param colorMap 颜色映射表
@@ -43,7 +43,7 @@ export interface ProcessedBin {
  */
 @Concurrent
 export function concurrentProcessAllWaterfallFrames(
-  spectrumHistory: Float32Array[],
+  spectrumHistory: number[][],
   chartWidth: number,
   chartHeight: number,
   colorMap: string[],
@@ -122,7 +122,8 @@ export function concurrentProcessAllWaterfallFrames(
     
     // 计算Y坐标（从底部开始）- 使用像素大小，确保填满Canvas高度
     const y = chartHeight - (rowIndex * pixelSize);
-    
+
+    console.debug(`[并行处理器] 处理帧: rowIndex=${rowIndex}, y=${y}, opacity=${opacity} ,pixelSize = ${pixelSize}`);
     processedFrames[rowIndex] = {
       rowIndex,
       y,
