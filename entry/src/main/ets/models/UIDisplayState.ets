@@ -1,7 +1,6 @@
 import { DecibelService } from '../services/DecibelService';
 import { DataProcessingState } from './DataProcessingState';
 import { PreferenceKeys } from './PreferenceKeys';
-import { WaterfallData } from './WaterfallData';
 
 /**
  * 警报显示状态对象（UI专用）
@@ -197,8 +196,6 @@ export class UIDisplayState {
   // 显示统计分布数据（用于直方图）
   @Trace displayStatisticsDistribution: number[] = [];
 
-  // 显示瀑布图数据
-  @Trace displayWaterfallData: WaterfallData = new WaterfallData();
 
   // UI更新状态
   @Trace isUIUpdatesEnabled: boolean = true;
@@ -303,8 +300,6 @@ export class UIDisplayState {
     // 更新统计分布数据（用于直方图）
     this.updateStatisticsDistribution(this.displayDb);
 
-    // 更新瀑布图数据
-    this.updateWaterfallData(processingState.processingSpectrumData);
 
   }
 
@@ -342,14 +337,6 @@ export class UIDisplayState {
     this.isUIUpdatesEnabled = true;
   }
 
-  /**
-   * 更新瀑布图数据
-   */
-  private updateWaterfallData(spectrumData: Float32Array): void {
-    if (this.isUIUpdatesEnabled && spectrumData && spectrumData.length > 0) {
-      this.displayWaterfallData.addSpectrumFrame(spectrumData);
-    }
-  }
 
   /**
    * 重置显示状态
@@ -360,7 +347,6 @@ export class UIDisplayState {
     this.displayPeakFreq = 0;
     this.displayStatistics.reset();
     this.displayStatisticsDistribution = [];
-    this.displayWaterfallData.clear();
     this.timeDisplay = '';
     this.lastSaveTime = Date.now();
     this.currentTime = Date.now();

@@ -74,7 +74,6 @@ class ButtonState {
 @ObservedV2
 class ButtonStates {
   @Trace startButton: ButtonState;
-  @Trace restartButton: ButtonState;
   @Trace stopButton: ButtonState;
   @Trace resetButton: ButtonState;
   @Trace saveButton: ButtonState;
@@ -82,7 +81,6 @@ class ButtonStates {
   constructor() {
     // 初始化默认状态
     this.startButton = new ButtonState(false, '开始检测', $r('sys.color.font_secondary'));
-    this.restartButton = new ButtonState(false, '重启', $r('sys.color.font_secondary'));
     this.stopButton = new ButtonState(false, '停止', $r('sys.color.font_secondary'));
     this.resetButton = new ButtonState(false, '重置', $r('sys.color.comp_background_secondary'));
     this.saveButton = new ButtonState(false, '保存', $r('sys.color.font_secondary'));
@@ -97,14 +95,6 @@ class ButtonStates {
       '开始检测',
       controllerState === AudioControllerLifecycleState.CONTROLLER_IDLE ?
         $r('sys.color.font_emphasize') : $r('sys.color.font_secondary')
-    );
-    
-    // 重启按钮状态
-    this.restartButton.update(
-      controllerState === AudioControllerLifecycleState.CONTROLLER_RECORDING,
-      '重启',
-      controllerState === AudioControllerLifecycleState.CONTROLLER_RECORDING ?
-        $r('sys.color.confirm') : $r('sys.color.font_secondary')
     );
     
     // 停止按钮状态
@@ -250,22 +240,6 @@ export struct ToolsContent {
             this.startDetection();
           })
 
-        // 重启按钮
-        Button(this.buttonStates.restartButton.text, { type: ButtonType.Capsule })
-          .backgroundColor(this.buttonStates.restartButton.backgroundColor)
-          .fontColor(Color.White)
-          .fontSize(DesignConstants.FONT_SIZE_SM)
-          .padding({
-            left: 16,
-            right: 16,
-            top: 8,
-            bottom: 8
-          })
-          .enabled(this.buttonStates.restartButton.enabled)
-          .onClick(() => {
-            this.restartDetection();
-          })
-
         // 停止按钮
         Button(this.buttonStates.stopButton.text, { type: ButtonType.Capsule })
           .backgroundColor(this.buttonStates.stopButton.backgroundColor)
@@ -316,7 +290,7 @@ export struct ToolsContent {
           })
       }
       .width('100%')
-      .justifyContent(FlexAlign.SpaceBetween)
+      .justifyContent(FlexAlign.SpaceEvenly)
 
       // 状态显示
       Row({ space: DesignConstants.SPACING_SM }) {
@@ -753,18 +727,6 @@ export struct ToolsContent {
     });
   }
 
-  // 重启检测（停止后自动启动）
-  private restartDetection(): void {
-    Throttle.click(async () => {
-      try {
-        const audioController = AudioControllerService.getInstance(this.ak, this.pk);
-        await audioController.restartRecordingFromExternal('手动重启');
-        console.info('[ToolsContent] 重启检测请求已通过状态机发送');
-      } catch (error) {
-        console.error('[ToolsContent] 重启检测失败:', error);
-      }
-    });
-  }
 
   // 停止检测（真正的停止，不会自动启动）
   private stopDetection(): void {
