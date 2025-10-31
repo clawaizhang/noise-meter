@@ -496,5 +496,47 @@ export class AudioControllerService {
       this.stateMachine.handleAudioServiceStateChange(audioState, error);
     }
   }
+
+  /**
+   * 重启录制（停止后自动启动）
+   * 供外部服务使用
+   */
+  public async restartRecordingFromExternal(comments: string): Promise<void> {
+    if (!this.stateMachine) {
+      throw new Error('状态机未初始化');
+    }
+
+    try {
+      // 先停止录制
+      await this.stateMachine.stopRecording(comments);
+      
+      // 等待状态变为IDLE后自动重新开始
+      return new Promise<void>((resolve, reject) => {
+        let timeoutId: number | undefined;
+        const stateChangeSubscription = this.stateChangeSubject.subscribe((event) => {
+          if (event.toState === AudioControllerLifecycleState.CONTROLLER_IDLE) {
+            // 状态变为IDLE后，自动重新开始录制
+            console.info('[AudioControllerService] 状态已变为IDLE，自动重新开始录制');
+            this.stateMachine!.startRecording().then(resolve).catch(reject);
+            
+            // 清理订阅和超时
+            if (timeoutId) {
+              clearTimeout(timeoutId);
+            }
+            stateChangeSubscription.unsubscribe();
+          }
+        });
+
+        // 设置超时保护
+        timeoutId = setTimeout(() => {
+          stateChangeSubscription.unsubscribe();
+          reject(new Error('重启录制超时'));
+        }, 10000); // 10秒超时
+      });
+    } catch (error) {
+      console.error('[外部服务] 重启录制失败:', error);
+      throw new Error(error);
+    }
+  }
 }
 

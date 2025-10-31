@@ -729,18 +729,14 @@ interface StateChangeEventWithPayload extends AudioControllerEvent {
         // 重置状态
         this.resetData();
 
-        // 自动开始新的检测
-        setTimeout(() => {
-          this.startRecording();
-        }, 500); // 延迟500ms后开始新的检测
+        // 真正的停止：不自动开始新的检测
+        console.info('[AudioController] 录制已停止，保持停止状态');
 
       } catch (error) {
         console.error('[FREQ_TRACE][Record] 保存记录失败:', error);
         this.addErrorMessage(`记录保存失败: ${error.message}`);
-        // 即使保存失败也开始新的检测
-        setTimeout(() => {
-          this.startRecording();
-        }, 500);
+        // 真正的停止：即使保存失败也不自动开始新的检测
+        console.info('[AudioController] 录制已停止（保存失败），保持停止状态');
       }
     }
   }
