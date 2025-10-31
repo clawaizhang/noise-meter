@@ -8,7 +8,8 @@ import { AlertsContent } from '../../components/alerts/AlertsContent';
 import { AlertsSettingsBuilder, AlertsSettingsProps } from '../settings/AlertsSettingsNavigation';
 import { MyContentComponent } from '../../components/my-content/MyContentComponent';
 import { EnhancedExposureContent } from '../../components/exposure/EnhancedExposureContent';
-import { HomePageContent } from '../../components/home/HomePageContent';
+import { UnifiedHealthImpactDashboard } from '../../components/health-impact/UnifiedHealthImpactDashboard';
+import { EnhancedHomePageContent } from '../../components/home/EnhancedHomePageContent';
 import { AudioController } from '../../components/decibel-meter/AudioController';
 import { ReferenceContent } from '../../components/reference/ReferenceContent';
 import { ToolsContent } from '../../components/tools/ToolsContent';
@@ -162,6 +163,36 @@ export struct MainNoiseMeter {
       action: () => {
         this.navStack.pushPathByName('DecibelHistory', null);
       }
+    },
+    {
+      value: '健康报告',
+      icon: $r('app.media.ic_document_edit'),
+      action: () => {
+        // 这里可以添加生成健康报告的逻辑
+        console.info('生成健康报告');
+      }
+    },
+    {
+      value: '警报设置',
+      icon: $r('app.media.ic_alarm'),
+      action: () => {
+        let alertsDialog: InfSheet;
+        let props: AlertsSettingsProps = {
+          onSave: () => {
+            alertsDialog.dismiss();
+          },
+          onClose: () => {
+            alertsDialog.dismiss();
+          }
+        }
+        alertsDialog = DialogHub.getSheet()
+          .setStyle({ showClose: false, backgroundColor: $r('sys.color.background_secondary') })
+          .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS })
+          .setComponentTargetId('mainId')
+          .setContent(wrapBuilder(AlertsSettingsBuilder), props)
+          .build();
+        alertsDialog.show();
+      }
     }
   ]
   private referenceMenus: Array<NavigationMenuItem> = [
@@ -186,7 +217,7 @@ export struct MainNoiseMeter {
 
   @Builder
   HomeContent() {
-    HomePageContent()
+    EnhancedHomePageContent()
       .opacity(this.currentIndex === 0 ? 1 : 0)
       .scale({ x: this.currentIndex === 0 ? 1 : 0.95, y: this.currentIndex === 0 ? 1 : 0.95 })
       .animation({
@@ -341,7 +372,7 @@ export struct MainNoiseMeter {
         }))
 
         TabContent() {
-          EnhancedExposureContent()
+          UnifiedHealthImpactDashboard()
             .opacity(this.currentIndex === 4 ? 1 : 0)
             .scale({ x: this.currentIndex === 4 ? 1 : 0.95, y: this.currentIndex === 4 ? 1 : 0.95 })
             .animation({
