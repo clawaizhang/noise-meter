@@ -135,9 +135,9 @@ export struct AudioController {
       this.startRecording();
     });
 
-    // 订阅暂停检测事件
+    // 订阅停止检测事件
     this.audioControllerService.subscribePauseDetection(() => {
-      this.stopRecording('手动暂停');
+      this.stopRecording('手动停止');
     });
 
     // 订阅位置数据流
@@ -475,7 +475,7 @@ interface StopRecordingEventWithPayload extends AudioControllerEvent {
         this.handleStopRecordingEvent((stopEvent.payload as StopRecordingPayload).comments);
         break;
       case AudioControllerEventType.PAUSE_RECORDING:
-        this.handlePauseRecordingEvent();
+        this.handleStopRecordingEvent('手动停止');
         break;
       case AudioControllerEventType.RESET_DATA:
         this.handleResetDataEvent();
@@ -520,18 +520,6 @@ interface StateChangeEventWithPayload extends AudioControllerEvent {
     }
   }
 
-  /**
-   * 处理暂停录制事件
-   */
-  private async handlePauseRecordingEvent(): Promise<void> {
-    try {
-      await this.originalStopRecording('手动暂停');
-      console.info('[AudioController] 通过事件暂停录制成功');
-    } catch (error) {
-      console.error('[AudioController] 通过事件暂停录制失败:', error);
-      this.audioControllerService.publishError([`暂停录制失败: ${error.message}`]);
-    }
-  }
 
   /**
    * 处理重置数据事件

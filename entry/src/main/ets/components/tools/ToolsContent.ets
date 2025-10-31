@@ -81,7 +81,7 @@ class ButtonStates {
   constructor() {
     // 初始化默认状态
     this.startButton = new ButtonState(false, '开始检测', $r('sys.color.font_secondary'));
-    this.pauseButton = new ButtonState(false, '暂停', $r('sys.color.font_secondary'));
+    this.pauseButton = new ButtonState(false, '停止', $r('sys.color.font_secondary'));
     this.resetButton = new ButtonState(false, '重置', $r('sys.color.comp_background_secondary'));
     this.saveButton = new ButtonState(false, '保存', $r('sys.color.font_secondary'));
   }
@@ -97,10 +97,10 @@ class ButtonStates {
         $r('sys.color.font_emphasize') : $r('sys.color.font_secondary')
     );
     
-    // 暂停按钮状态
+    // 停止按钮状态
     this.pauseButton.update(
       controllerState === AudioControllerLifecycleState.CONTROLLER_RECORDING,
-      '暂停',
+      '停止',
       controllerState === AudioControllerLifecycleState.CONTROLLER_RECORDING ?
         $r('sys.color.alert') : $r('sys.color.font_secondary')
     );
@@ -240,7 +240,7 @@ export struct ToolsContent {
             this.startDetection();
           })
 
-        // 暂停按钮
+        // 停止按钮
         Button(this.buttonStates.pauseButton.text, { type: ButtonType.Capsule })
           .backgroundColor(this.buttonStates.pauseButton.backgroundColor)
           .fontColor(Color.White)
@@ -253,7 +253,7 @@ export struct ToolsContent {
           })
           .enabled(this.buttonStates.pauseButton.enabled)
           .onClick(() => {
-            this.pauseDetection();
+            this.stopDetection();
           })
 
         // 重置按钮
@@ -727,15 +727,15 @@ export struct ToolsContent {
     });
   }
 
-  // 暂停检测
-  private pauseDetection(): void {
+  // 停止检测
+  private stopDetection(): void {
     Throttle.click(async () => {
       try {
         const audioController = AudioControllerService.getInstance(this.ak, this.pk);
-        await audioController.pauseRecordingFromExternal();
-        console.info('[ToolsContent] 暂停检测请求已通过状态机发送');
+        await audioController.stopRecordingFromExternal('手动停止');
+        console.info('[ToolsContent] 停止检测请求已通过状态机发送');
       } catch (error) {
-        console.error('[ToolsContent] 暂停检测失败:', error);
+        console.error('[ToolsContent] 停止检测失败:', error);
       }
     });
   }
@@ -861,7 +861,7 @@ export struct ToolsContent {
       case AudioControllerLifecycleState.CONTROLLER_STOPPING:
         return '停止中...';
       case AudioControllerLifecycleState.CONTROLLER_PAUSING:
-        return '暂停中...';
+        return '停止中...';
       case AudioControllerLifecycleState.CONTROLLER_ERROR:
         return '错误 - 点击开始重试';
       default:

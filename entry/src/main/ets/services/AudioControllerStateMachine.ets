@@ -25,7 +25,11 @@ export class AudioControllerStateMachine implements AudioControllerStateMachineI
     
     console.info('[AudioControllerStateMachine] 状态机初始化完成（事件驱动架构）');
   }
-  
+
+  pauseRecording(): Promise<void> {
+    throw new Error('Method not implemented.');
+  }
+
   /**
    * 状态转换验证
    */
@@ -163,26 +167,6 @@ export class AudioControllerStateMachine implements AudioControllerStateMachineI
     }
   }
   
-  public async pauseRecording(): Promise<void> {
-    if (!this.canTransitionTo(AudioControllerLifecycleState.CONTROLLER_PAUSING)) {
-      throw new Error(`无法从 ${this.currentState} 状态暂停录制`);
-    }
-    
-    this.transitionTo(AudioControllerLifecycleState.CONTROLLER_PAUSING, '用户请求暂停录制');
-    
-    try {
-      // 发布暂停录制事件，而不是直接调用AudioController
-      const pauseEvent: PauseRecordingEvent = {
-        type: AudioControllerEventType.PAUSE_RECORDING,
-        timestamp: Date.now()
-      };
-      this.publishEvent(pauseEvent);
-    } catch (error) {
-      this.transitionTo(AudioControllerLifecycleState.CONTROLLER_ERROR, '暂停录制失败', error.message);
-      throw new Error(error.message);
-    }
-  }
-  
   public async resumeRecording(): Promise<void> {
     if (this.currentState !== AudioControllerLifecycleState.CONTROLLER_IDLE) {
       throw new Error(`无法从 ${this.currentState} 状态恢复录制`);
@@ -300,7 +284,7 @@ export class AudioControllerStateMachine implements AudioControllerStateMachineI
         
       case AudioControllerLifecycleState.CONTROLLER_PAUSING:
         if (audioState === AudioServiceState.IDLE) {
-          this.transitionTo(AudioControllerLifecycleState.CONTROLLER_IDLE, 'AudioService暂停完成');
+          this.transitionTo(AudioControllerLifecycleState.CONTROLLER_IDLE, 'AudioService停止完成');
         }
         break;
     }
