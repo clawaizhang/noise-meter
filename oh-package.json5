@@ -6,6 +6,7 @@
     "@ohos/lottie-turbo": "^1.0.2-rc.1",
     "@hadss/dialoghub": "^1.1.0",
     "rxjs": '^7.8.2',
+    "@ohos/mpchart": '^3.0.25'
   },
   "devDependencies": {
     "@ohos/hypium": "1.0.18",
