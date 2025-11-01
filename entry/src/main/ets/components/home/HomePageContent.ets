@@ -60,15 +60,7 @@ export struct HomePageContent {
         .fontSize(56)
         .fontWeight(FontWeight.Bold)
         .fontColor(this.decibelColor)
-      
-      // 分贝描述
-      Text(this.ak.uiDisplayState.displayDescription)
-        .fontSize(DesignConstants.FONT_SIZE_MD)
-        .fontColor($r('sys.color.font_secondary'))
-      
-      // 统计数据行
-      this.buildStatisticsRow()
-      
+
       // 系统状态概要
       this.buildSystemStatus()
     }
@@ -155,7 +147,7 @@ export struct HomePageContent {
   @Builder
   private buildFunctionCard(config: FunctionCardConfig) {
     Row({ space: DesignConstants.SPACING_MD }) {
-      // 左侧图标区域
+      // 左侧图标区域 - 垂直居中对齐
       Stack({ alignContent: Alignment.TopEnd }) {
         Image(config.icon)
           .width(32)
@@ -175,46 +167,54 @@ export struct HomePageContent {
       }
       .width(32)
       .height(32)
+      .alignSelf(ItemAlign.Center)
 
-      // 右侧内容区域
+      // 右侧内容区域 - 居中对齐
       Column({ space: DesignConstants.SPACING_XS }) {
-        // 标题行
+        // 标题行 - 居中对齐
         Row() {
           Text(config.title)
             .fontSize(DesignConstants.FONT_SIZE_MD)
             .fontWeight(FontWeight.Medium)
             .fontColor($r('sys.color.font_primary'))
+            .textAlign(TextAlign.Start)
           
           Blank()
         }
         .width('100%')
-
-        // 描述行
+        .justifyContent(FlexAlign.Start)
+        
+        // 描述行 - 居中对齐
         Row() {
           Text(config.description)
             .fontSize(DesignConstants.FONT_SIZE_SM)
             .fontColor($r('sys.color.font_secondary'))
+            .textAlign(TextAlign.Start)
           
           Blank()
         }
         .width('100%')
-
-        // 数据展示区域
+        .justifyContent(FlexAlign.Start)
+        
+        // 数据展示区域 - 居中对齐
         if (config.dataDisplay) {
           Row() {
             Text(config.dataDisplay)
               .fontSize(DesignConstants.FONT_SIZE_SM)
               .fontWeight(FontWeight.Medium)
               .fontColor(config.dataColor || $r('sys.color.font_primary'))
+              .textAlign(TextAlign.Start)
             
             Blank()
           }
           .width('100%')
+          .justifyContent(FlexAlign.Start)
           .margin({ top: DesignConstants.SPACING_XS })
         }
       }
       .layoutWeight(1)
       .alignItems(HorizontalAlign.Start)
+      .justifyContent(FlexAlign.Center)
     }
     .width('100%')
     .height(80)
@@ -236,82 +236,59 @@ export struct HomePageContent {
   @Builder
   private buildStatisticsRow() {
     Row({ space: DesignConstants.SPACING_LG }) {
-      // 最小值
+      // 最小值 - 居中对齐
       Column({ space: DesignConstants.SPACING_XS }) {
         Text('最小值')
           .fontSize(DesignConstants.FONT_SIZE_SM)
           .fontColor($r('sys.color.font_secondary'))
+          .textAlign(TextAlign.Center)
         Text(`${this.ak.uiDisplayState.displayStatistics.minDb.toFixed(1)}dB`)
           .fontSize(DesignConstants.FONT_SIZE_MD)
           .fontWeight(FontWeight.Medium)
           .fontColor($r('sys.color.confirm'))
+          .textAlign(TextAlign.Center)
       }
+      .alignItems(HorizontalAlign.Center)
+      .layoutWeight(1)
       
-      // 平均值
+      // 平均值 - 居中对齐
       Column({ space: DesignConstants.SPACING_XS }) {
         Text('平均值')
           .fontSize(DesignConstants.FONT_SIZE_SM)
           .fontColor($r('sys.color.font_secondary'))
+          .textAlign(TextAlign.Center)
         Text(`${this.ak.uiDisplayState.displayStatistics.avgDb.toFixed(1)}dB`)
           .fontSize(DesignConstants.FONT_SIZE_MD)
           .fontWeight(FontWeight.Medium)
           .fontColor($r('sys.color.font_primary'))
+          .textAlign(TextAlign.Center)
       }
+      .alignItems(HorizontalAlign.Center)
+      .layoutWeight(1)
       
-      // 最大值
+      // 最大值 - 居中对齐
       Column({ space: DesignConstants.SPACING_XS }) {
         Text('最大值')
           .fontSize(DesignConstants.FONT_SIZE_SM)
           .fontColor($r('sys.color.font_secondary'))
+          .textAlign(TextAlign.Center)
         Text(`${this.ak.uiDisplayState.displayStatistics.maxDb.toFixed(1)}dB`)
           .fontSize(DesignConstants.FONT_SIZE_MD)
           .fontWeight(FontWeight.Medium)
           .fontColor($r('sys.color.alert'))
+          .textAlign(TextAlign.Center)
       }
+      .alignItems(HorizontalAlign.Center)
+      .layoutWeight(1)
     }
+    .width('100%')
+    .justifyContent(FlexAlign.SpaceEvenly)
     .margin({ top: DesignConstants.SPACING_MD })
   }
 
   @Builder
   private buildSystemStatus() {
     Column({ space: DesignConstants.SPACING_MD }) {
-      // 第一行：系统状态信息
-      Row({ space: DesignConstants.SPACING_LG }) {
-        // 测量时长
-        Column({ space: DesignConstants.SPACING_XS }) {
-          Text('测量时长')
-            .fontSize(DesignConstants.FONT_SIZE_SM)
-            .fontColor($r('sys.color.font_secondary'))
-          Text(this.measurementDuration)
-            .fontSize(DesignConstants.FONT_SIZE_SM)
-            .fontWeight(FontWeight.Medium)
-            .fontColor($r('sys.color.font_primary'))
-        }
-        
-        // 系统状态
-        Column({ space: DesignConstants.SPACING_XS }) {
-          Text('系统状态')
-            .fontSize(DesignConstants.FONT_SIZE_SM)
-            .fontColor($r('sys.color.font_secondary'))
-          Text(this.systemStatus)
-            .fontSize(DesignConstants.FONT_SIZE_SM)
-            .fontWeight(FontWeight.Medium)
-            .fontColor(this.systemStatusColor)
-        }
-        
-        // 记录数量
-        Column({ space: DesignConstants.SPACING_XS }) {
-          Text('记录数量')
-            .fontSize(DesignConstants.FONT_SIZE_SM)
-            .fontColor($r('sys.color.font_secondary'))
-          Text(this.ak.totalRecordsCount.toString())
-            .fontSize(DesignConstants.FONT_SIZE_SM)
-            .fontWeight(FontWeight.Medium)
-            .fontColor($r('sys.color.font_primary'))
-        }
-      }
-      .width('100%')
-      
       // 第二行：独立位置信息行
       this.buildLocationInfo()
     }

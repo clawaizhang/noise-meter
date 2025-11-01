@@ -180,8 +180,6 @@ export struct ToolsContent {
 
   build() {
     Column({ space: DesignConstants.SPACING_LG }) {
-      // 页面标题
-      this.buildPageHeader()
 
       // 操作按钮区域
       this.buildActionButtons()

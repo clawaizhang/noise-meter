@@ -169,13 +169,7 @@ export struct MainNoiseMeter {
     }
   ]
   private toolsMenus: Array<NavigationMenuItem> = [
-    {
-      value: '设置',
-      icon: $r('app.media.ic_settings'),
-      action: () => {
-        this.navStack.pushPathByName('Settings', null);
-      }
-    }
+
   ]
 
   @Builder
