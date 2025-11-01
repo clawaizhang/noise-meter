@@ -123,13 +123,7 @@ export struct MainNoiseMeter {
     }
   ]
   private noiseMeterMenus: Array<NavigationMenuItem> = [
-    {
-      value: '历史记录',
-      icon: $r('app.media.ic_history'),
-      action: () => {
-        this.navStack.pushPathByName('DecibelHistory', null);
-      }
-    }
+
   ]
   private alertsMenus: Array<NavigationMenuItem> = [
     {

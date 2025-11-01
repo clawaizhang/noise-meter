@@ -30,6 +30,10 @@ export struct FullScreenChartDashboard {
   @Local private swipeStartX: number = 0;
   @Local private swipeEndX: number = 0;
   @Local private swipeOffset: number = 0;
+  @Local private verticalSwipeStartY: number = 0;
+  @Local private verticalSwipeEndY: number = 0;
+  @Local private verticalSwipeDistance: number = 0;
+  @Local private isVerticalSwipeActive: boolean = false;
 
   aboutToAppear() {
     console.info('[全屏仪表盘] 组件初始化完成');
@@ -154,6 +158,53 @@ export struct FullScreenChartDashboard {
       // 滑动距离不足，恢复原位
       this.swipeOffset = 0;
     }
+  }
+
+  /**
+   * 处理垂直滑动手势开始
+   */
+  private handleVerticalSwipeStart(event: GestureEvent): void {
+    if (this.isAnimating) {
+      return;
+    }
+
+    this.verticalSwipeStartY = event.offsetY;
+    this.verticalSwipeEndY = event.offsetY;
+    this.verticalSwipeDistance = 0;
+    this.isVerticalSwipeActive = true;
+  }
+
+  /**
+   * 处理垂直滑动手势更新
+   */
+  private handleVerticalSwipeUpdate(event: GestureEvent): void {
+    if (this.isAnimating || !this.isVerticalSwipeActive) {
+      return;
+    }
+
+    this.verticalSwipeEndY = event.offsetY;
+    this.verticalSwipeDistance = this.verticalSwipeEndY - this.verticalSwipeStartY;
+  }
+
+  /**
+   * 处理垂直滑动手势结束
+   */
+  private handleVerticalSwipeEnd(event: GestureEvent): void {
+    if (this.isAnimating || !this.isVerticalSwipeActive) {
+      return;
+    }
+
+    const swipeDistance = this.verticalSwipeEndY - this.verticalSwipeStartY;
+    const minVerticalSwipeDistance = 80; // 垂直滑动最小距离阈值
+
+    // 下滑距离足够时退出全屏
+    if (swipeDistance > minVerticalSwipeDistance) {
+      console.info('[全屏仪表盘] 检测到下滑手势，退出全屏');
+      this.exitFullScreen();
+    }
+
+    this.isVerticalSwipeActive = false;
+    this.verticalSwipeDistance = 0;
   }
 
   /**
@@ -386,6 +437,22 @@ export struct FullScreenChartDashboard {
             this.swipeOffset = 0;
           })
       )
+      .gesture(
+        PanGesture({ direction: PanDirection.Vertical, distance: 5 })
+          .onActionStart((event: GestureEvent) => {
+            this.handleVerticalSwipeStart(event);
+          })
+          .onActionUpdate((event: GestureEvent) => {
+            this.handleVerticalSwipeUpdate(event);
+          })
+          .onActionEnd((event: GestureEvent) => {
+            this.handleVerticalSwipeEnd(event);
+          })
+          .onActionCancel(() => {
+            this.isVerticalSwipeActive = false;
+            this.verticalSwipeDistance = 0;
+          })
+      )
     }
     .width('100%')
     .height('100%')
@@ -406,17 +473,18 @@ export struct FullScreenChartDashboard {
         .layoutWeight(1)
         .textAlign(TextAlign.Center)
 
-      // 退出全屏按钮
+      // 退出全屏按钮 - 优化视觉设计
       Button() {
         Image($r('app.media.ic_close'))
-          .width(20)
-          .height(20)
+          .width(24)
+          .height(24)
           .fillColor($r('sys.color.ohos_id_color_text_primary'))
       }
       .type(ButtonType.Circle)
       .backgroundColor($r('sys.color.comp_background_tertiary'))
-      .width(40)
-      .height(40)
+      .width(48)
+      .height(48)
+      .opacity(0.9)
       .onClick(() => {
         this.exitFullScreen();
       })
@@ -431,6 +499,7 @@ export struct FullScreenChartDashboard {
       style: BorderStyle.Solid
     })
   }
+
 
   build() {
     Column() {
