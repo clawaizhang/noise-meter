@@ -71,8 +71,7 @@ export struct AlertsContent {
         
         // 双重检查：确保当前分贝值确实超过阈值才触发警报
         if (triggerDecibel >= threshold) {
-          // 不触发警报
-          // await this.triggerAlarm(triggerDecibel);
+          await this.triggerAlarm(triggerDecibel);
         } else {
           console.warn(`[AlertsContent] 警报状态异常：状态=${currentState}，但分贝值=${triggerDecibel}dB < 阈值=${threshold}dB，跳过警报触发`);
         }
