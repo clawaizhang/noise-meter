@@ -1,4 +1,5 @@
 import promptAction from '@ohos.promptAction';
+import { Throttle } from '../../utils/Debounce';
 
 @ComponentV2
 export struct ResetSaveButton {
@@ -34,24 +35,26 @@ export struct ResetSaveButton {
         color: $r( 'app.color.divider_primary'),
         offsetY: 2
       })
-      .onClick(async () => {
-        const confirmed = await promptAction.showDialog({
-          title: '确认重置',
-          message: '确认要重置当前数据吗？此操作不可恢复。',
-          buttons: [
-            {
-              text: '取消',
-              color: $r( 'app.color.text_secondary')
-            },
-            {
-              text: '确认',
-              color: $r( 'app.color.button_danger')
-            }
-          ]
+      .onClick(() => {
+        Throttle.click(async () => {
+          const confirmed = await promptAction.showDialog({
+            title: '确认重置',
+            message: '确认要重置当前数据吗？此操作不可恢复。',
+            buttons: [
+              {
+                text: '取消',
+                color: $r( 'app.color.text_secondary')
+              },
+              {
+                text: '确认',
+                color: $r( 'app.color.button_danger')
+              }
+            ]
+          });
+          if (confirmed.index === 1) {
+            this.onReset();
+          }
         });
-        if (confirmed.index === 1) {
-          this.onReset();
-        }
       })
   
       // 锁定/解锁按钮（放在中间）
@@ -66,7 +69,11 @@ export struct ResetSaveButton {
       .width(64)
       .height(64)
       .backgroundColor(this.isUILocked ? $r( 'app.color.background_tertiary') : $r( 'app.color.background_secondary'))
-      .onClick(this.lockToggle)
+      .onClick(() => {
+        Throttle.click(() => {
+          this.lockToggle();
+        });
+      })
   
       Button({
         type: ButtonType.Capsule,
@@ -93,27 +100,29 @@ export struct ResetSaveButton {
         color: $r( 'app.color.divider_primary'),
         offsetY: 2
       })
-      .onClick(async () => {
-        const confirmed = await promptAction.showDialog({
-          title: '确定保存',
-          message: '确定要保存当前数据吗？',
-          buttons: [
-            {
-              text: '取消',
-              color: $r( 'app.color.text_secondary')
-            },
-            {
-              text: '确定',
-              color: $r( 'app.color.button_primary')
-            }
-          ]
+      .onClick(() => {
+        Throttle.click(async () => {
+          const confirmed = await promptAction.showDialog({
+            title: '确定保存',
+            message: '确定要保存当前数据吗？',
+            buttons: [
+              {
+                text: '取消',
+                color: $r( 'app.color.text_secondary')
+              },
+              {
+                text: '确定',
+                color: $r( 'app.color.button_primary')
+              }
+            ]
+          });
+          if (confirmed.index === 1) {
+            this.onSave();
+          }
         });
-        if (confirmed.index === 1) {
-          this.onSave();
-        }
       })
     }
-    .width('100%')
+
     .justifyContent(FlexAlign.SpaceBetween)
   }
 }

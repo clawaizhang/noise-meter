@@ -5,18 +5,17 @@ import { BusinessError } from '@kit.BasicServicesKit';
 import { hidebug } from '@kit.PerformanceAnalysisKit';
 import { netQuality } from '@kit.NetworkBoostKit';
 import {
-  DeviceHealthInfo,
   BatteryInfo,
-  PerformanceInfo,
-  NetworkInfo,
+  CellularNetworkInfo,
+  DeviceHealthInfo,
   NetType,
   NetworkGeneration,
-  CellularNetworkInfo,
-  SystemMemInfo,
+  NetworkInfo,
+  PerformanceInfo,
+  SensorInfo,
   StorageInfo,
-  SensorInfo
+  SystemMemInfo
 } from '../types/DeviceHealthInfo';
-import abilityAccessCtrl from '@ohos.abilityAccessCtrl';
 
 interface NetworkQosParams {
   latency: number;

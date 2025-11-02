@@ -1,4 +1,4 @@
-import { NoiseStandard } from "../models/NoiseStandard";
+import { NoiseStandard } from '../models/NoiseStandard';
 
 export enum NoiseStandardType {
   TYPE_0,

@@ -1,7 +1,7 @@
-import { DatabaseConstants } from "../main/ets/constants/DatabaseConstants";
-import { TableCreateSql } from "../main/ets/constants/TableCreateSql";
-import { DbConfig } from "../main/ets/interfaces/DatabaseInterfaces";
-import { MainNoiseMeter } from "../main/ets/pages/noisemeter/NoiseMeterNavigation";
+import { DatabaseConstants } from '../main/ets/constants/DatabaseConstants';
+import { TableCreateSql } from '../main/ets/constants/TableCreateSql';
+import { DbConfig } from '../main/ets/interfaces/DatabaseInterfaces';
+import { MainNoiseMeter } from '../main/ets/pages/noisemeter/NoiseMeterNavigation';
 
 @ComponentV2
 export struct MainPage {
@@ -29,6 +29,11 @@ export const dbConfig: DbConfig = {
       version: 3,
       sqls: [
         TableCreateSql.ADD_COMMENT_COLUMN]
+    },
+    {
+      version: 4,
+      sqls: [
+        TableCreateSql.ADD_TIMESTAMP_INDEX]
     }
   ]
 }

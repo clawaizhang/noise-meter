@@ -1,65 +1,52 @@
 import UIAbility from '@ohos.app.ability.UIAbility';
 import window from '@ohos.window';
-import { AbilityConstant, Want, common } from '@kit.AbilityKit';
+import { AbilityConstant, common, Want } from '@kit.AbilityKit';
+import { BusinessError, deviceInfo } from '@kit.BasicServicesKit';
 import hilog from '@ohos.hilog';
 import backgroundTaskManager from '@ohos.resourceschedule.backgroundTaskManager';
 import wantAgent from '@ohos.app.ability.wantAgent';
 import { WindowManager } from '../utils/WindowManager';
 import { DisplayManager } from '../utils/DisplayManager';
 import { NotificationHelper } from '../utils/NotificationHelper';
-import { PreferenceService, PreferenceValue } from '../services/PreferenceService';
-import { PreferenceKeyConstants } from '../constants/PreferenceKeyConstants';
-import audio from '@ohos.multimedia.audio';
+import { PreferenceKeys } from '../models/PreferenceKeys';
+import { AppKeys } from '../models/AppKeys';
+import { AppUtil, PermissionUtil, PreferencesUtil } from '@pura/harmony-utils';
+import { camera } from '@kit.CameraKit';
+import { AppStorageV2, display, PersistenceV2 } from '@kit.ArkUI';
+import { AudioControllerService } from '../services/AudioControllerService';
+import { WindowFunctionCache } from '../utils/WindowFunctionCache';
+import { DataProcessingState } from '../models/DataProcessingState';
+import { UIDisplayState } from '../models/UIDisplayState';
 
 const TAG = 'EntryAbility';
 const DOMAIN = 0x0000;
 const NOTIFICATION_ID = 1;
+
 export default class EntryAbility extends UIAbility {
-  private keepScreenOn: boolean = false;
-  private backgroundRunningEnabled: boolean = false;
-  private meterOn: boolean = false;
   private backgroundRunningRequested: boolean = false;
+  private cameraManager: camera.CameraManager = camera.getCameraManager(getContext(this));
+  private mainWindow: window.Window | undefined = undefined;
 
   async onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): Promise<void> {
     hilog.info(DOMAIN, TAG, 'Ability onCreate');
-
-    // 初始化首选项默认值
-    const preferenceService = PreferenceService.getInstance();
-    preferenceService.init(this.context);
-    // 获取初始值
-    this.keepScreenOn = preferenceService.getBoolean(PreferenceKeyConstants.KEEP_SCREEN_ON, false);
-    this.backgroundRunningEnabled = preferenceService.getBoolean(PreferenceKeyConstants.BACKGROUND_RUNNING, false);
-    this.meterOn = preferenceService.getBoolean(PreferenceKeyConstants.METER_ON, false);
-
-    // 注册监听器
-    preferenceService.addChangeListener(PreferenceKeyConstants.KEEP_SCREEN_ON,
-      (key: string, newValue: PreferenceValue) => {
-        this.keepScreenOn = newValue as boolean;
-        const windowManager = WindowManager.getInstance();
-        windowManager.setKeepScreenOn(this.keepScreenOn);
-      });
-
-    preferenceService.addChangeListener(PreferenceKeyConstants.BACKGROUND_RUNNING,
-      (key: string, newValue: PreferenceValue) => {
-        this.backgroundRunningEnabled = newValue as boolean;
-      });
-
-    preferenceService.addChangeListener(PreferenceKeyConstants.PRIVACY_AGREED,
-      (key: string, newValue: PreferenceValue) => {
-        if (newValue) {
-          // 请求通知权限
-          const notificationHelper = NotificationHelper.getInstance(this.context);
-          notificationHelper.checkAndRequestPermission();
-        }
-      });
-    preferenceService.addChangeListener(PreferenceKeyConstants.METER_ON,
-      (key: string, newValue: PreferenceValue) => {
-        this.meterOn = newValue as boolean;
-      });
+    // 初始化FFT优化 - 预缓存窗函数
+    WindowFunctionCache.initialize();
   }
 
-  onDestroy(): void {
+  async onDestroy(): Promise<void> {
     hilog.info(DOMAIN, TAG, 'Ability onDestroy');
+
+    // 销毁DisplayManager资源
+    const displayManager = DisplayManager.getInstance();
+    await displayManager.destroy();
+
+    PermissionUtil.checkPermissions('ohos.permission.CAMERA').then((result) => {
+      if (result) {
+        if (this.cameraManager.isTorchSupported()) {
+          this.cameraManager.setTorchMode(camera.TorchMode.OFF);
+        }
+      }
+    })
   }
 
   onWindowStageCreate(windowStage: window.WindowStage): void {
@@ -67,47 +54,85 @@ export default class EntryAbility extends UIAbility {
     // 注册窗口并加载内容
     const windowManager = WindowManager.getInstance();
     windowManager.registerWindowStage(windowStage);
-    windowManager.loadContent('pages/Index');
-    windowManager.setKeepScreenOn(this.keepScreenOn);
-    windowStage.getMainWindowSync().setPreferredOrientation(window.Orientation.PORTRAIT);
-    // audio.getAudioManager().getVolumeManager().getAppVolumePercentage().then((volume) => {
-    //   PreferenceService.getInstance().setNumber(PreferenceKeyConstants.VOLUME, volume);
-    // });
-    // audio.getAudioManager().getVolumeManager().on('volumeChange', (volume) => {
-    //   if (volume.volumeType === audio.AudioVolumeType.MEDIA && volume.volume < 100) {
-    //     PreferenceService.getInstance().setNumber(PreferenceKeyConstants.VOLUME, volume.volume);
-    //   }
-    // });
+    windowManager.loadContent('pages/Index', () => {
+      AppUtil.init(this.context);
+      PersistenceV2.connect(PreferenceKeys, () => new PreferenceKeys());
+      AppStorageV2.connect(AppKeys, () => new AppKeys())!;
+      AppStorageV2.connect(DataProcessingState, () => new DataProcessingState())!;
+      AppStorageV2.connect(UIDisplayState, () => new UIDisplayState())!;
+      PersistenceV2.notifyOnError((key: string, reason: string, msg: string) => {
+        console.error(`error key: ${key}, reason: ${reason}, message: ${msg}`);
+      });
+    });
+
+    // 获取设备类型并设置窗口方向
+    windowStage.getMainWindow((err: BusinessError, windowClass) => {
+      if (err.code || !windowClass) {
+        hilog.error(DOMAIN, TAG, `Failed to obtain the main window. Cause code: ${err.code}, message: ${err.message}`);
+        return;
+      }
+      this.mainWindow = windowClass;
+      // 初始化窗口尺寸和断点信息
+      this.updateWindowBreakpointInfo();
+
+      // 监听窗口尺寸变化
+      this.setupWindowSizeChangeListener();
+      // 使用系统提供的断点计算方法
+      const uiContext = this.mainWindow.getUIContext();
+      const widthBp = uiContext.getWindowWidthBreakpoint();
+      // 获取设备类型
+      let orientation = window.Orientation.AUTO_ROTATION;
+      windowClass.getWindowProperties().windowRect
+      // 判断设备类型来设置窗口显示方向
+      if (widthBp <= WidthBreakpoint.WIDTH_SM) {
+        // 小屏强制竖屏
+        orientation = window.Orientation.PORTRAIT;
+      }
+      try {
+        windowClass.setPreferredOrientation(orientation, (err: BusinessError) => {
+          const errCode: number = err.code;
+          if (errCode) {
+            hilog.error(DOMAIN, TAG,
+              `Failed to set window orientation. Cause code: ${err.code}, message: ${err.message}`);
+            return;
+          }
+          hilog.info(DOMAIN, TAG, 'Succeeded in setting window orientation.');
+        });
+      } catch (exception) {
+        hilog.error(DOMAIN, TAG,
+          `Failed to set window orientation. Cause code: ${exception.code}, message: ${exception.message}`);
+      }
+    });
+
   }
 
   onWindowStageDestroy(): void {
-    const windowManager = WindowManager.getInstance();
-    windowManager.setKeepScreenOn(this.keepScreenOn);
     hilog.info(DOMAIN, TAG, 'Ability onWindowStageDestroy');
+
   }
 
   onForeground(): void {
-    const windowManager = WindowManager.getInstance();
-    windowManager.setKeepScreenOn(this.keepScreenOn);
     DisplayManager.getInstance().onForeground();
     if (this.backgroundRunningRequested) {
       // 取消后台通知
       const notificationHelper = NotificationHelper.getInstance(this.context);
       notificationHelper.cancelNotification(NOTIFICATION_ID);
-      this.stopBackgroundRunning();
+      // this.stopBackgroundRunning();
     }
+
+    // 双管线架构：恢复UI更新
+    // AudioControllerService.getInstancePlain()?.resumeUIUpdates();
 
     hilog.info(DOMAIN, TAG, 'Ability onForeground');
   }
 
   onBackground(): void {
-    const windowManager = WindowManager.getInstance();
-    windowManager.setKeepScreenOn(this.keepScreenOn);
     DisplayManager.getInstance().onBackground();
 
-    if (this.backgroundRunningEnabled && this.meterOn) {
-      this.startBackgroundRunning();
-    }
+    // 双管线架构：暂停UI更新
+    // AudioControllerService.getInstancePlain()?.pauseUIUpdates();
+
+    // this.startBackgroundRunning();
 
     hilog.info(DOMAIN, TAG, 'Ability onBackground');
   }
@@ -132,25 +157,27 @@ export default class EntryAbility extends UIAbility {
           hilog.error(DOMAIN, TAG, `Get wantAgent failed, error: ${JSON.stringify(err)}`);
           return;
         }
-        backgroundTaskManager.startBackgroundRunning(this.context,
-          backgroundTaskManager.BackgroundMode.AUDIO_RECORDING,
-          agent,
-          (err) => {
-            if (err) {
-              hilog.error(DOMAIN, TAG, `Start background running failed, error: ${JSON.stringify(err)}`);
-              return;
-            }
-            this.backgroundRunningRequested = true;
-            // 发布后台通知
-            const notificationHelper = NotificationHelper.getInstance(this.context);
-            notificationHelper.showNotification(
-              NOTIFICATION_ID,
-              '噪音监测中',
-              '应用已转入后台持续监测环境噪音',
-              '点击返回应用查看实时数据'
-            );
-            hilog.info(DOMAIN, TAG, 'Start background running successfully');
-          });
+        if (PersistenceV2.connect(PreferenceKeys)!.background_running) {
+          backgroundTaskManager.startBackgroundRunning(this.context,
+            backgroundTaskManager.BackgroundMode.AUDIO_RECORDING,
+            agent,
+            (err) => {
+              if (err) {
+                hilog.error(DOMAIN, TAG, `Start background running failed, error: ${JSON.stringify(err)}`);
+                return;
+              }
+              this.backgroundRunningRequested = true;
+              // 发布后台通知
+              const notificationHelper = NotificationHelper.getInstance(this.context);
+              notificationHelper.showNotification(
+                NOTIFICATION_ID,
+                '噪音监测中',
+                '应用已转入后台持续监测环境噪音',
+                '点击返回应用查看实时数据'
+              );
+              hilog.info(DOMAIN, TAG, 'Start background running successfully');
+            });
+        }
       });
     } catch (err) {
       hilog.error(DOMAIN, TAG, `Start background running failed, error: ${JSON.stringify(err)}`);
@@ -169,6 +196,56 @@ export default class EntryAbility extends UIAbility {
       });
     } catch (err) {
       hilog.error(DOMAIN, TAG, `Stop background running failed, error: ${JSON.stringify(err)}`);
+    }
+  }
+
+  // 设置窗口尺寸变化监听
+  private setupWindowSizeChangeListener(): void {
+    if (!this.mainWindow) {
+      hilog.error(DOMAIN, TAG, 'Main window is not available for size change listener');
+      return;
+    }
+
+    this.mainWindow.on('windowSizeChange', (windowSize: window.Size) => {
+      hilog.info(DOMAIN, TAG, `Window size changed: ${windowSize.width}x${windowSize.height}`);
+      this.updateWindowBreakpointInfo();
+    });
+    display.on('change', (displayId: number) => {
+      hilog.info(DOMAIN, TAG, `Display changed: ${displayId}`)
+      this.updateWindowBreakpointInfo();
+    })
+  }
+
+  // 更新窗口断点信息
+  private updateWindowBreakpointInfo(): void {
+    if (!this.mainWindow) {
+      return;
+    }
+
+    try {
+      // 获取窗口尺寸
+      const windowSize = this.mainWindow.getWindowProperties();
+      const widthVp = px2vp(windowSize.windowRect.width);
+      const heightVp = px2vp(windowSize.windowRect.height);
+
+      // 使用系统提供的断点计算方法
+      const uiContext = this.mainWindow.getUIContext();
+      const widthBp = uiContext.getWindowWidthBreakpoint();
+      const heightBp = uiContext.getWindowHeightBreakpoint();
+      const isLandscape = widthVp > heightVp;
+
+      // 更新到 AppStorage
+      let appKeys = AppStorageV2.connect(AppKeys)!;
+      appKeys.windowWidthBreakpoint = widthBp;
+      appKeys.windowHeightBreakpoint = heightBp;
+      appKeys.windowWidth = widthVp;
+      appKeys.windowHeight = heightVp;
+      appKeys.isLandscape = isLandscape;
+
+      hilog.info(DOMAIN, TAG,
+        `Window breakpoints updated - Width: ${widthBp}(${widthVp}vp), Height: ${heightBp}(${heightVp}vp), Landscape: ${isLandscape}`);
+    } catch (error) {
+      hilog.error(DOMAIN, TAG, `Failed to update window breakpoint info: ${error}`);
     }
   }
 }

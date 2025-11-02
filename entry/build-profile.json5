@@ -22,7 +22,7 @@
       "name": "default"
     },
     {
-      "name": "noise_meter",
+      "name": "noise_meter_pro",
       "runtimeOS": "HarmonyOS",
       "source": {
         "pages": [

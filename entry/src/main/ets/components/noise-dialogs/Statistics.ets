@@ -1,10 +1,10 @@
-import { DecibelRecord } from "../../models/DecibelRecord";
-import { DecibelService } from "../../services/DecibelService"
+import { DecibelRecord } from '../../models/DecibelRecord';
+import { DecibelService } from '../../services/DecibelService'
 
 interface NoiseSegment {
   name: string;
   value: number;
-  color: string;
+  color: Resource;
 }
 
 interface NoiseDistribution {
@@ -74,32 +74,32 @@ export struct Statistics {
     // 噪音组合
     const combination = this.analyzeNoiseCombination(levels);
     if (combination) {
-      description += '🔊 ' + combination;
+      description += '噪音组合：' + combination;
     }
 
     if (levels['难以忍受'] > 10) {
       const areaType = this.getAreaTypeForHighNoise();
-      description += '，' + `⚠️ 存在危险噪音，超过${areaType}标准，建议立即采取保护措施`;
+      description += '，' + `存在危险噪音，超过${areaType}标准，建议立即采取保护措施`;
     }
 
     if (levels['非常吵闹'] > 20) {
-      description += '，' + '🔊 接近工业区标准，可能影响听力健康';
+      description += '，' + '接近工业区标准，可能影响听力健康';
     }
 
     if (levels['吵闹'] > 30) {
-      description += '，' + '🔉 接近商业区标准，可能影响专注力，';
+      description += '，' + '接近商业区标准，可能影响专注力，';
     }
 
     if (levels['一般'] > 40) {
-      description += '，' + '🗣️ 符合居民区标准';
+      description += '，' + '符合居民区标准';
     }
 
     if (levels['安静'] > 50) {
-      description += '，' + '🤫 达到疗养区标准，适合办公学习';
+      description += '，' + '达到疗养区标准，适合办公学习';
     }
 
     if (levels['非常安静'] > 60) {
-      description += '，' + '🌙 环境非常安静，优于疗养区标准，适合休息';
+      description += '，' + '环境非常安静，优于疗养区标准，适合休息';
     }
 
     // 追加新的分析结果
@@ -114,7 +114,7 @@ export struct Statistics {
     // 建议
     const recommendations = this.generateRecommendations(levels);
     if (recommendations) {
-      description += '，' + '📝 建议：' + recommendations;
+      description += '，' + '建议：' + recommendations;
     }
 
     return description + "。";
@@ -210,137 +210,70 @@ export struct Statistics {
   }
 
   build() {
-    Column() {
+    Column({ space: 8 }) {
       Text(this.getOverallNoiseDescription())
-        .fontSize(14)
-        .fontColor($r('app.color.text_secondary'))
-        .margin({ bottom: 16 })
         .textAlign(TextAlign.Start)
-        .width('100%')
 
       Row() {
-        Column() {
+        Column({ space: 8 }) {
           Text('最小值')
-            .fontSize(12)
-            .fontColor($r('app.color.text_secondary'))
-            .margin({ bottom: 8 })
-          Row() {
-            Text(this.selectedRecord!.minDecibel.toString())
-              .fontSize(24)
-              .fontWeight(FontWeight.Bold)
-              .fontColor(DecibelService.getDecibelColor(this.selectedRecord!.minDecibel))
-          }
+          Text(this.selectedRecord!.minDecibel.toString())
+            .fontWeight(FontWeight.Bold)
+            .fontColor(DecibelService.getDecibelColor(this.selectedRecord!.minDecibel))
 
           Text(DecibelService.getDecibelLevel(this.selectedRecord!.minDecibel))
-            .fontSize(12)
             .fontColor(DecibelService.getDecibelColor(this.selectedRecord!.minDecibel))
-            .margin({ top: 8 })
         }
         .layoutWeight(1)
         .alignItems(HorizontalAlign.Center)
         .height(90)
 
-        Divider()
-          .width(1)
-          .height(60)
-          .backgroundColor($r('app.color.divider'))
-          .margin({ left: 12, right: 12 })
-
-        Column() {
+        Column({ space: 8 }) {
           Text('平均值')
-            .fontSize(12)
-            .fontColor($r('app.color.text_secondary'))
-            .margin({ bottom: 8 })
-          Row() {
-            Text(this.selectedRecord!.avgDecibel.toString())
-              .fontSize(24)
-              .fontWeight(FontWeight.Bold)
-              .fontColor(DecibelService.getDecibelColor(this.selectedRecord!.avgDecibel))
-          }
+          Text(this.selectedRecord!.avgDecibel.toString())
+            .fontWeight(FontWeight.Bold)
+            .fontColor(DecibelService.getDecibelColor(this.selectedRecord!.avgDecibel))
 
           Text(DecibelService.getDecibelLevel(this.selectedRecord!.avgDecibel))
-            .fontSize(12)
             .fontColor(DecibelService.getDecibelColor(this.selectedRecord!.avgDecibel))
-            .margin({ top: 8 })
         }
         .layoutWeight(1)
         .alignItems(HorizontalAlign.Center)
         .height(90)
 
-        Divider()
-          .width(1)
-          .height(60)
-          .backgroundColor($r('app.color.text_primary'))
-          .margin({ left: 12, right: 12 })
-
-        Column() {
+        Column({ space: 8 }) {
           Text('最大值')
-            .fontSize(12)
-            .fontColor($r('app.color.text_secondary'))
-            .margin({ bottom: 8 })
-          Row() {
-            Text(this.selectedRecord!.maxDecibel.toString())
-              .fontSize(24)
-              .fontWeight(FontWeight.Bold)
-              .fontColor(DecibelService.getDecibelColor(this.selectedRecord!.maxDecibel))
-          }
-
-          Text(DecibelService.getDecibelLevel(this.selectedRecord!.maxDecibel))
-            .fontSize(12)
+          Text(this.selectedRecord!.maxDecibel.toString())
+            .fontWeight(FontWeight.Bold)
             .fontColor(DecibelService.getDecibelColor(this.selectedRecord!.maxDecibel))
-            .margin({ top: 8 })
+          Text(DecibelService.getDecibelLevel(this.selectedRecord!.maxDecibel))
+            .fontColor(DecibelService.getDecibelColor(this.selectedRecord!.maxDecibel))
         }
         .layoutWeight(1)
         .alignItems(HorizontalAlign.Center)
         .height(90)
       }
-      .width('100%')
-
-      Divider()
-        .width('100%')
-        .height(1)
-        .backgroundColor($r('app.color.divider'))
-        .margin({ top: 12, bottom: 16 })
 
       if (this.selectedRecord && this.selectedRecord.decibelValues.length > 0) {
         Column() {
           ForEach(this.noiseDistribution.segments, (segment: NoiseSegment) => {
             Row() {
               Text(segment.name)
-                .fontSize(12)
-                .fontColor($r('app.color.text_secondary'))
                 .width(60)
-                .margin({ right: 8 })
-
               Row()
                 .width(`${segment.value * 0.7}%`)
                 .height(12)
                 .backgroundColor(segment.color)
                 .borderRadius(6)
-                .margin({ right: 8 })
-
               Text(`${segment.value}%`)
-                .fontSize(12)
-                .fontColor($r('app.color.text_secondary'))
             }
-            .width('100%')
-            .margin({ bottom: 8 })
             .alignItems(VerticalAlign.Center)
           })
-        }
-        .width('100%')
-        .padding({ left: 16, right: 16 })
+        }.alignItems(HorizontalAlign.Start)
       }
     }
-    .width('100%')
-    .padding({
-      left: 16,
-      right: 16,
-      top: 12,
-      bottom: 12
-    })
-    .backgroundColor($r('app.color.background_secondary'))
-    .borderRadius(12)
-    .margin({ bottom: 12 })
+    .padding(16)
+    .backgroundColor($r('sys.color.comp_background_primary'))
+    .borderRadius(16)
   }
 }

@@ -1,0 +1,395 @@
+import { DecibelService } from '../../services/DecibelService';
+import { WeightingType } from '../../constants/WeightingConstants';
+import { DialogHub, InfSheet } from '@hadss/dialoghub';
+import { resourceManager } from '@kit.LocalizationKit';
+import { DialogStyleManager } from '../../utils/DialogStyleManager';
+import { NoiseDescriptionDialogBuilder } from '../../pages/noisemeter/NoiseDescriptionDialogNavigation';
+import { NoiseStandardDialogBuilder } from '../../pages/noisemeter/NoiseStandardDialogNavigation';
+import { AppKeys } from '../../models/AppKeys';
+import { AppStorageV2, curves } from '@kit.ArkUI';
+import { interval, Subscription } from 'rxjs';
+import { Throttle } from '../../utils/Debounce';
+
+// 噪音等级横幅配置接口
+interface NoiseBannerConfig {
+  description: string;
+}
+
+// 当前分贝显示配置接口
+interface CurrentDecibelConfig {
+  decibelColor?: ResourceColor;
+  currentDecibel: number;
+}
+
+// 统计数据配置接口
+interface StatisticsConfig {
+  minDecibel: number;
+  avgDecibel: number;
+  maxDecibel: number;
+}
+
+@ComponentV2
+export struct DecibelDisplayComponent {
+  // 输入参数
+  @Param @Require weightingType: WeightingType = WeightingType.A;
+  @Param @Require calibrationValue: number = 0;
+  @Param @Require noiseThreshold: number = 80;
+  @Param @Require systemNotificationEnabled: boolean = true;
+  @Param @Require isNoiseAlarm: boolean = false;
+  @Local hiddenForXsMd: boolean = false;
+  // 内部状态
+  noiseStandardSub?: Subscription;
+  // DialogHub实例缓存
+  private noiseDescriptionDialog: InfSheet | null = null;
+  private noiseStandardDialog: InfSheet | null = null;
+  // 定时器管理
+  private noiseDescriptionUpdateIntervalId: number | null = null;
+  private noiseStandardUpdateSubscription?: Subscription;
+  @Local ak: AppKeys = AppStorageV2.connect(AppKeys)!;
+  sysResourceManager: resourceManager.ResourceManager = resourceManager.getSystemResourceManager();
+
+  aboutToAppear() {
+    // 初始化稳定描述
+    this.changeDisplay();
+  }
+
+  aboutToDisappear() {
+    // 清理资源
+    this.noiseStandardSub?.unsubscribe();
+
+    // 清理DialogHub定时器
+    this.cleanupDialogTimers();
+
+    // 注销Dialog
+    if (this.noiseDescriptionDialog) {
+      DialogStyleManager.unregisterDialog(this.noiseDescriptionDialog);
+    }
+    if (this.noiseStandardDialog) {
+      DialogStyleManager.unregisterDialog(this.noiseStandardDialog);
+    }
+  }
+
+  build() {
+    Column({ space: 0 }) {
+      if (!this.hiddenForXsMd) {
+        // 1. 噪音等级横幅（顶部）
+        this.noiseLevelBanner({
+          description: this.ak.uiDisplayState.displayDescription
+        })
+      }
+
+      // 2. 当前分贝值显示（核心区域）
+      this.currentDecibelDisplay({
+        currentDecibel: this.ak.uiDisplayState.displayDb
+      })
+
+
+      // 3. 统计数据展示（最小值-平均值-最大值）
+      this.statisticsDisplay({
+        minDecibel: this.ak.uiDisplayState.displayStatistics.minDb,
+        avgDecibel: this.ak.uiDisplayState.displayStatistics.avgDb,
+        maxDecibel: this.ak.uiDisplayState.displayStatistics.maxDb
+      })
+      if (!this.hiddenForXsMd) {
+        // 4. 系统状态信息
+        this.systemStatusDisplay()
+
+        // 噪音参考标准已移动到参考Tab，这里不再显示
+      }
+    }
+    .width('100%')
+    .padding({ left: 16, right: 16 })
+    .borderRadius(0)
+  }
+
+  @Monitor('ak.windowWidth','ak.windowHeight')
+  onWindowSizeChange(monitor: IMonitor) {
+    this.changeDisplay();
+  }
+
+  private changeDisplay() {
+    // 获取当前窗口尺寸
+    if (this.ak.windowWidthBreakpoint <= WidthBreakpoint.WIDTH_SM &&
+      this.ak.windowHeightBreakpoint <= HeightBreakpoint.HEIGHT_MD) {
+      this.hiddenForXsMd = true;
+    } else {
+      this.hiddenForXsMd = false;
+    }
+  }
+
+  // 清理DialogHub相关定时器
+  private cleanupDialogTimers() {
+    // 清理噪音描述对话框定时器
+    if (this.noiseDescriptionUpdateIntervalId) {
+      clearInterval(this.noiseDescriptionUpdateIntervalId);
+      this.noiseDescriptionUpdateIntervalId = null;
+    }
+
+    // 清理噪音标准对话框定时器
+    this.noiseStandardUpdateSubscription?.unsubscribe();
+    this.noiseStandardUpdateSubscription = undefined;
+  }
+
+  @Builder
+  noiseLevelBanner(config: NoiseBannerConfig) {
+    Row({ space: 8 }) {
+      Image($r('app.media.ic_info'))
+        .width(16)
+        .height(16)
+        .fillColor($r('sys.color.font_secondary'));
+
+      Text(config.description)
+        .fontSize(14)
+        .fontColor($r('sys.color.font_secondary'))
+        .fontWeight(FontWeight.Medium);
+    }
+    .padding({
+      left: 12,
+      right: 12,
+      top: 16,
+    })
+    .borderRadius(6)
+    .width('100%')
+    .justifyContent(FlexAlign.Center)
+    .onClick(() => {
+      Throttle.click(() => {
+        if (!this.noiseDescriptionDialog) {
+          this.noiseDescriptionDialog = DialogHub.getSheet()
+            .setContent(wrapBuilder(NoiseDescriptionDialogBuilder), this.ak)
+            .setStyle({ backgroundColor: $r('sys.color.background_secondary') })
+            .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS })
+            .setComponentTargetId('mainId')
+            .build();
+
+          // 注册Dialog到样式管理器
+          DialogStyleManager.registerDialog(this.noiseDescriptionDialog);
+        }
+        this.noiseDescriptionDialog.show();
+
+        // 清理之前的定时器并启动新的
+        if (this.noiseDescriptionUpdateIntervalId) {
+          clearInterval(this.noiseDescriptionUpdateIntervalId);
+        }
+        this.noiseDescriptionUpdateIntervalId = setInterval(() => {
+          this.noiseDescriptionDialog?.updateContent(this.ak);
+        }, 100);
+      })
+    })
+  }
+
+  @Builder
+  currentDecibelDisplay(config: CurrentDecibelConfig) {
+    Column({ space: 4 }) {
+      // 技术参数标题
+      Text('实时分贝')
+        .fontSize(14)
+        .fontColor($r('sys.color.ohos_id_color_text_secondary'))
+        .fontWeight(FontWeight.Medium)
+      
+      // 分贝值 - 缩小字体作为技术参考
+      Row({ space: 8 }) {
+        if (config.currentDecibel === 0) {
+          Text('-')
+            .fontSize(36)
+            .fontWeight(FontWeight.Bold)
+            .fontColor($r('sys.color.alert'))
+            .transition(TransitionEffect.scale({ x: 0, y: 0 }).animation({ curve: curves.springMotion() }));
+        } else {
+          Text(`${config.currentDecibel}dB`)
+            .fontSize(36)
+            .fontWeight(FontWeight.Bold)
+            .fontColor($r('sys.color.alert'))
+            .transition(TransitionEffect.scale({ x: 0, y: 0 }).animation({ curve: curves.springMotion() }));
+        }
+      }
+    }
+    .padding({ top: 8, bottom: 8 })
+    .width('100%')
+    .justifyContent(FlexAlign.Center)
+    .alignItems(HorizontalAlign.Center)
+    .id('currentDbComp')
+  }
+
+  @Builder
+  statisticsDisplay(config: StatisticsConfig) {
+    Row({ space: 0 }) {
+      // 最小值（左侧）
+      Column({ space: 2 }) {
+        Text('最小')
+          .fontSize(12)
+          .fontColor($r('sys.color.ohos_id_color_text_secondary'))
+          .textAlign(TextAlign.Center)
+          .width('100%');
+
+        Text(config.minDecibel === 0 ? '-' : `${config.minDecibel}`)
+          .fontSize(24)
+          .fontWeight(FontWeight.Medium)
+          .fontColor($r('sys.color.font_secondary'))
+          .textAlign(TextAlign.Center)
+          .width('100%');
+      }
+      .layoutWeight(1)
+
+      // 分隔线
+      Divider()
+        .vertical(true)
+        .strokeWidth(1)
+        .color($r('sys.color.comp_divider'))
+        .margin({ left: 12, right: 12 })
+        .height(32)
+
+      // 平均值（中间）
+      Column({ space: 2 }) {
+        Text('平均')
+          .fontSize(12)
+          .fontColor($r('sys.color.ohos_id_color_text_secondary'))
+          .textAlign(TextAlign.Center)
+          .width('100%');
+
+        Text(config.avgDecibel === 0 ? '-' : `${config.avgDecibel}`)
+          .fontSize(24)
+          .fontWeight(FontWeight.Medium)
+          .fontColor($r('sys.color.font_secondary'))
+          .textAlign(TextAlign.Center)
+          .width('100%');
+      }
+      .layoutWeight(1)
+
+      // 分隔线
+      Divider()
+        .vertical(true)
+        .strokeWidth(1)
+        .color($r('sys.color.comp_divider'))
+        .margin({ left: 12, right: 12 })
+        .height(32)
+
+      // 最大值（右侧）
+      Column({ space: 2 }) {
+        Text('最大')
+          .fontSize(12)
+          .fontColor($r('sys.color.ohos_id_color_text_secondary'))
+          .textAlign(TextAlign.Center)
+          .width('100%');
+
+        Text(config.maxDecibel === 0 ? '-' : `${config.maxDecibel}`)
+          .fontSize(24)
+          .fontWeight(FontWeight.Medium)
+          .fontColor($r('sys.color.font_secondary'))
+          .textAlign(TextAlign.Center)
+          .width('100%');
+      }
+      .layoutWeight(1)
+    }
+    .padding({
+      top: 8,
+      bottom: 8,
+      left: 16,
+      right: 16
+    })
+    .width('100%')
+    // 移除背景色，使用透明背景
+    .backgroundColor(Color.Transparent)
+    .borderRadius(0)
+  }
+
+  @Builder
+  systemStatusDisplay() {
+    Row({ space: 8 }) {
+      // 校准状态
+      Row({ space: 4 }) {
+        Image($r('app.media.ic_calibration'))
+          .width(14)
+          .height(14)
+          .fillColor($r('sys.color.ohos_id_color_text_secondary'));
+
+        Text(`校准:${this.calibrationValue} ${this.weightingType === WeightingType.A ? 'dB(A)' :
+          this.weightingType === WeightingType.C ? 'dB(C)' : 'dB'}`)
+          .fontSize(13)
+          .fontColor($r('sys.color.ohos_id_color_text_secondary'));
+      }
+
+      Blank()
+
+      // 自动保存状态
+      if (this.ak.uiDisplayState.timeDisplay) {
+        Row({ space: 4 }) {
+          if (this.ak.uiDisplayState.timeDisplay.includes('自动保存')) {
+            Image($r('app.media.ic_save'))
+              .width(14)
+              .height(14)
+              .fillColor($r('sys.color.ohos_id_color_text_secondary'));
+          }
+          Text(this.ak.uiDisplayState.timeDisplay)
+            .fontSize(13)
+            .fontColor($r('sys.color.ohos_id_color_text_secondary'));
+        }
+      }
+    }
+    .padding({
+      top: 6,
+      bottom: 6,
+      left: 8,
+      right: 8
+    })
+    .margin({ top: 8 })
+    .width('100%')
+    // 移除背景色，使用透明背景
+    .backgroundColor(Color.Transparent)
+    .borderRadius(0)
+  }
+
+  @Builder
+  noiseStandardDisplay() {
+    Row({ space: 6 }) {
+      Image($r('app.media.ic_info'))
+        .width(14)
+        .height(14)
+        .fillColor($r('sys.color.ohos_id_color_text_secondary'));
+
+      Text('噪音参考标准')
+        .fontSize(13)
+        .fontColor($r('sys.color.ohos_id_color_text_secondary'))
+        .textOverflow({ overflow: TextOverflow.Ellipsis })
+        .maxLines(1)
+        .layoutWeight(1);
+
+      Image($r('app.media.ic_arrow_right'))
+        .width(12)
+        .height(12)
+        .fillColor($r('sys.color.ohos_id_color_text_secondary'));
+    }
+    .padding({
+      top: 6,
+      bottom: 6,
+      left: 8,
+      right: 8
+    })
+    .margin({ top: 8 })
+    .width('100%')
+    // 移除背景色，使用透明背景
+    .backgroundColor(Color.Transparent)
+    .borderRadius(0)
+    .onClick(() => {
+      // 点击打开噪音参考标准对话框
+      if (!this.noiseStandardDialog) {
+        this.noiseStandardDialog = DialogHub.getSheet()
+          .setStyle({ backgroundColor: $r('sys.color.background_secondary') })
+          .setComponentTargetId('mainId')
+          .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS })
+          .setContent(wrapBuilder(NoiseStandardDialogBuilder), this.ak)
+          .build();
+
+        // 注册Dialog到样式管理器
+        DialogStyleManager.registerDialog(this.noiseStandardDialog);
+      }
+      this.noiseStandardDialog.show();
+
+      // 清理之前的订阅并启动新的
+      this.noiseStandardUpdateSubscription?.unsubscribe();
+      this.noiseStandardUpdateSubscription = interval(500).subscribe(() => {
+        this.noiseStandardDialog?.updateContent(this.ak);
+      });
+    })
+    .id('noiseStandardDisplayId')
+  }
+}

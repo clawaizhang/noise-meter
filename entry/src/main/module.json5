@@ -3,19 +3,13 @@
     "name": "entry",
     "type": "entry",
     "description": "$string:module_desc",
-    "metadata": [ {
-      "name": "appgallery_privacy_hosted",
-      "value": "1"
-    },
-      {
-        "name": "appgallery_privacy_link_privacy_statement",
-        "value": "https://agreement-drcn.hispace.dbankcloud.cn/index.html?lang=zh&agreementId=1603946590609908800" // 必须是https网址
-      }],
+    "metadata": [],
     "mainElement": "EntryAbility",
     "deviceTypes": [
       "phone",
       "tablet",
       "car",
+      "2in1",
     ],
     "deliveryWithInstall": true,
     "installationFree": false,
@@ -93,8 +87,8 @@
         }
       },
       {
-        "name": "ohos.permission.GET_WIFI_INFO",
-        "reason": "$string:wifi_info_reason",
+        "name": "ohos.permission.CAMERA",
+        "reason": "$string:camera_reason",
         "usedScene": {
           "abilities": [
             "EntryAbility"
@@ -103,8 +97,8 @@
         }
       },
       {
-        "name": "ohos.permission.GET_WIFI_INFO_INTERNAL",
-        "reason": "$string:wifi_info_reason",
+        "name": "ohos.permission.VIBRATE",
+        "reason": "$string:vibrate_permission_reason",
         "usedScene": {
           "abilities": [
             "EntryAbility"
@@ -120,7 +114,7 @@
         "description": "$string:EntryAbility_desc",
         "icon": "$media:layered_image",
         "label": "$string:EntryAbility_label",
-        "startWindowIcon": "$media:app_icon_default",
+        "startWindowIcon": "$media:app_icon_fore",
         "startWindowBackground": "$color:start_window_background",
         "exported": true,
         "skills": [

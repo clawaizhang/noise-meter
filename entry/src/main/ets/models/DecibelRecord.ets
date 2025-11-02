@@ -5,7 +5,7 @@ import { WeightingType } from '../constants/WeightingConstants';
 /**
  * 分贝值范围定义
  */
-interface DecibelRange {
+export interface DecibelRange {
   min: number;
   max: number;
   desc: string;
@@ -35,9 +35,12 @@ export class DecibelRecord {
   minDecibel: number;
   maxDecibel: number;
   avgDecibel: number;
+  //秒
   duration: number;
   decibelValues: number[];
   location?: string;
+
+  @Trace
   audioFilePath?: string;
   @Trace
   isFavorite: boolean;

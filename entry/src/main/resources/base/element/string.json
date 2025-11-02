@@ -10,7 +10,7 @@
     },
     {
       "name": "EntryAbility_label",
-      "value": "止喧噪音检测"
+      "value": "静喵Sound"
     },
     {
       "name": "microphone_permission_reason",
@@ -27,6 +27,10 @@
     {
       "name": "internet_reason",
       "value": "需要访问网络以获取位置信息"
+    },
+    {
+      "name": "camera_reason",
+      "value": "需要访问相机以开启手电筒"
     },
     {
       "name": "bundle_reason",
@@ -173,8 +177,220 @@
       "value": "快捷功能入口"
     },
     {
-      "name": "wifi_info_reason",
-      "value": "需要获取Wi-Fi信息以支持本地文件传输功能"
+      "name": "privacy_policy_welcome",
+      "value": "欢迎使用静喵Sound噪音检测应用"
+    },
+    {
+      "name": "privacy_policy_description",
+      "value": "为了更好地为您提供准确的噪音检测服务，我们需要获取必要的权限并收集相关数据。"
+    },
+    {
+      "name": "privacy_policy_permissions_title",
+      "value": "应用需要以下权限："
+    },
+    {
+      "name": "privacy_policy_microphone_permission",
+      "value": "麦克风权限 - 用于检测环境噪音"
+    },
+    {
+      "name": "privacy_policy_location_permission",
+      "value": "位置权限 - 用于记录检测地点"
+    },
+    {
+      "name": "privacy_policy_background_permission",
+      "value": "后台运行 - 持续监测环境噪音"
+    },
+    {
+      "name": "privacy_policy_agreement_text",
+      "value": "请阅读并同意"
+    },
+    {
+      "name": "privacy_policy_link_text",
+      "value": "《隐私政策》"
+    },
+    {
+      "name": "privacy_policy_cancel_button",
+      "value": "取消"
+    },
+    {
+      "name": "privacy_policy_agree_button",
+      "value": "同意并继续"
+    },
+    {
+      "name": "privacy_policy_management_title",
+      "value": "隐私政策管理"
+    },
+    {
+      "name": "view_privacy_policy",
+      "value": "查看隐私政策"
+    },
+    {
+      "name": "revoke_privacy_agreement",
+      "value": "取消隐私授权"
+    },
+    {
+      "name": "revoke_privacy_confirm_title",
+      "value": "确认取消隐私授权"
+    },
+    {
+      "name": "revoke_privacy_confirm_message",
+      "value": "取消隐私授权后，应用将立即退出。下次打开应用时需要重新同意隐私政策才能使用。"
+    },
+    {
+      "name": "revoke_privacy_confirm_button",
+      "value": "确认取消"
+    },
+    {
+      "name": "revoke_privacy_cancel_button",
+      "value": "返回"
+    },
+    {
+      "name": "privacy_policy_back_button",
+      "value": "返回"
+    },
+    {
+      "name": "vibrate_permission_reason",
+      "value": "需要振动权限来提供警报震动反馈"
+    },
+    {
+      "name": "privacy_policy_link",
+      "value": "https://agreement-drcn.hispace.dbankcloud.cn/index.html?lang=zh&agreementId=1772080835588051136"
+    },
+    {
+      "name": "display_mode_title",
+      "value": "色彩模式"
+    },
+    {
+      "name": "display_mode_auto_primary",
+      "value": "跟随系统"
+    },
+    {
+      "name": "display_mode_auto_secondary",
+      "value": "自动"
+    },
+    {
+      "name": "display_mode_light_primary",
+      "value": "浅色主题"
+    },
+    {
+      "name": "display_mode_light_secondary",
+      "value": "明亮"
+    },
+    {
+      "name": "display_mode_dark_primary",
+      "value": "深色主题"
+    },
+    {
+      "name": "display_mode_dark_secondary",
+      "value": "夜间"
+    },
+    {
+      "name": "display_mode_auto_desc",
+      "value": "根据系统设置自动切换浅色/深色模式，推荐使用"
+    },
+    {
+      "name": "display_mode_light_desc",
+      "value": "使用明亮的浅色界面，适合白天或光线充足的环境"
+    },
+    {
+      "name": "display_mode_dark_desc",
+      "value": "使用深色界面，减少眼睛疲劳，适合夜间或光线较暗的环境"
+    },
+    {
+      "name": "display_mode_preview_title",
+      "value": "预览效果"
+    },
+    {
+      "name": "display_mode_light_preview",
+      "value": "浅色"
+    },
+    {
+      "name": "display_mode_dark_preview",
+      "value": "深色"
+    },
+    {
+      "name": "display_mode_system_preview",
+      "value": "系统"
+    },
+    {
+      "name": "display_mode_detail_title",
+      "value": "详细信息"
+    },
+    {
+      "name": "display_mode_system_status",
+      "value": "当前系统主题：跟随系统设置"
+    },
+    {
+      "name": "display_mode_time_recommendation",
+      "value": "推荐：当前时间适合使用{0}"
+    },
+    {
+      "name": "display_mode_light_recommendation",
+      "value": "浅色模式"
+    },
+    {
+      "name": "display_mode_dark_recommendation",
+      "value": "深色模式"
+    },
+    {
+      "name": "exposure_statistics_title",
+      "value": "影响"
+    },
+    {
+      "name": "exposure_dose_label",
+      "value": "暴露剂量"
+    },
+    {
+      "name": "remaining_safe_time_label",
+      "value": "剩余安全时间"
+    },
+    {
+      "name": "today_peak_label",
+      "value": "今日峰值"
+    },
+    {
+      "name": "today_average_label",
+      "value": "今日平均"
+    },
+    {
+      "name": "health_rating_label",
+      "value": "健康评级"
+    },
+    {
+      "name": "health_rating_excellent",
+      "value": "优秀"
+    },
+    {
+      "name": "health_rating_good",
+      "value": "良好"
+    },
+    {
+      "name": "health_rating_fair",
+      "value": "一般"
+    },
+    {
+      "name": "health_rating_attention",
+      "value": "需要注意"
+    },
+    {
+      "name": "exposure_exceeded",
+      "value": "已超限"
+    },
+    {
+      "name": "loading_exposure_data",
+      "value": "加载暴露数据..."
+    },
+    {
+      "name": "based_on_national_standard",
+      "value": "基于国家标准"
+    },
+    {
+      "name": "highest_noise_level",
+      "value": "最高噪音水平"
+    },
+    {
+      "name": "average_noise_level",
+      "value": "平均噪音水平"
     }
   ]
 }

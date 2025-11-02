@@ -1,65 +1,104 @@
+import { PersistenceV2 } from '@kit.ArkUI';
+import { PreferenceKeys } from '../models/PreferenceKeys';
+import { WindowType } from './WindowType';
+
 /**
  * 音频分析模式（符合GB/T 3785.1-2010标准）
  */
 export enum AudioAnalysisMode {
-  FAST_TIME_WEIGHTING = 'FAST_TIME_WEIGHTING',    // 快速时间计权（F）
-  SLOW_TIME_WEIGHTING = 'SLOW_TIME_WEIGHTING',    // 慢速时间计权（S）
-  IMPULSE_TIME_WEIGHTING = 'IMPULSE_TIME_WEIGHTING' // 脉冲时间计权（I）
+  FAST_TIME_WEIGHTING = 'FAST_TIME_WEIGHTING', // 快速音频分析（F）
+  SLOW_TIME_WEIGHTING = 'SLOW_TIME_WEIGHTING', // 慢速音频分析（S）
+  IMPULSE_TIME_WEIGHTING = 'IMPULSE_TIME_WEIGHTING', // 脉冲音频分析（I）
+  CUSTOM_TIME_WEIGHTING = 'CUSTOM_TIME_WEIGHTING' // 自定义音频分析
 }
 
-/**
- * 窗函数类型
- */
-export enum WindowType {
-  HANNING = 'HANNING',      // 汉宁窗
-  BLACKMAN = 'BLACKMAN'     // 布莱克曼窗
-}
 
 /**
  * 音频分析配置
  */
-export interface AudioAnalysisConfig {
-  fftSize: number;          // FFT大小（必须是2的幂次方）
-  updateInterval: number;   // 更新间隔（毫秒）
-  smoothingFactor: number; // 平滑因子
-  windowType: WindowType;  // 窗函数类型
-  overlap: number;         // 重叠比例 (0-1)
-  bufferSize: number;      // 音频缓冲区大小（字节），等于fftSize * 2（16位采样）
+@ObservedV2
+export class AudioAnalysisConfig {
+  @Trace
+  fftSize: number = 2048; // FFT大小（必须是2的幂次方）
+  @Trace
+  updateInterval: number = 200; // 更新间隔（毫秒）
+  @Trace
+  smoothingFactor: number = 0.2; // 平滑因子
+  @Trace
+  windowType: WindowType = WindowType.HANNING; // 窗函数类型
+  @Trace
+  overlap: number = 0.4; // 重叠比例 (0-1)
+  @Trace
+  bufferSize: number = 4096; // 音频缓冲区大小（字节），等于fftSize * 2（16位采样）
+
+  static fast() {
+    let fast = new AudioAnalysisConfig();
+    fast.fftSize = 2048;
+    fast.updateInterval = 200;
+    fast.smoothingFactor = 0.2;
+    fast.windowType = WindowType.BLACKMAN;
+    fast.overlap = 0.4;
+    fast.bufferSize = 2048 * 2;
+    return fast;
+  }
+
+  static slow() {
+    let slow = new AudioAnalysisConfig();
+    slow.fftSize = 4096;
+    slow.updateInterval = 500;
+    slow.smoothingFactor = 0.05;
+    slow.windowType = WindowType.BLACKMAN;
+    slow.overlap = 0.6;
+    slow.bufferSize = 4096 * 2;
+    return slow;
+  }
+
+  static impulse() {
+    let impulse = new AudioAnalysisConfig();
+    impulse.fftSize = 1024;
+    impulse.updateInterval = 35;
+    impulse.smoothingFactor = 0.3;
+    impulse.windowType = WindowType.BLACKMAN;
+    impulse.overlap = 0.75;
+    impulse.bufferSize = 1024 * 2;
+    return impulse;
+  }
+
+  clone() {
+    let clone = new AudioAnalysisConfig();
+    clone.fftSize = this.fftSize;
+    clone.updateInterval = this.updateInterval;
+    clone.smoothingFactor = this.smoothingFactor;
+    clone.windowType = this.windowType;
+    clone.overlap = this.overlap;
+    clone.bufferSize = this.bufferSize;
+    return clone;
+  }
 }
+
+
+/**
+ * 自定义配置存储键名
+ */
+export class CustomConfigKeys {
+  public static readonly CUSTOM_AUDIO_CONFIG = 'custom_audio_config';
+}
+
+/**
+ * 默认自定义配置
+ */
+export const DEFAULT_CUSTOM_CONFIG: AudioAnalysisConfig = new AudioAnalysisConfig();
 
 /**
  * 预设配置
  */
 export class AudioPresets {
-  // 快速时间计权模式配置（F）
-  public static readonly FAST_TIME_WEIGHTING: AudioAnalysisConfig = {
-    fftSize: 2048,          // 中等FFT size，平衡时间和频率分辨率
-    updateInterval: 200,   // 200ms符合快速响应时间常数
-    smoothingFactor: 0.2,   // 增加平滑度，减少快速变化带来的波动
-    windowType: WindowType.BLACKMAN, // 使用主瓣更窄的窗函数
-    overlap: 0.4,          // 降低重叠率，提高时间分辨率
-    bufferSize: 2048 * 2
-  };
-
-  // 慢速时间计权模式配置（S）
-  public static readonly SLOW_TIME_WEIGHTING: AudioAnalysisConfig = {
-    fftSize: 4096,         // 较大FFT size，提高频率分辨率
-    updateInterval: 500,   // 500ms符合慢速响应时间常数
-    smoothingFactor: 0.05,  // 降低平滑度，保留更多细节
-    windowType: WindowType.HANNING,
-    overlap: 0.6,          // 提高重叠率，增加频率分辨率
-    bufferSize: 4096 * 2
-  };
-
-  // 脉冲时间计权模式配置（I）
-  public static readonly IMPULSE_TIME_WEIGHTING: AudioAnalysisConfig = {
-    fftSize: 1024,         // 较小FFT size，提高时间分辨率
-    updateInterval: 35,    // 35ms符合脉冲响应时间常数
-    smoothingFactor: 0.3,   // 增加平滑度，减少脉冲噪声影响
-    windowType: WindowType.BLACKMAN,
-    overlap: 0.75,
-    bufferSize: 1024 * 2
-  };
+  // 快速音频分析模式配置（F）
+  public static readonly FAST_TIME_WEIGHTING: AudioAnalysisConfig = AudioAnalysisConfig.fast();
+  // 慢速音频分析模式配置（S）
+  public static readonly SLOW_TIME_WEIGHTING: AudioAnalysisConfig = AudioAnalysisConfig.slow();
+  // 脉冲音频分析模式配置（I）
+  public static readonly IMPULSE_TIME_WEIGHTING: AudioAnalysisConfig = AudioAnalysisConfig.impulse();
 
   /**
    * 根据模式获取配置
@@ -69,7 +108,7 @@ export class AudioPresets {
   public static getConfig(mode: AudioAnalysisMode): AudioAnalysisConfig {
     console.info(`[音频配置] 获取${mode}模式配置`);
     let config: AudioAnalysisConfig;
-    
+
     switch (mode) {
       case AudioAnalysisMode.FAST_TIME_WEIGHTING:
         config = AudioPresets.FAST_TIME_WEIGHTING;
@@ -80,18 +119,20 @@ export class AudioPresets {
       case AudioAnalysisMode.IMPULSE_TIME_WEIGHTING:
         config = AudioPresets.IMPULSE_TIME_WEIGHTING;
         break;
+      case AudioAnalysisMode.CUSTOM_TIME_WEIGHTING:
+        // 自定义模式使用用户保存的配置
+        config = PersistenceV2.connect(PreferenceKeys)!.custom_audio_config;
+        console.info(`[音频配置] 使用自定义配置`);
+        break;
       default:
         config = AudioPresets.FAST_TIME_WEIGHTING;
     }
-    
+
     console.info(`[音频配置] 配置详情: FFT大小=${config.fftSize}, ` +
-                `更新间隔=${config.updateInterval}ms, ` +
-                `重叠率=${config.overlap}, ` +
-                `缓冲区大小=${config.bufferSize}字节`);
+      `窗函数=${config.windowType}, ` +
+      `更新间隔=${config.updateInterval}ms, ` +
+      `重叠率=${config.overlap}, ` +
+      `缓冲区大小=${config.bufferSize}字节`);
     return config;
   }
 }
-
-// 配置相关的首选项键名
-export const PREF_ANALYSIS_MODE = 'audio_analysis_mode';
-export const PREF_CUSTOM_CONFIG = 'audio_custom_config';

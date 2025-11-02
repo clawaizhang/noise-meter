@@ -6,15 +6,6 @@
       "buildFunction": "NoiseMeterBuilder"
     },
     {
-      "name": "DeviceManager",
-      "pageSourceFile": "src/main/ets/pages/device_manager/MainDeviceManagerNavigation.ets",
-      "buildFunction": "DeviceManagerBuilder"
-    },{
-      "name": "LocalSend",
-      "pageSourceFile": "src/main/ets/pages/local_send/LocalSendNavigation.ets",
-      "buildFunction": "LocalSendBuilder"
-    },
-    {
       "name": "DecibelHistory",
       "pageSourceFile": "src/main/ets/pages/noisemeter/DecibelHistoryNavigation.ets",
       "buildFunction": "DecibelHistoryBuilder"
@@ -45,9 +36,24 @@
       "buildFunction": "NoiseDescriptionDialogBuilder"
     },
     {
-      "name": "HealthDetailDialog",
-      "pageSourceFile": "src/main/ets/components/health-dialogs/HealthDetailDialog.ets",
-      "buildFunction": "HealthDetailDialogBuilder"
+      "name": "AlertsSettings",
+      "pageSourceFile": "src/main/ets/pages/settings/AlertsSettingsNavigation.ets",
+      "buildFunction": "AlertsSettingsBuilder"
+    },
+    {
+      "name": "DataPrivacySettings",
+      "pageSourceFile": "src/main/ets/pages/settings/DataPrivacySettingsNavigation.ets",
+      "buildFunction": "DataPrivacySettingsBuilder"
+    },
+    {
+      "name": "DeviceSettings",
+      "pageSourceFile": "src/main/ets/pages/settings/DeviceSettingsNavigation.ets",
+      "buildFunction": "DeviceSettingsBuilder"
+    },
+    {
+      "name": "AboutSettings",
+      "pageSourceFile": "src/main/ets/pages/settings/AboutSettingsNavigation.ets",
+      "buildFunction": "AboutSettingsBuilder"
     }
   ]
 } 

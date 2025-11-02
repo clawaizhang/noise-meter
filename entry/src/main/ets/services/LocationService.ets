@@ -1,7 +1,8 @@
 import common from '@ohos.app.ability.common';
 import { LocationUtil } from '@pura/harmony-utils';
-import geoLocationManager from '@ohos.geoLocationManager';
 import { SpatialStats } from '../types/NoiseStats';
+import { deviceInfo } from '@kit.BasicServicesKit';
+import { geoLocationManager } from '@kit.LocationKit';
 
 /**
  * 位置信息
@@ -18,7 +19,8 @@ export class LocationService {
   private static instance: LocationService;
   private cachedLocation: LocationInfo | null = null;
 
-  private constructor() {}
+  private constructor() {
+  }
 
   public static getInstance(): LocationService {
     if (!LocationService.instance) {
@@ -50,13 +52,34 @@ export class LocationService {
    */
   public async requestSingleLocation(): Promise<LocationInfo> {
     try {
-      const location = await LocationUtil.getCurrentLocationEasy();
-      const geoAddress = await LocationUtil.getAddressFromLocation(location.latitude, location.longitude);
-      this.cachedLocation = {
-        coordinates: `${location.latitude},${location.longitude}`,
-        address: geoAddress.placeName || ''
-      };
-      return this.cachedLocation;
+      if (!canIUse('SystemCapability.Location.Location.Core')) {
+        this.cachedLocation = {
+          coordinates: `${0},${0}`,
+          address: '设备不支持定位服务' || ''
+        };
+      } else {
+        if (deviceInfo.distributionOSApiVersion >= 60000) {
+          let geoPoi = await geoLocationManager.getPoiInfo();
+          if (geoPoi) {
+            let confidence = 0;
+            geoPoi.poiArray.forEach(poi => {
+              if (poi.confidence > confidence) {
+                confidence = poi.confidence;
+                this.cachedLocation = {
+                  coordinates: `${poi.latitude},${poi.longitude}`,
+                  address: poi.name || ''
+                };
+              }
+            });
+          } else {
+            await this.setLocationLegacy();
+          }
+        } else {
+          await this.setLocationLegacy();
+        }
+      }
+
+      return this.cachedLocation!;
     } catch (error) {
       this.cachedLocation = {
         coordinates: '未获取到位置信息',
@@ -64,6 +87,15 @@ export class LocationService {
       };
       throw new Error('获取位置信息失败');
     }
+  }
+
+  private async setLocationLegacy() {
+    const location = await LocationUtil.getCurrentLocationEasy();
+    const geoAddress = await LocationUtil.getAddressFromLocation(location.latitude, location.longitude);
+    this.cachedLocation = {
+      coordinates: `${location.latitude},${location.longitude}`,
+      address: geoAddress.placeName || ''
+    };
   }
 
   /**
@@ -93,7 +125,7 @@ export class LocationService {
   public static async getSpatialStats(): Promise<SpatialStats> {
     const instance = LocationService.getInstance();
     const location = await instance.requestSingleLocation();
-    
+
     const stats: SpatialStats = {
       hotSpots: [{
         coord: location.coordinates,

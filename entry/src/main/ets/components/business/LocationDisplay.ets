@@ -1,48 +1,48 @@
 import promptAction from '@ohos.promptAction';
-import { LocationService, LocationInfo } from '../../services/LocationService';
-import { PreferenceService, PreferenceChangeListener, PreferenceValue } from '../../services/PreferenceService';
-import { PreferenceKeyConstants } from '../../constants/PreferenceKeyConstants';
+import { LocationInfo, LocationService } from '../../services/LocationService';
+import { PreferenceKeys } from '../../models/PreferenceKeys';
+import { PersistenceV2 } from '@kit.ArkUI';
+import { Throttle } from '../../utils/Debounce';
 
 @ComponentV2
 export struct LocationDisplay {
   @Local location: string = '正在获取位置...';
   @Local address: string = '';
-  @Local isEnabled: boolean = false;
+  @Local pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys)!;
   @Local isRefreshing: boolean = false;
   private locationService: LocationService = LocationService.getInstance();
-  private preferenceService: PreferenceService = PreferenceService.getInstance();
-  private locationListener?: PreferenceChangeListener;
+  
+  // 位置更新事件
+  @Event onLocationUpdate: (locationInfo: LocationInfo | null) => void = () => {}
+
+  @Monitor('pk.location_enabled')
+  onLocationEnabledChange(monitor: IMonitor) {
+    const beforeEnabled = monitor.value<boolean>()?.before;
+    const newEnabled = monitor.value<boolean>()?.now;
+    if (newEnabled !== beforeEnabled) {
+      if (newEnabled) {
+        // 开启时自动刷新位置
+        this.startSingleLocation();
+      } else {
+        // 关闭时清空位置信息和缓存，并发射null事件
+        this.address = '开启位置服务可记录噪音检测位置';
+        this.locationService.clearCache();
+        // 发射位置服务关闭事件
+        this.onLocationUpdate(null);
+      }
+    }
+  }
 
   async aboutToAppear() {
-    this.preferenceService = PreferenceService.getInstance();
-    
-    // 获取位置开关状态
-    this.isEnabled = this.preferenceService.getBoolean(PreferenceKeyConstants.LOCATION, true);
-    
+
     // 如果位置开关是打开的,自动获取位置信息
-    if (this.isEnabled) {
+    if (this.pk.location_enabled) {
       this.startSingleLocation();
+    } else {
+      // 位置服务关闭时发射null事件
+      this.onLocationUpdate(null);
     }
 
-    // 使用新的监听方式
-    this.locationListener = (key: string, value: PreferenceValue): void => {
-      if (key === PreferenceKeyConstants.LOCATION) {
-        const newEnabled = this.preferenceService.getBoolean(PreferenceKeyConstants.LOCATION, true);
-        if (newEnabled !== this.isEnabled) {
-          this.isEnabled = newEnabled;
-          if (this.isEnabled) {
-            // 开启时自动刷新位置
-            this.startSingleLocation();
-          } else {
-            // 关闭时清空位置信息和缓存
-            this.address = '开启位置服务可记录噪音检测位置';
-            this.locationService.clearCache();
-          }
-        }
-      }
-    };
-    
-    this.preferenceService.addChangeListener(PreferenceKeyConstants.LOCATION, this.locationListener);
   }
 
   private async showLocationServiceDialog(): Promise<boolean> {
@@ -64,7 +64,7 @@ export struct LocationDisplay {
   }
 
   async startSingleLocation() {
-    if (!this.isEnabled || this.isRefreshing) {
+    if (!this.pk.location_enabled || this.isRefreshing) {
       return;
     }
 
@@ -92,67 +92,81 @@ export struct LocationDisplay {
       const hasPermission = await this.locationService.requestLocationPermission();
       if (!hasPermission) {
         this.address = '授予位置权限可获取位置信息';
+        this.pk.location_enabled = false;
         return;
       }
 
       // 获取位置信息
       const locationInfo: LocationInfo = await this.locationService.requestSingleLocation();
       this.address = locationInfo.address;
+      // 发射位置更新事件
+      this.onLocationUpdate(locationInfo);
     } catch (error) {
       console.error('Failed to request location:', error.message);
       this.address = '获取位置失败,请稍后重试';
+      // 发射位置获取失败事件
+      this.onLocationUpdate(null);
     } finally {
       this.isRefreshing = false;
     }
   }
 
   aboutToDisappear() {
-    // 移除监听器
-    if (this.locationListener) {
-      this.preferenceService.removeChangeListener(PreferenceKeyConstants.LOCATION, this.locationListener);
-    }
+
   }
 
   build() {
-    Row() {
-      if (this.isEnabled) {
-        Button({ type: ButtonType.Circle, stateEffect: true }) {
-          Row() {
-            Image($r('app.media.ic_refresh'))
-              .width(16)
-              .height(16)
-              .fillColor($r('app.color.text_secondary'))
-              .rotate({
-                angle: this.isRefreshing ? 360 : 0,
-                centerX: '50%',
-                centerY: '50%'
-              })
-              .animation({
-                duration: this.isRefreshing ? 1000 : 0,
-                iterations: this.isRefreshing ? -1 : 0,
-                curve: Curve.Linear
-              })
-          }
-        }
-        .width(20)
-        .height(20)
-        .backgroundColor($r('app.color.background_tertiary'))
-        .enabled(!this.isRefreshing)
-        .onClick(() => {
-          this.startSingleLocation();
-        })
-        .margin({ right: 8 })
-      }
+    Row({ space: 8 }) {
+      Image($r('app.media.ic_location'))
+        .width(14)
+        .height(14)
+        .fillColor($r('sys.color.ohos_id_color_text_secondary'));
 
-      Text(this.isEnabled ? (this.address || '点击刷新按钮获取位置') : '开启位置服务可记录噪音检测位置')
-        .fontSize(14)
-        .fontColor($r('app.color.text_secondary'))
-        .textAlign(TextAlign.Center)
-        .layoutWeight(1)
+      Text(this.pk.location_enabled ? (this.address || '点击刷新按钮获取位置') : '开启位置服务可记录噪音检测位置')
+        .fontSize(13)
+        .fontColor($r('sys.color.ohos_id_color_text_secondary'))
+        .textOverflow({ overflow: TextOverflow.Ellipsis })
+        .maxLines(1)
+        .layoutWeight(1);
+
+      if (this.pk.location_enabled) {
+        this.refreshButton()
+      }
     }
+    .padding({ top: 6, bottom: 6, left: 8, right: 8 })
     .width('100%')
-    .height(40)
+    // 移除背景色，使用透明背景
+    .backgroundColor(Color.Transparent)
+    .borderRadius(0)
     .alignItems(VerticalAlign.Center)
-    .justifyContent(FlexAlign.Center)
   }
-} 
+
+  @Builder
+  refreshButton() {
+    Button({ type: ButtonType.Circle, stateEffect: true }) {
+      Image($r("app.media.solar_refresh_circle_bold"))
+        .width(16)
+        .height(16)
+        .fillColor($r('sys.color.icon_secondary'))
+        .rotate({
+          angle: this.isRefreshing ? 360 : 0,
+          centerX: '50%',
+          centerY: '50%'
+        })
+        .animation({
+          duration: this.isRefreshing ? 1000 : 0,
+          iterations: this.isRefreshing ? -1 : 0,
+          curve: Curve.Linear
+        });
+    }
+    .width(20)
+    .height(20)
+    .backgroundColor($r('sys.color.comp_background_primary'))
+    .enabled(!this.isRefreshing)
+    .onClick(() => {
+      Throttle.click(() => {
+        this.startSingleLocation();
+      });
+    })
+  }
+}

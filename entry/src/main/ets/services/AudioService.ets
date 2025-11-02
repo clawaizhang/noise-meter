@@ -1,21 +1,17 @@
 import audio from '@ohos.multimedia.audio';
-import { PermissionUtil } from '@pura/harmony-utils';
 import common from '@ohos.app.ability.common';
-import promptAction from '@ohos.promptAction';
 import { WavFileGenerator } from '../utils/WavFileGenerator';
-import { PreferenceService, PreferenceValue } from './PreferenceService';
-import { AudioAnalysisMode, AudioPresets, PREF_ANALYSIS_MODE } from '../common/AudioConfig';
-import { FileService } from './FileService';
-import { AudioEnhancer } from './AudioEnhancer';
+import { AudioAnalysisMode, AudioPresets } from '../common/AudioConfig';
+import { FileUtils } from '../utils/FileUtils';
+import { PersistenceV2 } from '@kit.ArkUI';
+import { PreferenceKeys } from '../models/PreferenceKeys';
+import { PermissionService } from './PermissionService';
+import { AudioStreamProcessor } from '../utils/AudioStreamProcessor';
 
 /**
  * 音频服务类
  * 提供音频采集功能
  */
-
-// 音频配置键名
-const PREF_TARGET_SAMPLES = 'audio_target_samples';
-const PREF_PROCESS_INTERVAL = 'audio_process_interval';
 
 /**
  * 音频服务状态
@@ -34,12 +30,9 @@ export class AudioService {
   /**
    * 获取 AudioService 实例
    */
-  public static getInstance(context?: common.UIAbilityContext): AudioService {
+  public static getInstance(): AudioService {
     if (!AudioService.instance) {
-      if (!context) {
-        throw new Error('首次获取 AudioService 实例时必须提供 context');
-      }
-      AudioService.instance = new AudioService(context);
+      AudioService.instance = new AudioService();
     }
     return AudioService.instance;
   }
@@ -52,6 +45,7 @@ export class AudioService {
       encodingType: audio.AudioEncodingType.ENCODING_TYPE_RAW
     },
     capturerInfo: {
+      // source: audio.SourceType.SOURCE_TYPE_UNPROCESSED,
       source: audio.SourceType.SOURCE_TYPE_VOICE_RECOGNITION,
       capturerFlags: 0
     }
@@ -63,38 +57,30 @@ export class AudioService {
   private stateChangeCallback: ((info: audio.AudioCapturerChangeInfo) => void) | null = null;
   // 状态标志
   private state: AudioServiceState = AudioServiceState.IDLE;
-  private isProcessing: boolean = false;
-  private isRecording: boolean = false;
-  // 缓冲区相关
-  private tempBuffer: ArrayBuffer | null = null;
-  private tempBufferOffset: number = 0;
-  private audioBuffers: ArrayBuffer[] = [];
-  private lastProcessTime: number = 0;
   // 配置和回调
   private currentConfig = AudioPresets.getConfig(AudioAnalysisMode.FAST_TIME_WEIGHTING);
-  private onAudioData: ((buffer: ArrayBuffer) => void) | null = null;
-  private context: common.UIAbilityContext;
-  private preferenceService: PreferenceService;
   // 状态变更回调类型
   private stateChangeCallbacks: ((state: AudioServiceState) => void)[] = [];
+  // 音频流处理器
+  private audioStreamProcessor: AudioStreamProcessor;
+  private originAudioDataCallBack: ((buffer: ArrayBuffer) => void) | null = null;
 
-  constructor(context: common.UIAbilityContext) {
-    this.context = context;
-    this.preferenceService = PreferenceService.getInstance();
+  constructor() {
 
     // 从首选项加载分析模式
-    const savedMode: string =
-      this.preferenceService.getString(PREF_ANALYSIS_MODE, AudioAnalysisMode.FAST_TIME_WEIGHTING);
-    this.currentConfig = AudioPresets.getConfig(savedMode as AudioAnalysisMode);
+    const savedMode: AudioAnalysisMode = PersistenceV2.connect(PreferenceKeys)!.audio_analysis_mode!;
+    this.currentConfig = AudioPresets.getConfig(savedMode);
+    
+    // 初始化音频流处理器
+    this.audioStreamProcessor = new AudioStreamProcessor(this.currentConfig);
+    
     console.info(`[音频采集] 加载配置: 模式=${savedMode}, FFT大小=${this.currentConfig.fftSize}, ` +
       `处理间隔=${this.currentConfig.updateInterval}ms, 重叠率=${this.currentConfig.overlap}`);
 
-    // 添加配置变更监听
-    this.preferenceService.addChangeListener(PREF_ANALYSIS_MODE, (key: string, value: PreferenceValue) => {
-      if (key === PREF_ANALYSIS_MODE && typeof value === 'string') {
-        void this.handleModeChange(value);
-      }
-    });
+  }
+
+  registerOriginAudioDataCallBack(callback: (buffer: ArrayBuffer) => void){
+    this.originAudioDataCallBack = callback;
   }
 
   /**
@@ -104,51 +90,12 @@ export class AudioService {
    */
   private async checkMicrophonePermission(): Promise<boolean> {
     try {
-      const hasPermission = await PermissionUtil.checkPermissions('ohos.permission.MICROPHONE');
-      if (hasPermission) {
-        return true;
-      }
-
-      const granted = await PermissionUtil.requestPermissions(['ohos.permission.MICROPHONE']);
-      if (!granted) {
-        // 用户拒绝了权限，显示提示对话框
-        const result = await promptAction.showDialog({
-          title: '需要录音权限',
-          message: '检测噪音需要使用麦克风，是否去设置开启权限？',
-          buttons: [
-            { text: '取消', color: $r('app.color.button_cancel') },
-            { text: '去设置', color: $r('app.color.button_confirm') }
-          ]
-        });
-
-        if (result.index === 1) {
-          // 用户点击了"去设置"
-          await PermissionUtil.requestPermissionOnSettingEasy(['ohos.permission.MICROPHONE']);
-          // 从设置页面返回后，重新检查权限
-          const newPermissionStatus = await PermissionUtil.checkPermissions('ohos.permission.MICROPHONE');
-          return newPermissionStatus;
-        }
-      }
-      return granted;
+      const permissionService = PermissionService.getInstance();
+      return await permissionService.checkAndUpdateMicrophonePermission();
     } catch (err) {
-      console.error('Failed to check/request microphone permission:', err);
+      console.error('检查麦克风权限失败:', err);
       return false;
     }
-  }
-
-  /**
-   * 开始录音
-   */
-  startRecording(): void {
-    this.isRecording = true;
-    this.audioBuffers = []; // 清空之前的录音数据
-  }
-
-  /**
-   * 停止录音
-   */
-  stopRecording(): void {
-    this.isRecording = false;
   }
 
   /**
@@ -169,8 +116,7 @@ export class AudioService {
       const hasPermission = await this.checkMicrophonePermission();
       if (!hasPermission) {
         console.error('[音频采集] 没有麦克风权限');
-        await PermissionUtil.requestPermissionOnSettingEasy(['ohos.permission.MICROPHONE']);
-        throw new Error('没有麦克风权限, 尝试获取权限');
+        throw new Error('没有麦克风权限');
       }
 
       // 创建音频采集器
@@ -180,7 +126,23 @@ export class AudioService {
         `缓冲区大小=${this.currentConfig.bufferSize}`);
       this.audioCapturer = await audio.createAudioCapturer(this.audioCapturerOptions);
       console.info('[音频采集] 音频采集器创建成功');
-
+      this.audioCapturer.on('audioInterrupt', async (interruptEvent: audio.InterruptEvent) => {
+        this.state = AudioServiceState.IDLE;
+        const maxRetries = 3;
+        const retryInterval = 1000; // 1秒
+        let retryCount = 0;
+        while (true) {
+          try {
+            await this.startCapture();
+            console.info('[FREQ_TRACE][Audio] 音频采集启动成功');
+            break; // 成功则退出循环
+          } catch (error) {
+            retryCount++;
+            console.error(`[FREQ_TRACE][Audio] 音频采集启动失败，重试次数：${retryCount}/${maxRetries}`, error);
+            await new Promise<void>(resolve => setTimeout(resolve, retryInterval));
+          }
+        }
+      })
       // 开始读取音频数据
       await this.startReading();
 
@@ -192,7 +154,7 @@ export class AudioService {
       this.setState(AudioServiceState.IDLE);
 
       // 检查是否是资源占用错误
-      throw new Error('麦克风被占用, 正在等待其他应用释放');
+      throw err as Error;
     }
   }
 
@@ -215,21 +177,6 @@ export class AudioService {
           if (this.state !== AudioServiceState.CAPTURING) {
             return;
           }
-          // 如果正在录音，保存数据
-          if (this.isRecording) {
-            // 创建副本以避免引用问题
-            const bufferCopy = buffer.slice(0);
-            // remove enhancer
-            // const enhancer = new AudioEnhancer();
-            // // 自定义参数（根据实际环境调整）
-            // enhancer.setGainParams(200);
-            // enhancer.setNoiseParams(0.03, 0.35);
-            // // 处理音频数据
-            // const processedBuffer = enhancer.processAudio(bufferCopy);
-            // 保存调整后的副本到 audioBuffers
-            this.audioBuffers.push(bufferCopy);
-          }
-
           // 处理音频数据
           if (buffer && buffer.byteLength > 0) {
             console.info(`[音频采集] 收到音频数据: 大小=${buffer.byteLength}字节, 样本数=${buffer.byteLength / 2}`);
@@ -340,17 +287,14 @@ export class AudioService {
    * @param callback - 音频数据回调
    */
   startProcessing(callback: (buffer: ArrayBuffer) => void): void {
-    this.isProcessing = true;
-    this.onAudioData = callback;
-    this.lastProcessTime = Date.now();
+    this.audioStreamProcessor.startProcessing(callback);
   }
 
   /**
    * 停止处理音频数据
    */
   stopProcessing(): void {
-    this.isProcessing = false;
-    this.onAudioData = null;
+    this.audioStreamProcessor.stopProcessing();
   }
 
   /**
@@ -372,23 +316,24 @@ export class AudioService {
    * 是否正在处理音频数据
    */
   isAudioProcessing(): boolean {
-    return this.isProcessing;
+    return this.audioStreamProcessor.isProcessingAudio();
   }
 
   /**
    * 停止录音并获取WAV文件路径
-   * @param fileService 文件服务实例
+   * @param audioBuffers 音频缓冲区数组（可选，如果不提供则使用内部存储的缓冲区）
    * @returns Promise<string> 保存的WAV文件路径
    */
-  async stopRecordingAndGetWavData(fileService: FileService): Promise<string> {
+  async stopRecordingAndGetWavData(audioBuffers: ArrayBuffer[]): Promise<string> {
     try {
-      // 停止录音
-      this.stopRecording();
 
       console.info('开始生成WAV音频数据');
+      // 使用传入的音频缓冲区或内部存储的缓冲区
+      console.info(`生成WAV文件，使用${audioBuffers.length}个音频缓冲区`);
+      
       // 生成WAV文件数据
       const audioData = WavFileGenerator.generateWavFile(
-        this.audioBuffers,
+        audioBuffers,
         44100, // 采样率
         1, // 单声道
         16     // 16位采样
@@ -398,7 +343,7 @@ export class AudioService {
       // 创建音频文件目录
       const audioDir = 'audio';
       try {
-        await fileService.createDirectory(audioDir);
+        await FileUtils.createDirectory(audioDir);
       } catch (error) {
         // 目录可能已存在，忽略错误
       }
@@ -407,11 +352,8 @@ export class AudioService {
       const fileName = `audio_${new Date().getTime()}.wav`;
       const relativePath = `${audioDir}/${fileName}`;
       console.info('准备保存音频文件:', relativePath);
-      const filePath = await fileService.saveFile(relativePath, audioData);
+      const filePath = await FileUtils.saveFile(relativePath, audioData);
       console.info('音频文件保存成功:', filePath);
-
-      // 清空录音缓存
-      this.audioBuffers = [];
 
       return filePath;
     } catch (error) {
@@ -423,20 +365,18 @@ export class AudioService {
   /**
    * 处理音频分析模式变更
    */
-  private handleModeChange(value: string): void {
+  handleModeChange(value: AudioAnalysisMode): void {
     void Promise.resolve().then(async () => {
       try {
         // 验证并转换模式
-        if (!Object.values(AudioAnalysisMode).includes(value as AudioAnalysisMode)) {
+        if (!Object.values(AudioAnalysisMode).includes(value)) {
           throw new Error(`无效的音频分析模式: ${value}`);
         }
         const mode = value as AudioAnalysisMode;
 
         // 更新配置
         this.currentConfig = AudioPresets.getConfig(mode);
-
-        // 重置缓冲区
-        this.resetBuffers();
+        this.audioStreamProcessor.updateConfig(this.currentConfig);
 
         console.info(`[音频采集] 模式已更新为: ${mode}`);
       } catch (err) {
@@ -449,13 +389,14 @@ export class AudioService {
    * 销毁服务
    */
   public destroy(): void {
-    // 移除监听器
-    this.preferenceService.removeChangeListener(PREF_ANALYSIS_MODE, this.handleModeChange);
 
     // 停止采集
     if (this.state === AudioServiceState.CAPTURING) {
       this.stopCapture();
     }
+    
+    // 销毁音频流处理器
+    this.audioStreamProcessor.destroy();
   }
 
   /**
@@ -463,14 +404,10 @@ export class AudioService {
    * @param mode 分析模式
    */
   public async setAnalysisMode(mode: AudioAnalysisMode): Promise<void> {
-    // 保存到首选项
-    await this.preferenceService.setString(PREF_ANALYSIS_MODE, mode);
 
     // 更新配置
     this.currentConfig = AudioPresets.getConfig(mode);
-
-    // 重置缓冲区
-    this.resetBuffers();
+    this.audioStreamProcessor.updateConfig(this.currentConfig);
 
     console.info(`[音频采集] 切换到${mode}模式`);
   }
@@ -499,61 +436,11 @@ export class AudioService {
     }
 
     try {
-      const currentTime = Date.now();
-
-      // 如果正在处理并且满足处理间隔
-      if (this.isProcessing &&
-        currentTime - this.lastProcessTime >= this.currentConfig.updateInterval) {
-
-        console.info(`[音频处理] 开始处理数据: 当前时间=${currentTime}, ` +
-          `上次处理时间=${this.lastProcessTime}, ` +
-          `间隔=${currentTime - this.lastProcessTime}ms`);
-
-        // 将数据复制到临时缓冲区
-        if (!this.tempBuffer || this.tempBuffer.byteLength !== this.currentConfig.fftSize * 2) {
-          console.info(`[音频采集] 创建新的临时缓冲区, FFT大小: ${this.currentConfig.fftSize}, ` +
-            `缓冲区大小: ${this.currentConfig.fftSize * 2}字节`);
-          this.tempBuffer = new ArrayBuffer(this.currentConfig.fftSize * 2); // 16位采样，每个样本2字节
-          this.tempBufferOffset = 0;
-        }
-
-        const newData = new Int16Array(buffer);
-        const tempView = new Int16Array(this.tempBuffer);
-
-        // 计算新样本的添加
-        const availableSpace = this.currentConfig.fftSize - this.tempBufferOffset;
-        const samplesToAdd = Math.min(newData.length, availableSpace);
-
-        console.info(`[音频处理] 样本累积情况: ` +
-          `当前累积=${this.tempBufferOffset}, ` +
-          `新增=${samplesToAdd}, ` +
-          `目标=${this.currentConfig.fftSize}, ` +
-          `累积进度=${((this.tempBufferOffset + samplesToAdd) / this.currentConfig.fftSize * 100).toFixed(1)}%`);
-
-        // 复制新数据
-        tempView.set(newData.subarray(0, samplesToAdd), this.tempBufferOffset);
-        this.tempBufferOffset += samplesToAdd;
-
-        // 添加调试日志，显示处理后的状态
-        console.debug(`[音频处理] 处理后状态: 累积样本=${this.tempBufferOffset}, ` +
-          `已添加样本=${samplesToAdd}`);
-
-        // 严格检查：只有当样本数量精确达到FFT大小时才处理
-        if (this.tempBufferOffset === this.currentConfig.fftSize) {
-          console.info(`[音频处理] 样本数已达到FFT大小(${this.currentConfig.fftSize})，开始处理`);
-
-          // 发送数据进行处理
-          if (this.onAudioData) {
-            console.info(`[音频采集] 发送数据进行处理，数据大小: ${this.tempBuffer.byteLength}字节`);
-            this.onAudioData(this.tempBuffer);
-          }
-
-          this.lastProcessTime = currentTime;
-          this.tempBufferOffset = 0; // 重置缓冲区偏移量
-          this.tempBuffer = new ArrayBuffer(this.currentConfig.fftSize * 2); // 创建新的缓冲区
-        }
+      if (this.originAudioDataCallBack) {
+        this.originAudioDataCallBack(buffer.slice(0));
       }
-
+      // 使用音频流处理器处理数据
+      this.audioStreamProcessor.processAudioData(buffer);
     } catch (err) {
       console.error(`[音频采集] 处理数据失败: ${err instanceof Error ? err.message : String(err)}`);
       // 不抛出错误，继续处理下一帧
@@ -564,15 +451,8 @@ export class AudioService {
    * 重置缓冲区
    */
   private resetBuffers(): void {
-    console.info(`[音频采集] 重置缓冲区开始: fftSize=${this.currentConfig.fftSize}, tempBufferOffset=${this.tempBufferOffset}`);
-
-    // 创建新的临时缓冲区
-    this.tempBuffer = new ArrayBuffer(this.currentConfig.fftSize * 2);
-    console.info(`[音频采集] 创建新的临时缓冲区: 大小=${this.tempBuffer.byteLength}字节`);
-
-    this.tempBufferOffset = 0;
-    this.lastProcessTime = 0;
-    this.audioBuffers = [];
+    console.info(`[音频采集] 重置缓冲区开始`);
+    this.audioStreamProcessor.reset();
   }
 
   /**
@@ -588,10 +468,6 @@ export class AudioService {
     if (processInterval < 20 || processInterval > 200) {
       throw new Error('处理间隔必须在20到200毫秒之间');
     }
-
-    // 保存到首选项
-    await this.preferenceService.setNumber(PREF_TARGET_SAMPLES, targetSamples);
-    await this.preferenceService.setNumber(PREF_PROCESS_INTERVAL, processInterval);
 
     console.info(`[音频采集] 更新配置: 目标样本数=${targetSamples}, 处理间隔=${processInterval}ms`);
   }
