@@ -97,7 +97,7 @@ export struct ReferenceContent {
   build() {
     Column({ space: DesignConstants.SPACING_LG }) {
       // 页面标题
-      this.buildPageHeader()
+      // this.buildPageHeader()
 
       // 参考功能卡片区
       this.buildReferenceCards()

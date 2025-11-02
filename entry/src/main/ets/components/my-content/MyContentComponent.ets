@@ -95,62 +95,62 @@ export struct MyContentComponent {
               .show();
           })
 
-          // 后台运行设置
-          ListItem() {
-            Column() {
-              // 主内容区域
-              Row({ space: 8 }) {
-                Row() {
-                  Image($r('app.media.ic_running'))
-                    .width(24)
-                    .height(24)
-                    .fillColor($r('sys.color.brand'))
-                    .margin({ right: 12 })
-
-                  Text($r('app.string.background_running'))
-                    .fontSize(16)
-                    .fontColor($r('sys.color.font_primary'))
-                    .layoutWeight(1)
-                }.layoutWeight(1)
-
-                // 状态指示器
-                Toggle({ type: ToggleType.Switch, isOn: this.pk.background_running })
-                  .selectedColor($r('app.color.toggle_active'))
-                  .switchPointColor($r('app.color.background_primary'))
-                  .onChange((isOn: boolean) => {
-                    this.pk.background_running = isOn;
-                  })
-              }
-              .width('100%')
-              .height(56)
-              .padding({
-                left: 16,
-                right: 16
-              })
-              .alignItems(VerticalAlign.Center)
-
-              // 描述文本区域（使用间距分隔）
-              Text(this.pk.background_running ? $r('app.string.background_running_desc_on') : $r('app.string.background_running_desc_off'))
-                .fontSize(DesignConstants.FONT_SIZE_SM)
-                .fontColor($r('sys.color.font_secondary'))
-                .width('100%')
-                .textAlign(TextAlign.Start)
-                .padding({
-                  left: 16,
-                  right: 16,
-                  top: 0,
-                  bottom: DesignConstants.SPACING_MD
-                })
-            }
-            .width('100%')
-          }
-          .borderRadius(16)
-          .backgroundColor($r('sys.color.comp_background_primary'))
-          .margin({
-            top: DesignConstants.SPACING_LG,
-            left: 16,
-            right: 16
-          })
+          // // 后台运行设置
+          // ListItem() {
+          //   Column() {
+          //     // 主内容区域
+          //     Row({ space: 8 }) {
+          //       Row() {
+          //         Image($r('app.media.ic_running'))
+          //           .width(24)
+          //           .height(24)
+          //           .fillColor($r('sys.color.brand'))
+          //           .margin({ right: 12 })
+          //
+          //         Text($r('app.string.background_running'))
+          //           .fontSize(16)
+          //           .fontColor($r('sys.color.font_primary'))
+          //           .layoutWeight(1)
+          //       }.layoutWeight(1)
+          //
+          //       // 状态指示器
+          //       Toggle({ type: ToggleType.Switch, isOn: this.pk.background_running })
+          //         .selectedColor($r('app.color.toggle_active'))
+          //         .switchPointColor($r('app.color.background_primary'))
+          //         .onChange((isOn: boolean) => {
+          //           this.pk.background_running = isOn;
+          //         })
+          //     }
+          //     .width('100%')
+          //     .height(56)
+          //     .padding({
+          //       left: 16,
+          //       right: 16
+          //     })
+          //     .alignItems(VerticalAlign.Center)
+          //
+          //     // 描述文本区域（使用间距分隔）
+          //     Text(this.pk.background_running ? $r('app.string.background_running_desc_on') : $r('app.string.background_running_desc_off'))
+          //       .fontSize(DesignConstants.FONT_SIZE_SM)
+          //       .fontColor($r('sys.color.font_secondary'))
+          //       .width('100%')
+          //       .textAlign(TextAlign.Start)
+          //       .padding({
+          //         left: 16,
+          //         right: 16,
+          //         top: 0,
+          //         bottom: DesignConstants.SPACING_MD
+          //       })
+          //   }
+          //   .width('100%')
+          // }
+          // .borderRadius(16)
+          // .backgroundColor($r('sys.color.comp_background_primary'))
+          // .margin({
+          //   top: DesignConstants.SPACING_LG,
+          //   left: 16,
+          //   right: 16
+          // })
 
 
           // 给作者五星好评设置

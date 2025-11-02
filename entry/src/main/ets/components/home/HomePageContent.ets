@@ -59,7 +59,7 @@ export struct HomePageContent {
       Text(`${this.ak.uiDisplayState.displayDb}dB`)
         .fontSize(56)
         .fontWeight(FontWeight.Bold)
-        .fontColor(this.decibelColor)
+        .fontColor($r('sys.color.alert'))
 
       // 系统状态概要
       this.buildSystemStatus()

@@ -283,7 +283,7 @@ export struct AudioController {
 
     // 同步到UI显示状态（仅在UI更新启用时）
     this.ak.uiDisplayState.syncFromProcessingState(this.ak.dataProcessingState);
-    
+
     console.debug(`[统计更新] 分贝值: ${currentDb}dB, 历史数据点: ${values.length}, 统计分布: [${this.ak.uiDisplayState.displayStatisticsDistribution.join(', ')}]`);
   }
 
@@ -362,9 +362,6 @@ export struct AudioController {
 
     // 更新最后保存时间
     this.lastAutoSaveTime = new Date().getTime();
-
-    // 更新UI显示状态中的保存时间
-    this.audioControllerService.updateLastSaveTime(this.lastAutoSaveTime);
 
     // 显示保存提示
     promptAction.showToast({
@@ -512,11 +509,19 @@ interface StateChangeEventWithPayload extends AudioControllerEvent {
    */
   private async handleStopRecordingEvent(comments: string): Promise<void> {
     try {
+      console.info('[AudioController] 开始处理停止录制事件');
       await this.originalStopRecording(comments);
       console.info('[AudioController] 通过事件停止录制成功');
     } catch (error) {
       console.error('[AudioController] 通过事件停止录制失败:', error);
       this.audioControllerService.publishError([`停止录制失败: ${error.message}`]);
+      // 即使失败也要确保状态正确
+      try {
+        // 强制停止音频服务
+        await this.audioService.stopCapture();
+      } catch (stopError) {
+        console.warn('[AudioController] 强制停止音频服务时出错:', stopError);
+      }
     }
   }
 
@@ -670,11 +675,13 @@ interface StateChangeEventWithPayload extends AudioControllerEvent {
 
         // 停止音频采集，触发状态机状态转换
         try {
+          console.info('[AudioController] 开始停止音频采集');
           await this.audioService.stopCapture();
           console.info('[AudioController] 音频采集已停止，状态机将转换到IDLE状态');
         } catch (error) {
           console.error('[AudioController] 停止音频采集失败:', error);
           this.addErrorMessage(`停止音频采集失败: ${error.message}`);
+          // 即使失败也要继续后续处理，避免阻塞
         }
 
         // 如果启用了录音功能，获取并保存音频文件

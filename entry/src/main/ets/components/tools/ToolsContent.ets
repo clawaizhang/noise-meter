@@ -772,7 +772,7 @@ export struct ToolsContent {
       this.startSaveAnimation();
       try {
         const audioController = AudioControllerService.getInstance(this.ak, this.pk);
-        await audioController.stopRecordingFromExternal(comment);
+        await audioController.restartRecordingFromExternal(comment);
         console.info('[ToolsContent] 数据已通过状态机保存，备注:', comment);
         
         // 等待状态转换完成或超时

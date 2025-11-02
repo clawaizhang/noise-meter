@@ -117,11 +117,11 @@ export default class EntryAbility extends UIAbility {
       // 取消后台通知
       const notificationHelper = NotificationHelper.getInstance(this.context);
       notificationHelper.cancelNotification(NOTIFICATION_ID);
-      this.stopBackgroundRunning();
+      // this.stopBackgroundRunning();
     }
 
     // 双管线架构：恢复UI更新
-    AudioControllerService.getInstancePlain()?.resumeUIUpdates();
+    // AudioControllerService.getInstancePlain()?.resumeUIUpdates();
 
     hilog.info(DOMAIN, TAG, 'Ability onForeground');
   }
@@ -130,9 +130,9 @@ export default class EntryAbility extends UIAbility {
     DisplayManager.getInstance().onBackground();
 
     // 双管线架构：暂停UI更新
-    AudioControllerService.getInstancePlain()?.pauseUIUpdates();
+    // AudioControllerService.getInstancePlain()?.pauseUIUpdates();
 
-    this.startBackgroundRunning();
+    // this.startBackgroundRunning();
 
     hilog.info(DOMAIN, TAG, 'Ability onBackground');
   }
