@@ -9,6 +9,7 @@ import { DecibelRecordService } from '../../services/DecibelRecordService';
 import { AudioControllerService } from '../../services/AudioControllerService';
 import { LocationInfo, LocationService } from '../../services/LocationService';
 import { AudioControlPanel } from '../common/AudioControlPanel';
+import { StatusAlertsComponent } from '../status-alerts/StatusAlertsComponent';
 
 // 功能卡片配置接口
 interface FunctionCardConfig {
@@ -39,6 +40,7 @@ export struct HomePageContent {
 
   build() {
     Column({ space: DesignConstants.SPACING_LG }) {
+      StatusAlertsComponent()
       // 核心分贝显示区
       this.buildDecibelDisplay()
 
