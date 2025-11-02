@@ -26,6 +26,9 @@ export class AlertStateMachine {
   private alertDuration: number = 0;
   @Trace
   private currentTime: number = 0;
+  
+  // 警报触发时的实际分贝值记录 - 修复分贝值不一致问题
+  private alertTriggerDecibel: number = 0;
 
   // 秒定时器服务
   private secondTimerService: SecondTimerService = SecondTimerService.getInstance();
@@ -163,8 +166,12 @@ export class AlertStateMachine {
     
     // 检查是否超过阈值
     if (currentDecibel >= threshold + this.config.escalationThresholdOffset) {
+      // 记录警报触发时的实际分贝值
+      this.alertTriggerDecibel = currentDecibel;
       return AlertStatus.ALERT_ESCALATED;
     } else if (currentDecibel >= threshold) {
+      // 记录警报触发时的实际分贝值
+      this.alertTriggerDecibel = currentDecibel;
       // 检查是否应该升级到持续警报
       if (this.isAlertState(this.currentState) &&
           context.duration >= this.config.persistentAlertDuration) {
@@ -172,8 +179,12 @@ export class AlertStateMachine {
       }
       return AlertStatus.ALERT_ACTIVE;
     } else if (currentDecibel >= threshold - this.config.warningThresholdOffset) {
+      // 当分贝值低于阈值时，清除警报触发记录
+      this.alertTriggerDecibel = 0;
       return AlertStatus.WARNING;
     } else {
+      // 当分贝值远低于阈值时，清除警报触发记录
+      this.alertTriggerDecibel = 0;
       return AlertStatus.MONITORING;
     }
   }
@@ -309,6 +320,8 @@ export class AlertStateMachine {
     // 重置警报持续时间
     this.alertStartTime = 0;
     this.alertDuration = 0;
+    // 重置警报触发分贝值记录
+    this.alertTriggerDecibel = 0;
   }
   
   /**
@@ -370,6 +383,14 @@ export class AlertStateMachine {
     } else {
       return `${seconds}秒`;
     }
+  }
+
+  /**
+   * 获取警报触发时的实际分贝值 - 修复分贝值不一致问题
+   */
+  @Computed
+  public get AlertTriggerDecibel(): number {
+    return this.alertTriggerDecibel;
   }
   
   /**

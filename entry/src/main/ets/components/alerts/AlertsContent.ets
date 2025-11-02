@@ -55,13 +55,26 @@ export struct AlertsContent {
   private async updateAlertState(): Promise<void> {
     const currentState = this.stateMachine.CurrentState;
     const context = this.stateMachine.getContext();
+    const threshold = this.pk.alarm_threshold.currentEffectiveThreshold;
     
     switch (currentState) {
       case AlertStatus.ALERT_ACTIVE:
       case AlertStatus.ALERT_PERSISTENT:
       case AlertStatus.ALERT_ESCALATED:
-        // 触发警报通知
-        await this.triggerAlarm(context.currentDecibel);
+        // 触发警报通知 - 使用警报触发时的实际分贝值，修复分贝值不一致问题
+        let triggerDecibel = this.stateMachine.AlertTriggerDecibel;
+        // 安全措施：如果触发分贝值不可用，使用当前上下文中的值
+        if (triggerDecibel <= 0) {
+          triggerDecibel = context.currentDecibel;
+          console.warn(`[AlertsContent] 警报触发分贝值不可用，使用上下文值: ${triggerDecibel}dB`);
+        }
+        
+        // 双重检查：确保当前分贝值确实超过阈值才触发警报
+        if (triggerDecibel >= threshold) {
+          await this.triggerAlarm(triggerDecibel);
+        } else {
+          console.warn(`[AlertsContent] 警报状态异常：状态=${currentState}，但分贝值=${triggerDecibel}dB < 阈值=${threshold}dB，跳过警报触发`);
+        }
         break;
       case AlertStatus.MONITORING:
       case AlertStatus.WARNING:

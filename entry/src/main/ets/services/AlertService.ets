@@ -69,7 +69,8 @@ export class AlertService {
         return;
       }
       
-      // 2. 发布通知
+      // 2. 发布通知 - 添加详细的分贝值传递日志
+      hilog.info(DOMAIN, TAG, `警报触发: 实际分贝值=${currentDecibel}dB, 阈值=${threshold}dB, 差值=${currentDecibel - threshold}dB`);
       await this.publishAlertNotification(currentDecibel, threshold);
       
       hilog.info(DOMAIN, TAG, `警报触发成功并发送通知: ${currentDecibel}dB > ${threshold}dB`);
