@@ -357,7 +357,7 @@ export struct AudioController {
     }
   }
 
-  private performAutoSave(): void {
+  private async performAutoSave(): Promise<void> {
     console.info('[自动保存] 执行定时自动保存');
 
     // 更新最后保存时间
@@ -369,8 +369,13 @@ export struct AudioController {
       duration: 2000
     });
 
-    // 调用保存逻辑
-    this.performSave('自动保存');
+    try {
+      // 通过状态机触发保存，与手动保存使用相同路径
+      await this.audioControllerService.restartRecordingFromExternal('自动保存');
+      console.info('[自动保存] 自动保存成功');
+    } catch (error) {
+      console.error('[自动保存] 自动保存失败:', error);
+    }
   }
 
   /**
