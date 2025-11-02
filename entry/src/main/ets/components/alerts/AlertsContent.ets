@@ -653,23 +653,28 @@ export struct AlertsContent {
   }
 
   build() {
-    Column({ space: DesignConstants.SPACING_LG }) {
-      // 状态显示区（最突出）
-      this.buildStatusDisplay()
+    Scroll() {
+      Column({ space: DesignConstants.SPACING_LG }) {
+        // 状态显示区（最突出）
+        this.buildStatusDisplay()
 
-      NotificationPreferences({
-        systemNotificationEnabled: this.pk.system_notification_enabled,
-        onSystemNotificationChange: (enabled: boolean) => {
-          this.pk.system_notification_enabled = enabled;
-        }
-      })
-      // 环境信息区
-      this.buildEnvironmentInfo()
+        NotificationPreferences({
+          systemNotificationEnabled: this.pk.system_notification_enabled,
+          onSystemNotificationChange: (enabled: boolean) => {
+            this.pk.system_notification_enabled = enabled;
+          }
+        })
+        // 环境信息区
+        this.buildEnvironmentInfo()
+      }
+      .width('100%')
     }
+    .align(Alignment.Top)
     .width('90%')
     .height('100%')
-    .justifyContent(FlexAlign.Start)
-    .alignItems(HorizontalAlign.Center)
+    .scrollable(ScrollDirection.Vertical)
+    .scrollBar(BarState.Off)
+    .edgeEffect(EdgeEffect.Spring)
     .padding({ top: DesignConstants.SPACING_XL })
     .backgroundColor($r('sys.color.background_secondary'))
   }

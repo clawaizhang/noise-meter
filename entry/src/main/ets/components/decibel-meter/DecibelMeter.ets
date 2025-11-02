@@ -60,7 +60,6 @@ export struct DecibelMeter {
         Scroll() {
           GridRow({ columns: 12, breakpoints: { reference: BreakpointsReference.WindowSize }, gutter: 16 }) {
 
-          if (!this.hideForXsMd) {
             // 频谱图 - 优化布局，占据更多空间
             GridCol({
               span: {
@@ -73,7 +72,7 @@ export struct DecibelMeter {
             }) {
               Column() {
                 SpectrumChartComponent()
-                
+
                 // 全屏按钮
                 this.buildFullScreenButton('频谱图')
               }
@@ -94,7 +93,7 @@ export struct DecibelMeter {
             }) {
               Column() {
                 TimeDomainChartComponent()
-                
+
                 // 全屏按钮
                 this.buildFullScreenButton('时域图')
               }
@@ -115,7 +114,7 @@ export struct DecibelMeter {
             }) {
               Column() {
                 StatisticsChartComponent()
-                
+
                 // 全屏按钮
                 this.buildFullScreenButton('统计分布图')
               }
@@ -124,16 +123,15 @@ export struct DecibelMeter {
             .borderRadius(16)
             .padding(16)
           }
+          .id('mainNoiseMeterDisplayId')
+          .onBreakpointChange(breakPoints => {
+            // 断点信息现在由 AppStorage 统一管理，这里不再需要处理
+            console.info(`[CAT_ANIMATION] GridRow 断点变化: ${breakPoints}`);
+          })
         }
-        .id('mainNoiseMeterDisplayId')
-        .onBreakpointChange(breakPoints => {
-          // 断点信息现在由 AppStorage 统一管理，这里不再需要处理
-          console.info(`[CAT_ANIMATION] GridRow 断点变化: ${breakPoints}`);
-        })
+        .scrollBar(BarState.Off)
+        .edgeEffect(EdgeEffect.Spring)
       }
-      .scrollBar(BarState.Off)
-      .edgeEffect(EdgeEffect.Spring)
-        }
 
       Column()
         .width(this.dWidthHeight)
@@ -173,8 +171,6 @@ export struct DecibelMeter {
       this.audioControllerService ? '已初始化' : '未初始化');
   }
 
-
-
   // 启动折叠动画
   startCollapseAnimation() {
     // 获取屏幕尺寸
@@ -201,7 +197,6 @@ export struct DecibelMeter {
     }, 100)
   }
 
-
   /**
    * 构建全屏按钮
    */
@@ -209,7 +204,7 @@ export struct DecibelMeter {
   buildFullScreenButton(chartType: string) {
     Row() {
       Blank()
-      
+
       Button('全屏查看')
         .fontSize(12)
         .type(ButtonType.Capsule)
@@ -248,5 +243,4 @@ export struct DecibelMeter {
     console.info('[全屏模式] 退出全屏模式');
     this.isFullScreenMode = false;
   }
-
 }

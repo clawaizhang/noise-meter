@@ -95,18 +95,24 @@ export struct ReferenceContent {
   }
 
   build() {
-    Column({ space: DesignConstants.SPACING_LG }) {
-      // 页面标题
-      // this.buildPageHeader()
+    Scroll() {
+      Column({ space: DesignConstants.SPACING_LG }) {
+        // 页面标题
+        // this.buildPageHeader()
 
-      // 参考功能卡片区
-      this.buildReferenceCards()
+        // 参考功能卡片区
+        this.buildReferenceCards()
+      }
+      .width('100%')
     }
     .width('100%')
     .height('100%')
     .padding(DesignConstants.SPACING_MD)
-    .alignItems(HorizontalAlign.Start)
-    .justifyContent(FlexAlign.Start)
+    .scrollable(ScrollDirection.Vertical)
+    .scrollBar(BarState.Off)
+    .edgeEffect(EdgeEffect.Spring)
+    .align(Alignment.Top)
+
   }
 
   @Builder

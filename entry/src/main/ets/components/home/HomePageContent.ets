@@ -39,20 +39,26 @@ export struct HomePageContent {
   private locationService: LocationService = LocationService.getInstance();
 
   build() {
-    Column({ space: DesignConstants.SPACING_LG }) {
-      StatusAlertsComponent()
-      // 核心分贝显示区
-      this.buildDecibelDisplay()
+    Scroll() {
+      Column({ space: DesignConstants.SPACING_LG }) {
+        StatusAlertsComponent()
+        // 核心分贝显示区
+        this.buildDecibelDisplay()
 
-      AudioControlPanel()
-      // 功能入口卡片区
-      this.buildFunctionCards()
+        AudioControlPanel()
+        // 功能入口卡片区
+        this.buildFunctionCards()
+      }
+      .width('100%')
+      .padding(DesignConstants.SPACING_MD)
+      .alignItems(HorizontalAlign.Start)
+      .justifyContent(FlexAlign.Start)
     }
     .width('100%')
     .height('100%')
-    .padding(DesignConstants.SPACING_MD)
-    .alignItems(HorizontalAlign.Start)
-    .justifyContent(FlexAlign.Start)
+    .scrollable(ScrollDirection.Vertical)
+    .scrollBar(BarState.Off)
+    .edgeEffect(EdgeEffect.Spring)
   }
 
 

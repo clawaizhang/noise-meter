@@ -59,16 +59,22 @@ export struct ToolsContent {
 
 
   build() {
-    Column({ space: DesignConstants.SPACING_LG }) {
+    Scroll() {
+      Column({ space: DesignConstants.SPACING_LG }) {
 
-      // 工具功能卡片区
-      this.buildToolsCards()
+        // 工具功能卡片区
+        this.buildToolsCards()
+      }
+      .width('100%')
     }
     .width('100%')
     .height('100%')
+    .align(Alignment.Top)
     .padding(DesignConstants.SPACING_MD)
-    .alignItems(HorizontalAlign.Start)
-    .justifyContent(FlexAlign.Start)
+    .scrollable(ScrollDirection.Vertical)
+    .scrollBar(BarState.Off)
+    .edgeEffect(EdgeEffect.Spring)
+
   }
 
   @Builder
