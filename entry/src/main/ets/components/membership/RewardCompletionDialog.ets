@@ -7,6 +7,8 @@ import { DesignConstants } from '../../constants/DesignConstants';
 import { DialogHub, InfSheet } from '@hadss/dialoghub';
 import { DialogStyleManager } from '../../utils/DialogStyleManager';
 import { Throttle } from '../../utils/Debounce';
+import { CommentService } from '../../services/CommentService';
+import { common } from '@kit.AbilityKit';
 
 interface RewardCompletionDialogProps {
   consecutiveDays: number;
@@ -31,6 +33,21 @@ export struct RewardCompletionDialog {
   @Param @Require rewardDays: number;
   @Param @Require expiryDate: number;
   @Event onClose: () => void;
+
+  // 显示评论对话框
+  private showCommentDialog = () => {
+    Throttle.click(async () => {
+      try {
+        const context = getContext(this) as common.UIAbilityContext;
+        const commentService = CommentService.getInstance();
+        await commentService.showCommentDialog(context);
+        console.info('评论对话框显示成功');
+      } catch (error) {
+        console.error(`显示评论对话框失败: ${error instanceof Error ? error.message : String(error)}`);
+        // 可以在这里添加用户友好的错误提示
+      }
+    });
+  }
 
   /**
    * 格式化日期
@@ -141,21 +158,42 @@ export struct RewardCompletionDialog {
         .textAlign(TextAlign.Center)
         .width('100%')
 
-      // 确定按钮
-      Button('确定')
-        .width('100%')
-        .height(48)
-        .fontSize(DesignConstants.FONT_SIZE_MD)
-        .fontWeight(FontWeight.Medium)
-        .backgroundColor($r('sys.color.confirm'))
-        .fontColor($r('sys.color.font_on_primary'))
-        .borderRadius(DesignConstants.BORDER_RADIUS_MD)
-        .onClick(() => {
-          Throttle.click(() => {
-            this.onClose();
-          });
-        })
-        .margin({ top: DesignConstants.SPACING_LG })
+      // 按钮区域
+      Column({ space: DesignConstants.SPACING_MD }) {
+        // 确定按钮 - 主按钮
+        Button('确定')
+          .width('100%')
+          .height(48)
+          .fontSize(DesignConstants.FONT_SIZE_MD)
+          .fontWeight(FontWeight.Medium)
+          .backgroundColor($r('sys.color.confirm'))
+          .fontColor($r('sys.color.font_on_primary'))
+          .borderRadius(DesignConstants.BORDER_RADIUS_MD)
+          .onClick(() => {
+            Throttle.click(() => {
+              this.onClose();
+            });
+          })
+
+        // 五星好评按钮 - 次要按钮（轮廓样式）
+        Button('⭐ 五星好评')
+          .width('100%')
+          .height(48)
+          .fontSize(DesignConstants.FONT_SIZE_MD)
+          .fontWeight(FontWeight.Medium)
+          .backgroundColor(Color.Transparent)
+          .fontColor($r('sys.color.brand'))
+          .border({
+            width: DesignConstants.BORDER_WIDTH_MD,
+            color: $r('sys.color.brand'),
+            radius: DesignConstants.BORDER_RADIUS_MD
+          })
+          .onClick(() => {
+            this.showCommentDialog();
+          })
+      }
+      .width('100%')
+      .margin({ top: DesignConstants.SPACING_LG })
     }
     .padding(DesignConstants.SPACING_LG)
     .width('100%')
