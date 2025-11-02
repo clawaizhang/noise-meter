@@ -26,7 +26,6 @@ import {
 } from '../time-weighting/TimeWeightingDialog';
 import { AudioAnalysisMode } from '../../common/AudioConfig';
 import { LocationInfo, LocationService } from '../../services/LocationService';
-import { AudioControlPanel } from '../common/AudioControlPanel';
 
 // 工具功能卡片配置
 interface ToolCardConfig {
@@ -62,9 +61,6 @@ export struct ToolsContent {
   build() {
     Column({ space: DesignConstants.SPACING_LG }) {
 
-      // 操作按钮区域
-      this.buildActionButtons()
-
       // 工具功能卡片区
       this.buildToolsCards()
     }
@@ -91,11 +87,6 @@ export struct ToolsContent {
     .padding(DesignConstants.SPACING_MD)
     .backgroundColor($r('sys.color.comp_background_primary'))
     .borderRadius(DesignConstants.BORDER_RADIUS_LG)
-  }
-
-  @Builder
-  private buildActionButtons() {
-    AudioControlPanel()
   }
 
   @Builder

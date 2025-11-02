@@ -8,6 +8,7 @@ import { common } from '@kit.AbilityKit';
 import { DecibelRecordService } from '../../services/DecibelRecordService';
 import { AudioControllerService } from '../../services/AudioControllerService';
 import { LocationInfo, LocationService } from '../../services/LocationService';
+import { AudioControlPanel } from '../common/AudioControlPanel';
 
 // 功能卡片配置接口
 interface FunctionCardConfig {
@@ -40,7 +41,8 @@ export struct HomePageContent {
     Column({ space: DesignConstants.SPACING_LG }) {
       // 核心分贝显示区
       this.buildDecibelDisplay()
-      
+
+      AudioControlPanel()
       // 功能入口卡片区
       this.buildFunctionCards()
     }

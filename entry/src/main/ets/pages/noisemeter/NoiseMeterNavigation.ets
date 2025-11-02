@@ -159,14 +159,7 @@ export struct MainNoiseMeter {
     }
   ]
   private referenceMenus: Array<NavigationMenuItem> = [
-    {
-      value: '刷新',
-      icon: $r('app.media.ic_refresh'),
-      action: () => {
-        // 参考页面刷新功能
-        console.info('参考页面刷新');
-      }
-    }
+
   ]
   private toolsMenus: Array<NavigationMenuItem> = [
 
