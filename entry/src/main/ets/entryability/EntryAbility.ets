@@ -1,7 +1,7 @@
 import UIAbility from '@ohos.app.ability.UIAbility';
 import window from '@ohos.window';
-import { AbilityConstant, common, Want } from '@kit.AbilityKit';
-import { BusinessError, deviceInfo } from '@kit.BasicServicesKit';
+import { AbilityConstant, Want } from '@kit.AbilityKit';
+import { BusinessError } from '@kit.BasicServicesKit';
 import hilog from '@ohos.hilog';
 import backgroundTaskManager from '@ohos.resourceschedule.backgroundTaskManager';
 import wantAgent from '@ohos.app.ability.wantAgent';
@@ -10,13 +10,13 @@ import { DisplayManager } from '../utils/DisplayManager';
 import { NotificationHelper } from '../utils/NotificationHelper';
 import { PreferenceKeys } from '../models/PreferenceKeys';
 import { AppKeys } from '../models/AppKeys';
-import { AppUtil, PermissionUtil, PreferencesUtil } from '@pura/harmony-utils';
+import { AppUtil, PermissionUtil } from '@pura/harmony-utils';
 import { camera } from '@kit.CameraKit';
 import { AppStorageV2, display, PersistenceV2 } from '@kit.ArkUI';
-import { AudioControllerService } from '../services/AudioControllerService';
 import { WindowFunctionCache } from '../utils/WindowFunctionCache';
 import { DataProcessingState } from '../models/DataProcessingState';
 import { UIDisplayState } from '../models/UIDisplayState';
+import { of } from 'rxjs';
 
 const TAG = 'EntryAbility';
 const DOMAIN = 0x0000;
@@ -30,7 +30,9 @@ export default class EntryAbility extends UIAbility {
   async onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): Promise<void> {
     hilog.info(DOMAIN, TAG, 'Ability onCreate');
     // 初始化FFT优化 - 预缓存窗函数
-    WindowFunctionCache.initialize();
+    of().subscribe(() => {
+      WindowFunctionCache.initialize()
+    })
   }
 
   async onDestroy(): Promise<void> {
@@ -66,7 +68,7 @@ export default class EntryAbility extends UIAbility {
     });
 
     // 获取设备类型并设置窗口方向
-    windowStage.getMainWindow((err: BusinessError, windowClass) => {
+    windowStage?.getMainWindow((err: BusinessError, windowClass) => {
       if (err.code || !windowClass) {
         hilog.error(DOMAIN, TAG, `Failed to obtain the main window. Cause code: ${err.code}, message: ${err.message}`);
         return;

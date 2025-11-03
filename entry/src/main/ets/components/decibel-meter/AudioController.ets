@@ -109,9 +109,14 @@ export struct AudioController {
 
     console.info(`[自动保存检查] 当前时间: ${currentTime}, 上次保存: ${this.lastAutoSaveTime}, 已过时间: ${elapsed}ms, 剩余时间: ${remaining}ms`);
 
+    if (remaining <= 0) {
+      this.lastAutoSaveTime = new Date().getTime();
+      this.ak.uiDisplayState.lastSaveTime = this.lastAutoSaveTime ;
+      this.ak.uiDisplayState.updateTimeDisplay(this.pk);
+    }
     // 只有在真正录制状态下且时间间隔已过时才执行自动保存
     // 避免在长时间停止后立即触发自动保存
-    if (remaining <= 0 && remaining >= -3) {
+    if (remaining <= 0 && remaining >= -3000) {
       this.performAutoSave();
     }
   }
@@ -361,18 +366,16 @@ export struct AudioController {
   private async performAutoSave(): Promise<void> {
     console.info('[自动保存] 执行定时自动保存');
 
-    // 更新最后保存时间
-    this.lastAutoSaveTime = new Date().getTime();
-
-    // 显示保存提示
-    promptAction.showToast({
-      message: `自动保存记录（${this.pk.auto_save_interval}分钟）`,
-      duration: 2000
-    });
-
     try {
       // 通过状态机触发保存，与手动保存使用相同路径
       await this.audioControllerService.restartRecordingFromExternal('自动保存');
+
+      // 显示保存提示
+      promptAction.showToast({
+        message: `自动保存记录（${this.pk.auto_save_interval}分钟）`,
+        duration: 2000
+      });
+
       console.info('[自动保存] 自动保存成功');
     } catch (error) {
       console.error('[自动保存] 自动保存失败:', error);
