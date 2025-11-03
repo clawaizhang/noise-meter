@@ -1,6 +1,6 @@
 import { AppKeys } from '../../models/AppKeys';
 import { PreferenceKeys } from '../../models/PreferenceKeys';
-import { AppStorageV2, PersistenceV2 } from '@kit.ArkUI';
+import { AppStorageV2, curves, PersistenceV2 } from '@kit.ArkUI';
 import { DesignConstants } from '../../constants/DesignConstants';
 import { navigationStack } from '../../constants/ProviderConstant';
 import { Throttle } from '../../utils/Debounce';
@@ -57,6 +57,7 @@ export struct HomePageContent {
     }
     .width('100%')
     .height('100%')
+    .align(Alignment.Top)
     .scrollable(ScrollDirection.Vertical)
     .scrollBar(BarState.Off)
     .edgeEffect(EdgeEffect.Spring)
@@ -66,10 +67,19 @@ export struct HomePageContent {
   private buildDecibelDisplay() {
     Column({ space: DesignConstants.SPACING_MD }) {
       // 分贝值 - 核心显示（大字体）
-      Text(`${this.ak.uiDisplayState.displayDb}dB`)
-        .fontSize(56)
-        .fontWeight(FontWeight.Bold)
-        .fontColor($r('sys.color.alert'))
+      if (this.ak.uiDisplayState.displayDb > 0) {
+        Text(`${this.ak.uiDisplayState.displayDb}dB`)
+          .fontSize(56)
+          .fontWeight(FontWeight.Bold)
+          .fontColor($r('sys.color.alert'))
+          .transition(TransitionEffect.scale({ x: 0, y: 0 }).animation({ curve: curves.springMotion() }));
+      } else {
+        Text('--')
+          .fontSize(56)
+          .fontWeight(FontWeight.Bold)
+          .fontColor($r('sys.color.font_secondary'))
+          .transition(TransitionEffect.scale({ x: 0, y: 0 }).animation({ curve: curves.springMotion() }));
+      }
 
       // 系统状态概要
       this.buildSystemStatus()
@@ -277,7 +287,6 @@ export struct HomePageContent {
       // 第二行：独立位置信息行
       this.buildLocationInfo()
     }
-    .margin({ top: DesignConstants.SPACING_MD })
     .padding({ top: DesignConstants.SPACING_MD })
   }
 
