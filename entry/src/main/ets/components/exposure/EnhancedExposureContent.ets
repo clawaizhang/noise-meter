@@ -377,22 +377,45 @@ export struct EnhancedExposureContent {
   }
 
   /**
+   * 显示数据保存提示信息
+   */
+  private showDataSaveHint(): void {
+    promptAction.showToast({
+      message: '噪音影响程度基于已保存的历史记录计算',
+      duration: 3000
+    });
+  }
+
+  /**
    * 构建核心指标区 - 统一卡片版
    * 将噪音影响程度、今日最高噪音和今日平均噪音合并为一张卡片
    */
   @Builder
   private buildCoreMetrics() {
     Column({ space: DesignConstants.SPACING_LG }) {
-      // 顶部：噪音影响程度环形进度条
-      Column({ space: DesignConstants.SPACING_SM }) {
-        this.buildEnhancedProgressRing({
-          percentage: this.exposureData.exposurePercentage,
-          color: this.ExposureColor
-        })
+      // 顶部：噪音影响程度环形进度条和信息图标
+      Stack({ alignContent: Alignment.TopEnd }) {
+        Column({ space: DesignConstants.SPACING_SM }) {
+          this.buildEnhancedProgressRing({
+            percentage: this.exposureData.exposurePercentage,
+            color: this.ExposureColor
+          })
+        }
+        .width('100%')
+        .justifyContent(FlexAlign.Center)
+        .alignItems(HorizontalAlign.Center)
+
+        // 信息图标 - 右上角
+        Image($r('app.media.ic_info'))
+          .width(20)
+          .height(20)
+          .fillColor($r('sys.color.font_secondary'))
+          .margin({ top: DesignConstants.SPACING_XS, right: DesignConstants.SPACING_XS })
+          .onClick(() => {
+            this.showDataSaveHint();
+          })
       }
       .width('100%')
-      .justifyContent(FlexAlign.Center)
-      .alignItems(HorizontalAlign.Center)
 
       // 底部：剩余安全时间和健康状态描述
       Column({ space: DesignConstants.SPACING_MD }) {

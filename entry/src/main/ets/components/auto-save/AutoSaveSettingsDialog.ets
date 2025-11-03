@@ -3,6 +3,7 @@ import { EditableLeftIconType, EditableTitleBar, PersistenceV2 } from '@kit.ArkU
 import promptAction from '@ohos.promptAction';
 import { DesignConstants } from '../../constants/DesignConstants';
 import { Throttle } from '../../utils/Debounce';
+import { PremiumFeature } from '../membership/PremiumFeature';
 
 export interface AutoSaveDialogParams {
   onClose: () => void;
@@ -29,7 +30,6 @@ export struct AutoSaveSettingsDialog {
   @Local tempInterval: number = this.pk.auto_save_interval;
   @Local tempCustomInterval: number = this.tempInterval;
   @Param @Require params: AutoSaveDialogParams;
-  
   // 初始状态 - 用于检测是否有修改
   private initialAutoSaveEnabled: boolean = this.pk.auto_save_enabled;
   private initialInterval: number = this.pk.auto_save_interval;
@@ -54,7 +54,7 @@ export struct AutoSaveSettingsDialog {
     // 应用自动保存设置
     this.pk.auto_save_enabled = this.tempAutoSaveEnabled;
     this.pk.auto_save_interval = this.tempInterval;
-    
+
     // 通过回调通知设置已应用
     if (this.params.onSettingsApplied) {
       const settings: AutoSaveSettings = {
@@ -63,14 +63,14 @@ export struct AutoSaveSettingsDialog {
       };
       this.params.onSettingsApplied(settings);
     }
-    
+
     // 显示保存成功提示
     const statusText = this.tempAutoSaveEnabled ? `已开启，间隔${this.tempInterval}分钟` : '已关闭';
     promptAction.showToast({
       message: `自动保存${statusText}`,
       duration: 2000
     });
-    
+
     // 关闭弹窗
     this.params.onClose();
   }
@@ -82,27 +82,37 @@ export struct AutoSaveSettingsDialog {
   }
 
   @Computed
-  get selectedIndex(){
+  get selectedIndex() {
     return this.getPresetIndex(this.tempInterval);
   }
 
   private getPresetIndex(interval: number): number {
     switch (interval) {
-      case 3: return 0;
-      case 5: return 1;
-      case 10: return 2;
-      case 20: return 3;
-      default: return -1; // 自定义模式
+      case 3:
+        return 0;
+      case 5:
+        return 1;
+      case 10:
+        return 2;
+      case 20:
+        return 3;
+      default:
+        return -1; // 自定义模式
     }
   }
 
   private getPresetInterval(index: number): number {
     switch (index) {
-      case 0: return 3;
-      case 1: return 5;
-      case 2: return 10;
-      case 3: return 20;
-      default: return this.tempCustomInterval;
+      case 0:
+        return 3;
+      case 1:
+        return 5;
+      case 2:
+        return 10;
+      case 3:
+        return 20;
+      default:
+        return this.tempCustomInterval;
     }
   }
 
@@ -135,15 +145,18 @@ export struct AutoSaveSettingsDialog {
       Text(params.label)
         .fontSize(DesignConstants.FONT_SIZE_MD)
         .fontWeight(FontWeight.Medium)
-        .fontColor(params.selectedIndex === params.index ? $r('sys.color.font_on_primary') : $r('sys.color.font_primary'))
-      
+        .fontColor(params.selectedIndex === params.index ? $r('sys.color.font_on_primary') :
+          $r('sys.color.font_primary'))
+
       Text(params.description)
         .fontSize(DesignConstants.FONT_SIZE_SM)
-        .fontColor(params.selectedIndex === params.index ? $r('sys.color.font_on_primary') : $r('sys.color.font_secondary'))
+        .fontColor(params.selectedIndex === params.index ? $r('sys.color.font_on_primary') :
+          $r('sys.color.font_secondary'))
     }
     .width('100%')
     .height(72)
-    .backgroundColor(params.selectedIndex === params.index ? $r('sys.color.interactive_active') : $r('sys.color.comp_background_primary'))
+    .backgroundColor(params.selectedIndex === params.index ? $r('sys.color.interactive_active') :
+      $r('sys.color.comp_background_primary'))
     .borderRadius(DesignConstants.BORDER_RADIUS_MD)
     .padding(DesignConstants.SPACING_MD)
     .justifyContent(FlexAlign.Center)
@@ -163,7 +176,7 @@ export struct AutoSaveSettingsDialog {
           .fontSize(DesignConstants.FONT_SIZE_MD)
           .fontColor($r('sys.color.font_primary'))
           .layoutWeight(1)
-        
+
         TextInput({ text: this.tempCustomInterval.toString() })
           .width(80)
           .height(40)
@@ -172,12 +185,12 @@ export struct AutoSaveSettingsDialog {
           .onChange((value: string) => {
             this.handleCustomInput(value);
           })
-        
+
         Text('分钟')
           .fontSize(DesignConstants.FONT_SIZE_MD)
           .fontColor($r('sys.color.font_primary'))
       }
-      
+
       Text('（1-60分钟）')
         .fontSize(DesignConstants.FONT_SIZE_SM)
         .fontColor($r('sys.color.font_secondary'))
@@ -208,23 +221,28 @@ export struct AutoSaveSettingsDialog {
       Scroll() {
         Column({ space: DesignConstants.SPACING_LG }) {
           // 开关区域
-          Row({ space: 8 }) {
-            Text('启用自动保存')
-              .fontSize(DesignConstants.FONT_SIZE_MD)
-              .fontColor($r('sys.color.font_primary'))
-              .layoutWeight(1)
-            
-            Toggle({ type: ToggleType.Switch, isOn: this.tempAutoSaveEnabled })
-              .selectedColor($r('app.color.toggle_active'))
-              .switchPointColor($r('app.color.background_primary'))
-              .onChange((isOn: boolean) => {
-                this.handleToggleChange(isOn);
-              })
+          PremiumFeature({
+            featureName: '自动保存',
+            featureDesc: '自动保存功能将自动保存您的数据，您可以在设置中自定义保存间隔。'
+          }) {
+            Row({ space: 8 }) {
+              Text('启用自动保存')
+                .fontSize(DesignConstants.FONT_SIZE_MD)
+                .fontColor($r('sys.color.font_primary'))
+                .layoutWeight(1)
+
+              Toggle({ type: ToggleType.Switch, isOn: this.tempAutoSaveEnabled })
+                .selectedColor($r('app.color.toggle_active'))
+                .switchPointColor($r('app.color.background_primary'))
+                .onChange((isOn: boolean) => {
+                  this.handleToggleChange(isOn);
+                })
+            }
+            .width('100%')
+            .padding(DesignConstants.SPACING_MD)
+            .backgroundColor($r('sys.color.comp_background_primary'))
+            .borderRadius(DesignConstants.BORDER_RADIUS_MD)
           }
-          .width('100%')
-          .padding(DesignConstants.SPACING_MD)
-          .backgroundColor($r('sys.color.comp_background_primary'))
-          .borderRadius(DesignConstants.BORDER_RADIUS_MD)
 
           if (this.tempAutoSaveEnabled) {
             // 预设选项区域
@@ -237,6 +255,7 @@ export struct AutoSaveSettingsDialog {
                   selectedIndex: this.selectedIndex
                 })
               }
+
               GridCol({ span: 1 }) {
                 this.buildPresetOption({
                   index: 1,
@@ -245,6 +264,7 @@ export struct AutoSaveSettingsDialog {
                   selectedIndex: this.selectedIndex
                 })
               }
+
               GridCol({ span: 1 }) {
                 this.buildPresetOption({
                   index: 2,
@@ -253,6 +273,7 @@ export struct AutoSaveSettingsDialog {
                   selectedIndex: this.selectedIndex
                 })
               }
+
               GridCol({ span: 1 }) {
                 this.buildPresetOption({
                   index: 3,

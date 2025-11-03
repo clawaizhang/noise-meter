@@ -10,6 +10,7 @@ import { AudioControllerService } from '../../services/AudioControllerService';
 import { LocationInfo, LocationService } from '../../services/LocationService';
 import { AudioControlPanel } from '../common/AudioControlPanel';
 import { StatusAlertsComponent } from '../status-alerts/StatusAlertsComponent';
+import { DecibelService } from '../../services/DecibelService';
 
 // 功能卡片配置接口
 interface FunctionCardConfig {
@@ -61,7 +62,6 @@ export struct HomePageContent {
     .edgeEffect(EdgeEffect.Spring)
   }
 
-
   @Builder
   private buildDecibelDisplay() {
     Column({ space: DesignConstants.SPACING_MD }) {
@@ -90,13 +90,30 @@ export struct HomePageContent {
         this.buildFunctionCard({
           title: '仪表盘',
           icon: $r('app.media.ic_meter'),
-          description: '完整噪音检测',
+          description: '分析图表展示',
           dataDisplay: this.dashboardTrend,
           dataColor: this.dashboardTrendColor,
-          onTap: () => { this.switchToTab(1) }
+          onTap: () => {
+            this.switchToTab(1)
+          }
         })
       }
-      
+
+
+      // 工具入口 - 显示工具状态
+      GridCol({ span: 1 }) {
+        this.buildFunctionCard({
+          title: '操作台',
+          icon: $r('app.media.ic_atom'),
+          description: '校准和设置',
+          dataDisplay: this.toolsStatus,
+          dataColor: this.toolsStatusColor,
+          onTap: () => {
+            this.switchToTab(2)
+          }
+        })
+      }
+
       // 警报入口 - 显示活跃警报数量
       GridCol({ span: 1 }) {
         this.buildFunctionCard({
@@ -106,22 +123,12 @@ export struct HomePageContent {
           badgeCount: this.activeAlertsCount,
           dataDisplay: this.activeAlertsCount > 0 ? '警报中' : '正常',
           dataColor: this.activeAlertsCount > 0 ? $r('sys.color.alert') : $r('sys.color.confirm'),
-          onTap: () => { this.switchToTab(2) }
+          onTap: () => {
+            this.switchToTab(3)
+          }
         })
       }
-      
-      // 工具入口 - 显示工具状态
-      GridCol({ span: 1 }) {
-        this.buildFunctionCard({
-          title: '操作台',
-          icon: $r('app.media.ic_atom'),
-          description: '校准和设置',
-          dataDisplay: this.toolsStatus,
-          dataColor: this.toolsStatusColor,
-          onTap: () => { this.switchToTab(2) }
-        })
-      }
-      
+
       // 影响入口 - 显示暴露指数
       GridCol({ span: 1 }) {
         this.buildFunctionCard({
@@ -130,7 +137,23 @@ export struct HomePageContent {
           description: '暴露统计分析',
           dataDisplay: this.exposureIndex,
           dataColor: this.exposureColor,
-          onTap: () => { this.switchToTab(4) }
+          onTap: () => {
+            this.switchToTab(4)
+          }
+        })
+      }
+
+      // 影响入口 - 显示暴露指数
+      GridCol({ span: 1 }) {
+        this.buildFunctionCard({
+          title: '参考',
+          icon: $r('app.media.ic_book2'),
+          description: '参考资料',
+          dataDisplay: this.reference,
+          dataColor: this.exposureColor,
+          onTap: () => {
+            this.switchToTab(5)
+          }
         })
       }
 
@@ -163,7 +186,7 @@ export struct HomePageContent {
           .width(32)
           .height(32)
           .fillColor($r('sys.color.icon_primary'))
-        
+
         // 徽章计数 - 放在图标右上角
         if (config.badgeCount && config.badgeCount > 0) {
           Text(config.badgeCount.toString())
@@ -171,7 +194,12 @@ export struct HomePageContent {
             .fontColor(Color.White)
             .backgroundColor($r('sys.color.alert'))
             .borderRadius(DesignConstants.BORDER_RADIUS_FULL)
-            .padding({ left: 6, right: 6, top: 2, bottom: 2 })
+            .padding({
+              left: 6,
+              right: 6,
+              top: 2,
+              bottom: 2
+            })
             .margin({ top: -4, right: -4 })
         }
       }
@@ -188,24 +216,24 @@ export struct HomePageContent {
             .fontWeight(FontWeight.Medium)
             .fontColor($r('sys.color.font_primary'))
             .textAlign(TextAlign.Start)
-          
+
           Blank()
         }
         .width('100%')
         .justifyContent(FlexAlign.Start)
-        
+
         // 描述行 - 居中对齐
         Row() {
           Text(config.description)
             .fontSize(DesignConstants.FONT_SIZE_SM)
             .fontColor($r('sys.color.font_secondary'))
             .textAlign(TextAlign.Start)
-          
+
           Blank()
         }
         .width('100%')
         .justifyContent(FlexAlign.Start)
-        
+
         // 数据展示区域 - 居中对齐
         if (config.dataDisplay) {
           Row() {
@@ -214,7 +242,7 @@ export struct HomePageContent {
               .fontWeight(FontWeight.Medium)
               .fontColor(config.dataColor || $r('sys.color.font_primary'))
               .textAlign(TextAlign.Start)
-            
+
             Blank()
           }
           .width('100%')
@@ -244,59 +272,6 @@ export struct HomePageContent {
   }
 
   @Builder
-  private buildStatisticsRow() {
-    Row({ space: DesignConstants.SPACING_LG }) {
-      // 最小值 - 居中对齐
-      Column({ space: DesignConstants.SPACING_XS }) {
-        Text('最小值')
-          .fontSize(DesignConstants.FONT_SIZE_SM)
-          .fontColor($r('sys.color.font_secondary'))
-          .textAlign(TextAlign.Center)
-        Text(`${this.ak.uiDisplayState.displayStatistics.minDb.toFixed(1)}dB`)
-          .fontSize(DesignConstants.FONT_SIZE_MD)
-          .fontWeight(FontWeight.Medium)
-          .fontColor($r('sys.color.confirm'))
-          .textAlign(TextAlign.Center)
-      }
-      .alignItems(HorizontalAlign.Center)
-      .layoutWeight(1)
-      
-      // 平均值 - 居中对齐
-      Column({ space: DesignConstants.SPACING_XS }) {
-        Text('平均值')
-          .fontSize(DesignConstants.FONT_SIZE_SM)
-          .fontColor($r('sys.color.font_secondary'))
-          .textAlign(TextAlign.Center)
-        Text(`${this.ak.uiDisplayState.displayStatistics.avgDb.toFixed(1)}dB`)
-          .fontSize(DesignConstants.FONT_SIZE_MD)
-          .fontWeight(FontWeight.Medium)
-          .fontColor($r('sys.color.font_primary'))
-          .textAlign(TextAlign.Center)
-      }
-      .alignItems(HorizontalAlign.Center)
-      .layoutWeight(1)
-      
-      // 最大值 - 居中对齐
-      Column({ space: DesignConstants.SPACING_XS }) {
-        Text('最大值')
-          .fontSize(DesignConstants.FONT_SIZE_SM)
-          .fontColor($r('sys.color.font_secondary'))
-          .textAlign(TextAlign.Center)
-        Text(`${this.ak.uiDisplayState.displayStatistics.maxDb.toFixed(1)}dB`)
-          .fontSize(DesignConstants.FONT_SIZE_MD)
-          .fontWeight(FontWeight.Medium)
-          .fontColor($r('sys.color.alert'))
-          .textAlign(TextAlign.Center)
-      }
-      .alignItems(HorizontalAlign.Center)
-      .layoutWeight(1)
-    }
-    .width('100%')
-    .justifyContent(FlexAlign.SpaceEvenly)
-    .margin({ top: DesignConstants.SPACING_MD })
-  }
-
-  @Builder
   private buildSystemStatus() {
     Column({ space: DesignConstants.SPACING_MD }) {
       // 第二行：独立位置信息行
@@ -321,15 +296,22 @@ export struct HomePageContent {
         .layoutWeight(1)
     }
     .width('100%')
+
     // 移除点击事件，改为只读显示
   }
 
   @Computed
   get decibelColor(): Resource {
     const db = this.ak.uiDisplayState.displayDb;
-    if (db < 40) return $r('sys.color.confirm');
-    if (db < 60) return $r('sys.color.font_primary');
-    if (db < 80) return $r('sys.color.warning');
+    if (db < 40) {
+      return $r('sys.color.confirm');
+    }
+    if (db < 60) {
+      return $r('sys.color.font_primary');
+    }
+    if (db < 80) {
+      return $r('sys.color.warning');
+    }
     return $r('sys.color.alert');
   }
 
@@ -377,9 +359,13 @@ export struct HomePageContent {
     const currentDb = this.ak.uiDisplayState.displayDb;
     const previousDb = this.ak.uiDisplayState.previousDb || currentDb;
     const diff = currentDb - previousDb;
-    
-    if (diff > 5) return `↗ +${diff.toFixed(1)}dB`;
-    if (diff < -5) return `↘ ${diff.toFixed(1)}dB`;
+
+    if (diff > 5) {
+      return `↗ +${diff.toFixed(1)}dB`;
+    }
+    if (diff < -5) {
+      return `↘ ${diff.toFixed(1)}dB`;
+    }
     return '→ 稳定';
   }
 
@@ -388,9 +374,13 @@ export struct HomePageContent {
     const currentDb = this.ak.uiDisplayState.displayDb;
     const previousDb = this.ak.uiDisplayState.previousDb || currentDb;
     const diff = currentDb - previousDb;
-    
-    if (diff > 1) return $r('sys.color.alert');
-    if (diff < -1) return $r('sys.color.confirm');
+
+    if (diff > 1) {
+      return $r('sys.color.alert');
+    }
+    if (diff < -1) {
+      return $r('sys.color.confirm');
+    }
     return $r('sys.color.font_secondary');
   }
 
@@ -400,8 +390,10 @@ export struct HomePageContent {
     // 模拟数据 - 实际应该从AlertService获取
     const db = this.ak.uiDisplayState.displayDb;
     const threshold = this.pk.alarm_threshold.baseThreshold || 70;
-    
-    if (db > threshold) return 1;
+
+    if (db > threshold) {
+      return 1;
+    }
     return 0;
   }
 
@@ -414,7 +406,9 @@ export struct HomePageContent {
   @Computed
   get toolsStatusColor(): Resource {
     const calibrationValue = this.pk.calibration_value || 0;
-    if (calibrationValue === 0) return $r('sys.color.alert');
+    if (calibrationValue === 0) {
+      return $r('sys.color.alert');
+    }
     return $r('sys.color.confirm');
   }
 
@@ -422,18 +416,36 @@ export struct HomePageContent {
   @Computed
   get exposureIndex(): string {
     const db = this.ak.uiDisplayState.displayDb;
-    if (db < 40) return '低风险';
-    if (db < 60) return '中风险';
-    if (db < 80) return '高风险';
+    if (db < 40) {
+      return '低风险';
+    }
+    if (db < 60) {
+      return '中风险';
+    }
+    if (db < 80) {
+      return '高风险';
+    }
     return '极高风险';
+  }
+
+  @Computed
+  get reference(): string {
+    const db = this.ak.uiDisplayState.displayDb;
+    return DecibelService.getDecibelDescription(db);
   }
 
   @Computed
   get exposureColor(): Resource {
     const db = this.ak.uiDisplayState.displayDb;
-    if (db < 40) return $r('sys.color.confirm');
-    if (db < 60) return $r('sys.color.warning');
-    if (db < 80) return $r('sys.color.alert');
+    if (db < 40) {
+      return $r('sys.color.confirm');
+    }
+    if (db < 60) {
+      return $r('sys.color.warning');
+    }
+    if (db < 80) {
+      return $r('sys.color.alert');
+    }
     return $r('sys.color.alert');
   }
 
@@ -447,19 +459,24 @@ export struct HomePageContent {
     return '暂无记录';
   }
 
-
   // 格式化时间差
   private formatTimeAgo(timestamp: number): string {
     const now = Date.now();
     const diffMs = now - timestamp;
     const diffMins = Math.floor(diffMs / 60000);
-    
-    if (diffMins < 1) return '刚刚';
-    if (diffMins < 60) return `${diffMins}分钟前`;
-    
+
+    if (diffMins < 1) {
+      return '刚刚';
+    }
+    if (diffMins < 60) {
+      return `${diffMins}分钟前`;
+    }
+
     const diffHours = Math.floor(diffMins / 60);
-    if (diffHours < 24) return `${diffHours}小时前`;
-    
+    if (diffHours < 24) {
+      return `${diffHours}小时前`;
+    }
+
     const diffDays = Math.floor(diffHours / 24);
     return `${diffDays}天前`;
   }
@@ -472,7 +489,7 @@ export struct HomePageContent {
       if (records.length > 0) {
         this.ak.lastRecordTimestamp = records[0].timestamp;
       }
-      
+
       // 初始化记录总数
       const totalCount = await this.decibelRecordService.getTotalCount();
       this.ak.totalRecordsCount = totalCount;
@@ -487,11 +504,11 @@ export struct HomePageContent {
     if (!this.pk.location_enabled) {
       return '位置服务已关闭';
     }
-    
+
     if (this.isLocationRefreshing) {
       return '正在获取位置信息...';
     }
-    
+
     if (this.currentLocation) {
       // 简化地址显示，避免过长
       const address = this.currentLocation.address || '';
@@ -500,7 +517,7 @@ export struct HomePageContent {
       }
       return address;
     }
-    
+
     return '位置服务已开启';
   }
 
@@ -509,15 +526,15 @@ export struct HomePageContent {
     if (!this.pk.location_enabled) {
       return $r('sys.color.font_secondary');
     }
-    
+
     if (this.isLocationRefreshing) {
       return $r('sys.color.warning');
     }
-    
+
     if (this.currentLocation) {
       return $r('sys.color.confirm');
     }
-    
+
     return $r('sys.color.font_primary');
   }
 
@@ -531,7 +548,7 @@ export struct HomePageContent {
 
     try {
       this.isLocationRefreshing = true;
-      
+
       // 检查定位服务是否开启
       const isServiceEnabled = this.locationService.checkLocationEnabled();
       if (!isServiceEnabled) {

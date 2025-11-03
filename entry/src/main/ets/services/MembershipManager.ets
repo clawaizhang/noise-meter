@@ -18,8 +18,16 @@ export class MembershipStatus {
   @Trace purchaseDate: number = 0; // 购买时间
   @Trace can: boolean = false;
 
+  constructor() {
+    this.calculateCan();
+  }
+
   @Monitor('level','isTrial','expiryDate')
   onDataChange(monitor: IMonitor) {
+    this.calculateCan();
+  }
+
+  private calculateCan() {
     this.can = (this.level === MembershipLevel.PRO || this.isTrial) && this.expiryDate > Date.now();
   }
 }
