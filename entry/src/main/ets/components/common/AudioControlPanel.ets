@@ -1,6 +1,6 @@
 import { AppKeys } from '../../models/AppKeys';
 import { PreferenceKeys } from '../../models/PreferenceKeys';
-import { AppStorageV2, PersistenceV2 } from '@kit.ArkUI';
+import { AppStorageV2, PersistenceV2, promptAction } from '@kit.ArkUI';
 import { DesignConstants } from '../../constants/DesignConstants';
 import { AudioControllerService } from '../../services/AudioControllerService';
 import { AudioControllerLifecycleState, StateTransitionEvent } from '../../models/AudioControllerLifecycleState';
@@ -13,13 +13,13 @@ class ButtonState {
   @Trace enabled: boolean = false;
   @Trace text: string = '';
   @Trace backgroundColor: Resource = $r('sys.color.font_secondary');
-  
+
   constructor(enabled: boolean, text: string, backgroundColor: Resource) {
     this.enabled = enabled;
     this.text = text;
     this.backgroundColor = backgroundColor;
   }
-  
+
   // 更新按钮状态
   update(enabled: boolean, text: string, backgroundColor: Resource): void {
     this.enabled = enabled;
@@ -35,7 +35,7 @@ class ButtonStates {
   @Trace stopButton: ButtonState;
   @Trace resetButton: ButtonState;
   @Trace saveButton: ButtonState;
-  
+
   constructor() {
     // 初始化默认状态
     this.startButton = new ButtonState(false, '开始检测', $r('sys.color.font_secondary'));
@@ -43,18 +43,18 @@ class ButtonStates {
     this.resetButton = new ButtonState(false, '重置', $r('sys.color.comp_background_secondary'));
     this.saveButton = new ButtonState(false, '保存', $r('sys.color.font_secondary'));
   }
-  
+
   // 根据控制器状态更新所有按钮状态
   updateStates(controllerState: AudioControllerLifecycleState): void {
     // 开始按钮状态
     this.startButton.update(
       controllerState === AudioControllerLifecycleState.CONTROLLER_IDLE ||
-      controllerState === AudioControllerLifecycleState.CONTROLLER_ERROR,
+        controllerState === AudioControllerLifecycleState.CONTROLLER_ERROR,
       '开始检测',
       controllerState === AudioControllerLifecycleState.CONTROLLER_IDLE ?
         $r('sys.color.font_emphasize') : $r('sys.color.font_secondary')
     );
-    
+
     // 停止按钮状态
     this.stopButton.update(
       controllerState === AudioControllerLifecycleState.CONTROLLER_RECORDING,
@@ -62,16 +62,16 @@ class ButtonStates {
       controllerState === AudioControllerLifecycleState.CONTROLLER_RECORDING ?
         $r('sys.color.alert') : $r('sys.color.font_secondary')
     );
-    
+
     // 重置按钮状态
     this.resetButton.update(
       controllerState === AudioControllerLifecycleState.CONTROLLER_IDLE ||
-      controllerState === AudioControllerLifecycleState.CONTROLLER_RECORDING ||
-      controllerState === AudioControllerLifecycleState.CONTROLLER_ERROR,
+        controllerState === AudioControllerLifecycleState.CONTROLLER_RECORDING ||
+        controllerState === AudioControllerLifecycleState.CONTROLLER_ERROR,
       '重置',
       $r('sys.color.comp_background_secondary')
     );
-    
+
     // 保存按钮状态
     this.saveButton.update(
       controllerState === AudioControllerLifecycleState.CONTROLLER_RECORDING,
@@ -85,7 +85,8 @@ class ButtonStates {
 export struct AudioControlPanel {
   @Local ak: AppKeys = AppStorageV2.connect(AppKeys)!;
   @Local pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys)!;
-  @Local private controllerState: AudioControllerLifecycleState = AudioControllerService.getInstance(this.ak, this.pk).getStateMachine()?.getCurrentState()!;
+  @Local private controllerState: AudioControllerLifecycleState =
+    AudioControllerService.getInstance(this.ak, this.pk).getStateMachine()?.getCurrentState()!;
   @Local private saveAnimationOpacity: number = 1.0;
   @Local private buttonStates: ButtonStates = new ButtonStates();
   @Local private inputDialogController: CustomDialogController = new CustomDialogController({
@@ -114,12 +115,12 @@ export struct AudioControlPanel {
 
   // 状态监听初始化
   private initializeStateListener(): void {
-    const audioController = AudioControllerService.getInstance(this.ak, this.pk);
-    
+    const audioControllerService = AudioControllerService.getInstance(this.ak, this.pk);
+
     // 确保状态机已初始化
-    audioController.initializeStateMachine();
-    
-    audioController.onStateChangeFromExternal((event: StateTransitionEvent) => {
+    audioControllerService.initializeStateMachine();
+
+    audioControllerService.onStateChangeFromExternal((event: StateTransitionEvent) => {
       this.controllerState = event.toState;
       // 更新按钮状态
       this.buttonStates.updateStates(this.controllerState);
@@ -210,10 +211,17 @@ export struct AudioControlPanel {
           .fontSize(DesignConstants.FONT_SIZE_SM)
           .fontColor($r('sys.color.font_secondary'))
 
-        Text(this.getDetectionStatusText())
+        Text(this.DetectionStatusText)
           .fontSize(DesignConstants.FONT_SIZE_SM)
           .fontColor(this.getDetectionStatusColor())
           .fontWeight(FontWeight.Medium)
+
+        if (this.controllerState === AudioControllerLifecycleState.CONTROLLER_RECORDING) {
+          Text(this.ak.uiDisplayState.timeDisplay)
+            .fontSize(DesignConstants.FONT_SIZE_SM)
+            .fontColor($r('sys.color.font_secondary'))
+            .fontWeight(FontWeight.Medium)
+        }
       }
       .width('100%')
       .justifyContent(FlexAlign.Start)
@@ -237,7 +245,6 @@ export struct AudioControlPanel {
       }
     });
   }
-
 
   // 停止检测（真正的停止，不会自动启动）
   private stopDetection(): void {
@@ -288,15 +295,13 @@ export struct AudioControlPanel {
         await audioController.restartRecordingFromExternal(comment);
         console.info('[ToolsContent] 数据已通过状态机保存，备注:', comment);
 
-        // 等待状态转换完成或超时
-        await this.waitForStateTransition();
-
         // 延迟结束动画，让用户看到保存效果
         setTimeout(() => {
           this.endSaveAnimation();
+          promptAction.showToast({ message: '保存成功' });
           // 保存完成后保持停止状态，不自动重新开始检测
           console.info('[ToolsContent] 数据保存完成，保持停止状态');
-        }, 1000);
+        }, 500);
       } catch (error) {
         console.error('[ToolsContent] 保存数据失败:', error);
         this.endSaveAnimation();
@@ -317,37 +322,6 @@ export struct AudioControlPanel {
     console.info('[ToolsContent] 开始保存动画');
   }
 
-  // 等待状态转换完成
-  private async waitForStateTransition(): Promise<void> {
-    return new Promise<void>((resolve) => {
-      const maxWaitTime = 5000; // 最大等待5秒
-      const checkInterval = 100; // 每100毫秒检查一次
-      let elapsedTime = 0;
-
-      const checkState = () => {
-        // 如果状态已经变为IDLE或ERROR，则完成
-        if (this.controllerState === AudioControllerLifecycleState.CONTROLLER_IDLE ||
-          this.controllerState === AudioControllerLifecycleState.CONTROLLER_ERROR) {
-          console.info('[ToolsContent] 状态转换完成:', this.controllerState);
-          resolve();
-          return;
-        }
-
-        // 如果超时，强制完成
-        if (elapsedTime >= maxWaitTime) {
-          console.warn('[ToolsContent] 状态转换超时，强制完成');
-          resolve();
-          return;
-        }
-
-        elapsedTime += checkInterval;
-        setTimeout(checkState, checkInterval);
-      };
-
-      checkState();
-    });
-  }
-
   // 结束保存动画
   private endSaveAnimation(): void {
     this.getUIContext().animateTo({
@@ -362,7 +336,8 @@ export struct AudioControlPanel {
   }
 
   // 获取检测状态文本
-  private getDetectionStatusText(): string {
+  @Computed
+  private get DetectionStatusText(): string {
     switch (this.controllerState) {
       case AudioControllerLifecycleState.CONTROLLER_IDLE:
         return '空闲';
@@ -451,5 +426,4 @@ export struct AudioControlPanel {
     .width('100%')
     .padding(DesignConstants.SPACING_MD)
   }
-
 }

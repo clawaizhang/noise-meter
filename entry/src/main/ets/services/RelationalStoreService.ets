@@ -202,7 +202,7 @@ export class RelationalStoreService {
       return rowId;
     } catch (error) {
       const businessError = error as BusinessError;
-      console.error(`插入数据失败: ${businessError.message}`);
+      console.error(`插入数据失败: ${businessError}`);
       throw new Error('插入数据失败');
     }
   }
@@ -225,7 +225,7 @@ export class RelationalStoreService {
       await store.executeSql('COMMIT TRANSACTION');
     } catch (error) {
       const businessError = error as BusinessError;
-      console.error(`批量插入数据失败: ${businessError.message}`);
+      console.error(`批量插入数据失败: ${businessError}`);
       const store = await this.getStore();
       await store.executeSql('ROLLBACK TRANSACTION');
       throw new Error('批量插入数据失败');

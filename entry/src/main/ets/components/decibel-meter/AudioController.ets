@@ -458,20 +458,6 @@ export struct AudioController {
       case AudioControllerEventType.START_RECORDING:
         this.handleStartRecordingEvent();
         break;
-/**
- * 停止录制事件payload接口
- */
-interface StopRecordingPayload {
-  comments: string;
-}
-
-/**
- * 停止录制事件接口
- */
-interface StopRecordingEventWithPayload extends AudioControllerEvent {
-  payload: StopRecordingPayload;
-}
-
       case AudioControllerEventType.STOP_RECORDING:
         const stopEvent = event as StopRecordingEventWithPayload;
         this.handleStopRecordingEvent((stopEvent.payload as StopRecordingPayload).comments);
@@ -482,13 +468,6 @@ interface StopRecordingEventWithPayload extends AudioControllerEvent {
       case AudioControllerEventType.RESET_DATA:
         this.handleResetDataEvent();
         break;
-/**
- * 状态变更事件接口
- */
-interface StateChangeEventWithPayload extends AudioControllerEvent {
-  payload: StateTransitionEvent;
-}
-
       case AudioControllerEventType.STATE_CHANGE:
         const stateEvent = event as StateChangeEventWithPayload;
         this.handleStateChange(stateEvent.payload as StateTransitionEvent);
@@ -752,4 +731,25 @@ interface StateChangeEventWithPayload extends AudioControllerEvent {
       }
     }
   }
+}
+
+/**
+ * 停止录制事件payload接口
+ */
+interface StopRecordingPayload {
+  comments: string;
+}
+
+/**
+ * 停止录制事件接口
+ */
+interface StopRecordingEventWithPayload extends AudioControllerEvent {
+  payload: StopRecordingPayload;
+}
+
+/**
+ * 状态变更事件接口
+ */
+interface StateChangeEventWithPayload extends AudioControllerEvent {
+  payload: StateTransitionEvent;
 }

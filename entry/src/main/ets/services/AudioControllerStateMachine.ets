@@ -176,8 +176,7 @@ export class AudioControllerStateMachine implements AudioControllerStateMachineI
   }
   
   public async resetState(): Promise<void> {
-    this.transitionTo(AudioControllerLifecycleState.CONTROLLER_IDLE, '重置状态');
-    
+    //reset 不需要状态转换
     try {
       // 发布重置数据事件，而不是直接调用AudioController
       this.publishEvent({
