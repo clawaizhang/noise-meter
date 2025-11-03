@@ -85,7 +85,7 @@ class ButtonStates {
 export struct AudioControlPanel {
   @Local ak: AppKeys = AppStorageV2.connect(AppKeys)!;
   @Local pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys)!;
-  private  audioControllerService = AudioControllerService.getInstance(this.ak, this.pk);
+  private audioControllerService = AudioControllerService.getInstance(this.ak, this.pk);
   @Local private controllerState: AudioControllerLifecycleState =
     this.audioControllerService.getStateMachine()?.getCurrentState()!;
   @Local private saveAnimationOpacity: number = 1.0;
@@ -216,12 +216,10 @@ export struct AudioControlPanel {
           .fontColor(this.getDetectionStatusColor())
           .fontWeight(FontWeight.Medium)
 
-        if (this.controllerState === AudioControllerLifecycleState.CONTROLLER_RECORDING) {
-          Text(this.ak.uiDisplayState.timeDisplay)
-            .fontSize(DesignConstants.FONT_SIZE_SM)
-            .fontColor($r('sys.color.font_secondary'))
-            .fontWeight(FontWeight.Medium)
-        }
+        Text(this.ak.uiDisplayState.timeDisplay)
+          .fontSize(DesignConstants.FONT_SIZE_SM)
+          .fontColor($r('sys.color.font_secondary'))
+          .fontWeight(FontWeight.Medium)
       }
       .width('100%')
       .justifyContent(FlexAlign.Start)

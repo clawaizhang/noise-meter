@@ -49,8 +49,6 @@ export struct AudioController {
   // RxJS订阅管理
   private locationSubscription?: Subscription;
   private errorSubscription?: Subscription;
-  // 音频状态
-  private isRecording: boolean = false
   // 错误状态（支持多个错误同时显示）
   private errorMessages: string[] = []
   // 当前位置信息
@@ -93,17 +91,26 @@ export struct AudioController {
 
   @Monitor('ak.uiDisplayState.currentTime')
   monitorAutoSave() {
-    if (this.pk.auto_save_enabled && this.isRecording) {
+    // 只有在真正录制状态下才检查自动保存，避免状态转换期间的误触发
+    const isActuallyRecording =
+      this.audioControllerService.getStateMachine()!.isInState(AudioControllerLifecycleState.CONTROLLER_RECORDING);
+
+    if (this.pk.auto_save_enabled && isActuallyRecording) {
       console.info('[自动保存] 检测到自动保存已启用，立即检查是否需要保存');
       this.checkAutoSaveNow();
     }
   }
 
   private checkAutoSaveNow() {
-    const elapsed = this.ak.uiDisplayState.currentTime - this.lastAutoSaveTime;
+    const currentTime = this.ak.uiDisplayState.currentTime;
+    const elapsed = currentTime - this.lastAutoSaveTime;
     const intervalMs = this.pk.auto_save_interval * 60 * 1000;
     const remaining = Math.max(0, intervalMs - elapsed);
 
+    console.info(`[自动保存检查] 当前时间: ${currentTime}, 上次保存: ${this.lastAutoSaveTime}, 已过时间: ${elapsed}ms, 剩余时间: ${remaining}ms`);
+
+    // 只有在真正录制状态下且时间间隔已过时才执行自动保存
+    // 避免在长时间停止后立即触发自动保存
     if (remaining <= 0) {
       this.performAutoSave();
     }
@@ -189,9 +196,6 @@ export struct AudioController {
       const stateMachine = this.audioControllerService.getStateMachine();
       if (stateMachine) {
         await stateMachine.startRecording();
-      } else {
-        // 回退到原有逻辑
-        await this.originalStartRecording();
       }
     } catch (error) {
       console.error('[AudioController] 启动录制失败:', error);
@@ -227,9 +231,6 @@ export struct AudioController {
       const stateMachine = this.audioControllerService.getStateMachine();
       if (stateMachine) {
         await stateMachine.stopRecording(comments);
-      } else {
-        // 回退到原有逻辑
-        await this.originalStopRecording(comments);
       }
     } catch (error) {
       console.error('[AudioController] 停止录制失败:', error);
@@ -359,10 +360,7 @@ export struct AudioController {
 
   private async performAutoSave(): Promise<void> {
     console.info('[自动保存] 执行定时自动保存');
-    // 检查当前状态
-    if (this.audioControllerService.getStateMachine()?.getCurrentState() !== AudioControllerLifecycleState.CONTROLLER_RECORDING) {
-      return;
-    }
+
     // 更新最后保存时间
     this.lastAutoSaveTime = new Date().getTime();
 
@@ -443,7 +441,7 @@ export struct AudioController {
    */
   private initializeStateMachine(): void {
     // 通过AudioControllerService初始化状态机（不再传入this实例）
-    this .audioControllerService .initializeStateMachine();
+    this.audioControllerService.initializeStateMachine();
 
     // 监听状态机事件
     this.audioControllerService.onEvent((event) => {
@@ -512,7 +510,6 @@ export struct AudioController {
     }
   }
 
-
   /**
    * 处理重置数据事件
    */
@@ -530,13 +527,11 @@ export struct AudioController {
     // 根据状态变更执行相应操作
     switch (event.toState) {
       case AudioControllerLifecycleState.CONTROLLER_RECORDING:
-        // 录制开始，更新UI状态
-        this.isRecording = true;
+        console.info('[状态机] 录制状态已设置为true');
         break;
 
       case AudioControllerLifecycleState.CONTROLLER_IDLE:
-        // 录制停止，更新UI状态
-        this.isRecording = false;
+        console.info('[状态机] 录制状态已设置为false');
         break;
 
       case AudioControllerLifecycleState.CONTROLLER_ERROR:
@@ -556,7 +551,6 @@ export struct AudioController {
     try {
       // 原有的启动录制逻辑...
       await this.tryStartCapture();
-      this.isRecording = true;
       this.ak.dataProcessingState.statisticsData.startTime = new Date().getTime();
       this.resetData();
       this.clearErrorMessage();
@@ -628,7 +622,6 @@ export struct AudioController {
       });
 
     } catch (error) {
-      this.isRecording = false;
       this.addErrorMessage(`音频采集启动失败: ${error.message}`);
       this.resetData();
       throw new Error(`音频采集停止失败: ${error.message}`);
@@ -640,98 +633,95 @@ export struct AudioController {
    */
   private async originalStopRecording(comments: string): Promise<void> {
     // 原有的停止录制逻辑...
-    if (this.isRecording) {
-      this.isRecording = false;
-      console.info("[FREQ_TRACE][Recording] 停止检测 - 开始");
+    console.info("[FREQ_TRACE][Recording] 停止检测 - 开始");
 
-      // 判断是否为自动保存
-      const isAutoSave = comments === '自动保存';
+    // 判断是否为自动保存
+    const isAutoSave = comments === '自动保存';
 
-      try {
-        let locationInfo: LocationInfo | null = null;
+    try {
+      let locationInfo: LocationInfo | null = null;
 
-        if (this.pk.location_enabled) {
-          locationInfo = this.currentLocation;
-          console.info('[FREQ_TRACE][Location] 位置信息:', locationInfo);
-        } else {
-          console.info('[FREQ_TRACE][Location] 位置服务已关闭，不保存位置信息');
-        }
-
-        // 停止处理音频数据
-        this.audioService.stopProcessing();
-
-        // 停止音频采集，触发状态机状态转换
-        try {
-          console.info('[AudioController] 开始停止音频采集');
-          await this.audioService.stopCapture();
-          console.info('[AudioController] 音频采集已停止，状态机将转换到IDLE状态');
-        } catch (error) {
-          console.error('[AudioController] 停止音频采集失败:', error);
-          this.addErrorMessage(`停止音频采集失败: ${error.message}`);
-          // 即使失败也要继续后续处理，避免阻塞
-        }
-
-        // 如果启用了录音功能，获取并保存音频文件
-        let currentAudioFilePath: string = '';
-
-        if (this.pk.record_enabled) {
-          try {
-            // 获取音频数据
-            const recentAudioBuffers = this.originAudioBuffers.map(item => item.buffer);
-            console.info(`[音频保存] 使用最近${this.pk.auto_save_interval}分钟的音频数据，缓冲区数量: ${recentAudioBuffers.length}`);
-
-            currentAudioFilePath = await this.audioService.stopRecordingAndGetWavData(recentAudioBuffers);
-          } catch (error) {
-            console.error('[FREQ_TRACE][Audio] 获取或保存WAV音频数据失败:', error);
-            this.addErrorMessage(`音频文件保存失败: ${error.message}`);
-          }
-        }
-
-        console.info('[FREQ_TRACE][Record] 准备创建记录');
-        // 更新记录对象
-        if (this.currentRecord) {
-          this.currentRecord.minDecibel = this.ak.dataProcessingState.statisticsData.minDb;
-          this.currentRecord.maxDecibel = this.ak.dataProcessingState.statisticsData.maxDb;
-          this.currentRecord.avgDecibel = this.ak.dataProcessingState.statisticsData.avgDb;
-          this.currentRecord.duration = this.ak.dataProcessingState.statisticsData.duration;
-          console.info('[FREQ_TRACE][Record] 创建记录对象 持续时间 ' +
-          this.ak.dataProcessingState.statisticsData.duration);
-          this.currentRecord.decibelValues = this.timedValues.map(item => item.value);
-          this.currentRecord.weightingTypes = this.timedWeightingTypes.map(item => item.type);
-          this.currentRecord.audioFilePath = currentAudioFilePath;
-          this.currentRecord.location = locationInfo?.address;
-          this.currentRecord.comment = comments;
-
-          // 保存记录
-          await this.recordService.saveRecord(this.currentRecord);
-          console.info('[FREQ_TRACE][Record] 记录保存成功');
-
-          // 更新最后记录时间和记录总数
-          this.ak.lastRecordTimestamp = Date.now();
-          const totalCount = await this.recordService.getTotalCount();
-          this.ak.totalRecordsCount = totalCount;
-
-          // 显示详情对话框
-          if (isAutoSave) {
-            promptAction.showToast({
-              message: '自动保存记录成功',
-              duration: 3000
-            });
-          }
-        }
-
-        // 重置状态
-        this.resetData();
-
-        // 真正的停止：不自动开始新的检测
-        console.info('[AudioController] 录制已停止，保持停止状态');
-
-      } catch (error) {
-        console.error('[FREQ_TRACE][Record] 保存记录失败:', error);
-        this.addErrorMessage(`记录保存失败: ${error.message}`);
-        // 真正的停止：即使保存失败也不自动开始新的检测
-        console.info('[AudioController] 录制已停止（保存失败），保持停止状态');
+      if (this.pk.location_enabled) {
+        locationInfo = this.currentLocation;
+        console.info('[FREQ_TRACE][Location] 位置信息:', locationInfo);
+      } else {
+        console.info('[FREQ_TRACE][Location] 位置服务已关闭，不保存位置信息');
       }
+
+      // 停止处理音频数据
+      this.audioService.stopProcessing();
+
+      // 停止音频采集，触发状态机状态转换
+      try {
+        console.info('[AudioController] 开始停止音频采集');
+        await this.audioService.stopCapture();
+        console.info('[AudioController] 音频采集已停止，状态机将转换到IDLE状态');
+      } catch (error) {
+        console.error('[AudioController] 停止音频采集失败:', error);
+        this.addErrorMessage(`停止音频采集失败: ${error.message}`);
+        // 即使失败也要继续后续处理，避免阻塞
+      }
+
+      // 如果启用了录音功能，获取并保存音频文件
+      let currentAudioFilePath: string = '';
+
+      if (this.pk.record_enabled) {
+        try {
+          // 获取音频数据
+          const recentAudioBuffers = this.originAudioBuffers.map(item => item.buffer);
+          console.info(`[音频保存] 使用最近${this.pk.auto_save_interval}分钟的音频数据，缓冲区数量: ${recentAudioBuffers.length}`);
+
+          currentAudioFilePath = await this.audioService.stopRecordingAndGetWavData(recentAudioBuffers);
+        } catch (error) {
+          console.error('[FREQ_TRACE][Audio] 获取或保存WAV音频数据失败:', error);
+          this.addErrorMessage(`音频文件保存失败: ${error.message}`);
+        }
+      }
+
+      console.info('[FREQ_TRACE][Record] 准备创建记录');
+      // 更新记录对象
+      if (this.currentRecord) {
+        this.currentRecord.minDecibel = this.ak.dataProcessingState.statisticsData.minDb;
+        this.currentRecord.maxDecibel = this.ak.dataProcessingState.statisticsData.maxDb;
+        this.currentRecord.avgDecibel = this.ak.dataProcessingState.statisticsData.avgDb;
+        this.currentRecord.duration = this.ak.dataProcessingState.statisticsData.duration;
+        console.info('[FREQ_TRACE][Record] 创建记录对象 持续时间 ' +
+        this.ak.dataProcessingState.statisticsData.duration);
+        this.currentRecord.decibelValues = this.timedValues.map(item => item.value);
+        this.currentRecord.weightingTypes = this.timedWeightingTypes.map(item => item.type);
+        this.currentRecord.audioFilePath = currentAudioFilePath;
+        this.currentRecord.location = locationInfo?.address;
+        this.currentRecord.comment = comments;
+
+        // 保存记录
+        await this.recordService.saveRecord(this.currentRecord);
+        console.info('[FREQ_TRACE][Record] 记录保存成功');
+
+        // 更新最后记录时间和记录总数
+        this.ak.lastRecordTimestamp = Date.now();
+        const totalCount = await this.recordService.getTotalCount();
+        this.ak.totalRecordsCount = totalCount;
+
+        // 显示详情对话框
+        if (isAutoSave) {
+          promptAction.showToast({
+            message: '自动保存记录成功',
+            duration: 3000
+          });
+        }
+      }
+
+      // 重置状态
+      this.resetData();
+
+      // 真正的停止：不自动开始新的检测
+      console.info('[AudioController] 录制已停止，保持停止状态');
+
+    } catch (error) {
+      console.error('[FREQ_TRACE][Record] 保存记录失败:', error);
+      this.addErrorMessage(`记录保存失败: ${error.message}`);
+      // 真正的停止：即使保存失败也不自动开始新的检测
+      console.info('[AudioController] 录制已停止（保存失败），保持停止状态');
     }
   }
 }

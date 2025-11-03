@@ -1,4 +1,4 @@
-import { Subject, BehaviorSubject, filter } from 'rxjs';
+import { Subject, BehaviorSubject, filter, throttleTime } from 'rxjs';
 import { UIDisplayState } from '../models/UIDisplayState';
 import { DataProcessingState } from '../models/DataProcessingState';
 import { PreferenceKeys } from '../models/PreferenceKeys';
@@ -199,9 +199,11 @@ export class AudioControllerService {
 
     // 每秒更新一次时间显示
     this.timeDisplayTimer = setInterval(() => {
-      const currentTime = Date.now();
-      this.uiDisplayState.updateCurrentTime(currentTime);
-      this.uiDisplayState.updateTimeDisplay(this.pk);
+      if (this.stateMachine?.getCurrentState() === AudioControllerLifecycleState.CONTROLLER_RECORDING) {
+        const currentTime = Date.now();
+        this.uiDisplayState.updateCurrentTime(currentTime);
+        this.uiDisplayState.updateTimeDisplay(this.pk);
+      }
     }, 1000);
 
     console.info('[双管线架构] 时间显示更新已启动');
@@ -242,6 +244,7 @@ export class AudioControllerService {
    * 订阅所有事件
    */
   public onEvent(callback: (event: AudioControllerEvent) => void): void {
+    // 去重
     this.eventSubject.subscribe(callback);
   }
 
@@ -250,7 +253,8 @@ export class AudioControllerService {
    */
   public onStartRecording(callback: () => void): void {
     this.eventSubject.pipe(
-      filter(event => event.type === AudioControllerEventType.START_RECORDING)
+      filter(event => event.type === AudioControllerEventType.START_RECORDING),
+      throttleTime(100)
     ).subscribe(callback);
   }
 
@@ -259,7 +263,8 @@ export class AudioControllerService {
    */
   public onStopRecording(callback: (comments: string) => void): void {
     this.eventSubject.pipe(
-      filter(event => event.type === AudioControllerEventType.STOP_RECORDING)
+      filter(event => event.type === AudioControllerEventType.STOP_RECORDING),
+      throttleTime(100)
     ).subscribe(event => {
       const stopEvent = event as StopRecordingEvent;
       callback((stopEvent.payload as StopRecordingPayload).comments);
@@ -271,7 +276,8 @@ export class AudioControllerService {
    */
   public onPauseRecording(callback: () => void): void {
     this.eventSubject.pipe(
-      filter(event => event.type === AudioControllerEventType.PAUSE_RECORDING)
+      filter(event => event.type === AudioControllerEventType.PAUSE_RECORDING),
+      throttleTime(100)
     ).subscribe(callback);
   }
 
@@ -280,7 +286,8 @@ export class AudioControllerService {
    */
   public onResetData(callback: () => void): void {
     this.eventSubject.pipe(
-      filter(event => event.type === AudioControllerEventType.RESET_DATA)
+      filter(event => event.type === AudioControllerEventType.RESET_DATA),
+      throttleTime(100)
     ).subscribe(callback);
   }
 
@@ -509,7 +516,7 @@ export class AudioControllerService {
     try {
       // 先停止录制
       await this.stateMachine.stopRecording(comments);
-      
+
       // 等待状态变为IDLE后自动重新开始
       return new Promise<void>((resolve, reject) => {
         let timeoutId: number | undefined;
@@ -518,7 +525,7 @@ export class AudioControllerService {
             // 状态变为IDLE后，自动重新开始录制
             console.info('[AudioControllerService] 状态已变为IDLE，自动重新开始录制');
             this.stateMachine!.startRecording().then(resolve).catch(reject);
-            
+
             // 清理订阅和超时
             if (timeoutId) {
               clearTimeout(timeoutId);
