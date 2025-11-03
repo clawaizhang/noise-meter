@@ -105,13 +105,13 @@ export struct AudioController {
     const currentTime = this.ak.uiDisplayState.currentTime;
     const elapsed = currentTime - this.lastAutoSaveTime;
     const intervalMs = this.pk.auto_save_interval * 60 * 1000;
-    const remaining = Math.max(0, intervalMs - elapsed);
+    const remaining = intervalMs - elapsed;
 
     console.info(`[自动保存检查] 当前时间: ${currentTime}, 上次保存: ${this.lastAutoSaveTime}, 已过时间: ${elapsed}ms, 剩余时间: ${remaining}ms`);
 
     // 只有在真正录制状态下且时间间隔已过时才执行自动保存
     // 避免在长时间停止后立即触发自动保存
-    if (remaining <= 0) {
+    if (remaining <= 0 && remaining >= -3) {
       this.performAutoSave();
     }
   }
