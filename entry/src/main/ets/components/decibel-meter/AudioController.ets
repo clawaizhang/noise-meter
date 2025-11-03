@@ -359,7 +359,10 @@ export struct AudioController {
 
   private async performAutoSave(): Promise<void> {
     console.info('[自动保存] 执行定时自动保存');
-
+    // 检查当前状态
+    if (this.audioControllerService.getStateMachine()?.getCurrentState() !== AudioControllerLifecycleState.CONTROLLER_RECORDING) {
+      return;
+    }
     // 更新最后保存时间
     this.lastAutoSaveTime = new Date().getTime();
 

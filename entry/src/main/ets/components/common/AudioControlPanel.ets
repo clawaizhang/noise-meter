@@ -85,8 +85,9 @@ class ButtonStates {
 export struct AudioControlPanel {
   @Local ak: AppKeys = AppStorageV2.connect(AppKeys)!;
   @Local pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys)!;
+  private  audioControllerService = AudioControllerService.getInstance(this.ak, this.pk);
   @Local private controllerState: AudioControllerLifecycleState =
-    AudioControllerService.getInstance(this.ak, this.pk).getStateMachine()?.getCurrentState()!;
+    this.audioControllerService.getStateMachine()?.getCurrentState()!;
   @Local private saveAnimationOpacity: number = 1.0;
   @Local private buttonStates: ButtonStates = new ButtonStates();
   @Local private inputDialogController: CustomDialogController = new CustomDialogController({
@@ -115,12 +116,11 @@ export struct AudioControlPanel {
 
   // 状态监听初始化
   private initializeStateListener(): void {
-    const audioControllerService = AudioControllerService.getInstance(this.ak, this.pk);
 
     // 确保状态机已初始化
-    audioControllerService.initializeStateMachine();
+    this.audioControllerService.initializeStateMachine();
 
-    audioControllerService.onStateChangeFromExternal((event: StateTransitionEvent) => {
+    this.audioControllerService.onStateChangeFromExternal((event: StateTransitionEvent) => {
       this.controllerState = event.toState;
       // 更新按钮状态
       this.buttonStates.updateStates(this.controllerState);
@@ -236,8 +236,7 @@ export struct AudioControlPanel {
   private startDetection(): void {
     Throttle.click(async () => {
       try {
-        const audioController = AudioControllerService.getInstance(this.ak, this.pk);
-        await audioController.startRecordingFromExternal();
+        await this.audioControllerService.startRecordingFromExternal();
         console.info('[ToolsContent] 开始检测请求已通过状态机发送');
       } catch (error) {
         console.error('[ToolsContent] 启动检测失败:', error);
@@ -250,8 +249,7 @@ export struct AudioControlPanel {
   private stopDetection(): void {
     Throttle.click(async () => {
       try {
-        const audioController = AudioControllerService.getInstance(this.ak, this.pk);
-        await audioController.stopRecordingFromExternal('手动停止');
+        await this.audioControllerService.stopRecordingFromExternal('手动停止');
         console.info('[ToolsContent] 停止检测请求已通过状态机发送');
       } catch (error) {
         console.error('[ToolsContent] 停止检测失败:', error);
@@ -270,8 +268,7 @@ export struct AudioControlPanel {
   private resetData(): void {
     Throttle.click(async () => {
       try {
-        const audioController = AudioControllerService.getInstance(this.ak, this.pk);
-        await audioController.resetStateFromExternal();
+        await this.audioControllerService.resetStateFromExternal();
         console.info('[ToolsContent] 数据已通过状态机重置');
       } catch (error) {
         console.error('[ToolsContent] 重置数据失败:', error);
@@ -291,8 +288,7 @@ export struct AudioControlPanel {
     Throttle.click(async () => {
       this.startSaveAnimation();
       try {
-        const audioController = AudioControllerService.getInstance(this.ak, this.pk);
-        await audioController.restartRecordingFromExternal(comment);
+        await this.audioControllerService.restartRecordingFromExternal(comment);
         console.info('[ToolsContent] 数据已通过状态机保存，备注:', comment);
 
         // 延迟结束动画，让用户看到保存效果
