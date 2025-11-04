@@ -90,10 +90,22 @@ function buildHealthImpactCard(data: HealthImpactData, ak: AppKeys, isCurrentRan
         .fontColor($r('sys.color.font_primary'))
         .layoutWeight(1);
 
-      Text(data.riskLevel)
-        .fontSize(14)
-        .fontWeight(FontWeight.Medium)
-        .fontColor(data.color);
+      // 状态标签 - 只在当前状态时显示
+      if (isCurrentRange) {
+        Text(data.riskLevel)
+          .fontSize(12)
+          .fontWeight(FontWeight.Medium)
+          .fontColor($r('sys.color.font_primary'))
+          .padding({ left: 8, right: 8, top: 4, bottom: 4 })
+          .backgroundColor(data.color)
+          .borderRadius(8)
+          .opacity(0.9)
+      } else {
+        Text(data.riskLevel)
+          .fontSize(14)
+          .fontWeight(FontWeight.Medium)
+          .fontColor(data.color);
+      }
     }
     .width('100%')
 
@@ -121,7 +133,7 @@ function buildHealthImpactCard(data: HealthImpactData, ak: AppKeys, isCurrentRan
   .padding(16)
   .width('100%')
   .backgroundBlurStyle(isCurrentRange ? BlurStyle.COMPONENT_REGULAR : BlurStyle.NONE)
-  .backgroundColor(isCurrentRange ? data.color : $r('sys.color.comp_background_primary'))
+  .backgroundColor($r('sys.color.comp_background_primary'))
   .borderRadius(16)
   .alignItems(HorizontalAlign.Start)
   .transition(TransitionEffect.OPACITY.animation({ curve: curves.springMotion(0.6, 0.8) })

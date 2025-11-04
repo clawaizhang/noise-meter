@@ -75,7 +75,7 @@ const devicePerformanceData: DevicePerformanceData[] = [
     unit: '',
     description: '微机电系统麦克风',
     status: '正常',
-    color: $r('sys.color.font_primary')
+    color: $r('sys.color.comp_background_emphasize')
   },
   {
     category: '传感器信息',
@@ -84,7 +84,7 @@ const devicePerformanceData: DevicePerformanceData[] = [
     unit: 'dBFS',
     description: '麦克风灵敏度',
     status: '正常',
-    color: $r('sys.color.font_primary')
+    color: $r('sys.color.comp_background_emphasize')
   },
   {
     category: '传感器信息',
@@ -93,7 +93,7 @@ const devicePerformanceData: DevicePerformanceData[] = [
     unit: 'dB',
     description: '信号与噪声比值',
     status: '良好',
-    color: $r('sys.color.font_primary')
+    color: $r('sys.color.comp_background_emphasize')
   },
 ];
 
@@ -146,8 +146,9 @@ function buildDevicePerformanceCard(performance: DevicePerformanceData, ak: AppK
       Text(performance.status)
         .fontSize(12)
         .fontColor($r('sys.color.font_primary'))
-        .padding(8)
+        .padding({ left: 8, right: 8, top: 4, bottom: 4 })
         .backgroundColor(performance.color)
+        .opacity(0.9)
         .borderRadius(6);
     }
     .width('100%')

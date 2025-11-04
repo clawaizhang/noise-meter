@@ -196,8 +196,12 @@ function buildLegalReferenceCard(legal: LegalReferenceData, ak: AppKeys, isCompl
       Text(isCompliant ? '符合法规' : '超出法规限值')
         .fontSize(12)
         .fontWeight(FontWeight.Medium)
-        .fontColor(isCompliant ? $r('sys.color.confirm') : $r('sys.color.alert'))
-        .margin({ left: 8 });
+        .fontColor($r('sys.color.font_secondary'))
+        .margin({ left: 8 })
+        .padding({ left: 8, right: 8, top: 2, bottom: 2 })
+        .backgroundColor(isCompliant ? $r('sys.color.confirm') : $r('sys.color.alert'))
+        .opacity(0.9)
+        .borderRadius(4);
     }
     .width('100%')
 
@@ -226,8 +230,8 @@ function buildLegalReferenceCard(legal: LegalReferenceData, ak: AppKeys, isCompl
   }
   .padding(12)
   .width('100%')
-  .backgroundBlurStyle(isCompliant ? BlurStyle.COMPONENT_ULTRA_THIN : BlurStyle.NONE)
-  .backgroundColor(isCompliant ? $r('sys.color.comp_background_primary') : legal.color)
+  .backgroundBlurStyle(BlurStyle.COMPONENT_ULTRA_THIN)
+  .backgroundColor($r('sys.color.comp_background_primary'))
   .borderRadius(12)
   .alignItems(HorizontalAlign.Start)
   .transition(TransitionEffect.OPACITY.animation({ curve: curves.springMotion(0.6, 0.8) })

@@ -157,6 +157,18 @@ function buildScenarioAdviceCard(scenario: ScenarioData, ak: AppKeys, isCurrentS
         .fontColor($r('sys.color.font_primary'))
         .layoutWeight(1)
         .margin({ left: 8 });
+
+      // 最佳匹配状态标签
+      if (isCurrentScenario) {
+        Text('最佳匹配')
+          .fontSize(10)
+          .fontWeight(FontWeight.Medium)
+          .fontColor($r('sys.color.font_primary'))
+          .padding({ left: 6, right: 6, top: 4, bottom: 4 })
+          .backgroundColor(scenario.color)
+          .borderRadius(6)
+          .opacity(0.9)
+      }
     }
     .width('100%')
 
@@ -223,7 +235,7 @@ function buildScenarioAdviceCard(scenario: ScenarioData, ak: AppKeys, isCurrentS
   .padding(12)
   .width('100%')
   .backgroundBlurStyle(isCurrentScenario ? BlurStyle.COMPONENT_REGULAR : BlurStyle.NONE)
-  .backgroundColor(isCurrentScenario ? scenario.color : $r('sys.color.comp_background_primary'))
+  .backgroundColor($r('sys.color.comp_background_primary'))
   .borderRadius(12)
   .alignItems(HorizontalAlign.Start)
   .transition(TransitionEffect.OPACITY.animation({ curve: curves.springMotion(0.6, 0.8) })

@@ -197,17 +197,29 @@ struct StandardComparisonComponent {
       }
       .width('100%')
 
-      // 符合状态
+      // 符合状态 - 添加状态标签
       Row() {
         Text('符合状态:')
           .fontSize(12)
           .fontColor($r('sys.color.font_secondary'))
 
-        Text(this.isCompliant(standard) ? '符合标准' : '超出标准')
-          .fontSize(12)
-          .fontWeight(FontWeight.Medium)
-          .fontColor(this.isCompliant(standard) ? $r('sys.color.confirm') : $r('sys.color.alert'))
-          .margin({ left: 8 })
+        if (this.isCompliant(standard)) {
+          Text('符合标准')
+            .fontSize(12)
+            .fontWeight(FontWeight.Medium)
+            .fontColor($r('sys.color.confirm'))
+            .margin({ left: 8 })
+        } else {
+          Text('超出标准')
+            .fontSize(12)
+            .fontWeight(FontWeight.Medium)
+            .fontColor($r('sys.color.font_primary'))
+            .padding({ left: 8, right: 8, top: 4, bottom: 4 })
+            .backgroundColor($r('sys.color.alert'))
+            .borderRadius(6)
+            .opacity(0.9)
+            .margin({ left: 8 })
+        }
       }
       .width('100%')
 
@@ -221,7 +233,7 @@ struct StandardComparisonComponent {
     .padding(12)
     .width('100%')
     .backgroundBlurStyle(this.isCompliant(standard) ? BlurStyle.COMPONENT_ULTRA_THIN : BlurStyle.NONE)
-    .backgroundColor(this.isCompliant(standard) ? $r('sys.color.comp_background_primary') : standard.color)
+    .backgroundColor($r('sys.color.comp_background_primary'))
     .borderRadius(12)
     .alignItems(HorizontalAlign.Start)
     .transition(TransitionEffect.OPACITY.animation({ curve: curves.springMotion(0.6, 0.8) })
