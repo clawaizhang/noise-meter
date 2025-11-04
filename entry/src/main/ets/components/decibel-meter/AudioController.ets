@@ -16,6 +16,7 @@ import { WindowType } from '../../common/WindowType';
 import { Subscription } from 'rxjs';
 import { AudioControllerLifecycleState, StateTransitionEvent } from '../../models/AudioControllerLifecycleState';
 import { AudioControllerEvent, AudioControllerEventType } from '../../models/AudioControllerEvents';
+import { AutoSaveService } from '../../services/AutoSaveService';
 
 /**
  * 带时间戳的分贝值接口
@@ -58,9 +59,8 @@ export struct AudioController {
   private recordService: DecibelRecordService = new DecibelRecordService(getContext() as common.UIAbilityContext)
   // 服务实例
   private audioControllerService: AudioControllerService = AudioControllerService.getInstance(this.ak, this.pk);
-  // 自动保存相关属性
-  private autoSaveTimer?: number;
-  private lastAutoSaveTime: number = Date.now();
+  // 自动保存服务
+  private autoSaveService: AutoSaveService = AutoSaveService.getInstance(this.ak, this.pk);
   // 20分钟数据保留相关属性
   private dataCleanupTimer?: number;
   private readonly CLEANUP_CHECK_INTERVAL = 60000; // 1分钟检查一次
@@ -89,37 +89,6 @@ export struct AudioController {
     }
   }
 
-  @Monitor('ak.uiDisplayState.currentTime')
-  monitorAutoSave() {
-    // 只有在真正录制状态下才检查自动保存，避免状态转换期间的误触发
-    const isActuallyRecording =
-      this.audioControllerService.getStateMachine()!.isInState(AudioControllerLifecycleState.CONTROLLER_RECORDING);
-
-    if (this.pk.auto_save_enabled && isActuallyRecording) {
-      console.info('[自动保存] 检测到自动保存已启用，立即检查是否需要保存');
-      this.checkAutoSaveNow();
-    }
-  }
-
-  private checkAutoSaveNow() {
-    const currentTime = this.ak.uiDisplayState.currentTime;
-    const elapsed = currentTime - this.lastAutoSaveTime;
-    const intervalMs = this.pk.auto_save_interval * 60 * 1000;
-    const remaining = intervalMs - elapsed;
-
-    console.info(`[自动保存检查] 当前时间: ${currentTime}, 上次保存: ${this.lastAutoSaveTime}, 已过时间: ${elapsed}ms, 剩余时间: ${remaining}ms`);
-
-    if (remaining <= 0) {
-      this.lastAutoSaveTime = new Date().getTime();
-      this.ak.uiDisplayState.lastSaveTime = this.lastAutoSaveTime ;
-      this.ak.uiDisplayState.updateTimeDisplay(this.pk);
-    }
-    // 只有在真正录制状态下且时间间隔已过时才执行自动保存
-    // 避免在长时间停止后立即触发自动保存
-    if (remaining <= 0 && remaining >= -3000) {
-      this.performAutoSave();
-    }
-  }
 
   aboutToAppear() {
     // 启动时间显示更新
@@ -188,8 +157,10 @@ export struct AudioController {
       this.eventSubscription.unsubscribe();
     }
 
-    // 清理RxJS资源
-    this.stopAutoSaveMonitoring();
+    // 清理自动保存监控
+    this.autoSaveService.stopAutoSaveMonitoring();
+
+    // 清理其他资源
     this.stopDataCleanupMonitoring();
     this.audioService.stopProcessing();
     this.audioService.stopCapture();
@@ -351,35 +322,9 @@ export struct AudioController {
 
     // 更新UI显示状态中的保存时间（手动保存时）
     const currentTime = Date.now();
-    this.audioControllerService.updateLastSaveTime(currentTime);
+    this.audioControllerService.updateRecordingStartTime(currentTime);
 
     this.stopRecording(comments);
-  }
-
-  private stopAutoSaveMonitoring(): void {
-    if (this.autoSaveTimer) {
-      clearInterval(this.autoSaveTimer);
-      this.autoSaveTimer = undefined;
-    }
-  }
-
-  private async performAutoSave(): Promise<void> {
-    console.info('[自动保存] 执行定时自动保存');
-
-    try {
-      // 通过状态机触发保存，与手动保存使用相同路径
-      await this.audioControllerService.restartRecordingFromExternal('自动保存');
-
-      // 显示保存提示
-      promptAction.showToast({
-        message: `自动保存记录（${this.pk.auto_save_interval}分钟）`,
-        duration: 2000
-      });
-
-      console.info('[自动保存] 自动保存成功');
-    } catch (error) {
-      console.error('[自动保存] 自动保存失败:', error);
-    }
   }
 
   /**
@@ -531,18 +476,31 @@ export struct AudioController {
     switch (event.toState) {
       case AudioControllerLifecycleState.CONTROLLER_RECORDING:
         console.info('[状态机] 录制状态已设置为true');
+        // 启动自动保存监控（如果启用）
+        if (this.pk.auto_save_enabled) {
+          this.autoSaveService.startAutoSaveMonitoring();
+        }
         break;
 
       case AudioControllerLifecycleState.CONTROLLER_IDLE:
         console.info('[状态机] 录制状态已设置为false');
+        // 停止自动保存监控
+        this.autoSaveService.stopAutoSaveMonitoring();
         break;
 
       case AudioControllerLifecycleState.CONTROLLER_ERROR:
         // 错误状态，可能需要显示错误信息
         console.error('[状态机] 进入错误状态:', event.error);
+        // 停止自动保存监控
+        this.autoSaveService.stopAutoSaveMonitoring();
         if (event.error) {
           this.addErrorMessage(event.error);
         }
+        break;
+
+      case AudioControllerLifecycleState.CONTROLLER_STOPPING:
+        // 停止过程中，确保自动保存监控被停止
+        this.autoSaveService.stopAutoSaveMonitoring();
         break;
     }
   }
@@ -571,6 +529,11 @@ export struct AudioController {
 
       // 启动数据清理监控...
       this.startDataCleanupMonitoring();
+
+      // 启动自动保存监控
+      if (this.pk.auto_save_enabled) {
+        this.autoSaveService.startAutoSaveMonitoring();
+      }
 
       // 注册音频数据回调...
       this.audioService.registerOriginAudioDataCallBack((buffer: ArrayBuffer) => {
@@ -716,6 +679,9 @@ export struct AudioController {
 
       // 重置状态
       this.resetData();
+
+      // 停止自动保存监控
+      this.autoSaveService.stopAutoSaveMonitoring();
 
       // 真正的停止：不自动开始新的检测
       console.info('[AudioController] 录制已停止，保持停止状态');

@@ -202,7 +202,7 @@ export class UIDisplayState {
 
   // 时间显示相关属性
   @Trace timeDisplay: string = '';
-  lastSaveTime: number = Date.now();
+  recordingStartTime: number = Date.now();
   @Trace currentTime: number = Date.now();
 
   constructor() {
@@ -217,20 +217,12 @@ export class UIDisplayState {
       return; // 后台时不更新显示
     }
 
-    let elapsed = this.currentTime - this.lastSaveTime;
+    let elapsed = this.currentTime - this.recordingStartTime;
     let minutes = Math.floor(elapsed / 60000);
     let seconds = Math.floor((elapsed % 60000) / 1000);
     
     if (!pk.auto_save_enabled) {
-      // 60分钟循环
-      if (minutes >= 60) {
-        this.lastSaveTime = Date.now();
-        elapsed = this.currentTime - this.lastSaveTime;
-        minutes = Math.floor(elapsed / 60000);
-        seconds = Math.floor((elapsed % 60000) / 1000);
-        this.timeDisplay = `${minutes}:${seconds.toString().padStart(2, '0')}`;
-        return;
-      }
+      // 显示已录制时长（从录音开始时间计算）
       this.timeDisplay = `${minutes}:${seconds.toString().padStart(2, '0')}`;
       return;
     }
@@ -248,14 +240,16 @@ export class UIDisplayState {
     seconds = Math.floor((remaining % 60000) / 1000);
 
     this.timeDisplay = `${minutes}:${seconds.toString().padStart(2, '0')} 后自动保存`;
+
+    console.info(`剩余时间：${minutes}分${seconds}秒`);
   }
 
   /**
-   * 更新最后保存时间
-   * @param saveTime 保存时间戳
+   * 更新录音开始时间
+   * @param startTime 录音开始时间戳
    */
-  updateLastSaveTime(saveTime: number): void {
-    this.lastSaveTime = saveTime;
+  updateRecordingStartTime(startTime: number): void {
+    this.recordingStartTime = startTime;
   }
 
   /**
@@ -348,7 +342,7 @@ export class UIDisplayState {
     this.displayStatistics.reset();
     this.displayStatisticsDistribution = [];
     this.timeDisplay = '';
-    this.lastSaveTime = Date.now();
+    this.recordingStartTime = Date.now();
     this.currentTime = Date.now();
     this.isUIUpdatesEnabled = true;
   }

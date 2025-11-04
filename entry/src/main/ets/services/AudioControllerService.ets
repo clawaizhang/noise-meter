@@ -7,6 +7,7 @@ import { LocationInfo } from '../services/LocationService';
 import { AudioControllerStateMachine } from './AudioControllerStateMachine';
 import { AudioControllerLifecycleState, StateTransitionEvent } from '../models/AudioControllerLifecycleState';
 import { AudioService, AudioServiceState } from './AudioService';
+import { AutoSaveService } from './AutoSaveService';
 import {
   AudioControllerEvent,
   AudioControllerEventType,
@@ -39,19 +40,22 @@ export class AudioControllerService {
   private locationSubject = new BehaviorSubject<LocationInfo | null>(null);
   // 错误数据Subject
   private errorSubject = new Subject<string[]>();
-  // 时间显示定时器
-  private timeDisplayTimer?: number;
   private pk: PreferenceKeys;
   // 状态机相关
   private stateMachine?: AudioControllerStateMachine;
   private stateChangeSubject = new Subject<StateTransitionEvent>();
   // 事件总线
   private eventSubject = new Subject<AudioControllerEvent>();
+  // 自动保存服务
+  private autoSaveService: AutoSaveService;
 
   constructor(ak: AppKeys, pk: PreferenceKeys) {
     this.dataProcessingState = ak.dataProcessingState;
     this.uiDisplayState = ak.uiDisplayState;
     this.pk = pk;
+    this.autoSaveService = AutoSaveService.getInstance(ak, pk);
+    // 设置AutoSaveService的AudioControllerService引用
+    this.autoSaveService.setAudioControllerService(this);
   }
 
 
@@ -195,39 +199,22 @@ export class AudioControllerService {
    * 启动时间显示更新
    */
   public startTimeDisplayUpdates(): void {
-    this.stopTimeDisplayUpdates(); // 先停止之前的定时器
-
-    // 每秒更新一次时间显示
-    this.timeDisplayTimer = setInterval(() => {
-      if (this.stateMachine?.getCurrentState() === AudioControllerLifecycleState.CONTROLLER_RECORDING) {
-        const currentTime = Date.now();
-        this.uiDisplayState.updateCurrentTime(currentTime);
-        this.uiDisplayState.updateTimeDisplay(this.pk);
-      }
-    }, 1000);
-
-    console.info('[双管线架构] 时间显示更新已启动');
+    this.autoSaveService.startTimeDisplayUpdates();
   }
 
   /**
    * 停止时间显示更新
    */
   public stopTimeDisplayUpdates(): void {
-    if (this.timeDisplayTimer) {
-      clearInterval(this.timeDisplayTimer);
-      this.timeDisplayTimer = undefined;
-      console.info('[双管线架构] 时间显示更新已停止');
-    }
+    this.autoSaveService.stopTimeDisplayUpdates();
   }
 
   /**
-   * 更新最后保存时间
-   * @param saveTime 保存时间戳
+   * 更新录音开始时间
+   * @param startTime 录音开始时间戳
    */
-  public updateLastSaveTime(saveTime: number): void {
-    this.uiDisplayState.updateLastSaveTime(saveTime);
-    // 立即更新一次时间显示
-    this.uiDisplayState.updateTimeDisplay(this.pk);
+  public updateRecordingStartTime(startTime: number): void {
+    this.autoSaveService.updateRecordingStartTime(startTime);
   }
 
   // ========== 事件总线方法 ==========
@@ -398,6 +385,8 @@ export class AudioControllerService {
 
       case AudioControllerLifecycleState.CONTROLLER_RECORDING:
         console.info('[状态机] 录制已开始');
+        // 在录音开始时更新录音开始时间
+        this.updateRecordingStartTime(Date.now());
         break;
 
       case AudioControllerLifecycleState.CONTROLLER_IDLE:
