@@ -22,7 +22,7 @@ export struct FullScreenChartDashboard {
   @Param canvasWidth: number = 0;
   @Param canvasHeight: number = 0;
   @Param initialChartType: string = '频谱图'; // 初始图表类型
-  @Event onExitFullScreen: () => void;
+  @Event onExitFullScreen: (currentChartType: ChartType) => void;
   // 组件状态
   @Local private currentChartType: ChartType = ChartType.SPECTRUM;
   @Local private isAnimating: boolean = false;
@@ -38,17 +38,22 @@ export struct FullScreenChartDashboard {
   aboutToAppear() {
     console.info('[全屏仪表盘] 组件初始化完成');
     // 根据传入的图表类型设置初始显示
-    this.setInitialChartType();
+    this.setCurrentChartType();
   }
 
   aboutToDisappear() {
     console.info('[全屏仪表盘] 组件即将销毁');
   }
 
+  @Monitor('initialChartType')
+  onInitialChartTypeChange() {
+    this.setCurrentChartType();
+  }
+
   /**
    * 根据传入的图表类型设置初始显示
    */
-  private setInitialChartType(): void {
+  private setCurrentChartType(): void {
     console.info(`[全屏仪表盘] 设置初始图表类型: ${this.initialChartType}`);
     switch (this.initialChartType) {
       case '频谱图':
@@ -229,21 +234,6 @@ export struct FullScreenChartDashboard {
     this.switchToChart(chartTypes[prevIndex]);
   }
 
-  /**
-   * 获取图表类型对应的显示名称
-   */
-  private getChartDisplayName(chartType: ChartType): string {
-    switch (chartType) {
-      case ChartType.SPECTRUM:
-        return '频谱图';
-      case ChartType.TIME_DOMAIN:
-        return '时域图';
-      case ChartType.STATISTICS:
-        return '统计分布图';
-      default:
-        return '未知图表';
-    }
-  }
 
   /**
    * 获取图表类型对应的标题
@@ -267,7 +257,7 @@ export struct FullScreenChartDashboard {
   private exitFullScreen(): void {
     console.info('[全屏仪表盘] 退出全屏模式');
     // 触发父组件的退出全屏逻辑
-    this.onExitFullScreen();
+    this.onExitFullScreen(this.currentChartType);
   }
 
   /**
@@ -388,34 +378,31 @@ export struct FullScreenChartDashboard {
       // 图表内容区域
       Stack({ alignContent: Alignment.Center }) {
         // 频谱图
-        if (this.currentChartType === ChartType.SPECTRUM) {
-          SpectrumChartComponent({ canvasWidthInput: this.canvasWidth, canvasHeightInput: this.canvasHeight })
-            .width('100%')
-            .height('100%')
-            .opacity(this.chartOpacity)
-            .translate({ x: this.swipeOffset })
-            .padding({ bottom: 8 }) // 添加底部间距，避免被标签栏遮挡
-        }
+        SpectrumChartComponent({ canvasWidthInput: this.canvasWidth, canvasHeightInput: this.canvasHeight })
+          .width('100%')
+          .height('100%')
+          .opacity(this.chartOpacity)
+          .translate({ x: this.swipeOffset })
+          .visibility(this.currentChartType === ChartType.SPECTRUM ? Visibility.Visible : Visibility.None)
+          .padding({ bottom: 8 }) // 添加底部间距，避免被标签栏遮挡
 
         // 时域图
-        if (this.currentChartType === ChartType.TIME_DOMAIN) {
-          TimeDomainChartComponent({ canvasWidthInput: this.canvasWidth, canvasHeightInput: this.canvasHeight })
-            .width('100%')
-            .height('100%')
-            .opacity(this.chartOpacity)
-            .translate({ x: this.swipeOffset })
-            .padding({ bottom: 8 }) // 添加底部间距，避免被标签栏遮挡
-        }
+        TimeDomainChartComponent({ canvasWidthInput: this.canvasWidth, canvasHeightInput: this.canvasHeight })
+          .width('100%')
+          .height('100%')
+          .opacity(this.chartOpacity)
+          .translate({ x: this.swipeOffset })
+          .visibility(this.currentChartType === ChartType.TIME_DOMAIN ? Visibility.Visible : Visibility.None)
+          .padding({ bottom: 8 }) // 添加底部间距，避免被标签栏遮挡
 
         // 统计分布图
-        if (this.currentChartType === ChartType.STATISTICS) {
-          StatisticsChartComponent({ canvasWidthInput: this.canvasWidth, canvasHeightInput: this.canvasHeight })
-            .width('100%')
-            .height('100%')
-            .opacity(this.chartOpacity)
-            .translate({ x: this.swipeOffset })
-            .padding({ bottom: 8 }) // 添加底部间距，避免被标签栏遮挡
-        }
+        StatisticsChartComponent({ canvasWidthInput: this.canvasWidth, canvasHeightInput: this.canvasHeight })
+          .width('100%')
+          .height('100%')
+          .opacity(this.chartOpacity)
+          .translate({ x: this.swipeOffset })
+          .visibility(this.currentChartType === ChartType.STATISTICS ? Visibility.Visible : Visibility.None)
+          .padding({ bottom: 8 }) // 添加底部间距，避免被标签栏遮挡
 
       }
       .width('100%')
@@ -499,7 +486,6 @@ export struct FullScreenChartDashboard {
       style: BorderStyle.Solid
     })
   }
-
 
   build() {
     Column() {

@@ -17,6 +17,7 @@ import { AudioControllerService } from '../../services/AudioControllerService';
 import { AudioDeviceMonitorService } from '../../services/AudioDeviceMonitorService';
 import { Throttle } from '../../utils/Debounce';
 import { StatusAlertsComponent } from '../status-alerts/StatusAlertsComponent';
+import { ChartType } from '../common/charts/ChartConfig';
 
 @ComponentV2
 export struct DashBoard {
@@ -41,93 +42,92 @@ export struct DashBoard {
   build() {
     Stack({ alignContent: Alignment.Top }) {
       // 全屏模式显示
-      if (this.isFullScreenMode) {
-        FullScreenChartDashboard({
-          canvasWidth: this.ak.windowWidth - 32,
-          canvasHeight: this.ak.windowHeight - 330, // 重新计算高度：120 + 底部标签栏56px
-          initialChartType: this.currentFullScreenChartType,
-          onExitFullScreen: () => {
-            this.exitFullScreenMode();
-          },
-        })
-          .borderRadius(16)
-          .width('100%')
-          .height('100%')
-      } else {
-        // 正常模式显示
-        Scroll() {
-          GridRow({ columns: 12, breakpoints: { reference: BreakpointsReference.WindowSize }, gutter: 16 }) {
+      FullScreenChartDashboard({
+        canvasWidth: this.ak.windowWidth - 32,
+        canvasHeight: this.ak.windowHeight - 330, // 重新计算高度：120 + 底部标签栏56px
+        initialChartType: this.currentFullScreenChartType,
+        onExitFullScreen: (currentChartType:ChartType) => {
+          this.exitFullScreenMode(currentChartType);
+        },
+      })
+        .visibility(this.isFullScreenMode ? Visibility.Visible : Visibility.None)
+        .borderRadius(16)
+        .width('100%')
+        .height('100%')
+      // 正常模式显示
+      Scroll() {
+        GridRow({ columns: 12, breakpoints: { reference: BreakpointsReference.WindowSize }, gutter: 16 }) {
 
-            // 频谱图 - 优化布局，占据更多空间
-            GridCol({
-              span: {
-                xs: 12, // 横向XS/SM：单列布局（全宽）
-                sm: 12, // 横向XS/SM：单列布局（全宽）
-                md: 6, // 横向MD及以上：双列布局（半宽）
-                lg: 6, // 横向MD及以上：双列布局（半宽）
-                xl: 6    // 横向MD及以上：双列布局（半宽）
-              }
-            }) {
-              Column() {
-                SpectrumChartComponent()
-
-                // 全屏按钮
-                this.buildFullScreenButton('频谱图')
-              }
+          // 频谱图 - 优化布局，占据更多空间
+          GridCol({
+            span: {
+              xs: 12, // 横向XS/SM：单列布局（全宽）
+              sm: 12, // 横向XS/SM：单列布局（全宽）
+              md: 6, // 横向MD及以上：双列布局（半宽）
+              lg: 6, // 横向MD及以上：双列布局（半宽）
+              xl: 6    // 横向MD及以上：双列布局（半宽）
             }
-            .backgroundColor($r('sys.color.comp_background_primary'))
-            .borderRadius(16)
+          }) {
+            Column() {
+              SpectrumChartComponent()
 
-            // 时域波形图 - 优化布局，占据更多空间
-            GridCol({
-              span: {
-                xs: 12, // 横向XS/SM：单列布局（全宽）
-                sm: 12, // 横向XS/SM：单列布局（全宽）
-                md: 6, // 横向MD及以上：双列布局（半宽）
-                lg: 6, // 横向MD及以上：双列布局（半宽）
-                xl: 6    // 横向MD及以上：双列布局（半宽）
-              }
-            }) {
-              Column() {
-                TimeDomainChartComponent()
-
-                // 全屏按钮
-                this.buildFullScreenButton('时域图')
-              }
+              // 全屏按钮
+              this.buildFullScreenButton('频谱图')
             }
-            .backgroundColor($r('sys.color.comp_background_primary'))
-            .borderRadius(16)
-
-            // 统计分布图 - 新增统计图表组件
-            GridCol({
-              span: {
-                xs: 12, // 横向XS/SM：单列布局（全宽）
-                sm: 12, // 横向XS/SM：单列布局（全宽）
-                md: 6, // 横向MD及以上：双列布局（半宽）
-                lg: 6, // 横向MD及以上：双列布局（半宽）
-                xl: 6    // 横向MD及以上：双列布局（半宽）
-              }
-            }) {
-              Column() {
-                StatisticsChartComponent()
-
-                // 全屏按钮
-                this.buildFullScreenButton('统计分布图')
-
-              }
-            }
-            .borderRadius(16)
-            .backgroundColor($r('sys.color.comp_background_primary'))
           }
-          .id('mainNoiseMeterDisplayId')
-          .onBreakpointChange(breakPoints => {
-            // 断点信息现在由 AppStorage 统一管理，这里不再需要处理
-            console.info(`[CAT_ANIMATION] GridRow 断点变化: ${breakPoints}`);
-          })
+          .backgroundColor($r('sys.color.comp_background_primary'))
+          .borderRadius(16)
+
+          // 时域波形图 - 优化布局，占据更多空间
+          GridCol({
+            span: {
+              xs: 12, // 横向XS/SM：单列布局（全宽）
+              sm: 12, // 横向XS/SM：单列布局（全宽）
+              md: 6, // 横向MD及以上：双列布局（半宽）
+              lg: 6, // 横向MD及以上：双列布局（半宽）
+              xl: 6    // 横向MD及以上：双列布局（半宽）
+            }
+          }) {
+            Column() {
+              TimeDomainChartComponent()
+
+              // 全屏按钮
+              this.buildFullScreenButton('时域图')
+            }
+          }
+          .backgroundColor($r('sys.color.comp_background_primary'))
+          .borderRadius(16)
+
+          // 统计分布图 - 新增统计图表组件
+          GridCol({
+            span: {
+              xs: 12, // 横向XS/SM：单列布局（全宽）
+              sm: 12, // 横向XS/SM：单列布局（全宽）
+              md: 6, // 横向MD及以上：双列布局（半宽）
+              lg: 6, // 横向MD及以上：双列布局（半宽）
+              xl: 6    // 横向MD及以上：双列布局（半宽）
+            }
+          }) {
+            Column() {
+              StatisticsChartComponent()
+
+              // 全屏按钮
+              this.buildFullScreenButton('统计分布图')
+
+            }
+          }
+          .borderRadius(16)
+          .backgroundColor($r('sys.color.comp_background_primary'))
         }
-        .scrollBar(BarState.Off)
-        .edgeEffect(EdgeEffect.Spring)
+        .id('mainNoiseMeterDisplayId')
+        .onBreakpointChange(breakPoints => {
+          // 断点信息现在由 AppStorage 统一管理，这里不再需要处理
+          console.info(`[CAT_ANIMATION] GridRow 断点变化: ${breakPoints}`);
+        })
       }
+      .scrollBar(BarState.Off)
+      .edgeEffect(EdgeEffect.Spring)
+      .visibility(!this.isFullScreenMode ? Visibility.Visible : Visibility.None)
 
       Column()
         .width(this.dWidthHeight)
@@ -210,16 +210,17 @@ export struct DashBoard {
    */
   private enterFullScreenMode(chartType: string): void {
     console.info(`[全屏模式] 进入全屏模式，图表类型: ${chartType}`);
-    this.isFullScreenMode = true;
     // 将图表类型传递给全屏组件
     this.currentFullScreenChartType = chartType;
+    this.isFullScreenMode = true;
   }
 
   /**
    * 退出全屏模式
    */
-  private exitFullScreenMode(): void {
+  private exitFullScreenMode(chartType: ChartType): void {
     console.info('[全屏模式] 退出全屏模式');
+    this.currentFullScreenChartType = chartType;
     this.isFullScreenMode = false;
   }
 }
