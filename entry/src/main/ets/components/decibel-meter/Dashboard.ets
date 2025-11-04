@@ -19,7 +19,7 @@ import { Throttle } from '../../utils/Debounce';
 import { StatusAlertsComponent } from '../status-alerts/StatusAlertsComponent';
 
 @ComponentV2
-export struct DecibelMeter {
+export struct DashBoard {
   @Param @Require meterOn: boolean = true;
   @Local pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys)!;
   @Local dScale: number = 1; // 页面缩放比例
@@ -29,14 +29,11 @@ export struct DecibelMeter {
   @Local dWidthHeight: string = ''; // 页面透明度
   @Local bgImage: image.PixelMap | undefined = undefined; // 页面透明度
   @Local ak: AppKeys = AppStorageV2.connect(AppKeys)!;
-  @Local private currentLocation: LocationInfo | null = null; // 当前位置信息，从LocationDisplay接收
-  @Local private hideForXsMd: boolean = false;
   @Local private isFullScreenMode: boolean = false; // 全屏模式状态
   @Local private currentFullScreenChartType: string = '频谱图'; // 当前全屏显示的图表类型
   private animationTimeOutId: number | undefined;
   // 服务实例
   private audioControllerService: AudioControllerService = AudioControllerService.getInstance(this.ak, this.pk);
-  private audioDeviceMonitorService: AudioDeviceMonitorService = AudioDeviceMonitorService.getInstance();
   // 双管线架构：UI显示状态
   @Consumer(navigationStack) navStack: NavPathStack = new NavPathStack()
   sysResourceManager: resourceManager.ResourceManager = resourceManager.getSystemResourceManager();
@@ -53,6 +50,7 @@ export struct DecibelMeter {
             this.exitFullScreenMode();
           },
         })
+          .borderRadius(16)
           .width('100%')
           .height('100%')
       } else {
@@ -79,7 +77,6 @@ export struct DecibelMeter {
             }
             .backgroundColor($r('sys.color.comp_background_primary'))
             .borderRadius(16)
-            .padding(16)
 
             // 时域波形图 - 优化布局，占据更多空间
             GridCol({
@@ -100,7 +97,6 @@ export struct DecibelMeter {
             }
             .backgroundColor($r('sys.color.comp_background_primary'))
             .borderRadius(16)
-            .padding(16)
 
             // 统计分布图 - 新增统计图表组件
             GridCol({
@@ -117,11 +113,11 @@ export struct DecibelMeter {
 
                 // 全屏按钮
                 this.buildFullScreenButton('统计分布图')
+
               }
             }
-            .backgroundColor($r('sys.color.comp_background_primary'))
             .borderRadius(16)
-            .padding(16)
+            .backgroundColor($r('sys.color.comp_background_primary'))
           }
           .id('mainNoiseMeterDisplayId')
           .onBreakpointChange(breakPoints => {
@@ -147,24 +143,7 @@ export struct DecibelMeter {
     this.audioControllerService.dispose();
   }
 
-  @Monitor('ak.windowWidth','ak.windowHeight')
-  onWindowSizeChange(monitor: IMonitor) {
-    // 获取当前窗口尺寸
-    this.calculateSize();
-  }
-
-  private calculateSize() {
-    if (this.ak.windowWidthBreakpoint <= WidthBreakpoint.WIDTH_SM &&
-      this.ak.windowHeightBreakpoint <= HeightBreakpoint.HEIGHT_MD) {
-      this.hideForXsMd = true;
-    } else {
-      this.hideForXsMd = false;
-    }
-  }
-
   aboutToAppear() {
-    // 获取当前窗口尺寸
-    this.calculateSize();
 
     // 确保AudioControllerService已正确初始化
     console.info('[DecibelMeter] AudioControllerService实例状态:',
@@ -209,7 +188,7 @@ export struct DecibelMeter {
         .fontSize(12)
         .type(ButtonType.Capsule)
         .backgroundColor($r('sys.color.comp_background_tertiary'))
-        .fontColor($r('sys.color.font_on_tertiary'))
+        .fontColor($r('sys.color.font_secondary'))
         .padding({
           left: 12,
           right: 12,
@@ -223,7 +202,7 @@ export struct DecibelMeter {
         })
     }
     .width('100%')
-    .margin({ top: 8 })
+    .padding(8)
   }
 
   /**

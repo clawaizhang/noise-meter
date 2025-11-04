@@ -321,7 +321,7 @@ export struct StatisticsChartComponent {
     }
     .width('100%')
     .padding(16)
-    .backgroundColor(Color.Transparent)
+    .backgroundColor('#ff2e3033')
     .borderRadius(8)
   }
 

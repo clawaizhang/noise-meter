@@ -511,6 +511,7 @@ export struct FullScreenChartDashboard {
     }
     .width('100%')
     .height('100%')
+    .borderRadius(16)
     .backgroundColor($r('sys.color.comp_background_primary'))
   }
 }

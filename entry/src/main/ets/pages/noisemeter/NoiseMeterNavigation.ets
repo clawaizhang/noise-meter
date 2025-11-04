@@ -1,4 +1,4 @@
-import { DecibelMeter } from '../../components/decibel-meter/DecibelMeter';
+import { DashBoard } from '../../components/decibel-meter/Dashboard';
 import { navigationStack } from '../../constants/ProviderConstant';
 import { DialogHub, InfSheet } from '@hadss/dialoghub';
 import { AppKeys } from '../../models/AppKeys';
@@ -176,7 +176,7 @@ export struct MainNoiseMeter {
   DashboardContent() {
     Column() {
       // 噪音检测区域
-      DecibelMeter({ meterOn: true })
+      DashBoard({ meterOn: true })
         .id('decibelMeterId')
         .width('92%')
     }
