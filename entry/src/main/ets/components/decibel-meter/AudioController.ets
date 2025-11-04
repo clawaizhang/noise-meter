@@ -484,8 +484,6 @@ export struct AudioController {
 
       case AudioControllerLifecycleState.CONTROLLER_IDLE:
         console.info('[状态机] 录制状态已设置为false');
-        // 停止自动保存监控
-        this.autoSaveService.stopAutoSaveMonitoring();
         break;
 
       case AudioControllerLifecycleState.CONTROLLER_ERROR:
@@ -679,9 +677,6 @@ export struct AudioController {
 
       // 重置状态
       this.resetData();
-
-      // 停止自动保存监控
-      this.autoSaveService.stopAutoSaveMonitoring();
 
       // 真正的停止：不自动开始新的检测
       console.info('[AudioController] 录制已停止，保持停止状态');

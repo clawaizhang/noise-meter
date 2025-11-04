@@ -233,6 +233,7 @@ export class UIDisplayState {
 
     if (remaining <= 0) {
       this.timeDisplay = '即将自动保存';
+      console.info('即将自动保存');
       return;
     }
 

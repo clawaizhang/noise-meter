@@ -14,12 +14,10 @@ export class AutoSaveService {
   private audioControllerService: AudioControllerService | null = null;
   private ak: AppKeys;
   private pk: PreferenceKeys;
-  
   // 自动保存相关属性
   private recordingStartTime: number = Date.now();
   private isAutoSaveEnabled: boolean = false;
   private isTimeDisplayEnabled: boolean = false;
-  
   // 回调函数
   private autoSaveCheckCallback?: () => void;
   private timeDisplayCallback?: () => void;
@@ -59,7 +57,7 @@ export class AutoSaveService {
     return (): void => {
       // 只有在真正录制状态下且自动保存已启用时才检查自动保存
       const isActuallyRecording = this.isActuallyRecording();
-      
+
       if (this.pk?.auto_save_enabled && isActuallyRecording && this.isAutoSaveEnabled) {
         console.info('[自动保存] 秒定时器触发，检查是否需要保存');
         this.checkAutoSaveNow();
@@ -94,23 +92,23 @@ export class AutoSaveService {
    */
   public startAutoSaveMonitoring(): void {
     this.stopAutoSaveMonitoring();
-    
+
     // 检查自动保存配置是否有效
     if (!this.pk?.auto_save_enabled || this.pk.auto_save_interval <= 0) {
       console.warn('[自动保存] 自动保存配置无效，跳过启动监控');
       return;
     }
-    
+
     this.isAutoSaveEnabled = true;
-    
+
     // 使用SecondTimerService进行秒级检查
     if (this.autoSaveCheckCallback) {
       this.secondTimerService.subscribe(this.autoSaveCheckCallback);
     }
-    
+
     // 重置上次保存时间
     this.recordingStartTime = Date.now();
-    
+
     console.info('[自动保存] 自动保存监控已启动（使用SecondTimerService）');
   }
 
@@ -119,12 +117,12 @@ export class AutoSaveService {
    */
   public stopAutoSaveMonitoring(): void {
     this.isAutoSaveEnabled = false;
-    
+
     // 取消订阅SecondTimerService
     if (this.autoSaveCheckCallback) {
       this.secondTimerService.unsubscribe(this.autoSaveCheckCallback);
     }
-    
+
     console.info('[自动保存] 自动保存监控已停止');
   }
 
@@ -133,20 +131,20 @@ export class AutoSaveService {
    */
   public startTimeDisplayUpdates(): void {
     this.stopTimeDisplayUpdates();
-    
+
     this.isTimeDisplayEnabled = true;
-    
+
     // 使用SecondTimerService进行秒级时间显示更新
     if (this.timeDisplayCallback) {
       this.secondTimerService.subscribe(this.timeDisplayCallback);
     }
-    
+
     // 立即更新一次时间显示
     if (this.ak.uiDisplayState) {
       this.ak.uiDisplayState.updateCurrentTime(Date.now());
       this.ak.uiDisplayState.updateTimeDisplay(this.pk!);
     }
-    
+
     console.info('[时间显示] 时间显示更新已启动（使用SecondTimerService）');
   }
 
@@ -155,12 +153,12 @@ export class AutoSaveService {
    */
   public stopTimeDisplayUpdates(): void {
     this.isTimeDisplayEnabled = false;
-    
+
     // 取消订阅SecondTimerService
     if (this.timeDisplayCallback) {
       this.secondTimerService.unsubscribe(this.timeDisplayCallback);
     }
-    
+
     console.info('[时间显示] 时间显示更新已停止');
   }
 
@@ -190,19 +188,14 @@ export class AutoSaveService {
     // 如果时间间隔已过，执行自动保存
     if (remaining <= 0) {
       this.recordingStartTime = Date.now();
-      
+
       // 更新UI显示状态（只更新自动保存时间，不更新录音开始时间）
       if (this.ak.uiDisplayState) {
         this.ak.uiDisplayState.updateTimeDisplay(this.pk);
       }
-      
+
       // 只有在真正录制状态下且时间间隔已过时才执行自动保存
-      // 避免在长时间停止后立即触发自动保存
-      if (remaining >= -3000) {
-        this.performAutoSave();
-      } else {
-        console.warn('[自动保存] 时间间隔已过太久，跳过自动保存以避免异常');
-      }
+      this.performAutoSave();
     }
   }
 
@@ -234,7 +227,7 @@ export class AutoSaveService {
    */
   public updateRecordingStartTime(startTime: number): void {
     this.recordingStartTime = startTime;
-    
+
     // 更新UI显示状态
     if (this.ak.uiDisplayState) {
       this.ak.uiDisplayState.updateRecordingStartTime(startTime);
