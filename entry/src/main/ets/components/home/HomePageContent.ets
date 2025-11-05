@@ -272,7 +272,11 @@ export struct HomePageContent {
     .justifyContent(FlexAlign.Center)
     .alignItems(VerticalAlign.Center)
     .shadow(DesignConstants.SHADOW_SM)
-    .onClick(config.onTap)
+    .onClick(() => {
+      Throttle.click(() => {
+        config.onTap();
+      });
+    })
   }
 
   // 切换到指定Tab

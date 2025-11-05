@@ -150,7 +150,9 @@ export struct AudioControlPanel {
           })
           .enabled(this.buttonStates.startButton.enabled)
           .onClick(() => {
-            this.startDetection();
+            Throttle.click(() => {
+              this.startDetection();
+            });
           })
 
         // 停止按钮
@@ -166,7 +168,9 @@ export struct AudioControlPanel {
           })
           .enabled(this.buttonStates.stopButton.enabled)
           .onClick(() => {
+            Throttle.click(() => {
             this.stopDetection();
+            });
           })
 
         // 重置按钮
@@ -182,7 +186,9 @@ export struct AudioControlPanel {
           })
           .enabled(this.buttonStates.resetButton.enabled)
           .onClick(() => {
+            Throttle.click(() => {
             this.showResetConfirmation();
+            });
           })
 
         // 保存按钮
@@ -199,7 +205,9 @@ export struct AudioControlPanel {
           .enabled(this.buttonStates.saveButton.enabled)
           .opacity(this.saveAnimationOpacity)
           .onClick(() => {
+            Throttle.click(() => {
             this.showSaveDialog();
+            });
           })
       }
       .width('100%')
@@ -403,7 +411,9 @@ export struct AudioControlPanel {
           .backgroundColor($r('sys.color.comp_background_secondary'))
           .fontColor($r('sys.color.font_primary'))
           .onClick(() => {
+            Throttle.click(() => {
             this.confirmDialogController.close();
+            });
           })
 
         Button('确认重置', { type: ButtonType.Normal })
@@ -411,8 +421,10 @@ export struct AudioControlPanel {
           .backgroundColor($r('sys.color.alert'))
           .fontColor(Color.White)
           .onClick(() => {
+            Throttle.click(() => {
             this.resetData();
             this.confirmDialogController.close();
+            });
           })
       }
       .width('100%')

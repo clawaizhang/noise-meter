@@ -422,7 +422,9 @@ export struct UpgradeContent {
     .width('30%')
     .height(150)
     .onClick(() => {
+      Throttle.click(() => {
       this.selectedPlan = plans.current;
+      });
     })
   }
 
@@ -776,7 +778,9 @@ export struct UpgradeContent {
           .fontColor($r('sys.color.font_primary'))
           .borderRadius(DesignConstants.BORDER_RADIUS_MD)
           .onClick(() => {
+            Throttle.click(() => {
             this.handleManageSubscription();
+            });
           })
 
         Button('续费升级')

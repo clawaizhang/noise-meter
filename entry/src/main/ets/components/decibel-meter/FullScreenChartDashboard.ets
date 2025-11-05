@@ -6,6 +6,7 @@
 import { SpectrumChartComponent } from './SpectrumChartComponent';
 import { TimeDomainChartComponent } from './TimeDomainChartComponent';
 import { StatisticsChartComponent } from '../statistics/StatisticsChartComponent';
+import { Throttle } from '../../utils/Debounce';
 
 // 图表类型枚举
 enum ChartType {
@@ -287,7 +288,9 @@ export struct FullScreenChartDashboard {
       .height(56)
       .justifyContent(FlexAlign.Center)
       .onClick(() => {
+        Throttle.click(() => {
         this.switchToChart(ChartType.SPECTRUM);
+        });
       })
 
       // 时域图标签

@@ -371,13 +371,14 @@ export struct DecibelDisplayComponent {
     .borderRadius(0)
     .onClick(() => {
       // 点击打开噪音参考标准对话框
+      Throttle.click(() => {
       if (!this.noiseStandardDialog) {
         this.noiseStandardDialog = DialogHub.getSheet()
-          .setStyle({ backgroundColor: $r('sys.color.background_secondary') })
-          .setComponentTargetId('mainId')
-          .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS })
-          .setContent(wrapBuilder(NoiseStandardDialogBuilder), this.ak)
-          .build();
+        .setStyle({ backgroundColor: $r('sys.color.background_secondary') })
+        .setComponentTargetId('mainId')
+        .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS })
+        .setContent(wrapBuilder(NoiseStandardDialogBuilder), this.ak)
+        .build();
 
         // 注册Dialog到样式管理器
         DialogStyleManager.registerDialog(this.noiseStandardDialog);
@@ -388,6 +389,7 @@ export struct DecibelDisplayComponent {
       this.noiseStandardUpdateSubscription?.unsubscribe();
       this.noiseStandardUpdateSubscription = interval(500).subscribe(() => {
         this.noiseStandardDialog?.updateContent(this.ak);
+      });
       });
     })
     .id('noiseStandardDisplayId')

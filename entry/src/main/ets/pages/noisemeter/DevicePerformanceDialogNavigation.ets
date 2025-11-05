@@ -1,5 +1,6 @@
 import { curves, AppStorageV2 } from '@kit.ArkUI';
 import { AppKeys } from '../../models/AppKeys';
+import { Throttle } from '../../utils/Debounce';
 
 // 设备性能数据接口
 interface DevicePerformanceData {
@@ -241,7 +242,9 @@ struct DevicePerformanceComponent {
           .backgroundColor(this.selectedCategory === item.category ? $r('sys.color.comp_background_primary') : $r('sys.color.background_secondary'))
           .borderRadius(8)
           .onClick(() => {
+            Throttle.click(() => {
             this.selectedCategory = item.category
+            });
           })
       })
     }

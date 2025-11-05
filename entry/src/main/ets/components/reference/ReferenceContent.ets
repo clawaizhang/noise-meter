@@ -300,7 +300,11 @@ export struct ReferenceContent {
     .justifyContent(FlexAlign.Center)
     .alignItems(VerticalAlign.Center)
     .shadow(DesignConstants.SHADOW_SM)
-    .onClick(config.onTap)
+    .onClick(() => {
+      Throttle.click(() => {
+        config.onTap();
+    });
+    })
   }
 
   @Builder
@@ -360,7 +364,11 @@ export struct ReferenceContent {
     .justifyContent(FlexAlign.Center)
     .alignItems(VerticalAlign.Center)
     .shadow(DesignConstants.SHADOW_SM)
-    .onClick(config.onTap)
+    .onClick(() => {
+      Throttle.click(() => {
+        config.onTap();
+      });
+    })
   }
 
   @Builder

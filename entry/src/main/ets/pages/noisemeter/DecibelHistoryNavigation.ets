@@ -127,7 +127,9 @@ export struct DecibelHistory {
             .height('100%')
             .backgroundColor('#80000000')
             .onClick(() => {
+              Throttle.click(() => {
               this.showFilterPanel = false;
+              });
             })
 
           this.FilterPanelBuilder()

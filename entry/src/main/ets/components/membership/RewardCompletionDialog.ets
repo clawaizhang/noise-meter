@@ -189,7 +189,9 @@ export struct RewardCompletionDialog {
             radius: DesignConstants.BORDER_RADIUS_MD
           })
           .onClick(() => {
+            Throttle.click(() => {
             this.showCommentDialog();
+            });
           })
       }
       .width('100%')

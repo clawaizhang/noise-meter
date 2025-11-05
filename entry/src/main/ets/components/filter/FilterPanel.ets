@@ -124,7 +124,9 @@ export struct FilterPanel {
           .borderRadius(DesignConstants.BORDER_RADIUS_MD)
           .width('100%')
           .onClick(() => {
+            Throttle.click(() => {
             this.toggleDecibelRange(range, !this.isDecibelRangeSelected(range));
+            });
           })
         })
       }
@@ -226,10 +228,12 @@ export struct FilterPanel {
         .backgroundColor($r('sys.color.comp_background_secondary'))
         .borderRadius(DesignConstants.BORDER_RADIUS_MD)
         .onClick(() => {
+          Throttle.click(() => {
           if (!this.filterConfig.status) {
             this.filterConfig.status = new StatusFilter();
           }
           this.filterConfig.status.favoriteOnly = !this.filterConfig.status.favoriteOnly;
+          });
         })
 
         GridCol({ span: 1 }) {
@@ -259,10 +263,12 @@ export struct FilterPanel {
         .backgroundColor($r('sys.color.comp_background_secondary'))
         .borderRadius(DesignConstants.BORDER_RADIUS_MD)
         .onClick(() => {
+          Throttle.click(() => {
           if (!this.filterConfig.status) {
             this.filterConfig.status = new StatusFilter();
           }
           this.filterConfig.status.hasAudio = !this.filterConfig.status.hasAudio;
+          });
         })
 
         GridCol({ span: 1 }) {
@@ -292,10 +298,12 @@ export struct FilterPanel {
         .backgroundColor($r('sys.color.comp_background_secondary'))
         .borderRadius(DesignConstants.BORDER_RADIUS_MD)
         .onClick(() => {
+          Throttle.click(() => {
           if (!this.filterConfig.status) {
             this.filterConfig.status = new StatusFilter();
           }
           this.filterConfig.status.hasLocation = !this.filterConfig.status.hasLocation;
+          });
         })
       }
     }
@@ -351,7 +359,9 @@ export struct FilterPanel {
         .backgroundColor($r('sys.color.comp_background_secondary'))
         .borderRadius(DesignConstants.BORDER_RADIUS_MD)
         .onClick(() => {
+          Throttle.click(() => {
           this.toggleWeightingType(WeightingType.A, !this.isWeightingTypeSelected(WeightingType.A));
+          });
         })
 
         GridCol({ span: 1 }) {
@@ -378,7 +388,9 @@ export struct FilterPanel {
         .backgroundColor($r('sys.color.comp_background_secondary'))
         .borderRadius(DesignConstants.BORDER_RADIUS_MD)
         .onClick(() => {
+          Throttle.click(() => {
           this.toggleWeightingType(WeightingType.C, !this.isWeightingTypeSelected(WeightingType.C));
+          });
         })
 
         GridCol({ span: 1 }) {
@@ -405,7 +417,9 @@ export struct FilterPanel {
         .backgroundColor($r('sys.color.comp_background_secondary'))
         .borderRadius(DesignConstants.BORDER_RADIUS_MD)
         .onClick(() => {
+          Throttle.click(() => {
           this.toggleWeightingType(WeightingType.Z, !this.isWeightingTypeSelected(WeightingType.Z));
+          });
         })
       }
     }

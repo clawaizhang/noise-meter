@@ -83,16 +83,18 @@ export struct MyContentComponent {
             right: 16
           })
           .onClick(() => {
+            Throttle.click(() => {
             DialogHub.getSheet()
-              .setStyle({
-                title: { title: '色彩模式' },
-                backgroundColor: $r('sys.color.background_secondary')
-              })
-              .setConfig({ scrollSizeMode: ScrollSizeMode.FOLLOW_DETENT })
-              .setComponentTargetId('mainId')
-              .setContent(wrapBuilder(DisplayModeCardBuilder))
-              .build()
-              .show();
+            .setStyle({
+              title: { title: '色彩模式' },
+              backgroundColor: $r('sys.color.background_secondary')
+            })
+            .setConfig({ scrollSizeMode: ScrollSizeMode.FOLLOW_DETENT })
+            .setComponentTargetId('mainId')
+            .setContent(wrapBuilder(DisplayModeCardBuilder))
+            .build()
+            .show();
+            });
           })
 
           // // 后台运行设置

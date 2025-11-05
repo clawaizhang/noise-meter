@@ -17,6 +17,7 @@ import {
 import common from '@ohos.app.ability.common';
 import { PremiumFeature } from '../membership/PremiumFeature';
 import promptAction from '@ohos.promptAction';
+import { Throttle } from '../../utils/Debounce';
 
 // 分贝区间统计数据
 @ObservedV2
@@ -241,7 +242,9 @@ export struct EnhancedExposureContent {
       .backgroundColor($r('sys.color.comp_background_primary'))
       .borderRadius(DesignConstants.BORDER_RADIUS_MD)
       .onClick(() => {
+        Throttle.click(() => {
         this.isStandardSelectorOpen = !this.isStandardSelectorOpen;
+        });
       })
 
       // 标准选择下拉菜单
@@ -299,9 +302,11 @@ export struct EnhancedExposureContent {
             .backgroundColor($r('sys.color.comp_background_primary'))
             .borderRadius(DesignConstants.BORDER_RADIUS_MD)
             .onClick(() => {
+              Throttle.click(() => {
               this.selectedStandard = standard;
               this.isStandardSelectorOpen = false;
               this.loadAllData();
+              });
             })
           }, (item: NoiseExposureStandard) => item)
         }
@@ -372,7 +377,9 @@ export struct EnhancedExposureContent {
     .width(120)
     .height(120)
     .onClick(() => {
+      Throttle.click(() => {
       this.refreshData();
+      });
     })
   }
 
@@ -412,7 +419,9 @@ export struct EnhancedExposureContent {
           .fillColor($r('sys.color.font_secondary'))
           .margin({ top: DesignConstants.SPACING_XS, right: DesignConstants.SPACING_XS })
           .onClick(() => {
+            Throttle.click(() => {
             this.showDataSaveHint();
+            });
           })
       }
       .width('100%')

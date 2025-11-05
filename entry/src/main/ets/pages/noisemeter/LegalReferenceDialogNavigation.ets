@@ -1,6 +1,7 @@
 import { curves, AppStorageV2 } from '@kit.ArkUI';
 import { AppKeys } from '../../models/AppKeys';
 import { DecibelService } from '../../services/DecibelService';
+import { Throttle } from '../../utils/Debounce';
 
 // 法规政策数据接口
 interface LegalReferenceData {
@@ -308,7 +309,9 @@ struct LegalReferenceComponent {
           .backgroundColor(this.selectedCategory === item.category ? $r('sys.color.comp_background_primary') : $r('sys.color.background_secondary'))
           .borderRadius(8)
           .onClick(() => {
+            Throttle.click(() => {
             this.selectedCategory = item.category
+            });
           })
       })
     }

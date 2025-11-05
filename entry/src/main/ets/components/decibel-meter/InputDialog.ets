@@ -64,8 +64,10 @@ export struct InputDialog {
               .fontColor(Color.White)
               .backgroundColor($r('sys.color.font_emphasize'))
               .onClick(() => {
+                Throttle.click(() => {
                 this.onClose();
                 this.onConfirm?.(this.comment);
+                });
               })
           }
         }

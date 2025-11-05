@@ -1,6 +1,7 @@
 import { AppStorageV2, curves } from '@kit.ArkUI';
 import { AppKeys } from '../../models/AppKeys';
 import { DecibelService } from '../../services/DecibelService';
+import { Throttle } from '../../utils/Debounce';
 
 // 国际标准数据接口
 interface InternationalStandard {
@@ -133,7 +134,9 @@ struct StandardComparisonComponent {
           .backgroundColor(this.selectedAreaType === item.type ? $r('sys.color.comp_background_primary') : $r('sys.color.background_secondary'))
           .borderRadius(8)
           .onClick(() => {
+            Throttle.click(() => {
             this.selectedAreaType = item.type
+            });
           })
       })
     }

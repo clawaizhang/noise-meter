@@ -155,7 +155,9 @@ export struct StatusAlertsComponent {
             .type(ButtonType.Capsule)
             .onClick(() => {
               // 移除特定错误消息
+              Throttle.click(() => {
               this.errorMessages.splice(index, 1)
+              });
             })
         }
         .width('100%')

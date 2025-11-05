@@ -458,9 +458,11 @@ export struct MembershipStatusCard {
     .width('100%')
     .onClick(() => {
       // 仅专业版用户可以点击查看详情
+      Throttle.click(() => {
       if (this.pk.has_agreed_membership_reward && this.pk.member_ship.can) {
         this.showProDetails();
       }
+      });
     })
   }
 }

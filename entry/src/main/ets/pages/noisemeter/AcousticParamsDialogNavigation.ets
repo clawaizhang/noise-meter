@@ -1,5 +1,6 @@
 import { curves, AppStorageV2 } from '@kit.ArkUI';
 import { AppKeys } from '../../models/AppKeys';
+import { Throttle } from '../../utils/Debounce';
 
 // 声学参数数据接口
 interface AcousticParameter {
@@ -248,7 +249,9 @@ struct AcousticParamsComponent {
           .backgroundColor(this.selectedCategory === item.category ? $r('sys.color.comp_background_primary') : $r('sys.color.background_secondary'))
           .borderRadius(8)
           .onClick(() => {
+            Throttle.click(() => {
             this.selectedCategory = item.category
+            });
           })
       })
     }

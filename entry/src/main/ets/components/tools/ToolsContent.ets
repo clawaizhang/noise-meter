@@ -270,7 +270,11 @@ export struct ToolsContent {
     .justifyContent(FlexAlign.Center)
     .alignItems(VerticalAlign.Center)
     .shadow(DesignConstants.SHADOW_SM)
-    .onClick(config.onTap)
+    .onClick(() => {
+      Throttle.click(() => {
+        config.onTap()
+      });
+    })
   }
 
 
