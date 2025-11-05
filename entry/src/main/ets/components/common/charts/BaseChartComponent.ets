@@ -69,7 +69,7 @@ export struct BaseChartComponent {
     const ASPECT_RATIO: number = this.chartConfig.aspectRatio;
 
     // 基于横向断点判断布局模式
-    if (widthBp <= 1 && heightBp <= HeightBreakpoint.HEIGHT_MD) { // XS/SM断点
+    if (widthBp <= 1) { // XS/SM断点
       // 小屏幕：单列布局，图表占满屏幕宽度
       this.canvasWidth = this.ak.windowWidth - 32; // 减去边距
       this.canvasHeight = this.canvasWidth / ASPECT_RATIO;
