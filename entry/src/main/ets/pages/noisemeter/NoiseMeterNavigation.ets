@@ -112,12 +112,8 @@ export struct MainNoiseMeter {
     .flexGrow(1)
   }
 
-  private homeMenus: Array<NavigationMenuItem> = [
-
-  ]
-  private noiseMeterMenus: Array<NavigationMenuItem> = [
-
-  ]
+  private homeMenus: Array<NavigationMenuItem> = []
+  private noiseMeterMenus: Array<NavigationMenuItem> = []
   private alertsMenus: Array<NavigationMenuItem> = [
     {
       value: '警报设置',
@@ -151,12 +147,8 @@ export struct MainNoiseMeter {
       }
     }
   ]
-  private referenceMenus: Array<NavigationMenuItem> = [
-
-  ]
-  private toolsMenus: Array<NavigationMenuItem> = [
-
-  ]
+  private referenceMenus: Array<NavigationMenuItem> = []
+  private toolsMenus: Array<NavigationMenuItem> = []
 
   @Builder
   HomeContent() {
@@ -177,8 +169,7 @@ export struct MainNoiseMeter {
     Column() {
       // 噪音检测区域
       DashBoard({ meterOn: true })
-        .id('decibelMeterId')
-        .width('92%')
+        .id('decibelMeterId').padding({ left: 16, right: 16 })
     }
     .id('decibelMeterRoot')
     .justifyContent(FlexAlign.Center)
@@ -269,7 +260,7 @@ export struct MainNoiseMeter {
         // 主页页面 - 使用DashboardContent组件
         TabContent() {
           this.DashboardContent()
-        }
+        }.align(Alignment.Top)
         .tabBar(this.TabBuilder({
           title: '仪表盘',
           icon: this.currentIndex == 1 ? $r("app.media.solar_spedometer_middle_bold") : $r("app.media.ic_meter"),

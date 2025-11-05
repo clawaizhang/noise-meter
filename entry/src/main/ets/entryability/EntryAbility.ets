@@ -56,7 +56,7 @@ export default class EntryAbility extends UIAbility {
     // 注册窗口并加载内容
     const windowManager = WindowManager.getInstance();
     windowManager.registerWindowStage(windowStage);
-    windowManager.loadContent('pages/Index', () => {
+    windowManager.loadContent('pages/Index', (windowStageRegistered) => {
       AppUtil.init(this.context);
       PersistenceV2.connect(PreferenceKeys, () => new PreferenceKeys());
       AppStorageV2.connect(AppKeys, () => new AppKeys())!;
@@ -65,46 +65,47 @@ export default class EntryAbility extends UIAbility {
       PersistenceV2.notifyOnError((key: string, reason: string, msg: string) => {
         console.error(`error key: ${key}, reason: ${reason}, message: ${msg}`);
       });
+      // 获取设备类型并设置窗口方向
+      windowStageRegistered?.getMainWindow((err: BusinessError, windowClass) => {
+        if (err.code || !windowClass) {
+          hilog.error(DOMAIN, TAG,
+            `Failed to obtain the main window. Cause code: ${err.code}, message: ${err.message}`);
+          return;
+        }
+        this.mainWindow = windowClass;
+        // 初始化窗口尺寸和断点信息
+        this.updateWindowBreakpointInfo();
+
+        // 监听窗口尺寸变化
+        this.setupWindowSizeChangeListener();
+        // 使用系统提供的断点计算方法
+        const uiContext = this.mainWindow.getUIContext();
+        const widthBp = uiContext.getWindowWidthBreakpoint();
+        // 获取设备类型
+        let orientation = window.Orientation.AUTO_ROTATION;
+        windowClass.getWindowProperties().windowRect
+        // 判断设备类型来设置窗口显示方向
+        if (widthBp <= WidthBreakpoint.WIDTH_SM) {
+          // 小屏强制竖屏
+          orientation = window.Orientation.PORTRAIT;
+        }
+        try {
+          windowClass.setPreferredOrientation(orientation, (err: BusinessError) => {
+            const errCode: number = err.code;
+            if (errCode) {
+              hilog.error(DOMAIN, TAG,
+                `Failed to set window orientation. Cause code: ${err.code}, message: ${err.message}`);
+              return;
+            }
+            hilog.info(DOMAIN, TAG, 'Succeeded in setting window orientation.');
+          });
+        } catch (exception) {
+          hilog.error(DOMAIN, TAG,
+            `Failed to set window orientation. Cause code: ${exception.code}, message: ${exception.message}`);
+        }
+      });
     });
 
-    // 获取设备类型并设置窗口方向
-    windowStage?.getMainWindow((err: BusinessError, windowClass) => {
-      if (err.code || !windowClass) {
-        hilog.error(DOMAIN, TAG, `Failed to obtain the main window. Cause code: ${err.code}, message: ${err.message}`);
-        return;
-      }
-      this.mainWindow = windowClass;
-      // 初始化窗口尺寸和断点信息
-      this.updateWindowBreakpointInfo();
-
-      // 监听窗口尺寸变化
-      this.setupWindowSizeChangeListener();
-      // 使用系统提供的断点计算方法
-      const uiContext = this.mainWindow.getUIContext();
-      const widthBp = uiContext.getWindowWidthBreakpoint();
-      // 获取设备类型
-      let orientation = window.Orientation.AUTO_ROTATION;
-      windowClass.getWindowProperties().windowRect
-      // 判断设备类型来设置窗口显示方向
-      if (widthBp <= WidthBreakpoint.WIDTH_SM) {
-        // 小屏强制竖屏
-        orientation = window.Orientation.PORTRAIT;
-      }
-      try {
-        windowClass.setPreferredOrientation(orientation, (err: BusinessError) => {
-          const errCode: number = err.code;
-          if (errCode) {
-            hilog.error(DOMAIN, TAG,
-              `Failed to set window orientation. Cause code: ${err.code}, message: ${err.message}`);
-            return;
-          }
-          hilog.info(DOMAIN, TAG, 'Succeeded in setting window orientation.');
-        });
-      } catch (exception) {
-        hilog.error(DOMAIN, TAG,
-          `Failed to set window orientation. Cause code: ${exception.code}, message: ${exception.message}`);
-      }
-    });
 
   }
 

@@ -6,17 +6,11 @@ import { TimeDomainChartComponent } from './TimeDomainChartComponent';
 import { StatisticsChartComponent } from '../statistics/StatisticsChartComponent';
 import { FullScreenChartDashboard } from './FullScreenChartDashboard';
 import { PreferenceKeys } from '../../models/PreferenceKeys';
-import { LocationInfo } from '../../services/LocationService';
-import { LocationDisplay } from '../business/LocationDisplay';
 import { resourceManager } from '@kit.LocalizationKit';
 import { image } from '@kit.ImageKit';
 import { AppKeys } from '../../models/AppKeys';
-import { PermissionService } from '../../services/PermissionService';
-import { AudioController } from './AudioController';
 import { AudioControllerService } from '../../services/AudioControllerService';
-import { AudioDeviceMonitorService } from '../../services/AudioDeviceMonitorService';
 import { Throttle } from '../../utils/Debounce';
-import { StatusAlertsComponent } from '../status-alerts/StatusAlertsComponent';
 
 @ComponentV2
 export struct DashBoard {
@@ -44,7 +38,7 @@ export struct DashBoard {
       if (this.isFullScreenMode) {
         FullScreenChartDashboard({
           canvasWidth: this.ak.windowWidth - 32,
-          canvasHeight: this.ak.windowHeight - 330, // 重新计算高度：120 + 底部标签栏56px
+          canvasHeight: this.ak.windowHeight - 260,
           initialChartType: this.currentFullScreenChartType,
           onExitFullScreen: () => {
             this.exitFullScreenMode();
@@ -127,6 +121,7 @@ export struct DashBoard {
         }
         .scrollBar(BarState.Off)
         .edgeEffect(EdgeEffect.Spring)
+        .align(Alignment.Top)
       }
 
       Column()

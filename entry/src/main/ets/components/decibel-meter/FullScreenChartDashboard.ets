@@ -230,22 +230,6 @@ export struct FullScreenChartDashboard {
   }
 
   /**
-   * 获取图表类型对应的显示名称
-   */
-  private getChartDisplayName(chartType: ChartType): string {
-    switch (chartType) {
-      case ChartType.SPECTRUM:
-        return '频谱图';
-      case ChartType.TIME_DOMAIN:
-        return '时域图';
-      case ChartType.STATISTICS:
-        return '统计分布图';
-      default:
-        return '未知图表';
-    }
-  }
-
-  /**
    * 获取图表类型对应的标题
    */
   private getChartTitle(chartType: ChartType): string {
@@ -382,11 +366,9 @@ export struct FullScreenChartDashboard {
   @Builder
   private buildChartArea() {
     Column() {
-      // 顶部标题栏
-      this.buildTitleBar()
 
       // 图表内容区域
-      Stack({ alignContent: Alignment.Center }) {
+      Stack({ alignContent: Alignment.TopEnd }) {
         // 频谱图
         if (this.currentChartType === ChartType.SPECTRUM) {
           SpectrumChartComponent({ canvasWidthInput: this.canvasWidth, canvasHeightInput: this.canvasHeight })
@@ -416,6 +398,9 @@ export struct FullScreenChartDashboard {
             .translate({ x: this.swipeOffset })
             .padding({ bottom: 8 }) // 添加底部间距，避免被标签栏遮挡
         }
+
+        // 顶部标题栏
+        this.buildTitleBar()
 
       }
       .width('100%')
@@ -464,42 +449,24 @@ export struct FullScreenChartDashboard {
    */
   @Builder
   private buildTitleBar() {
-    Row() {
-      // 图表标题
-      Text(this.getChartTitle(this.currentChartType))
-        .fontSize(20)
-        .fontColor($r('sys.color.ohos_id_color_text_primary'))
-        .fontWeight(FontWeight.Medium)
-        .layoutWeight(1)
-        .textAlign(TextAlign.Center)
-
-      // 退出全屏按钮 - 优化视觉设计
-      Button() {
-        Image($r('app.media.ic_close'))
-          .width(24)
-          .height(24)
-          .fillColor($r('sys.color.ohos_id_color_text_primary'))
-      }
-      .type(ButtonType.Circle)
-      .backgroundColor($r('sys.color.comp_background_tertiary'))
-      .width(48)
-      .height(48)
-      .opacity(0.9)
-      .onClick(() => {
-        this.exitFullScreen();
-      })
+    // 退出全屏按钮 - 优化视觉设计
+    Button() {
+      Image($r('app.media.ic_close'))
+        .width(48)
+        .height(48)
+        .fillColor('#99ffffff')
     }
-    .width('100%')
-    .height(60)
-    .padding({ left: 16, right: 16 })
-    .backgroundColor($r('sys.color.comp_background_primary'))
-    .border({
-      width: { bottom: 1 },
-      color: $r('sys.color.comp_border_color'),
-      style: BorderStyle.Solid
+    .type(ButtonType.Circle)
+    .backgroundColor('#190a59f7')
+    .width(48)
+    .height(48)
+    .opacity(0.9)
+    .onClick(() => {
+      this.exitFullScreen();
     })
+    .padding({ top: 8})
+    .offset({ right: 8})
   }
-
 
   build() {
     Column() {

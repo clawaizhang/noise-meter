@@ -308,7 +308,7 @@ export struct StatisticsChartComponent {
         model: this.barChartModel
       })
         .width('100%')
-        .height(this.layoutConfig.chartHeight)
+        .height(this.canvasHeightInput ? this.canvasHeightInput - 260 : this.layoutConfig.chartHeight)
         .margin({ bottom: 16 })
 
       // 统计指标显示
@@ -322,7 +322,7 @@ export struct StatisticsChartComponent {
     .width('100%')
     .padding(16)
     .backgroundColor('#ff2e3033')
-    .borderRadius(8)
+    .borderRadius(16)
   }
 
   // 构建统计信息显示

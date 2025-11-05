@@ -28,7 +28,7 @@ export class WindowManager {
   }
 
   // 加载页面内容
-  public loadContent(pagePath: string, then: () => void): void {
+  public loadContent(pagePath: string, then: (windowStage:window.WindowStage | null) => void): void {
     if (!this.windowStage) {
       hilog.error(DOMAIN, TAG, 'WindowStage is null');
       return;
@@ -42,7 +42,7 @@ export class WindowManager {
       this.windowStage?.getMainWindow().then(windowObj => {
         DialogHub.init(windowObj.getUIContext());
       })
-      then();
+      then(this.windowStage);
       hilog.info(DOMAIN, TAG, 'Succeeded in loading the content.');
     });
   }
