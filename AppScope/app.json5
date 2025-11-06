@@ -2,8 +2,8 @@
   "app": {
     "bundleName": "yu.zhang.myapplication.noise_meter_pro",
     "vendor": "zhang.yu",
-    "versionCode": 1006039,
-    "versionName": "1.6.39",
+    "versionCode": 1006051,
+    "versionName": "1.6.51",
     "icon": "$media:layered_image",
     "label": "$string:app_name"
   }
