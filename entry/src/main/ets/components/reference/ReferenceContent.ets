@@ -147,7 +147,9 @@ export struct ReferenceContent {
             currentValue: this.getHealthImpactStatus(),
             currentColor: this.getHealthImpactColor(),
             onTap: () => {
-              this.openHealthImpactDialog()
+              Throttle.click(() => {
+                this.openHealthImpactDialog()
+              })
             },
             theme: 'red',
             detailInfo: '基于OSHA标准的职业健康安全参考'
@@ -163,7 +165,9 @@ export struct ReferenceContent {
             currentValue: this.getStandardComparison(),
             currentColor: this.getStandardComparisonColor(),
             onTap: () => {
+              Throttle.click(() => {
               this.openStandardComparisonDialog()
+              })
             },
             theme: 'blue',
             detailInfo: '国际噪音标准对比分析'
@@ -179,7 +183,9 @@ export struct ReferenceContent {
             currentValue: this.getScenarioAdvice(),
             currentColor: this.getScenarioAdviceColor(),
             onTap: () => {
+              Throttle.click(() => {
               this.openScenarioAdviceDialog()
+              })
             },
             theme: 'green',
             detailInfo: '不同场景的噪音控制参考'
@@ -196,7 +202,9 @@ export struct ReferenceContent {
             currentValue: this.getAcousticParams(),
             currentColor: this.getAcousticParamsColor(),
             onTap: () => {
+              Throttle.click(() => {
               this.openAcousticParamsDialog()
+              })
             },
             theme: 'purple',
             detailInfo: '专业声学测量参数说明'
@@ -212,7 +220,9 @@ export struct ReferenceContent {
             currentValue: this.getDevicePerformance(),
             currentColor: this.getDevicePerformanceColor(),
             onTap: () => {
+              Throttle.click(() => {
               this.openDevicePerformanceDialog()
+              })
             },
             theme: 'orange',
             detailInfo: '测量设备技术规格参考'
@@ -228,7 +238,9 @@ export struct ReferenceContent {
             currentValue: this.getLegalReference(),
             currentColor: this.getLegalReferenceColor(),
             onTap: () => {
+              Throttle.click(() => {
               this.openLegalReferenceDialog()
+              })
             },
             theme: 'gray',
             detailInfo: '噪音相关法律法规参考'
@@ -241,70 +253,6 @@ export struct ReferenceContent {
       // 实时对比显示区域（保持不变）
       this.buildRealTimeComparison()
     }
-  }
-
-  @Builder
-  private buildReferenceCard(config: ReferenceCardConfig) {
-    Row({ space: DesignConstants.SPACING_MD }) {
-      // 左侧图标区域
-      Image(config.icon)
-        .width(32)
-        .height(32)
-        .fillColor($r('sys.color.icon_primary'))
-
-      // 右侧内容区域
-      Column({ space: DesignConstants.SPACING_XS }) {
-        // 标题行
-        Row() {
-          Text(config.title)
-            .fontSize(DesignConstants.FONT_SIZE_MD)
-            .fontWeight(FontWeight.Medium)
-            .fontColor($r('sys.color.font_primary'))
-
-          Blank()
-        }
-        .width('100%')
-
-        // 描述行
-        Row() {
-          Text(config.description)
-            .fontSize(DesignConstants.FONT_SIZE_SM)
-            .fontColor($r('sys.color.font_secondary'))
-
-          Blank()
-        }
-        .width('100%')
-
-        // 当前值显示区域
-        if (config.currentValue) {
-          Row() {
-            Text(config.currentValue)
-              .fontSize(DesignConstants.FONT_SIZE_SM)
-              .fontWeight(FontWeight.Medium)
-              .fontColor(config.currentColor || $r('sys.color.font_primary'))
-
-            Blank()
-          }
-          .width('100%')
-          .margin({ top: DesignConstants.SPACING_XS })
-        }
-      }
-      .layoutWeight(1)
-      .alignItems(HorizontalAlign.Start)
-    }
-    .width('100%')
-    .height(80)
-    .padding(DesignConstants.SPACING_MD)
-    .backgroundColor($r('sys.color.comp_background_primary'))
-    .borderRadius(DesignConstants.BORDER_RADIUS_LG)
-    .justifyContent(FlexAlign.Center)
-    .alignItems(VerticalAlign.Center)
-    .shadow(DesignConstants.SHADOW_SM)
-    .onClick(() => {
-      Throttle.click(() => {
-        config.onTap();
-    });
-    })
   }
 
   @Builder

@@ -511,7 +511,8 @@ export struct AudioController {
       // 原有的启动录制逻辑...
       await this.tryStartCapture();
       this.ak.dataProcessingState.statisticsData.startTime = new Date().getTime();
-      this.resetData();
+      // 注释掉开始录音时的数据重置，改为在停止录音时重置
+      // this.resetData();
       this.clearErrorMessage();
 
       // 创建新的记录对象...
