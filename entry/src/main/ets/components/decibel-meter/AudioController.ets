@@ -114,26 +114,6 @@ export struct AudioController {
       this.performSave(comments);
     });
 
-    // 订阅开始检测事件
-    this.audioControllerService.subscribeStartDetection(() => {
-      this.startRecording();
-    });
-
-    // 订阅停止检测事件
-    this.audioControllerService.subscribeStopDetection((comment:string) => {
-      this.stopRecording(comment);
-    });
-
-    // 订阅暂停检测事件
-    this.audioControllerService.subscribePauseDetection(() => {
-      this.pauseRecording();
-    });
-
-    // 订阅恢复检测事件
-    this.audioControllerService.subscribeResumeDetection(() => {
-      this.resumeRecording();
-    });
-
     // 订阅位置数据流
     this.locationSubscription = this.audioControllerService.getLocation$().subscribe(
       (location: LocationInfo | null) => {
@@ -185,32 +165,6 @@ export struct AudioController {
       const stateMachine = this.audioControllerService.getStateMachine();
       if (stateMachine) {
         await stateMachine.startRecording();
-      }
-    } catch (error) {
-      console.error('[AudioController] 启动录制失败:', error);
-      throw new Error('启动录制失败');
-    }
-  }
-
-  async resumeRecording(): Promise<void> {
-    try {
-      // 使用状态机控制录制
-      const stateMachine = this.audioControllerService.getStateMachine();
-      if (stateMachine) {
-        await stateMachine.resumeRecording();
-      }
-    } catch (error) {
-      console.error('[AudioController] 启动录制失败:', error);
-      throw new Error('启动录制失败');
-    }
-  }
-
-  async pauseRecording(): Promise<void> {
-    try {
-      // 使用状态机控制录制
-      const stateMachine = this.audioControllerService.getStateMachine();
-      if (stateMachine) {
-        await stateMachine.pauseRecording();
       }
     } catch (error) {
       console.error('[AudioController] 启动录制失败:', error);
@@ -526,6 +480,7 @@ export struct AudioController {
    */
   private async handleResumeRecordingEvent(): Promise<void> {
     try {
+      console.info('[AudioController] 开始处理恢复录制事件');
       await this.originalResumeRecording();
       console.info('[AudioController] 通过事件恢复录制成功');
     } catch (error) {
@@ -553,6 +508,11 @@ export struct AudioController {
       case AudioControllerLifecycleState.CONTROLLER_STARTING:
         console.info('[状态机] 启动录制中...');
         this.autoSaveService.startAutoSaveMonitoring();
+        break;
+      case AudioControllerLifecycleState.CONTROLLER_RESUMING:
+        console.info('[状态机] 恢复录制中...');
+        // 恢复录制时不重置自动保存监控，继续使用现有配置
+        this.autoSaveService.resumeAutoSaveMonitoring();
         break;
       case AudioControllerLifecycleState.CONTROLLER_RECORDING:
         console.info('[状态机] 录制状态已设置为true');

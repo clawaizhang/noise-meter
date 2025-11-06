@@ -53,6 +53,7 @@ export class AudioControllerStateMachine implements AudioControllerStateMachineI
     const validTransitions: Record<AudioControllerLifecycleState, AudioControllerLifecycleState[]> = {
       [AudioControllerLifecycleState.CONTROLLER_IDLE]: [
         AudioControllerLifecycleState.CONTROLLER_STARTING,
+        AudioControllerLifecycleState.CONTROLLER_RESUMING,
         AudioControllerLifecycleState.CONTROLLER_ERROR
       ],
       [AudioControllerLifecycleState.CONTROLLER_STARTING]: [
@@ -70,11 +71,17 @@ export class AudioControllerStateMachine implements AudioControllerStateMachineI
       ],
       [AudioControllerLifecycleState.CONTROLLER_PAUSING]: [
         AudioControllerLifecycleState.CONTROLLER_IDLE,
+        AudioControllerLifecycleState.CONTROLLER_RESUMING,
+        AudioControllerLifecycleState.CONTROLLER_ERROR
+      ],
+      [AudioControllerLifecycleState.CONTROLLER_RESUMING]: [
+        AudioControllerLifecycleState.CONTROLLER_RECORDING,
         AudioControllerLifecycleState.CONTROLLER_ERROR
       ],
       [AudioControllerLifecycleState.CONTROLLER_ERROR]: [
         AudioControllerLifecycleState.CONTROLLER_IDLE,
-        AudioControllerLifecycleState.CONTROLLER_STARTING
+        AudioControllerLifecycleState.CONTROLLER_STARTING,
+        AudioControllerLifecycleState.CONTROLLER_RESUMING
       ]
     };
     
@@ -184,11 +191,11 @@ export class AudioControllerStateMachine implements AudioControllerStateMachineI
   }
   
   public async resumeRecording(): Promise<void> {
-    if (!this.canTransitionTo(AudioControllerLifecycleState.CONTROLLER_STARTING)) {
+    if (!this.canTransitionTo(AudioControllerLifecycleState.CONTROLLER_RESUMING)) {
       throw new Error(`无法从 ${this.currentState} 状态恢复录制`);
     }
     
-    this.transitionTo(AudioControllerLifecycleState.CONTROLLER_STARTING, '用户请求恢复录制');
+    this.transitionTo(AudioControllerLifecycleState.CONTROLLER_RESUMING, '用户请求恢复录制');
     
     try {
       // 发布恢复录制事件
@@ -294,6 +301,14 @@ export class AudioControllerStateMachine implements AudioControllerStateMachineI
           this.transitionTo(AudioControllerLifecycleState.CONTROLLER_RECORDING, 'AudioService开始采集');
         } else if (audioState === AudioServiceState.IDLE) {
           this.transitionTo(AudioControllerLifecycleState.CONTROLLER_ERROR, 'AudioService启动失败', error);
+        }
+        break;
+        
+      case AudioControllerLifecycleState.CONTROLLER_RESUMING:
+        if (audioState === AudioServiceState.IDLE || audioState === AudioServiceState.STARTING) {
+          this.transitionTo(AudioControllerLifecycleState.CONTROLLER_RECORDING, 'AudioService恢复采集');
+        } else if (audioState === AudioServiceState.CAPTURING) {
+          this.transitionTo(AudioControllerLifecycleState.CONTROLLER_ERROR, 'AudioService恢复失败', error);
         }
         break;
         
