@@ -460,7 +460,7 @@ export struct FullScreenChartDashboard {
         .fillColor('#99ffffff')
     }
     .type(ButtonType.Circle)
-    .backgroundColor('#190a59f7')
+    .backgroundColor(Color.Transparent)
     .width(48)
     .height(48)
     .opacity(0.9)
