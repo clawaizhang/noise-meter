@@ -7,6 +7,7 @@ import { SpectrumChartComponent } from './SpectrumChartComponent';
 import { TimeDomainChartComponent } from './TimeDomainChartComponent';
 import { StatisticsChartComponent } from '../statistics/StatisticsChartComponent';
 import { Throttle } from '../../utils/Debounce';
+import curves from '@ohos.curves';
 
 // 图表类型枚举
 enum ChartType {
@@ -35,6 +36,7 @@ export struct FullScreenChartDashboard {
   @Local private verticalSwipeEndY: number = 0;
   @Local private verticalSwipeDistance: number = 0;
   @Local private isVerticalSwipeActive: boolean = false;
+  @Local private showExitButton: boolean = false; // 控制退出全屏按钮显示状态
 
   aboutToAppear() {
     console.info('[全屏仪表盘] 组件初始化完成');
@@ -251,6 +253,8 @@ export struct FullScreenChartDashboard {
    */
   private exitFullScreen(): void {
     console.info('[全屏仪表盘] 退出全屏模式');
+    // 隐藏退出按钮
+    this.showExitButton = false;
     // 触发父组件的退出全屏逻辑
     this.onExitFullScreen();
   }
@@ -445,6 +449,9 @@ export struct FullScreenChartDashboard {
     .width('100%')
     .height('100%')
     .layoutWeight(1)
+    .onClick(() => {
+        this.showExitButton = !this.showExitButton;
+    })
   }
 
   /**
@@ -452,23 +459,27 @@ export struct FullScreenChartDashboard {
    */
   @Builder
   private buildTitleBar() {
-    // 退出全屏按钮 - 优化视觉设计
-    Button() {
-      Image($r('app.media.ic_close'))
-        .width(48)
-        .height(48)
-        .fillColor('#99ffffff')
+    // 退出全屏按钮 - 默认不显示，进入全屏图表模式时显示
+    // 点击全屏图表时会隐藏
+    if (this.showExitButton) {
+      Button() {
+        Image($r('app.media.ic_close'))
+          .width(48)
+          .height(48)
+          .fillColor('#99ffffff')
+      }
+      .type(ButtonType.Circle)
+      .backgroundColor(Color.Transparent)
+      .width(48)
+      .height(48)
+      .opacity(0.9)
+      .onClick(() => {
+        this.exitFullScreen();
+      })
+      .padding({ top: 8})
+      .offset({ right: 8})
+      .transition(TransitionEffect.scale({x: 0, y: 0}).animation({ curve: curves.springMotion() }))
     }
-    .type(ButtonType.Circle)
-    .backgroundColor(Color.Transparent)
-    .width(48)
-    .height(48)
-    .opacity(0.9)
-    .onClick(() => {
-      this.exitFullScreen();
-    })
-    .padding({ top: 8})
-    .offset({ right: 8})
   }
 
   build() {

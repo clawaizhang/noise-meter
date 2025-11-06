@@ -208,6 +208,8 @@ export struct DashBoard {
     this.isFullScreenMode = true;
     // 将图表类型传递给全屏组件
     this.currentFullScreenChartType = chartType;
+    // 每次进入全屏模式时，FullScreenChartDashboard组件会重新创建
+    // 因此退出按钮会在aboutToAppear中重新显示
   }
 
   /**
