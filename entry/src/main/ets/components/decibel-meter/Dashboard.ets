@@ -1,5 +1,5 @@
 import { navigationStack } from '../../constants/ProviderConstant';
-import { AppStorageV2, PersistenceV2 } from '@kit.ArkUI';
+import { AppStorageV2, curves, PersistenceV2 } from '@kit.ArkUI';
 import display from '@ohos.display';
 import { SpectrumChartComponent } from './SpectrumChartComponent';
 import { TimeDomainChartComponent } from './TimeDomainChartComponent';
@@ -41,12 +41,16 @@ export struct DashBoard {
           canvasHeight: this.ak.windowHeight - 260,
           initialChartType: this.currentFullScreenChartType,
           onExitFullScreen: () => {
-            this.exitFullScreenMode();
+            this.getUIContext().animateTo({ duration: 600, curve: Curve.EaseInOut }, () => {
+              this.exitFullScreenMode();
+            })
           },
         })
           .borderRadius(16)
           .width('100%')
           .height('100%')
+          .geometryTransition("FullScreenChartDashboard")
+          .transition(TransitionEffect.OPACITY)
       } else {
         // 正常模式显示
         Scroll() {
@@ -68,6 +72,8 @@ export struct DashBoard {
                 // 全屏按钮
                 this.buildFullScreenButton('频谱图')
               }
+              .geometryTransition("FullScreenChartDashboard")
+              .transition(TransitionEffect.OPACITY)
             }
             .backgroundColor($r('sys.color.comp_background_primary'))
             .borderRadius(16)
@@ -192,7 +198,9 @@ export struct DashBoard {
         })
         .onClick(() => {
           Throttle.click(() => {
-            this.enterFullScreenMode(chartType);
+            this.getUIContext().animateTo({ duration: 600, curve: Curve.EaseInOut }, () => {
+              this.enterFullScreenMode(chartType);
+            })
           })
         })
     }
