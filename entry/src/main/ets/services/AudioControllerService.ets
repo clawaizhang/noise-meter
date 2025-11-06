@@ -15,6 +15,7 @@ import {
   StartRecordingEvent,
   StopRecordingEvent,
   PauseRecordingEvent,
+  ResumeRecordingEvent,
   ResetDataEvent,
   StateChangeEvent,
   StopRecordingPayload
@@ -136,6 +137,13 @@ export class AudioControllerService {
    */
   public subscribePauseDetection(callback: () => void): void {
     this.onPauseRecording(callback);
+  }
+
+  /**
+   * 订阅恢复检测事件
+   */
+  public subscribeResumeDetection(callback: () => void): void {
+    this.onResumeRecording(callback);
   }
 
   /**
@@ -269,6 +277,16 @@ export class AudioControllerService {
   }
 
   /**
+   * 订阅恢复录制事件
+   */
+  public onResumeRecording(callback: () => void): void {
+    this.eventSubject.pipe(
+      filter(event => event.type === AudioControllerEventType.RESUME_RECORDING),
+      throttleTime(100)
+    ).subscribe(callback);
+  }
+
+  /**
    * 订阅重置数据事件
    */
   public onResetData(callback: () => void): void {
@@ -296,6 +314,11 @@ export class AudioControllerService {
     this.onPauseRecording(() => {
       console.info('[事件路由] 触发暂停检测事件');
       this.pauseDetectionSubject.next();
+    });
+
+    this.onResumeRecording(() => {
+      console.info('[事件路由] 触发恢复检测事件');
+      this.startDetectionSubject.next();
     });
 
     this.onResetData(() => {
@@ -464,6 +487,19 @@ export class AudioControllerService {
       await this.stateMachine.pauseRecording();
     } catch (error) {
       console.error('[外部服务] 暂停录制失败:', error);
+      throw new Error(error);
+    }
+  }
+
+  public async resumeRecordingFromExternal(): Promise<void> {
+    if (!this.stateMachine) {
+      throw new Error('状态机未初始化');
+    }
+
+    try {
+      await this.stateMachine.resumeRecording();
+    } catch (error) {
+      console.error('[外部服务] 恢复录制失败:', error);
       throw new Error(error);
     }
   }

@@ -1,6 +1,6 @@
 import { AudioControllerLifecycleState, StateTransitionEvent, StateMachineConfig, AudioControllerStateMachineInterface } from '../models/AudioControllerLifecycleState';
 import { AudioService, AudioServiceState } from './AudioService';
-import { AudioControllerEvent, AudioControllerEventType, AudioControllerEventPublisher, StartRecordingEvent, StopRecordingEvent, PauseRecordingEvent, ResetDataEvent, StateChangeEvent } from '../models/AudioControllerEvents';
+import { AudioControllerEvent, AudioControllerEventType, AudioControllerEventPublisher, StartRecordingEvent, StopRecordingEvent, PauseRecordingEvent, ResumeRecordingEvent, ResetDataEvent, StateChangeEvent } from '../models/AudioControllerEvents';
 
 /**
  * AudioController状态机实现
@@ -184,11 +184,23 @@ export class AudioControllerStateMachine implements AudioControllerStateMachineI
   }
   
   public async resumeRecording(): Promise<void> {
-    if (this.currentState !== AudioControllerLifecycleState.CONTROLLER_IDLE) {
+    if (!this.canTransitionTo(AudioControllerLifecycleState.CONTROLLER_STARTING)) {
       throw new Error(`无法从 ${this.currentState} 状态恢复录制`);
     }
     
-    await this.startRecording();
+    this.transitionTo(AudioControllerLifecycleState.CONTROLLER_STARTING, '用户请求恢复录制');
+    
+    try {
+      // 发布恢复录制事件
+      this.publishEvent({
+        type: AudioControllerEventType.RESUME_RECORDING,
+        timestamp: Date.now()
+      } as ResumeRecordingEvent);
+      // 注意：实际的状态转换会在AudioService状态变化时触发
+    } catch (error) {
+      this.transitionTo(AudioControllerLifecycleState.CONTROLLER_ERROR, '恢复录制失败', error.message);
+      throw new Error(error.message);
+    }
   }
   
   public async resetState(): Promise<void> {

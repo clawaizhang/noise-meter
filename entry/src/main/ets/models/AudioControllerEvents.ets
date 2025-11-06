@@ -7,6 +7,7 @@ export enum AudioControllerEventType {
   START_RECORDING = 'START_RECORDING',
   STOP_RECORDING = 'STOP_RECORDING',
   PAUSE_RECORDING = 'PAUSE_RECORDING',
+  RESUME_RECORDING = 'RESUME_RECORDING',
   RESET_DATA = 'RESET_DATA',
   STATE_CHANGE = 'STATE_CHANGE'
 }
@@ -47,6 +48,13 @@ export interface StopRecordingEvent extends AudioControllerEvent {
  */
 export interface PauseRecordingEvent extends AudioControllerEvent {
   type: AudioControllerEventType.PAUSE_RECORDING;
+}
+
+/**
+ * 恢复录制事件
+ */
+export interface ResumeRecordingEvent extends AudioControllerEvent {
+  type: AudioControllerEventType.RESUME_RECORDING;
 }
 
 /**

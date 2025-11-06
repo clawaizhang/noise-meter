@@ -15,7 +15,7 @@ import { AudioControllerService } from '../../services/AudioControllerService';
 import { WindowType } from '../../common/WindowType';
 import { Subscription } from 'rxjs';
 import { AudioControllerLifecycleState, StateTransitionEvent } from '../../models/AudioControllerLifecycleState';
-import { AudioControllerEvent, AudioControllerEventType } from '../../models/AudioControllerEvents';
+import { AudioControllerEvent, AudioControllerEventType, ResumeRecordingEvent } from '../../models/AudioControllerEvents';
 import { AutoSaveService } from '../../services/AutoSaveService';
 
 /**
@@ -119,6 +119,11 @@ export struct AudioController {
     // 订阅停止检测事件
     this.audioControllerService.subscribePauseDetection(() => {
       this.stopRecording('手动停止');
+    });
+
+    // 订阅恢复检测事件
+    this.audioControllerService.subscribeResumeDetection(() => {
+      this.startRecording();
     });
 
     // 订阅位置数据流
@@ -414,6 +419,9 @@ export struct AudioController {
       case AudioControllerEventType.PAUSE_RECORDING:
         this.handlePauseRecordingEvent();
         break;
+      case AudioControllerEventType.RESUME_RECORDING:
+        this.handleResumeRecordingEvent();
+        break;
       case AudioControllerEventType.RESET_DATA:
         this.handleResetDataEvent();
         break;
@@ -476,6 +484,19 @@ export struct AudioController {
       } catch (stopError) {
         console.warn('[AudioController] 强制停止音频服务时出错:', stopError);
       }
+    }
+  }
+
+  /**
+   * 处理恢复录制事件
+   */
+  private async handleResumeRecordingEvent(): Promise<void> {
+    try {
+      await this.originalResumeRecording();
+      console.info('[AudioController] 通过事件恢复录制成功');
+    } catch (error) {
+      console.error('[AudioController] 通过事件恢复录制失败:', error);
+      this.audioControllerService.publishError([`恢复录制失败: ${error.message}`]);
     }
   }
 
@@ -611,6 +632,80 @@ export struct AudioController {
       this.addErrorMessage(`音频采集启动失败: ${error.message}`);
       this.resetData();
       throw new Error(`音频采集停止失败: ${error.message}`);
+    }
+  }
+
+  /**
+   * 原有的恢复录制逻辑（继续采集，不重置数据）
+   */
+  private async originalResumeRecording(): Promise<void> {
+    try {
+      await this.tryStartCapture();
+      this.clearErrorMessage();
+
+      // 注意：恢复录制时不重置数据，继续使用现有数据
+
+      // 启动数据清理监控
+      this.startDataCleanupMonitoring();
+
+      // 启动自动保存监控
+      if (this.pk.auto_save_enabled) {
+        this.autoSaveService.startAutoSaveMonitoring();
+      }
+
+      // 注册音频数据回调
+      this.audioService.registerOriginAudioDataCallBack((buffer: ArrayBuffer) => {
+        this.originAudioBuffers.push({ timestamp: Date.now(), buffer: buffer.slice(0) });
+      });
+
+      // 开始处理音频数据
+      this.audioService.startProcessing((buffer: ArrayBuffer) => {
+        const currentTime = Date.now();
+        this.timedAudioBuffers.push({ timestamp: currentTime, buffer: buffer.slice(0) });
+
+        // 处理时域波形数据
+        this.processTimeDomainData(buffer);
+
+        let config = AudioPresets.getConfig(this.pk.audio_analysis_mode);
+        // 计算频谱数据（用于频谱图显示）
+        taskpool.execute<[ArrayBuffer, WeightingType, number, number, WindowType, number, number], Float32Array>(
+          concurrentCalculateSpectrum,
+          buffer.slice(0),
+          this.pk.weighting_type,
+          this.pk.calibration_value,
+          config.fftSize,
+          config.windowType,
+          config.smoothingFactor,
+          config.overlap
+        ).then((spectrum) => {
+          // 双管线架构：频谱数据通过状态管理，不再通过事件传递
+
+          // 计算分贝值
+          const config = AudioPresets.getConfig(this.pk.audio_analysis_mode);
+          const db: number = new FFTAnalyzer(
+            config.fftSize,
+            config.windowType,
+            config.smoothingFactor,
+            config.overlap
+          ).calculateAverageDb(spectrum);
+          let currentDecibel = Number(Math.round(db).toFixed(1));
+
+          // 收集分贝值和加权类型（带时间戳）
+          const currentTime = new Date().getTime();
+          this.timedValues.push({ timestamp: currentTime, value: currentDecibel });
+          this.timedWeightingTypes.push({ timestamp: currentTime, type: this.pk.weighting_type });
+
+          // 更新统计信息
+          this.updateStatistics(currentDecibel, spectrum);
+
+          // 检查报警状态
+          this.checkAlarmStatus(currentDecibel);
+        });
+      });
+
+    } catch (error) {
+      this.addErrorMessage(`音频采集恢复失败: ${error.message}`);
+      throw new Error(`音频采集恢复失败: ${error.message}`);
     }
   }
 

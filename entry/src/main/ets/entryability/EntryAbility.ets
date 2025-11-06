@@ -17,6 +17,7 @@ import { WindowFunctionCache } from '../utils/WindowFunctionCache';
 import { DataProcessingState } from '../models/DataProcessingState';
 import { UIDisplayState } from '../models/UIDisplayState';
 import { of } from 'rxjs';
+import { AudioControllerService } from '../services/AudioControllerService';
 
 const TAG = 'EntryAbility';
 const DOMAIN = 0x0000;
@@ -126,6 +127,9 @@ export default class EntryAbility extends UIAbility {
     // 双管线架构：恢复UI更新
     // AudioControllerService.getInstancePlain()?.resumeUIUpdates();
 
+    // 恢复录音（如果之前正在录音）
+    this.resumeRecording();
+
     hilog.info(DOMAIN, TAG, 'Ability onForeground');
   }
 
@@ -134,6 +138,9 @@ export default class EntryAbility extends UIAbility {
 
     // 双管线架构：暂停UI更新
     // AudioControllerService.getInstancePlain()?.pauseUIUpdates();
+
+    // 暂停录音（如果正在录音）
+    this.pauseRecording();
 
     // this.startBackgroundRunning();
 
@@ -199,6 +206,42 @@ export default class EntryAbility extends UIAbility {
       });
     } catch (err) {
       hilog.error(DOMAIN, TAG, `Stop background running failed, error: ${JSON.stringify(err)}`);
+    }
+  }
+
+  /**
+   * 暂停录音
+   */
+  private async pauseRecording(): Promise<void> {
+    try {
+      const audioControllerService = AudioControllerService.getInstancePlain();
+      if (audioControllerService && audioControllerService.isRecording()) {
+        hilog.info(DOMAIN, TAG, '应用进入后台，暂停录音');
+        await audioControllerService.pauseRecordingFromExternal();
+        hilog.info(DOMAIN, TAG, '录音已暂停');
+      } else {
+        hilog.info(DOMAIN, TAG, '当前未在录音，无需暂停');
+      }
+    } catch (error) {
+      hilog.error(DOMAIN, TAG, `暂停录音失败: ${JSON.stringify(error)}`);
+    }
+  }
+
+  /**
+   * 恢复录音
+   */
+  private async resumeRecording(): Promise<void> {
+    try {
+      const audioControllerService = AudioControllerService.getInstancePlain();
+      if (audioControllerService && !audioControllerService.isRecording()) {
+        hilog.info(DOMAIN, TAG, '应用回到前台，恢复录音');
+        await audioControllerService.startRecordingFromExternal();
+        hilog.info(DOMAIN, TAG, '录音已恢复');
+      } else {
+        hilog.info(DOMAIN, TAG, '当前已在录音状态，无需恢复');
+      }
+    } catch (error) {
+      hilog.error(DOMAIN, TAG, `恢复录音失败: ${JSON.stringify(error)}`);
     }
   }
 
