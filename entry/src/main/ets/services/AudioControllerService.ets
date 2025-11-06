@@ -455,6 +455,19 @@ export class AudioControllerService {
     }
   }
 
+  public async pauseRecordingFromExternal(): Promise<void> {
+    if (!this.stateMachine) {
+      throw new Error('状态机未初始化');
+    }
+
+    try {
+      await this.stateMachine.pauseRecording();
+    } catch (error) {
+      console.error('[外部服务] 暂停录制失败:', error);
+      throw new Error(error);
+    }
+  }
+
   public async resetStateFromExternal(): Promise<void> {
     if (!this.stateMachine) {
       throw new Error('状态机未初始化');

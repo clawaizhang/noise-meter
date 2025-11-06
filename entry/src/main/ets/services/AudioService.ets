@@ -240,6 +240,48 @@ export class AudioService {
   }
 
   /**
+   * 暂停采集音频（停止采集但保留数据）
+   */
+  public async pauseCapture(): Promise<void> {
+    if (this.state !== AudioServiceState.CAPTURING) {
+      console.info(`[音频采集] 当前状态 ${this.state} 不需要暂停采集`);
+      return;
+    }
+
+    try {
+      this.setState(AudioServiceState.STOPPING);
+
+      // 停止处理音频数据（但不重置缓冲区）
+      this.stopProcessing();
+
+      // 停止读取音频数据
+      await this.stopReading();
+
+      // 释放音频采集器
+      if (this.audioCapturer) {
+        try {
+          await this.audioCapturer.release();
+        } catch (err) {
+          console.warn('[音频采集] 释放音频采集器时出错:', err);
+        }
+        this.audioCapturer = null;
+      }
+
+      // 注意：这里不重置缓冲区，保留数据
+      // this.resetBuffers();
+
+      this.setState(AudioServiceState.IDLE);
+      console.info('[音频采集] 音频采集已暂停（数据保留）');
+    } catch (err) {
+      const errMsg = `暂停音频采集失败: ${err instanceof Error ? err.message : String(err)}`;
+      console.error(`[音频采集] ${errMsg}`);
+      // 即使出错也要重置状态
+      this.setState(AudioServiceState.IDLE);
+      throw new Error(errMsg);
+    }
+  }
+
+  /**
    * 停止采集音频
    */
   public async stopCapture(): Promise<void> {

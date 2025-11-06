@@ -412,7 +412,7 @@ export struct AudioController {
         this.handleStopRecordingEvent((stopEvent.payload as StopRecordingPayload).comments);
         break;
       case AudioControllerEventType.PAUSE_RECORDING:
-        this.handleStopRecordingEvent('手动停止');
+        this.handlePauseRecordingEvent();
         break;
       case AudioControllerEventType.RESET_DATA:
         this.handleResetDataEvent();
@@ -448,6 +448,27 @@ export struct AudioController {
     } catch (error) {
       console.error('[AudioController] 通过事件停止录制失败:', error);
       this.audioControllerService.publishError([`停止录制失败: ${error.message}`]);
+      // 即使失败也要确保状态正确
+      try {
+        // 强制停止音频服务
+        await this.audioService.stopCapture();
+      } catch (stopError) {
+        console.warn('[AudioController] 强制停止音频服务时出错:', stopError);
+      }
+    }
+  }
+
+  /**
+   * 处理暂停录制事件
+   */
+  private async handlePauseRecordingEvent(): Promise<void> {
+    try {
+      console.info('[AudioController] 开始处理暂停录制事件');
+      await this.originalPauseRecording();
+      console.info('[AudioController] 通过事件暂停录制成功');
+    } catch (error) {
+      console.error('[AudioController] 通过事件暂停录制失败:', error);
+      this.audioControllerService.publishError([`暂停录制失败: ${error.message}`]);
       // 即使失败也要确保状态正确
       try {
         // 强制停止音频服务
@@ -590,6 +611,45 @@ export struct AudioController {
       this.addErrorMessage(`音频采集启动失败: ${error.message}`);
       this.resetData();
       throw new Error(`音频采集停止失败: ${error.message}`);
+    }
+  }
+
+  /**
+   * 原有的暂停录制逻辑（停止采集但保留数据）
+   */
+  private async originalPauseRecording(): Promise<void> {
+    console.info("[FREQ_TRACE][Recording] 暂停检测 - 开始");
+
+    try {
+      // 停止处理音频数据
+      this.audioService.stopProcessing();
+
+      // 暂停音频采集，但不重置数据
+      try {
+        console.info('[AudioController] 开始暂停音频采集');
+        await this.audioService.pauseCapture();
+        console.info('[AudioController] 音频采集已暂停，数据保留');
+      } catch (error) {
+        console.error('[AudioController] 暂停音频采集失败:', error);
+        this.addErrorMessage(`暂停音频采集失败: ${error.message}`);
+        // 即使失败也要继续后续处理，避免阻塞
+      }
+
+      // 注意：这里不重置数据，保留所有历史数据
+      // this.resetData();
+
+      // 停止自动保存监控
+      this.autoSaveService.stopAutoSaveMonitoring();
+
+      // 停止数据清理监控
+      this.stopDataCleanupMonitoring();
+
+      console.info('[AudioController] 录制已暂停，数据保留');
+    } catch (error) {
+      console.error('[FREQ_TRACE][Record] 暂停录制失败:', error);
+      this.addErrorMessage(`暂停录制失败: ${error.message}`);
+      // 即使失败也要确保状态正确
+      console.info('[AudioController] 录制暂停失败，保持当前状态');
     }
   }
 

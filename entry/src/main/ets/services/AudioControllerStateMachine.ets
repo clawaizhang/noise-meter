@@ -26,8 +26,24 @@ export class AudioControllerStateMachine implements AudioControllerStateMachineI
     console.info('[AudioControllerStateMachine] 状态机初始化完成（事件驱动架构）');
   }
 
-  pauseRecording(): Promise<void> {
-    throw new Error('Method not implemented.');
+  public async pauseRecording(): Promise<void> {
+    if (!this.canTransitionTo(AudioControllerLifecycleState.CONTROLLER_PAUSING)) {
+      throw new Error(`无法从 ${this.currentState} 状态暂停录制`);
+    }
+    
+    this.transitionTo(AudioControllerLifecycleState.CONTROLLER_PAUSING, '用户请求暂停录制');
+    
+    try {
+      // 发布暂停录制事件
+      this.publishEvent({
+        type: AudioControllerEventType.PAUSE_RECORDING,
+        timestamp: Date.now()
+      } as PauseRecordingEvent);
+      // 注意：实际的状态转换会在AudioService状态变化时触发
+    } catch (error) {
+      this.transitionTo(AudioControllerLifecycleState.CONTROLLER_ERROR, '暂停录制失败', error.message);
+      throw new Error(error.message);
+    }
   }
 
   /**
