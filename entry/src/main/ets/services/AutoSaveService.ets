@@ -108,8 +108,34 @@ export class AutoSaveService {
 
     // 重置上次保存时间
     this.recordingStartTime = Date.now();
+    this.ak.uiDisplayState.updateRecordingStartTime(this.recordingStartTime);
 
     console.info('[自动保存] 自动保存监控已启动（使用SecondTimerService）');
+  }
+
+  /**
+   * 恢复自动保存监控
+   * 与startAutoSaveMonitoring的区别：不重置上次保存时间，继续使用现有时间
+   */
+  public resumeAutoSaveMonitoring(): void {
+    this.stopAutoSaveMonitoring();
+
+    // 检查自动保存配置是否有效
+    if (!this.pk?.auto_save_enabled || this.pk.auto_save_interval <= 0) {
+      console.warn('[自动保存] 自动保存配置无效，跳过恢复监控');
+      return;
+    }
+
+    this.isAutoSaveEnabled = true;
+
+    // 使用SecondTimerService进行秒级检查
+    if (this.autoSaveCheckCallback) {
+      this.secondTimerService.subscribe(this.autoSaveCheckCallback);
+    }
+
+    // 注意：恢复时不重置上次保存时间，继续使用现有时间
+
+    console.info('[自动保存] 自动保存监控已恢复（使用SecondTimerService）');
   }
 
   /**

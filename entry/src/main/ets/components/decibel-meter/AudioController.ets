@@ -15,7 +15,11 @@ import { AudioControllerService } from '../../services/AudioControllerService';
 import { WindowType } from '../../common/WindowType';
 import { Subscription } from 'rxjs';
 import { AudioControllerLifecycleState, StateTransitionEvent } from '../../models/AudioControllerLifecycleState';
-import { AudioControllerEvent, AudioControllerEventType, ResumeRecordingEvent } from '../../models/AudioControllerEvents';
+import {
+  AudioControllerEvent,
+  AudioControllerEventType,
+  ResumeRecordingEvent
+} from '../../models/AudioControllerEvents';
 import { AutoSaveService } from '../../services/AutoSaveService';
 
 /**
@@ -89,7 +93,6 @@ export struct AudioController {
     }
   }
 
-
   aboutToAppear() {
     // 启动时间显示更新
     this.audioControllerService.startTimeDisplayUpdates();
@@ -117,13 +120,18 @@ export struct AudioController {
     });
 
     // 订阅停止检测事件
+    this.audioControllerService.subscribeStopDetection((comment:string) => {
+      this.stopRecording(comment);
+    });
+
+    // 订阅暂停检测事件
     this.audioControllerService.subscribePauseDetection(() => {
-      this.stopRecording('手动停止');
+      this.pauseRecording();
     });
 
     // 订阅恢复检测事件
     this.audioControllerService.subscribeResumeDetection(() => {
-      this.startRecording();
+      this.resumeRecording();
     });
 
     // 订阅位置数据流
@@ -177,6 +185,32 @@ export struct AudioController {
       const stateMachine = this.audioControllerService.getStateMachine();
       if (stateMachine) {
         await stateMachine.startRecording();
+      }
+    } catch (error) {
+      console.error('[AudioController] 启动录制失败:', error);
+      throw new Error('启动录制失败');
+    }
+  }
+
+  async resumeRecording(): Promise<void> {
+    try {
+      // 使用状态机控制录制
+      const stateMachine = this.audioControllerService.getStateMachine();
+      if (stateMachine) {
+        await stateMachine.resumeRecording();
+      }
+    } catch (error) {
+      console.error('[AudioController] 启动录制失败:', error);
+      throw new Error('启动录制失败');
+    }
+  }
+
+  async pauseRecording(): Promise<void> {
+    try {
+      // 使用状态机控制录制
+      const stateMachine = this.audioControllerService.getStateMachine();
+      if (stateMachine) {
+        await stateMachine.pauseRecording();
       }
     } catch (error) {
       console.error('[AudioController] 启动录制失败:', error);
@@ -516,12 +550,12 @@ export struct AudioController {
 
     // 根据状态变更执行相应操作
     switch (event.toState) {
+      case AudioControllerLifecycleState.CONTROLLER_STARTING:
+        console.info('[状态机] 启动录制中...');
+        this.autoSaveService.startAutoSaveMonitoring();
+        break;
       case AudioControllerLifecycleState.CONTROLLER_RECORDING:
         console.info('[状态机] 录制状态已设置为true');
-        // 启动自动保存监控（如果启用）
-        if (this.pk.auto_save_enabled) {
-          this.autoSaveService.startAutoSaveMonitoring();
-        }
         break;
 
       case AudioControllerLifecycleState.CONTROLLER_IDLE:
@@ -546,87 +580,101 @@ export struct AudioController {
   }
 
   /**
-   * 原有的启动录制逻辑（作为回退方案）
+   * 准备开始录制 - 重置数据和状态
    */
-  private async originalStartRecording(): Promise<void> {
-    try {
-      // 原有的启动录制逻辑...
-      await this.tryStartCapture();
-      this.ak.dataProcessingState.statisticsData.startTime = new Date().getTime();
-      // 注释掉开始录音时的数据重置，改为在停止录音时重置
-      // this.resetData();
-      this.clearErrorMessage();
+  private prepareForRecording(): void {
+    // 重置数据状态
+    this.ak.dataProcessingState.statisticsData.startTime = new Date().getTime();
+    this.clearErrorMessage();
 
-      // 创建新的记录对象...
-      this.currentRecord = new DecibelRecord(
-        0, // minDecibel
-        0, // maxDecibel
-        0, // avgDecibel
-        0, // duration
-        [], // decibelValues
-        undefined, // location
-        undefined// audioFilePath
-      );
+    // 创建新的记录对象
+    this.currentRecord = new DecibelRecord(
+      0, // minDecibel
+      0, // maxDecibel
+      0, // avgDecibel
+      0, // duration
+      [], // decibelValues
+      undefined, // location
+      undefined// audioFilePath
+    );
 
-      // 启动数据清理监控...
-      this.startDataCleanupMonitoring();
+    // 启动数据清理监控
+    this.startDataCleanupMonitoring();
 
-      // 启动自动保存监控
-      if (this.pk.auto_save_enabled) {
-        this.autoSaveService.startAutoSaveMonitoring();
-      }
+    // 启动自动保存监控
+    if (this.pk.auto_save_enabled) {
+      this.autoSaveService.startAutoSaveMonitoring();
+    }
+  }
 
-      // 注册音频数据回调...
-      this.audioService.registerOriginAudioDataCallBack((buffer: ArrayBuffer) => {
-        this.originAudioBuffers.push({ timestamp: Date.now(), buffer: buffer.slice(0) });
-      });
+  /**
+   * 设置音频处理回调
+   */
+  private setupAudioProcessing(): void {
+    // 注册音频数据回调
+    this.audioService.registerOriginAudioDataCallBack((buffer: ArrayBuffer) => {
+      this.originAudioBuffers.push({ timestamp: Date.now(), buffer: buffer.slice(0) });
+    });
 
-      // 开始处理音频数据...
-      this.audioService.startProcessing((buffer: ArrayBuffer) => {
-        // 原有的音频处理逻辑...
-        const currentTime = Date.now();
-        this.timedAudioBuffers.push({ timestamp: currentTime, buffer: buffer.slice(0) });
+    // 开始处理音频数据
+    this.audioService.startProcessing((buffer: ArrayBuffer) => {
+      const currentTime = Date.now();
+      this.timedAudioBuffers.push({ timestamp: currentTime, buffer: buffer.slice(0) });
 
-        // 处理时域波形数据
-        this.processTimeDomainData(buffer);
+      // 处理时域波形数据
+      this.processTimeDomainData(buffer);
 
-        let config = AudioPresets.getConfig(this.pk.audio_analysis_mode);
-        // 计算频谱数据（用于频谱图显示）
-        taskpool.execute<[ArrayBuffer, WeightingType, number, number, WindowType, number, number], Float32Array>(
-          concurrentCalculateSpectrum,
-          buffer.slice(0),
-          this.pk.weighting_type,
-          this.pk.calibration_value,
+      let config = AudioPresets.getConfig(this.pk.audio_analysis_mode);
+      // 计算频谱数据（用于频谱图显示）
+      taskpool.execute<[ArrayBuffer, WeightingType, number, number, WindowType, number, number], Float32Array>(
+        concurrentCalculateSpectrum,
+        buffer.slice(0),
+        this.pk.weighting_type,
+        this.pk.calibration_value,
+        config.fftSize,
+        config.windowType,
+        config.smoothingFactor,
+        config.overlap
+      ).then((spectrum) => {
+        // 双管线架构：频谱数据通过状态管理，不再通过事件传递
+
+        // 计算分贝值
+        const config = AudioPresets.getConfig(this.pk.audio_analysis_mode);
+        const db: number = new FFTAnalyzer(
           config.fftSize,
           config.windowType,
           config.smoothingFactor,
           config.overlap
-        ).then((spectrum) => {
-          // 双管线架构：频谱数据通过状态管理，不再通过事件传递
+        ).calculateAverageDb(spectrum);
+        let currentDecibel = Number(Math.round(db).toFixed(1));
 
-          // 计算分贝值
-          const config = AudioPresets.getConfig(this.pk.audio_analysis_mode);
-          const db: number = new FFTAnalyzer(
-            config.fftSize,
-            config.windowType,
-            config.smoothingFactor,
-            config.overlap
-          ).calculateAverageDb(spectrum);
-          let currentDecibel = Number(Math.round(db).toFixed(1));
+        // 收集分贝值和加权类型（带时间戳）
+        const currentTime = new Date().getTime();
+        this.timedValues.push({ timestamp: currentTime, value: currentDecibel });
+        this.timedWeightingTypes.push({ timestamp: currentTime, type: this.pk.weighting_type });
 
-          // 收集分贝值和加权类型（带时间戳）
-          const currentTime = new Date().getTime();
-          this.timedValues.push({ timestamp: currentTime, value: currentDecibel });
-          this.timedWeightingTypes.push({ timestamp: currentTime, type: this.pk.weighting_type });
+        // 更新统计信息
+        this.updateStatistics(currentDecibel, spectrum);
 
-          // 更新统计信息
-          this.updateStatistics(currentDecibel, spectrum);
-
-          // 检查报警状态
-          this.checkAlarmStatus(currentDecibel);
-
-        });
+        // 检查报警状态
+        this.checkAlarmStatus(currentDecibel);
       });
+    });
+  }
+
+  /**
+   * 原有的启动录制逻辑（作为回退方案）
+   */
+  private async originalStartRecording(): Promise<void> {
+    try {
+      // 启动音频采集
+      await this.tryStartCapture();
+
+      // 准备录制环境 - 重置数据和状态
+      this.prepareForRecording();
+
+      // 设置音频处理回调
+      this.setupAudioProcessing();
 
     } catch (error) {
       this.addErrorMessage(`音频采集启动失败: ${error.message}`);
@@ -636,72 +684,32 @@ export struct AudioController {
   }
 
   /**
+   * 准备恢复录制 - 不重置数据，继续使用现有数据
+   */
+  private prepareForResumeRecording(): void {
+    this.clearErrorMessage();
+
+    // 注意：恢复录制时不重置数据，继续使用现有数据
+
+    // 启动数据清理监控
+    this.startDataCleanupMonitoring();
+
+    // 恢复自动保存监控（不重置上次保存时间）
+    if (this.pk.auto_save_enabled) {
+      this.autoSaveService.resumeAutoSaveMonitoring();
+    }
+  }
+
+  /**
    * 原有的恢复录制逻辑（继续采集，不重置数据）
    */
   private async originalResumeRecording(): Promise<void> {
     try {
+      // 启动音频采集
       await this.tryStartCapture();
-      this.clearErrorMessage();
 
-      // 注意：恢复录制时不重置数据，继续使用现有数据
-
-      // 启动数据清理监控
-      this.startDataCleanupMonitoring();
-
-      // 启动自动保存监控
-      if (this.pk.auto_save_enabled) {
-        this.autoSaveService.startAutoSaveMonitoring();
-      }
-
-      // 注册音频数据回调
-      this.audioService.registerOriginAudioDataCallBack((buffer: ArrayBuffer) => {
-        this.originAudioBuffers.push({ timestamp: Date.now(), buffer: buffer.slice(0) });
-      });
-
-      // 开始处理音频数据
-      this.audioService.startProcessing((buffer: ArrayBuffer) => {
-        const currentTime = Date.now();
-        this.timedAudioBuffers.push({ timestamp: currentTime, buffer: buffer.slice(0) });
-
-        // 处理时域波形数据
-        this.processTimeDomainData(buffer);
-
-        let config = AudioPresets.getConfig(this.pk.audio_analysis_mode);
-        // 计算频谱数据（用于频谱图显示）
-        taskpool.execute<[ArrayBuffer, WeightingType, number, number, WindowType, number, number], Float32Array>(
-          concurrentCalculateSpectrum,
-          buffer.slice(0),
-          this.pk.weighting_type,
-          this.pk.calibration_value,
-          config.fftSize,
-          config.windowType,
-          config.smoothingFactor,
-          config.overlap
-        ).then((spectrum) => {
-          // 双管线架构：频谱数据通过状态管理，不再通过事件传递
-
-          // 计算分贝值
-          const config = AudioPresets.getConfig(this.pk.audio_analysis_mode);
-          const db: number = new FFTAnalyzer(
-            config.fftSize,
-            config.windowType,
-            config.smoothingFactor,
-            config.overlap
-          ).calculateAverageDb(spectrum);
-          let currentDecibel = Number(Math.round(db).toFixed(1));
-
-          // 收集分贝值和加权类型（带时间戳）
-          const currentTime = new Date().getTime();
-          this.timedValues.push({ timestamp: currentTime, value: currentDecibel });
-          this.timedWeightingTypes.push({ timestamp: currentTime, type: this.pk.weighting_type });
-
-          // 更新统计信息
-          this.updateStatistics(currentDecibel, spectrum);
-
-          // 检查报警状态
-          this.checkAlarmStatus(currentDecibel);
-        });
-      });
+      // 准备恢复录制环境 - 不重置数据
+      this.prepareForResumeRecording();
 
     } catch (error) {
       this.addErrorMessage(`音频采集恢复失败: ${error.message}`);
@@ -716,10 +724,6 @@ export struct AudioController {
     console.info("[FREQ_TRACE][Recording] 暂停检测 - 开始");
 
     try {
-      // 停止处理音频数据
-      this.audioService.stopProcessing();
-
-      // 暂停音频采集，但不重置数据
       try {
         console.info('[AudioController] 开始暂停音频采集');
         await this.audioService.pauseCapture();

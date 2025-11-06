@@ -252,10 +252,10 @@ export class AudioService {
       this.setState(AudioServiceState.STOPPING);
 
       // 停止处理音频数据（但不重置缓冲区）
-      this.stopProcessing();
+      // this.stopProcessing();
 
       // 停止读取音频数据
-      await this.stopReading();
+      // await this.stopReading();
 
       // 释放音频采集器
       if (this.audioCapturer) {
@@ -264,7 +264,6 @@ export class AudioService {
         } catch (err) {
           console.warn('[音频采集] 释放音频采集器时出错:', err);
         }
-        this.audioCapturer = null;
       }
 
       // 注意：这里不重置缓冲区，保留数据

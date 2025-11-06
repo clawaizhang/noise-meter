@@ -235,7 +235,7 @@ export default class EntryAbility extends UIAbility {
       const audioControllerService = AudioControllerService.getInstancePlain();
       if (audioControllerService && !audioControllerService.isRecording()) {
         hilog.info(DOMAIN, TAG, '应用回到前台，恢复录音');
-        await audioControllerService.startRecordingFromExternal();
+        await audioControllerService.resumeRecordingFromExternal();
         hilog.info(DOMAIN, TAG, '录音已恢复');
       } else {
         hilog.info(DOMAIN, TAG, '当前已在录音状态，无需恢复');

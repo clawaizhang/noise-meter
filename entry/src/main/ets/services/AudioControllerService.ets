@@ -135,6 +135,13 @@ export class AudioControllerService {
   /**
    * 订阅暂停检测事件
    */
+  public subscribeStopDetection(callback: (comment:string) => void): void {
+    this.onStopRecording(callback);
+  }
+
+  /**
+   * 订阅暂停检测事件
+   */
   public subscribePauseDetection(callback: () => void): void {
     this.onPauseRecording(callback);
   }
@@ -223,6 +230,14 @@ export class AudioControllerService {
    */
   public updateRecordingStartTime(startTime: number): void {
     this.autoSaveService.updateRecordingStartTime(startTime);
+  }
+
+  /**
+   * 恢复自动保存监控
+   * 与startAutoSaveMonitoring的区别：不重置上次保存时间，继续使用现有时间
+   */
+  public resumeAutoSaveMonitoring(): void {
+    this.autoSaveService.resumeAutoSaveMonitoring();
   }
 
   // ========== 事件总线方法 ==========
@@ -408,8 +423,6 @@ export class AudioControllerService {
 
       case AudioControllerLifecycleState.CONTROLLER_RECORDING:
         console.info('[状态机] 录制已开始');
-        // 在录音开始时更新录音开始时间
-        this.updateRecordingStartTime(Date.now());
         break;
 
       case AudioControllerLifecycleState.CONTROLLER_IDLE:
