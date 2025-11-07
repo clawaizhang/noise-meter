@@ -2,13 +2,18 @@ import { resourceManager } from '@kit.LocalizationKit';
 import { AppStorageV2 } from '@kit.ArkUI';
 import { AppKeys } from '../../models/AppKeys';
 
+// 缓存对数坐标常量，避免重复计算
+const LOG_MIN_FREQ = Math.log10(16);
+const FREQUENCY_STEPS = [16, 31.5, 63, 125, 250, 500, 1000, 2000, 4000, 8000, 16000];
+const DB_STEPS = [-20, 0, 20, 40, 60, 80, 100, 120, 140];
+
 export function getDbSteps(): number[] {
-  return [-20, 0, 20, 40, 60, 80, 100, 120, 140];
+  return DB_STEPS;
 }
 
 export function getFrequencySteps(): number[] {
   // 标准频率步进
-  return [16, 31.5, 63, 125, 250, 500, 1000, 2000, 4000, 8000, 16000];
+  return FREQUENCY_STEPS;
 }
 
 // 绘制频谱的方法
@@ -90,10 +95,9 @@ export function drawSpectrum(canvasContext: CanvasRenderingContext2D, canvasWidt
     canvasContext.font = `${vp2px(fontSize)}px sans-serif`;
     canvasContext.fillStyle = lineColor;
 
-    // 计算对数坐标映射的常量
-    const logMin: number = Math.log10(16);
+    // 使用缓存的对数坐标常量
     const logMax: number = Math.log10(frequencyHigh);
-    console.info(`[频谱绘制] 对数范围: min=${logMin.toFixed(2)}, max=${logMax.toFixed(2)}`);
+    console.info(`[频谱绘制] 对数范围: min=${LOG_MIN_FREQ.toFixed(2)}, max=${logMax.toFixed(2)}`);
 
     // 计算0分贝对应的Y坐标
     const zeroDbNormalizedValue: number = (0 - minDb) / (maxDb - minDb);
@@ -106,7 +110,7 @@ export function drawSpectrum(canvasContext: CanvasRenderingContext2D, canvasWidt
 
       // 计算X坐标，确保从画布左侧到右侧
       const x: number =
-        ((logFreq - logMin) / (logMax - logMin)) * canvasWidth;
+        ((logFreq - LOG_MIN_FREQ) / (logMax - LOG_MIN_FREQ)) * canvasWidth;
       console.info(`[频谱绘制] 频率=${freq}Hz, x坐标=${x.toFixed(2)}`);
 
       // 跳过最左侧和最右侧的垂直网格线
@@ -162,8 +166,7 @@ export function drawSpectrum(canvasContext: CanvasRenderingContext2D, canvasWidt
       }
     }
 
-    // 预计算对数坐标常量
-    const logMinDraw: number = Math.log10(16);
+    // 使用缓存的对数坐标常量
     const logMaxDraw: number = Math.log10(frequencyHigh);
     
     // 初始化峰值频率计算变量
@@ -194,7 +197,7 @@ export function drawSpectrum(canvasContext: CanvasRenderingContext2D, canvasWidt
       }
 
       const logFreq: number = Math.log10(centerFreq);
-      const x: number = ((logFreq - logMinDraw) / (logMaxDraw - logMinDraw)) * canvasWidth;
+      const x: number = ((logFreq - LOG_MIN_FREQ) / (logMaxDraw - LOG_MIN_FREQ)) * canvasWidth;
 
       const value: number = Math.max(minDb, Math.min(maxDb, rawSpectrum[i]));
       const normalizedValue: number = (value - minDb) / (maxDb - minDb);
@@ -237,7 +240,7 @@ export function drawSpectrum(canvasContext: CanvasRenderingContext2D, canvasWidt
     // 显示峰值频率
     if (peakFreq > 0) {
       const logPeakFreq: number = Math.log10(peakFreq);
-      const peakX: number = ((logPeakFreq - logMinDraw) / (logMaxDraw - logMinDraw)) * canvasWidth;
+      const peakX: number = ((logPeakFreq - LOG_MIN_FREQ) / (logMaxDraw - LOG_MIN_FREQ)) * canvasWidth;
 
       const peakFreqY: number = canvasHeight -
         (maxValue / (maxDb - minDb)) * canvasHeight;

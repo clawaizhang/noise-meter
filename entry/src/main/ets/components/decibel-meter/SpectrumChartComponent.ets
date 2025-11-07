@@ -14,11 +14,11 @@ export struct SpectrumChartComponent {
   @Param sampleRate: number = 44100
   @Param canvasWidthInput: number = 0
   @Param canvasHeightInput: number = 0
-  @Local pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys)!;
+  @Local pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys) ?? new PreferenceKeys();
 
   // 依赖注入
   @Local private sysResourceManager: resourceManager.ResourceManager = resourceManager.getSystemResourceManager();
-  @Local private ak: AppKeys = AppStorageV2.connect(AppKeys)!
+  @Local private ak: AppKeys = AppStorageV2.connect(AppKeys) ?? new AppKeys()
 
   // 频谱数据
   @Local private currentSpectrumData: Float32Array = new Float32Array();

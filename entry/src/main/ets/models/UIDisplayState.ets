@@ -182,7 +182,7 @@ export class UIDisplayState {
   @Trace displayColor: Resource = $r('sys.color.confirm');
 
   // 显示频谱数据（UI专用）
-  @Trace displaySpectrumData: number[] = [];
+  @Trace displaySpectrumData: Float32Array = new Float32Array();
 
   // 显示时域波形数据（UI专用）
   @Trace displayTimeDomainData: number[] = [];
@@ -277,9 +277,9 @@ export class UIDisplayState {
     this.displayDescription = DecibelService.getDecibelDescription(this.displayDb);
     this.displayColor = DecibelService.getDecibelColor(this.displayDb);
 
-    // 同步频谱数据（浅拷贝）
+    // 同步频谱数据（直接赋值，因为都是Float32Array类型）
     if (processingState.processingSpectrumData.length > 0) {
-      this.displaySpectrumData = [...processingState.processingSpectrumData];
+      this.displaySpectrumData = processingState.processingSpectrumData.slice(); // 使用slice创建副本
     }
 
     // 同步峰值频率
@@ -338,7 +338,7 @@ export class UIDisplayState {
    */
   reset(): void {
     this.displayDb = 0;
-    this.displaySpectrumData = [];
+    this.displaySpectrumData = new Float32Array();
     this.displayPeakFreq = 0;
     this.displayStatistics.reset();
     this.displayStatisticsDistribution = [];
