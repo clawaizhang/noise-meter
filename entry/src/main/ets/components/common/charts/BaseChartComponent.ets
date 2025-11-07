@@ -90,6 +90,8 @@ export struct BaseChartComponent {
       return;
     }
 
+    console.debug(`[BaseChart] 开始绘制图表，尺寸: ${this.canvasWidth}x${this.canvasHeight}`);
+
     // 清除画布
     ChartUtils.clearCanvas(this.canvasContext, this.canvasWidth, this.canvasHeight);
 
@@ -106,6 +108,8 @@ export struct BaseChartComponent {
     if (this.onDrawChart) {
       this.onDrawChart(this.canvasContext, this.canvasWidth, this.canvasHeight);
     }
+    
+    console.debug(`[BaseChart] 图表绘制完成`);
   }
 
   /**

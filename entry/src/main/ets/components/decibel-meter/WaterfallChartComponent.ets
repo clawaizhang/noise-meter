@@ -24,6 +24,9 @@ export struct WaterfallChartComponent {
   // 频谱数据
   @Local private currentSpectrumData: Float32Array = new Float32Array();
   
+  // 重绘触发器
+  @Local private redrawTrigger: number = 0;
+  
   // 瀑布图历史数据管理器
   @Local private historyManager: WaterfallHistoryManager = new WaterfallHistoryManager();
   
@@ -57,6 +60,12 @@ export struct WaterfallChartComponent {
     const newSpectrum = monitor.value<Float32Array>()?.now;
     if (newSpectrum && this.ak.isDisplayApp) {
       this.currentSpectrumData = newSpectrum;
+      
+      // 添加调试日志
+      console.debug(`[瀑布图组件] 频谱数据更新，长度: ${newSpectrum.length}`);
+      
+      // 强制触发图表重绘
+      this.requestRedraw();
     }
   }
 
@@ -93,6 +102,9 @@ export struct WaterfallChartComponent {
       maxFrameTime: 120 // 单帧渲染时间超过120ms视为过慢
     };
     this.performanceMonitor.setAlertThresholds(thresholds);
+    
+    // 启动定期重绘机制
+    this.startPeriodicRedraw();
   }
 
   /**
@@ -185,6 +197,48 @@ export struct WaterfallChartComponent {
    */
   public resetPerformanceMonitoring(): void {
     this.performanceMonitor.reset();
+  }
+  
+  /**
+   * 定期重绘机制
+   */
+  private redrawTimer?: number;
+  
+  private startPeriodicRedraw(): void {
+    // 清除现有定时器
+    if (this.redrawTimer) {
+      clearInterval(this.redrawTimer);
+    }
+    
+    // 设置定期重绘，确保瀑布图持续更新
+    this.redrawTimer = setInterval(() => {
+      if (this.currentSpectrumData.length > 0 && this.ak.isDisplayApp) {
+        this.requestRedraw();
+      }
+    }, this.waterfallConfig.updateTime);
+    
+    console.info(`[瀑布图组件] 启动定期重绘，间隔: ${this.waterfallConfig.updateTime}ms`);
+  }
+  
+  private stopPeriodicRedraw(): void {
+    if (this.redrawTimer) {
+      clearInterval(this.redrawTimer);
+      this.redrawTimer = undefined;
+      console.info('[瀑布图组件] 停止定期重绘');
+    }
+  }
+  
+  /**
+   * 请求重绘
+   */
+  private requestRedraw(): void {
+    // 通过触发状态变化来强制重绘
+    this.redrawTrigger++;
+    console.debug(`[瀑布图组件] 请求重绘，触发器: ${this.redrawTrigger}`);
+  }
+  
+  aboutToDisappear() {
+    this.stopPeriodicRedraw();
   }
 
   build() {

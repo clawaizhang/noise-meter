@@ -88,6 +88,9 @@ export class WaterfallHistoryManager {
     if (this.circularBufferIndex === 0) {
       this.isBufferFull = true;
     }
+    
+    // 添加调试日志
+    console.debug(`[WaterfallHistoryManager] 添加数据，索引: ${this.circularBufferIndex}, 缓冲区满: ${this.isBufferFull}`);
   }
 
   /**
@@ -99,23 +102,34 @@ export class WaterfallHistoryManager {
       timestamps: []
     };
     
+    // 获取当前有效的数据行数
+    const lineCount = this.getLineCount();
+    
+    if (lineCount === 0) {
+      return result;
+    }
+    
     if (this.isBufferFull) {
-      // 缓冲区已满，从当前索引开始获取数据
-      for (let i = this.circularBufferIndex; i < this.config.maxHistoryLines; i++) {
-        if (this.historyData[i]) {
+      // 缓冲区已满，从当前索引开始获取数据（最新的数据在前）
+      for (let i = 0; i < this.config.maxHistoryLines; i++) {
+        const index = (this.circularBufferIndex + i) % this.config.maxHistoryLines;
+        if (this.historyData[index] && this.historyData[index].length > 0) {
+          result.data.push(this.historyData[index]);
+          result.timestamps.push(this.timestamps[index]);
+        }
+      }
+    } else {
+      // 缓冲区未满，按顺序获取数据
+      for (let i = 0; i < this.circularBufferIndex; i++) {
+        if (this.historyData[i] && this.historyData[i].length > 0) {
           result.data.push(this.historyData[i]);
           result.timestamps.push(this.timestamps[i]);
         }
       }
     }
     
-    // 添加从开始到当前索引的数据
-    for (let i = 0; i < this.circularBufferIndex; i++) {
-      if (this.historyData[i]) {
-        result.data.push(this.historyData[i]);
-        result.timestamps.push(this.timestamps[i]);
-      }
-    }
+    // 添加调试日志
+    console.debug(`[WaterfallHistoryManager] 获取历史数据，行数: ${result.data.length}, 缓冲区满: ${this.isBufferFull}`);
     
     return result;
   }
@@ -159,10 +173,16 @@ export class WaterfallRenderer {
    */
   private shouldRender(): boolean {
     const now = Date.now();
-    if (now - this.lastRenderTime >= this.frameInterval) {
+    const timeSinceLastRender = now - this.lastRenderTime;
+    
+    // 添加调试日志
+    if (timeSinceLastRender >= this.frameInterval) {
       this.lastRenderTime = now;
+      console.debug(`[WaterfallRenderer] 渲染帧，距离上次渲染: ${timeSinceLastRender}ms`);
       return true;
     }
+    
+    console.debug(`[WaterfallRenderer] 跳过渲染，距离上次渲染: ${timeSinceLastRender}ms, 需要间隔: ${this.frameInterval}ms`);
     return false;
   }
   
@@ -210,6 +230,9 @@ export class WaterfallRenderer {
     if (config.enableOptimization && !this.shouldRender()) {
       return;
     }
+    
+    // 开始性能监控
+    this.performanceMonitor.startFrame();
     
     console.info(`[瀑布图渲染] 开始渲染，数据长度=${spectrumData.length}`);
     
@@ -429,7 +452,12 @@ function drawWaterfallBodyOptimized(
   renderer: WaterfallRenderer
 ): void {
   const lineCount = historyData.length;
-  const lineHeight = chartHeight / Math.max(lineCount, 1);
+  // 确保最小行高，避免行高过大导致只显示少数几行
+  const minLineHeight = 2; // 最小行高2像素
+  const calculatedLineHeight = chartHeight / Math.max(lineCount, 1);
+  const lineHeight = Math.min(calculatedLineHeight, minLineHeight);
+  
+  console.debug(`[瀑布图绘制] 行数: ${lineCount}, 计算行高: ${calculatedLineHeight}px, 实际行高: ${lineHeight}px`);
   
   // 频率映射参数
   const frequencyHigh = frequencySteps[frequencySteps.length - 1];
@@ -523,7 +551,12 @@ function drawWaterfallBody(
   config: WaterfallConfig
 ): void {
   const lineCount = historyData.length;
-  const lineHeight = chartHeight / Math.max(lineCount, 1);
+  // 确保最小行高，避免行高过大导致只显示少数几行
+  const minLineHeight = 2; // 最小行高2像素
+  const calculatedLineHeight = chartHeight / Math.max(lineCount, 1);
+  const lineHeight = Math.min(calculatedLineHeight, minLineHeight);
+  
+  console.debug(`[瀑布图绘制-原始] 行数: ${lineCount}, 计算行高: ${calculatedLineHeight}px, 实际行高: ${lineHeight}px`);
   
   // 频率映射参数
   const frequencyHigh = frequencySteps[frequencySteps.length - 1];
