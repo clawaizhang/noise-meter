@@ -60,7 +60,7 @@ export class FFTAnalyzer {
   private cachedReal: Float32Array | null = null;
   private cachedImag: Float32Array | null = null;
   private previousMagnitudes: Float32Array | null = null;
-  private cachedCosSin: ComplexNumber[] | null = null;
+  private cachedCosSin: Map<number, ComplexNumber> = new Map();
 
   /**
    * 构造函数
@@ -160,6 +160,11 @@ export class FFTAnalyzer {
       throw new Error('输入数据不能为空');
     }
 
+    // 检查输入数据大小是否合理
+    if (input.byteLength < 2) {
+      throw new Error('输入数据太小，至少需要2字节');
+    }
+
     if (this.DEBUG) {
       console.info(`当前计权类型: ${weightingType}`);
     }
@@ -192,10 +197,15 @@ export class FFTAnalyzer {
     }
 
     // 将输入数据复制到FFT缓冲区并应用窗函数
+    // 优化：预计算窗函数缩放因子，避免重复计算
+    const windowScale = this.window.length / actualSamples;
+    
     for (let i = 0; i < actualSamples; i++) {
-      // 使用实际大小计算窗函数索引
-      const windowIndex = Math.floor(i * this.window.length / actualSamples);
-      real[i] = this.cachedSamples[i] * scale * this.window[windowIndex];
+      // 使用预计算的缩放因子，避免重复除法运算
+      const windowIndex = Math.floor(i * windowScale);
+      // 确保索引不越界
+      const safeWindowIndex = Math.min(windowIndex, this.window.length - 1);
+      real[i] = this.cachedSamples[i] * scale * this.window[safeWindowIndex];
       imag[i] = 0;
     }
 
@@ -265,19 +275,15 @@ export class FFTAnalyzer {
           const k = i + j;
           const l = k + halfSize;
 
-          // 获取或计算旋转因子
+          // 获取或计算旋转因子 - 使用Map提高性能
           const key = angle * j;
-          let cosSin = this.cachedCosSin?.[key];
+          let cosSin = this.cachedCosSin.get(key);
           if (!cosSin) {
-            const cosSinValue: ComplexNumber = {
+            cosSin = {
               real: Math.cos(key),
               imag: Math.sin(key)
             };
-            if (!this.cachedCosSin) {
-              this.cachedCosSin = [];
-            }
-            this.cachedCosSin[key] = cosSinValue;
-            cosSin = cosSinValue;
+            this.cachedCosSin.set(key, cosSin);
           }
 
           // 蝶形运算
@@ -328,30 +334,22 @@ export class FFTAnalyzer {
    * @returns 计权值
    */
   private getWeighting(frequency: number, weightingType: WeightingType): number {
-    // 如果是Z计权，直接返回1.0（不进行频率计权）
+    // 如果是Z计权，直接返回0dB（不进行频率计权）
     if (weightingType === WeightingType.Z) {
-      return 1.0;
+      return 0.0;
     }
 
-    // A计权公式
+    // A计权公式 - 返回dB值
     if (weightingType === WeightingType.A) {
-      const f2 = frequency * frequency;
-      const f4 = f2 * f2;
-      const numerator = 12200.0 * 12200.0 * f4;
-      const denominator =
-        (f2 + 20.6 * 20.6) * Math.sqrt((f2 + 107.7 * 107.7) * (f2 + 737.9 * 737.9)) * (f2 + 12200.0 * 12200.0);
-      return Math.sqrt(numerator / denominator);
+      return this.calculateAWeighting(frequency);
     }
 
-    // C计权公式
+    // C计权公式 - 返回dB值
     if (weightingType === WeightingType.C) {
-      const f2 = frequency * frequency;
-      const numerator = 12200.0 * 12200.0 * f2;
-      const denominator = (f2 + 20.6 * 20.6) * (f2 + 12200.0 * 12200.0);
-      return Math.sqrt(numerator / denominator);
+      return this.calculateCWeighting(frequency);
     }
 
-    return 1.0; // 默认不进行计权
+    return 0.0; // 默认不进行计权
   }
 
   /**
@@ -366,17 +364,20 @@ export class FFTAnalyzer {
     // 计算功率谱密度（考虑窗函数能量损失和FFT大小归一化）
     const power = (re * re + im * im) / (this.size * this.WINDOW_CORRECTION);
 
-    // 应用频率计权
-    const weighting = this.getWeighting(frequency, weightingType);
-    const weightedPower = power * weighting * weighting;
-
     // 计算分贝值（相对于参考声压）
-    if (weightedPower <= 0) {
+    if (power <= 0) {
       return this.MIN_DB;
     }
 
-    // 转换为声压级SPL，加入麦克风灵敏度和系统增益校正
-    return 10.0 * Math.log10(weightedPower) + 93.98 - this.MIC_SENSITIVITY + this.systemGain;
+    // 先计算未加权的分贝值
+    let dbValue = 10.0 * Math.log10(power) + 93.98 - this.MIC_SENSITIVITY + this.systemGain;
+
+    // 应用频率计权（getWeighting现在返回dB值）
+    const weightingDb = this.getWeighting(frequency, weightingType);
+    dbValue += weightingDb;
+
+    // 确保不低于最小分贝值
+    return Math.max(dbValue, this.MIN_DB);
   }
 
   /**
@@ -443,21 +444,34 @@ export class FFTAnalyzer {
       throw new Error('频率范围无效');
     }
 
+    // 检查频率范围是否超出奈奎斯特频率
+    const nyquistFreq = sampleRate / 2;
+    if (startFreq > nyquistFreq) {
+      if (this.DEBUG) {
+        console.warn(`起始频率${startFreq}Hz超过奈奎斯特频率${nyquistFreq}Hz`);
+      }
+      return this.MIN_DB;
+    }
+
     const binSize = sampleRate / (2 * spectrum.length);
-    const startBin = Math.floor(startFreq / binSize);
-    const endBin = Math.ceil(endFreq / binSize);
+    const startBin = Math.max(0, Math.floor(startFreq / binSize));
+    const endBin = Math.min(spectrum.length - 1, Math.ceil(endFreq / binSize));
 
     let totalEnergy = 0;
     let count = 0;
 
-    for (let i = startBin; i <= endBin && i < spectrum.length; i++) {
+    for (let i = startBin; i <= endBin; i++) {
+      // 跳过无效值
+      if (isNaN(spectrum[i]) || spectrum[i] <= this.MIN_DB) {
+        continue;
+      }
       // 将分贝值转换回线性域进行平均
       totalEnergy += Math.pow(10, spectrum[i] / 10);
       count++;
     }
 
     // 将平均能量转换回分贝域
-    return count > 0 ? 10 * Math.log10(totalEnergy / count) : -100;
+    return count > 0 ? 10 * Math.log10(totalEnergy / count) : this.MIN_DB;
   }
 
   /**
@@ -480,6 +494,10 @@ export class FFTAnalyzer {
   public reset(): void {
     this.previousMagnitudes = null;
     this.cachedSamples = null;
+    this.cachedCosSin.clear(); // 清理旋转因子缓存
+    if (this.DEBUG) {
+      console.info('FFT分析器状态已重置');
+    }
   }
 
   public calculateAverageDb(weightedSpectrum: Float32Array): number {
@@ -528,7 +546,7 @@ export class FFTAnalyzer {
           weightingFactor = this.calculateCWeighting(frequency);
           break;
         case WeightingType.Z:
-          weightingFactor = 0; // Z计权不做修正
+          weightingFactor = 0; // Z计权不做修正，0dB
           break;
         default:
           weightingFactor = 0;
