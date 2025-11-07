@@ -447,6 +447,11 @@ export class AudioControllerService {
     return state === AudioControllerLifecycleState.CONTROLLER_RECORDING;
   }
 
+  public isPaused(): boolean {
+    const state = this.getCurrentState();
+    return state === AudioControllerLifecycleState.CONTROLLER_PAUSED;
+  }
+
   public isStarting(): boolean {
     const state = this.getCurrentState();
     return state === AudioControllerLifecycleState.CONTROLLER_STARTING;

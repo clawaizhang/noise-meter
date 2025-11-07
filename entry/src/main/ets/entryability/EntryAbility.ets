@@ -233,12 +233,12 @@ export default class EntryAbility extends UIAbility {
   private async resumeRecording(): Promise<void> {
     try {
       const audioControllerService = AudioControllerService.getInstancePlain();
-      if (audioControllerService && !audioControllerService.isRecording()) {
+      if (audioControllerService && audioControllerService.isPaused()) {
         hilog.info(DOMAIN, TAG, '应用回到前台，恢复录音');
         await audioControllerService.resumeRecordingFromExternal();
         hilog.info(DOMAIN, TAG, '录音已恢复');
       } else {
-        hilog.info(DOMAIN, TAG, '当前已在录音状态，无需恢复');
+        hilog.info(DOMAIN, TAG, '当前未处于暂停状态，无需恢复');
       }
     } catch (error) {
       hilog.error(DOMAIN, TAG, `恢复录音失败: ${JSON.stringify(error)}`);
