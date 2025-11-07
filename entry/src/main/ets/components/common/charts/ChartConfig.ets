@@ -22,6 +22,7 @@ export interface FontSizeConfig {
 // 图表类型枚举
 export enum ChartType {
   SPECTRUM = 'spectrum',
+  SPECTRUM_BAR = 'spectrum_bar',
   TIME_DOMAIN = 'time_domain',
   STATISTICS = 'statistics'
 }

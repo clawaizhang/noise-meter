@@ -2,6 +2,7 @@ import { navigationStack } from '../../constants/ProviderConstant';
 import { AppStorageV2, curves, PersistenceV2 } from '@kit.ArkUI';
 import display from '@ohos.display';
 import { SpectrumChartComponent } from './SpectrumChartComponent';
+import { SpectrumBarChartComponent } from './SpectrumBarChartComponent';
 import { TimeDomainChartComponent } from './TimeDomainChartComponent';
 import { StatisticsChartComponent } from '../statistics/StatisticsChartComponent';
 import { FullScreenChartDashboard } from './FullScreenChartDashboard';
@@ -71,6 +72,28 @@ export struct DashBoard {
 
                 // 全屏按钮
                 this.buildFullScreenButton('频谱图')
+              }
+              .geometryTransition("FullScreenChartDashboard")
+              .transition(TransitionEffect.OPACITY)
+            }
+            .backgroundColor($r('sys.color.comp_background_primary'))
+            .borderRadius(16)
+
+            // 频谱柱状图 - 新增频谱柱状图组件
+            GridCol({
+              span: {
+                xs: 12, // 横向XS/SM：单列布局（全宽）
+                sm: 12, // 横向XS/SM：单列布局（全宽）
+                md: 6, // 横向MD及以上：双列布局（半宽）
+                lg: 6, // 横向MD及以上：双列布局（半宽）
+                xl: 6    // 横向MD及以上：双列布局（半宽）
+              }
+            }) {
+              Column() {
+                SpectrumBarChartComponent()
+
+                // 全屏按钮
+                this.buildFullScreenButton('频谱柱状图')
               }
               .geometryTransition("FullScreenChartDashboard")
               .transition(TransitionEffect.OPACITY)
