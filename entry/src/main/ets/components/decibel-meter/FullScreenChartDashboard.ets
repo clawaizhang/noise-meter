@@ -5,6 +5,7 @@
 
 import { SpectrumChartComponent } from './SpectrumChartComponent';
 import { TimeDomainChartComponent } from './TimeDomainChartComponent';
+import { WaterfallChartComponent } from './WaterfallChartComponent';
 import { StatisticsChartComponent } from '../statistics/StatisticsChartComponent';
 import { Throttle } from '../../utils/Debounce';
 import curves from '@ohos.curves';
@@ -13,6 +14,7 @@ import curves from '@ohos.curves';
 enum ChartType {
   SPECTRUM = 'spectrum',
   TIME_DOMAIN = 'time_domain',
+  WATERFALL = 'waterfall',
   STATISTICS = 'statistics'
 }
 
@@ -59,6 +61,9 @@ export struct FullScreenChartDashboard {
         break;
       case '时域图':
         this.currentChartType = ChartType.TIME_DOMAIN;
+        break;
+      case '瀑布图':
+        this.currentChartType = ChartType.WATERFALL;
         break;
       case '统计分布图':
         this.currentChartType = ChartType.STATISTICS;
@@ -214,7 +219,7 @@ export struct FullScreenChartDashboard {
    * 切换到下一个图表
    */
   private switchToNextChart(): void {
-    const chartTypes = [ChartType.SPECTRUM, ChartType.TIME_DOMAIN, ChartType.STATISTICS];
+    const chartTypes = [ChartType.SPECTRUM, ChartType.TIME_DOMAIN, ChartType.WATERFALL, ChartType.STATISTICS];
     const currentIndex = chartTypes.indexOf(this.currentChartType);
     const nextIndex = (currentIndex + 1) % chartTypes.length;
 
@@ -225,7 +230,7 @@ export struct FullScreenChartDashboard {
    * 切换到上一个图表
    */
   private switchToPreviousChart(): void {
-    const chartTypes = [ChartType.SPECTRUM, ChartType.TIME_DOMAIN, ChartType.STATISTICS];
+    const chartTypes = [ChartType.SPECTRUM, ChartType.TIME_DOMAIN, ChartType.WATERFALL, ChartType.STATISTICS];
     const currentIndex = chartTypes.indexOf(this.currentChartType);
     const prevIndex = (currentIndex - 1 + chartTypes.length) % chartTypes.length;
 
@@ -241,6 +246,8 @@ export struct FullScreenChartDashboard {
         return '频谱分析';
       case ChartType.TIME_DOMAIN:
         return '时域波形';
+      case ChartType.WATERFALL:
+        return '瀑布图';
       case ChartType.STATISTICS:
         return '统计分布';
       default:
@@ -327,6 +334,36 @@ export struct FullScreenChartDashboard {
         this.switchToChart(ChartType.TIME_DOMAIN);
       })
 
+      // 瀑布图标签
+      Column({ space: 4 }) {
+        Text('瀑布图')
+          .fontSize(14)
+          .fontColor(this.currentChartType === ChartType.WATERFALL ?
+            $r('sys.color.ohos_id_color_primary') :
+            $r('sys.color.ohos_id_color_text_secondary'))
+          .fontWeight(this.currentChartType === ChartType.WATERFALL ? FontWeight.Medium : FontWeight.Normal)
+
+        // 选中指示器
+        if (this.currentChartType === ChartType.WATERFALL) {
+          Row()
+            .width(24)
+            .height(3)
+            .backgroundColor($r('sys.color.ohos_id_color_primary'))
+            .borderRadius(2)
+        } else {
+          Row()
+            .width(24)
+            .height(3)
+            .backgroundColor(Color.Transparent)
+        }
+      }
+      .layoutWeight(1)
+      .height(56)
+      .justifyContent(FlexAlign.Center)
+      .onClick(() => {
+        this.switchToChart(ChartType.WATERFALL);
+      })
+
       // 统计分布图标签
       Column({ space: 4 }) {
         Text('统计分布图')
@@ -389,6 +426,16 @@ export struct FullScreenChartDashboard {
         // 时域图
         if (this.currentChartType === ChartType.TIME_DOMAIN) {
           TimeDomainChartComponent({ canvasWidthInput: this.canvasWidth, canvasHeightInput: this.canvasHeight })
+            .width('100%')
+            .height('100%')
+            .opacity(this.chartOpacity)
+            .translate({ x: this.swipeOffset })
+            .padding({ bottom: 8 }) // 添加底部间距，避免被标签栏遮挡
+        }
+
+        // 瀑布图
+        if (this.currentChartType === ChartType.WATERFALL) {
+          WaterfallChartComponent({ canvasWidthInput: this.canvasWidth, canvasHeightInput: this.canvasHeight })
             .width('100%')
             .height('100%')
             .opacity(this.chartOpacity)
