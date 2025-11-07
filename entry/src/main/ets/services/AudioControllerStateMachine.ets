@@ -53,7 +53,6 @@ export class AudioControllerStateMachine implements AudioControllerStateMachineI
     const validTransitions: Record<AudioControllerLifecycleState, AudioControllerLifecycleState[]> = {
       [AudioControllerLifecycleState.CONTROLLER_IDLE]: [
         AudioControllerLifecycleState.CONTROLLER_STARTING,
-        AudioControllerLifecycleState.CONTROLLER_RESUMING,
         AudioControllerLifecycleState.CONTROLLER_ERROR
       ],
       [AudioControllerLifecycleState.CONTROLLER_STARTING]: [
@@ -70,8 +69,12 @@ export class AudioControllerStateMachine implements AudioControllerStateMachineI
         AudioControllerLifecycleState.CONTROLLER_ERROR
       ],
       [AudioControllerLifecycleState.CONTROLLER_PAUSING]: [
-        AudioControllerLifecycleState.CONTROLLER_IDLE,
+        AudioControllerLifecycleState.CONTROLLER_PAUSED,
+        AudioControllerLifecycleState.CONTROLLER_ERROR
+      ],
+      [AudioControllerLifecycleState.CONTROLLER_PAUSED]: [
         AudioControllerLifecycleState.CONTROLLER_RESUMING,
+        AudioControllerLifecycleState.CONTROLLER_STOPPING,
         AudioControllerLifecycleState.CONTROLLER_ERROR
       ],
       [AudioControllerLifecycleState.CONTROLLER_RESUMING]: [
@@ -326,7 +329,7 @@ export class AudioControllerStateMachine implements AudioControllerStateMachineI
         
       case AudioControllerLifecycleState.CONTROLLER_PAUSING:
         if (audioState === AudioServiceState.IDLE) {
-          this.transitionTo(AudioControllerLifecycleState.CONTROLLER_IDLE, 'AudioService停止完成');
+          this.transitionTo(AudioControllerLifecycleState.CONTROLLER_PAUSED, 'AudioService暂停完成');
         }
         break;
     }
