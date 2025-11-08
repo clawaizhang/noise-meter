@@ -86,6 +86,12 @@ export class FFTAnalyzer {
     const windowData = WindowFunctionCache.getWindowData(size, windowType);
     this.window = windowData.window;
     this.WINDOW_CORRECTION = windowData.correction;
+    
+    // 在调试模式下验证计权公式
+    if (this.DEBUG) {
+      this.validateWeightingFormulas(WeightingType.A);
+      this.validateWeightingFormulas(WeightingType.C);
+    }
   }
 
   private isPowerOf2(value: number): boolean {
@@ -575,7 +581,7 @@ export class FFTAnalyzer {
     const num = c1 * f4;
     const den = ((f2 + c2) * Math.sqrt((f2 + c3) * (f2 + c4)) * (f2 + c1));
 
-    return 2.0 + 20.0 * Math.log10(num / den);
+    return 20.0 * Math.log10(num / den) + 2.0;
   }
 
   /**
@@ -592,6 +598,39 @@ export class FFTAnalyzer {
     const num = c1 * f2;
     const den = (f2 + c2) * (f2 + c1);
 
-    return 0.06 + 20.0 * Math.log10(num / den);
+    return 20.0 * Math.log10(num / den) + 0.06;
+  }
+
+  /**
+   * 验证计权公式的准确性（用于调试）
+   * @param weightingType 计权类型
+   */
+  public validateWeightingFormulas(weightingType: WeightingType): void {
+    if (!this.DEBUG) return;
+    
+    console.info(`验证${weightingType}计权公式准确性:`);
+    
+    // 测试标准频率点
+    const testFrequencies = [31.5, 63, 125, 250, 500, 1000, 2000, 4000, 8000];
+    const expectedA = [-39.4, -26.2, -16.1, -8.6, -3.2, 0, 1.2, 1.0, -1.1];
+    const expectedC = [-3.0, -0.8, -0.2, 0, 0, 0, -0.2, -0.8, -3.0];
+    
+    testFrequencies.forEach((freq, index) => {
+      let actualValue = 0;
+      let expectedValue = 0;
+      
+      if (weightingType === WeightingType.A) {
+        actualValue = this.calculateAWeighting(freq);
+        expectedValue = expectedA[index];
+      } else if (weightingType === WeightingType.C) {
+        actualValue = this.calculateCWeighting(freq);
+        expectedValue = expectedC[index];
+      }
+      
+      const error = Math.abs(actualValue - expectedValue);
+      const status = error < 0.5 ? '✓' : '✗';
+      
+      console.info(`${status} ${freq}Hz: 实际值=${actualValue.toFixed(2)}dB, 期望值=${expectedValue.toFixed(2)}dB, 误差=${error.toFixed(2)}dB`);
+    });
   }
 }
