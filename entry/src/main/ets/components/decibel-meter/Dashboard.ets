@@ -5,13 +5,18 @@ import { SpectrumChartComponent } from './SpectrumChartComponent';
 import { SpectrumBarChartComponent } from './SpectrumBarChartComponent';
 import { TimeDomainChartComponent } from './TimeDomainChartComponent';
 import { StatisticsChartComponent } from '../statistics/StatisticsChartComponent';
-import { FullScreenChartDashboard } from './FullScreenChartDashboard';
 import { PreferenceKeys } from '../../models/PreferenceKeys';
 import { resourceManager } from '@kit.LocalizationKit';
 import { image } from '@kit.ImageKit';
 import { AppKeys } from '../../models/AppKeys';
 import { AudioControllerService } from '../../services/AudioControllerService';
 import { Throttle } from '../../utils/Debounce';
+
+// 图表类型配置接口
+interface ChartTypeConfig {
+  title: string;
+  componentId: number;
+}
 
 @ComponentV2
 export struct DashBoard {
@@ -24,8 +29,7 @@ export struct DashBoard {
   @Local dWidthHeight: string = ''; // 页面透明度
   @Local bgImage: image.PixelMap | undefined = undefined; // 页面透明度
   @Local ak: AppKeys = AppStorageV2.connect(AppKeys)!;
-  @Local private isFullScreenMode: boolean = false; // 全屏模式状态
-  @Local private currentFullScreenChartType: string = '频谱图'; // 当前全屏显示的图表类型
+  @Local private currentTabIndex: number = 0; // 当前选中的标签页索引
   private animationTimeOutId: number | undefined;
   // 服务实例
   private audioControllerService: AudioControllerService = AudioControllerService.getInstance(this.ak, this.pk);
@@ -33,125 +37,47 @@ export struct DashBoard {
   @Consumer(navigationStack) navStack: NavPathStack = new NavPathStack()
   sysResourceManager: resourceManager.ResourceManager = resourceManager.getSystemResourceManager();
 
+  // 图表类型配置
+  private readonly chartTypes: ChartTypeConfig[] = [
+    { title: '频谱图', componentId: 0 },
+    { title: '频谱柱状图', componentId: 1 },
+    { title: '时域图', componentId: 2 },
+    { title: '统计分布图', componentId: 3 }
+  ]
+
   build() {
     Stack({ alignContent: Alignment.Top }) {
-      // 全屏模式显示
-      if (this.isFullScreenMode) {
-        FullScreenChartDashboard({
-          canvasWidth: this.ak.windowWidth - 32,
-          canvasHeight: this.ak.windowHeight - 260,
-          initialChartType: this.currentFullScreenChartType,
-          onExitFullScreen: () => {
-            this.getUIContext().animateTo({ duration: 600, curve: Curve.EaseInOut }, () => {
-              this.exitFullScreenMode();
+      // 全屏显示当前选中的图表
+      Column() {
+        // 标签页头部
+        this.buildTabHeader()
+        
+        // 图表内容区域 - 直接全屏显示
+        Stack() {
+          // 使用Tabs组件实现标签页切换
+          Tabs({ index: this.currentTabIndex }) {
+            ForEach(this.chartTypes, (item: ChartTypeConfig, index?: number) => {
+              TabContent() {
+                this.buildChartContent(item.title)
+              }
+              .tabBar(item.title)
             })
-          },
-        })
-          .borderRadius(16)
-          .width('100%')
-          .height('100%')
-          .geometryTransition("FullScreenChartDashboard")
-          .transition(TransitionEffect.OPACITY)
-      } else {
-        // 正常模式显示
-        Scroll() {
-          GridRow({ columns: 12, breakpoints: { reference: BreakpointsReference.WindowSize }, gutter: 16 }) {
-
-            // 频谱图 - 优化布局，占据更多空间
-            GridCol({
-              span: {
-                xs: 12, // 横向XS/SM：单列布局（全宽）
-                sm: 12, // 横向XS/SM：单列布局（全宽）
-                md: 6, // 横向MD及以上：双列布局（半宽）
-                lg: 6, // 横向MD及以上：双列布局（半宽）
-                xl: 6    // 横向MD及以上：双列布局（半宽）
-              }
-            }) {
-              Column() {
-                SpectrumChartComponent()
-
-                // 全屏按钮
-                this.buildFullScreenButton('频谱图')
-              }
-              .geometryTransition("FullScreenChartDashboard")
-              .transition(TransitionEffect.OPACITY)
-            }
-            .backgroundColor($r('sys.color.comp_background_primary'))
-            .borderRadius(16)
-
-            // 频谱柱状图 - 新增频谱柱状图组件
-            GridCol({
-              span: {
-                xs: 12, // 横向XS/SM：单列布局（全宽）
-                sm: 12, // 横向XS/SM：单列布局（全宽）
-                md: 6, // 横向MD及以上：双列布局（半宽）
-                lg: 6, // 横向MD及以上：双列布局（半宽）
-                xl: 6    // 横向MD及以上：双列布局（半宽）
-              }
-            }) {
-              Column() {
-                SpectrumBarChartComponent()
-
-                // 全屏按钮
-                this.buildFullScreenButton('频谱柱状图')
-              }
-              .geometryTransition("FullScreenChartDashboard")
-              .transition(TransitionEffect.OPACITY)
-            }
-            .backgroundColor($r('sys.color.comp_background_primary'))
-            .borderRadius(16)
-
-            // 时域波形图 - 优化布局，占据更多空间
-            GridCol({
-              span: {
-                xs: 12, // 横向XS/SM：单列布局（全宽）
-                sm: 12, // 横向XS/SM：单列布局（全宽）
-                md: 6, // 横向MD及以上：双列布局（半宽）
-                lg: 6, // 横向MD及以上：双列布局（半宽）
-                xl: 6    // 横向MD及以上：双列布局（半宽）
-              }
-            }) {
-              Column() {
-                TimeDomainChartComponent()
-
-                // 全屏按钮
-                this.buildFullScreenButton('时域图')
-              }
-            }
-            .backgroundColor($r('sys.color.comp_background_primary'))
-            .borderRadius(16)
-
-            // 统计分布图 - 新增统计图表组件
-            GridCol({
-              span: {
-                xs: 12, // 横向XS/SM：单列布局（全宽）
-                sm: 12, // 横向XS/SM：单列布局（全宽）
-                md: 6, // 横向MD及以上：双列布局（半宽）
-                lg: 6, // 横向MD及以上：双列布局（半宽）
-                xl: 6    // 横向MD及以上：双列布局（半宽）
-              }
-            }) {
-              Column() {
-                StatisticsChartComponent()
-
-                // 全屏按钮
-                this.buildFullScreenButton('统计分布图')
-
-              }
-            }
-            .borderRadius(16)
-            .backgroundColor($r('sys.color.comp_background_primary'))
           }
-          .id('mainNoiseMeterDisplayId')
-          .onBreakpointChange(breakPoints => {
-            // 断点信息现在由 AppStorage 统一管理，这里不再需要处理
-            console.info(`[CAT_ANIMATION] GridRow 断点变化: ${breakPoints}`);
+          .vertical(false)
+          .scrollable(true)
+          .barMode(BarMode.Fixed)
+          .barWidth('100%')
+          .animationDuration(300)
+          .onChange((index: number) => {
+            this.currentTabIndex = index;
           })
+          .backgroundColor($r('sys.color.comp_background_primary'))
+          .borderRadius(16)
         }
-        .scrollBar(BarState.Off)
-        .edgeEffect(EdgeEffect.Spring)
-        .align(Alignment.Top)
+        .layoutWeight(1)
       }
+      .width('100%')
+      .height('100%')
 
       Column()
         .width(this.dWidthHeight)
@@ -162,13 +88,59 @@ export struct DashBoard {
     }.margin({ top: 16 })
   }
 
+  /**
+   * 构建标签页头部
+   */
+  @Builder
+  buildTabHeader() {
+    Row() {
+      Text('噪声分析')
+        .fontSize(18)
+        .fontWeight(FontWeight.Medium)
+        .fontColor($r('sys.color.font_primary'))
+      
+      Blank()
+      
+      // 当前图表类型指示器
+      Text(this.chartTypes[this.currentTabIndex].title)
+        .fontSize(14)
+        .fontColor($r('sys.color.font_secondary'))
+        .backgroundColor($r('sys.color.comp_background_tertiary'))
+        .padding({ left: 12, right: 12, top: 6, bottom: 6 })
+        .borderRadius(12)
+    }
+    .width('100%')
+    .padding({ left: 16, right: 16, top: 8, bottom: 8 })
+  }
+
+  /**
+   * 构建图表内容 - 直接全屏显示，无需全屏按钮
+   */
+  @Builder
+  buildChartContent(chartTitle: string) {
+    Column() {
+      // 图表组件 - 直接全屏显示
+      if (chartTitle === '频谱图') {
+        SpectrumChartComponent()
+      } else if (chartTitle === '频谱柱状图') {
+        SpectrumBarChartComponent()
+      } else if (chartTitle === '时域图') {
+        TimeDomainChartComponent()
+      } else if (chartTitle === '统计分布图') {
+        StatisticsChartComponent()
+      }
+    }
+    .width('100%')
+    .height('100%')
+    .padding(8) // 减少padding，让图表更大
+  }
+
   aboutToDisappear() {
     // 清理资源
     this.audioControllerService.dispose();
   }
 
   aboutToAppear() {
-
     // 确保AudioControllerService已正确初始化
     console.info('[DecibelMeter] AudioControllerService实例状态:',
       this.audioControllerService ? '已初始化' : '未初始化');
@@ -198,56 +170,5 @@ export struct DashBoard {
         this.translateY = -this.getUIContext().px2vp(displayClass.height) / 2 + 20;
       });
     }, 100)
-  }
-
-  /**
-   * 构建全屏按钮
-   */
-  @Builder
-  buildFullScreenButton(chartType: string) {
-    Row() {
-      Blank()
-
-      Button('全屏查看')
-        .fontSize(12)
-        .type(ButtonType.Capsule)
-        .backgroundColor($r('sys.color.comp_background_tertiary'))
-        .fontColor($r('sys.color.font_secondary'))
-        .padding({
-          left: 12,
-          right: 12,
-          top: 6,
-          bottom: 6
-        })
-        .onClick(() => {
-          Throttle.click(() => {
-            this.getUIContext().animateTo({ duration: 600, curve: Curve.EaseInOut }, () => {
-              this.enterFullScreenMode(chartType);
-            })
-          })
-        })
-    }
-    .width('100%')
-    .padding(8)
-  }
-
-  /**
-   * 进入全屏模式
-   */
-  private enterFullScreenMode(chartType: string): void {
-    console.info(`[全屏模式] 进入全屏模式，图表类型: ${chartType}`);
-    this.isFullScreenMode = true;
-    // 将图表类型传递给全屏组件
-    this.currentFullScreenChartType = chartType;
-    // 每次进入全屏模式时，FullScreenChartDashboard组件会重新创建
-    // 因此退出按钮会在aboutToAppear中重新显示
-  }
-
-  /**
-   * 退出全屏模式
-   */
-  private exitFullScreenMode(): void {
-    console.info('[全屏模式] 退出全屏模式');
-    this.isFullScreenMode = false;
   }
 }
