@@ -31,6 +31,83 @@ import {
   AxisBase,
 } from '@ohos/mpchart';
 
+/**
+ * 自定义X轴值格式化器
+ * 用于显示标准对数频率点标签
+ */
+class StandardFrequencyAxisValueFormatter implements IAxisValueFormatter {
+  private static readonly STANDARD_FREQUENCIES = [16, 31.5, 63, 125, 250, 500, 1000, 2000, 4000, 8000, 16000];
+  private static readonly LOG_MIN_FREQ = Math.log10(16);
+  private static readonly LOG_MAX_FREQ = Math.log10(20000);
+  
+  // 预计算标准频率点对应的X轴位置
+  private static readonly FREQUENCY_TO_X_MAP: Map<number, number> = (() => {
+    const map = new Map<number, number>();
+    for (const freq of StandardFrequencyAxisValueFormatter.STANDARD_FREQUENCIES) {
+      const logFreq = Math.log10(freq);
+      const xValue = ((logFreq - StandardFrequencyAxisValueFormatter.LOG_MIN_FREQ) /
+        (StandardFrequencyAxisValueFormatter.LOG_MAX_FREQ - StandardFrequencyAxisValueFormatter.LOG_MIN_FREQ)) * 20000;
+      map.set(freq, xValue);
+      // 调试日志：记录频率到X轴的映射
+      console.info(`[X轴格式化器初始化] 频率${freq}Hz -> X值${xValue}`);
+    }
+    return map;
+  })();
+  
+  getFormattedValue(value: number, axis: AxisBase): string {
+    // 调试日志：记录输入的X值
+    console.info(`[X轴格式化器] 输入X值: ${value}`);
+    
+    // 查找当前X值最接近的标准频率点
+    let closestFreq = StandardFrequencyAxisValueFormatter.STANDARD_FREQUENCIES[0];
+    let minDistance = Math.abs(value - StandardFrequencyAxisValueFormatter.FREQUENCY_TO_X_MAP.get(closestFreq)!);
+    
+    for (const freq of StandardFrequencyAxisValueFormatter.STANDARD_FREQUENCIES) {
+      const freqXValue = StandardFrequencyAxisValueFormatter.FREQUENCY_TO_X_MAP.get(freq)!;
+      const distance = Math.abs(value - freqXValue);
+      if (distance < minDistance) {
+        minDistance = distance;
+        closestFreq = freq;
+      }
+    }
+    
+    // 调试日志：记录找到的最接近频率和距离
+    console.info(`[X轴格式化器] 最接近频率: ${closestFreq}Hz, 距离: ${minDistance}`);
+    
+    // 根据频率范围使用不同的容差
+    let threshold: number;
+    if (closestFreq <= 63) {
+      threshold = 200; // 低频区域使用更大容差，确保63Hz能匹配
+    } else if (closestFreq <= 1000) {
+      threshold = 450; // 中频区域使用中等容差，特别为1000Hz增加容差
+    } else {
+      threshold = 700; // 高频区域使用较大容差
+    }
+    
+    // 调试日志：记录容差和比较结果
+    console.info(`[X轴格式化器] 容差: ${threshold}, 是否匹配: ${minDistance <= threshold}`);
+    
+    if (minDistance <= threshold) {
+      // 使用统一样式格式化频率显示
+      let formattedValue: string;
+      if (closestFreq >= 1000) {
+        formattedValue = `${(closestFreq / 1000).toFixed(0)}k`;
+      } else {
+        formattedValue = `${Math.round(closestFreq)}`;
+      }
+      
+      // 调试日志：记录最终返回的标签
+      console.info(`[X轴格式化器] 返回标签: "${formattedValue}"`);
+      return formattedValue;
+    } else {
+      // 调试日志：记录不匹配的情况
+      console.info(`[X轴格式化器] 不匹配，返回空字符串`);
+      return '';
+    }
+
+  }
+}
+
 @ComponentV2
 export struct LineChartSpectrumComponent {
   // 输入参数
@@ -298,6 +375,7 @@ export struct LineChartSpectrumComponent {
       // 设置最小值和最大值，确保使用正确的分贝范围
       this.leftAxis.setAxisMinimum(dbSteps[0]); // -20
       this.leftAxis.setAxisMaximum(dbSteps[dbSteps.length - 1]); // 140
+      this.leftAxis.setYOffset(-10)
       // 设置网格线样式
       this.leftAxis.setDrawGridLines(true);
       this.leftAxis.setGridColor(parseInt(UnifiedChartStyle.GRID_COLOR.replace('#', '0xFF')));
@@ -335,37 +413,21 @@ export struct LineChartSpectrumComponent {
       this.xAxis.setDrawGridLines(true); // 启用水平网格线作为刻度线
       this.xAxis.setDrawAxisLine(true); // 绘制轴线
       this.xAxis.setGranularity(1);
-      this.xAxis.setLabelCount(10);
+      this.xAxis.setLabelCount(11, false); // 强制显示11个标签，不自动调整
       this.xAxis.setTextColor(parseInt(UnifiedChartStyle.TEXT_COLOR.replace('#', '0xFF')));
       this.xAxis.setTextSize(UnifiedChartStyle.FONT_SIZES.axis);
-      this.xAxis.setYOffset(10); // 正偏移，使标签显示在图表上方
+      this.xAxis.setYOffset(-100); // 正偏移，使标签显示在图表上方
+      this.xAxis.setXOffset(2);
       this.xAxis.setAvoidFirstLastClipping(true); // 避免首尾标签被裁剪
       // 设置图表X轴显示范围，与映射后的X值保持一致
       // 由于跳过了16Hz以下的数据，所以最小值应该对应16Hz的映射值
-      const LOG_MIN_FREQ = Math.log10(16);
-      const logMaxFreq = Math.log10(20000);
       
       // 直接设置范围，因为16Hz映射到0，20kHz映射到20000
       this.xAxis.setAxisMinimum(0);     // 16Hz对应的映射值
       this.xAxis.setAxisMaximum(20000);  // 20kHz对应的映射值
       
-      // 自定义X轴标签，按照对数坐标显示频率
-      // 创建一个符合IAxisValueFormatter接口的对象
-      const formatter: IAxisValueFormatter = {
-        getFormattedValue: (value: number, axis: AxisBase): string => {
-          // 将映射后的X值转换回频率
-          const LOG_MIN_FREQ = Math.log10(16);
-          const logMaxFreq = Math.log10(20000);
-          const logFreq = LOG_MIN_FREQ + (value / 20000) * (logMaxFreq - LOG_MIN_FREQ);
-          const frequency = Math.pow(10, logFreq);
-          
-          // 调试信息：验证映射是否正确
-          console.info(`[频谱图] X轴值: ${value}, 对应频率: ${frequency}Hz`);
-          
-          // 使用统一样式格式化频率显示
-          return UnifiedChartStyle.formatFrequency(frequency);
-        }
-      };
+      // 使用自定义的X轴格式化器，显示标准对数频率点
+      const formatter = new StandardFrequencyAxisValueFormatter();
       this.xAxis.setValueFormatter(formatter);
       
       // 设置X轴单位标签
@@ -425,7 +487,7 @@ export struct LineChartSpectrumComponent {
           Text('频率(Hz)')
             .fontSize(UnifiedChartStyle.FONT_SIZES.axis)
             .fontColor(parseInt(UnifiedChartStyle.TEXT_COLOR.replace('#', '0xFF')))
-            .position({ x: '87%', y: '17%' })
+            .position({ x: '87%', y: '18%' })
             .translate({ x: '-50%' })
             .backgroundColor(UnifiedChartStyle.BACKGROUND_COLOR)
             .padding({ left: 4, right: 4 })
@@ -435,7 +497,7 @@ export struct LineChartSpectrumComponent {
           Text('声级(dB)')
             .fontSize(UnifiedChartStyle.FONT_SIZES.axis)
             .fontColor(parseInt(UnifiedChartStyle.TEXT_COLOR.replace('#', '0xFF')))
-            .position({ x: '5%', y: '85%' })
+            .position({ x: '3%', y: '85%' })
             .translate({ y: '-50%' })
             .rotate({ angle: -90 })
             .backgroundColor(UnifiedChartStyle.BACKGROUND_COLOR)
