@@ -525,7 +525,7 @@ export struct LineChartSpectrumComponent {
             .borderRadius(4)
           
           // Y轴单位标签
-          Text('声级(dB)')
+          Text(`声级dB(${this.pk.weighting_type})`)
             .fontSize(UnifiedChartStyle.FONT_SIZES.axis)
             .fontColor(parseInt(UnifiedChartStyle.TEXT_COLOR.replace('#', '0xFF')))
             .position({ x: '3%', y: '85%' })
