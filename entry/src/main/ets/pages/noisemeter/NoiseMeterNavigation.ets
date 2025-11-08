@@ -167,13 +167,16 @@ export struct MainNoiseMeter {
   @Builder
   DashboardContent() {
     Column() {
-      // 噪音检测区域
+      // 噪音检测区域 - 在隐藏标题栏时使用更大的显示区域
       DashBoard({ meterOn: true })
-        .id('decibelMeterId').padding({ left: 16, right: 16 })
+        .id('decibelMeterId')
+        .padding({ left: 16, right: 16, top: this.currentIndex === 1 ? 8 : 16, bottom: 8 })
     }
     .id('decibelMeterRoot')
     .justifyContent(FlexAlign.Center)
     .alignItems(HorizontalAlign.Center)
+    .width('100%')
+    .height('100%')
     .opacity(this.currentIndex === 1 ? 1 : 0)
     .scale({ x: this.currentIndex === 1 ? 1 : 0.95, y: this.currentIndex === 1 ? 1 : 0.95 })
     .animation({
@@ -261,6 +264,9 @@ export struct MainNoiseMeter {
         TabContent() {
           this.DashboardContent()
         }.align(Alignment.Top)
+        .layoutWeight(1)
+        .width('100%')
+        .height('100%')
         .tabBar(this.TabBuilder({
           title: '仪表盘',
           icon: this.currentIndex == 1 ? $r("app.media.solar_spedometer_middle_bold") : $r("app.media.ic_meter"),
@@ -360,13 +366,13 @@ export struct MainNoiseMeter {
       .barWidth('100%')
       .animationDuration(0)
     }
-    .title(this.buildTitleContent, {
+    .title(this.currentIndex === 1 ? undefined : this.buildTitleContent, {
       barStyle: BarStyle.STANDARD,
       backgroundBlurStyle: BlurStyle.BACKGROUND_REGULAR,
     })
     .id('mainAppId')
     .menus(this.menuItems)
-    .hideTitleBar(false)
+    .hideTitleBar(this.currentIndex === 1)
     .hideToolBar(true)
     .mode(NavDestinationMode.STANDARD)
     .backgroundColor($r('sys.color.background_secondary'))

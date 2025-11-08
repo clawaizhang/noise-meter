@@ -69,6 +69,8 @@ export struct DashBoard {
         .borderRadius(16)
       }
       .layoutWeight(1)
+      .width('100%')
+      .height('100%')
 
       Column()
         .width(this.dWidthHeight)
@@ -76,7 +78,7 @@ export struct DashBoard {
         .backgroundImage(this.bgImage)
         .scale({ x: this.dScale, y: this.dScale })
         .translate({ x: this.translateX, y: this.translateY })
-    }.margin({ top: 16 })
+    }.margin({ top: 8, left: 8, right: 8, bottom: 8 })
   }
 
   /**
@@ -98,7 +100,9 @@ export struct DashBoard {
     }
     .width('100%')
     .height('100%')
-    .padding(4) // 进一步减少padding，因为坐标轴标签现在在内部，图表显示区域可以更大
+    .padding(2) // 最小化padding以最大化显示区域
+    .justifyContent(FlexAlign.Center)
+    .alignItems(HorizontalAlign.Center)
   }
 
   aboutToDisappear() {
