@@ -6,6 +6,7 @@ import { BaseChartComponent } from '../common/charts/BaseChartComponent';
 import { ChartConfig, ChartType, DefaultChartConfig } from '../common/charts/ChartConfig';
 import { AudioPresets } from '../../common/AudioConfig';
 import { SpectrumDataProcessor, PeakInfo } from './SpectrumDataProcessor';
+import { UnifiedChartStyle } from '../common/charts/UnifiedChartStyle';
 
 @ComponentV2
 export struct SpectrumChartComponent {
@@ -33,10 +34,15 @@ export struct SpectrumChartComponent {
     return {
       margin: DefaultChartConfig.margin,
       aspectRatio: 1.5,
-      backgroundColor: DefaultChartConfig.backgroundColor,
-      gridColor: DefaultChartConfig.gridColor,
-      textColor: DefaultChartConfig.textColor,
-      fontSize: DefaultChartConfig.fontSize,
+      backgroundColor: UnifiedChartStyle.BACKGROUND_COLOR,
+      gridColor: UnifiedChartStyle.GRID_COLOR,
+      textColor: UnifiedChartStyle.TEXT_COLOR,
+      fontSize: {
+        title: UnifiedChartStyle.FONT_SIZES.title,
+        axis: UnifiedChartStyle.FONT_SIZES.axis,
+        label: UnifiedChartStyle.FONT_SIZES.value,
+        small: UnifiedChartStyle.FONT_SIZES.legend
+      },
       chartType: ChartType.SPECTRUM,
       responsive: DefaultChartConfig.responsive
     };
@@ -87,14 +93,14 @@ export struct SpectrumChartComponent {
     fontSize: number = 12): void {
     console.info(`[频谱绘制] 开始绘制频谱，数据长度=${rawSpectrum.length}`);
     if (canvasContext) {
-      let lineColor = sysResourceManager.getColorSync($r('sys.color.font_on_tertiary').id);
+      let lineColor = parseInt(UnifiedChartStyle.TEXT_COLOR.replace('#', '0xFF'));
       // 清除画布
       const frequencyHigh: number = frequencySteps[frequencySteps.length - 1];
       console.info(`[频谱绘制] 频率步进点=${frequencySteps.join(', ')}`);
       canvasContext.clearRect(0, 0, canvasWidth, canvasHeight);
       // 绘制分贝刻度
       canvasContext.strokeStyle = lineColor;
-      canvasContext.lineWidth = 1;
+      canvasContext.lineWidth = UnifiedChartStyle.LINE_WIDTHS.thin;
       canvasContext.textAlign = 'right';
       canvasContext.font = `${vp2px(fontSize)}px sans-serif`;
       canvasContext.fillStyle = lineColor;
@@ -146,7 +152,7 @@ export struct SpectrumChartComponent {
         }
 
         // 绘制水平网格线（从画布左侧到右侧）
-        canvasContext.lineWidth = 0.5
+        canvasContext.lineWidth = UnifiedChartStyle.LINE_WIDTHS.grid;
         canvasContext.beginPath();
         canvasContext.moveTo(0, y);
         canvasContext.lineTo(canvasWidth, y);
@@ -182,12 +188,11 @@ export struct SpectrumChartComponent {
         if (i === 0 || i === frequencySteps.length - 1) {
           // 绘制第一个频率标签
           if (i === 0) {
-            canvasContext.fillStyle =
-              sysResourceManager.getColorSync($r('sys.color.font_on_tertiary').id);
+            canvasContext.fillStyle = lineColor;
             canvasContext.font = `${vp2px(fontSize)}px sans-serif`;
             canvasContext.textAlign = 'left';
             canvasContext.fillText(
-              `${freq}`,
+              UnifiedChartStyle.formatFrequency(freq),
               x + 2,
               zeroDbY - 2  // 使用0分贝线的位置
             );
@@ -197,19 +202,15 @@ export struct SpectrumChartComponent {
 
         // 绘制垂直网格线
         canvasContext.beginPath();
-        canvasContext.strokeStyle =
-          sysResourceManager.getColorSync($r('sys.color.font_on_tertiary').id);
-        canvasContext.lineWidth = 0.5;
+        canvasContext.strokeStyle = lineColor;
+        canvasContext.lineWidth = UnifiedChartStyle.LINE_WIDTHS.grid;
         canvasContext.moveTo(x, 0);
         canvasContext.lineTo(x, canvasHeight);
         canvasContext.stroke();
 
         // 绘制频率文本（在0分贝线的上方，左对齐）
-        const label: string = freq >= 1000 ?
-          (freq === 1000 ? '1k' : `${freq / 1000}k`) :
-          freq.toString();
-        canvasContext.fillStyle =
-          sysResourceManager.getColorSync($r('sys.color.font_on_tertiary').id);
+        const label: string = UnifiedChartStyle.formatFrequency(freq);
+        canvasContext.fillStyle = lineColor;
         canvasContext.font = `${vp2px(fontSize)}px sans-serif`;
         canvasContext.textAlign = 'left';
         canvasContext.fillText(
@@ -237,9 +238,8 @@ export struct SpectrumChartComponent {
 
       // 绘制主频谱折线
       const spectrumPath = new Path2D(); // 创建新的Path2D对象
-      canvasContext.strokeStyle =
-        sysResourceManager.getColorSync($r('sys.color.font_on_secondary').id);
-      canvasContext.lineWidth = 0.5;
+      canvasContext.strokeStyle = parseInt(UnifiedChartStyle.PRIMARY_COLOR.replace('#', '0xFF'));
+      canvasContext.lineWidth = UnifiedChartStyle.LINE_WIDTHS.normal;
 
       // 标记是否找到第一个有效点
       let isFirstValidPoint = true;
@@ -300,19 +300,18 @@ export struct SpectrumChartComponent {
 
         const peakFreqY: number = canvasHeight -
           ((this.peakInfo.dbValue - minDb) / (maxDb - minDb)) * canvasHeight;
-        canvasContext.fillStyle =
-          sysResourceManager.getColorSync($r('sys.color.font_on_secondary').id);
+        canvasContext.fillStyle = parseInt(UnifiedChartStyle.PRIMARY_COLOR.replace('#', '0xFF'));
         canvasContext.textAlign = 'center';
         canvasContext.font = `bold ${vp2px(fontSize + 2)}px sans-serif`;
         canvasContext.fillText(
-          `${Math.round(this.peakInfo.frequency)}Hz`,
+          UnifiedChartStyle.formatFrequency(this.peakInfo.frequency),
           peakX,
           peakFreqY - 35 // 稍微抬高标签位置
         );
 
         // 显示峰值分贝值
         canvasContext.fillText(
-          `${this.peakInfo.dbValue.toFixed(1)}dB`,
+          UnifiedChartStyle.formatDecibel(this.peakInfo.dbValue),
           peakX,
           peakFreqY - 20 // 在频率标签上方
         );

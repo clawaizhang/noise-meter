@@ -4,6 +4,7 @@ import { AppKeys } from '../../models/AppKeys';
 import { PreferenceKeys } from '../../models/PreferenceKeys';
 import { AudioPresets } from '../../common/AudioConfig';
 import { SpectrumDataProcessor, PeakInfo } from './SpectrumDataProcessor';
+import { UnifiedChartStyle } from '../common/charts/UnifiedChartStyle';
 import {
   JArrayList,
   XAxis,
@@ -150,21 +151,22 @@ export struct LineChartSpectrumComponent {
 
     // 创建数据集
     this.dataSet = new LineDataSet(values, '频谱数据');
-    this.dataSet.setHighLightColor(Color.Blue);
+    this.dataSet.setHighLightColor(parseInt(UnifiedChartStyle.HIGHLIGHT_COLOR.replace('#', '0xFF')));
     this.dataSet.setDrawIcons(false);
     this.dataSet.setMode(Mode.LINEAR); // 直线模式
     this.dataSet.setDrawCircles(false); // 不绘制圆点，因为数据点太多
     this.dataSet.setDrawCircleHole(false);
-    this.dataSet.setColorByColor(Color.Blue); // 设置折线颜色
+    this.dataSet.setColorByColor(parseInt(UnifiedChartStyle.PRIMARY_COLOR.replace('#', '0xFF'))); // 设置折线颜色
 
-    // 设置渐变色填充
-    const gradientFillColor = new JArrayList<ChartColorStop>();
-    gradientFillColor.add(["#0C0099CC", 0.2]);
-    gradientFillColor.add(["#7F0099CC", 0.4]);
-    gradientFillColor.add(["#0099CC", 1.0]);
-    this.dataSet.setGradientFillColor(gradientFillColor);
+    // 使用统一样式的渐变色填充
+    const gradientFillColor = UnifiedChartStyle.getGradientFillColor(UnifiedChartStyle.PRIMARY_COLOR);
+    const gradientArrayList = new JArrayList<ChartColorStop>();
+    for (const stop of gradientFillColor) {
+      gradientArrayList.add(stop);
+    }
+    this.dataSet.setGradientFillColor(gradientArrayList);
     this.dataSet.setDrawFilled(true);
-    this.dataSet.setLineWidth(1.5); // 设置线宽
+    this.dataSet.setLineWidth(UnifiedChartStyle.LINE_WIDTHS.normal); // 使用统一样式线宽
 
     const dataSetList: JArrayList<ILineDataSet> = new JArrayList<ILineDataSet>();
     dataSetList.add(this.dataSet);
@@ -194,16 +196,21 @@ export struct LineChartSpectrumComponent {
     if (legend) {
       legend.setEnabled(true);
       legend.setForm(LegendForm.LINE);
+      legend.setTextColor(parseInt(UnifiedChartStyle.TEXT_COLOR.replace('#', '0xFF')));
+      legend.setTextSize(UnifiedChartStyle.FONT_SIZES.legend);
     }
     
     // 设置图表数据最大的绘制数
     this.model.setMaxVisibleValueCount(100);
     
+    // 创建分贝限制线（与频谱柱状图保持一致）
+    this.createLimitLines();
+    
     // 设置左Y轴信息
     this.leftAxis = this.model.getAxisLeft();
     if (this.leftAxis) {
       // 设置绘制标签个数
-      this.leftAxis.setLabelCount(6, false);
+      this.leftAxis.setLabelCount(7, true);
       // 设置标签位置
       this.leftAxis.setPosition(YAxisLabelPosition.OUTSIDE_CHART);
       // 设置距离顶部距离
@@ -212,12 +219,18 @@ export struct LineChartSpectrumComponent {
       const dbSteps: number[] = SpectrumDataProcessor.getDbSteps();
       this.leftAxis.setAxisMinimum(dbSteps[0]);
       this.leftAxis.setAxisMaximum(dbSteps[dbSteps.length - 1]);
+      // 设置网格线样式
+      this.leftAxis.setDrawGridLines(true);
+      this.leftAxis.setGridColor(parseInt(UnifiedChartStyle.GRID_COLOR.replace('#', '0xFF')));
+      this.leftAxis.setGridLineWidth(UnifiedChartStyle.LINE_WIDTHS.grid);
+      this.leftAxis.setTextColor(parseInt(UnifiedChartStyle.TEXT_COLOR.replace('#', '0xFF')));
+      this.leftAxis.setTextSize(UnifiedChartStyle.FONT_SIZES.axis);
     }
 
     // 设置图表右Y轴信息
     this.rightAxis = this.model.getAxisRight();
     if (this.rightAxis) {
-      this.rightAxis.setLabelCount(6, false);
+      this.rightAxis.setLabelCount(7, true);
       this.rightAxis.setDrawGridLines(false);
       this.rightAxis.setSpaceTop(15);
       const dbSteps: number[] = SpectrumDataProcessor.getDbSteps();
@@ -233,6 +246,8 @@ export struct LineChartSpectrumComponent {
       this.xAxis.setDrawGridLines(false);
       this.xAxis.setGranularity(1);
       this.xAxis.setLabelCount(10);
+      this.xAxis.setTextColor(parseInt(UnifiedChartStyle.TEXT_COLOR.replace('#', '0xFF')));
+      this.xAxis.setTextSize(UnifiedChartStyle.FONT_SIZES.axis);
       // 设置图表X轴显示范围，与映射后的X值保持一致
       // 由于跳过了16Hz以下的数据，所以最小值应该对应16Hz的映射值
       const LOG_MIN_FREQ = Math.log10(16);
@@ -255,12 +270,8 @@ export struct LineChartSpectrumComponent {
           // 调试信息：验证映射是否正确
           console.info(`[频谱图] X轴值: ${value}, 对应频率: ${frequency}Hz`);
           
-          // 格式化频率显示
-          if (frequency >= 1000) {
-            return `${(frequency / 1000).toFixed(1)}k`;
-          } else {
-            return `${Math.round(frequency)}`;
-          }
+          // 使用统一样式格式化频率显示
+          return UnifiedChartStyle.formatFrequency(frequency);
         }
       };
       this.xAxis.setValueFormatter(formatter);
@@ -271,6 +282,29 @@ export struct LineChartSpectrumComponent {
     // 初始化数据
     const lineData: LineData = this.generateLineData();
     this.model.setData(lineData);
+  }
+  
+  /**
+   * 创建分贝限制线（与频谱柱状图保持一致）
+   */
+  private createLimitLines(): void {
+    if (!this.leftAxis) return;
+    
+    // 清除之前的限制线
+    this.leftAxis.removeAllLimitLines();
+    
+    // 添加统一样式的限制线
+    for (const limitLineConfig of UnifiedChartStyle.LIMIT_LINES) {
+      const limitLine = new LimitLine(limitLineConfig.value, limitLineConfig.label);
+      limitLine.setLineWidth(UnifiedChartStyle.LINE_WIDTHS.normal);
+      limitLine.enableDashedLine(5, 5, 0);
+      limitLine.setLabelPosition(LimitLabelPosition.RIGHT_TOP);
+      limitLine.setTextColor(parseInt(limitLineConfig.color.replace('#', '0xFF')));
+      limitLine.setLineColor(parseInt(limitLineConfig.color.replace('#', '0xFF')));
+      limitLine.setTextSize(UnifiedChartStyle.FONT_SIZES.value);
+      
+      this.leftAxis.addLimitLine(limitLine);
+    }
   }
 
   aboutToAppear() {
@@ -286,35 +320,36 @@ export struct LineChartSpectrumComponent {
       // 图表标题
       Row() {
         Text('频谱分析')
-          .fontSize(16)
+          .fontSize(UnifiedChartStyle.FONT_SIZES.title)
           .fontWeight(FontWeight.Medium)
-          .fontColor(Color.Black)
+          .fontColor(parseInt(UnifiedChartStyle.TEXT_COLOR.replace('#', '0xFF')))
         
         Blank()
         
         // 显示峰值信息
         if (this.peakInfo && this.peakInfo.frequency > 0) {
-          Text(`峰值: ${Math.round(this.peakInfo.frequency)}Hz (${this.peakInfo.dbValue.toFixed(1)}dB)`)
-            .fontSize(12)
-            .fontColor(Color.Gray)
-            .backgroundColor(Color.White)
-            .padding({ left: 8, right: 8, top: 4, bottom: 4 })
-            .borderRadius(8)
+          Text(`峰值: ${UnifiedChartStyle.formatFrequency(this.peakInfo.frequency)} (${UnifiedChartStyle.formatDecibel(this.peakInfo.dbValue)})`)
+            .fontSize(UnifiedChartStyle.FONT_SIZES.value)
+            .fontColor(parseInt(UnifiedChartStyle.TEXT_COLOR.replace('#', '0xFF')))
+            .backgroundColor(UnifiedChartStyle.BACKGROUND_COLOR)
+            .padding({ left: UnifiedChartStyle.SPACING.sm, right: UnifiedChartStyle.SPACING.sm, top: 4, bottom: 4 })
+            .borderRadius(UnifiedChartStyle.BORDER_RADIUS.small)
         }
       }
       .width('100%')
-      .padding({ left: 16, right: 16, top: 8, bottom: 8 })
+      .padding({ left: UnifiedChartStyle.SPACING.md, right: UnifiedChartStyle.SPACING.md, top: UnifiedChartStyle.SPACING.sm, bottom: UnifiedChartStyle.SPACING.sm })
       
       // LineChart组件
       if (this.model) {
         LineChart({ model: this.model })
           .width('100%')
           .layoutWeight(1)
+          .borderRadius(UnifiedChartStyle.BORDER_RADIUS.large) // 添加圆角，与其他图表保持一致
       }
     }
     .width('100%')
     .height('100%')
-    .backgroundColor(Color.White)
-    .borderRadius(16)
+    .backgroundColor(UnifiedChartStyle.BACKGROUND_COLOR)
+    .borderRadius(UnifiedChartStyle.BORDER_RADIUS.large)
   }
 }

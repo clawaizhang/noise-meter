@@ -53,9 +53,9 @@ export const DefaultChartConfig: ChartConfig = {
     left: 35
   },
   aspectRatio: 1.5,
-  backgroundColor: '#ff191a1c',
-  gridColor: '#ff666666',
-  textColor: '#ffffffff',
+  backgroundColor: '#191A1C',
+  gridColor: '#666666',
+  textColor: '#FFFFFF',
   fontSize: {
     title: 16,
     axis: 12,

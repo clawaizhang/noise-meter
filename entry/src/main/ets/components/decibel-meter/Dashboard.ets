@@ -68,7 +68,7 @@ export struct DashBoard {
         .onChange((index: number) => {
           this.currentTabIndex = index;
         })
-        .backgroundColor($r('sys.color.comp_background_primary'))
+        .backgroundColor('#191A1C') // 使用与图表一致的黑色背景
         .borderRadius(16)
       }
       .layoutWeight(1)

@@ -3,6 +3,7 @@ import { resourceManager } from '@kit.LocalizationKit';
 import { AppKeys } from '../../models/AppKeys';
 import { PreferenceKeys } from '../../models/PreferenceKeys';
 import { AudioPresets } from '../../common/AudioConfig';
+import { UnifiedChartStyle } from '../common/charts/UnifiedChartStyle';
 import {
   JArrayList,
   XAxis,
@@ -117,20 +118,21 @@ export struct LineChartTimeDomainComponent {
 
     // 创建数据集
     this.dataSet = new LineDataSet(values, '时域波形');
-    this.dataSet.setHighLightColor(Color.Blue);
+    this.dataSet.setHighLightColor(parseInt(UnifiedChartStyle.HIGHLIGHT_COLOR.replace('#', '0xFF')));
     this.dataSet.setDrawIcons(false);
     this.dataSet.setMode(Mode.LINEAR); // 直线模式
     this.dataSet.setDrawCircles(false); // 不绘制圆点，因为数据点太多
     this.dataSet.setDrawCircleHole(false);
-    this.dataSet.setColorByColor(Color.Blue); // 设置折线颜色
-    this.dataSet.setLineWidth(1.0); // 设置线宽
+    this.dataSet.setColorByColor(parseInt(UnifiedChartStyle.PRIMARY_COLOR.replace('#', '0xFF'))); // 设置折线颜色
+    this.dataSet.setLineWidth(UnifiedChartStyle.LINE_WIDTHS.normal); // 使用统一样式线宽
 
-    // 设置渐变色填充
-    const gradientFillColor = new JArrayList<ChartColorStop>();
-    gradientFillColor.add(["#0C0099CC", 0.2]);
-    gradientFillColor.add(["#7F0099CC", 0.4]);
-    gradientFillColor.add(["#0099CC", 1.0]);
-    this.dataSet.setGradientFillColor(gradientFillColor);
+    // 使用统一样式的渐变色填充
+    const gradientFillColor = UnifiedChartStyle.getGradientFillColor(UnifiedChartStyle.PRIMARY_COLOR);
+    const gradientArrayList = new JArrayList<ChartColorStop>();
+    for (const stop of gradientFillColor) {
+      gradientArrayList.add(stop);
+    }
+    this.dataSet.setGradientFillColor(gradientArrayList);
     this.dataSet.setDrawFilled(true);
 
     const dataSetList: JArrayList<ILineDataSet> = new JArrayList<ILineDataSet>();
@@ -161,16 +163,21 @@ export struct LineChartTimeDomainComponent {
     if (legend) {
       legend.setEnabled(true);
       legend.setForm(LegendForm.LINE);
+      legend.setTextColor(parseInt(UnifiedChartStyle.TEXT_COLOR.replace('#', '0xFF')));
+      legend.setTextSize(UnifiedChartStyle.FONT_SIZES.legend);
     }
     
     // 设置图表数据最大的绘制数
     this.model.setMaxVisibleValueCount(500);
     
+    // 创建时域限制线（0线为中心线）
+    this.createLimitLines();
+    
     // 设置左Y轴信息
     this.leftAxis = this.model.getAxisLeft();
     if (this.leftAxis) {
       // 设置绘制标签个数
-      this.leftAxis.setLabelCount(6, false);
+      this.leftAxis.setLabelCount(7, true);
       // 设置标签位置
       this.leftAxis.setPosition(YAxisLabelPosition.OUTSIDE_CHART);
       // 设置距离顶部距离
@@ -178,12 +185,18 @@ export struct LineChartTimeDomainComponent {
       // 设置最小值和最大值
       this.leftAxis.setAxisMinimum(-1.0);
       this.leftAxis.setAxisMaximum(1.0);
+      // 设置网格线样式
+      this.leftAxis.setDrawGridLines(true);
+      this.leftAxis.setGridColor(parseInt(UnifiedChartStyle.GRID_COLOR.replace('#', '0xFF')));
+      this.leftAxis.setGridLineWidth(UnifiedChartStyle.LINE_WIDTHS.grid);
+      this.leftAxis.setTextColor(parseInt(UnifiedChartStyle.TEXT_COLOR.replace('#', '0xFF')));
+      this.leftAxis.setTextSize(UnifiedChartStyle.FONT_SIZES.axis);
     }
 
     // 设置图表右Y轴信息
     this.rightAxis = this.model.getAxisRight();
     if (this.rightAxis) {
-      this.rightAxis.setLabelCount(6, false);
+      this.rightAxis.setLabelCount(7, true);
       this.rightAxis.setDrawGridLines(false);
       this.rightAxis.setSpaceTop(15);
       this.rightAxis.setAxisMinimum(-1.0);
@@ -198,6 +211,8 @@ export struct LineChartTimeDomainComponent {
       this.xAxis.setDrawGridLines(false);
       this.xAxis.setGranularity(1);
       this.xAxis.setLabelCount(5);
+      this.xAxis.setTextColor(parseInt(UnifiedChartStyle.TEXT_COLOR.replace('#', '0xFF')));
+      this.xAxis.setTextSize(UnifiedChartStyle.FONT_SIZES.axis);
     }
     
     // 设置图表最大的X轴显示范围
@@ -206,6 +221,27 @@ export struct LineChartTimeDomainComponent {
     // 初始化数据
     const lineData: LineData = this.generateLineData();
     this.model.setData(lineData);
+  }
+  
+  /**
+   * 创建时域限制线（0线为中心线）
+   */
+  private createLimitLines(): void {
+    if (!this.leftAxis) return;
+    
+    // 清除之前的限制线
+    this.leftAxis.removeAllLimitLines();
+    
+    // 添加0中心线
+    const centerLine = new LimitLine(0, '0');
+    centerLine.setLineWidth(UnifiedChartStyle.LINE_WIDTHS.thin);
+    centerLine.enableDashedLine(5, 5, 0);
+    centerLine.setLabelPosition(LimitLabelPosition.RIGHT_TOP);
+    centerLine.setTextColor(parseInt(UnifiedChartStyle.TEXT_COLOR.replace('#', '0xFF')));
+    centerLine.setLineColor(parseInt(UnifiedChartStyle.GRID_COLOR.replace('#', '0xFF')));
+    centerLine.setTextSize(UnifiedChartStyle.FONT_SIZES.value);
+    
+    this.leftAxis.addLimitLine(centerLine);
   }
 
   aboutToAppear() {
@@ -221,33 +257,34 @@ export struct LineChartTimeDomainComponent {
       // 图表标题
       Row() {
         Text('时域波形')
-          .fontSize(16)
+          .fontSize(UnifiedChartStyle.FONT_SIZES.title)
           .fontWeight(FontWeight.Medium)
-          .fontColor(Color.Black)
+          .fontColor(parseInt(UnifiedChartStyle.TEXT_COLOR.replace('#', '0xFF')))
         
         Blank()
         
         // 显示数据点数量
         Text(`采样点: ${this.currentTimeDomainData.length}`)
-          .fontSize(12)
-          .fontColor(Color.Gray)
-          .backgroundColor(Color.White)
-          .padding({ left: 8, right: 8, top: 4, bottom: 4 })
-          .borderRadius(8)
+          .fontSize(UnifiedChartStyle.FONT_SIZES.value)
+          .fontColor(parseInt(UnifiedChartStyle.TEXT_COLOR.replace('#', '0xFF')))
+          .backgroundColor(UnifiedChartStyle.BACKGROUND_COLOR)
+          .padding({ left: UnifiedChartStyle.SPACING.sm, right: UnifiedChartStyle.SPACING.sm, top: 4, bottom: 4 })
+          .borderRadius(UnifiedChartStyle.BORDER_RADIUS.small)
       }
       .width('100%')
-      .padding({ left: 16, right: 16, top: 8, bottom: 8 })
+      .padding({ left: UnifiedChartStyle.SPACING.md, right: UnifiedChartStyle.SPACING.md, top: UnifiedChartStyle.SPACING.sm, bottom: UnifiedChartStyle.SPACING.sm })
       
       // LineChart组件
       if (this.model) {
         LineChart({ model: this.model })
           .width('100%')
           .layoutWeight(1)
+          .borderRadius(UnifiedChartStyle.BORDER_RADIUS.large) // 添加圆角，与其他图表保持一致
       }
     }
     .width('100%')
     .height('100%')
-    .backgroundColor(Color.White)
-    .borderRadius(16)
+    .backgroundColor(UnifiedChartStyle.BACKGROUND_COLOR)
+    .borderRadius(UnifiedChartStyle.BORDER_RADIUS.large)
   }
 }

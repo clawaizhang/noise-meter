@@ -2,12 +2,14 @@
  * 统计分布图组件 - 基于mpchart库重构版本
  * 使用BarChart组件替代Canvas绘制，提供更好的性能和交互体验
  * 遵循ArkTS规范，保持原有的数据结构和功能
+ * 统一图表风格，与频谱柱状图保持一致
  */
 
 import { DesignConstants } from '../../constants/DesignConstants';
 import { AppKeys } from '../../models/AppKeys';
 import { AppStorageV2 } from '@kit.ArkUI';
 import { resourceManager } from '@kit.LocalizationKit';
+import { UnifiedChartStyle } from '../common/charts/UnifiedChartStyle';
 import {
   BarChart,
   BarChartModel,
@@ -16,7 +18,10 @@ import {
   BarEntry,
   JArrayList,
   IValueFormatter,
-  XAxisPosition
+  XAxisPosition,
+  LimitLine,
+  LimitLabelPosition,
+  YAxis
 } from '@ohos/mpchart';
 import { UiStatisticsData } from '../../models/UIDisplayState';
 
@@ -89,10 +94,10 @@ export struct StatisticsChartComponent {
     config.chartHeight = 150;
     config.statsHeight = 60;
     config.fontSize = new FontSizeConfig();
-    config.fontSize.title = 16;
-    config.fontSize.axis = 13;
-    config.fontSize.stats = 14;
-    config.fontSize.small = 10;
+    config.fontSize.title = UnifiedChartStyle.FONT_SIZES.title;
+    config.fontSize.axis = UnifiedChartStyle.FONT_SIZES.axis;
+    config.fontSize.stats = UnifiedChartStyle.FONT_SIZES.stats || 14;
+    config.fontSize.small = UnifiedChartStyle.FONT_SIZES.value;
     return config;
   }
 
@@ -106,24 +111,24 @@ export struct StatisticsChartComponent {
     if (isSmallScreen) {
       config.chartHeight = 100;
       config.statsHeight = 45;
-      config.fontSize.title = 14;
-      config.fontSize.axis = 11;
-      config.fontSize.stats = 12;
-      config.fontSize.small = 9;
+      config.fontSize.title = UnifiedChartStyle.getResponsiveFontSize(UnifiedChartStyle.FONT_SIZES.title, 0.875);
+      config.fontSize.axis = UnifiedChartStyle.getResponsiveFontSize(UnifiedChartStyle.FONT_SIZES.axis, 0.846);
+      config.fontSize.stats = UnifiedChartStyle.getResponsiveFontSize(UnifiedChartStyle.FONT_SIZES.stats || 14, 0.857);
+      config.fontSize.small = UnifiedChartStyle.getResponsiveFontSize(UnifiedChartStyle.FONT_SIZES.value, 0.9);
     } else if (isFullScreen) {
       config.chartHeight = 180;
       config.statsHeight = 70;
-      config.fontSize.title = 18;
-      config.fontSize.axis = 14;
-      config.fontSize.stats = 15;
-      config.fontSize.small = 11;
+      config.fontSize.title = UnifiedChartStyle.getResponsiveFontSize(UnifiedChartStyle.FONT_SIZES.title, 1.125);
+      config.fontSize.axis = UnifiedChartStyle.getResponsiveFontSize(UnifiedChartStyle.FONT_SIZES.axis, 1.077);
+      config.fontSize.stats = UnifiedChartStyle.getResponsiveFontSize(UnifiedChartStyle.FONT_SIZES.stats || 14, 1.071);
+      config.fontSize.small = UnifiedChartStyle.getResponsiveFontSize(UnifiedChartStyle.FONT_SIZES.value, 1.1);
     } else {
       config.chartHeight = 150;
       config.statsHeight = 60;
-      config.fontSize.title = 16;
-      config.fontSize.axis = 13;
-      config.fontSize.stats = 14;
-      config.fontSize.small = 10;
+      config.fontSize.title = UnifiedChartStyle.FONT_SIZES.title;
+      config.fontSize.axis = UnifiedChartStyle.FONT_SIZES.axis;
+      config.fontSize.stats = UnifiedChartStyle.FONT_SIZES.stats || 14;
+      config.fontSize.small = UnifiedChartStyle.FONT_SIZES.value;
     }
 
     return config;
@@ -147,19 +152,20 @@ export struct StatisticsChartComponent {
       xAxis.setGranularity(1);
       xAxis.setLabelCount(11, true);
       xAxis.setTextSize(this.layoutConfig.fontSize.axis);
-      xAxis.setTextColor(this.sysResourceManager.getColorSync($r('sys.color.font_on_tertiary').id));
+      xAxis.setTextColor(parseInt(UnifiedChartStyle.TEXT_COLOR.replace('#', '0xFF')));
     }
 
     // 配置Y轴
     const leftAxis = this.barChartModel.getAxisLeft();
     if (leftAxis) {
       leftAxis.setDrawGridLines(true);
-      leftAxis.setGridColor(this.sysResourceManager.getColorSync($r('sys.color.font_on_tertiary').id));
-      leftAxis.setGridLineWidth(0.5);
+      leftAxis.setGridColor(parseInt(UnifiedChartStyle.GRID_COLOR.replace('#', '0xFF')));
+      leftAxis.setGridLineWidth(UnifiedChartStyle.LINE_WIDTHS.grid);
       leftAxis.setGranularity(1);
       leftAxis.setTextSize(this.layoutConfig.fontSize.axis);
-      leftAxis.setTextColor(this.sysResourceManager.getColorSync($r('sys.color.font_on_tertiary').id));
+      leftAxis.setTextColor(parseInt(UnifiedChartStyle.TEXT_COLOR.replace('#', '0xFF')));
       leftAxis.setAxisMinimum(0);
+      
     }
 
     const rightAxis = this.barChartModel.getAxisRight();
@@ -203,19 +209,19 @@ export struct StatisticsChartComponent {
     // 创建数据集
     const dataSet = new BarDataSet(entries, '分贝分布');
 
-    // 设置颜色
-    const colors = this.getBarColors(distribution.length);
+    // 使用统一样式的颜色
+    const colors = UnifiedChartStyle.getStatisticsBarColors(distribution.length);
     for (let i = 0; i < colors.length; i++) {
       dataSet.addColor(colors[i]);
     }
 
     dataSet.setDrawValues(true);
     dataSet.setValueTextSize(this.layoutConfig.fontSize.small);
-    dataSet.setValueTextColor(this.sysResourceManager.getColorSync($r('sys.color.font_on_tertiary').id));
+    dataSet.setValueTextColor(parseInt(UnifiedChartStyle.TEXT_COLOR.replace('#', '0xFF')));
 
     // 配置柱子样式
-    dataSet.setBarBorderColor(this.sysResourceManager.getColorSync($r('sys.color.font_on_tertiary').id));
-    dataSet.setBarBorderWidth(1);
+    dataSet.setBarBorderColor(parseInt(UnifiedChartStyle.GRID_COLOR.replace('#', '0xFF')));
+    dataSet.setBarBorderWidth(UnifiedChartStyle.LINE_WIDTHS.thin);
     dataSet.setBarShadowColor(0x00000000); // 透明阴影
 
     // 设置数据
@@ -229,23 +235,6 @@ export struct StatisticsChartComponent {
     // 设置数据到图表
     this.barChartModel.setData(this.barData);
     this.barChartModel.invalidate(); // 刷新图表
-  }
-
-  // 获取柱子颜色数组
-  private getBarColors(count: number): number[] {
-    const colors: number[] = [];
-    for (let i = 0; i < count; i++) {
-      let color: number;
-      if (i < 6) {
-        color = 0xFF4CAF50; // 低分贝 - 绿色
-      } else if (i < 8) {
-        color = 0xFFFF9800; // 中高分贝 - 橙色
-      } else {
-        color = 0xFFF44336; // 高分贝 - 红色
-      }
-      colors.push(color);
-    }
-    return colors;
   }
 
   // 更新X轴标签
@@ -297,19 +286,20 @@ export struct StatisticsChartComponent {
       // 图表标题
       Text('分贝统计分布')
         .fontSize(this.layoutConfig.fontSize.title)
-        .fontColor($r('sys.color.font_on_tertiary'))
+        .fontColor(parseInt(UnifiedChartStyle.TEXT_COLOR.replace('#', '0xFF')))
         .fontWeight(FontWeight.Medium)
         .textAlign(TextAlign.Center)
         .width('100%')
-        .margin({ bottom: 8 })
+        .margin({ bottom: UnifiedChartStyle.SPACING.sm })
 
       // BarChart组件
       BarChart({
         model: this.barChartModel
       })
         .width('100%')
-        .height(this.canvasHeightInput ? this.canvasHeightInput - 260 : this.layoutConfig.chartHeight)
-        .margin({ bottom: 16 })
+        .layoutWeight(1) // 使用layoutWeight确保与其他图表尺寸一致
+        .borderRadius(UnifiedChartStyle.BORDER_RADIUS.large) // 添加圆角，与其他图表保持一致
+        .margin({ bottom: UnifiedChartStyle.SPACING.md })
 
       // 统计指标显示
       this.buildStatisticsInfo(
@@ -320,9 +310,9 @@ export struct StatisticsChartComponent {
       )
     }
     .width('100%')
-    .padding(16)
-    .backgroundColor('#ff2e3033')
-    .borderRadius(16)
+    .padding(UnifiedChartStyle.SPACING.md)
+    .backgroundColor(UnifiedChartStyle.BACKGROUND_COLOR)
+    .borderRadius(UnifiedChartStyle.BORDER_RADIUS.large)
   }
 
   // 构建统计信息显示
@@ -332,63 +322,63 @@ export struct StatisticsChartComponent {
       // 统计信息标题
       Text('统计指标')
         .fontSize(this.layoutConfig.fontSize.stats)
-        .fontColor($r('sys.color.font_on_tertiary'))
+        .fontColor(parseInt(UnifiedChartStyle.TEXT_COLOR.replace('#', '0xFF')))
         .fontWeight(FontWeight.Medium)
         .textAlign(TextAlign.Center)
         .width('100%')
-        .margin({ bottom: 8 })
+        .margin({ bottom: UnifiedChartStyle.SPACING.sm })
 
       if (isSmallScreen) {
         // 小屏幕：紧凑两行显示
         Row() {
-          Text(`平均值: ${stats.avgDb.toFixed(1)} dB`)
+          Text(`平均值: ${UnifiedChartStyle.formatDecibel(stats.avgDb)}`)
             .fontSize(this.layoutConfig.fontSize.stats)
-            .fontColor($r('sys.color.font_on_tertiary'))
+            .fontColor(parseInt(UnifiedChartStyle.TEXT_COLOR.replace('#', '0xFF')))
             .layoutWeight(1)
             .textAlign(TextAlign.Start)
 
-          Text(`最大值: ${stats.maxDb.toFixed(1)} dB`)
+          Text(`最大值: ${UnifiedChartStyle.formatDecibel(stats.maxDb)}`)
             .fontSize(this.layoutConfig.fontSize.stats)
-            .fontColor($r('sys.color.font_on_tertiary'))
+            .fontColor(parseInt(UnifiedChartStyle.TEXT_COLOR.replace('#', '0xFF')))
             .layoutWeight(1)
             .textAlign(TextAlign.End)
         }
         .width('100%')
-        .margin({ bottom: 4 })
+        .margin({ bottom: UnifiedChartStyle.SPACING.xs })
 
         Row() {
-          Text(`最小值: ${stats.minDb.toFixed(1)} dB`)
+          Text(`最小值: ${UnifiedChartStyle.formatDecibel(stats.minDb)}`)
             .fontSize(this.layoutConfig.fontSize.stats)
-            .fontColor($r('sys.color.font_on_tertiary'))
+            .fontColor(parseInt(UnifiedChartStyle.TEXT_COLOR.replace('#', '0xFF')))
             .layoutWeight(1)
             .textAlign(TextAlign.Start)
 
-          Text(`标准差: ${stdDev.toFixed(1)} dB`)
+          Text(`标准差: ${UnifiedChartStyle.formatDecibel(stdDev)}`)
             .fontSize(this.layoutConfig.fontSize.stats)
-            .fontColor($r('sys.color.font_on_tertiary'))
+            .fontColor(parseInt(UnifiedChartStyle.TEXT_COLOR.replace('#', '0xFF')))
             .layoutWeight(1)
             .textAlign(TextAlign.End)
         }
         .width('100%')
       } else if (isFullScreen) {
         // 全屏模式：两行显示
-        Text(`平均值: ${stats.avgDb.toFixed(1)} dB | 最大值: ${stats.maxDb.toFixed(1)} dB`)
+        Text(`平均值: ${UnifiedChartStyle.formatDecibel(stats.avgDb)} | 最大值: ${UnifiedChartStyle.formatDecibel(stats.maxDb)}`)
           .fontSize(this.layoutConfig.fontSize.stats)
-          .fontColor($r('sys.color.font_on_tertiary'))
+          .fontColor(parseInt(UnifiedChartStyle.TEXT_COLOR.replace('#', '0xFF')))
           .textAlign(TextAlign.Center)
           .width('100%')
-          .margin({ bottom: 4 })
+          .margin({ bottom: UnifiedChartStyle.SPACING.xs })
 
-        Text(`最小值: ${stats.minDb.toFixed(1)} dB | 标准差: ${stdDev.toFixed(1)} dB`)
+        Text(`最小值: ${UnifiedChartStyle.formatDecibel(stats.minDb)} | 标准差: ${UnifiedChartStyle.formatDecibel(stdDev)}`)
           .fontSize(this.layoutConfig.fontSize.stats)
-          .fontColor($r('sys.color.font_on_tertiary'))
+          .fontColor(parseInt(UnifiedChartStyle.TEXT_COLOR.replace('#', '0xFF')))
           .textAlign(TextAlign.Center)
           .width('100%')
       } else {
         // 中等屏幕：单行显示
-        Text(`平均值: ${stats.avgDb.toFixed(1)} dB | 最大值: ${stats.maxDb.toFixed(1)} dB | 最小值: ${stats.minDb.toFixed(1)} dB | 标准差: ${stdDev.toFixed(1)} dB`)
+        Text(`平均值: ${UnifiedChartStyle.formatDecibel(stats.avgDb)} | 最大值: ${UnifiedChartStyle.formatDecibel(stats.maxDb)} | 最小值: ${UnifiedChartStyle.formatDecibel(stats.minDb)} | 标准差: ${UnifiedChartStyle.formatDecibel(stdDev)}`)
           .fontSize(this.layoutConfig.fontSize.stats)
-          .fontColor($r('sys.color.font_on_tertiary'))
+          .fontColor(parseInt(UnifiedChartStyle.TEXT_COLOR.replace('#', '0xFF')))
           .textAlign(TextAlign.Center)
           .width('100%')
       }

@@ -556,7 +556,7 @@ export struct SpectrumBarChartComponent {
               .opacity(0.8)
           }
           .padding(8)
-          .backgroundColor($r('sys.color.comp_background_secondary'))
+          .backgroundColor('#2A2B2D') // 深色背景，与整体风格一致
           .borderRadius(8)
           .margin({ right: 8 })
         })
@@ -586,11 +586,12 @@ export struct SpectrumBarChartComponent {
         }
         .width('100%')
         .padding(16)
-        .backgroundColor($r('sys.color.comp_background_secondary'))
+        .backgroundColor('#2A2B2D') // 深色背景，与整体风格一致
         .borderRadius({ topLeft: 16, topRight: 16 })
       }
     }
     .width('100%')
     .height('100%')
+    .backgroundColor(DefaultChartConfig.backgroundColor) // 设置整个组件的背景色
   }
 }
