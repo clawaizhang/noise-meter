@@ -5,7 +5,7 @@ import { PreferenceKeys } from '../../models/PreferenceKeys';
 import { BaseChartComponent } from '../common/charts/BaseChartComponent';
 import { ChartConfig, ChartType, DefaultChartConfig } from '../common/charts/ChartConfig';
 import { AudioPresets } from '../../common/AudioConfig';
-import { SpectrumDataProcessor, PeakInfo } from './SpectrumDataProcessor';
+import { SpectrumDataProcessor, PeakInfo, PeakInterpolationMethod } from './SpectrumDataProcessor';
 import { UnifiedChartStyle } from '../common/charts/UnifiedChartStyle';
 
 @ComponentV2
@@ -53,11 +53,15 @@ export struct SpectrumChartComponent {
     const newSpectrum = monitor.value<Float32Array>()?.now;
     if (newSpectrum && this.ak.isDisplayApp) {
       this.currentSpectrumData = newSpectrum;
-      // 使用公共模块查找峰值频率
+      // 使用改进的峰值检测方法（默认启用抛物线插值）
       this.peakInfo = SpectrumDataProcessor.findPeakFrequency(
         this.currentSpectrumData,
         this.fftSize,
-        this.sampleRate
+        this.sampleRate,
+        SpectrumDataProcessor.MIN_FREQUENCY,
+        SpectrumDataProcessor.MAX_FREQUENCY,
+        true, // 默认启用插值
+        PeakInterpolationMethod.PARABOLIC // 默认使用抛物线插值
       );
     }
   }

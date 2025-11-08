@@ -386,47 +386,6 @@ export class FFTAnalyzer {
     return Math.max(dbValue, this.MIN_DB);
   }
 
-  /**
-   * 分析频谱
-   * @param spectrum 频谱数据
-   * @param binSize 频率分辨率
-   * @returns 频谱统计信息
-   */
-  private analyzeSpectrum(spectrum: Float32Array, binSize: number): SpectrumStats {
-    let maxDb = -Infinity;
-    let minDb = Infinity;
-    let sumDb = 0;
-    let peakFreq = 0;
-
-    // 直接处理所有样本
-    for (let i = 0; i < spectrum.length; i++) {
-      const db = spectrum[i];
-      if (db > maxDb) {
-        maxDb = db;
-        peakFreq = i * binSize;
-      }
-      if (db < minDb) {
-        minDb = db;
-      }
-      sumDb += db;
-    }
-
-    const avgDb = sumDb / spectrum.length;
-
-    if (this.DEBUG) {
-      console.info(`频谱分析: 最大分贝=${maxDb.toFixed(2)}dB@${peakFreq.toFixed(1)}Hz, ` +
-        `最小分贝=${minDb.toFixed(2)}dB, 平均分贝=${avgDb.toFixed(2)}dB`);
-    }
-
-    return {
-      maxDb: maxDb,
-      minDb: minDb,
-      avgDb: avgDb,
-      peakFreq: peakFreq,
-      validSamples: spectrum.length, // 所有样本都是有效的
-      totalSamples: spectrum.length
-    };
-  }
 
   /**
    * 获取指定频率范围内的能量

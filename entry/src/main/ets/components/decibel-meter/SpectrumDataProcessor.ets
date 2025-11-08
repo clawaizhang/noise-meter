@@ -1,6 +1,15 @@
 import { resourceManager } from '@kit.LocalizationKit';
 
 /**
+ * 峰值插值方法（内部实现细节）
+ */
+export enum PeakInterpolationMethod {
+  NONE = 'none',           // 不使用插值
+  PARABOLIC = 'parabolic', // 抛物线插值
+  CENTROID = 'centroid'    // 重心法
+}
+
+/**
  * 频谱数据点类型
  */
 export interface SpectrumDataPoint {
@@ -21,6 +30,14 @@ export interface PeakInfo {
 }
 
 /**
+ * 频率和幅度结果接口
+ */
+export interface FrequencyAmplitudeResult {
+  frequency: number;
+  amplitude: number;
+}
+
+/**
  * 频谱数据处理器
  * 提供统一的频谱数据处理方法，供折线图和柱状图共同使用
  */
@@ -32,12 +49,106 @@ export class SpectrumDataProcessor {
   private static readonly DB_STEPS = [-20, 0, 20, 40, 60, 80, 100, 120, 140];
   
   // 有效频率范围 (人耳听觉范围)
-  private static readonly MIN_FREQUENCY = 16;    // 16Hz
-  private static readonly MAX_FREQUENCY = 20000; // 20kHz
+  public static readonly MIN_FREQUENCY = 16;    // 16Hz
+  public static readonly MAX_FREQUENCY = 20000; // 20kHz
   
   // 对数坐标常量
   private static readonly LOG_MIN_FREQ = Math.log10(SpectrumDataProcessor.MIN_FREQUENCY);
   
+  /**
+   * 抛物线插值方法
+   * 通过在峰值点及其邻近两点拟合抛物线来提高频率精度
+   * @param spectrumData 频谱数据
+   * @param peakIndex 峰值索引
+   * @param fftSize FFT大小
+   * @param sampleRate 采样率
+   * @returns 插值后的频率和幅度
+   */
+  static parabolicInterpolation(
+    spectrumData: Float32Array,
+    peakIndex: number,
+    fftSize: number,
+    sampleRate: number
+  ): FrequencyAmplitudeResult {
+    // 边界检查
+    if (peakIndex <= 0 || peakIndex >= spectrumData.length - 1) {
+      const result: FrequencyAmplitudeResult = {
+        frequency: SpectrumDataProcessor.getIndexFrequency(peakIndex, fftSize, sampleRate),
+        amplitude: Math.abs(spectrumData[peakIndex])
+      };
+      return result;
+    }
+    
+    const y1 = Math.abs(spectrumData[peakIndex - 1]);
+    const y2 = Math.abs(spectrumData[peakIndex]);
+    const y3 = Math.abs(spectrumData[peakIndex + 1]);
+    
+    // 计算偏移量：δ = (y1 - y3) / (2 * (y1 - 2*y2 + y3))
+    const denominator = 2 * (y1 - 2 * y2 + y3);
+    if (Math.abs(denominator) < 1e-10) {
+      // 避免除零，返回离散值
+      const result: FrequencyAmplitudeResult = {
+        frequency: SpectrumDataProcessor.getIndexFrequency(peakIndex, fftSize, sampleRate),
+        amplitude: y2
+      };
+      return result;
+    }
+    
+    const delta = (y1 - y3) / denominator;
+    const preciseIndex = peakIndex + delta;
+    
+    // 计算精确峰值幅度
+    const amplitude = y2 - 0.25 * (y1 - y3) * delta;
+    
+    const result: FrequencyAmplitudeResult = {
+      frequency: (preciseIndex * sampleRate) / fftSize,
+      amplitude: amplitude
+    };
+    return result;
+  }
+
+  /**
+   * 重心法
+   * 通过计算峰值周围区域的加权中心来确定精确峰值位置
+   * @param spectrumData 频谱数据
+   * @param peakIndex 峰值索引
+   * @param windowSize 窗口大小
+   * @param fftSize FFT大小
+   * @param sampleRate 采样率
+   * @returns 重心法计算后的频率和幅度
+   */
+  static centroidMethod(
+    spectrumData: Float32Array,
+    peakIndex: number,
+    windowSize: number = 3,
+    fftSize: number,
+    sampleRate: number
+  ): FrequencyAmplitudeResult {
+    const start = Math.max(0, peakIndex - windowSize);
+    const end = Math.min(spectrumData.length - 1, peakIndex + windowSize);
+    
+    let weightedSum = 0;
+    let magnitudeSum = 0;
+    let maxMagnitude = 0;
+    
+    for (let i = start; i <= end; i++) {
+      const magnitude = Math.abs(spectrumData[i]);
+      weightedSum += i * magnitude;
+      magnitudeSum += magnitude;
+      if (magnitude > maxMagnitude) {
+        maxMagnitude = magnitude;
+      }
+    }
+    
+    const centroidIndex = weightedSum / magnitudeSum;
+    
+    const result: FrequencyAmplitudeResult = {
+      frequency: (centroidIndex * sampleRate) / fftSize,
+      amplitude: maxMagnitude
+    };
+    return result;
+  }
+
   /**
    * 获取标准频率步进点
    */
@@ -101,13 +212,17 @@ export class SpectrumDataProcessor {
    * @param sampleRate 采样率
    * @param minFreq 最小频率限制
    * @param maxFreq 最大频率限制
+   * @param useInterpolation 是否使用插值
+   * @param interpolationMethod 插值方法
    */
   static findPeakFrequency(
-    spectrumData: Float32Array, 
-    fftSize: number, 
+    spectrumData: Float32Array,
+    fftSize: number,
     sampleRate: number,
     minFreq: number = SpectrumDataProcessor.MIN_FREQUENCY,
-    maxFreq: number = SpectrumDataProcessor.MAX_FREQUENCY
+    maxFreq: number = SpectrumDataProcessor.MAX_FREQUENCY,
+    useInterpolation: boolean = true,
+    interpolationMethod: PeakInterpolationMethod = PeakInterpolationMethod.PARABOLIC
   ): PeakInfo | null {
     if (spectrumData.length === 0) {
       return null;
@@ -132,15 +247,47 @@ export class SpectrumDataProcessor {
       }
     }
     
-    const peakFrequency = SpectrumDataProcessor.getIndexFrequency(maxIndexInRange, fftSize, sampleRate);
-    const peakDbValue = SpectrumDataProcessor.calculateDbValue(maxValueInRange, fftSize);
-    
-    return {
-      frequency: peakFrequency,
-      dbValue: peakDbValue,
-      index: maxIndexInRange,
-      amplitude: maxValueInRange
-    };
+    // 使用插值提高精度
+    if (useInterpolation && maxIndexInRange > 0 && maxIndexInRange < spectrumData.length - 1) {
+      let interpolated: FrequencyAmplitudeResult;
+      
+      switch (interpolationMethod) {
+        case PeakInterpolationMethod.PARABOLIC:
+          interpolated = SpectrumDataProcessor.parabolicInterpolation(
+            spectrumData, maxIndexInRange, fftSize, sampleRate
+          );
+          break;
+        case PeakInterpolationMethod.CENTROID:
+          interpolated = SpectrumDataProcessor.centroidMethod(
+            spectrumData, maxIndexInRange, 3, fftSize, sampleRate
+          );
+          break;
+        default:
+          // 不使用插值
+          interpolated = {
+            frequency: SpectrumDataProcessor.getIndexFrequency(maxIndexInRange, fftSize, sampleRate),
+            amplitude: maxValueInRange
+          } as FrequencyAmplitudeResult;
+      }
+      
+      return {
+        frequency: interpolated.frequency,
+        dbValue: SpectrumDataProcessor.calculateDbValue(interpolated.amplitude, fftSize),
+        index: maxIndexInRange,
+        amplitude: interpolated.amplitude
+      };
+    } else {
+      // 不使用插值或边界情况
+      const peakFrequency = SpectrumDataProcessor.getIndexFrequency(maxIndexInRange, fftSize, sampleRate);
+      const peakDbValue = SpectrumDataProcessor.calculateDbValue(maxValueInRange, fftSize);
+      
+      return {
+        frequency: peakFrequency,
+        dbValue: peakDbValue,
+        index: maxIndexInRange,
+        amplitude: maxValueInRange
+      };
+    }
   }
   
   /**
@@ -315,5 +462,95 @@ export class SpectrumDataProcessor {
     } else {
       return '#FFFF0000';   // 红色 - 危险
     }
+  }
+  
+  /**
+   * 查找多个峰值频率
+   * @param spectrumData 频谱数据
+   * @param fftSize FFT大小
+   * @param sampleRate 采样率
+   * @param peakCount 最大峰值数量
+   * @param minPeakDistance 最小峰值间隔
+   * @param minPeakHeight 最小峰值高度(dB)
+   * @param useInterpolation 是否使用插值
+   * @param interpolationMethod 插值方法
+   * @returns 峰值信息数组，按幅度降序排列
+   */
+  static findMultiplePeaks(
+    spectrumData: Float32Array,
+    fftSize: number,
+    sampleRate: number,
+    peakCount: number = 3,
+    minPeakDistance: number = 10,
+    minPeakHeight: number = -60,
+    useInterpolation: boolean = true,
+    interpolationMethod: PeakInterpolationMethod = PeakInterpolationMethod.PARABOLIC
+  ): PeakInfo[] {
+    if (spectrumData.length === 0) {
+      return [];
+    }
+    
+    const peaks: PeakInfo[] = [];
+    const processed = new Set<number>();
+    
+    // 寻找多个局部最大值
+    for (let i = 1; i < spectrumData.length - 1; i++) {
+      if (processed.has(i)) continue;
+      
+      const currentValue = Math.abs(spectrumData[i]);
+      const currentValueDb = SpectrumDataProcessor.calculateDbValue(currentValue, fftSize);
+      
+      // 检查是否为局部最大值且满足最小高度要求
+      if (currentValueDb >= minPeakHeight &&
+          currentValue >= Math.abs(spectrumData[i - 1]) &&
+          currentValue >= Math.abs(spectrumData[i + 1])) {
+        
+        let interpolated: FrequencyAmplitudeResult;
+        
+        // 使用插值提高精度
+        if (useInterpolation) {
+          switch (interpolationMethod) {
+            case PeakInterpolationMethod.PARABOLIC:
+              interpolated = SpectrumDataProcessor.parabolicInterpolation(
+                spectrumData, i, fftSize, sampleRate
+              );
+              break;
+            case PeakInterpolationMethod.CENTROID:
+              interpolated = SpectrumDataProcessor.centroidMethod(
+                spectrumData, i, 3, fftSize, sampleRate
+              );
+              break;
+            default:
+              interpolated = {
+                frequency: SpectrumDataProcessor.getIndexFrequency(i, fftSize, sampleRate),
+                amplitude: currentValue
+              };
+          }
+        } else {
+          interpolated = {
+            frequency: SpectrumDataProcessor.getIndexFrequency(i, fftSize, sampleRate),
+            amplitude: currentValue
+          };
+        }
+        
+        const peakInfo: PeakInfo = {
+          frequency: interpolated.frequency,
+          dbValue: SpectrumDataProcessor.calculateDbValue(interpolated.amplitude, fftSize),
+          index: i,
+          amplitude: interpolated.amplitude
+        };
+        
+        peaks.push(peakInfo);
+        
+        // 标记已处理的区域避免重复检测
+        for (let j = Math.max(0, i - minPeakDistance); j <= Math.min(spectrumData.length - 1, i + minPeakDistance); j++) {
+          processed.add(j);
+        }
+      }
+    }
+    
+    // 按幅度排序并返回前N个峰值
+    peaks.sort((a, b) => b.dbValue - a.dbValue);
+    return peaks.slice(0, peakCount);
   }
 }

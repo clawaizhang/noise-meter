@@ -21,6 +21,7 @@ import {
   ResumeRecordingEvent
 } from '../../models/AudioControllerEvents';
 import { AutoSaveService } from '../../services/AutoSaveService';
+import { PeakInterpolationMethod, SpectrumDataProcessor } from './SpectrumDataProcessor';
 
 /**
  * 带时间戳的分贝值接口
@@ -250,6 +251,27 @@ export struct AudioController {
     this.ak.dataProcessingState.processingDb = currentDb;
     this.ak.dataProcessingState.processingSpectrumData = spectrumData;
     this.ak.dataProcessingState.statisticsData.updateStatistics(currentDb, values);
+
+    // 使用改进的峰值检测（默认启用抛物线插值）
+    if (spectrumData.length > 0) {
+      try {
+        const peakInfo = SpectrumDataProcessor.findPeakFrequency(
+          spectrumData,
+          2048, // 默认FFT大小
+          44100, // 采样率
+          16, // 最小频率
+          20000, // 最大频率
+          true, // 默认启用插值
+          PeakInterpolationMethod.PARABOLIC // 默认使用抛物线插值
+        );
+        
+        if (peakInfo) {
+          this.ak.dataProcessingState.processingPeakFreq = peakInfo.frequency;
+        }
+      } catch (error) {
+        console.warn(`[峰值检测] 错误: ${error}`);
+      }
+    }
 
     // 同步到UI显示状态（仅在UI更新启用时）
     this.ak.uiDisplayState.syncFromProcessingState(this.ak.dataProcessingState);
@@ -600,12 +622,14 @@ export struct AudioController {
 
         // 计算分贝值
         const config = AudioPresets.getConfig(this.pk.audio_analysis_mode);
-        const db: number = new FFTAnalyzer(
+        const fftAnalyzer = new FFTAnalyzer(
           config.fftSize,
           config.windowType,
           config.smoothingFactor,
           config.overlap
-        ).calculateAverageDb(spectrum);
+        );
+        
+        const db: number = fftAnalyzer.calculateAverageDb(spectrum);
         let currentDecibel = Number(Math.round(db).toFixed(1));
 
         // 收集分贝值和加权类型（带时间戳）
@@ -613,7 +637,7 @@ export struct AudioController {
         this.timedValues.push({ timestamp: currentTime, value: currentDecibel });
         this.timedWeightingTypes.push({ timestamp: currentTime, type: this.pk.weighting_type });
 
-        // 更新统计信息
+        // 更新统计信息（使用改进的峰值检测）
         this.updateStatistics(currentDecibel, spectrum);
 
         // 检查报警状态

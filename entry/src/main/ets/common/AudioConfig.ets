@@ -12,7 +12,6 @@ export enum AudioAnalysisMode {
   CUSTOM_TIME_WEIGHTING = 'CUSTOM_TIME_WEIGHTING' // 自定义音频分析
 }
 
-
 /**
  * 音频分析配置
  */
@@ -39,6 +38,8 @@ export class AudioAnalysisConfig {
     fast.windowType = WindowType.BLACKMAN;
     fast.overlap = 0.4;
     fast.bufferSize = 2048 * 2;
+    
+    
     return fast;
   }
 
@@ -50,6 +51,8 @@ export class AudioAnalysisConfig {
     slow.windowType = WindowType.BLACKMAN;
     slow.overlap = 0.6;
     slow.bufferSize = 4096 * 2;
+    
+    
     return slow;
   }
 
@@ -61,6 +64,8 @@ export class AudioAnalysisConfig {
     impulse.windowType = WindowType.BLACKMAN;
     impulse.overlap = 0.75;
     impulse.bufferSize = 1024 * 2;
+    
+    
     return impulse;
   }
 
@@ -72,6 +77,7 @@ export class AudioAnalysisConfig {
     clone.windowType = this.windowType;
     clone.overlap = this.overlap;
     clone.bufferSize = this.bufferSize;
+    
     return clone;
   }
 }
