@@ -20,7 +20,7 @@ export struct PeakFrequencyDisplay {
   @Param positionY: string = '8%';
 
   build() {
-    if (this.peakInfo && this.peakInfo.frequency > 0) {
+    if (this.peakInfo) {
       Column() {
         Text(`峰值频率`)
           .fontSize(UnifiedChartStyle.FONT_SIZES.value)

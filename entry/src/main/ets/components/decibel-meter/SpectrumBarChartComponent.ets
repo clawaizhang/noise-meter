@@ -345,6 +345,9 @@ export struct SpectrumBarChartComponent {
     if (newSpectrum && this.ak.isDisplayApp) {
       this.currentSpectrumData = newSpectrum;
       this.applyDataSmoothing();
+      // 对于峰值频率计算，我们需要使用未加权的频谱数据
+      // 但是这里我们只能使用已有的加权的频谱数据，因为原始音频数据不可用
+      // 峰值频率的主要计算已经在AudioController中使用未加权频谱完成
       this.findPeakFrequency();
       this.applyPeakSmoothing();
       this.generateFrequencyLabels();
@@ -722,11 +725,11 @@ export struct SpectrumBarChartComponent {
           .padding({ left: 4, right: 4 })
           .borderRadius(4)
         
-        // 峰值频率信息 - 使用通用组件
+        // 峰值频率信息 - 使用全局计算的峰值频率（基于未加权频谱）
         PeakFrequencyDisplay({
           peakInfo: {
-            frequency: this.smoothedPeakFrequency,
-            dbValue: this.smoothedPeakDb
+            frequency: this.ak.uiDisplayState.displayPeakFreq,
+            dbValue: this.ak.uiDisplayState.displayDb
           },
           positionX: '86%',
           positionY: '5%'

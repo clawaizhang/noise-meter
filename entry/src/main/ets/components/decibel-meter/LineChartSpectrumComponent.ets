@@ -83,7 +83,10 @@ export struct LineChartSpectrumComponent {
     const newSpectrum = monitor.value<Float32Array>()?.now;
     if (newSpectrum && this.ak.isDisplayApp) {
       this.currentSpectrumData = newSpectrum;
-      // 使用改进的峰值检测方法（默认启用抛物线插值）
+      
+      // 注意：峰值频率的主要计算已经在AudioController中使用未加权频谱完成
+      // 这里我们使用已加权的频谱数据进行峰值计算，但实际显示的峰值频率
+      // 来自AudioController中基于未加权频谱的计算结果
       this.peakInfo = SpectrumDataProcessor.findPeakFrequency(
         this.currentSpectrumData,
         this.fftSize,
@@ -422,7 +425,7 @@ export struct LineChartSpectrumComponent {
           Text('频率(Hz)')
             .fontSize(UnifiedChartStyle.FONT_SIZES.axis)
             .fontColor(parseInt(UnifiedChartStyle.TEXT_COLOR.replace('#', '0xFF')))
-            .position({ x: '95%', y: '2%' })
+            .position({ x: '87%', y: '17%' })
             .translate({ x: '-50%' })
             .backgroundColor(UnifiedChartStyle.BACKGROUND_COLOR)
             .padding({ left: 4, right: 4 })
@@ -432,7 +435,7 @@ export struct LineChartSpectrumComponent {
           Text('声级(dB)')
             .fontSize(UnifiedChartStyle.FONT_SIZES.axis)
             .fontColor(parseInt(UnifiedChartStyle.TEXT_COLOR.replace('#', '0xFF')))
-            .position({ x: '2%', y: '6%' })
+            .position({ x: '5%', y: '85%' })
             .translate({ y: '-50%' })
             .rotate({ angle: -90 })
             .backgroundColor(UnifiedChartStyle.BACKGROUND_COLOR)
