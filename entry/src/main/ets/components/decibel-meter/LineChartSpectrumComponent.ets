@@ -442,8 +442,8 @@ export struct LineChartSpectrumComponent {
           // 峰值频率信息 - 使用通用组件
           PeakFrequencyDisplay({
             peakInfo: this.smoothedPeakInfo,
-            positionX: '95%',
-            positionY: '8%'
+            positionX: '86%',
+            positionY: '5%'
           })
         }
         .width('100%')

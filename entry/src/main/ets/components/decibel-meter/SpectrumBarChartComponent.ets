@@ -728,13 +728,12 @@ export struct SpectrumBarChartComponent {
             frequency: this.smoothedPeakFrequency,
             dbValue: this.smoothedPeakDb
           },
-          positionX: '95%',
-          positionY: '8%'
+          positionX: '86%',
+          positionY: '5%'
         })
       }
       .width('100%')
       .layoutWeight(1) // 占用剩余空间
-      .margin({ left: 16, right: 16, bottom: 8 })
 
       // 选中频率信息
       if (this.selectedFrequency > 0) {
