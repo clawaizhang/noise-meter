@@ -35,6 +35,14 @@ export class AudioAnalysisConfig {
   decimationEnabled: boolean = false; // 是否启用降采样
   @Trace
   decimationFactor: number = 2; // 降采样因子
+  @Trace
+  kaiserBeta: number = 6.0; // Kaiser窗的Beta参数
+  @Trace
+  gaussianSigma: number = 0.5; // Gaussian窗的Sigma参数
+  @Trace
+  tukeyAlpha: number = 0.5; // Tukey窗的Alpha参数
+  @Trace
+  chebyshevAttenuation: number = 60.0; // Chebyshev窗的衰减参数(dB)
 
   static fast() {
     let fast = new AudioAnalysisConfig();
@@ -47,6 +55,10 @@ export class AudioAnalysisConfig {
     fast.sampleRate = 44100;
     fast.decimationEnabled = false;
     fast.decimationFactor = 2;
+    fast.kaiserBeta = 6.0;
+    fast.gaussianSigma = 0.5;
+    fast.tukeyAlpha = 0.5;
+    fast.chebyshevAttenuation = 60.0;
     
     return fast;
   }
@@ -62,6 +74,10 @@ export class AudioAnalysisConfig {
     slow.sampleRate = 44100;
     slow.decimationEnabled = false;
     slow.decimationFactor = 2;
+    slow.kaiserBeta = 6.0;
+    slow.gaussianSigma = 0.5;
+    slow.tukeyAlpha = 0.5;
+    slow.chebyshevAttenuation = 60.0;
     
     return slow;
   }
@@ -77,6 +93,10 @@ export class AudioAnalysisConfig {
     impulse.sampleRate = 44100;
     impulse.decimationEnabled = false;
     impulse.decimationFactor = 2;
+    impulse.kaiserBeta = 6.0;
+    impulse.gaussianSigma = 0.5;
+    impulse.tukeyAlpha = 0.5;
+    impulse.chebyshevAttenuation = 60.0;
     
     return impulse;
   }
@@ -92,6 +112,10 @@ export class AudioAnalysisConfig {
     clone.sampleRate = this.sampleRate;
     clone.decimationEnabled = this.decimationEnabled;
     clone.decimationFactor = this.decimationFactor;
+    clone.kaiserBeta = this.kaiserBeta;
+    clone.gaussianSigma = this.gaussianSigma;
+    clone.tukeyAlpha = this.tukeyAlpha;
+    clone.chebyshevAttenuation = this.chebyshevAttenuation;
     
     return clone;
   }
@@ -156,6 +180,13 @@ export class AudioPresets {
       config.sampleRate = pk.audio_sample_rate;
       config.decimationEnabled = pk.audio_decimation_enabled;
       config.decimationFactor = pk.audio_decimation_factor;
+      // 应用窗函数类型设置
+      config.windowType = pk.window_function_type;
+      // 应用窗函数参数设置
+      config.kaiserBeta = pk.window_kaiser_beta;
+      config.gaussianSigma = pk.window_gaussian_sigma;
+      config.tukeyAlpha = pk.window_tukey_alpha;
+      config.chebyshevAttenuation = pk.window_chebyshev_attenuation;
     } else {
       // 对于自定义模式，保留自定义配置中的采样率设置，但确保有默认值
       if (config.sampleRate === 0) {
@@ -164,6 +195,13 @@ export class AudioPresets {
       if (config.decimationFactor === 0) {
         config.decimationFactor = pk.audio_decimation_factor;
       }
+      // 对于自定义模式，应用窗函数类型设置
+      config.windowType = pk.window_function_type;
+      // 应用窗函数参数设置
+      config.kaiserBeta = pk.window_kaiser_beta;
+      config.gaussianSigma = pk.window_gaussian_sigma;
+      config.tukeyAlpha = pk.window_tukey_alpha;
+      config.chebyshevAttenuation = pk.window_chebyshev_attenuation;
     }
 
     console.info(`[音频配置] 配置详情: FFT大小=${config.fftSize}, ` +

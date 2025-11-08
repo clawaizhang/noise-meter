@@ -39,6 +39,17 @@ import {
   SampleRateSettingsParams
 } from './SampleRateSettingsDialog';
 import { AudioService } from '../../services/AudioService';
+import {
+  WindowFunctionDialogBuilder,
+  WindowFunctionDialogContent,
+  WindowFunctionDialogParams,
+} from './WindowFunctionDialog';
+import {
+  WindowFunctionParamsDialogBuilder,
+  WindowFunctionParamsDialogParams,
+  showWindowFunctionParamsDialog
+} from './WindowFunctionParamsDialog';
+import { WindowType } from '../../common/WindowType';
 
 // 工具功能卡片配置
 interface ToolCardConfig {
@@ -227,6 +238,34 @@ export struct ToolsContent {
           statusColor: $r('sys.color.font_primary'),
           onTap: () => {
             this.navigateToSampleRateSettings()
+          }
+        })
+      }
+
+      // 窗函数设置卡片
+      GridCol({ span: 1 }) {
+        this.buildToolCard({
+          title: '窗函数设置',
+          icon: $r('app.media.ic_filter'),
+          description: 'FFT窗函数选择',
+          status: this.getWindowFunctionDisplayName(this.pk.window_function_type),
+          statusColor: $r('sys.color.font_primary'),
+          onTap: () => {
+            this.navigateToWindowFunctionSettings()
+          }
+        })
+      }
+
+      // 窗函数参数设置卡片
+      GridCol({ span: 1 }) {
+        this.buildToolCard({
+          title: '窗函数参数',
+          icon: $r('app.media.ic_filter'),
+          description: '可调窗函数参数',
+          status: this.getWindowParamsDisplayName(),
+          statusColor: $r('sys.color.font_primary'),
+          onTap: () => {
+            this.navigateToWindowFunctionParamsSettings()
           }
         })
       }
@@ -632,5 +671,137 @@ export struct ToolsContent {
     } else {
       return sampleRateText;
     }
+  }
+
+  // 导航到窗函数设置
+  private navigateToWindowFunctionSettings = () => {
+    let windowFunctionDialog: InfSheet;
+    let param: WindowFunctionDialogParams = {
+      currentWindowType: this.pk.window_function_type,
+      onSettingsApplied: async (selectedWindowType: WindowType) => {
+        // 即时生效：立即应用新设置
+        this.pk.window_function_type = selectedWindowType;
+        
+        // 应用到AudioService
+        const audioService = AudioService.getInstance(this.pk);
+        await audioService.applyWindowFunctionSettings(
+          selectedWindowType,
+          this.pk.window_kaiser_beta,
+          this.pk.window_gaussian_sigma,
+          this.pk.window_tukey_alpha,
+          this.pk.window_chebyshev_attenuation
+        );
+        
+        console.info(`[窗函数设置] 已应用: 窗函数类型=${selectedWindowType}`);
+      },
+      onClose: () => {
+        windowFunctionDialog?.dismiss();
+      }
+    }
+    windowFunctionDialog = DialogHub.getSheet()
+      .setStyle({
+        showClose: false,
+        backgroundColor: $r('sys.color.background_secondary'),
+        detents: [0.8, 1.0]
+      })
+      .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS })
+      .setComponentTargetId('mainId')
+      .setContent(wrapBuilder(WindowFunctionDialogContent), param)
+      .build();
+    windowFunctionDialog.show();
+  }
+
+  // 获取窗函数显示名称
+  private getWindowFunctionDisplayName(windowType: WindowType): string {
+    switch (windowType) {
+      case WindowType.HANNING:
+        return '汉宁窗';
+      case WindowType.BLACKMAN:
+        return '布莱克曼窗';
+      case WindowType.HAMMING:
+        return '汉明窗';
+      case WindowType.BARTLETT:
+        return '巴特利特窗';
+      case WindowType.KAISER:
+        return '凯泽窗';
+      case WindowType.FLATTOP:
+        return '平顶窗';
+      case WindowType.TRIANGULAR:
+        return '三角窗';
+      case WindowType.WELCH:
+        return '韦尔奇窗';
+      case WindowType.SINE:
+        return '正弦窗';
+      case WindowType.GAUSSIAN:
+        return '高斯窗';
+      case WindowType.TUKEY:
+        return '图基窗';
+      case WindowType.CHEBYSHEV:
+        return '切比雪夫窗';
+      default:
+        return '汉宁窗';
+    }
+  }
+
+  // 获取窗函数参数显示名称
+  private getWindowParamsDisplayName(): string {
+    switch (this.pk.window_function_type) {
+      case WindowType.KAISER:
+        return `Beta=${this.pk.window_kaiser_beta.toFixed(1)}`;
+      case WindowType.GAUSSIAN:
+        return `Sigma=${this.pk.window_gaussian_sigma.toFixed(2)}`;
+      case WindowType.TUKEY:
+        return `Alpha=${this.pk.window_tukey_alpha.toFixed(2)}`;
+      case WindowType.CHEBYSHEV:
+        return `${this.pk.window_chebyshev_attenuation.toFixed(0)}dB`;
+      default:
+        return '固定参数';
+    }
+  }
+
+  // 导航到窗函数参数设置
+  private navigateToWindowFunctionParamsSettings = () => {
+    let windowFunctionParamsDialog: InfSheet;
+    let param: WindowFunctionParamsDialogParams = {
+      currentWindowType: this.pk.window_function_type,
+      currentKaiserBeta: this.pk.window_kaiser_beta,
+      currentGaussianSigma: this.pk.window_gaussian_sigma,
+      currentTukeyAlpha: this.pk.window_tukey_alpha,
+      currentChebyshevAttenuation: this.pk.window_chebyshev_attenuation,
+      onSettingsApplied: async (windowType: WindowType, kaiserBeta?: number, gaussianSigma?: number,
+        tukeyAlpha?: number, chebyshevAttenuation?: number) => {
+        // 即时生效：立即应用新设置
+        this.pk.window_function_type = windowType;
+        if (kaiserBeta !== undefined) {
+          this.pk.window_kaiser_beta = kaiserBeta;
+        }
+        if (gaussianSigma !== undefined) {
+          this.pk.window_gaussian_sigma = gaussianSigma;
+        }
+        if (tukeyAlpha !== undefined) {
+          this.pk.window_tukey_alpha = tukeyAlpha;
+        }
+        if (chebyshevAttenuation !== undefined) {
+          this.pk.window_chebyshev_attenuation = chebyshevAttenuation;
+        }
+        
+        // 应用到AudioService
+        const audioService = AudioService.getInstance(this.pk);
+        await audioService.applyWindowFunctionSettings(
+          windowType,
+          this.pk.window_kaiser_beta,
+          this.pk.window_gaussian_sigma,
+          this.pk.window_tukey_alpha,
+          this.pk.window_chebyshev_attenuation
+        );
+        
+        console.info(`[窗函数参数设置] 已应用: 窗函数类型=${windowType}, KaiserBeta=${this.pk.window_kaiser_beta}, GaussianSigma=${this.pk.window_gaussian_sigma}, TukeyAlpha=${this.pk.window_tukey_alpha}, ChebyshevAttenuation=${this.pk.window_chebyshev_attenuation}`);
+      },
+      onClose: () => {
+        windowFunctionParamsDialog?.dismiss();
+      }
+    }
+    windowFunctionParamsDialog = showWindowFunctionParamsDialog(param);
+    windowFunctionParamsDialog.show();
   }
 }

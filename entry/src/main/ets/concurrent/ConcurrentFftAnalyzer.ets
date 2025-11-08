@@ -6,7 +6,8 @@ import { FFTAnalyzer } from '../utils/FFTAnalyzer';
 export function concurrentCalculateSpectrum(buffer: ArrayBuffer,
   weightingType: WeightingType, calibrationGain: number, fftSize: number, windowType: WindowType,
   smoothingFactor: number, overlap: number, sampleRate: number = 44100, decimationEnabled: boolean = false,
-  decimationFactor: number = 1): Float32Array {
+  decimationFactor: number = 1, kaiserBeta: number = 6.0, gaussianSigma: number = 0.5,
+  tukeyAlpha: number = 0.5, chebyshevAttenuation: number = 60.0): Float32Array {
   // 初始化权分析器
   let fftAnalyzer = new FFTAnalyzer(
     fftSize,
@@ -15,7 +16,11 @@ export function concurrentCalculateSpectrum(buffer: ArrayBuffer,
     overlap,
     sampleRate,
     decimationEnabled,
-    decimationFactor
+    decimationFactor,
+    kaiserBeta,
+    gaussianSigma,
+    tukeyAlpha,
+    chebyshevAttenuation
   );
   // 执行FFT变换并获取频谱数据（transform方法内部已经应用了计权）
   fftAnalyzer.setSystemGain(calibrationGain);

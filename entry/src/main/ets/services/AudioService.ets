@@ -2,6 +2,7 @@ import audio from '@ohos.multimedia.audio';
 import common from '@ohos.app.ability.common';
 import { WavFileGenerator } from '../utils/WavFileGenerator';
 import { AudioAnalysisMode, AudioPresets } from '../common/AudioConfig';
+import { WindowType } from '../common/WindowType';
 import { FileUtils } from '../utils/FileUtils';
 import { PersistenceV2 } from '@kit.ArkUI';
 import { PreferenceKeys } from '../models/PreferenceKeys';
@@ -518,6 +519,41 @@ export class AudioService {
       } catch (error) {
         console.error(`[音频采集] 采样率更新后重新开始采集失败:`, error);
         throw new Error(`采样率更新后重新开始采集失败: ${error instanceof Error ? error.message : String(error)}`);
+      }
+    }
+  }
+
+  /**
+   * 应用窗函数设置变更
+   */
+  public async applyWindowFunctionSettings(windowType: WindowType, kaiserBeta: number, gaussianSigma: number, tukeyAlpha: number, chebyshevAttenuation: number): Promise<void> {
+    const wasCapturing = this.state === AudioServiceState.CAPTURING;
+    
+    // 如果正在采集，先停止
+    if (wasCapturing) {
+      await this.stopCapture();
+    }
+    
+    // 更新配置
+    this.currentConfig.windowType = windowType;
+    this.currentConfig.kaiserBeta = kaiserBeta;
+    this.currentConfig.gaussianSigma = gaussianSigma;
+    this.currentConfig.tukeyAlpha = tukeyAlpha;
+    this.currentConfig.chebyshevAttenuation = chebyshevAttenuation;
+
+    // 更新音频流处理器配置
+    this.audioStreamProcessor.updateConfig(this.currentConfig);
+
+    console.info(`[音频采集] 窗函数设置已应用: 窗函数类型=${windowType}, KaiserBeta=${kaiserBeta}, GaussianSigma=${gaussianSigma}, TukeyAlpha=${tukeyAlpha}, ChebyshevAttenuation=${chebyshevAttenuation}`);
+    
+    // 如果之前在采集，重新开始采集
+    if (wasCapturing) {
+      try {
+        await this.startCapture();
+        console.info(`[音频采集] 窗函数更新后重新开始采集成功`);
+      } catch (error) {
+        console.error(`[音频采集] 窗函数更新后重新开始采集失败:`, error);
+        throw new Error(`窗函数更新后重新开始采集失败: ${error instanceof Error ? error.message : String(error)}`);
       }
     }
   }

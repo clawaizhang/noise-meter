@@ -3,6 +3,7 @@ import {
   AudioAnalysisConfig, AudioAnalysisMode, DEFAULT_CUSTOM_CONFIG,
 } from '../common/AudioConfig';
 import { WeightingType } from '../constants/WeightingConstants';
+import { WindowType } from '../common/WindowType';
 import { MembershipStatus } from '../services/MembershipManager';
 import { ContinuousUsageData } from './ContinuousUsageData';
 import { CUSTOM_THRESHOLD_CONFIG, DEFAULT_THRESHOLD_CONFIG, PresetType, ThresholdConfig } from './ThresholdConfig';
@@ -197,6 +198,36 @@ export class PreferenceKeys {
    */
   @Trace
   audio_decimation_factor: number = PreferencesUtil.getNumberSync('audio_decimation_factor', 2);
+  
+  /**
+   * 窗函数类型
+   */
+  @Trace
+  window_function_type: WindowType = PreferencesUtil.getStringSync('window_function_type', WindowType.HANNING) as WindowType;
+  
+  /**
+   * Kaiser窗Beta参数
+   */
+  @Trace
+  window_kaiser_beta: number = PreferencesUtil.getNumberSync('window_kaiser_beta', 6.0);
+  
+  /**
+   * Gaussian窗Sigma参数
+   */
+  @Trace
+  window_gaussian_sigma: number = PreferencesUtil.getNumberSync('window_gaussian_sigma', 0.4);
+  
+  /**
+   * Tukey窗Alpha参数
+   */
+  @Trace
+  window_tukey_alpha: number = PreferencesUtil.getNumberSync('window_tukey_alpha', 0.5);
+  
+  /**
+   * Chebyshev窗衰减参数
+   */
+  @Trace
+  window_chebyshev_attenuation: number = PreferencesUtil.getNumberSync('window_chebyshev_attenuation', 60.0);
   
   total_app_usage_today: number = 0;
 }

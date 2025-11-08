@@ -70,7 +70,8 @@ export class FFTAnalyzer {
    * @param smoothingFactor 平滑因子
    */
   constructor(size: number = 2048, windowType: WindowType = WindowType.HANNING, smoothingFactor: number = 0.2,
-    overlap: number = 0.5, sampleRate: number = 44100, decimationEnabled: boolean = false, decimationFactor: number = 1) {
+    overlap: number = 0.5, sampleRate: number = 44100, decimationEnabled: boolean = false, decimationFactor: number = 1,
+    kaiserBeta: number = 6.0, gaussianSigma: number = 0.5, tukeyAlpha: number = 0.5, chebyshevAttenuation: number = 60.0) {
     // 确保size是2的幂次方
     if (!this.isPowerOf2(size)) {
       throw new Error('FFT大小必须是2的幂');
@@ -86,8 +87,8 @@ export class FFTAnalyzer {
     this.decimationEnabled = decimationEnabled;
     this.decimationFactor = decimationFactor;
 
-    // 使用预缓存的窗函数和能量校正因子
-    const windowData = WindowFunctionCache.getWindowData(size, windowType);
+    // 使用预缓存的窗函数和能量校正因子，传递窗函数参数
+    const windowData = WindowFunctionCache.getWindowDataWithParams(size, windowType, kaiserBeta, gaussianSigma, tukeyAlpha, chebyshevAttenuation);
     this.window = windowData.window;
     this.WINDOW_CORRECTION = windowData.correction;
     
@@ -96,6 +97,7 @@ export class FFTAnalyzer {
       this.validateWeightingFormulas(WeightingType.A);
       this.validateWeightingFormulas(WeightingType.C);
       console.info(`[FFT分析器] 初始化: 采样率=${this.sampleRate}Hz, 降采样=${this.decimationEnabled}, 降采样因子=${this.decimationFactor}`);
+      console.info(`[FFT分析器] 窗函数参数: KaiserBeta=${kaiserBeta}, GaussianSigma=${gaussianSigma}, TukeyAlpha=${tukeyAlpha}, ChebyshevAttenuation=${chebyshevAttenuation}`);
     }
   }
 

@@ -107,7 +107,7 @@ export class AudioStreamProcessor {
    * @param config 新的音频分析配置
    */
   updateConfig(config: AudioAnalysisConfig): void {
-    console.info(`[音频流处理器] 更新配置: FFT大小=${config.fftSize}, 更新间隔=${config.updateInterval}ms`);
+    console.info(`[音频流处理器] 更新配置: FFT大小=${config.fftSize}, 更新间隔=${config.updateInterval}ms, 窗函数类型=${config.windowType}`);
     
     this.currentConfig = config;
     this.fftBufferManager.updateFFTSize(config.fftSize);
