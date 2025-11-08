@@ -29,7 +29,9 @@ import {
   XAxis,
   XAxisPosition,
   YAxis,
-  YAxisLabelPosition
+  YAxisLabelPosition,
+  IAxisValueFormatter,
+  AxisBase,
 } from '@ohos/mpchart';
 import { UnifiedChartStyle } from '../common/charts/UnifiedChartStyle';
 
@@ -45,6 +47,110 @@ interface DbColorRange {
   minDb: number;
   maxDb: number;
   color: string;
+}
+
+/**
+ * 自定义X轴值格式化器
+ * 用于显示标准对数频率点标签
+ */
+class StandardFrequencyAxisValueFormatter implements IAxisValueFormatter {
+  private static readonly STANDARD_FREQUENCIES = [16, 31.5, 63, 125, 250, 500, 1000, 2000, 4000, 8000, 16000];
+  private static readonly LOG_MIN_FREQ = Math.log10(16);
+  private static readonly LOG_MAX_FREQ = Math.log10(20000);
+  
+  // 预计算标准频率点对应的X轴位置
+  private static readonly FREQUENCY_TO_X_MAP: Map<number, number> = (() => {
+    const map = new Map<number, number>();
+    for (const freq of StandardFrequencyAxisValueFormatter.STANDARD_FREQUENCIES) {
+      const logFreq = Math.log10(freq);
+      const xValue = ((logFreq - StandardFrequencyAxisValueFormatter.LOG_MIN_FREQ) /
+        (StandardFrequencyAxisValueFormatter.LOG_MAX_FREQ - StandardFrequencyAxisValueFormatter.LOG_MIN_FREQ)) * 20000;
+      map.set(freq, xValue);
+      // 调试日志：记录频率到X轴的映射
+      console.info(`[X轴格式化器初始化] 频率${freq}Hz -> X值${xValue}`);
+    }
+    return map;
+  })();
+  
+  getFormattedValue(value: number, axis: AxisBase): string {
+    // 调试日志：记录输入的X值
+    console.info(`[X轴格式化器] 输入X值: ${value}`);
+    
+    // 查找当前X值最接近的标准频率点
+    let closestFreq = StandardFrequencyAxisValueFormatter.STANDARD_FREQUENCIES[0];
+    let minDistance = Math.abs(value - StandardFrequencyAxisValueFormatter.FREQUENCY_TO_X_MAP.get(closestFreq)!);
+    
+    for (const freq of StandardFrequencyAxisValueFormatter.STANDARD_FREQUENCIES) {
+      const freqXValue = StandardFrequencyAxisValueFormatter.FREQUENCY_TO_X_MAP.get(freq)!;
+      const distance = Math.abs(value - freqXValue);
+      if (distance < minDistance) {
+        minDistance = distance;
+        closestFreq = freq;
+      }
+    }
+    
+    // 调试日志：记录找到的最接近频率和距离
+    console.info(`[X轴格式化器] 最接近频率: ${closestFreq}Hz, 距离: ${minDistance}`);
+    
+    // 根据频率范围使用不同的容差
+    let threshold: number;
+    if (closestFreq <= 63) {
+      threshold = 200; // 低频区域使用更大容差，确保63Hz能匹配
+    } else if (closestFreq <= 1000) {
+      threshold = 450; // 中频区域使用中等容差，特别为1000Hz增加容差
+    } else {
+      threshold = 700; // 高频区域使用较大容差
+    }
+    
+    // 调试日志：记录容差和比较结果
+    console.info(`[X轴格式化器] 容差: ${threshold}, 是否匹配: ${minDistance <= threshold}`);
+    
+    // 隐藏第一个和最后一个标签
+    if (closestFreq === 16 || closestFreq === 16000) {
+      console.info(`[X轴格式化器] 隐藏首尾标签: ${closestFreq}Hz`);
+      return '';
+    }
+    
+    if (minDistance <= threshold) {
+      // 使用统一样式格式化频率显示
+      let formattedValue: string;
+      if (closestFreq >= 1000) {
+        formattedValue = `${(closestFreq / 1000).toFixed(0)}k`;
+      } else {
+        formattedValue = `${Math.round(closestFreq)}`;
+      }
+      
+      // 调试日志：记录最终返回的标签
+      console.info(`[X轴格式化器] 返回标签: "${formattedValue}"`);
+      return formattedValue;
+    } else {
+      // 调试日志：记录不匹配的情况
+      console.info(`[X轴格式化器] 不匹配，返回空字符串`);
+      return '';
+    }
+
+  }
+}
+
+/**
+ * 自定义Y轴值格式化器
+ * 用于隐藏第一个和最后一个Y轴标签
+ */
+class YAxisValueFormatter implements IAxisValueFormatter {
+  getFormattedValue(value: number, axis: AxisBase): string {
+    // 获取分贝步进值
+    const dbSteps: number[] = SpectrumDataProcessor.getDbSteps();
+    
+    // 隐藏第一个和最后一个标签
+    if (value === dbSteps[0] || value === dbSteps[dbSteps.length - 1]) {
+      console.info(`[Y轴格式化器] 隐藏首尾标签: ${value}dB`);
+      return '';
+    }
+    
+    // 返回正常的分贝值标签
+    console.info(`[Y轴格式化器] 返回标签: ${value}dB`);
+    return `${value}`;
+  }
 }
 
 @ComponentV2
@@ -413,8 +519,8 @@ export struct SpectrumBarChartComponent {
       l.setEnabled(false);
     }
 
-    // 设置图表数据最大的绘制数，如果超过该数值，则不进行绘制图表的数值标签
-    this.model.setMaxVisibleValueCount(this.displayDataPoints);
+    // 设置图表数据最大的绘制数
+    this.model.setMaxVisibleValueCount(100);
 
     // 优化图表交互设置，关闭不必要的触摸功能
     this.model.setTouchEnabled(true); // 保持基本触摸功能以显示导航按钮
@@ -429,45 +535,49 @@ export struct SpectrumBarChartComponent {
     // 是否绘制图表的背景色，绘制范围为图表瀑布图的绘制范围，不包含轴线之外的部分
     this.model.setDrawGridBackground(true);
     // 设置图表的背景色，颜色的规格需要满足CanvasRenderingContext2D.fillstyle/strokestyle规格
-    this.model.setGridBackgroundColor(DefaultChartConfig.backgroundColor);
+    this.model.setGridBackgroundColor(UnifiedChartStyle.BACKGROUND_COLOR);
     // 设置不绘制瀑布图的柱体阴影背景
     this.model.setDrawBarShadow(false);
 
     // 设置瀑布图的数值在柱体上方
     this.model.setDrawValueAboveBar(false);
 
-    // 设置图表左Y轴信息 - 修复刻度线和标签显示问题
+    // 设置图表左Y轴信息 - 参考现行图的配置
     this.leftAxis = this.model.getAxisLeft();
     if (this.leftAxis) {
-      // 使用正确的分贝范围
+      // 获取分贝步进值并设置正确的标签数量
       const dbSteps: number[] = SpectrumDataProcessor.getDbSteps();
+      this.leftAxis.setLabelCount(dbSteps.length, true); // 使用实际的分贝步进数量
+      // 设置标签位置为内部
+      this.leftAxis.setPosition(YAxisLabelPosition.INSIDE_CHART);
+      // 设置距离顶部距离
+      this.leftAxis.setSpaceTop(15);
+      this.leftAxis.setSpaceBottom(15); // 为内部标签添加底部间距
+      // 设置最小值和最大值，确保使用正确的分贝范围
       this.leftAxis.setAxisMinimum(dbSteps[0]); // -20
       this.leftAxis.setAxisMaximum(dbSteps[dbSteps.length - 1]); // 140
-      this.leftAxis.setDrawLimitLinesBehindData(false);
-      this.leftAxis.setDrawGridLines(true); // 启用水平网格线
-      this.leftAxis.setDrawAxisLine(true); // 显示Y轴线 - 修复竖线不显示问题
-      this.leftAxis.setDrawLabels(true); // 确保显示Y轴标签
-      this.leftAxis.setPosition(YAxisLabelPosition.OUTSIDE_CHART); // 将Y轴标签移至外部以避免重叠
-      this.leftAxis.setTextColor(DefaultChartConfig.textColor);
-      this.leftAxis.setTextSize(DefaultChartConfig.fontSize.axis);
-      this.leftAxis.setLabelCount(dbSteps.length, true); // 使用实际的分贝步进数量
-      this.leftAxis.setAxisLineWidth(UnifiedChartStyle.LINE_WIDTHS.normal); // 设置轴线宽度
-      this.leftAxis.setAxisLineColor(parseInt(DefaultChartConfig.textColor.replace('#', '0xFF')));
-      this.leftAxis.setSpaceTop(10); // 为内部标签添加顶部间距
-      this.leftAxis.setSpaceBottom(10); // 为内部标签添加底部间距
+      this.leftAxis.setYOffset(-10);
+      // 设置网格线样式
+      this.leftAxis.setDrawGridLines(true);
+      this.leftAxis.setGridColor(parseInt(UnifiedChartStyle.GRID_COLOR.replace('#', '0xFF')));
+      this.leftAxis.setGridLineWidth(UnifiedChartStyle.LINE_WIDTHS.grid);
+      this.leftAxis.setTextColor(parseInt(UnifiedChartStyle.TEXT_COLOR.replace('#', '0xFF')));
+      this.leftAxis.setTextSize(UnifiedChartStyle.FONT_SIZES.axis);
+      
+      // 优化Y轴显示 - 隐藏轴线但保留标签
+      this.leftAxis.setDrawAxisLine(false); // 隐藏Y轴线
+      this.leftAxis.setAxisLineWidth(0); // 设置轴线宽度为0
+      this.leftAxis.setTextColor(parseInt(UnifiedChartStyle.TEXT_COLOR.replace('#', '0xFF')));
+      this.leftAxis.setTextSize(UnifiedChartStyle.FONT_SIZES.axis);
       
       // 确保Y轴使用精确的分贝刻度
       this.leftAxis.setGranularity(20); // 设置20dB的间隔
       this.leftAxis.setCenterAxisLabels(false); // 禁用中心轴标签，确保只显示定义的刻度
       
-      // 添加网格线样式
-      this.leftAxis.setGridColor(parseInt(DefaultChartConfig.gridColor.replace('#', '0xFF')));
-      this.leftAxis.setGridLineWidth(UnifiedChartStyle.LINE_WIDTHS.grid);
-
-      // 添加所有限制线
-      for (const limitLine of this.limitLines) {
-        this.leftAxis.addLimitLine(limitLine);
-      }
+      // 使用自定义的Y轴格式化器，隐藏第一个和最后一个标签
+      const yAxisFormatter = new YAxisValueFormatter();
+      this.leftAxis.setValueFormatter(yAxisFormatter);
+      
     }
 
     // 设置图表右Y轴信息
@@ -477,36 +587,34 @@ export struct SpectrumBarChartComponent {
       this.rightAxis.setAxisMinimum(0);
     }
 
-    // 设置X轴信息 - 修复频率范围和标签显示问题，支持对数分布
+    // 设置X轴信息 - 参考现行图的配置
     this.xAxis = this.model.getXAxis();
     if (this.xAxis) {
       this.xAxis.setPosition(XAxisPosition.TOP); // 将标签移至上方
-      this.xAxis.setDrawGridLines(true); // 启用垂直网格线作为刻度线
+      this.xAxis.setDrawGridLines(true); // 启用水平网格线作为刻度线
       this.xAxis.setDrawAxisLine(true); // 绘制轴线
-      this.xAxis.setDrawLabels(true); // 确保显示标签
-      this.xAxis.setTextColor(DefaultChartConfig.textColor);
-      this.xAxis.setTextSize(DefaultChartConfig.fontSize.axis);
-      this.xAxis.setLabelCount(this.frequencyLabels.length, false); // 使用实际标签数量，不强制均匀分布
-      this.xAxis.setGranularity(1); // 设置最小间隔
-      this.xAxis.setAxisLineWidth(UnifiedChartStyle.LINE_WIDTHS.normal); // 显示轴线
-      this.xAxis.setAxisLineColor(parseInt(DefaultChartConfig.textColor.replace('#', '0xFF')));
-      this.xAxis.setGridColor(parseInt(DefaultChartConfig.gridColor.replace('#', '0xFF')));
-      this.xAxis.setGridLineWidth(UnifiedChartStyle.LINE_WIDTHS.grid);
-      this.xAxis.setYOffset(10); // 正偏移，使标签显示在图表上方
+      this.xAxis.setGranularity(1);
+      this.xAxis.setLabelCount(11, false); // 强制显示11个标签，不自动调整
+      this.xAxis.setTextColor(parseInt(UnifiedChartStyle.TEXT_COLOR.replace('#', '0xFF')));
+      this.xAxis.setTextSize(UnifiedChartStyle.FONT_SIZES.axis);
+      this.xAxis.setYOffset(-15); // 正偏移，使标签显示在图表上方
+      this.xAxis.setXOffset(20);
       this.xAxis.setAvoidFirstLastClipping(true); // 避免首尾标签被裁剪
       
-      // 设置X轴范围，确保覆盖整个频率范围
-      this.xAxis.setAxisMinimum(0);
-      this.xAxis.setAxisMaximum(this.displayDataPoints - 1);
+      // 设置图表X轴显示范围，与映射后的X值保持一致
+      // 由于跳过了16Hz以下的数据，所以最小值应该对应16Hz的映射值
       
-      // 设置自定义频率标签 - 按照对数分布的标准频率点
-      if (this.frequencyLabels.length > 0) {
-        console.info(`[频谱图] X轴标签数量: ${this.frequencyLabels.length}, 标签: ${this.frequencyLabels.join(', ')}`);
-        
-        // 如果MPChart库支持自定义标签，可以在这里设置
-        // 注意：根据ArkTS约束，可能需要使用其他方式设置标签
-        // 例如：this.xAxis.setValueFormatter(...) 或其他API
-      }
+      // 直接设置范围，因为16Hz映射到0，20kHz映射到20000
+      this.xAxis.setAxisMinimum(0);     // 16Hz对应的映射值
+      this.xAxis.setAxisMaximum(20000);  // 20kHz对应的映射值
+      
+      // 使用自定义的X轴格式化器，显示标准对数频率点
+      const formatter = new StandardFrequencyAxisValueFormatter();
+      this.xAxis.setValueFormatter(formatter);
+      
+      // 设置X轴单位标签
+      this.xAxis.setAxisLineWidth(UnifiedChartStyle.LINE_WIDTHS.grid); // 显示轴线
+      this.xAxis.setAxisLineColor(parseInt(UnifiedChartStyle.TEXT_COLOR.replace('#', '0xFF')));
     }
 
     // 为图表设置markerView
@@ -518,12 +626,12 @@ export struct SpectrumBarChartComponent {
 
     // 将数据与图表配置类绑定
     this.model.setData(this.data);
-    // 设置图表最大的X轴显示范围
-    this.model.setVisibleXRangeMaximum(this.displayDataPoints);
+    
+    this.model.setVisibleXRangeMaximum(20000); // 显示最大20kHz范围
   }
 
   /**
-   * 生成频谱柱状图数据 - 优化功率分布显示
+   * 生成频谱柱状图数据 - 参考现行图的对数坐标映射
    */
   private generateSpectrumBarData(): BarData {
     let values: JArrayList<WaterfallEntry> = new JArrayList<WaterfallEntry>();
@@ -533,7 +641,14 @@ export struct SpectrumBarChartComponent {
       this.smoothedSpectrumData : this.currentSpectrumData;
 
     if (sourceData.length > 0) {
-      // 使用增强的频谱数据（包含低频插值点）
+      // 获取频率步进和分贝步进
+      const dbSteps: number[] = SpectrumDataProcessor.getDbSteps();
+      
+      // 与原来的Canvas实现保持一致：使用对数坐标映射
+      const LOG_MIN_FREQ = Math.log10(16); // 16Hz
+      const logMaxFreq = Math.log10(20000); // 20kHz
+      
+      // 使用SpectrumDataProcessor生成增强的频谱数据点（包含低频插值）
       const enhancedDataPoints = SpectrumDataProcessor.generateEnhancedSpectrumData(
         sourceData,
         this.fftSize,
@@ -541,43 +656,49 @@ export struct SpectrumBarChartComponent {
         16, // 最小频率16Hz
         SpectrumDataProcessor.MAX_FREQUENCY
       );
-
-      // 根据显示点数均匀采样增强后的数据点
-      const displayCount = this.displayDataPoints;
-      const step = Math.max(1, Math.floor(enhancedDataPoints.length / displayCount));
       
-      // 计算功率分布，确保正确显示功率谱
-      const dbSteps: number[] = SpectrumDataProcessor.getDbSteps();
-      const minDb = dbSteps[0]; // -20dB
-      const maxDb = dbSteps[dbSteps.length - 1]; // 140dB
-      
-      for (let i = 0; i < displayCount && i * step < enhancedDataPoints.length; i++) {
-        const dataPoint = enhancedDataPoints[i * step];
-        let dbValue = dataPoint.dbValue;
+      // 遍历增强后的数据点
+      for (const dataPoint of enhancedDataPoints) {
+        const frequency: number = dataPoint.frequency;
+        const dbValue: number = dataPoint.dbValue;
         
-        // 确保分贝值在有效范围内
-        dbValue = Math.max(minDb, Math.min(maxDb, dbValue));
+        // 确保分贝值在合理范围内
+        const clampedDbValue: number = Math.max(dbSteps[0], Math.min(dbSteps[dbSteps.length - 1], dbValue));
         
-        // 创建柱状图条目，使用索引作为X值，分贝值作为Y值
+        // 使用对数坐标映射，与原来的Canvas实现完全一致
+        // 这样低频率部分会有更多的显示空间，高频率部分会被压缩
+        const logFreq: number = Math.log10(frequency);
+        const mappedX: number = ((logFreq - LOG_MIN_FREQ) / (logMaxFreq - LOG_MIN_FREQ)) * 20000;
+        
+        // 调试信息：只记录前几个数据点
+        if (enhancedDataPoints.indexOf(dataPoint) < 5) {
+          console.info(`[频谱图] 数据点: 频率=${frequency}Hz, 映射X值=${mappedX}, 分贝=${clampedDbValue}dB`);
+        }
+        
+        // 创建柱状图条目，使用映射后的X值，确保与原来的Canvas实现完全一致
         // 注意：WaterfallEntry的构造函数参数可能是(x, y, y2)或(x, y, height)
-        // 这里使用(x, 0, dbValue)表示从0开始到dbValue高度的柱子
-        const entry = new WaterfallEntry(i, 0, dbValue);
-
+        // 这里使用(mappedX, 0, clampedDbValue)表示从0开始到clampedDbValue高度的柱子
+        const entry = new WaterfallEntry(mappedX, 0, clampedDbValue);
         values.add(entry);
       }
       
-      console.info(`[频谱图] 生成了${values.size()}个数据点，分贝范围: ${minDb}dB 到 ${maxDb}dB`);
+      console.info(`[频谱图] 生成了${values.size()}个数据点，分贝范围: ${dbSteps[0]}dB 到 ${dbSteps[dbSteps.length - 1]}dB`);
     } else {
       // 如果没有频谱数据，则使用默认数据
-      const dataPoints = this.displayDataPoints;
       const dbSteps: number[] = SpectrumDataProcessor.getDbSteps();
       const minDb = dbSteps[0]; // -20dB
       const maxDb = dbSteps[dbSteps.length - 1]; // 140dB
       
-      for (let i = 0; i < dataPoints; i++) {
+      // 生成一些默认的对数分布数据点
+      for (let i = 0; i < 50; i++) {
+        // 在对数空间中均匀分布频率
+        const logFreq = Math.log10(16) + (Math.log10(20000) - Math.log10(16)) * (i / 50);
+        const frequency = Math.pow(10, logFreq);
+        const mappedX = ((logFreq - Math.log10(16)) / (Math.log10(20000) - Math.log10(16))) * 20000;
+        
         // 生成在有效范围内的默认值
         const randomValue = minDb + Math.random() * (maxDb - minDb) * 0.6; // 默认值在安全范围内
-        values.add(new WaterfallEntry(i, 0, randomValue));
+        values.add(new WaterfallEntry(mappedX, 0, randomValue));
       }
       
       console.info(`[频谱图] 使用默认数据，生成了${values.size()}个数据点`);
@@ -706,33 +827,33 @@ export struct SpectrumBarChartComponent {
         
         // X轴单位标签
         Text('频率(Hz)')
-          .fontSize(DefaultChartConfig.fontSize.axis)
-          .fontColor(DefaultChartConfig.textColor)
-          .position({ x: '95%', y: '2%' })
+          .fontSize(UnifiedChartStyle.FONT_SIZES.axis)
+          .fontColor(parseInt(UnifiedChartStyle.TEXT_COLOR.replace('#', '0xFF')))
+          .position({ x: '87%', y: '5%' })
           .translate({ x: '-50%' })
-          .backgroundColor(this.chartConfig.backgroundColor)
+          .backgroundColor(UnifiedChartStyle.BACKGROUND_COLOR)
           .padding({ left: 4, right: 4 })
           .borderRadius(4)
         
         // Y轴单位标签
-        Text('声级(dB)')
-          .fontSize(DefaultChartConfig.fontSize.axis)
-          .fontColor(DefaultChartConfig.textColor)
-          .position({ x: '1%', y: '5%' })
+        Text(`声级dB(${this.pk.weighting_type})`)
+          .fontSize(UnifiedChartStyle.FONT_SIZES.axis)
+          .fontColor(parseInt(UnifiedChartStyle.TEXT_COLOR.replace('#', '0xFF')))
+          .position({ x: '3%', y: '85%' })
           .translate({ y: '-50%' })
           .rotate({ angle: -90 })
-          .backgroundColor(this.chartConfig.backgroundColor)
+          .backgroundColor(UnifiedChartStyle.BACKGROUND_COLOR)
           .padding({ left: 4, right: 4 })
           .borderRadius(4)
         
-        // 峰值频率信息 - 使用全局计算的峰值频率（基于未加权频谱）
+        // 峰值频率信息 - 使用通用组件
         PeakFrequencyDisplay({
           peakInfo: {
             frequency: this.ak.uiDisplayState.displayPeakFreq,
             dbValue: this.ak.uiDisplayState.displayDb
           },
           positionX: '86%',
-          positionY: '5%'
+          positionY: '15%'
         })
       }
       .width('100%')
