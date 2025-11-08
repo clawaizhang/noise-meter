@@ -40,6 +40,9 @@ export struct LineChartTimeDomainComponent {
 
   // 时域数据
   @Local private currentTimeDomainData: number[] = [];
+  
+  // 滑动窗口相关
+  @Local private maxWindowDataPoints: number = 500; // 滑动窗口最大数据点数
 
   // LineChart 相关
   @Local private model: LineChartModel | null = null;
@@ -67,11 +70,12 @@ export struct LineChartTimeDomainComponent {
     }
   }
 
-  @Monitor('ak.uiDisplayState.displayDb')
+  @Monitor('ak.uiDisplayState.displayTimeDomainData')
   onTimeDomainDataChange(monitor: IMonitor) {
-    const newTimeDomainData = monitor.value<number[]>()?.now;
-    if (newTimeDomainData && this.ak.isDisplayApp) {
+    if (this.ak.isDisplayApp) {
+      // 直接使用最新的时域数据，因为AudioController已经限制了数据量（512个点）
       this.currentTimeDomainData = this.ak.uiDisplayState.displayTimeDomainData;
+      
       // 更新图表数据
       this.updateChartData();
     }
@@ -100,21 +104,13 @@ export struct LineChartTimeDomainComponent {
   private generateLineData(): LineData {
     const values: JArrayList<EntryOhos> = new JArrayList<EntryOhos>();
     
-    // 时域数据可能很长，需要采样显示
-    const maxPoints = 500; // 限制最大数据点数
+    // 由于已经通过滑动窗口限制了数据量，这里可以直接使用所有数据
+    // 不再需要额外的采样逻辑
     const dataLength = this.currentTimeDomainData.length;
     
-    if (dataLength <= maxPoints) {
-      // 如果数据点不多，全部显示
-      for (let i = 0; i < dataLength; i++) {
-        values.add(new EntryOhos(i, this.currentTimeDomainData[i]));
-      }
-    } else {
-      // 如果数据点太多，进行均匀采样
-      const step = Math.floor(dataLength / maxPoints);
-      for (let i = 0; i < dataLength; i += step) {
-        values.add(new EntryOhos(i, this.currentTimeDomainData[i]));
-      }
+    // 直接使用所有数据点，因为滑动窗口已经限制了数据量
+    for (let i = 0; i < dataLength; i++) {
+      values.add(new EntryOhos(i, this.currentTimeDomainData[i]));
     }
 
     // 创建数据集
