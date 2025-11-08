@@ -1,9 +1,7 @@
 import { navigationStack } from '../../constants/ProviderConstant';
 import { AppStorageV2, curves, PersistenceV2 } from '@kit.ArkUI';
 import display from '@ohos.display';
-import { SpectrumChartComponent } from './SpectrumChartComponent';
 import { SpectrumBarChartComponent } from './SpectrumBarChartComponent';
-import { TimeDomainChartComponent } from './TimeDomainChartComponent';
 import { LineChartSpectrumComponent } from './LineChartSpectrumComponent';
 import { LineChartTimeDomainComponent } from './LineChartTimeDomainComponent';
 import { StatisticsChartComponent } from '../statistics/StatisticsChartComponent';
@@ -12,7 +10,6 @@ import { resourceManager } from '@kit.LocalizationKit';
 import { image } from '@kit.ImageKit';
 import { AppKeys } from '../../models/AppKeys';
 import { AudioControllerService } from '../../services/AudioControllerService';
-import { Throttle } from '../../utils/Debounce';
 
 // 图表类型配置接口
 interface ChartTypeConfig {
