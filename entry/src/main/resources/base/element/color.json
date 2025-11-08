@@ -227,6 +227,34 @@
     {
       "name": "brand_primary",
       "value": "#1890FF"
+    },
+    {
+      "name": "font_primary",
+      "value": "#e5000000"
+    },
+    {
+      "name": "font_secondary",
+      "value": "#666666"
+    },
+    {
+      "name": "warning",
+      "value": "#FFC107"
+    },
+    {
+      "name": "warning_container",
+      "value": "#FFF8E1"
+    },
+    {
+      "name": "primary_container",
+      "value": "#E3F2FD"
+    },
+    {
+      "name": "comp_background_primary",
+      "value": "#FFFFFF"
+    },
+    {
+      "name": "comp_background_secondary",
+      "value": "#F5F5F5"
     }
   ]
 }

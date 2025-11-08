@@ -60,7 +60,7 @@ export struct AudioController {
   // 当前位置信息
   private currentLocation: LocationInfo | null = null;
   // 服务实例
-  private audioService: AudioService = AudioService.getInstance()
+  private audioService: AudioService = AudioService.getInstance(this.pk)
   private recordService: DecibelRecordService = new DecibelRecordService(getContext() as common.UIAbilityContext)
   // 服务实例
   private audioControllerService: AudioControllerService = AudioControllerService.getInstance(this.ak, this.pk);
@@ -94,7 +94,10 @@ export struct AudioController {
     }
   }
 
+
   aboutToAppear() {
+    // 初始化AudioService配置
+    this.audioService.initializeConfig();
     // 启动时间显示更新
     this.audioControllerService.startTimeDisplayUpdates();
 
@@ -262,7 +265,10 @@ export struct AudioController {
           config.fftSize,
           config.windowType,
           config.smoothingFactor,
-          config.overlap
+          config.overlap,
+          config.sampleRate,
+          config.decimationEnabled,
+          config.decimationFactor
         );
         
         // 获取最近的音频缓冲区
@@ -274,7 +280,7 @@ export struct AudioController {
           const peakInfo = SpectrumDataProcessor.findPeakFrequency(
             unweightedSpectrum,
             config.fftSize,
-            44100, // 采样率
+            config.sampleRate, // 采样率
             16, // 最小频率
             20000, // 最大频率
             true, // 默认启用插值
@@ -626,7 +632,7 @@ export struct AudioController {
 
       let config = AudioPresets.getConfig(this.pk.audio_analysis_mode);
       // 计算频谱数据（用于频谱图显示）
-      taskpool.execute<[ArrayBuffer, WeightingType, number, number, WindowType, number, number], Float32Array>(
+      taskpool.execute<[ArrayBuffer, WeightingType, number, number, WindowType, number, number, number, boolean, number], Float32Array>(
         concurrentCalculateSpectrum,
         buffer.slice(0),
         this.pk.weighting_type,
@@ -634,7 +640,10 @@ export struct AudioController {
         config.fftSize,
         config.windowType,
         config.smoothingFactor,
-        config.overlap
+        config.overlap,
+        config.sampleRate,
+        config.decimationEnabled,
+        config.decimationFactor
       ).then((spectrum) => {
         // 双管线架构：频谱数据通过状态管理，不再通过事件传递
 
@@ -644,7 +653,10 @@ export struct AudioController {
           config.fftSize,
           config.windowType,
           config.smoothingFactor,
-          config.overlap
+          config.overlap,
+          config.sampleRate,
+          config.decimationEnabled,
+          config.decimationFactor
         );
         
         const db: number = fftAnalyzer.calculateAverageDb(spectrum);

@@ -34,6 +34,11 @@ import {
   SpectrumDisplayConfig
 } from '../../services/SpectrumDisplayService';
 import { LocationInfo, LocationService } from '../../services/LocationService';
+import {
+  SampleRateSettingsBuilder,
+  SampleRateSettingsParams
+} from './SampleRateSettingsDialog';
+import { AudioService } from '../../services/AudioService';
 
 // 工具功能卡片配置
 interface ToolCardConfig {
@@ -208,6 +213,20 @@ export struct ToolsContent {
           statusColor: this.isTorchOn ? $r('sys.color.confirm') : $r('sys.color.font_secondary'),
           onTap: () => {
             this.toggleTorch()
+          }
+        })
+      }
+
+      // 采样率设置卡片
+      GridCol({ span: 1 }) {
+        this.buildToolCard({
+          title: '采样率设置',
+          icon: $r('app.media.ic_frequency_weighting'),
+          description: '音频采样率和降采样',
+          status: this.getSampleRateDisplayText(),
+          statusColor: $r('sys.color.font_primary'),
+          onTap: () => {
+            this.navigateToSampleRateSettings()
           }
         })
       }
@@ -560,6 +579,56 @@ export struct ToolsContent {
         this.refreshLocation();
       } else {
       }
+    }
+  }
+
+  // 导航到采样率设置
+  private navigateToSampleRateSettings = () => {
+    let sampleRateDialog: InfSheet;
+    let param: SampleRateSettingsParams = {
+      onClose: () => {
+        sampleRateDialog?.dismiss();
+      },
+      onSettingsApplied: (sampleRate: number, decimationEnabled: boolean, decimationFactor: number) => {
+        // 应用采样率设置
+        this.applySampleRateSettings(sampleRate, decimationEnabled, decimationFactor);
+      }
+    }
+    sampleRateDialog = DialogHub.getSheet()
+      .setStyle({
+        showClose: false,
+        backgroundColor: $r('sys.color.background_secondary')
+      })
+      .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS })
+      .setComponentTargetId('mainId')
+      .setContent(wrapBuilder(SampleRateSettingsBuilder), param)
+      .build();
+
+    sampleRateDialog.show();
+  }
+
+  // 应用采样率设置
+  private applySampleRateSettings(sampleRate: number, decimationEnabled: boolean, decimationFactor: number): void {
+    // 更新持久化存储
+    this.pk.audio_sample_rate = sampleRate;
+    this.pk.audio_decimation_enabled = decimationEnabled;
+    this.pk.audio_decimation_factor = decimationFactor;
+    
+    // 应用到AudioService
+    const audioService = AudioService.getInstance(this.pk);
+    audioService.applySampleRateSettings(sampleRate, decimationEnabled, decimationFactor);
+    
+    console.info(`[采样率设置] 已应用: 采样率=${sampleRate}Hz, 降采样启用=${decimationEnabled}, 降采样因子=${decimationFactor}`);
+  }
+
+  // 获取采样率显示文本
+  private getSampleRateDisplayText(): string {
+    const sampleRateText = `${(this.pk.audio_sample_rate / 1000).toFixed(1)}kHz`;
+    
+    if (this.pk.audio_decimation_enabled) {
+      return `${sampleRateText} (降采样${this.pk.audio_decimation_factor}倍)`;
+    } else {
+      return sampleRateText;
     }
   }
 }

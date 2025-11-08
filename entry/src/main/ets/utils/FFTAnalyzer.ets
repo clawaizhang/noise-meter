@@ -31,10 +31,9 @@ interface SpectrumStats {
 export class FFTAnalyzer {
   private readonly size: number;
   private readonly window: Float32Array;
-  private static sampleRate: number = 44100;
+  private sampleRate: number = 44100;
   private readonly REF_VALUE: number = 32767.0; // 16位音频的最大值
   private readonly MIN_DB: number = -120.0; // 最小分贝值
-  private readonly SAMPLE_RATE: number = 44100 // 采样率
   private readonly REF_POWER: number = 2e-5; // 参考声压，20μPa
   private readonly smoothingFactor: number; // 平滑因子
   private readonly DEBUG: boolean = true; // 调试开关
@@ -43,6 +42,8 @@ export class FFTAnalyzer {
   private readonly WINDOW_CORRECTION: number; // 窗函数能量校正因子
   private readonly MIC_SENSITIVITY: number = -25; // 典型的手机麦克风灵敏度（dBV/Pa）
   private systemGain: number = 0; // 系统增益校正（dB）
+  private decimationEnabled: boolean = false; // 是否启用降采样
+  private decimationFactor: number = 1; // 降采样因子
 
   /**
    * 设置系统增益
@@ -69,7 +70,7 @@ export class FFTAnalyzer {
    * @param smoothingFactor 平滑因子
    */
   constructor(size: number = 2048, windowType: WindowType = WindowType.HANNING, smoothingFactor: number = 0.2,
-    overlap: number = 0.5) {
+    overlap: number = 0.5, sampleRate: number = 44100, decimationEnabled: boolean = false, decimationFactor: number = 1) {
     // 确保size是2的幂次方
     if (!this.isPowerOf2(size)) {
       throw new Error('FFT大小必须是2的幂');
@@ -81,6 +82,9 @@ export class FFTAnalyzer {
     this.windowType = windowType;
     this.smoothingFactor = smoothingFactor;
     this.overlap = overlap;
+    this.sampleRate = sampleRate;
+    this.decimationEnabled = decimationEnabled;
+    this.decimationFactor = decimationFactor;
 
     // 使用预缓存的窗函数和能量校正因子
     const windowData = WindowFunctionCache.getWindowData(size, windowType);
@@ -91,7 +95,30 @@ export class FFTAnalyzer {
     if (this.DEBUG) {
       this.validateWeightingFormulas(WeightingType.A);
       this.validateWeightingFormulas(WeightingType.C);
+      console.info(`[FFT分析器] 初始化: 采样率=${this.sampleRate}Hz, 降采样=${this.decimationEnabled}, 降采样因子=${this.decimationFactor}`);
     }
+  }
+
+  /**
+   * 应用降采样
+   * @param samples 原始样本数据
+   * @returns 降采样后的样本数据
+   */
+  private applyDecimation(samples: Int16Array): Int16Array {
+    if (!this.decimationEnabled || this.decimationFactor <= 1) {
+      return samples;
+    }
+
+    const decimatedLength = Math.floor(samples.length / this.decimationFactor);
+    const decimatedSamples = new Int16Array(decimatedLength);
+
+    // 简单的降采样：每隔N个样本取一个
+    // 在实际应用中，可能需要先进行低通滤波以防止混叠
+    for (let i = 0; i < decimatedLength; i++) {
+      decimatedSamples[i] = samples[i * this.decimationFactor];
+    }
+
+    return decimatedSamples;
   }
 
   private isPowerOf2(value: number): boolean {
@@ -176,7 +203,16 @@ export class FFTAnalyzer {
     }
 
     // 重用samples数组
-    const samples = new Int16Array(input);
+    let samples = new Int16Array(input);
+    
+    // 应用降采样（如果启用）
+    if (this.decimationEnabled && this.decimationFactor > 1) {
+      samples = this.applyDecimation(samples);
+      if (this.DEBUG) {
+        console.info(`应用降采样: 原始样本数=${input.byteLength / 2}, 降采样后=${samples.length}, 降采样因子=${this.decimationFactor}`);
+      }
+    }
+    
     if (!this.cachedSamples || this.cachedSamples.length !== samples.length) {
       this.cachedSamples = new Int16Array(samples.length);
     }
@@ -227,10 +263,12 @@ export class FFTAnalyzer {
     // 计算频谱
     const spectrum = new Float32Array(this.size / 2); // 只需要一半的频率点（奈奎斯特定理）
 
-    // 计算频率分辨率
-    const freqResolution = FFTAnalyzer.sampleRate / actualSamples; // 使用实际样本数计算分辨率
+    // 计算频率分辨率 - 使用实际采样率（考虑降采样）
+    const effectiveSampleRate = this.decimationEnabled ?
+      this.sampleRate / this.decimationFactor : this.sampleRate;
+    const freqResolution = effectiveSampleRate / actualSamples; // 使用实际样本数计算分辨率
     if (this.DEBUG) {
-      console.info(`FFT参数: 归一化因子=${1.0 / this.size}, 频率分辨率=${freqResolution}Hz`);
+      console.info(`FFT参数: 归一化因子=${1.0 / this.size}, 频率分辨率=${freqResolution}Hz, 有效采样率=${effectiveSampleRate}Hz`);
     }
 
     // 计算频谱
@@ -399,7 +437,7 @@ export class FFTAnalyzer {
     spectrum: Float32Array,
     startFreq: number,
     endFreq: number,
-    sampleRate: number = FFTAnalyzer.sampleRate
+    sampleRate?: number
   ): number {
     if (!spectrum || spectrum.length === 0) {
       throw new Error('频谱数据不能为空');
@@ -410,7 +448,8 @@ export class FFTAnalyzer {
     }
 
     // 检查频率范围是否超出奈奎斯特频率
-    const nyquistFreq = sampleRate / 2;
+    const effectiveSampleRate = sampleRate || this.sampleRate;
+    const nyquistFreq = effectiveSampleRate / 2;
     if (startFreq > nyquistFreq) {
       if (this.DEBUG) {
         console.warn(`起始频率${startFreq}Hz超过奈奎斯特频率${nyquistFreq}Hz`);
@@ -418,7 +457,7 @@ export class FFTAnalyzer {
       return this.MIN_DB;
     }
 
-    const binSize = sampleRate / (2 * spectrum.length);
+    const binSize = effectiveSampleRate / (2 * spectrum.length);
     const startBin = Math.max(0, Math.floor(startFreq / binSize));
     const endBin = Math.min(spectrum.length - 1, Math.ceil(endFreq / binSize));
 
@@ -443,14 +482,18 @@ export class FFTAnalyzer {
    * 获取频率分辨率
    */
   public getFrequencyResolution(): number {
-    return FFTAnalyzer.sampleRate / this.size;
+    const effectiveSampleRate = this.decimationEnabled ?
+      this.sampleRate / this.decimationFactor : this.sampleRate;
+    return effectiveSampleRate / this.size;
   }
 
   /**
    * 获取时间分辨率（毫秒）
    */
   public getTimeResolution(): number {
-    return (this.size / FFTAnalyzer.sampleRate) * 1000;
+    const effectiveSampleRate = this.decimationEnabled ?
+      this.sampleRate / this.decimationFactor : this.sampleRate;
+    return (this.size / effectiveSampleRate) * 1000;
   }
 
   /**

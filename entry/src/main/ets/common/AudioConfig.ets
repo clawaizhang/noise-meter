@@ -29,6 +29,12 @@ export class AudioAnalysisConfig {
   overlap: number = 0.4; // 重叠比例 (0-1)
   @Trace
   bufferSize: number = 4096; // 音频缓冲区大小（字节），等于fftSize * 2（16位采样）
+  @Trace
+  sampleRate: number = 44100; // 采样率（Hz）
+  @Trace
+  decimationEnabled: boolean = false; // 是否启用降采样
+  @Trace
+  decimationFactor: number = 2; // 降采样因子
 
   static fast() {
     let fast = new AudioAnalysisConfig();
@@ -38,7 +44,9 @@ export class AudioAnalysisConfig {
     fast.windowType = WindowType.BLACKMAN;
     fast.overlap = 0.4;
     fast.bufferSize = 2048 * 2;
-    
+    fast.sampleRate = 44100;
+    fast.decimationEnabled = false;
+    fast.decimationFactor = 2;
     
     return fast;
   }
@@ -51,7 +59,9 @@ export class AudioAnalysisConfig {
     slow.windowType = WindowType.BLACKMAN;
     slow.overlap = 0.6;
     slow.bufferSize = 4096 * 2;
-    
+    slow.sampleRate = 44100;
+    slow.decimationEnabled = false;
+    slow.decimationFactor = 2;
     
     return slow;
   }
@@ -64,7 +74,9 @@ export class AudioAnalysisConfig {
     impulse.windowType = WindowType.BLACKMAN;
     impulse.overlap = 0.75;
     impulse.bufferSize = 1024 * 2;
-    
+    impulse.sampleRate = 44100;
+    impulse.decimationEnabled = false;
+    impulse.decimationFactor = 2;
     
     return impulse;
   }
@@ -77,6 +89,9 @@ export class AudioAnalysisConfig {
     clone.windowType = this.windowType;
     clone.overlap = this.overlap;
     clone.bufferSize = this.bufferSize;
+    clone.sampleRate = this.sampleRate;
+    clone.decimationEnabled = this.decimationEnabled;
+    clone.decimationFactor = this.decimationFactor;
     
     return clone;
   }
@@ -134,11 +149,31 @@ export class AudioPresets {
         config = AudioPresets.FAST_TIME_WEIGHTING;
     }
 
+    // 从PreferenceKeys加载采样率配置（仅对非自定义模式应用）
+    const pk = PersistenceV2.connect(PreferenceKeys)!;
+    if (mode !== AudioAnalysisMode.CUSTOM_TIME_WEIGHTING) {
+      // 对于预设模式，应用全局采样率设置
+      config.sampleRate = pk.audio_sample_rate;
+      config.decimationEnabled = pk.audio_decimation_enabled;
+      config.decimationFactor = pk.audio_decimation_factor;
+    } else {
+      // 对于自定义模式，保留自定义配置中的采样率设置，但确保有默认值
+      if (config.sampleRate === 0) {
+        config.sampleRate = pk.audio_sample_rate;
+      }
+      if (config.decimationFactor === 0) {
+        config.decimationFactor = pk.audio_decimation_factor;
+      }
+    }
+
     console.info(`[音频配置] 配置详情: FFT大小=${config.fftSize}, ` +
       `窗函数=${config.windowType}, ` +
       `更新间隔=${config.updateInterval}ms, ` +
       `重叠率=${config.overlap}, ` +
-      `缓冲区大小=${config.bufferSize}字节`);
+      `缓冲区大小=${config.bufferSize}字节, ` +
+      `采样率=${config.sampleRate}Hz, ` +
+      `降采样启用=${config.decimationEnabled}, ` +
+      `降采样因子=${config.decimationFactor}`);
     return config;
   }
 }

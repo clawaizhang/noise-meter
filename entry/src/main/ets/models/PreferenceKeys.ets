@@ -179,5 +179,24 @@ export class PreferenceKeys {
    */
   @Trace
   spectrum_custom_decibel_max: number = PreferencesUtil.getNumberSync('spectrum_custom_decibel_max', 140);
+  
+  /**
+   * 音频采样率配置
+   */
+  @Trace
+  audio_sample_rate: number = PreferencesUtil.getNumberSync('audio_sample_rate', 44100);
+  
+  /**
+   * 是否启用降采样
+   */
+  @Trace
+  audio_decimation_enabled: boolean = PreferencesUtil.getBooleanSync('audio_decimation_enabled', false);
+  
+  /**
+   * 降采样因子
+   */
+  @Trace
+  audio_decimation_factor: number = PreferencesUtil.getNumberSync('audio_decimation_factor', 2);
+  
   total_app_usage_today: number = 0;
 }

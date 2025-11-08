@@ -46,7 +46,7 @@ struct Index {
   usePrivacy: boolean = true;
   private relationalStoreService: RelationalStoreService = RelationalStoreService.getInstance();
   private context = this.getUIContext().getHostContext() as common.UIAbilityContext;
-  private audioService: AudioService = AudioService.getInstance()
+  private audioService: AudioService = AudioService.getInstance(this.pk)
   private audioDeviceMonitorService: AudioDeviceMonitorService = AudioDeviceMonitorService.getInstance()
 
   @Monitor('pk.display_mode')

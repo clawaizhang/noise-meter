@@ -26,13 +26,14 @@ export enum AudioServiceState {
 
 export class AudioService {
   private static instance: AudioService | null = null;
+  private pk: PreferenceKeys;
 
   /**
    * 获取 AudioService 实例
    */
-  public static getInstance(): AudioService {
+  public static getInstance(pk: PreferenceKeys): AudioService {
     if (!AudioService.instance) {
-      AudioService.instance = new AudioService();
+      AudioService.instance = new AudioService(pk);
     }
     return AudioService.instance;
   }
@@ -65,18 +66,35 @@ export class AudioService {
   private audioStreamProcessor: AudioStreamProcessor;
   private originAudioDataCallBack: ((buffer: ArrayBuffer) => void) | null = null;
 
-  constructor() {
-
-    // 从首选项加载分析模式
-    const savedMode: AudioAnalysisMode = PersistenceV2.connect(PreferenceKeys)!.audio_analysis_mode!;
-    this.currentConfig = AudioPresets.getConfig(savedMode);
+  constructor(pk: PreferenceKeys) {
+    // 初始化默认配置
+    this.currentConfig = AudioPresets.FAST_TIME_WEIGHTING;
+    this.pk = pk;
     
     // 初始化音频流处理器
     this.audioStreamProcessor = new AudioStreamProcessor(this.currentConfig);
     
-    console.info(`[音频采集] 加载配置: 模式=${savedMode}, FFT大小=${this.currentConfig.fftSize}, ` +
-      `处理间隔=${this.currentConfig.updateInterval}ms, 重叠率=${this.currentConfig.overlap}`);
+    console.info(`[音频采集] 初始化默认配置`);
+  }
 
+  /**
+   * 初始化配置（从外部调用）
+   * 应该在组件初始化后调用
+   */
+  public initializeConfig(): void {
+    // 从首选项加载分析模式
+    this.currentConfig = AudioPresets.getConfig(this.pk.audio_analysis_mode!);
+    
+    // 应用采样率配置到音频采集器
+    this.applySampleRateConfig();
+    
+    // 更新音频流处理器配置
+    this.audioStreamProcessor.updateConfig(this.currentConfig);
+    
+    console.info(`[音频采集] 加载配置: 模式=${this.pk.audio_analysis_mode!}, FFT大小=${this.currentConfig.fftSize}, ` +
+      `处理间隔=${this.currentConfig.updateInterval}ms, 重叠率=${this.currentConfig.overlap}, ` +
+      `采样率=${this.currentConfig.sampleRate}Hz, 降采样=${this.currentConfig.decimationEnabled}, ` +
+      `降采样因子=${this.currentConfig.decimationFactor}`);
   }
 
   registerOriginAudioDataCallBack(callback: (buffer: ArrayBuffer) => void){
@@ -417,13 +435,67 @@ export class AudioService {
 
         // 更新配置
         this.currentConfig = AudioPresets.getConfig(mode);
+        this.applySampleRateConfig();
         this.audioStreamProcessor.updateConfig(this.currentConfig);
 
-        console.info(`[音频采集] 模式已更新为: ${mode}`);
+        console.info(`[音频采集] 模式已更新为: ${mode}, 采样率=${this.currentConfig.sampleRate}Hz`);
       } catch (err) {
         console.error(`[音频采集] 更新模式失败: ${err instanceof Error ? err.message : String(err)}`);
       }
     });
+  }
+
+  /**
+   * 应用采样率配置
+   */
+  private applySampleRateConfig(): void {
+    // 根据采样率设置音频采集器参数
+    switch (this.currentConfig.sampleRate) {
+      case 8000:
+        this.audioCapturerOptions.streamInfo.samplingRate = audio.AudioSamplingRate.SAMPLE_RATE_8000;
+        break;
+      case 11025:
+        this.audioCapturerOptions.streamInfo.samplingRate = audio.AudioSamplingRate.SAMPLE_RATE_11025;
+        break;
+      case 16000:
+        this.audioCapturerOptions.streamInfo.samplingRate = audio.AudioSamplingRate.SAMPLE_RATE_16000;
+        break;
+      case 22050:
+        this.audioCapturerOptions.streamInfo.samplingRate = audio.AudioSamplingRate.SAMPLE_RATE_22050;
+        break;
+      case 44100:
+        this.audioCapturerOptions.streamInfo.samplingRate = audio.AudioSamplingRate.SAMPLE_RATE_44100;
+        break;
+      case 48000:
+        this.audioCapturerOptions.streamInfo.samplingRate = audio.AudioSamplingRate.SAMPLE_RATE_48000;
+        break;
+      default:
+        console.warn(`[音频采集] 不支持的采样率: ${this.currentConfig.sampleRate}, 使用默认44100Hz`);
+        this.audioCapturerOptions.streamInfo.samplingRate = audio.AudioSamplingRate.SAMPLE_RATE_44100;
+        this.currentConfig.sampleRate = 44100;
+        break;
+    }
+
+    console.info(`[音频采集] 采样率配置已应用: ${this.currentConfig.sampleRate}Hz, ` +
+      `降采样=${this.currentConfig.decimationEnabled}, 降采样因子=${this.currentConfig.decimationFactor}`);
+  }
+
+  /**
+   * 应用采样率设置变更
+   */
+  public applySampleRateSettings(sampleRate: number, decimationEnabled: boolean, decimationFactor: number): void {
+    // 更新配置
+    this.currentConfig.sampleRate = sampleRate;
+    this.currentConfig.decimationEnabled = decimationEnabled;
+    this.currentConfig.decimationFactor = decimationFactor;
+
+    // 应用采样率配置到音频采集器
+    this.applySampleRateConfig();
+
+    // 更新音频流处理器配置
+    this.audioStreamProcessor.updateConfig(this.currentConfig);
+
+    console.info(`[音频采集] 采样率设置已应用: ${sampleRate}Hz, 降采样=${decimationEnabled}, 降采样因子=${decimationFactor}`);
   }
 
   /**

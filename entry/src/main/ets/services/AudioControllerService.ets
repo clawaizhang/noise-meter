@@ -389,7 +389,7 @@ export class AudioControllerService {
       this.setupEventRouting();
 
       // 注册AudioService状态监听器 - 修复状态同步问题
-      const audioService = AudioService.getInstance();
+      const audioService = AudioService.getInstance(this.pk);
       audioService.addStateChangeListener((audioState: AudioServiceState) => {
         this.handleAudioServiceStateChange(audioState);
       });
