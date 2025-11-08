@@ -146,10 +146,8 @@ export class UnifiedChartStyle {
     const colorStops: ChartColorStop[] = [];
     
     // 创建从透明到半透明的渐变
-    colorStops.push([baseColor + '20', 0.2]); // 20% 透明度
-    colorStops.push([baseColor + '7F', 0.4]); // 50% 透明度
-    colorStops.push([baseColor, 1.0]);        // 100% 不透明
-    
+    colorStops.push([baseColor + '20', 0]); // 0% 透明度
+
     return colorStops;
   }
   

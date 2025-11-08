@@ -5,6 +5,7 @@ import { PreferenceKeys } from '../../models/PreferenceKeys';
 import { AudioPresets } from '../../common/AudioConfig';
 import { SpectrumDataProcessor, PeakInfo, PeakInterpolationMethod } from './SpectrumDataProcessor';
 import { UnifiedChartStyle } from '../common/charts/UnifiedChartStyle';
+import { PeakFrequencyDisplay } from './PeakFrequencyDisplay';
 import {
   JArrayList,
   XAxis,
@@ -283,17 +284,17 @@ export struct LineChartSpectrumComponent {
     // 设置左Y轴信息 - 将标签移至内部
     this.leftAxis = this.model.getAxisLeft();
     if (this.leftAxis) {
-      // 设置绘制标签个数
-      this.leftAxis.setLabelCount(7, true);
+      // 获取分贝步进值并设置正确的标签数量
+      const dbSteps: number[] = SpectrumDataProcessor.getDbSteps();
+      this.leftAxis.setLabelCount(dbSteps.length, true); // 使用实际的分贝步进数量
       // 设置标签位置为内部
       this.leftAxis.setPosition(YAxisLabelPosition.INSIDE_CHART);
       // 设置距离顶部距离
       this.leftAxis.setSpaceTop(15);
       this.leftAxis.setSpaceBottom(15); // 为内部标签添加底部间距
-      // 设置最小值和最大值
-      const dbSteps: number[] = SpectrumDataProcessor.getDbSteps();
-      this.leftAxis.setAxisMinimum(dbSteps[0]);
-      this.leftAxis.setAxisMaximum(dbSteps[dbSteps.length - 1]);
+      // 设置最小值和最大值，确保使用正确的分贝范围
+      this.leftAxis.setAxisMinimum(dbSteps[0]); // -20
+      this.leftAxis.setAxisMaximum(dbSteps[dbSteps.length - 1]); // 140
       // 设置网格线样式
       this.leftAxis.setDrawGridLines(true);
       this.leftAxis.setGridColor(parseInt(UnifiedChartStyle.GRID_COLOR.replace('#', '0xFF')));
@@ -306,6 +307,10 @@ export struct LineChartSpectrumComponent {
       this.leftAxis.setAxisLineWidth(0); // 设置轴线宽度为0
       this.leftAxis.setTextColor(parseInt(UnifiedChartStyle.TEXT_COLOR.replace('#', '0xFF')));
       this.leftAxis.setTextSize(UnifiedChartStyle.FONT_SIZES.axis);
+      
+      // 确保Y轴使用精确的分贝刻度
+      this.leftAxis.setGranularity(20); // 设置20dB的间隔
+      this.leftAxis.setCenterAxisLabels(false); // 禁用中心轴标签，确保只显示定义的刻度
     }
 
     // 设置图表右Y轴信息
@@ -320,17 +325,17 @@ export struct LineChartSpectrumComponent {
       this.rightAxis.setEnabled(false);
     }
     
-    // 设置X轴信息 - 将标签移至内部但保持在底部
+    // 设置X轴信息 - 将标签移至上方并添加刻度线
     this.xAxis = this.model.getXAxis();
     if (this.xAxis) {
-      this.xAxis.setPosition(XAxisPosition.BOTTOM); // 保持底部位置，但通过偏移使其在内部
-      this.xAxis.setDrawGridLines(false);
-      this.xAxis.setDrawAxisLine(false); // 不绘制轴线，因为标签在内部
+      this.xAxis.setPosition(XAxisPosition.TOP); // 将标签移至上方
+      this.xAxis.setDrawGridLines(true); // 启用水平网格线作为刻度线
+      this.xAxis.setDrawAxisLine(true); // 绘制轴线
       this.xAxis.setGranularity(1);
       this.xAxis.setLabelCount(10);
       this.xAxis.setTextColor(parseInt(UnifiedChartStyle.TEXT_COLOR.replace('#', '0xFF')));
       this.xAxis.setTextSize(UnifiedChartStyle.FONT_SIZES.axis);
-      this.xAxis.setYOffset(-25); // 负偏移，使标签显示在图表内部
+      this.xAxis.setYOffset(10); // 正偏移，使标签显示在图表上方
       this.xAxis.setAvoidFirstLastClipping(true); // 避免首尾标签被裁剪
       // 设置图表X轴显示范围，与映射后的X值保持一致
       // 由于跳过了16Hz以下的数据，所以最小值应该对应16Hz的映射值
@@ -361,7 +366,7 @@ export struct LineChartSpectrumComponent {
       this.xAxis.setValueFormatter(formatter);
       
       // 设置X轴单位标签
-      this.xAxis.setAxisLineWidth(0); // 不显示轴线
+      this.xAxis.setAxisLineWidth(UnifiedChartStyle.LINE_WIDTHS.grid); // 显示轴线
       this.xAxis.setAxisLineColor(parseInt(UnifiedChartStyle.TEXT_COLOR.replace('#', '0xFF')));
     }
 
@@ -405,34 +410,6 @@ export struct LineChartSpectrumComponent {
 
   build() {
     Column() {
-      // 峰值信息行（与频谱柱状图保持一致的显示风格）
-      Row() {
-        Blank()
-        
-        // 显示峰值信息（使用平滑后的峰值）
-        if (this.smoothedPeakInfo && this.smoothedPeakInfo.frequency > 0) {
-          Column() {
-            Text(`峰值频率`)
-              .fontSize(UnifiedChartStyle.FONT_SIZES.value)
-              .fontColor(parseInt(UnifiedChartStyle.TEXT_COLOR.replace('#', '0xFF')))
-              .opacity(0.8)
-            Text(`${UnifiedChartStyle.formatFrequency(this.smoothedPeakInfo.frequency)}`)
-              .fontSize(UnifiedChartStyle.FONT_SIZES.value)
-              .fontColor(SpectrumDataProcessor.getDbColor(this.smoothedPeakInfo.dbValue))
-              .fontWeight(FontWeight.Bold)
-            Text(`${UnifiedChartStyle.formatDecibel(this.smoothedPeakInfo.dbValue)}`)
-              .fontSize(UnifiedChartStyle.FONT_SIZES.value)
-              .fontColor(SpectrumDataProcessor.getDbColor(this.smoothedPeakInfo.dbValue))
-          }
-          .alignItems(HorizontalAlign.End)
-          .backgroundColor(UnifiedChartStyle.BACKGROUND_COLOR)
-          .padding({ left: UnifiedChartStyle.SPACING.sm, right: UnifiedChartStyle.SPACING.sm, top: 4, bottom: 4 })
-          .borderRadius(UnifiedChartStyle.BORDER_RADIUS.small)
-        }
-      }
-      .width('100%')
-      .padding({ left: UnifiedChartStyle.SPACING.md, right: UnifiedChartStyle.SPACING.md, top: UnifiedChartStyle.SPACING.xs, bottom: UnifiedChartStyle.SPACING.xs })
-      
       // LineChart组件
       if (this.model) {
         Stack() {
@@ -445,7 +422,7 @@ export struct LineChartSpectrumComponent {
           Text('频率(Hz)')
             .fontSize(UnifiedChartStyle.FONT_SIZES.axis)
             .fontColor(parseInt(UnifiedChartStyle.TEXT_COLOR.replace('#', '0xFF')))
-            .position({ x: '95%', y: '98%' })
+            .position({ x: '95%', y: '2%' })
             .translate({ x: '-50%' })
             .backgroundColor(UnifiedChartStyle.BACKGROUND_COLOR)
             .padding({ left: 4, right: 4 })
@@ -461,6 +438,13 @@ export struct LineChartSpectrumComponent {
             .backgroundColor(UnifiedChartStyle.BACKGROUND_COLOR)
             .padding({ left: 4, right: 4 })
             .borderRadius(4)
+          
+          // 峰值频率信息 - 使用通用组件
+          PeakFrequencyDisplay({
+            peakInfo: this.smoothedPeakInfo,
+            positionX: '95%',
+            positionY: '8%'
+          })
         }
         .width('100%')
         .layoutWeight(1)

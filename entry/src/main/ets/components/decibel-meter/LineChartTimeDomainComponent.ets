@@ -213,21 +213,21 @@ export struct LineChartTimeDomainComponent {
       this.rightAxis.setEnabled(false);
     }
     
-    // 设置X轴信息 - 将标签移至内部但保持在底部
+    // 设置X轴信息 - 将标签移至上方并添加刻度线
     this.xAxis = this.model.getXAxis();
     if (this.xAxis) {
-      this.xAxis.setPosition(XAxisPosition.BOTTOM); // 保持底部位置，但通过偏移使其在内部
-      this.xAxis.setDrawGridLines(false);
-      this.xAxis.setDrawAxisLine(false); // 不绘制轴线，因为标签在内部
+      this.xAxis.setPosition(XAxisPosition.TOP); // 将标签移至上方
+      this.xAxis.setDrawGridLines(true); // 启用水平网格线作为刻度线
+      this.xAxis.setDrawAxisLine(true); // 绘制轴线
       this.xAxis.setGranularity(1);
       this.xAxis.setLabelCount(5);
       this.xAxis.setTextColor(parseInt(UnifiedChartStyle.TEXT_COLOR.replace('#', '0xFF')));
       this.xAxis.setTextSize(UnifiedChartStyle.FONT_SIZES.axis);
-      this.xAxis.setYOffset(-25); // 负偏移，使标签显示在图表内部
+      this.xAxis.setYOffset(10); // 正偏移，使标签显示在图表上方
       this.xAxis.setAvoidFirstLastClipping(true); // 避免首尾标签被裁剪
       
       // 设置X轴单位标签
-      this.xAxis.setAxisLineWidth(0); // 不显示轴线
+      this.xAxis.setAxisLineWidth(UnifiedChartStyle.LINE_WIDTHS.grid); // 显示轴线
       this.xAxis.setAxisLineColor(parseInt(UnifiedChartStyle.TEXT_COLOR.replace('#', '0xFF')));
       
       // 自定义X轴标签，显示时间单位（毫秒）
@@ -308,7 +308,7 @@ export struct LineChartTimeDomainComponent {
           Text('时间(ms)')
             .fontSize(UnifiedChartStyle.FONT_SIZES.axis)
             .fontColor(parseInt(UnifiedChartStyle.TEXT_COLOR.replace('#', '0xFF')))
-            .position({ x: '95%', y: '98%' })
+            .position({ x: '95%', y: '2%' })
             .translate({ x: '-50%' })
             .backgroundColor(UnifiedChartStyle.BACKGROUND_COLOR)
             .padding({ left: 4, right: 4 })

@@ -6,6 +6,7 @@ import { BaseChartComponent } from '../common/charts/BaseChartComponent';
 import { ChartConfig, ChartType, DefaultChartConfig } from '../common/charts/ChartConfig';
 import { AudioPresets } from '../../common/AudioConfig';
 import { SpectrumDataProcessor, SpectrumDataPoint, PeakInfo } from './SpectrumDataProcessor';
+import { PeakFrequencyDisplay } from './PeakFrequencyDisplay';
 import {
   WaterfallChart,
   WaterfallChartModel,
@@ -30,6 +31,7 @@ import {
   YAxis,
   YAxisLabelPosition
 } from '@ohos/mpchart';
+import { UnifiedChartStyle } from '../common/charts/UnifiedChartStyle';
 
 // 频率范围类型
 interface FrequencyRange {
@@ -392,8 +394,10 @@ export struct SpectrumBarChartComponent {
     // 设置图表左Y轴信息 - 将标签移至内部
     this.leftAxis = this.model.getAxisLeft();
     if (this.leftAxis) {
-      this.leftAxis.setAxisMinimum(0);
-      this.leftAxis.setAxisMaximum(120);
+      // 使用正确的分贝范围
+      const dbSteps: number[] = SpectrumDataProcessor.getDbSteps();
+      this.leftAxis.setAxisMinimum(dbSteps[0]); // -20
+      this.leftAxis.setAxisMaximum(dbSteps[dbSteps.length - 1]); // 140
       this.leftAxis.setDrawLimitLinesBehindData(false);
       this.leftAxis.setDrawGridLines(true);
       this.leftAxis.setDrawAxisLine(false); // 隐藏Y轴线
@@ -401,11 +405,15 @@ export struct SpectrumBarChartComponent {
       this.leftAxis.setPosition(YAxisLabelPosition.INSIDE_CHART); // 将Y轴标签移至内部
       this.leftAxis.setTextColor(DefaultChartConfig.textColor);
       this.leftAxis.setTextSize(DefaultChartConfig.fontSize.axis);
-      this.leftAxis.setLabelCount(7, true); // 设置Y轴标签数量
+      this.leftAxis.setLabelCount(dbSteps.length, true); // 使用实际的分贝步进数量
       this.leftAxis.setAxisLineWidth(0); // 设置轴线宽度为0
       this.leftAxis.setAxisLineColor(parseInt(DefaultChartConfig.textColor.replace('#', '0xFF')));
       this.leftAxis.setSpaceTop(10); // 为内部标签添加顶部间距
       this.leftAxis.setSpaceBottom(10); // 为内部标签添加底部间距
+      
+      // 确保Y轴使用精确的分贝刻度
+      this.leftAxis.setGranularity(20); // 设置20dB的间隔
+      this.leftAxis.setCenterAxisLabels(false); // 禁用中心轴标签，确保只显示定义的刻度
 
       // 添加所有限制线
       for (const limitLine of this.limitLines) {
@@ -420,20 +428,20 @@ export struct SpectrumBarChartComponent {
       this.rightAxis.setAxisMinimum(0);
     }
 
-    // 设置X轴信息 - 将标签移至内部但保持在底部
+    // 设置X轴信息 - 将标签移至上方并添加刻度线
     this.xAxis = this.model.getXAxis();
     if (this.xAxis) {
-      this.xAxis.setPosition(XAxisPosition.BOTTOM); // 保持底部位置，但通过偏移使其在内部
-      this.xAxis.setDrawGridLines(false);
-      this.xAxis.setDrawAxisLine(false); // 不绘制轴线，因为标签在内部
+      this.xAxis.setPosition(XAxisPosition.TOP); // 将标签移至上方
+      this.xAxis.setDrawGridLines(true); // 启用水平网格线作为刻度线
+      this.xAxis.setDrawAxisLine(true); // 绘制轴线
       this.xAxis.setDrawLabels(true);
       this.xAxis.setTextColor(DefaultChartConfig.textColor);
       this.xAxis.setTextSize(DefaultChartConfig.fontSize.axis);
       this.xAxis.setLabelCount(Math.min(this.frequencyLabels.length, 8), true);
       this.xAxis.setGranularity(1);
-      this.xAxis.setAxisLineWidth(0); // 不显示轴线
+      this.xAxis.setAxisLineWidth(UnifiedChartStyle.LINE_WIDTHS.grid); // 显示轴线
       this.xAxis.setAxisLineColor(parseInt(DefaultChartConfig.textColor.replace('#', '0xFF')));
-      this.xAxis.setYOffset(-20); // 负偏移，使标签显示在图表内部
+      this.xAxis.setYOffset(10); // 正偏移，使标签显示在图表上方
       this.xAxis.setAvoidFirstLastClipping(true); // 避免首尾标签被裁剪
     }
 
@@ -611,73 +619,6 @@ export struct SpectrumBarChartComponent {
 
   build() {
     Column() {
-      // 标题和信息栏
-      Row() {
-        Column() {
-          Text('频谱柱状图')
-            .fontSize(DefaultChartConfig.fontSize.title)
-            .fontColor(DefaultChartConfig.textColor)
-            .fontWeight(FontWeight.Medium)
-
-          Text(`采样率: ${this.sampleRate}Hz | FFT: ${this.fftSize} | 模式: ${this.pk.audio_analysis_mode}`)
-            .fontSize(DefaultChartConfig.fontSize.small)
-            .fontColor(DefaultChartConfig.textColor)
-            .opacity(0.8)
-            .margin({ top: 4 })
-        }
-        .alignItems(HorizontalAlign.Start)
-
-        Blank()
-
-        Column() {
-          if (this.peakFrequency > 0) {
-            Text(`峰值频率`)
-              .fontSize(DefaultChartConfig.fontSize.small)
-              .fontColor(DefaultChartConfig.textColor)
-              .opacity(0.8)
-            Text(`${this.formatFrequency(this.smoothedPeakFrequency)}`)
-              .fontSize(DefaultChartConfig.fontSize.label)
-              .fontColor(SpectrumDataProcessor.getDbColor(this.smoothedPeakDb))
-              .fontWeight(FontWeight.Bold)
-              .animation({
-                duration: 300,
-                curve: Curve.EaseInOut
-              })
-            Text(`${this.smoothedPeakDb.toFixed(1)}dB`)
-              .fontSize(DefaultChartConfig.fontSize.small)
-              .fontColor(SpectrumDataProcessor.getDbColor(this.smoothedPeakDb))
-              .animation({
-                duration: 300,
-                curve: Curve.EaseInOut
-              })
-          }
-        }
-        .alignItems(HorizontalAlign.End)
-      }
-      .width('100%')
-      .padding({ left: 16, right: 16, top: 8, bottom: 8 })
-
-      // 频段指示器
-      Row() {
-        ForEach(this.FREQUENCY_BANDS, (band: FrequencyRange, index: number) => {
-          Row() {
-            Text(band.label)
-              .fontSize(DefaultChartConfig.fontSize.small)
-              .fontColor(DefaultChartConfig.textColor)
-            Text(`${this.formatFrequency(band.startFreq)}-${this.formatFrequency(band.endFreq)}`)
-              .fontSize(DefaultChartConfig.fontSize.small)
-              .fontColor(DefaultChartConfig.textColor)
-              .opacity(0.8)
-          }
-          .padding(8)
-          .backgroundColor('#2A2B2D') // 深色背景，与整体风格一致
-          .borderRadius(8)
-          .margin({ right: 8 })
-        })
-      }
-      .width('100%')
-      .padding({ left: 16, right: 16, bottom: 8 })
-
       // 使用瀑布图组件显示频谱柱状图
       Stack() {
         WaterfallChart({ model: this.model })
@@ -690,7 +631,7 @@ export struct SpectrumBarChartComponent {
         Text('频率(Hz)')
           .fontSize(DefaultChartConfig.fontSize.axis)
           .fontColor(DefaultChartConfig.textColor)
-          .position({ x: '95%', y: '98%' })
+          .position({ x: '95%', y: '2%' })
           .translate({ x: '-50%' })
           .backgroundColor(this.chartConfig.backgroundColor)
           .padding({ left: 4, right: 4 })
@@ -706,9 +647,19 @@ export struct SpectrumBarChartComponent {
           .backgroundColor(this.chartConfig.backgroundColor)
           .padding({ left: 4, right: 4 })
           .borderRadius(4)
+        
+        // 峰值频率信息 - 使用通用组件
+        PeakFrequencyDisplay({
+          peakInfo: {
+            frequency: this.smoothedPeakFrequency,
+            dbValue: this.smoothedPeakDb
+          },
+          positionX: '95%',
+          positionY: '8%'
+        })
       }
       .width('100%')
-      .layoutWeight(1)
+      .layoutWeight(1) // 占用剩余空间
       .margin({ left: 16, right: 16, bottom: 8 })
 
       // 选中频率信息

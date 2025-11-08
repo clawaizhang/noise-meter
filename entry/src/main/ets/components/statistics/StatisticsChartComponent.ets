@@ -155,19 +155,19 @@ export struct StatisticsChartComponent {
     this.barChartModel.setHighlightPerTapEnabled(false); // 禁用点击高亮
     this.barChartModel.setHighlightPerDragEnabled(false); // 禁用拖动高亮
 
-    // 配置X轴 - 将标签移至内部但保持在底部
+    // 配置X轴 - 将标签移至上方并添加刻度线
     const xAxis = this.barChartModel.getXAxis();
     if (xAxis) {
-      xAxis.setPosition(XAxisPosition.BOTTOM); // 保持底部位置，但通过偏移使其在内部
-      xAxis.setDrawGridLines(false);
-      xAxis.setDrawAxisLine(false); // 不绘制轴线，因为标签在内部
+      xAxis.setPosition(XAxisPosition.TOP); // 将标签移至上方
+      xAxis.setDrawGridLines(true); // 启用水平网格线作为刻度线
+      xAxis.setDrawAxisLine(true); // 绘制轴线
       xAxis.setGranularity(1);
       xAxis.setLabelCount(11, true);
       xAxis.setTextSize(this.layoutConfig.fontSize.axis);
       xAxis.setTextColor(parseInt(UnifiedChartStyle.TEXT_COLOR.replace('#', '0xFF')));
-      xAxis.setAxisLineWidth(0); // 不显示轴线
+      xAxis.setAxisLineWidth(UnifiedChartStyle.LINE_WIDTHS.grid); // 显示轴线
       xAxis.setAxisLineColor(parseInt(UnifiedChartStyle.TEXT_COLOR.replace('#', '0xFF')));
-      xAxis.setYOffset(-25); // 负偏移，使标签显示在图表内部
+      xAxis.setYOffset(10); // 正偏移，使标签显示在图表上方
       xAxis.setAvoidFirstLastClipping(true); // 避免首尾标签被裁剪
     }
 
@@ -317,7 +317,7 @@ export struct StatisticsChartComponent {
         Text('声级(dB)')
           .fontSize(this.layoutConfig.fontSize.axis)
           .fontColor(parseInt(UnifiedChartStyle.TEXT_COLOR.replace('#', '0xFF')))
-          .position({ x: '95%', y: '98%' })
+          .position({ x: '95%', y: '2%' })
           .translate({ x: '-50%' })
           .backgroundColor(UnifiedChartStyle.BACKGROUND_COLOR)
           .padding({ left: 4, right: 4 })
