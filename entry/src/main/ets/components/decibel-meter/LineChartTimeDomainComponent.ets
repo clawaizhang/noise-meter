@@ -155,13 +155,10 @@ export struct LineChartTimeDomainComponent {
       description.setEnabled(false);
     }
     
-    // 获取图表图例部件，设置图表图例形状为线形
+    // 获取图表图例部件，禁用图例因为只有一根线
     let legend: Legend | null = this.model.getLegend();
     if (legend) {
-      legend.setEnabled(true);
-      legend.setForm(LegendForm.LINE);
-      legend.setTextColor(parseInt(UnifiedChartStyle.TEXT_COLOR.replace('#', '0xFF')));
-      legend.setTextSize(UnifiedChartStyle.FONT_SIZES.legend);
+      legend.setEnabled(false); // 禁用图例，因为只有一根线，显示"时域波形"标签是多余的
     }
     
     // 设置图表数据最大的绘制数
@@ -170,15 +167,16 @@ export struct LineChartTimeDomainComponent {
     // 创建时域限制线（0线为中心线）
     this.createLimitLines();
     
-    // 设置左Y轴信息
+    // 设置左Y轴信息 - 将标签移至内部
     this.leftAxis = this.model.getAxisLeft();
     if (this.leftAxis) {
       // 设置绘制标签个数
       this.leftAxis.setLabelCount(7, true);
-      // 设置标签位置
-      this.leftAxis.setPosition(YAxisLabelPosition.OUTSIDE_CHART);
+      // 设置标签位置为内部
+      this.leftAxis.setPosition(YAxisLabelPosition.INSIDE_CHART);
       // 设置距离顶部距离
       this.leftAxis.setSpaceTop(15);
+      this.leftAxis.setSpaceBottom(15); // 为内部标签添加底部间距
       // 设置最小值和最大值
       this.leftAxis.setAxisMinimum(-1.0);
       this.leftAxis.setAxisMaximum(1.0);
@@ -205,18 +203,21 @@ export struct LineChartTimeDomainComponent {
       this.rightAxis.setEnabled(false);
     }
     
-    // 设置X轴信息
+    // 设置X轴信息 - 将标签移至内部但保持在底部
     this.xAxis = this.model.getXAxis();
     if (this.xAxis) {
-      this.xAxis.setPosition(XAxisPosition.BOTTOM);
+      this.xAxis.setPosition(XAxisPosition.BOTTOM); // 保持底部位置，但通过偏移使其在内部
       this.xAxis.setDrawGridLines(false);
+      this.xAxis.setDrawAxisLine(false); // 不绘制轴线，因为标签在内部
       this.xAxis.setGranularity(1);
       this.xAxis.setLabelCount(5);
       this.xAxis.setTextColor(parseInt(UnifiedChartStyle.TEXT_COLOR.replace('#', '0xFF')));
       this.xAxis.setTextSize(UnifiedChartStyle.FONT_SIZES.axis);
+      this.xAxis.setYOffset(-25); // 负偏移，使标签显示在图表内部
+      this.xAxis.setAvoidFirstLastClipping(true); // 避免首尾标签被裁剪
       
       // 设置X轴单位标签
-      this.xAxis.setAxisLineWidth(UnifiedChartStyle.LINE_WIDTHS.normal);
+      this.xAxis.setAxisLineWidth(0); // 不显示轴线
       this.xAxis.setAxisLineColor(parseInt(UnifiedChartStyle.TEXT_COLOR.replace('#', '0xFF')));
       
       // 自定义X轴标签，显示时间单位（毫秒）
@@ -270,13 +271,8 @@ export struct LineChartTimeDomainComponent {
 
   build() {
     Column() {
-      // 图表标题
+      // 采样点信息行（去掉标题，只保留采样点数量）
       Row() {
-        Text('时域波形图')
-          .fontSize(UnifiedChartStyle.FONT_SIZES.title)
-          .fontWeight(FontWeight.Medium)
-          .fontColor(parseInt(UnifiedChartStyle.TEXT_COLOR.replace('#', '0xFF')))
-        
         Blank()
         
         // 显示数据点数量
@@ -288,7 +284,7 @@ export struct LineChartTimeDomainComponent {
           .borderRadius(UnifiedChartStyle.BORDER_RADIUS.small)
       }
       .width('100%')
-      .padding({ left: UnifiedChartStyle.SPACING.md, right: UnifiedChartStyle.SPACING.md, top: UnifiedChartStyle.SPACING.sm, bottom: UnifiedChartStyle.SPACING.sm })
+      .padding({ left: UnifiedChartStyle.SPACING.md, right: UnifiedChartStyle.SPACING.md, top: UnifiedChartStyle.SPACING.xs, bottom: UnifiedChartStyle.SPACING.xs })
       
       // LineChart组件
       if (this.model) {

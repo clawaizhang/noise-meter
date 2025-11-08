@@ -43,6 +43,13 @@ export struct LineChartSpectrumComponent {
   // 频谱数据
   @Local private currentSpectrumData: Float32Array = new Float32Array();
   @Local private peakInfo: PeakInfo | null = null;
+  
+  // 峰值平滑处理相关
+  @Local private smoothedPeakInfo: PeakInfo | null = null;
+  @Local private lastPeakUpdateTime: number = 0;
+  @Local private readonly PEAK_UPDATE_THRESHOLD_MS: number = 200; // 峰值更新最小间隔(ms)
+  @Local private readonly PEAK_CHANGE_THRESHOLD_DB: number = 2.0; // 峰值变化阈值(dB)
+  @Local private readonly PEAK_CHANGE_THRESHOLD_HZ: number = 100; // 峰值频率变化阈值(Hz)
 
   // LineChart 相关
   @Local private model: LineChartModel | null = null;
@@ -85,9 +92,61 @@ export struct LineChartSpectrumComponent {
         true, // 默认启用插值
         PeakInterpolationMethod.PARABOLIC // 默认使用抛物线插值
       );
+      
+      // 应用峰值平滑处理
+      this.applyPeakSmoothing();
+      
       // 更新图表数据
       this.updateChartData();
     }
+  }
+
+  /**
+   * 应用峰值平滑处理
+   * 减少峰值显示的抖动，提高用户体验
+   */
+  private applyPeakSmoothing(): void {
+    if (!this.peakInfo) {
+      return;
+    }
+
+    const currentTime = Date.now();
+    
+    // 如果是第一次检测到峰值，直接使用
+    if (!this.smoothedPeakInfo) {
+      this.smoothedPeakInfo = {
+        frequency: this.peakInfo.frequency,
+        dbValue: this.peakInfo.dbValue,
+        index: this.peakInfo.index,
+        amplitude: this.peakInfo.amplitude
+      };
+      this.lastPeakUpdateTime = currentTime;
+      return;
+    }
+
+    // 检查是否满足时间间隔要求
+    if (currentTime - this.lastPeakUpdateTime < this.PEAK_UPDATE_THRESHOLD_MS) {
+      return; // 时间间隔太短，不更新
+    }
+
+    // 检查峰值变化是否超过阈值
+    const dbChange = Math.abs(this.peakInfo.dbValue - this.smoothedPeakInfo.dbValue);
+    const freqChange = Math.abs(this.peakInfo.frequency - this.smoothedPeakInfo.frequency);
+
+    if (dbChange < this.PEAK_CHANGE_THRESHOLD_DB && freqChange < this.PEAK_CHANGE_THRESHOLD_HZ) {
+      return; // 变化太小，不更新
+    }
+
+    // 应用平滑算法：加权平均
+    const smoothingFactor = 0.15; // 平滑因子，越小越平滑
+    this.smoothedPeakInfo = {
+      frequency: smoothingFactor * this.peakInfo.frequency + (1 - smoothingFactor) * this.smoothedPeakInfo.frequency,
+      dbValue: smoothingFactor * this.peakInfo.dbValue + (1 - smoothingFactor) * this.smoothedPeakInfo.dbValue,
+      index: this.peakInfo.index,
+      amplitude: smoothingFactor * this.peakInfo.amplitude + (1 - smoothingFactor) * this.smoothedPeakInfo.amplitude
+    };
+    
+    this.lastPeakUpdateTime = currentTime;
   }
 
   /**
@@ -194,13 +253,10 @@ export struct LineChartSpectrumComponent {
       description.setEnabled(false);
     }
     
-    // 获取图表图例部件，设置图表图例形状为线形
+    // 获取图表图例部件，禁用图例因为只有一根线
     let legend: Legend | null = this.model.getLegend();
     if (legend) {
-      legend.setEnabled(true);
-      legend.setForm(LegendForm.LINE);
-      legend.setTextColor(parseInt(UnifiedChartStyle.TEXT_COLOR.replace('#', '0xFF')));
-      legend.setTextSize(UnifiedChartStyle.FONT_SIZES.legend);
+      legend.setEnabled(false); // 禁用图例，因为只有一根线，显示"频谱数据"标签是多余的
     }
     
     // 设置图表数据最大的绘制数
@@ -209,15 +265,16 @@ export struct LineChartSpectrumComponent {
     // 创建分贝限制线（与频谱柱状图保持一致）
     this.createLimitLines();
     
-    // 设置左Y轴信息
+    // 设置左Y轴信息 - 将标签移至内部
     this.leftAxis = this.model.getAxisLeft();
     if (this.leftAxis) {
       // 设置绘制标签个数
       this.leftAxis.setLabelCount(7, true);
-      // 设置标签位置
-      this.leftAxis.setPosition(YAxisLabelPosition.OUTSIDE_CHART);
+      // 设置标签位置为内部
+      this.leftAxis.setPosition(YAxisLabelPosition.INSIDE_CHART);
       // 设置距离顶部距离
       this.leftAxis.setSpaceTop(15);
+      this.leftAxis.setSpaceBottom(15); // 为内部标签添加底部间距
       // 设置最小值和最大值
       const dbSteps: number[] = SpectrumDataProcessor.getDbSteps();
       this.leftAxis.setAxisMinimum(dbSteps[0]);
@@ -246,15 +303,18 @@ export struct LineChartSpectrumComponent {
       this.rightAxis.setEnabled(false);
     }
     
-    // 设置X轴信息
+    // 设置X轴信息 - 将标签移至内部但保持在底部
     this.xAxis = this.model.getXAxis();
     if (this.xAxis) {
-      this.xAxis.setPosition(XAxisPosition.BOTTOM);
+      this.xAxis.setPosition(XAxisPosition.BOTTOM); // 保持底部位置，但通过偏移使其在内部
       this.xAxis.setDrawGridLines(false);
+      this.xAxis.setDrawAxisLine(false); // 不绘制轴线，因为标签在内部
       this.xAxis.setGranularity(1);
       this.xAxis.setLabelCount(10);
       this.xAxis.setTextColor(parseInt(UnifiedChartStyle.TEXT_COLOR.replace('#', '0xFF')));
       this.xAxis.setTextSize(UnifiedChartStyle.FONT_SIZES.axis);
+      this.xAxis.setYOffset(-25); // 负偏移，使标签显示在图表内部
+      this.xAxis.setAvoidFirstLastClipping(true); // 避免首尾标签被裁剪
       // 设置图表X轴显示范围，与映射后的X值保持一致
       // 由于跳过了16Hz以下的数据，所以最小值应该对应16Hz的映射值
       const LOG_MIN_FREQ = Math.log10(16);
@@ -284,7 +344,7 @@ export struct LineChartSpectrumComponent {
       this.xAxis.setValueFormatter(formatter);
       
       // 设置X轴单位标签
-      this.xAxis.setAxisLineWidth(UnifiedChartStyle.LINE_WIDTHS.normal);
+      this.xAxis.setAxisLineWidth(0); // 不显示轴线
       this.xAxis.setAxisLineColor(parseInt(UnifiedChartStyle.TEXT_COLOR.replace('#', '0xFF')));
     }
 
@@ -328,27 +388,33 @@ export struct LineChartSpectrumComponent {
 
   build() {
     Column() {
-      // 图表标题
+      // 峰值信息行（与频谱柱状图保持一致的显示风格）
       Row() {
-        Text('频率频谱分析')
-          .fontSize(UnifiedChartStyle.FONT_SIZES.title)
-          .fontWeight(FontWeight.Medium)
-          .fontColor(parseInt(UnifiedChartStyle.TEXT_COLOR.replace('#', '0xFF')))
-        
         Blank()
         
-        // 显示峰值信息
-        if (this.peakInfo && this.peakInfo.frequency > 0) {
-          Text(`峰值: ${UnifiedChartStyle.formatFrequency(this.peakInfo.frequency)} (${UnifiedChartStyle.formatDecibel(this.peakInfo.dbValue)})`)
-            .fontSize(UnifiedChartStyle.FONT_SIZES.value)
-            .fontColor(parseInt(UnifiedChartStyle.TEXT_COLOR.replace('#', '0xFF')))
-            .backgroundColor(UnifiedChartStyle.BACKGROUND_COLOR)
-            .padding({ left: UnifiedChartStyle.SPACING.sm, right: UnifiedChartStyle.SPACING.sm, top: 4, bottom: 4 })
-            .borderRadius(UnifiedChartStyle.BORDER_RADIUS.small)
+        // 显示峰值信息（使用平滑后的峰值）
+        if (this.smoothedPeakInfo && this.smoothedPeakInfo.frequency > 0) {
+          Column() {
+            Text(`峰值频率`)
+              .fontSize(UnifiedChartStyle.FONT_SIZES.value)
+              .fontColor(parseInt(UnifiedChartStyle.TEXT_COLOR.replace('#', '0xFF')))
+              .opacity(0.8)
+            Text(`${UnifiedChartStyle.formatFrequency(this.smoothedPeakInfo.frequency)}`)
+              .fontSize(UnifiedChartStyle.FONT_SIZES.value)
+              .fontColor(SpectrumDataProcessor.getDbColor(this.smoothedPeakInfo.dbValue))
+              .fontWeight(FontWeight.Bold)
+            Text(`${UnifiedChartStyle.formatDecibel(this.smoothedPeakInfo.dbValue)}`)
+              .fontSize(UnifiedChartStyle.FONT_SIZES.value)
+              .fontColor(SpectrumDataProcessor.getDbColor(this.smoothedPeakInfo.dbValue))
+          }
+          .alignItems(HorizontalAlign.End)
+          .backgroundColor(UnifiedChartStyle.BACKGROUND_COLOR)
+          .padding({ left: UnifiedChartStyle.SPACING.sm, right: UnifiedChartStyle.SPACING.sm, top: 4, bottom: 4 })
+          .borderRadius(UnifiedChartStyle.BORDER_RADIUS.small)
         }
       }
       .width('100%')
-      .padding({ left: UnifiedChartStyle.SPACING.md, right: UnifiedChartStyle.SPACING.md, top: UnifiedChartStyle.SPACING.sm, bottom: UnifiedChartStyle.SPACING.sm })
+      .padding({ left: UnifiedChartStyle.SPACING.md, right: UnifiedChartStyle.SPACING.md, top: UnifiedChartStyle.SPACING.xs, bottom: UnifiedChartStyle.SPACING.xs })
       
       // LineChart组件
       if (this.model) {

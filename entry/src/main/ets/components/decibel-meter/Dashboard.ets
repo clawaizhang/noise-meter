@@ -98,7 +98,7 @@ export struct DashBoard {
     }
     .width('100%')
     .height('100%')
-    .padding(8) // 减少padding，让图表更大
+    .padding(4) // 进一步减少padding，因为坐标轴标签现在在内部，图表显示区域可以更大
   }
 
   aboutToDisappear() {

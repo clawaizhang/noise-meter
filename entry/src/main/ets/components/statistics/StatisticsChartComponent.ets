@@ -21,7 +21,8 @@ import {
   XAxisPosition,
   LimitLine,
   LimitLabelPosition,
-  YAxis
+  YAxis,
+  YAxisLabelPosition
 } from '@ohos/mpchart';
 import { UiStatisticsData } from '../../models/UIDisplayState';
 
@@ -144,20 +145,23 @@ export struct StatisticsChartComponent {
     this.barChartModel.setDrawBarShadow(false);
     this.barChartModel.setHighlightFullBarEnabled(false);
 
-    // 配置X轴
+    // 配置X轴 - 将标签移至内部但保持在底部
     const xAxis = this.barChartModel.getXAxis();
     if (xAxis) {
-      xAxis.setPosition(XAxisPosition.BOTTOM);
+      xAxis.setPosition(XAxisPosition.BOTTOM); // 保持底部位置，但通过偏移使其在内部
       xAxis.setDrawGridLines(false);
+      xAxis.setDrawAxisLine(false); // 不绘制轴线，因为标签在内部
       xAxis.setGranularity(1);
       xAxis.setLabelCount(11, true);
       xAxis.setTextSize(this.layoutConfig.fontSize.axis);
       xAxis.setTextColor(parseInt(UnifiedChartStyle.TEXT_COLOR.replace('#', '0xFF')));
-      xAxis.setAxisLineWidth(UnifiedChartStyle.LINE_WIDTHS.normal);
+      xAxis.setAxisLineWidth(0); // 不显示轴线
       xAxis.setAxisLineColor(parseInt(UnifiedChartStyle.TEXT_COLOR.replace('#', '0xFF')));
+      xAxis.setYOffset(-25); // 负偏移，使标签显示在图表内部
+      xAxis.setAvoidFirstLastClipping(true); // 避免首尾标签被裁剪
     }
 
-    // 配置Y轴
+    // 配置Y轴 - 将标签移至内部
     const leftAxis = this.barChartModel.getAxisLeft();
     if (leftAxis) {
       leftAxis.setDrawGridLines(true);
@@ -169,6 +173,9 @@ export struct StatisticsChartComponent {
       leftAxis.setAxisMinimum(0);
       leftAxis.setAxisLineWidth(UnifiedChartStyle.LINE_WIDTHS.normal);
       leftAxis.setAxisLineColor(parseInt(UnifiedChartStyle.TEXT_COLOR.replace('#', '0xFF')));
+      leftAxis.setPosition(YAxisLabelPosition.INSIDE_CHART); // 将Y轴标签移至内部
+      leftAxis.setSpaceTop(10); // 为内部标签添加顶部间距
+      leftAxis.setSpaceBottom(10); // 为内部标签添加底部间距
     }
 
     const rightAxis = this.barChartModel.getAxisRight();
@@ -286,16 +293,7 @@ export struct StatisticsChartComponent {
 
   build() {
     Column() {
-      // 图表标题
-      Text('声级分布图')
-        .fontSize(this.layoutConfig.fontSize.title)
-        .fontColor(parseInt(UnifiedChartStyle.TEXT_COLOR.replace('#', '0xFF')))
-        .fontWeight(FontWeight.Medium)
-        .textAlign(TextAlign.Center)
-        .width('100%')
-        .margin({ bottom: UnifiedChartStyle.SPACING.sm })
-
-      // BarChart组件
+      // BarChart组件（去掉标题，因为标签页已显示图表名称）
       Stack() {
         BarChart({
           model: this.barChartModel

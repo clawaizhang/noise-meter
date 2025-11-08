@@ -78,6 +78,17 @@ export struct SpectrumBarChartComponent {
   @Local private peakDb: number = 0;
   @Local private selectedFrequency: number = 0;
   @Local private selectedDb: number = 0;
+  
+  // 峰值平滑处理相关
+  @Local private smoothedPeakFrequency: number = 0;
+  @Local private smoothedPeakDb: number = 0;
+  @Local private lastPeakUpdateTime: number = 0;
+  @Local private readonly PEAK_UPDATE_THRESHOLD_MS: number = 800; // 增加峰值更新最小间隔(ms)
+  @Local private readonly PEAK_CHANGE_THRESHOLD_DB: number = 5.0; // 增加峰值变化阈值(dB)
+  @Local private readonly PEAK_CHANGE_THRESHOLD_HZ: number = 250; // 增加峰值频率变化阈值(Hz)
+  @Local private readonly PEAK_SMOOTHING_FACTOR: number = 0.05; // 降低平滑因子，使变化更平缓
+  @Local private peakHistory: PeakInfo[] = []; // 峰值历史记录
+  @Local private readonly PEAK_HISTORY_SIZE: number = 5; // 峰值历史记录大小
 
   // 频段定义
   private readonly FREQUENCY_BANDS: FrequencyRange[] = [
@@ -135,6 +146,78 @@ export struct SpectrumBarChartComponent {
       this.peakFrequency = peakInfo.frequency;
       this.peakDb = peakInfo.dbValue;
     }
+  }
+
+  /**
+   * 应用峰值平滑处理
+   * 减少峰值显示的抖动，提高用户体验
+   */
+  private applyPeakSmoothing(): void {
+    const currentTime = Date.now();
+    
+    // 如果是第一次检测到峰值，直接使用
+    if (this.smoothedPeakFrequency === 0 && this.smoothedPeakDb === 0) {
+      this.smoothedPeakFrequency = this.peakFrequency;
+      this.smoothedPeakDb = this.peakDb;
+      this.lastPeakUpdateTime = currentTime;
+      // 添加到历史记录
+      this.peakHistory.push({
+        frequency: this.peakFrequency,
+        dbValue: this.peakDb,
+        index: 0,
+        amplitude: Math.pow(10, this.peakDb / 20)
+      });
+      return;
+    }
+
+    // 检查是否满足时间间隔要求
+    if (currentTime - this.lastPeakUpdateTime < this.PEAK_UPDATE_THRESHOLD_MS) {
+      return; // 时间间隔太短，不更新
+    }
+
+    // 检查峰值变化是否超过阈值
+    const dbChange = Math.abs(this.peakDb - this.smoothedPeakDb);
+    const freqChange = Math.abs(this.peakFrequency - this.smoothedPeakFrequency);
+
+    if (dbChange < this.PEAK_CHANGE_THRESHOLD_DB && freqChange < this.PEAK_CHANGE_THRESHOLD_HZ) {
+      return; // 变化太小，不更新
+    }
+
+    // 添加当前峰值到历史记录
+    this.peakHistory.push({
+      frequency: this.peakFrequency,
+      dbValue: this.peakDb,
+      index: 0,
+      amplitude: Math.pow(10, this.peakDb / 20)
+    });
+
+    // 限制历史记录大小
+    if (this.peakHistory.length > this.PEAK_HISTORY_SIZE) {
+      this.peakHistory.shift();
+    }
+
+    // 计算历史记录的加权平均，最新的记录权重更高
+    let weightedFreq = 0;
+    let weightedDb = 0;
+    let totalWeight = 0;
+
+    for (let i = 0; i < this.peakHistory.length; i++) {
+      const weight = (i + 1) / this.peakHistory.length; // 线性增加的权重
+      weightedFreq += this.peakHistory[i].frequency * weight;
+      weightedDb += this.peakHistory[i].dbValue * weight;
+      totalWeight += weight;
+    }
+
+    const avgFreq = weightedFreq / totalWeight;
+    const avgDb = weightedDb / totalWeight;
+
+    // 应用平滑算法：结合历史平均和当前值
+    this.smoothedPeakFrequency = this.PEAK_SMOOTHING_FACTOR * this.peakFrequency +
+                                 (1 - this.PEAK_SMOOTHING_FACTOR) * avgFreq;
+    this.smoothedPeakDb = this.PEAK_SMOOTHING_FACTOR * this.peakDb +
+                         (1 - this.PEAK_SMOOTHING_FACTOR) * avgDb;
+    
+    this.lastPeakUpdateTime = currentTime;
   }
 
   /**
@@ -219,6 +302,7 @@ export struct SpectrumBarChartComponent {
       this.currentSpectrumData = newSpectrum;
       this.applyDataSmoothing();
       this.findPeakFrequency();
+      this.applyPeakSmoothing();
       this.generateFrequencyLabels();
       this.updateChartData();
     }
@@ -295,10 +379,7 @@ export struct SpectrumBarChartComponent {
     // 设置瀑布图的数值在柱体上方
     this.model.setDrawValueAboveBar(false);
 
-    // 创建分贝限制线
-    this.createLimitLines();
-
-    // 设置图表左Y轴信息
+    // 设置图表左Y轴信息 - 将标签移至内部
     this.leftAxis = this.model.getAxisLeft();
     if (this.leftAxis) {
       this.leftAxis.setAxisMinimum(0);
@@ -307,11 +388,14 @@ export struct SpectrumBarChartComponent {
       this.leftAxis.setDrawGridLines(true);
       this.leftAxis.setDrawAxisLine(true);
       this.leftAxis.setDrawLabels(true);
+      this.leftAxis.setPosition(YAxisLabelPosition.INSIDE_CHART); // 将Y轴标签移至内部
       this.leftAxis.setTextColor(DefaultChartConfig.textColor);
       this.leftAxis.setTextSize(DefaultChartConfig.fontSize.axis);
       this.leftAxis.setLabelCount(7, true); // 设置Y轴标签数量
       this.leftAxis.setAxisLineWidth(1.5);
       this.leftAxis.setAxisLineColor(parseInt(DefaultChartConfig.textColor.replace('#', '0xFF')));
+      this.leftAxis.setSpaceTop(10); // 为内部标签添加顶部间距
+      this.leftAxis.setSpaceBottom(10); // 为内部标签添加底部间距
 
       // 添加所有限制线
       for (const limitLine of this.limitLines) {
@@ -326,19 +410,21 @@ export struct SpectrumBarChartComponent {
       this.rightAxis.setAxisMinimum(0);
     }
 
-    // 设置X轴信息
+    // 设置X轴信息 - 将标签移至内部但保持在底部
     this.xAxis = this.model.getXAxis();
     if (this.xAxis) {
-      this.xAxis.setPosition(XAxisPosition.BOTTOM);
+      this.xAxis.setPosition(XAxisPosition.BOTTOM); // 保持底部位置，但通过偏移使其在内部
       this.xAxis.setDrawGridLines(false);
-      this.xAxis.setDrawAxisLine(true);
+      this.xAxis.setDrawAxisLine(false); // 不绘制轴线，因为标签在内部
       this.xAxis.setDrawLabels(true);
       this.xAxis.setTextColor(DefaultChartConfig.textColor);
       this.xAxis.setTextSize(DefaultChartConfig.fontSize.axis);
       this.xAxis.setLabelCount(Math.min(this.frequencyLabels.length, 8), true);
       this.xAxis.setGranularity(1);
-      this.xAxis.setAxisLineWidth(1.5);
+      this.xAxis.setAxisLineWidth(0); // 不显示轴线
       this.xAxis.setAxisLineColor(parseInt(DefaultChartConfig.textColor.replace('#', '0xFF')));
+      this.xAxis.setYOffset(-20); // 负偏移，使标签显示在图表内部
+      this.xAxis.setAvoidFirstLastClipping(true); // 避免首尾标签被裁剪
     }
 
     // 为图表设置markerView
@@ -352,53 +438,6 @@ export struct SpectrumBarChartComponent {
     this.model.setData(this.data);
     // 设置图表最大的X轴显示范围
     this.model.setVisibleXRangeMaximum(this.displayDataPoints);
-  }
-
-  /**
-   * 创建分贝限制线
-   */
-  private createLimitLines(): void {
-    this.limitLines = [];
-
-    // 安全级别 (50dB)
-    const safeLine = new LimitLine(50, '安全');
-    safeLine.setLineWidth(2);
-    safeLine.enableDashedLine(5, 5, 0);
-    safeLine.setLabelPosition(LimitLabelPosition.RIGHT_TOP);
-    safeLine.setTextColor('#FF00FF00');
-    safeLine.setLineColor('#FF00FF00');
-    safeLine.setTextSize(10);
-    this.limitLines.push(safeLine);
-
-    // 注意级别 (70dB)
-    const cautionLine = new LimitLine(70, '注意');
-    cautionLine.setLineWidth(2);
-    cautionLine.enableDashedLine(5, 5, 0);
-    cautionLine.setLabelPosition(LimitLabelPosition.RIGHT_TOP);
-    cautionLine.setTextColor('#FFFFFF00');
-    cautionLine.setLineColor('#FFFFFF00');
-    cautionLine.setTextSize(10);
-    this.limitLines.push(cautionLine);
-
-    // 危险级别 (85dB)
-    const dangerLine = new LimitLine(85, '危险');
-    dangerLine.setLineWidth(2);
-    dangerLine.enableDashedLine(5, 5, 0);
-    dangerLine.setLabelPosition(LimitLabelPosition.RIGHT_TOP);
-    dangerLine.setTextColor('#FFFF8800');
-    dangerLine.setLineColor('#FFFF8800');
-    dangerLine.setTextSize(10);
-    this.limitLines.push(dangerLine);
-
-    // 极限级别 (110dB)
-    const extremeLine = new LimitLine(110, '极限');
-    extremeLine.setLineWidth(2);
-    extremeLine.enableDashedLine(5, 5, 0);
-    extremeLine.setLabelPosition(LimitLabelPosition.RIGHT_TOP);
-    extremeLine.setTextColor('#FFFF0000');
-    extremeLine.setLineColor('#FFFF0000');
-    extremeLine.setTextSize(10);
-    this.limitLines.push(extremeLine);
   }
 
   /**
@@ -498,21 +537,66 @@ export struct SpectrumBarChartComponent {
     }
 
     // 生成新的数据
-    this.data = this.generateSpectrumBarData();
+    const newData = this.generateSpectrumBarData();
 
-    // 更新图表数据
-    this.model.setData(this.data);
+    // 只有当新数据与当前数据有显著差异时才更新
+    if (this.shouldUpdateChart(newData)) {
+      this.data = newData;
 
-    // 更新X轴标签
-    if (this.xAxis && this.frequencyLabels.length > 0) {
-      // 这里可能需要根据库的API设置自定义标签
-      // 如果库支持，可以设置频率标签
+      // 更新图表数据
+      this.model.setData(this.data);
+
+      // 更新X轴标签
+      if (this.xAxis && this.frequencyLabels.length > 0) {
+        // 这里可能需要根据库的API设置自定义标签
+        // 如果库支持，可以设置频率标签
+      }
+
+      // 触发数据更新
+      this.data.notifyDataChanged();
+      this.model.notifyDataSetChanged();
+      this.model.invalidate();
+    }
+  }
+
+  /**
+   * 判断是否需要更新图表
+   * 通过比较新旧数据的差异来减少不必要的更新
+   */
+  private shouldUpdateChart(newData: BarData): boolean {
+    if (!this.data || !newData) {
+      return true;
     }
 
-    // 触发数据更新
-    this.data.notifyDataChanged();
-    this.model.notifyDataSetChanged();
-    this.model.invalidate();
+    try {
+      const oldDataSet = this.data.getDataSets().get(0) as WaterfallDataSet;
+      const newDataSet = newData.getDataSets().get(0) as WaterfallDataSet;
+      
+      if (!oldDataSet || !newDataSet) {
+        return true;
+      }
+
+      const oldValues = oldDataSet.getValues()!;
+      const newValues = newDataSet.getValues()!;
+      
+      if (oldValues.size() !== newValues.size()) {
+        return true;
+      }
+
+      // 计算数据差异，只有当差异超过阈值时才更新
+      let totalDifference = 0;
+      for (let i = 0; i < oldValues.size(); i++) {
+        const oldValue = oldValues.get(i).getY();
+        const newValue = newValues.get(i).getY();
+        totalDifference += Math.abs(oldValue - newValue);
+      }
+
+      const averageDifference = totalDifference / oldValues.size();
+      return averageDifference > 2.0; // 只有当平均差异超过2dB时才更新
+    } catch (e) {
+      console.error('比较图表数据时出错:', e);
+      return true; // 出错时默认更新
+    }
   }
 
   build() {
@@ -541,13 +625,21 @@ export struct SpectrumBarChartComponent {
               .fontSize(DefaultChartConfig.fontSize.small)
               .fontColor(DefaultChartConfig.textColor)
               .opacity(0.8)
-            Text(`${this.formatFrequency(this.peakFrequency)}`)
+            Text(`${this.formatFrequency(this.smoothedPeakFrequency)}`)
               .fontSize(DefaultChartConfig.fontSize.label)
-              .fontColor(SpectrumDataProcessor.getDbColor(this.peakDb))
+              .fontColor(SpectrumDataProcessor.getDbColor(this.smoothedPeakDb))
               .fontWeight(FontWeight.Bold)
-            Text(`${this.peakDb.toFixed(1)}dB`)
+              .animation({
+                duration: 300,
+                curve: Curve.EaseInOut
+              })
+            Text(`${this.smoothedPeakDb.toFixed(1)}dB`)
               .fontSize(DefaultChartConfig.fontSize.small)
-              .fontColor(SpectrumDataProcessor.getDbColor(this.peakDb))
+              .fontColor(SpectrumDataProcessor.getDbColor(this.smoothedPeakDb))
+              .animation({
+                duration: 300,
+                curve: Curve.EaseInOut
+              })
           }
         }
         .alignItems(HorizontalAlign.End)
