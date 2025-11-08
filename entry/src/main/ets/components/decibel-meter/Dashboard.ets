@@ -4,6 +4,8 @@ import display from '@ohos.display';
 import { SpectrumChartComponent } from './SpectrumChartComponent';
 import { SpectrumBarChartComponent } from './SpectrumBarChartComponent';
 import { TimeDomainChartComponent } from './TimeDomainChartComponent';
+import { LineChartSpectrumComponent } from './LineChartSpectrumComponent';
+import { LineChartTimeDomainComponent } from './LineChartTimeDomainComponent';
 import { StatisticsChartComponent } from '../statistics/StatisticsChartComponent';
 import { PreferenceKeys } from '../../models/PreferenceKeys';
 import { resourceManager } from '@kit.LocalizationKit';
@@ -47,37 +49,29 @@ export struct DashBoard {
 
   build() {
     Stack({ alignContent: Alignment.Top }) {
-      // 全屏显示当前选中的图表
-      Column() {
-        // 标签页头部
-        this.buildTabHeader()
-        
-        // 图表内容区域 - 直接全屏显示
-        Stack() {
-          // 使用Tabs组件实现标签页切换
-          Tabs({ index: this.currentTabIndex }) {
-            ForEach(this.chartTypes, (item: ChartTypeConfig, index?: number) => {
-              TabContent() {
-                this.buildChartContent(item.title)
-              }
-              .tabBar(item.title)
-            })
-          }
-          .vertical(false)
-          .scrollable(true)
-          .barMode(BarMode.Fixed)
-          .barWidth('100%')
-          .animationDuration(300)
-          .onChange((index: number) => {
-            this.currentTabIndex = index;
+      // 图表内容区域 - 直接全屏显示
+      Stack() {
+        // 使用Tabs组件实现标签页切换
+        Tabs({ index: this.currentTabIndex }) {
+          ForEach(this.chartTypes, (item: ChartTypeConfig, index?: number) => {
+            TabContent() {
+              this.buildChartContent(item.title)
+            }
+            .tabBar(item.title)
           })
-          .backgroundColor($r('sys.color.comp_background_primary'))
-          .borderRadius(16)
         }
-        .layoutWeight(1)
+        .vertical(false)
+        .scrollable(true)
+        .barMode(BarMode.Fixed)
+        .barWidth('100%')
+        .animationDuration(300)
+        .onChange((index: number) => {
+          this.currentTabIndex = index;
+        })
+        .backgroundColor($r('sys.color.comp_background_primary'))
+        .borderRadius(16)
       }
-      .width('100%')
-      .height('100%')
+      .layoutWeight(1)
 
       Column()
         .width(this.dWidthHeight)
@@ -89,31 +83,6 @@ export struct DashBoard {
   }
 
   /**
-   * 构建标签页头部
-   */
-  @Builder
-  buildTabHeader() {
-    Row() {
-      Text('噪声分析')
-        .fontSize(18)
-        .fontWeight(FontWeight.Medium)
-        .fontColor($r('sys.color.font_primary'))
-      
-      Blank()
-      
-      // 当前图表类型指示器
-      Text(this.chartTypes[this.currentTabIndex].title)
-        .fontSize(14)
-        .fontColor($r('sys.color.font_secondary'))
-        .backgroundColor($r('sys.color.comp_background_tertiary'))
-        .padding({ left: 12, right: 12, top: 6, bottom: 6 })
-        .borderRadius(12)
-    }
-    .width('100%')
-    .padding({ left: 16, right: 16, top: 8, bottom: 8 })
-  }
-
-  /**
    * 构建图表内容 - 直接全屏显示，无需全屏按钮
    */
   @Builder
@@ -121,11 +90,11 @@ export struct DashBoard {
     Column() {
       // 图表组件 - 直接全屏显示
       if (chartTitle === '频谱图') {
-        SpectrumChartComponent()
+        LineChartSpectrumComponent({ sampleRate: 44100 })
       } else if (chartTitle === '频谱柱状图') {
         SpectrumBarChartComponent()
       } else if (chartTitle === '时域图') {
-        TimeDomainChartComponent()
+        LineChartTimeDomainComponent({ sampleRate: 44100 })
       } else if (chartTitle === '统计分布图') {
         StatisticsChartComponent()
       }
