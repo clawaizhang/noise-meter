@@ -121,32 +121,31 @@ export struct LineChartSpectrumComponent {
     const LOG_MIN_FREQ = Math.log10(16); // 16Hz
     const logMaxFreq = Math.log10(20000); // 20kHz
     
-    // 遍历所有FFT点，与原来的Canvas实现完全一致
-    for (let i = 0; i < this.fftSize; i++) {
-      const centerFreq: number = SpectrumDataProcessor.getIndexFrequency(i, this.fftSize, this.sampleRate);
-      if (centerFreq < 16) {
-        continue;
-      } // 只显示16Hz以上的范围
-      
-      // 安全检查：确保currentSpectrumData存在且有效
-      if (!this.currentSpectrumData || i >= this.currentSpectrumData.length) {
-        continue;
-      }
-      
-      // 频谱数据已经是分贝值，直接使用
-      const dbValue: number = this.currentSpectrumData[i];
+    // 使用SpectrumDataProcessor生成增强的频谱数据点（包含低频插值）
+    const enhancedDataPoints = SpectrumDataProcessor.generateEnhancedSpectrumData(
+      this.currentSpectrumData,
+      this.fftSize,
+      this.sampleRate,
+      16, // 最小频率16Hz
+      SpectrumDataProcessor.MAX_FREQUENCY
+    );
+    
+    // 遍历增强后的数据点
+    for (const dataPoint of enhancedDataPoints) {
+      const frequency: number = dataPoint.frequency;
+      const dbValue: number = dataPoint.dbValue;
       
       // 确保分贝值在合理范围内
       const clampedDbValue: number = Math.max(dbSteps[0], Math.min(dbSteps[dbSteps.length - 1], dbValue));
       
       // 使用对数坐标映射，与原来的Canvas实现完全一致
       // 这样低频率部分会有更多的显示空间，高频率部分会被压缩
-      const logFreq: number = Math.log10(centerFreq);
+      const logFreq: number = Math.log10(frequency);
       const mappedX: number = ((logFreq - LOG_MIN_FREQ) / (logMaxFreq - LOG_MIN_FREQ)) * 20000;
       
       // 调试信息：只记录前几个数据点
-      if (i < 5) {
-        console.info(`[频谱图] 数据点${i}: 频率=${centerFreq}Hz, 映射X值=${mappedX}, 分贝=${clampedDbValue}dB`);
+      if (enhancedDataPoints.indexOf(dataPoint) < 5) {
+        console.info(`[频谱图] 数据点: 频率=${frequency}Hz, 映射X值=${mappedX}, 分贝=${clampedDbValue}dB`);
       }
       
       // 使用映射后的X值，确保与原来的Canvas实现完全一致

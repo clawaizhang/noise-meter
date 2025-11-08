@@ -412,25 +412,32 @@ export struct SpectrumBarChartComponent {
       this.smoothedSpectrumData : this.currentSpectrumData;
 
     if (sourceData.length > 0) {
-      const dataPoints = this.displayDataPoints;
-      // 使用对数分布的索引，更好地匹配人耳听觉特性
-      const indices = SpectrumDataProcessor.generateLogarithmicIndices(dataPoints, this.fftSize);
+      // 使用增强的频谱数据（包含低频插值点）
+      const enhancedDataPoints = SpectrumDataProcessor.generateEnhancedSpectrumData(
+        sourceData,
+        this.fftSize,
+        this.sampleRate,
+        16, // 最小频率16Hz
+        SpectrumDataProcessor.MAX_FREQUENCY
+      );
 
-      for (let i = 0; i < dataPoints; i++) {
-        const dataIndex = indices[i];
-        if (dataIndex < sourceData.length) {
-          // 频谱数据已经是分贝值，直接使用
-          const dbValue = SpectrumDataProcessor.getDbValue(sourceData[dataIndex]);
-          // 创建柱状图条目，使用频率索引作为X值，分贝值作为Y值范围
-          const entry = new WaterfallEntry(i, 0, dbValue);
+      // 根据显示点数均匀采样增强后的数据点
+      const displayCount = this.displayDataPoints;
+      const step = Math.max(1, Math.floor(enhancedDataPoints.length / displayCount));
+      
+      for (let i = 0; i < displayCount && i * step < enhancedDataPoints.length; i++) {
+        const dataPoint = enhancedDataPoints[i * step];
+        const dbValue = dataPoint.dbValue;
+        
+        // 创建柱状图条目，使用索引作为X值，分贝值作为Y值范围
+        const entry = new WaterfallEntry(i, 0, dbValue);
 
-          // 根据分贝值设置颜色
-          const color = SpectrumDataProcessor.getDbColor(dbValue);
-          // 注意：这里需要根据MPChart库的实际API来设置颜色
-          // 如果库支持单独设置每个柱子的颜色，可以在这里设置
+        // 根据分贝值设置颜色
+        const color = SpectrumDataProcessor.getDbColor(dbValue);
+        // 注意：这里需要根据MPChart库的实际API来设置颜色
+        // 如果库支持单独设置每个柱子的颜色，可以在这里设置
 
-          values.add(entry);
-        }
+        values.add(entry);
       }
     } else {
       // 如果没有频谱数据，则使用默认数据

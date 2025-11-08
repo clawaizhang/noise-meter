@@ -38,6 +38,14 @@ export interface FrequencyAmplitudeResult {
 }
 
 /**
+ * 频率索引点接口
+ */
+export interface FrequencyIndexPoint {
+  freq: number;
+  index: number;
+}
+
+/**
  * 频谱数据处理器
  * 提供统一的频谱数据处理方法，供折线图和柱状图共同使用
  */
@@ -552,5 +560,115 @@ export class SpectrumDataProcessor {
     // 按幅度排序并返回前N个峰值
     peaks.sort((a, b) => b.dbValue - a.dbValue);
     return peaks.slice(0, peakCount);
+  }
+  
+  /**
+   * 生成增强的频谱数据（包含低频插值点）
+   * 解决不同FFT大小导致的低频数据缺失问题
+   * @param spectrumData 原始频谱数据
+   * @param fftSize FFT大小
+   * @param sampleRate 采样率
+   * @param minFreq 最小频率
+   * @param maxFreq 最大频率
+   * @returns 增强后的频谱数据点数组
+   */
+  static generateEnhancedSpectrumData(
+    spectrumData: Float32Array,
+    fftSize: number,
+    sampleRate: number,
+    minFreq: number = SpectrumDataProcessor.MIN_FREQUENCY,
+    maxFreq: number = SpectrumDataProcessor.MAX_FREQUENCY
+  ): SpectrumDataPoint[] {
+    const dataPoints: SpectrumDataPoint[] = [];
+    const freqResolution = sampleRate / fftSize;
+    
+    // 1. 添加原始FFT数据点
+    for (let i = 0; i < fftSize / 2; i++) {
+      const frequency = SpectrumDataProcessor.getIndexFrequency(i, fftSize, sampleRate);
+      if (frequency < minFreq || frequency > maxFreq) {
+        continue;
+      }
+      
+      if (i < spectrumData.length) {
+        const dbValue = spectrumData[i];
+        dataPoints.push({
+          frequency,
+          amplitude: Math.pow(10, dbValue / 20), // 将分贝转换回幅度
+          dbValue,
+          index: i
+        });
+      }
+    }
+    
+    // 2. 根据FFT大小添加低频插值点
+    const lowFreqPoints = SpectrumDataProcessor.generateLowFrequencyInterpolationPoints(fftSize, sampleRate);
+    
+    for (const point of lowFreqPoints) {
+      if (point.index < spectrumData.length && point.index > 0) {
+        const dbValue = spectrumData[point.index];
+        dataPoints.push({
+          frequency: point.freq,
+          amplitude: Math.pow(10, dbValue / 20), // 将分贝转换回幅度
+          dbValue,
+          index: point.index
+        });
+      }
+    }
+    
+    // 3. 按频率排序并去重
+    dataPoints.sort((a, b) => a.frequency - b.frequency);
+    const uniqueDataPoints: SpectrumDataPoint[] = [];
+    const seenFrequencies = new Set<number>();
+    
+    for (const point of dataPoints) {
+      if (!seenFrequencies.has(Math.round(point.frequency * 10) / 10)) { // 保留1位小数精度
+        seenFrequencies.add(Math.round(point.frequency * 10) / 10);
+        uniqueDataPoints.push(point);
+      }
+    }
+    
+    console.info(`[频谱处理] FFT大小=${fftSize}, 频率分辨率=${freqResolution.toFixed(1)}Hz, ` +
+      `原始数据点=${fftSize / 2}, 插值点=${lowFreqPoints.length}, 最终数据点=${uniqueDataPoints.length}`);
+    
+    return uniqueDataPoints;
+  }
+  
+  /**
+   * 生成低频插值点
+   * 根据FFT大小动态调整插值策略
+   * @param fftSize FFT大小
+   * @param sampleRate 采样率
+   * @returns 低频插值点数组
+   */
+  private static generateLowFrequencyInterpolationPoints(
+    fftSize: number,
+    sampleRate: number
+  ): FrequencyIndexPoint[] {
+    const freqResolution = sampleRate / fftSize;
+    let points: FrequencyIndexPoint[] = [];
+    
+    if (fftSize <= 1024) {
+      // 脉冲模式：频率分辨率约43Hz，需要更多插值点
+      const point1: FrequencyIndexPoint = { freq: 16, index: Math.round(16 / freqResolution) };
+      const point2: FrequencyIndexPoint = { freq: 20, index: Math.round(20 / freqResolution) };
+      const point3: FrequencyIndexPoint = { freq: 25, index: Math.round(25 / freqResolution) };
+      const point4: FrequencyIndexPoint = { freq: 31.5, index: Math.round(31.5 / freqResolution) };
+      const point5: FrequencyIndexPoint = { freq: 40, index: Math.round(40 / freqResolution) };
+      points = [point1, point2, point3, point4, point5];
+    } else if (fftSize <= 2048) {
+      // 快速模式：频率分辨率约21.5Hz，需要适量插值点
+      const point1: FrequencyIndexPoint = { freq: 16, index: Math.round(16 / freqResolution) };
+      const point2: FrequencyIndexPoint = { freq: 20, index: Math.round(20 / freqResolution) };
+      const point3: FrequencyIndexPoint = { freq: 31.5, index: Math.round(31.5 / freqResolution) };
+      points = [point1, point2, point3];
+    } else {
+      // 慢速模式：频率分辨率约10.8Hz，已经足够，只需要关键点
+      const point1: FrequencyIndexPoint = { freq: 16, index: Math.round(16 / freqResolution) };
+      const point2: FrequencyIndexPoint = { freq: 31.5, index: Math.round(31.5 / freqResolution) };
+      points = [point1, point2];
+    }
+    
+    console.info(`[频谱处理] 生成${points.length}个低频插值点，频率分辨率=${freqResolution.toFixed(1)}Hz`);
+    return points;
   }
 }

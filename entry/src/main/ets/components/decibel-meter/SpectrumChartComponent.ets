@@ -224,18 +224,26 @@ export struct SpectrumChartComponent {
         );
       }
 
+      // 使用增强的频谱数据（包含低频插值点）
+      const enhancedDataPoints = SpectrumDataProcessor.generateEnhancedSpectrumData(
+        rawSpectrum,
+        fftSize,
+        sampleRate,
+        16, // 最小频率16Hz
+        SpectrumDataProcessor.MAX_FREQUENCY
+      );
+
       // 获取频谱数据并记录范围
       let minSpectrum: number = Infinity;
       let maxSpectrum: number = -Infinity;
-      for (const value of rawSpectrum) {
-        if (isFinite(value)) {
-          // 频谱数据已经是分贝值，直接使用
-          minSpectrum = Math.min(minSpectrum, value);
-          maxSpectrum = Math.max(maxSpectrum, value);
+      for (const point of enhancedDataPoints) {
+        if (isFinite(point.dbValue)) {
+          minSpectrum = Math.min(minSpectrum, point.dbValue);
+          maxSpectrum = Math.max(maxSpectrum, point.dbValue);
         }
       }
 
-      console.info(`[频谱绘制] 频谱范围: min=${minSpectrum.toFixed(2)}, max=${maxSpectrum.toFixed(2)}`);
+      console.info(`[频谱绘制] 增强频谱范围: min=${minSpectrum.toFixed(2)}, max=${maxSpectrum.toFixed(2)}, 数据点数=${enhancedDataPoints.length}`);
 
       // 使用缓存的对数坐标常量
       const logMaxDraw: number = Math.log10(frequencyHigh);
@@ -251,22 +259,14 @@ export struct SpectrumChartComponent {
       let lastX: number | null = null;
       let lastY: number | null = null;
 
-      for (let i = 0; i < fftSize; i++) {
-        const centerFreq: number = SpectrumDataProcessor.getIndexFrequency(i, fftSize, sampleRate);
-        if (centerFreq < 16) {
-          continue;
-        } // 只显示16Hz以上的范围
-
-        // 安全检查：确保rawSpectrum存在且有效
-        if (!rawSpectrum || i >= rawSpectrum.length) {
-          continue;
-        }
-
-        const logFreq: number = Math.log10(centerFreq);
+      for (const dataPoint of enhancedDataPoints) {
+        const frequency: number = dataPoint.frequency;
+        const dbValue: number = dataPoint.dbValue;
+        const logFreq: number = Math.log10(frequency);
         const x: number = ((logFreq - LOG_MIN_FREQ) / (logMaxDraw - LOG_MIN_FREQ)) * canvasWidth;
 
         // 频谱数据已经是分贝值，直接使用
-        const value: number = Math.max(minDb, Math.min(maxDb, rawSpectrum[i]));
+        const value: number = Math.max(minDb, Math.min(maxDb, dbValue));
         const normalizedValue: number = (value - minDb) / (maxDb - minDb);
         const height: number = canvasHeight * normalizedValue;
         const y: number = canvasHeight - height;
