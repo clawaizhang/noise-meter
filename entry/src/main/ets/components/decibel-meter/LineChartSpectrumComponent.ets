@@ -87,6 +87,12 @@ class StandardFrequencyAxisValueFormatter implements IAxisValueFormatter {
     // 调试日志：记录容差和比较结果
     console.info(`[X轴格式化器] 容差: ${threshold}, 是否匹配: ${minDistance <= threshold}`);
     
+    // 隐藏第一个和最后一个标签
+    if (closestFreq === 16 || closestFreq === 16000) {
+      console.info(`[X轴格式化器] 隐藏首尾标签: ${closestFreq}Hz`);
+      return '';
+    }
+    
     if (minDistance <= threshold) {
       // 使用统一样式格式化频率显示
       let formattedValue: string;
@@ -105,6 +111,27 @@ class StandardFrequencyAxisValueFormatter implements IAxisValueFormatter {
       return '';
     }
 
+  }
+}
+
+/**
+ * 自定义Y轴值格式化器
+ * 用于隐藏第一个和最后一个Y轴标签
+ */
+class YAxisValueFormatter implements IAxisValueFormatter {
+  getFormattedValue(value: number, axis: AxisBase): string {
+    // 获取分贝步进值
+    const dbSteps: number[] = SpectrumDataProcessor.getDbSteps();
+    
+    // 隐藏第一个和最后一个标签
+    if (value === dbSteps[0] || value === dbSteps[dbSteps.length - 1]) {
+      console.info(`[Y轴格式化器] 隐藏首尾标签: ${value}dB`);
+      return '';
+    }
+    
+    // 返回正常的分贝值标签
+    console.info(`[Y轴格式化器] 返回标签: ${value}dB`);
+    return `${value}`;
   }
 }
 
@@ -392,6 +419,10 @@ export struct LineChartSpectrumComponent {
       // 确保Y轴使用精确的分贝刻度
       this.leftAxis.setGranularity(20); // 设置20dB的间隔
       this.leftAxis.setCenterAxisLabels(false); // 禁用中心轴标签，确保只显示定义的刻度
+      
+      // 使用自定义的Y轴格式化器，隐藏第一个和最后一个标签
+      const yAxisFormatter = new YAxisValueFormatter();
+      this.leftAxis.setValueFormatter(yAxisFormatter);
     }
 
     // 设置图表右Y轴信息
@@ -417,7 +448,7 @@ export struct LineChartSpectrumComponent {
       this.xAxis.setTextColor(parseInt(UnifiedChartStyle.TEXT_COLOR.replace('#', '0xFF')));
       this.xAxis.setTextSize(UnifiedChartStyle.FONT_SIZES.axis);
       this.xAxis.setYOffset(-100); // 正偏移，使标签显示在图表上方
-      this.xAxis.setXOffset(2);
+      this.xAxis.setXOffset(10);
       this.xAxis.setAvoidFirstLastClipping(true); // 避免首尾标签被裁剪
       // 设置图表X轴显示范围，与映射后的X值保持一致
       // 由于跳过了16Hz以下的数据，所以最小值应该对应16Hz的映射值
