@@ -13,10 +13,10 @@ export function concurrentCalculateSpectrum(buffer: ArrayBuffer,
     smoothingFactor,
     overlap
   );
-  // 执行FFT变换并获取频谱数据
+  // 执行FFT变换并获取频谱数据（transform方法内部已经应用了计权）
   fftAnalyzer.setSystemGain(calibrationGain);
   const spectrum = fftAnalyzer.transform(buffer, weightingType);
 
-  // 应用计权
-  return fftAnalyzer.applyWeighting(spectrum, weightingType);
+  // 直接返回频谱，无需再次应用计权（transform方法已经处理了计权）
+  return spectrum;
 }
