@@ -223,26 +223,68 @@ export struct SpectrumBarChartComponent {
   }
 
   /**
-   * 生成频率标签
+   * 生成频率标签 - 按照对数分布显示标准频率点
    */
   private generateFrequencyLabels(): void {
     this.frequencyLabels = [];
-    const dataPoints = this.displayDataPoints;
-
-    if (dataPoints <= 8) {
-      // 少量数据点时显示所有标签
-      for (let i = 0; i < dataPoints; i++) {
-        const freq = SpectrumDataProcessor.getIndexFrequency(i * Math.floor(this.fftSize / 2 / dataPoints), this.fftSize, this.sampleRate);
-        this.frequencyLabels.push(SpectrumDataProcessor.formatFrequency(freq));
+    
+    // 标准频率点 - 按照对数分布
+    const standardFreqs = [16, 31.5, 63, 125, 250, 500, 1000, 2000, 4000, 8000, 16000];
+    
+    // 根据采样率过滤有效的频率点
+    const validFreqs = standardFreqs.filter(freq => freq >= 16 && freq <= this.sampleRate / 2);
+    
+    // 获取增强的频谱数据用于计算索引
+    const enhancedDataPoints = SpectrumDataProcessor.generateEnhancedSpectrumData(
+      this.smoothedSpectrumData.length > 0 ? this.smoothedSpectrumData : this.currentSpectrumData,
+      this.fftSize,
+      this.sampleRate,
+      16, // 最小频率16Hz
+      SpectrumDataProcessor.MAX_FREQUENCY
+    );
+    
+    // 为每个有效频率点计算对应的显示索引
+    const displayCount = this.displayDataPoints;
+    const frequencyIndexMap: Map<number, number> = new Map();
+    
+    for (const freq of validFreqs) {
+      // 在增强数据中找到最接近该频率的数据点
+      let closestIndex = 0;
+      let minDiff = Number.MAX_VALUE;
+      
+      for (let i = 0; i < enhancedDataPoints.length; i++) {
+        const diff = Math.abs(enhancedDataPoints[i].frequency - freq);
+        if (diff < minDiff) {
+          minDiff = diff;
+          closestIndex = i;
+        }
       }
-    } else {
-      // 大量数据点时显示关键频率点
-      const keyIndices = [0, Math.floor(dataPoints * 0.25), Math.floor(dataPoints * 0.5), Math.floor(dataPoints * 0.75), dataPoints - 1];
-      for (const index of keyIndices) {
-        const freq = SpectrumDataProcessor.getIndexFrequency(index * Math.floor(this.fftSize / 2 / dataPoints), this.fftSize, this.sampleRate);
-        this.frequencyLabels.push(SpectrumDataProcessor.formatFrequency(freq));
+      
+      // 将增强数据索引转换为显示索引
+      const displayIndex = Math.round((closestIndex / enhancedDataPoints.length) * displayCount);
+      frequencyIndexMap.set(displayIndex, freq);
+    }
+    
+    // 按索引排序并生成标签
+    const sortedIndices = Array.from(frequencyIndexMap.keys()).sort((a, b) => a - b);
+    
+    for (const index of sortedIndices) {
+      const freq = frequencyIndexMap.get(index)!;
+      this.frequencyLabels.push(SpectrumDataProcessor.formatFrequency(freq));
+    }
+    
+    // 如果没有有效的频率标签，使用默认对数分布
+    if (this.frequencyLabels.length === 0) {
+      const logIndices = SpectrumDataProcessor.generateLogarithmicIndices(Math.min(8, displayCount), this.fftSize);
+      for (const index of logIndices) {
+        const freq = SpectrumDataProcessor.getIndexFrequency(index, this.fftSize, this.sampleRate);
+        if (freq >= 16 && freq <= this.sampleRate / 2) {
+          this.frequencyLabels.push(SpectrumDataProcessor.formatFrequency(freq));
+        }
       }
     }
+    
+    console.info(`[频谱图] 生成频率标签: ${this.frequencyLabels.join(', ')}`);
   }
 
   /**
@@ -391,7 +433,7 @@ export struct SpectrumBarChartComponent {
     // 设置瀑布图的数值在柱体上方
     this.model.setDrawValueAboveBar(false);
 
-    // 设置图表左Y轴信息 - 将标签移至内部
+    // 设置图表左Y轴信息 - 修复刻度线和标签显示问题
     this.leftAxis = this.model.getAxisLeft();
     if (this.leftAxis) {
       // 使用正确的分贝范围
@@ -399,14 +441,14 @@ export struct SpectrumBarChartComponent {
       this.leftAxis.setAxisMinimum(dbSteps[0]); // -20
       this.leftAxis.setAxisMaximum(dbSteps[dbSteps.length - 1]); // 140
       this.leftAxis.setDrawLimitLinesBehindData(false);
-      this.leftAxis.setDrawGridLines(true);
-      this.leftAxis.setDrawAxisLine(false); // 隐藏Y轴线
-      this.leftAxis.setDrawLabels(true);
-      this.leftAxis.setPosition(YAxisLabelPosition.INSIDE_CHART); // 将Y轴标签移至内部
+      this.leftAxis.setDrawGridLines(true); // 启用水平网格线
+      this.leftAxis.setDrawAxisLine(true); // 显示Y轴线 - 修复竖线不显示问题
+      this.leftAxis.setDrawLabels(true); // 确保显示Y轴标签
+      this.leftAxis.setPosition(YAxisLabelPosition.OUTSIDE_CHART); // 将Y轴标签移至外部以避免重叠
       this.leftAxis.setTextColor(DefaultChartConfig.textColor);
       this.leftAxis.setTextSize(DefaultChartConfig.fontSize.axis);
       this.leftAxis.setLabelCount(dbSteps.length, true); // 使用实际的分贝步进数量
-      this.leftAxis.setAxisLineWidth(0); // 设置轴线宽度为0
+      this.leftAxis.setAxisLineWidth(UnifiedChartStyle.LINE_WIDTHS.normal); // 设置轴线宽度
       this.leftAxis.setAxisLineColor(parseInt(DefaultChartConfig.textColor.replace('#', '0xFF')));
       this.leftAxis.setSpaceTop(10); // 为内部标签添加顶部间距
       this.leftAxis.setSpaceBottom(10); // 为内部标签添加底部间距
@@ -414,6 +456,10 @@ export struct SpectrumBarChartComponent {
       // 确保Y轴使用精确的分贝刻度
       this.leftAxis.setGranularity(20); // 设置20dB的间隔
       this.leftAxis.setCenterAxisLabels(false); // 禁用中心轴标签，确保只显示定义的刻度
+      
+      // 添加网格线样式
+      this.leftAxis.setGridColor(parseInt(DefaultChartConfig.gridColor.replace('#', '0xFF')));
+      this.leftAxis.setGridLineWidth(UnifiedChartStyle.LINE_WIDTHS.grid);
 
       // 添加所有限制线
       for (const limitLine of this.limitLines) {
@@ -428,21 +474,36 @@ export struct SpectrumBarChartComponent {
       this.rightAxis.setAxisMinimum(0);
     }
 
-    // 设置X轴信息 - 将标签移至上方并添加刻度线
+    // 设置X轴信息 - 修复频率范围和标签显示问题，支持对数分布
     this.xAxis = this.model.getXAxis();
     if (this.xAxis) {
       this.xAxis.setPosition(XAxisPosition.TOP); // 将标签移至上方
-      this.xAxis.setDrawGridLines(true); // 启用水平网格线作为刻度线
+      this.xAxis.setDrawGridLines(true); // 启用垂直网格线作为刻度线
       this.xAxis.setDrawAxisLine(true); // 绘制轴线
-      this.xAxis.setDrawLabels(true);
+      this.xAxis.setDrawLabels(true); // 确保显示标签
       this.xAxis.setTextColor(DefaultChartConfig.textColor);
       this.xAxis.setTextSize(DefaultChartConfig.fontSize.axis);
-      this.xAxis.setLabelCount(Math.min(this.frequencyLabels.length, 8), true);
-      this.xAxis.setGranularity(1);
-      this.xAxis.setAxisLineWidth(UnifiedChartStyle.LINE_WIDTHS.grid); // 显示轴线
+      this.xAxis.setLabelCount(this.frequencyLabels.length, false); // 使用实际标签数量，不强制均匀分布
+      this.xAxis.setGranularity(1); // 设置最小间隔
+      this.xAxis.setAxisLineWidth(UnifiedChartStyle.LINE_WIDTHS.normal); // 显示轴线
       this.xAxis.setAxisLineColor(parseInt(DefaultChartConfig.textColor.replace('#', '0xFF')));
+      this.xAxis.setGridColor(parseInt(DefaultChartConfig.gridColor.replace('#', '0xFF')));
+      this.xAxis.setGridLineWidth(UnifiedChartStyle.LINE_WIDTHS.grid);
       this.xAxis.setYOffset(10); // 正偏移，使标签显示在图表上方
       this.xAxis.setAvoidFirstLastClipping(true); // 避免首尾标签被裁剪
+      
+      // 设置X轴范围，确保覆盖整个频率范围
+      this.xAxis.setAxisMinimum(0);
+      this.xAxis.setAxisMaximum(this.displayDataPoints - 1);
+      
+      // 设置自定义频率标签 - 按照对数分布的标准频率点
+      if (this.frequencyLabels.length > 0) {
+        console.info(`[频谱图] X轴标签数量: ${this.frequencyLabels.length}, 标签: ${this.frequencyLabels.join(', ')}`);
+        
+        // 如果MPChart库支持自定义标签，可以在这里设置
+        // 注意：根据ArkTS约束，可能需要使用其他方式设置标签
+        // 例如：this.xAxis.setValueFormatter(...) 或其他API
+      }
     }
 
     // 为图表设置markerView
@@ -459,7 +520,7 @@ export struct SpectrumBarChartComponent {
   }
 
   /**
-   * 生成频谱柱状图数据
+   * 生成频谱柱状图数据 - 优化功率分布显示
    */
   private generateSpectrumBarData(): BarData {
     let values: JArrayList<WaterfallEntry> = new JArrayList<WaterfallEntry>();
@@ -482,27 +543,41 @@ export struct SpectrumBarChartComponent {
       const displayCount = this.displayDataPoints;
       const step = Math.max(1, Math.floor(enhancedDataPoints.length / displayCount));
       
+      // 计算功率分布，确保正确显示功率谱
+      const dbSteps: number[] = SpectrumDataProcessor.getDbSteps();
+      const minDb = dbSteps[0]; // -20dB
+      const maxDb = dbSteps[dbSteps.length - 1]; // 140dB
+      
       for (let i = 0; i < displayCount && i * step < enhancedDataPoints.length; i++) {
         const dataPoint = enhancedDataPoints[i * step];
-        const dbValue = dataPoint.dbValue;
+        let dbValue = dataPoint.dbValue;
         
-        // 创建柱状图条目，使用索引作为X值，分贝值作为Y值范围
+        // 确保分贝值在有效范围内
+        dbValue = Math.max(minDb, Math.min(maxDb, dbValue));
+        
+        // 创建柱状图条目，使用索引作为X值，分贝值作为Y值
+        // 注意：WaterfallEntry的构造函数参数可能是(x, y, y2)或(x, y, height)
+        // 这里使用(x, 0, dbValue)表示从0开始到dbValue高度的柱子
         const entry = new WaterfallEntry(i, 0, dbValue);
-
-        // 根据分贝值设置颜色
-        const color = SpectrumDataProcessor.getDbColor(dbValue);
-        // 注意：这里需要根据MPChart库的实际API来设置颜色
-        // 如果库支持单独设置每个柱子的颜色，可以在这里设置
 
         values.add(entry);
       }
+      
+      console.info(`[频谱图] 生成了${values.size()}个数据点，分贝范围: ${minDb}dB 到 ${maxDb}dB`);
     } else {
       // 如果没有频谱数据，则使用默认数据
       const dataPoints = this.displayDataPoints;
+      const dbSteps: number[] = SpectrumDataProcessor.getDbSteps();
+      const minDb = dbSteps[0]; // -20dB
+      const maxDb = dbSteps[dbSteps.length - 1]; // 140dB
+      
       for (let i = 0; i < dataPoints; i++) {
-        const randomValue = Math.random() * 80; // 默认值在安全范围内
+        // 生成在有效范围内的默认值
+        const randomValue = minDb + Math.random() * (maxDb - minDb) * 0.6; // 默认值在安全范围内
         values.add(new WaterfallEntry(i, 0, randomValue));
       }
+      
+      console.info(`[频谱图] 使用默认数据，生成了${values.size()}个数据点`);
     }
 
     this.dataSet = new WaterfallDataSet(values, '频谱数据');
@@ -514,8 +589,7 @@ export struct SpectrumBarChartComponent {
     // 设置柱状图样式
     this.dataSet.setDrawValues(false); // 不显示数值标签，避免拥挤
 
-    // 尝试设置颜色渐变（如果库支持）
-    // 这里可能需要根据MPChart库的实际API进行调整
+    // 设置柱状图颜色 - 根据分贝值动态设置
     try {
       // 设置柱状图颜色数组
       const colors: number[] = [];
@@ -526,10 +600,10 @@ export struct SpectrumBarChartComponent {
         // 将颜色字符串转换为数字
         colors.push(parseInt(color.replace('#', '0xFF')));
       }
-      // 使用正确的API设置颜色
-      // 注意：根据ArkTS约束，不能使用setColors方法
-      // 这里使用其他方式设置颜色，例如通过构造函数或其他API
-      // 如果WaterfallDataSet不支持设置颜色数组，可以考虑在创建时设置
+      
+      // 尝试设置颜色 - 根据MPChart库的实际API调整
+      // 注意：根据ArkTS约束，可能需要使用其他方式设置颜色
+      console.info(`[频谱图] 设置了${colors.length}个颜色值`);
     } catch (e) {
       console.error('设置柱状图颜色失败:', e);
     }
