@@ -125,5 +125,59 @@ export class PreferenceKeys {
    * 今日累计使用秒数（备份字段）
    */
   @Trace
+  
+  /**
+   * 频谱显示模式
+   */
+  @Trace
+  spectrum_display_mode: string = PreferencesUtil.getStringSync('spectrum_display_mode', 'line');
+  
+  /**
+   * 频谱平滑因子
+   */
+  @Trace
+  spectrum_smoothing_factor: number = PreferencesUtil.getNumberSync('spectrum_smoothing_factor', 0.3);
+  
+  /**
+   * 是否显示峰值频率
+   */
+  @Trace
+  spectrum_show_peak_frequency: boolean = PreferencesUtil.getBooleanSync('spectrum_show_peak_frequency', true);
+  
+  /**
+   * 频谱频率范围
+   */
+  @Trace
+  spectrum_frequency_range: string = PreferencesUtil.getStringSync('spectrum_frequency_range', 'full');
+  
+  /**
+   * 频谱分贝范围
+   */
+  @Trace
+  spectrum_db_range: string = PreferencesUtil.getStringSync('spectrum_db_range', 'auto');
+  
+  /**
+   * 自定义频率最小值
+   */
+  @Trace
+  spectrum_custom_frequency_min: number = PreferencesUtil.getNumberSync('spectrum_custom_frequency_min', 16);
+  
+  /**
+   * 自定义频率最大值
+   */
+  @Trace
+  spectrum_custom_frequency_max: number = PreferencesUtil.getNumberSync('spectrum_custom_frequency_max', 20000);
+  
+  /**
+   * 自定义分贝最小值
+   */
+  @Trace
+  spectrum_custom_decibel_min: number = PreferencesUtil.getNumberSync('spectrum_custom_decibel_min', -20);
+  
+  /**
+   * 自定义分贝最大值
+   */
+  @Trace
+  spectrum_custom_decibel_max: number = PreferencesUtil.getNumberSync('spectrum_custom_decibel_max', 140);
   total_app_usage_today: number = 0;
 }

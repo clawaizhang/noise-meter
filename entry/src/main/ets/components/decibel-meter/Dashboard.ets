@@ -1,8 +1,8 @@
 import { navigationStack } from '../../constants/ProviderConstant';
-import { AppStorageV2, PersistenceV2 } from '@kit.ArkUI';
-import display from '@ohos.display';
+import { AppStorageV2, display, PersistenceV2 } from '@kit.ArkUI';
 import { SpectrumBarChartComponent } from './SpectrumBarChartComponent';
 import { LineChartSpectrumComponent } from './LineChartSpectrumComponent';
+import { ProfessionalSpectrumAnalyzer } from './ProfessionalSpectrumAnalyzer';
 import { LineChartTimeDomainComponent } from './LineChartTimeDomainComponent';
 import { StatisticsChartComponent } from '../statistics/StatisticsChartComponent';
 import { PreferenceKeys } from '../../models/PreferenceKeys';
@@ -41,10 +41,11 @@ export struct DashBoard {
 
   // 图表类型配置
   private readonly chartTypes: ChartTypeConfig[] = [
-    { title: '频率频谱图', componentId: 0 },
-    { title: '频谱柱状图', componentId: 1 },
-    { title: '时域波形图', componentId: 2 },
-    { title: '声级分布图', componentId: 3 }
+    { title: '专业频谱分析', componentId: 0 },
+    { title: '频率频谱图', componentId: 1 },
+    { title: '频谱柱状图', componentId: 2 },
+    { title: '时域波形图', componentId: 3 },
+    { title: '声级分布图', componentId: 4 }
   ]
 
   build() {
@@ -130,7 +131,9 @@ export struct DashBoard {
   buildChartContent(chartTitle: string) {
     Column() {
       // 图表组件 - 直接全屏显示
-      if (chartTitle === '频率频谱图') {
+      if (chartTitle === '专业频谱分析') {
+        ProfessionalSpectrumAnalyzer({ sampleRate: 44100 })
+      } else if (chartTitle === '频率频谱图') {
         LineChartSpectrumComponent({ sampleRate: 44100 })
       } else if (chartTitle === '频谱柱状图') {
         SpectrumBarChartComponent()
@@ -191,7 +194,6 @@ export struct DashBoard {
   // 启动折叠动画
   startCollapseAnimation() {
     // 获取屏幕尺寸
-    const displayClass = display.getDefaultDisplaySync();
     this.dWidthHeight = '100%';
     this.animationTimeOutId = setTimeout(() => {
       // 页面内容动画
@@ -208,8 +210,8 @@ export struct DashBoard {
         }
       }, () => {
         this.dScale = 0.05;
-        this.translateX = this.getUIContext().px2vp(displayClass.width) / 2 - 30;
-        this.translateY = -this.getUIContext().px2vp(displayClass.height) / 2 + 20;
+        this.translateX = this.ak.windowWidth / 2 - 30;
+        this.translateY = -this.ak.windowHeight / 2 + 20;
       });
     }, 100)
   }

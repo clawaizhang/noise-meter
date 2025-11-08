@@ -25,6 +25,14 @@ import {
   TimeWeightingDialogBuilder, TimeWeightingDialogParams,
 } from '../time-weighting/TimeWeightingDialog';
 import { AudioAnalysisMode } from '../../common/AudioConfig';
+import {
+  SpectrumDisplaySettingsBuilder,
+  SpectrumDisplaySettingsParams,
+} from '../decibel-meter/SpectrumDisplaySettingsDialog';
+import {
+  SpectrumDisplayService,
+  SpectrumDisplayConfig
+} from '../../services/SpectrumDisplayService';
 import { LocationInfo, LocationService } from '../../services/LocationService';
 
 // 工具功能卡片配置
@@ -56,8 +64,6 @@ export struct ToolsContent {
   aboutToDisappear(): void {
   }
 
-
-
   build() {
     Scroll() {
       Column({ space: DesignConstants.SPACING_LG }) {
@@ -75,24 +81,6 @@ export struct ToolsContent {
     .scrollBar(BarState.Off)
     .edgeEffect(EdgeEffect.Spring)
 
-  }
-
-  @Builder
-  private buildPageHeader() {
-    Column({ space: DesignConstants.SPACING_XS }) {
-      Text('操作控制台')
-        .fontSize(DesignConstants.FONT_SIZE_XL)
-        .fontWeight(FontWeight.Bold)
-        .fontColor($r('sys.color.font_primary'))
-
-      Text('检测控制和系统设置')
-        .fontSize(DesignConstants.FONT_SIZE_MD)
-        .fontColor($r('sys.color.font_secondary'))
-    }
-    .width('100%')
-    .padding(DesignConstants.SPACING_MD)
-    .backgroundColor($r('sys.color.comp_background_primary'))
-    .borderRadius(DesignConstants.BORDER_RADIUS_LG)
   }
 
   @Builder
@@ -196,6 +184,20 @@ export struct ToolsContent {
         })
       }
 
+      // 频谱显示设置卡片
+      GridCol({ span: 1 }) {
+        this.buildToolCard({
+          title: '频谱显示设置',
+          icon: $r('app.media.ic_frequency_weighting'),
+          description: '线形图/柱状图/混合模式',
+          status: this.getSpectrumDisplayModeText(),
+          statusColor: $r('sys.color.font_primary'),
+          onTap: () => {
+            this.navigateToSpectrumDisplaySettings()
+          }
+        })
+      }
+
       // 手电筒卡片
       GridCol({ span: 1 }) {
         this.buildToolCard({
@@ -276,7 +278,6 @@ export struct ToolsContent {
       });
     })
   }
-
 
   // 导航到声级校准设置
   private navigateToAudioCalibration = () => {
@@ -372,6 +373,13 @@ export struct ToolsContent {
     this.pk.auto_save_enabled = settings.enabled;
     this.pk.auto_save_interval = settings.interval;
   }
+  
+  // 应用频谱显示设置
+  private applySpectrumDisplaySettings(config: SpectrumDisplayConfig) {
+    // 使用SpectrumDisplayService应用配置
+    const spectrumDisplayService = SpectrumDisplayService.getInstance();
+    spectrumDisplayService.applyDisplayConfig(this.pk, config);
+  }
 
   // 获取计权类型显示名称
   private getWeightingDisplayName(weighting: WeightingType): string {
@@ -445,8 +453,6 @@ export struct ToolsContent {
     }
   }
 
-
-
   // 位置状态计算属性 - 操作台只显示开启/关闭状态
   @Computed
   get locationStatus(): string {
@@ -478,7 +484,7 @@ export struct ToolsContent {
 
     try {
       this.isLocationRefreshing = true;
-      
+
       // 检查定位服务是否开启
       const isServiceEnabled = this.locationService.checkLocationEnabled();
       if (!isServiceEnabled) {
@@ -496,8 +502,50 @@ export struct ToolsContent {
       const locationInfo: LocationInfo = await this.locationService.requestSingleLocation();
     } catch (error) {
       console.error('获取位置信息失败:', error);
+
+
     } finally {
       this.isLocationRefreshing = false;
+    }
+  }
+
+  // 导航到频谱显示设置
+  private navigateToSpectrumDisplaySettings = () => {
+    let spectrumDialog: InfSheet;
+    let param: SpectrumDisplaySettingsParams = {
+      onClose: () => {
+        spectrumDialog?.dismiss();
+
+      },
+      onSettingsApplied: (config: SpectrumDisplayConfig) => {
+        // 应用频谱显示设置
+        this.applySpectrumDisplaySettings(config);
+      },
+    }
+    spectrumDialog = DialogHub.getSheet()
+      .setStyle({
+        showClose: false,
+        backgroundColor: $r('sys.color.background_secondary')
+      })
+      .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS })
+      .setComponentTargetId('mainId')
+      .setContent(wrapBuilder(SpectrumDisplaySettingsBuilder), param)
+      .build();
+
+    spectrumDialog.show();
+  }
+
+  // 获取频谱显示模式显示名称
+  private getSpectrumDisplayModeText(): string {
+    switch (this.pk.spectrum_display_mode) {
+      case 'line':
+        return '线形图';
+      case 'bar':
+        return '柱状图';
+      case 'hybrid':
+        return '混合模式';
+      default:
+        return '线形图';
     }
   }
 

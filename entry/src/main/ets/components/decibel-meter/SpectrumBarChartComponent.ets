@@ -33,6 +33,7 @@ import {
   IAxisValueFormatter,
   AxisBase,
 } from '@ohos/mpchart';
+import { SpectrumDisplayService } from '../../services/SpectrumDisplayService';
 import { UnifiedChartStyle } from '../common/charts/UnifiedChartStyle';
 
 // 频率范围类型
@@ -163,6 +164,8 @@ export struct SpectrumBarChartComponent {
 
   // 依赖注入
   @Local private sysResourceManager: resourceManager.ResourceManager = resourceManager.getSystemResourceManager();
+  // 频谱显示服务
+  private spectrumDisplayService: SpectrumDisplayService = SpectrumDisplayService.getInstance();
   @Local private ak: AppKeys = AppStorageV2.connect(AppKeys) ?? new AppKeys()
 
   // 频谱数据

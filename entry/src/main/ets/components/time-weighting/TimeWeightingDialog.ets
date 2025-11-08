@@ -12,7 +12,7 @@ import { TechnicalParamsDisplay } from './TechnicalParamsDisplay';
 import { PreviewPanel } from './PreviewPanel';
 import { ScenarioDisplay } from './ScenarioDisplay';
 import { CollapsibleSection } from './CollapsibleSection';
-import { CustomConfigPanel } from './CustomConfigPanel';
+import { EnhancedCustomConfigPanel } from './EnhancedCustomConfigPanel';
 import { PreferenceKeys } from '../../models/PreferenceKeys';
 import { EditableLeftIconType, EditableTitleBar, PersistenceV2, promptAction } from '@kit.ArkUI';
 import { PremiumFeature } from '../membership/PremiumFeature';
@@ -327,7 +327,7 @@ export struct TimeWeightingDialog {
         // 自定义模式界面
         Scroll() {
           Column() {
-            CustomConfigPanel({
+            EnhancedCustomConfigPanel({
               onSelectedChange: () => {
                 // 自定义配置面板的更改在保存时应用
                 // 这里不需要立即生效

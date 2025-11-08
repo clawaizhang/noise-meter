@@ -5,6 +5,7 @@ import { PreferenceKeys } from '../../models/PreferenceKeys';
 import { AudioPresets } from '../../common/AudioConfig';
 import { SpectrumDataProcessor, PeakInfo, PeakInterpolationMethod } from './SpectrumDataProcessor';
 import { UnifiedChartStyle } from '../common/charts/UnifiedChartStyle';
+import { SpectrumDisplayService } from '../../services/SpectrumDisplayService';
 import { PeakFrequencyDisplay } from './PeakFrequencyDisplay';
 import {
   JArrayList,
@@ -143,6 +144,8 @@ export struct LineChartSpectrumComponent {
 
   // 依赖注入
   @Local private sysResourceManager: resourceManager.ResourceManager = resourceManager.getSystemResourceManager();
+  // 频谱显示服务
+  private spectrumDisplayService: SpectrumDisplayService = SpectrumDisplayService.getInstance();
   @Local private ak: AppKeys = AppStorageV2.connect(AppKeys) ?? new AppKeys()
 
   // 频谱数据
