@@ -144,6 +144,16 @@ export struct StatisticsChartComponent {
     this.barChartModel.setDrawBorders(false);
     this.barChartModel.setDrawBarShadow(false);
     this.barChartModel.setHighlightFullBarEnabled(false);
+    
+    // 优化图表交互设置，关闭不必要的触摸功能
+    this.barChartModel.setTouchEnabled(true); // 保持基本触摸功能以显示导航按钮
+    this.barChartModel.setDragEnabled(false); // 禁用拖动
+    this.barChartModel.setScaleEnabled(false); // 禁用缩放
+    this.barChartModel.setScaleXEnabled(false); // 禁用X轴缩放
+    this.barChartModel.setScaleYEnabled(false); // 禁用Y轴缩放
+    this.barChartModel.setPinchZoom(false); // 禁用捏合缩放
+    this.barChartModel.setHighlightPerTapEnabled(false); // 禁用点击高亮
+    this.barChartModel.setHighlightPerDragEnabled(false); // 禁用拖动高亮
 
     // 配置X轴 - 将标签移至内部但保持在底部
     const xAxis = this.barChartModel.getXAxis();
@@ -171,7 +181,8 @@ export struct StatisticsChartComponent {
       leftAxis.setTextSize(this.layoutConfig.fontSize.axis);
       leftAxis.setTextColor(parseInt(UnifiedChartStyle.TEXT_COLOR.replace('#', '0xFF')));
       leftAxis.setAxisMinimum(0);
-      leftAxis.setAxisLineWidth(UnifiedChartStyle.LINE_WIDTHS.normal);
+      leftAxis.setDrawAxisLine(false); // 隐藏Y轴线
+      leftAxis.setAxisLineWidth(0); // 设置轴线宽度为0
       leftAxis.setAxisLineColor(parseInt(UnifiedChartStyle.TEXT_COLOR.replace('#', '0xFF')));
       leftAxis.setPosition(YAxisLabelPosition.INSIDE_CHART); // 将Y轴标签移至内部
       leftAxis.setSpaceTop(10); // 为内部标签添加顶部间距

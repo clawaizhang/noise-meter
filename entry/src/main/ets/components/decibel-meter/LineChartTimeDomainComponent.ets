@@ -164,6 +164,16 @@ export struct LineChartTimeDomainComponent {
     // 设置图表数据最大的绘制数
     this.model.setMaxVisibleValueCount(500);
     
+    // 优化图表交互设置，关闭不必要的触摸功能
+    this.model.setTouchEnabled(true); // 保持基本触摸功能以显示导航按钮
+    this.model.setDragEnabled(false); // 禁用拖动
+    this.model.setScaleEnabled(false); // 禁用缩放
+    this.model.setScaleXEnabled(false); // 禁用X轴缩放
+    this.model.setScaleYEnabled(false); // 禁用Y轴缩放
+    this.model.setPinchZoom(false); // 禁用捏合缩放
+    this.model.setHighlightPerTapEnabled(false); // 禁用点击高亮
+    this.model.setHighlightPerDragEnabled(false); // 禁用拖动高亮
+
     // 创建时域限制线（0线为中心线）
     this.createLimitLines();
     
@@ -187,9 +197,9 @@ export struct LineChartTimeDomainComponent {
       this.leftAxis.setTextColor(parseInt(UnifiedChartStyle.TEXT_COLOR.replace('#', '0xFF')));
       this.leftAxis.setTextSize(UnifiedChartStyle.FONT_SIZES.axis);
       
-      // 设置Y轴单位标签
-      this.leftAxis.setAxisLineWidth(UnifiedChartStyle.LINE_WIDTHS.normal);
-      this.leftAxis.setAxisLineColor(parseInt(UnifiedChartStyle.TEXT_COLOR.replace('#', '0xFF')));
+      // 优化Y轴显示 - 隐藏轴线但保留标签
+      this.leftAxis.setDrawAxisLine(false); // 隐藏Y轴线
+      this.leftAxis.setAxisLineWidth(0); // 设置轴线宽度为0
     }
 
     // 设置图表右Y轴信息

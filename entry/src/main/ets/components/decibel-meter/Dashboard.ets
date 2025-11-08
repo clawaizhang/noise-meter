@@ -49,71 +49,70 @@ export struct DashBoard {
 
   build() {
     Stack({ alignContent: Alignment.Top }) {
-      // 图表内容区域 - 直接全屏显示
-      Stack() {
-        // 当前选中的图表内容
-        this.buildChartContent(this.chartTypes[this.currentTabIndex].title)
-
-        // 左侧导航按钮
-        if (this.showNavigationButtons) {
-          Button({ type: ButtonType.Circle })
-            .width(48)
-            .height(48)
-            .backgroundColor('rgba(0, 0, 0, 0.6)')
-            .opacity(this.navigationButtonsOpacity)
-            .position({ x: 16, y: '50%' })
-            .translate({ y: -24 })
-            .onClick(() => {
-              // 切换到上一个图表
-              this.currentTabIndex = (this.currentTabIndex - 1 + this.chartTypes.length) % this.chartTypes.length;
-            })
-            .animation({
-              duration: 300,
-              curve: Curve.EaseInOut
-            })
-        }
-        
-        // 右侧导航按钮
-        if (this.showNavigationButtons) {
-          Button({ type: ButtonType.Circle })
-            .width(48)
-            .height(48)
-            .backgroundColor('rgba(0, 0, 0, 0.6)')
-            .opacity(this.navigationButtonsOpacity)
-            .position({ x: '100%', y: '50%' })
-            .translate({ x: -64, y: -24 })
-            .onClick(() => {
-              // 切换到下一个图表
-              this.currentTabIndex = (this.currentTabIndex + 1) % this.chartTypes.length;
-            })
-            .animation({
-              duration: 300,
-              curve: Curve.EaseInOut
-            })
-        }
-        
-        // 当前图表标题指示器
-        if (this.showNavigationButtons) {
-          Text(this.chartTypes[this.currentTabIndex].title)
-            .fontSize(14)
-            .fontColor(Color.White)
-            .opacity(this.navigationButtonsOpacity * 0.8)
-            .position({ x: '50%', y: 24 })
-            .translate({ x: -50, y: 0 })
-            .textAlign(TextAlign.Center)
-            .width(100)
-            .backgroundColor('rgba(0, 0, 0, 0.6)')
-            .padding(8)
-            .borderRadius(16)
-            .animation({
-              duration: 300,
-              curve: Curve.EaseInOut
-            })
-        }
+      // 使用Swiper组件实现图表切换
+      Swiper() {
+        ForEach(this.chartTypes, (item: ChartTypeConfig, index?: number) => {
+          Stack() {
+            // 图表内容
+            this.buildChartContent(item.title)
+          }
+        }, (item: ChartTypeConfig, index?: number) => item.title)
       }
-      .layoutWeight(1)
+      .index(this.currentTabIndex)
+      .loop(true)
+      .indicator(true) // 禁用默认指示器
+      .duration(300) // 设置切换动画时长
+      .curve(Curve.EaseInOut) // 设置动画曲线
+      .onChange((index: number) => {
+        this.currentTabIndex = index;
+      })
       .width('100%')
       .height('100%')
+      .borderRadius(16)
+      .onClick(() => {
+        // 点击图表区域显示导航按钮
+        this.showNavigationButtons = true;
+        this.navigationButtonsOpacity = 1;
+        
+        // 清除之前的超时
+        if (this.navigationButtonsTimeoutId) {
+          clearTimeout(this.navigationButtonsTimeoutId);
+        }
+        
+        // 设置3秒后自动隐藏导航按钮
+        this.navigationButtonsTimeoutId = setTimeout(() => {
+          this.getUIContext().animateTo({
+            duration: 300,
+            curve: Curve.EaseOut,
+            onFinish: () => {
+              this.showNavigationButtons = false;
+              this.navigationButtonsOpacity = 0;
+            }
+          }, () => {
+            this.navigationButtonsOpacity = 0;
+          });
+        }, 3000);
+      })
+      
+      // 当前图表标题指示器 - 置于最上层
+      if (this.showNavigationButtons) {
+        Text(this.chartTypes[this.currentTabIndex].title)
+          .fontSize(14)
+          .fontColor(Color.White)
+          .opacity(this.navigationButtonsOpacity * 0.8)
+          .position({ x: '50%', y: 24 })
+          .translate({ x: -50, y: 0 })
+          .textAlign(TextAlign.Center)
+          .width(100)
+          .backgroundColor('rgba(0, 0, 0, 0.6)')
+          .padding(8)
+          .borderRadius(16)
+          .animation({
+            duration: 300,
+            curve: Curve.EaseInOut
+          })
+          .zIndex(10) // 确保标题在最上层
+      }
 
       Column()
         .width(this.dWidthHeight)
@@ -146,30 +145,30 @@ export struct DashBoard {
     .padding(0) // 完全移除padding以最大化显示区域
     .justifyContent(FlexAlign.Center)
     .alignItems(HorizontalAlign.Center)
-    .onClick(() => {
-      // 点击图表区域显示导航按钮
-      this.showNavigationButtons = true;
-      this.navigationButtonsOpacity = 1;
+  }
 
-      // 清除之前的超时
-      if (this.navigationButtonsTimeoutId) {
-        clearTimeout(this.navigationButtonsTimeoutId);
-      }
-
-      // 设置3秒后自动隐藏导航按钮
-      this.navigationButtonsTimeoutId = setTimeout(() => {
-        this.getUIContext().animateTo({
-          duration: 300,
-          curve: Curve.EaseOut,
-          onFinish: () => {
-            this.showNavigationButtons = false;
-            this.navigationButtonsOpacity = 0;
-          }
-        }, () => {
+  /**
+   * 重置导航按钮超时
+   */
+  private resetNavigationTimeout() {
+    // 清除之前的超时
+    if (this.navigationButtonsTimeoutId) {
+      clearTimeout(this.navigationButtonsTimeoutId);
+    }
+    
+    // 设置3秒后自动隐藏导航按钮
+    this.navigationButtonsTimeoutId = setTimeout(() => {
+      this.getUIContext().animateTo({
+        duration: 300,
+        curve: Curve.EaseOut,
+        onFinish: () => {
+          this.showNavigationButtons = false;
           this.navigationButtonsOpacity = 0;
-        });
-      }, 3000);
-    })
+        }
+      }, () => {
+        this.navigationButtonsOpacity = 0;
+      });
+    }, 3000);
   }
 
   aboutToDisappear() {
