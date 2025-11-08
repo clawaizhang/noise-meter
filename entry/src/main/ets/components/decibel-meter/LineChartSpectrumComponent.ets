@@ -139,6 +139,11 @@ export struct LineChartSpectrumComponent {
       const logFreq: number = Math.log10(centerFreq);
       const mappedX: number = ((logFreq - LOG_MIN_FREQ) / (logMaxFreq - LOG_MIN_FREQ)) * 20000;
       
+      // 调试信息：只记录前几个数据点
+      if (i < 5) {
+        console.info(`[频谱图] 数据点${i}: 频率=${centerFreq}Hz, 映射X值=${mappedX}, 分贝=${clampedDbValue}dB`);
+      }
+      
       // 使用映射后的X值，确保与原来的Canvas实现完全一致
       values.add(new EntryOhos(mappedX, clampedDbValue));
     }
@@ -227,10 +232,15 @@ export struct LineChartSpectrumComponent {
       this.xAxis.setPosition(XAxisPosition.BOTTOM);
       this.xAxis.setDrawGridLines(false);
       this.xAxis.setGranularity(1);
-      this.xAxis.setLabelCount(5);
+      this.xAxis.setLabelCount(10);
       // 设置图表X轴显示范围，与映射后的X值保持一致
-      this.xAxis.setAxisMinimum(0);     // 映射后的最小值
-      this.xAxis.setAxisMaximum(20000); // 映射后的最大值
+      // 由于跳过了16Hz以下的数据，所以最小值应该对应16Hz的映射值
+      const LOG_MIN_FREQ = Math.log10(16);
+      const logMaxFreq = Math.log10(20000);
+      
+      // 直接设置范围，因为16Hz映射到0，20kHz映射到20000
+      this.xAxis.setAxisMinimum(0);     // 16Hz对应的映射值
+      this.xAxis.setAxisMaximum(20000);  // 20kHz对应的映射值
       
       // 自定义X轴标签，按照对数坐标显示频率
       // 创建一个符合IAxisValueFormatter接口的对象
@@ -241,6 +251,9 @@ export struct LineChartSpectrumComponent {
           const logMaxFreq = Math.log10(20000);
           const logFreq = LOG_MIN_FREQ + (value / 20000) * (logMaxFreq - LOG_MIN_FREQ);
           const frequency = Math.pow(10, logFreq);
+          
+          // 调试信息：验证映射是否正确
+          console.info(`[频谱图] X轴值: ${value}, 对应频率: ${frequency}Hz`);
           
           // 格式化频率显示
           if (frequency >= 1000) {
