@@ -447,8 +447,8 @@ export struct LineChartSpectrumComponent {
       this.xAxis.setLabelCount(11, false); // 强制显示11个标签，不自动调整
       this.xAxis.setTextColor(parseInt(UnifiedChartStyle.TEXT_COLOR.replace('#', '0xFF')));
       this.xAxis.setTextSize(UnifiedChartStyle.FONT_SIZES.axis);
-      this.xAxis.setYOffset(-100); // 正偏移，使标签显示在图表上方
-      this.xAxis.setXOffset(10);
+      this.xAxis.setYOffset(-15); // 正偏移，使标签显示在图表上方
+      this.xAxis.setXOffset(20);
       this.xAxis.setAvoidFirstLastClipping(true); // 避免首尾标签被裁剪
       // 设置图表X轴显示范围，与映射后的X值保持一致
       // 由于跳过了16Hz以下的数据，所以最小值应该对应16Hz的映射值
@@ -518,7 +518,7 @@ export struct LineChartSpectrumComponent {
           Text('频率(Hz)')
             .fontSize(UnifiedChartStyle.FONT_SIZES.axis)
             .fontColor(parseInt(UnifiedChartStyle.TEXT_COLOR.replace('#', '0xFF')))
-            .position({ x: '87%', y: '18%' })
+            .position({ x: '87%', y: '5%' })
             .translate({ x: '-50%' })
             .backgroundColor(UnifiedChartStyle.BACKGROUND_COLOR)
             .padding({ left: 4, right: 4 })
@@ -539,7 +539,7 @@ export struct LineChartSpectrumComponent {
           PeakFrequencyDisplay({
             peakInfo: this.smoothedPeakInfo,
             positionX: '86%',
-            positionY: '5%'
+            positionY: '15%'
           })
         }
         .width('100%')
