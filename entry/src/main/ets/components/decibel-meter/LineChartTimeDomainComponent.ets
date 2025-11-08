@@ -25,6 +25,7 @@ import {
   LimitLabelPosition,
   ChartColorStop,
   LegendForm,
+  IAxisValueFormatter,
 } from '@ohos/mpchart';
 
 @ComponentV2
@@ -191,6 +192,10 @@ export struct LineChartTimeDomainComponent {
       this.leftAxis.setGridLineWidth(UnifiedChartStyle.LINE_WIDTHS.grid);
       this.leftAxis.setTextColor(parseInt(UnifiedChartStyle.TEXT_COLOR.replace('#', '0xFF')));
       this.leftAxis.setTextSize(UnifiedChartStyle.FONT_SIZES.axis);
+      
+      // 设置Y轴单位标签
+      this.leftAxis.setAxisLineWidth(UnifiedChartStyle.LINE_WIDTHS.normal);
+      this.leftAxis.setAxisLineColor(parseInt(UnifiedChartStyle.TEXT_COLOR.replace('#', '0xFF')));
     }
 
     // 设置图表右Y轴信息
@@ -213,6 +218,21 @@ export struct LineChartTimeDomainComponent {
       this.xAxis.setLabelCount(5);
       this.xAxis.setTextColor(parseInt(UnifiedChartStyle.TEXT_COLOR.replace('#', '0xFF')));
       this.xAxis.setTextSize(UnifiedChartStyle.FONT_SIZES.axis);
+      
+      // 设置X轴单位标签
+      this.xAxis.setAxisLineWidth(UnifiedChartStyle.LINE_WIDTHS.normal);
+      this.xAxis.setAxisLineColor(parseInt(UnifiedChartStyle.TEXT_COLOR.replace('#', '0xFF')));
+      
+      // 自定义X轴标签，显示时间单位（毫秒）
+      const sampleRate = this.sampleRate; // 保存sampleRate值
+      class TimeAxisFormatter implements IAxisValueFormatter {
+        getFormattedValue(value: number): string {
+          // 将采样点索引转换为时间（毫秒）
+          const timeMs = (value / sampleRate) * 1000;
+          return timeMs.toFixed(1);
+        }
+      }
+      this.xAxis.setValueFormatter(new TimeAxisFormatter());
     }
     
     // 设置图表最大的X轴显示范围
@@ -256,7 +276,7 @@ export struct LineChartTimeDomainComponent {
     Column() {
       // 图表标题
       Row() {
-        Text('时域波形')
+        Text('时域波形图')
           .fontSize(UnifiedChartStyle.FONT_SIZES.title)
           .fontWeight(FontWeight.Medium)
           .fontColor(parseInt(UnifiedChartStyle.TEXT_COLOR.replace('#', '0xFF')))
@@ -276,10 +296,35 @@ export struct LineChartTimeDomainComponent {
       
       // LineChart组件
       if (this.model) {
-        LineChart({ model: this.model })
-          .width('100%')
-          .layoutWeight(1)
-          .borderRadius(UnifiedChartStyle.BORDER_RADIUS.large) // 添加圆角，与其他图表保持一致
+        Stack() {
+          LineChart({ model: this.model })
+            .width('100%')
+            .height('100%')
+            .borderRadius(UnifiedChartStyle.BORDER_RADIUS.large) // 添加圆角，与其他图表保持一致
+          
+          // X轴单位标签
+          Text('时间(ms)')
+            .fontSize(UnifiedChartStyle.FONT_SIZES.axis)
+            .fontColor(parseInt(UnifiedChartStyle.TEXT_COLOR.replace('#', '0xFF')))
+            .position({ x: '95%', y: '98%' })
+            .translate({ x: '-50%' })
+            .backgroundColor(UnifiedChartStyle.BACKGROUND_COLOR)
+            .padding({ left: 4, right: 4 })
+            .borderRadius(4)
+          
+          // Y轴单位标签
+          Text('幅值')
+            .fontSize(UnifiedChartStyle.FONT_SIZES.axis)
+            .fontColor(parseInt(UnifiedChartStyle.TEXT_COLOR.replace('#', '0xFF')))
+            .position({ x: '1%', y: '5%' })
+            .translate({ y: '-50%' })
+            .rotate({ angle: -90 })
+            .backgroundColor(UnifiedChartStyle.BACKGROUND_COLOR)
+            .padding({ left: 4, right: 4 })
+            .borderRadius(4)
+        }
+        .width('100%')
+        .layoutWeight(1)
       }
     }
     .width('100%')

@@ -41,10 +41,10 @@ export struct DashBoard {
 
   // 图表类型配置
   private readonly chartTypes: ChartTypeConfig[] = [
-    { title: '频谱图', componentId: 0 },
+    { title: '频率频谱图', componentId: 0 },
     { title: '频谱柱状图', componentId: 1 },
-    { title: '时域图', componentId: 2 },
-    { title: '统计分布图', componentId: 3 }
+    { title: '时域波形图', componentId: 2 },
+    { title: '声级分布图', componentId: 3 }
   ]
 
   build() {
@@ -89,13 +89,13 @@ export struct DashBoard {
   buildChartContent(chartTitle: string) {
     Column() {
       // 图表组件 - 直接全屏显示
-      if (chartTitle === '频谱图') {
+      if (chartTitle === '频率频谱图') {
         LineChartSpectrumComponent({ sampleRate: 44100 })
       } else if (chartTitle === '频谱柱状图') {
         SpectrumBarChartComponent()
-      } else if (chartTitle === '时域图') {
+      } else if (chartTitle === '时域波形图') {
         LineChartTimeDomainComponent({ sampleRate: 44100 })
-      } else if (chartTitle === '统计分布图') {
+      } else if (chartTitle === '声级分布图') {
         StatisticsChartComponent()
       }
     }

@@ -153,6 +153,8 @@ export struct StatisticsChartComponent {
       xAxis.setLabelCount(11, true);
       xAxis.setTextSize(this.layoutConfig.fontSize.axis);
       xAxis.setTextColor(parseInt(UnifiedChartStyle.TEXT_COLOR.replace('#', '0xFF')));
+      xAxis.setAxisLineWidth(UnifiedChartStyle.LINE_WIDTHS.normal);
+      xAxis.setAxisLineColor(parseInt(UnifiedChartStyle.TEXT_COLOR.replace('#', '0xFF')));
     }
 
     // 配置Y轴
@@ -165,7 +167,8 @@ export struct StatisticsChartComponent {
       leftAxis.setTextSize(this.layoutConfig.fontSize.axis);
       leftAxis.setTextColor(parseInt(UnifiedChartStyle.TEXT_COLOR.replace('#', '0xFF')));
       leftAxis.setAxisMinimum(0);
-      
+      leftAxis.setAxisLineWidth(UnifiedChartStyle.LINE_WIDTHS.normal);
+      leftAxis.setAxisLineColor(parseInt(UnifiedChartStyle.TEXT_COLOR.replace('#', '0xFF')));
     }
 
     const rightAxis = this.barChartModel.getAxisRight();
@@ -284,7 +287,7 @@ export struct StatisticsChartComponent {
   build() {
     Column() {
       // 图表标题
-      Text('分贝统计分布')
+      Text('声级分布图')
         .fontSize(this.layoutConfig.fontSize.title)
         .fontColor(parseInt(UnifiedChartStyle.TEXT_COLOR.replace('#', '0xFF')))
         .fontWeight(FontWeight.Medium)
@@ -293,13 +296,38 @@ export struct StatisticsChartComponent {
         .margin({ bottom: UnifiedChartStyle.SPACING.sm })
 
       // BarChart组件
-      BarChart({
-        model: this.barChartModel
-      })
-        .width('100%')
-        .layoutWeight(1) // 使用layoutWeight确保与其他图表尺寸一致
-        .borderRadius(UnifiedChartStyle.BORDER_RADIUS.large) // 添加圆角，与其他图表保持一致
-        .margin({ bottom: UnifiedChartStyle.SPACING.md })
+      Stack() {
+        BarChart({
+          model: this.barChartModel
+        })
+          .width('100%')
+          .height('100%')
+          .borderRadius(UnifiedChartStyle.BORDER_RADIUS.large) // 添加圆角，与其他图表保持一致
+        
+        // X轴单位标签
+        Text('声级(dB)')
+          .fontSize(this.layoutConfig.fontSize.axis)
+          .fontColor(parseInt(UnifiedChartStyle.TEXT_COLOR.replace('#', '0xFF')))
+          .position({ x: '95%', y: '98%' })
+          .translate({ x: '-50%' })
+          .backgroundColor(UnifiedChartStyle.BACKGROUND_COLOR)
+          .padding({ left: 4, right: 4 })
+          .borderRadius(4)
+        
+        // Y轴单位标签
+        Text('次数')
+          .fontSize(this.layoutConfig.fontSize.axis)
+          .fontColor(parseInt(UnifiedChartStyle.TEXT_COLOR.replace('#', '0xFF')))
+          .position({ x: '1%', y: '5%' })
+          .translate({ y: '-50%' })
+          .rotate({ angle: -90 })
+          .backgroundColor(UnifiedChartStyle.BACKGROUND_COLOR)
+          .padding({ left: 4, right: 4 })
+          .borderRadius(4)
+      }
+      .width('100%')
+      .layoutWeight(1) // 使用layoutWeight确保与其他图表尺寸一致
+      .margin({ bottom: UnifiedChartStyle.SPACING.md })
 
       // 统计指标显示
       this.buildStatisticsInfo(

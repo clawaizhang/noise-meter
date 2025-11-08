@@ -225,6 +225,10 @@ export struct LineChartSpectrumComponent {
       this.leftAxis.setGridLineWidth(UnifiedChartStyle.LINE_WIDTHS.grid);
       this.leftAxis.setTextColor(parseInt(UnifiedChartStyle.TEXT_COLOR.replace('#', '0xFF')));
       this.leftAxis.setTextSize(UnifiedChartStyle.FONT_SIZES.axis);
+      
+      // 设置Y轴单位标签
+      this.leftAxis.setAxisLineWidth(UnifiedChartStyle.LINE_WIDTHS.normal);
+      this.leftAxis.setAxisLineColor(parseInt(UnifiedChartStyle.TEXT_COLOR.replace('#', '0xFF')));
     }
 
     // 设置图表右Y轴信息
@@ -275,6 +279,10 @@ export struct LineChartSpectrumComponent {
         }
       };
       this.xAxis.setValueFormatter(formatter);
+      
+      // 设置X轴单位标签
+      this.xAxis.setAxisLineWidth(UnifiedChartStyle.LINE_WIDTHS.normal);
+      this.xAxis.setAxisLineColor(parseInt(UnifiedChartStyle.TEXT_COLOR.replace('#', '0xFF')));
     }
 
     this.model.setVisibleXRangeMaximum(20000); // 显示最大20kHz范围
@@ -319,7 +327,7 @@ export struct LineChartSpectrumComponent {
     Column() {
       // 图表标题
       Row() {
-        Text('频谱分析')
+        Text('频率频谱分析')
           .fontSize(UnifiedChartStyle.FONT_SIZES.title)
           .fontWeight(FontWeight.Medium)
           .fontColor(parseInt(UnifiedChartStyle.TEXT_COLOR.replace('#', '0xFF')))
@@ -341,10 +349,35 @@ export struct LineChartSpectrumComponent {
       
       // LineChart组件
       if (this.model) {
-        LineChart({ model: this.model })
-          .width('100%')
-          .layoutWeight(1)
-          .borderRadius(UnifiedChartStyle.BORDER_RADIUS.large) // 添加圆角，与其他图表保持一致
+        Stack() {
+          LineChart({ model: this.model })
+            .width('100%')
+            .height('100%')
+            .borderRadius(UnifiedChartStyle.BORDER_RADIUS.large) // 添加圆角，与其他图表保持一致
+          
+          // X轴单位标签
+          Text('频率(Hz)')
+            .fontSize(UnifiedChartStyle.FONT_SIZES.axis)
+            .fontColor(parseInt(UnifiedChartStyle.TEXT_COLOR.replace('#', '0xFF')))
+            .position({ x: '95%', y: '98%' })
+            .translate({ x: '-50%' })
+            .backgroundColor(UnifiedChartStyle.BACKGROUND_COLOR)
+            .padding({ left: 4, right: 4 })
+            .borderRadius(4)
+          
+          // Y轴单位标签
+          Text('声级(dB)')
+            .fontSize(UnifiedChartStyle.FONT_SIZES.axis)
+            .fontColor(parseInt(UnifiedChartStyle.TEXT_COLOR.replace('#', '0xFF')))
+            .position({ x: '2%', y: '6%' })
+            .translate({ y: '-50%' })
+            .rotate({ angle: -90 })
+            .backgroundColor(UnifiedChartStyle.BACKGROUND_COLOR)
+            .padding({ left: 4, right: 4 })
+            .borderRadius(4)
+        }
+        .width('100%')
+        .layoutWeight(1)
       }
     }
     .width('100%')

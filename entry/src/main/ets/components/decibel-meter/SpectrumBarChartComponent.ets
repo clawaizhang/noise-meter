@@ -310,6 +310,8 @@ export struct SpectrumBarChartComponent {
       this.leftAxis.setTextColor(DefaultChartConfig.textColor);
       this.leftAxis.setTextSize(DefaultChartConfig.fontSize.axis);
       this.leftAxis.setLabelCount(7, true); // 设置Y轴标签数量
+      this.leftAxis.setAxisLineWidth(1.5);
+      this.leftAxis.setAxisLineColor(parseInt(DefaultChartConfig.textColor.replace('#', '0xFF')));
 
       // 添加所有限制线
       for (const limitLine of this.limitLines) {
@@ -335,6 +337,8 @@ export struct SpectrumBarChartComponent {
       this.xAxis.setTextSize(DefaultChartConfig.fontSize.axis);
       this.xAxis.setLabelCount(Math.min(this.frequencyLabels.length, 8), true);
       this.xAxis.setGranularity(1);
+      this.xAxis.setAxisLineWidth(1.5);
+      this.xAxis.setAxisLineColor(parseInt(DefaultChartConfig.textColor.replace('#', '0xFF')));
     }
 
     // 为图表设置markerView
@@ -509,7 +513,7 @@ export struct SpectrumBarChartComponent {
       // 标题和信息栏
       Row() {
         Column() {
-          Text('频谱分析')
+          Text('频谱柱状图')
             .fontSize(DefaultChartConfig.fontSize.title)
             .fontColor(DefaultChartConfig.textColor)
             .fontWeight(FontWeight.Medium)
@@ -518,6 +522,7 @@ export struct SpectrumBarChartComponent {
             .fontSize(DefaultChartConfig.fontSize.small)
             .fontColor(DefaultChartConfig.textColor)
             .opacity(0.8)
+            .margin({ top: 4 })
         }
         .alignItems(HorizontalAlign.Start)
 
@@ -565,12 +570,37 @@ export struct SpectrumBarChartComponent {
       .padding({ left: 16, right: 16, bottom: 8 })
 
       // 使用瀑布图组件显示频谱柱状图
-      WaterfallChart({ model: this.model })
-        .width('100%')
-        .layoutWeight(1)
-        .borderRadius(16)
-        .backgroundColor(this.chartConfig.backgroundColor)
-        .margin({ left: 16, right: 16, bottom: 8 })
+      Stack() {
+        WaterfallChart({ model: this.model })
+          .width('100%')
+          .height('100%')
+          .borderRadius(16)
+          .backgroundColor(this.chartConfig.backgroundColor)
+        
+        // X轴单位标签
+        Text('频率(Hz)')
+          .fontSize(DefaultChartConfig.fontSize.axis)
+          .fontColor(DefaultChartConfig.textColor)
+          .position({ x: '95%', y: '98%' })
+          .translate({ x: '-50%' })
+          .backgroundColor(this.chartConfig.backgroundColor)
+          .padding({ left: 4, right: 4 })
+          .borderRadius(4)
+        
+        // Y轴单位标签
+        Text('声级(dB)')
+          .fontSize(DefaultChartConfig.fontSize.axis)
+          .fontColor(DefaultChartConfig.textColor)
+          .position({ x: '1%', y: '5%' })
+          .translate({ y: '-50%' })
+          .rotate({ angle: -90 })
+          .backgroundColor(this.chartConfig.backgroundColor)
+          .padding({ left: 4, right: 4 })
+          .borderRadius(4)
+      }
+      .width('100%')
+      .layoutWeight(1)
+      .margin({ left: 16, right: 16, bottom: 8 })
 
       // 选中频率信息
       if (this.selectedFrequency > 0) {
