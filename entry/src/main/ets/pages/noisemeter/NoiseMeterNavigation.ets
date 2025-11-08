@@ -170,7 +170,7 @@ export struct MainNoiseMeter {
       // 噪音检测区域 - 在隐藏标题栏时使用更大的显示区域
       DashBoard({ meterOn: true })
         .id('decibelMeterId')
-        .padding({ left: 16, right: 16, top: this.currentIndex === 1 ? 8 : 16, bottom: 8 })
+        .padding(8)
     }
     .id('decibelMeterRoot')
     .justifyContent(FlexAlign.Center)

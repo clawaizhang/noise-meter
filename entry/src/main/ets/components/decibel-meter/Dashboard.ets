@@ -1,5 +1,5 @@
 import { navigationStack } from '../../constants/ProviderConstant';
-import { AppStorageV2, curves, PersistenceV2 } from '@kit.ArkUI';
+import { AppStorageV2, PersistenceV2 } from '@kit.ArkUI';
 import display from '@ohos.display';
 import { SpectrumBarChartComponent } from './SpectrumBarChartComponent';
 import { LineChartSpectrumComponent } from './LineChartSpectrumComponent';
@@ -28,8 +28,11 @@ export struct DashBoard {
   @Local dWidthHeight: string = ''; // 页面透明度
   @Local bgImage: image.PixelMap | undefined = undefined; // 页面透明度
   @Local ak: AppKeys = AppStorageV2.connect(AppKeys)!;
-  @Local private currentTabIndex: number = 0; // 当前选中的标签页索引
+  @Local private currentTabIndex: number = 0; // 当前选中的图表索引
+  @Local private showNavigationButtons: boolean = false; // 是否显示导航按钮
+  @Local private navigationButtonsOpacity: number = 0; // 导航按钮透明度
   private animationTimeOutId: number | undefined;
+  private navigationButtonsTimeoutId: number | undefined;
   // 服务实例
   private audioControllerService: AudioControllerService = AudioControllerService.getInstance(this.ak, this.pk);
   // 双管线架构：UI显示状态
@@ -48,25 +51,65 @@ export struct DashBoard {
     Stack({ alignContent: Alignment.Top }) {
       // 图表内容区域 - 直接全屏显示
       Stack() {
-        // 使用Tabs组件实现标签页切换
-        Tabs({ index: this.currentTabIndex }) {
-          ForEach(this.chartTypes, (item: ChartTypeConfig, index?: number) => {
-            TabContent() {
-              this.buildChartContent(item.title)
-            }
-            .tabBar(item.title)
-          })
+        // 当前选中的图表内容
+        this.buildChartContent(this.chartTypes[this.currentTabIndex].title)
+
+        // 左侧导航按钮
+        if (this.showNavigationButtons) {
+          Button({ type: ButtonType.Circle })
+            .width(48)
+            .height(48)
+            .backgroundColor('rgba(0, 0, 0, 0.6)')
+            .opacity(this.navigationButtonsOpacity)
+            .position({ x: 16, y: '50%' })
+            .translate({ y: -24 })
+            .onClick(() => {
+              // 切换到上一个图表
+              this.currentTabIndex = (this.currentTabIndex - 1 + this.chartTypes.length) % this.chartTypes.length;
+            })
+            .animation({
+              duration: 300,
+              curve: Curve.EaseInOut
+            })
         }
-        .vertical(false)
-        .scrollable(true)
-        .barMode(BarMode.Fixed)
-        .barWidth('100%')
-        .animationDuration(300)
-        .onChange((index: number) => {
-          this.currentTabIndex = index;
-        })
-        .backgroundColor('#191A1C') // 使用与图表一致的黑色背景
-        .borderRadius(16)
+        
+        // 右侧导航按钮
+        if (this.showNavigationButtons) {
+          Button({ type: ButtonType.Circle })
+            .width(48)
+            .height(48)
+            .backgroundColor('rgba(0, 0, 0, 0.6)')
+            .opacity(this.navigationButtonsOpacity)
+            .position({ x: '100%', y: '50%' })
+            .translate({ x: -64, y: -24 })
+            .onClick(() => {
+              // 切换到下一个图表
+              this.currentTabIndex = (this.currentTabIndex + 1) % this.chartTypes.length;
+            })
+            .animation({
+              duration: 300,
+              curve: Curve.EaseInOut
+            })
+        }
+        
+        // 当前图表标题指示器
+        if (this.showNavigationButtons) {
+          Text(this.chartTypes[this.currentTabIndex].title)
+            .fontSize(14)
+            .fontColor(Color.White)
+            .opacity(this.navigationButtonsOpacity * 0.8)
+            .position({ x: '50%', y: 24 })
+            .translate({ x: -50, y: 0 })
+            .textAlign(TextAlign.Center)
+            .width(100)
+            .backgroundColor('rgba(0, 0, 0, 0.6)')
+            .padding(8)
+            .borderRadius(16)
+            .animation({
+              duration: 300,
+              curve: Curve.EaseInOut
+            })
+        }
       }
       .layoutWeight(1)
       .width('100%')
@@ -100,14 +143,44 @@ export struct DashBoard {
     }
     .width('100%')
     .height('100%')
-    .padding(2) // 最小化padding以最大化显示区域
+    .padding(0) // 完全移除padding以最大化显示区域
     .justifyContent(FlexAlign.Center)
     .alignItems(HorizontalAlign.Center)
+    .onClick(() => {
+      // 点击图表区域显示导航按钮
+      this.showNavigationButtons = true;
+      this.navigationButtonsOpacity = 1;
+
+      // 清除之前的超时
+      if (this.navigationButtonsTimeoutId) {
+        clearTimeout(this.navigationButtonsTimeoutId);
+      }
+
+      // 设置3秒后自动隐藏导航按钮
+      this.navigationButtonsTimeoutId = setTimeout(() => {
+        this.getUIContext().animateTo({
+          duration: 300,
+          curve: Curve.EaseOut,
+          onFinish: () => {
+            this.showNavigationButtons = false;
+            this.navigationButtonsOpacity = 0;
+          }
+        }, () => {
+          this.navigationButtonsOpacity = 0;
+        });
+      }, 3000);
+    })
   }
 
   aboutToDisappear() {
     // 清理资源
     this.audioControllerService.dispose();
+    
+    // 清理导航按钮超时ID
+    if (this.navigationButtonsTimeoutId) {
+      clearTimeout(this.navigationButtonsTimeoutId);
+      this.navigationButtonsTimeoutId = undefined;
+    }
   }
 
   aboutToAppear() {
