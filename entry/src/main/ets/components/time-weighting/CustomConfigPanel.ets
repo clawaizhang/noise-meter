@@ -54,10 +54,14 @@ export struct CustomConfigPanel {
   @Local tempCustomConfig: AudioAnalysisConfig = this.pk.custom_audio_config.clone(); // 临时配置状态
   // FFT大小选项
   private readonly fftSizeOptions: SelectOption[] = [
-    { value: 1024, label: '1024', index: 0 },
-    { value: 2048, label: '2048', index: 1 },
-    { value: 4096, label: '4096', index: 2 },
-    { value: 8192, label: '8192', index: 3 }
+    { value: 64, label: '64', index: 0 },
+    { value: 128, label: '128', index: 1 },
+    { value: 256, label: '256', index: 2 },
+    { value: 512, label: '512', index: 3 },
+    { value: 1024, label: '1024', index: 4 },
+    { value: 2048, label: '2048', index: 5 },
+    { value: 4096, label: '4096', index: 6 },
+    { value: 8192, label: '8192', index: 7 }
   ];
   // 更新间隔选项
   private readonly updateIntervalOptions: SelectOption[] = [

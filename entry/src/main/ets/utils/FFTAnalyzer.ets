@@ -112,10 +112,26 @@ export class FFTAnalyzer {
     const decimatedLength = Math.floor(samples.length / this.decimationFactor);
     const decimatedSamples = new Int16Array(decimatedLength);
 
-    // 简单的降采样：每隔N个样本取一个
-    // 在实际应用中，可能需要先进行低通滤波以防止混叠
+    // 使用简单的移动平均滤波作为抗混叠滤波器
+    // 在实际应用中，更复杂的滤波器（如FIR或IIR）会更好
+    const filterLength = Math.min(this.decimationFactor * 4, samples.length);
+    
     for (let i = 0; i < decimatedLength; i++) {
-      decimatedSamples[i] = samples[i * this.decimationFactor];
+      const sourceIndex = i * this.decimationFactor;
+      
+      // 计算移动平均值
+      let sum = 0;
+      let count = 0;
+      const startIdx = Math.max(0, sourceIndex - Math.floor(filterLength / 2));
+      const endIdx = Math.min(samples.length - 1, sourceIndex + Math.floor(filterLength / 2));
+      
+      for (let j = startIdx; j <= endIdx; j++) {
+        sum += samples[j];
+        count++;
+      }
+      
+      // 使用平均值作为降采样后的值
+      decimatedSamples[i] = Math.round(sum / count);
     }
 
     return decimatedSamples;

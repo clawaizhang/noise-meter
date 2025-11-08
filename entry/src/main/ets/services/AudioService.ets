@@ -476,14 +476,27 @@ export class AudioService {
         break;
     }
 
-    console.info(`[音频采集] 采样率配置已应用: ${this.currentConfig.sampleRate}Hz, ` +
-      `降采样=${this.currentConfig.decimationEnabled}, 降采样因子=${this.currentConfig.decimationFactor}`);
+    // 计算有效采样率（考虑降采样）
+    const effectiveSampleRate = this.currentConfig.decimationEnabled ?
+      this.currentConfig.sampleRate / this.currentConfig.decimationFactor :
+      this.currentConfig.sampleRate;
+
+    console.info(`[音频采集] 采样率配置已应用: 原始采样率=${this.currentConfig.sampleRate}Hz, ` +
+      `有效采样率=${effectiveSampleRate}Hz, 降采样启用=${this.currentConfig.decimationEnabled}, ` +
+      `降采样因子=${this.currentConfig.decimationFactor}`);
   }
 
   /**
    * 应用采样率设置变更
    */
-  public applySampleRateSettings(sampleRate: number, decimationEnabled: boolean, decimationFactor: number): void {
+  public async applySampleRateSettings(sampleRate: number, decimationEnabled: boolean, decimationFactor: number): Promise<void> {
+    const wasCapturing = this.state === AudioServiceState.CAPTURING;
+    
+    // 如果正在采集，先停止
+    if (wasCapturing) {
+      await this.stopCapture();
+    }
+    
     // 更新配置
     this.currentConfig.sampleRate = sampleRate;
     this.currentConfig.decimationEnabled = decimationEnabled;
@@ -496,6 +509,17 @@ export class AudioService {
     this.audioStreamProcessor.updateConfig(this.currentConfig);
 
     console.info(`[音频采集] 采样率设置已应用: ${sampleRate}Hz, 降采样=${decimationEnabled}, 降采样因子=${decimationFactor}`);
+    
+    // 如果之前在采集，重新开始采集
+    if (wasCapturing) {
+      try {
+        await this.startCapture();
+        console.info(`[音频采集] 采样率更新后重新开始采集成功`);
+      } catch (error) {
+        console.error(`[音频采集] 采样率更新后重新开始采集失败:`, error);
+        throw new Error(`采样率更新后重新开始采集失败: ${error instanceof Error ? error.message : String(error)}`);
+      }
+    }
   }
 
   /**

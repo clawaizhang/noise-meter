@@ -64,10 +64,14 @@ export struct EnhancedCustomConfigPanel {
   
   // FFT大小选项
   private readonly fftSizeOptions: SelectOption[] = [
-    { value: 1024, label: '1024', index: 0 },
-    { value: 2048, label: '2048', index: 1 },
-    { value: 4096, label: '4096', index: 2 },
-    { value: 8192, label: '8192', index: 3 }
+    { value: 64, label: '64', index: 0 },
+    { value: 128, label: '128', index: 1 },
+    { value: 256, label: '256', index: 2 },
+    { value: 512, label: '512', index: 3 },
+    { value: 1024, label: '1024', index: 4 },
+    { value: 2048, label: '2048', index: 5 },
+    { value: 4096, label: '4096', index: 6 },
+    { value: 8192, label: '8192', index: 7 }
   ];
   
   // 更新间隔选项
@@ -118,7 +122,7 @@ export struct EnhancedCustomConfigPanel {
       'FFT大小',
       '快速傅里叶变换的采样点数，决定了频率分辨率',
       'FFT越大，频率分辨率越高，但计算延迟也越大。较小的FFT提供更好的时间分辨率。',
-      ['1024: 适合快速变化的信号，如脉冲噪声', '2048: 平衡频率和时间分辨率，适合一般测量', '4096: 高频率分辨率，适合稳态信号分析', '8192: 极高频率分辨率，适合精密声学分析'],
+      ['64: 极高时间分辨率，适合瞬态信号分析', '128: 高时间分辨率，适合快速变化信号', '256: 较高时间分辨率，适合一般瞬态分析', '512: 平衡时间分辨率，适合快速测量', '1024: 适合快速变化的信号，如脉冲噪声', '2048: 平衡频率和时间分辨率，适合一般测量', '4096: 高频率分辨率，适合稳态信号分析', '8192: 极高频率分辨率，适合精密声学分析'],
       '频率分辨率 = 采样率 / FFT大小'
     )],
     ['updateInterval', new ParameterDetail(

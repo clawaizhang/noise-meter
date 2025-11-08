@@ -98,6 +98,7 @@ export struct AudioController {
   aboutToAppear() {
     // 初始化AudioService配置
     this.audioService.initializeConfig();
+    
     // 启动时间显示更新
     this.audioControllerService.startTimeDisplayUpdates();
 
@@ -862,6 +863,8 @@ export struct AudioController {
       console.info('[AudioController] 录制已停止（保存失败），保持停止状态');
     }
   }
+
+
 }
 
 /**

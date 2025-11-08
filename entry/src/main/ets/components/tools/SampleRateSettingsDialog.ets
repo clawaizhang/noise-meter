@@ -51,13 +51,19 @@ const SAMPLE_RATE_OPTIONS: SampleRateOption[] = [
 ];
 
 /**
- * 降采样因子选项
+ * 降采样因子选项（指数形式：0表示不降采样，1表示2倍，2表示4倍，依此类推）
  */
 const DECIMATION_FACTOR_OPTIONS: DecimationFactorOption[] = [
-  new DecimationFactorOption(2, '2倍'),
-  new DecimationFactorOption(4, '4倍'),
-  new DecimationFactorOption(8, '8倍'),
-  new DecimationFactorOption(16, '16倍')
+  new DecimationFactorOption(0, '0 (不降采样)'),
+  new DecimationFactorOption(1, '1 (2倍)'),
+  new DecimationFactorOption(2, '2 (4倍)'),
+  new DecimationFactorOption(3, '3 (8倍)'),
+  new DecimationFactorOption(4, '4 (16倍)'),
+  new DecimationFactorOption(5, '5 (32倍)'),
+  new DecimationFactorOption(6, '6 (64倍)'),
+  new DecimationFactorOption(7, '7 (128倍)'),
+  new DecimationFactorOption(8, '8 (256倍)'),
+  new DecimationFactorOption(9, '9 (512倍)')
 ];
 
 /**
@@ -69,14 +75,20 @@ export struct SampleRateSettingsDialog {
   @Local pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys)!;
   @Local selectedSampleRate: number = 44100;
   @Local decimationEnabled: boolean = false;
-  @Local selectedDecimationFactor: number = 2;
+  @Local selectedDecimationFactor: number = 0; // 默认不降采样
   @Param params: SampleRateSettingsParams | null = null;
 
   aboutToAppear(): void {
     // 初始化当前设置
     this.selectedSampleRate = this.pk.audio_sample_rate;
     this.decimationEnabled = this.pk.audio_decimation_enabled;
-    this.selectedDecimationFactor = this.pk.audio_decimation_factor;
+    
+    // 将实际降采样因子转换为指数形式（例如：4转换为2，8转换为3）
+    if (this.decimationEnabled && this.pk.audio_decimation_factor > 1) {
+      this.selectedDecimationFactor = Math.round(Math.log2(this.pk.audio_decimation_factor));
+    } else {
+      this.selectedDecimationFactor = 0; // 不降采样
+    }
     
     // 检查当前是否为自定义模式
     if (this.pk.audio_analysis_mode === 'CUSTOM_TIME_WEIGHTING') {
@@ -173,7 +185,7 @@ export struct SampleRateSettingsDialog {
           .fontColor($r('sys.color.font_primary'))
           .alignSelf(ItemAlign.Start)
 
-        Text('降采样可以大幅降低计算量，提高处理速度，但会损失高频信号成分。适用于对实时性要求高但不需要高频分析的场景。')
+        Text('降采样可以大幅降低计算量，提高处理速度，但会损失高频信号成分。适用于对实时性要求高但不需要高频分析的场景。数值表示降采样的指数，实际降采样倍数为2的指数次方。')
           .fontSize(DesignConstants.FONT_SIZE_SM)
           .fontColor($r('sys.color.font_secondary'))
           .lineHeight(20)
@@ -287,13 +299,15 @@ export struct SampleRateSettingsDialog {
     // 更新配置
     this.pk.audio_sample_rate = this.selectedSampleRate;
     this.pk.audio_decimation_enabled = this.decimationEnabled;
-    this.pk.audio_decimation_factor = this.selectedDecimationFactor;
+    // 将指数转换为实际降采样因子（2的指数次方）
+    const actualDecimationFactor = this.decimationEnabled ? Math.pow(2, this.selectedDecimationFactor) : 1;
+    this.pk.audio_decimation_factor = actualDecimationFactor;
 
     // 通知应用设置
     this.params?.onSettingsApplied(
       this.selectedSampleRate,
       this.decimationEnabled,
-      this.selectedDecimationFactor
+      actualDecimationFactor
     );
 
     // 关闭对话框

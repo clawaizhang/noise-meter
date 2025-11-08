@@ -16,7 +16,7 @@ export class WindowFunctionCache {
    * 预缓存所有需要的窗函数和能量校正因子
    */
   public static initialize(): void {
-    const fftSizes = [1024, 2048, 4096, 8192];
+    const fftSizes = [64, 128, 256, 512, 1024, 2048, 4096, 8192];
     const windowTypes = [WindowType.HANNING, WindowType.BLACKMAN];
     
     for (const size of fftSizes) {

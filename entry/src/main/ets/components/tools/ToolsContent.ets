@@ -589,9 +589,9 @@ export struct ToolsContent {
       onClose: () => {
         sampleRateDialog?.dismiss();
       },
-      onSettingsApplied: (sampleRate: number, decimationEnabled: boolean, decimationFactor: number) => {
+      onSettingsApplied: async (sampleRate: number, decimationEnabled: boolean, decimationFactor: number) => {
         // 应用采样率设置
-        this.applySampleRateSettings(sampleRate, decimationEnabled, decimationFactor);
+        await this.applySampleRateSettings(sampleRate, decimationEnabled, decimationFactor);
       }
     }
     sampleRateDialog = DialogHub.getSheet()
@@ -608,7 +608,7 @@ export struct ToolsContent {
   }
 
   // 应用采样率设置
-  private applySampleRateSettings(sampleRate: number, decimationEnabled: boolean, decimationFactor: number): void {
+  private async applySampleRateSettings(sampleRate: number, decimationEnabled: boolean, decimationFactor: number): Promise<void> {
     // 更新持久化存储
     this.pk.audio_sample_rate = sampleRate;
     this.pk.audio_decimation_enabled = decimationEnabled;
@@ -616,7 +616,7 @@ export struct ToolsContent {
     
     // 应用到AudioService
     const audioService = AudioService.getInstance(this.pk);
-    audioService.applySampleRateSettings(sampleRate, decimationEnabled, decimationFactor);
+    await audioService.applySampleRateSettings(sampleRate, decimationEnabled, decimationFactor);
     
     console.info(`[采样率设置] 已应用: 采样率=${sampleRate}Hz, 降采样启用=${decimationEnabled}, 降采样因子=${decimationFactor}`);
   }
@@ -625,8 +625,10 @@ export struct ToolsContent {
   private getSampleRateDisplayText(): string {
     const sampleRateText = `${(this.pk.audio_sample_rate / 1000).toFixed(1)}kHz`;
     
-    if (this.pk.audio_decimation_enabled) {
-      return `${sampleRateText} (降采样${this.pk.audio_decimation_factor}倍)`;
+    if (this.pk.audio_decimation_enabled && this.pk.audio_decimation_factor > 1) {
+      // 计算降采样指数
+      const decimationExponent = Math.round(Math.log2(this.pk.audio_decimation_factor));
+      return `${sampleRateText} (降采样${decimationExponent}级/${this.pk.audio_decimation_factor}倍)`;
     } else {
       return sampleRateText;
     }
