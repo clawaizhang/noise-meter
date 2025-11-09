@@ -441,8 +441,7 @@ export function showWindowFunctionParamsDialog(params: WindowFunctionParamsDialo
   return DialogHub.getSheet()
     .setStyle({
       showClose: false,
-      backgroundColor: $r('sys.color.background_secondary'),
-      detents: [0.6, 0.8]
+      backgroundColor: $r('sys.color.comp_background_primary')
     })
     .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS })
     .setComponentTargetId('mainId')

@@ -51,16 +51,37 @@ import {
 } from './WindowFunctionParamsDialog';
 import { WindowType } from '../../common/WindowType';
 
-// 工具功能卡片配置
-interface ToolCardConfig {
+// 功能分类枚举
+enum ToolCategory {
+  BASIC_MEASUREMENT = 'BASIC_MEASUREMENT',    // 基础测量
+  DATA_MANAGEMENT = 'DATA_MANAGEMENT',        // 数据管理
+  DISPLAY_SETTINGS = 'DISPLAY_SETTINGS',       // 显示设置
+  ALERT_SYSTEM = 'ALERT_SYSTEM',             // 警报系统
+  ADVANCED_SETTINGS = 'ADVANCED_SETTINGS',     // 高级设置
+  SYSTEM_TOOLS = 'SYSTEM_TOOLS'              // 系统工具
+}
+
+// 工具功能配置接口
+interface ToolConfig {
+  id: string;
   title: string;
   icon: Resource;
   description: string;
-  status?: string;
-  statusColor?: Resource;
+  category: ToolCategory;
+  isAdvanced?: boolean;
+  getStatus?: () => string;
+  getStatusColor?: () => Resource;
   onTap: () => void;
 }
 
+// 功能分类配置接口
+interface CategoryConfig {
+  title: string;
+  icon: Resource;
+  description: string;
+  color: Resource;
+  tools: ToolConfig[];
+}
 
 @ComponentV2
 export struct ToolsContent {
@@ -68,6 +89,11 @@ export struct ToolsContent {
   @Local pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys)!;
   @Local isTorchOn: boolean = false;
   @Local private isLocationRefreshing: boolean = false;
+  @Local expandedCategories: Set<ToolCategory> = new Set();
+  @Local isAdvancedMode: boolean = false;
+  @Local animatingCategories: Set<ToolCategory> = new Set();
+  @Local hoveredTool: string = '';
+  @Local pressedTool: string = '';
   private locationService: LocationService = LocationService.getInstance();
 
   aboutToAppear(): void {
@@ -75,17 +101,210 @@ export struct ToolsContent {
     if (this.pk.location_enabled) {
       this.refreshLocation();
     }
+    
+    // 默认展开基础测量和数据管理
+    this.expandedCategories.add(ToolCategory.BASIC_MEASUREMENT);
+    this.expandedCategories.add(ToolCategory.DATA_MANAGEMENT);
   }
 
   aboutToDisappear(): void {
   }
 
+  // 获取所有功能分类配置
+  private getCategories(): CategoryConfig[] {
+    const categories: CategoryConfig[] = [
+      {
+        title: '基础测量',
+        icon: $r('app.media.ic_meter'),
+        description: '核心测量功能设置',
+        color: $r('sys.color.brand'),
+        tools: [
+          {
+            id: 'calibration',
+            title: '声级校准',
+            icon: $r('app.media.ic_calibration'),
+            description: '自动和手动校准',
+            category: ToolCategory.BASIC_MEASUREMENT,
+            getStatus: () => `当前: ${this.pk.calibration_value}dB`,
+            getStatusColor: () => $r('sys.color.font_primary'),
+            onTap: (): void => this.navigateToAudioCalibration()
+          },
+          {
+            id: 'frequency_weighting',
+            title: '频率加权',
+            icon: $r('app.media.ic_frequency_weighting'),
+            description: 'A/C/Z计权设置',
+            category: ToolCategory.BASIC_MEASUREMENT,
+            getStatus: () => this.getWeightingDisplayName(this.pk.weighting_type),
+            getStatusColor: () => $r('sys.color.font_primary'),
+            onTap: (): void => this.navigateToFrequencyWeighting()
+          },
+          {
+            id: 'audio_analysis_mode',
+            title: '音频分析模式',
+            icon: $r('app.media.ic_time_weighting'),
+            description: '快速/慢速/脉冲',
+            category: ToolCategory.BASIC_MEASUREMENT,
+            getStatus: () => this.getAnalysisModeDisplayName(this.pk.audio_analysis_mode),
+            getStatusColor: () => $r('sys.color.font_primary'),
+            onTap: (): void => this.navigateToAudioAnalysisMode()
+          }
+        ]
+      },
+      {
+        title: '数据管理',
+        icon: $r('app.media.ic_save'),
+        description: '数据记录和存储设置',
+        color: $r('sys.color.confirm'),
+        tools: [
+          {
+            id: 'audio_recording',
+            title: '音频记录',
+            icon: $r('app.media.ic_mic'),
+            description: '保存原始音频',
+            category: ToolCategory.DATA_MANAGEMENT,
+            getStatus: () => this.pk.record_enabled ? '已开启' : '已关闭',
+            getStatusColor: () => this.pk.record_enabled ? $r('sys.color.confirm') : $r('sys.color.font_secondary'),
+            onTap: (): void => this.toggleAudioRecording()
+          },
+          {
+            id: 'auto_save',
+            title: '自动保存',
+            icon: $r('app.media.ic_save'),
+            description: '自动保存设置',
+            category: ToolCategory.DATA_MANAGEMENT,
+            getStatus: () => this.pk.auto_save_enabled ? '已开启' : '已关闭',
+            getStatusColor: () => this.pk.auto_save_enabled ? $r('sys.color.confirm') : $r('sys.color.font_secondary'),
+            onTap: (): void => this.navigateToAutoSave()
+          },
+          {
+            id: 'location_service',
+            title: '位置服务',
+            icon: $r('app.media.ic_location'),
+            description: '记录位置信息',
+            category: ToolCategory.DATA_MANAGEMENT,
+            getStatus: () => this.locationStatus,
+            getStatusColor: () => this.locationStatusColor,
+            onTap: () => this.toggleLocationService()
+          }
+        ]
+      },
+      {
+        title: '显示设置',
+        icon: $r('app.media.ic_frequency_weighting'),
+        description: '频谱显示配置',
+        color: $r('sys.color.font_emphasize'),
+        tools: [
+          {
+            id: 'spectrum_display',
+            title: '频谱显示设置',
+            icon: $r('app.media.ic_frequency_weighting'),
+            description: '线形图/柱状图/混合模式',
+            category: ToolCategory.DISPLAY_SETTINGS,
+            getStatus: () => this.getSpectrumDisplayModeText(),
+            getStatusColor: () => $r('sys.color.font_primary'),
+            onTap: (): void => this.navigateToSpectrumDisplaySettings()
+          }
+        ]
+      },
+      {
+        title: '警报系统',
+        icon: $r('app.media.ic_alarm'),
+        description: '阈值和通知管理',
+        color: $r('sys.color.warning'),
+        tools: [
+          {
+            id: 'alerts',
+            title: '警报设置',
+            icon: $r('app.media.ic_alarm'),
+            description: '阈值和通知管理',
+            category: ToolCategory.ALERT_SYSTEM,
+            getStatus: () => `阈值: ${this.pk.alarm_threshold.currentEffectiveThreshold}dB`,
+            getStatusColor: () => $r('sys.color.font_primary'),
+            onTap: (): void => this.navigateToAlerts()
+          }
+        ]
+      },
+      {
+        title: '高级设置',
+        icon: $r('app.media.ic_filter'),
+        description: '专业音频处理设置',
+        color: $r('sys.color.font_secondary'),
+        tools: [
+          {
+            id: 'sample_rate',
+            title: '采样率设置',
+            icon: $r('app.media.ic_frequency_weighting'),
+            description: '音频采样率和降采样',
+            category: ToolCategory.ADVANCED_SETTINGS,
+            isAdvanced: true,
+            getStatus: () => this.getSampleRateDisplayText(),
+            getStatusColor: () => $r('sys.color.font_primary'),
+            onTap: (): void => this.navigateToSampleRateSettings()
+          },
+          {
+            id: 'window_function',
+            title: '窗函数设置',
+            icon: $r('app.media.ic_filter'),
+            description: 'FFT窗函数选择',
+            category: ToolCategory.ADVANCED_SETTINGS,
+            isAdvanced: true,
+            getStatus: () => this.getWindowFunctionDisplayName(this.pk.window_function_type),
+            getStatusColor: () => $r('sys.color.font_primary'),
+            onTap: (): void => this.navigateToWindowFunctionSettings()
+          },
+          {
+            id: 'window_params',
+            title: '窗函数参数',
+            icon: $r('app.media.ic_filter'),
+            description: '可调窗函数参数',
+            category: ToolCategory.ADVANCED_SETTINGS,
+            isAdvanced: true,
+            getStatus: () => this.getWindowParamsDisplayName(),
+            getStatusColor: () => $r('sys.color.font_primary'),
+            onTap: (): void => this.navigateToWindowFunctionParamsSettings()
+          }
+        ]
+      },
+      {
+        title: '系统工具',
+        icon: $r('app.media.ic_flashlight_bold'),
+        description: '设备辅助功能',
+        color: $r('sys.color.font_secondary'),
+        tools: [
+          {
+            id: 'flashlight',
+            title: '手电筒',
+            icon: $r('app.media.ic_flashlight_bold'),
+            description: '开启/关闭手电筒',
+            category: ToolCategory.SYSTEM_TOOLS,
+            getStatus: () => this.isTorchOn ? '开启' : '关闭',
+            getStatusColor: () => this.isTorchOn ? $r('sys.color.confirm') : $r('sys.color.font_secondary'),
+            onTap: (): void => this.toggleTorch()
+          }
+        ]
+      }
+    ];
+
+    return categories;
+  }
+
   build() {
     Scroll() {
       Column({ space: DesignConstants.SPACING_LG }) {
+        // 模式切换
+        this.buildModeToggle()
 
-        // 工具功能卡片区
-        this.buildToolsCards()
+        // 功能分类列表 - 根据模式过滤
+        ForEach(this.getCategories().filter(category => {
+          // 在基础模式下，隐藏高级设置分类
+          if (!this.isAdvancedMode && category.title === '高级设置') {
+            return false;
+          }
+          return true;
+        }), (category: CategoryConfig) => {
+          this.buildCategorySection(category)
+        })
       }
       .width('100%')
     }
@@ -96,245 +315,287 @@ export struct ToolsContent {
     .scrollable(ScrollDirection.Vertical)
     .scrollBar(BarState.Off)
     .edgeEffect(EdgeEffect.Spring)
-
   }
 
   @Builder
-  private buildToolsCards() {
-    GridRow({ columns: 2, gutter: DesignConstants.SPACING_MD }) {
-      // 测量工具
-      GridCol({ span: 1 }) {
-        this.buildToolCard({
-          title: '声级校准',
-          icon: $r('app.media.ic_calibration'),
-          description: '自动和手动校准',
-          status: `当前: ${this.pk.calibration_value}dB`,
-          statusColor: $r('sys.color.font_primary'),
-          onTap: () => {
-            this.navigateToAudioCalibration()
-          }
+  private buildModeToggle() {
+    Column({ space: DesignConstants.SPACING_SM }) {
+      // 模式切换按钮
+      Row({ space: DesignConstants.SPACING_MD }) {
+        Column() {
+          Text('基础模式')
+            .fontSize(DesignConstants.FONT_SIZE_SM)
+            .fontColor(!this.isAdvancedMode ? $r('sys.color.background_secondary') : $r('sys.color.font_secondary'))
+            .fontWeight(!this.isAdvancedMode ? FontWeight.Medium : FontWeight.Normal)
+            .animation({
+              duration: DesignConstants.ANIMATION_DURATION_SM,
+              curve: Curve.EaseInOut
+            })
+        }
+        .layoutWeight(1)
+        .height(36)
+        .justifyContent(FlexAlign.Center)
+        .backgroundColor(!this.isAdvancedMode ? $r('sys.color.brand') : $r('sys.color.comp_background_primary'))
+        .borderRadius(DesignConstants.BORDER_RADIUS_SM)
+        .onClick(() => {
+          this.isAdvancedMode = false;
+        })
+        .animation({
+          duration: DesignConstants.ANIMATION_DURATION_SM,
+          curve: Curve.EaseInOut
+        })
+
+        Column() {
+          Text('专业模式')
+            .fontSize(DesignConstants.FONT_SIZE_SM)
+            .fontColor(this.isAdvancedMode ? $r('sys.color.background_secondary') : $r('sys.color.font_secondary'))
+            .fontWeight(this.isAdvancedMode ? FontWeight.Medium : FontWeight.Normal)
+            .animation({
+              duration: DesignConstants.ANIMATION_DURATION_SM,
+              curve: Curve.EaseInOut
+            })
+        }
+        .layoutWeight(1)
+        .height(36)
+        .justifyContent(FlexAlign.Center)
+        .backgroundColor(this.isAdvancedMode ? $r('sys.color.brand') : $r('sys.color.comp_background_primary'))
+        .borderRadius(DesignConstants.BORDER_RADIUS_SM)
+        .onClick(() => {
+          this.isAdvancedMode = true;
+        })
+        .animation({
+          duration: DesignConstants.ANIMATION_DURATION_SM,
+          curve: Curve.EaseInOut
         })
       }
-
-      // 分析工具
-      GridCol({ span: 1 }) {
-        this.buildToolCard({
-          title: '频率加权',
-          icon: $r('app.media.ic_frequency_weighting'),
-          description: 'A/C/Z计权设置',
-          status: `当前: ${this.getWeightingDisplayName(this.pk.weighting_type)}`,
-          statusColor: $r('sys.color.font_primary'),
-          onTap: () => {
-            this.navigateToFrequencyWeighting()
-          }
-        })
+      .width('100%')
+      .height(40)
+      .backgroundColor($r('sys.color.comp_background_primary'))
+      .borderRadius(DesignConstants.BORDER_RADIUS_MD)
+      .padding(2)
+      
+      // 模式说明
+      Column({ space: DesignConstants.SPACING_XS }) {
+        Text(this.isAdvancedMode ? '专业模式：显示所有高级音频处理功能' : '基础模式：显示常用核心功能')
+          .fontSize(DesignConstants.FONT_SIZE_XS)
+          .fontColor($r('sys.color.font_secondary'))
+          .textAlign(TextAlign.Center)
       }
+      .width('100%')
+      .padding({ top: DesignConstants.SPACING_XS })
+      .animation({
+        duration: DesignConstants.ANIMATION_DURATION_SM,
+        curve: Curve.EaseInOut
+      })
+    }
+    .width('100%')
+    .backgroundColor($r('sys.color.comp_background_primary'))
+    .borderRadius(DesignConstants.BORDER_RADIUS_MD)
+    .margin({ bottom: DesignConstants.SPACING_MD })
+    .padding(DesignConstants.SPACING_MD)
+  }
 
-      // 音频分析模式
-      GridCol({ span: 1 }) {
-        this.buildToolCard({
-          title: '音频分析模式',
-          icon: $r('app.media.ic_time_weighting'),
-          description: '快速/慢速/脉冲',
-          status: `当前: ${this.getAnalysisModeDisplayName(this.pk.audio_analysis_mode)}`,
-          statusColor: $r('sys.color.font_primary'),
-          onTap: () => {
-            this.navigateToAudioAnalysisMode()
-          }
-        })
-      }
+  @Builder
+  private buildCategorySection(category: CategoryConfig) {
+    Column({ space: DesignConstants.SPACING_MD }) {
+      // 分类标题
+      this.buildCategoryHeader(category)
 
-      // 音频记录开关
-      GridCol({ span: 1 }) {
-        this.buildToolCard({
-          title: '音频记录',
-          icon: $r('app.media.ic_mic'),
-          description: '保存原始音频',
-          status: this.pk.record_enabled ? '已开启' : '已关闭',
-          statusColor: this.pk.record_enabled ? $r('sys.color.confirm') : $r('sys.color.font_secondary'),
-          onTap: () => {
-            this.toggleAudioRecording()
-          }
-        })
-      }
-
-      // 警报工具
-      GridCol({ span: 1 }) {
-        this.buildToolCard({
-          title: '警报设置',
-          icon: $r('app.media.ic_alarm'),
-          description: '阈值和通知管理',
-          status: `阈值: ${this.pk.alarm_threshold.currentEffectiveThreshold}dB`,
-          statusColor: $r('sys.color.font_primary'),
-          onTap: () => {
-            this.navigateToAlerts()
-          }
-        })
-      }
-
-      // 数据工具
-      GridCol({ span: 1 }) {
-        this.buildToolCard({
-          title: '自动保存',
-          icon: $r('app.media.ic_save'),
-          description: '自动保存设置',
-          status: this.pk.auto_save_enabled ? '已开启' : '已关闭',
-          statusColor: this.pk.auto_save_enabled ? $r('sys.color.confirm') : $r('sys.color.font_secondary'),
-          onTap: () => {
-            this.navigateToAutoSave()
-          }
-        })
-      }
-
-      // 位置服务卡片
-      GridCol({ span: 1 }) {
-        this.buildToolCard({
-          title: '位置服务',
-          icon: $r('app.media.ic_location'),
-          description: '记录位置信息',
-          status: this.locationStatus,
-          statusColor: this.locationStatusColor,
-          onTap: () => {
-            this.toggleLocationService()
-          }
-        })
-      }
-
-      // 频谱显示设置卡片
-      GridCol({ span: 1 }) {
-        this.buildToolCard({
-          title: '频谱显示设置',
-          icon: $r('app.media.ic_frequency_weighting'),
-          description: '线形图/柱状图/混合模式',
-          status: this.getSpectrumDisplayModeText(),
-          statusColor: $r('sys.color.font_primary'),
-          onTap: () => {
-            this.navigateToSpectrumDisplaySettings()
-          }
-        })
-      }
-
-      // 手电筒卡片
-      GridCol({ span: 1 }) {
-        this.buildToolCard({
-          title: '手电筒',
-          icon: $r('app.media.ic_flashlight_bold'),
-          description: '开启/关闭手电筒',
-          status: this.isTorchOn ? '开启' : '关闭',
-          statusColor: this.isTorchOn ? $r('sys.color.confirm') : $r('sys.color.font_secondary'),
-          onTap: () => {
-            this.toggleTorch()
-          }
-        })
-      }
-
-      // 采样率设置卡片
-      GridCol({ span: 1 }) {
-        this.buildToolCard({
-          title: '采样率设置',
-          icon: $r('app.media.ic_frequency_weighting'),
-          description: '音频采样率和降采样',
-          status: this.getSampleRateDisplayText(),
-          statusColor: $r('sys.color.font_primary'),
-          onTap: () => {
-            this.navigateToSampleRateSettings()
-          }
-        })
-      }
-
-      // 窗函数设置卡片
-      GridCol({ span: 1 }) {
-        this.buildToolCard({
-          title: '窗函数设置',
-          icon: $r('app.media.ic_filter'),
-          description: 'FFT窗函数选择',
-          status: this.getWindowFunctionDisplayName(this.pk.window_function_type),
-          statusColor: $r('sys.color.font_primary'),
-          onTap: () => {
-            this.navigateToWindowFunctionSettings()
-          }
-        })
-      }
-
-      // 窗函数参数设置卡片
-      GridCol({ span: 1 }) {
-        this.buildToolCard({
-          title: '窗函数参数',
-          icon: $r('app.media.ic_filter'),
-          description: '可调窗函数参数',
-          status: this.getWindowParamsDisplayName(),
-          statusColor: $r('sys.color.font_primary'),
-          onTap: () => {
-            this.navigateToWindowFunctionParamsSettings()
-          }
+      // 分类内容 - 使用动画展开/收起
+      if (this.expandedCategories.has(category.tools[0].category)) {
+        Column({ space: DesignConstants.SPACING_SM }) {
+          ForEach(category.tools, (tool: ToolConfig) => {
+            // 根据模式过滤高级功能
+            if (!tool.isAdvanced || this.isAdvancedMode) {
+              this.buildToolCard(tool)
+            }
+          })
+        }
+        .width('100%')
+        .margin({ top: DesignConstants.SPACING_SM })
+        .opacity(this.animatingCategories.has(category.tools[0].category) ? 0 : 1)
+        .animation({
+          duration: DesignConstants.ANIMATION_DURATION_MD,
+          curve: Curve.EaseInOut,
+          delay: this.animatingCategories.has(category.tools[0].category) ? 0 : 50
         })
       }
     }
     .width('100%')
+    .padding(DesignConstants.SPACING_MD)
+    .backgroundColor($r('sys.color.comp_background_primary'))
+    .borderRadius(DesignConstants.BORDER_RADIUS_LG)
+    .shadow(DesignConstants.SHADOW_SM)
   }
 
   @Builder
-  private buildToolCard(config: ToolCardConfig) {
+  private buildCategoryHeader(category: CategoryConfig) {
+    Row({ space: DesignConstants.SPACING_MD }) {
+      // 分类图标
+      Image(category.icon)
+        .width(24)
+        .height(24)
+        .fillColor(category.color)
+        .animation({
+          duration: DesignConstants.ANIMATION_DURATION_SM,
+          curve: Curve.EaseInOut
+        })
+
+      // 分类信息
+      Column({ space: DesignConstants.SPACING_XS }) {
+        Row() {
+          Text(category.title)
+            .fontSize(DesignConstants.FONT_SIZE_MD)
+            .fontWeight(FontWeight.Medium)
+            .fontColor($r('sys.color.font_primary'))
+
+          // 高级标识
+          if (category.title === '高级设置') {
+            Text('PRO')
+              .fontSize(DesignConstants.FONT_SIZE_XS)
+              .fontColor($r('sys.color.background_secondary'))
+              .backgroundColor(category.color)
+              .borderRadius(DesignConstants.BORDER_RADIUS_XS)
+              .padding({ left: 4, right: 4, top: 2, bottom: 2 })
+              .margin({ left: DesignConstants.SPACING_XS })
+              .animation({
+                duration: DesignConstants.ANIMATION_DURATION_SM,
+                curve: Curve.EaseInOut
+              })
+          }
+
+          Blank()
+        }
+        .width('100%')
+
+        Text(category.description)
+          .fontSize(DesignConstants.FONT_SIZE_SM)
+          .fontColor($r('sys.color.font_secondary'))
+      }
+      .layoutWeight(1)
+      .alignItems(HorizontalAlign.Start)
+
+      // 展开指示器 - 带动画
+      Image($r('sys.media.ohos_ic_public_arrow_down'))
+        .width(16)
+        .height(16)
+        .fillColor($r('sys.color.font_secondary'))
+        .rotate({
+          angle: this.expandedCategories.has(category.tools[0].category) ? 180 : 0
+        })
+        .animation({
+          duration: DesignConstants.ANIMATION_DURATION_SM,
+          curve: Curve.EaseInOut
+        })
+    }
+    .width('100%')
+    .padding({ top: DesignConstants.SPACING_SM, bottom: DesignConstants.SPACING_SM })
+    .onClick(() => {
+      this.toggleCategory(category.tools[0].category)
+    })
+    .gesture(
+      TapGesture()
+        .onAction(() => {
+          // 添加触觉反馈效果
+          this.animateCategoryPress(category.tools[0].category);
+        })
+    )
+  }
+
+  @Builder
+  private buildToolCard(tool: ToolConfig) {
     Row({ space: DesignConstants.SPACING_MD }) {
       // 左侧图标区域
-      Image(config.icon)
-        .width(32)
-        .height(32)
-        .fillColor($r('sys.color.icon_primary'))
+      Image(tool.icon)
+        .width(24)
+        .height(24)
+        .fillColor(this.hoveredTool === tool.id ? $r('sys.color.brand') : $r('sys.color.icon_primary'))
+        .scale({ x: this.pressedTool === tool.id ? 0.9 : 1.0, y: this.pressedTool === tool.id ? 0.9 : 1.0 })
+        .animation({
+          duration: DesignConstants.ANIMATION_DURATION_XS,
+          curve: Curve.EaseInOut
+        })
 
       // 右侧内容区域
       Column({ space: DesignConstants.SPACING_XS }) {
         // 标题行
         Row() {
-          Text(config.title)
-            .fontSize(DesignConstants.FONT_SIZE_MD)
-            .fontWeight(FontWeight.Medium)
-            .fontColor($r('sys.color.font_primary'))
-
-          Blank()
-        }
-        .width('100%')
-
-        // 描述行
-        Row() {
-          Text(config.description)
+          Text(tool.title)
             .fontSize(DesignConstants.FONT_SIZE_SM)
-            .fontColor($r('sys.color.font_secondary'))
+            .fontWeight(FontWeight.Medium)
+            .fontColor(this.hoveredTool === tool.id ? $r('sys.color.brand') : $r('sys.color.font_primary'))
+            .animation({
+              duration: DesignConstants.ANIMATION_DURATION_XS,
+              curve: Curve.EaseInOut
+            })
 
           Blank()
         }
         .width('100%')
 
-        // 状态显示区域
-        if (config.status) {
-          Row() {
-            Text(config.status)
-              .fontSize(DesignConstants.FONT_SIZE_SM)
-              .fontWeight(FontWeight.Medium)
-              .fontColor(config.statusColor || $r('sys.color.font_primary'))
+        // 描述和状态行
+        Row() {
+          Text(tool.description)
+            .fontSize(DesignConstants.FONT_SIZE_XS)
+            .fontColor($r('sys.color.font_secondary'))
+            .layoutWeight(1)
 
-            Blank()
+          if (tool.getStatus && tool.getStatusColor) {
+            Text(tool.getStatus())
+              .fontSize(DesignConstants.FONT_SIZE_XS)
+              .fontWeight(FontWeight.Medium)
+              .fontColor(tool.getStatusColor())
           }
-          .width('100%')
-          .margin({ top: DesignConstants.SPACING_XS })
         }
+        .width('100%')
       }
       .layoutWeight(1)
       .alignItems(HorizontalAlign.Start)
     }
     .width('100%')
-    .height(80)
+    .height(60)
     .padding(DesignConstants.SPACING_MD)
-    .backgroundColor($r('sys.color.comp_background_primary'))
-    .borderRadius(DesignConstants.BORDER_RADIUS_LG)
+    .backgroundColor(this.pressedTool === tool.id ? $r('sys.color.comp_background_emphasize') :
+                   this.hoveredTool === tool.id ? $r('sys.color.comp_background_secondary') :
+                   $r('sys.color.background_secondary'))
+    .borderRadius(DesignConstants.BORDER_RADIUS_MD)
     .justifyContent(FlexAlign.Center)
     .alignItems(VerticalAlign.Center)
-    .shadow(DesignConstants.SHADOW_SM)
+    .shadow(this.hoveredTool === tool.id ? DesignConstants.SHADOW_MD : DesignConstants.SHADOW_SM)
+    .animation({
+      duration: DesignConstants.ANIMATION_DURATION_XS,
+      curve: Curve.EaseInOut
+    })
     .onClick(() => {
       Throttle.click(() => {
-        config.onTap()
+        tool.onTap()
       });
     })
+    .onHover((isHovered: boolean) => {
+      this.hoveredTool = isHovered ? tool.id : '';
+    })
+  }
+
+  // 切换分类展开状态
+  private toggleCategory(category: ToolCategory): void {
+    // 添加动画状态
+    this.animatingCategories.add(category);
+    
+    if (this.expandedCategories.has(category)) {
+      this.expandedCategories.delete(category);
+    } else {
+      this.expandedCategories.add(category);
+    }
+    
+    // 延迟清除动画状态
+    setTimeout(() => {
+      this.animatingCategories.delete(category);
+    }, DesignConstants.ANIMATION_DURATION_MD);
+  }
+  
+  // 分类按压动画效果
+  private animateCategoryPress(category: ToolCategory): void {
+    // 可以在这里添加更复杂的动画效果
   }
 
   // 导航到声级校准设置
@@ -356,6 +617,7 @@ export struct ToolsContent {
       .build();
     calibrationDialog.show();
   }
+
   // 导航到警报与通知设置
   private navigateToAlerts = () => {
     let alertsDialog: InfSheet;
@@ -375,6 +637,7 @@ export struct ToolsContent {
       .build();
     alertsDialog.show();
   }
+
   // 导航到频率加权设置
   private navigateToFrequencyWeighting = () => {
     let frequencyDialog: InfSheet;
@@ -400,6 +663,7 @@ export struct ToolsContent {
 
     frequencyDialog.show();
   }
+
   // 导航到自动保存设置
   private navigateToAutoSave = () => {
     let autoSaveDialog: InfSheet;
@@ -560,8 +824,6 @@ export struct ToolsContent {
       const locationInfo: LocationInfo = await this.locationService.requestSingleLocation();
     } catch (error) {
       console.error('获取位置信息失败:', error);
-
-
     } finally {
       this.isLocationRefreshing = false;
     }
@@ -573,7 +835,6 @@ export struct ToolsContent {
     let param: SpectrumDisplaySettingsParams = {
       onClose: () => {
         spectrumDialog?.dismiss();
-
       },
       onSettingsApplied: (config: SpectrumDisplayConfig) => {
         // 应用频谱显示设置
@@ -701,8 +962,7 @@ export struct ToolsContent {
     windowFunctionDialog = DialogHub.getSheet()
       .setStyle({
         showClose: false,
-        backgroundColor: $r('sys.color.background_secondary'),
-        detents: [0.8, 1.0]
+        backgroundColor: $r('sys.color.comp_background_primary'),
       })
       .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS })
       .setComponentTargetId('mainId')
@@ -784,7 +1044,7 @@ export struct ToolsContent {
         if (chebyshevAttenuation !== undefined) {
           this.pk.window_chebyshev_attenuation = chebyshevAttenuation;
         }
-        
+
         // 应用到AudioService
         const audioService = AudioService.getInstance(this.pk);
         await audioService.applyWindowFunctionSettings(
@@ -794,7 +1054,7 @@ export struct ToolsContent {
           this.pk.window_tukey_alpha,
           this.pk.window_chebyshev_attenuation
         );
-        
+
         console.info(`[窗函数参数设置] 已应用: 窗函数类型=${windowType}, KaiserBeta=${this.pk.window_kaiser_beta}, GaussianSigma=${this.pk.window_gaussian_sigma}, TukeyAlpha=${this.pk.window_tukey_alpha}, ChebyshevAttenuation=${this.pk.window_chebyshev_attenuation}`);
       },
       onClose: () => {
