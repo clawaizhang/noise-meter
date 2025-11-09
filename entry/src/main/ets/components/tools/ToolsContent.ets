@@ -5,25 +5,50 @@ import { DesignConstants } from '../../constants/DesignConstants';
 import { Throttle } from '../../utils/Debounce';
 import { LocationInfo, LocationService } from '../../services/LocationService';
 import { ToolConfigFactory } from './ToolConfigs';
-import { createLearnMoreButton, createToolIcon, createToolStatus, createUsageHint,
-         LearnMoreButton, ToolIcon, ToolStatus, UsageHint } from './ToolComponents';
+import {
+  createLearnMoreButton,
+  createToolIcon,
+  createToolStatus,
+  createUsageHint,
+  LearnMoreButton,
+  ToolIcon,
+  ToolStatus,
+  UsageHint
+} from './ToolComponents';
 import { ToolNavigationService } from './ToolNavigationService';
 import { ToolStatusService } from './ToolStatusService';
 
 // 功能分类枚举
 export enum ToolCategory {
-  BASIC_MEASUREMENT = 'BASIC_MEASUREMENT',    // 基础测量
-  DATA_MANAGEMENT = 'DATA_MANAGEMENT',        // 数据管理
-  DISPLAY_SETTINGS = 'DISPLAY_SETTINGS',       // 显示设置
-  ALERT_SYSTEM = 'ALERT_SYSTEM',             // 警报系统
-  ADVANCED_SETTINGS = 'ADVANCED_SETTINGS'     // 高级设置
+  BASIC_MEASUREMENT = 'BASIC_MEASUREMENT', // 基础测量
+  DATA_MANAGEMENT = 'DATA_MANAGEMENT', // 数据管理
+  DISPLAY_SETTINGS = 'DISPLAY_SETTINGS', // 显示设置
+  ALERT_SYSTEM = 'ALERT_SYSTEM', // 警报系统
+  ADVANCED_SETTINGS = 'ADVANCED_SETTINGS' // 高级设置
 }
 
 // 功能优先级枚举
 export enum ToolPriority {
-  ESSENTIAL = 'ESSENTIAL',    // 核心功能，所有用户都需要
+  ESSENTIAL = 'ESSENTIAL', // 核心功能，所有用户都需要
   RECOMMENDED = 'RECOMMENDED', // 推荐功能，大多数用户会用
-  ADVANCED = 'ADVANCED'        // 高级功能，专业用户需要
+  ADVANCED = 'ADVANCED' // 高级功能，专业用户需要
+}
+
+// 用户技能水平枚举
+enum UserSkillLevel {
+  BEGINNER = 'beginner',
+  INTERMEDIATE = 'intermediate',
+  EXPERT = 'expert'
+}
+
+// 测量场景枚举
+enum MeasurementScene {
+  INDOOR = 'INDOOR',
+  OUTDOOR = 'OUTDOOR',
+  INDUSTRIAL = 'INDUSTRIAL',
+  RESIDENTIAL = 'RESIDENTIAL',
+  TRAFFIC = 'TRAFFIC',
+  CUSTOM = 'CUSTOM'
 }
 
 
@@ -35,8 +60,13 @@ export interface ToolConfig {
   description: string;
   category: ToolCategory;
   priority: ToolPriority;
-  usageHint?: string;        // 功能提示
-  learnMore?: () => void;    // 学习更多
+  usageHint?: string; // 功能提示
+  learnMore?: () => void; // 学习更多
+  usageFrequency?: number; // 使用频率 0-1
+  progress?: number; // 配置完成度 0-1
+  isLocked?: boolean; // 是否锁定
+  unlockCondition?: string; // 解锁条件
+  quickSetup?: () => void; // 快速设置
   getStatus?: () => string;
   getStatusColor?: () => Resource;
   onTap: () => void;
@@ -68,21 +98,44 @@ export struct ToolsContent {
 
   aboutToAppear(): void {
     // 服务已在属性声明时初始化
-    
+    // 根据用户技能水平设置默认展开分类
+    this.setupDefaultCategories();
     // 如果位置服务已开启，自动获取位置
     if (this.pk.location_enabled) {
       this.refreshLocation();
     }
-    
+
     // 默认展开所有分类，让用户自由探索
     this.expandedCategories.add(ToolCategory.BASIC_MEASUREMENT);
     this.expandedCategories.add(ToolCategory.DATA_MANAGEMENT);
     this.expandedCategories.add(ToolCategory.DISPLAY_SETTINGS);
     this.expandedCategories.add(ToolCategory.ALERT_SYSTEM);
     this.expandedCategories.add(ToolCategory.ADVANCED_SETTINGS);
-    
+
+
     // 根据使用历史评估用户水平
     this.evaluateUserSkillLevel();
+  }
+
+  // 根据技能水平设置默认展开分类
+  private setupDefaultCategories(): void {
+    switch (this.userSkillLevel) {
+      case UserSkillLevel.BEGINNER:
+        this.expandedCategories.add(ToolCategory.BASIC_MEASUREMENT);
+        break;
+      case UserSkillLevel.INTERMEDIATE:
+        this.expandedCategories.add(ToolCategory.BASIC_MEASUREMENT);
+        this.expandedCategories.add(ToolCategory.DATA_MANAGEMENT);
+        this.expandedCategories.add(ToolCategory.ALERT_SYSTEM);
+        break;
+      case UserSkillLevel.EXPERT:
+        this.expandedCategories.add(ToolCategory.BASIC_MEASUREMENT);
+        this.expandedCategories.add(ToolCategory.DATA_MANAGEMENT);
+        this.expandedCategories.add(ToolCategory.DISPLAY_SETTINGS);
+        this.expandedCategories.add(ToolCategory.ALERT_SYSTEM);
+        this.expandedCategories.add(ToolCategory.ADVANCED_SETTINGS);
+        break;
+    }
   }
 
   aboutToDisappear(): void {
@@ -93,11 +146,17 @@ export struct ToolsContent {
     // 这里可以根据用户的使用历史、设置复杂度等来评估
     // 简化版本：根据高级功能的使用情况
     let advancedFeaturesUsed = 0;
-    
-    if (this.pk.audio_sample_rate !== 44100) advancedFeaturesUsed++;
-    if (this.pk.window_function_type !== 'HANNING') advancedFeaturesUsed++;
-    if (this.pk.audio_decimation_enabled) advancedFeaturesUsed++;
-    
+
+    if (this.pk.audio_sample_rate !== 44100) {
+      advancedFeaturesUsed++;
+    }
+    if (this.pk.window_function_type !== 'HANNING') {
+      advancedFeaturesUsed++;
+    }
+    if (this.pk.audio_decimation_enabled) {
+      advancedFeaturesUsed++;
+    }
+
     if (advancedFeaturesUsed >= 2) {
       this.userSkillLevel = 'expert';
     } else if (advancedFeaturesUsed >= 1) {
@@ -128,8 +187,10 @@ export struct ToolsContent {
       color: $r('sys.color.brand'),
       tools: [
         this.toolFactory.createCalibrationTool(this.navigationService.navigateToAudioCalibration),
-        this.toolFactory.createFrequencyWeightingTool(this.navigationService.navigateToFrequencyWeighting, this.statusService.getWeightingDisplayName.bind(this.statusService)),
-        this.toolFactory.createAudioAnalysisModeTool(this.navigationService.navigateToAudioAnalysisMode, this.statusService.getAnalysisModeDisplayName.bind(this.statusService))
+        this.toolFactory.createFrequencyWeightingTool(this.navigationService.navigateToFrequencyWeighting,
+          this.statusService.getWeightingDisplayName.bind(this.statusService)),
+        this.toolFactory.createAudioAnalysisModeTool(this.navigationService.navigateToAudioAnalysisMode,
+          this.statusService.getAnalysisModeDisplayName.bind(this.statusService))
       ]
     };
   }
@@ -144,7 +205,9 @@ export struct ToolsContent {
       tools: [
         this.toolFactory.createAudioRecordingTool(this.navigationService.toggleAudioRecording),
         this.toolFactory.createAutoSaveTool(this.navigationService.navigateToAutoSave),
-        this.toolFactory.createLocationServiceTool(this.navigationService.toggleLocationService.bind(this.navigationService, this.refreshLocation.bind(this)), this.statusService.getLocationStatus.bind(this.statusService), this.statusService.getLocationStatusColor.bind(this.statusService))
+        this.toolFactory.createLocationServiceTool(this.navigationService.toggleLocationService.bind(this.navigationService,
+          this.refreshLocation.bind(this)), this.statusService.getLocationStatus.bind(this.statusService),
+          this.statusService.getLocationStatusColor.bind(this.statusService))
       ]
     };
   }
@@ -157,7 +220,8 @@ export struct ToolsContent {
       description: '频谱显示配置',
       color: $r('sys.color.font_emphasize'),
       tools: [
-        this.toolFactory.createSpectrumDisplayTool(this.navigationService.navigateToSpectrumDisplaySettings, this.statusService.getSpectrumDisplayModeText.bind(this.statusService))
+        this.toolFactory.createSpectrumDisplayTool(this.navigationService.navigateToSpectrumDisplaySettings,
+          this.statusService.getSpectrumDisplayModeText.bind(this.statusService))
       ]
     };
   }
@@ -183,9 +247,12 @@ export struct ToolsContent {
       description: '高级音频处理和分析',
       color: $r('sys.color.font_secondary'),
       tools: [
-        this.toolFactory.createSampleRateTool(this.navigationService.navigateToSampleRateSettings, this.statusService.getSampleRateDisplayText.bind(this.statusService)),
-        this.toolFactory.createWindowFunctionTool(this.navigationService.navigateToWindowFunctionSettings, this.statusService.getWindowFunctionDisplayName.bind(this.statusService)),
-        this.toolFactory.createWindowParamsTool(this.navigationService.navigateToWindowFunctionParamsSettings, this.statusService.getWindowParamsDisplayName.bind(this.statusService))
+        this.toolFactory.createSampleRateTool(this.navigationService.navigateToSampleRateSettings,
+          this.statusService.getSampleRateDisplayText.bind(this.statusService)),
+        this.toolFactory.createWindowFunctionTool(this.navigationService.navigateToWindowFunctionSettings,
+          this.statusService.getWindowFunctionDisplayName.bind(this.statusService)),
+        this.toolFactory.createWindowParamsTool(this.navigationService.navigateToWindowFunctionParamsSettings,
+          this.statusService.getWindowParamsDisplayName.bind(this.statusService))
       ]
     };
   }
@@ -234,15 +301,15 @@ export struct ToolsContent {
         .width(20)
         .height(20)
         .fillColor($r('sys.color.brand'))
-      
+
       Text('智能助手')
         .fontSize(DesignConstants.FONT_SIZE_MD)
         .fontWeight(FontWeight.Medium)
         .fontColor($r('sys.color.font_primary'))
         .margin({ left: DesignConstants.SPACING_XS })
-      
+
       Blank()
-      
+
       Text(this.showAdvancedHints ? '收起提示' : '显示提示')
         .fontSize(DesignConstants.FONT_SIZE_XS)
         .fontColor($r('sys.color.brand'))
@@ -259,11 +326,11 @@ export struct ToolsContent {
       Text('💡 根据您的使用习惯，我们为您推荐以下功能：')
         .fontSize(DesignConstants.FONT_SIZE_SM)
         .fontColor($r('sys.color.font_secondary'))
-      
+
       Text(this.getSkillLevelTip())
         .fontSize(DesignConstants.FONT_SIZE_XS)
         .fontColor($r('sys.color.font_secondary'))
-      
+
       Text('📚 点击功能旁的"了解更多"获取详细说明')
         .fontSize(DesignConstants.FONT_SIZE_XS)
         .fontColor($r('sys.color.font_secondary'))
@@ -348,7 +415,12 @@ export struct ToolsContent {
               .fontColor($r('sys.color.background_secondary'))
               .backgroundColor(category.color)
               .borderRadius(DesignConstants.BORDER_RADIUS_XS)
-              .padding({ left: 4, right: 4, top: 2, bottom: 2 })
+              .padding({
+                left: 4,
+                right: 4,
+                top: 2,
+                bottom: 2
+              })
               .margin({ left: DesignConstants.SPACING_XS })
               .animation({
                 duration: DesignConstants.ANIMATION_DURATION_SM,
@@ -453,8 +525,8 @@ export struct ToolsContent {
     .height(tool.usageHint && this.showAdvancedHints ? 80 : 60)
     .padding(DesignConstants.SPACING_MD)
     .backgroundColor(this.pressedTool === tool.id ? $r('sys.color.comp_background_emphasize') :
-                   this.hoveredTool === tool.id ? $r('sys.color.comp_background_secondary') :
-                   $r('sys.color.background_secondary'))
+      this.hoveredTool === tool.id ? $r('sys.color.comp_background_secondary') :
+        $r('sys.color.background_secondary'))
     .borderRadius(DesignConstants.BORDER_RADIUS_MD)
     .justifyContent(FlexAlign.Center)
     .alignItems(VerticalAlign.Center)
@@ -477,25 +549,23 @@ export struct ToolsContent {
   private toggleCategory(category: ToolCategory): void {
     // 添加动画状态
     this.animatingCategories.add(category);
-    
+
     if (this.expandedCategories.has(category)) {
       this.expandedCategories.delete(category);
     } else {
       this.expandedCategories.add(category);
     }
-    
+
     // 延迟清除动画状态
     setTimeout(() => {
       this.animatingCategories.delete(category);
     }, DesignConstants.ANIMATION_DURATION_MD);
   }
-  
+
   // 分类按压动画效果
   private animateCategoryPress(category: ToolCategory): void {
     // 可以在这里添加更复杂的动画效果
   }
-
-
 
   // 刷新位置信息方法
   private async refreshLocation(): Promise<void> {
@@ -528,7 +598,6 @@ export struct ToolsContent {
     }
   }
 
-
   // 监听位置服务开关变化
   @Monitor('pk.location_enabled')
   onLocationEnabledChange(monitor: IMonitor) {
@@ -542,6 +611,4 @@ export struct ToolsContent {
       }
     }
   }
-
-
 }
