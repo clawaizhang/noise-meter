@@ -266,16 +266,25 @@ export struct ToolsContent {
         this.buildSimplifiedTips()
 
         // 工具网格布局 - 扁平化展示所有工具
-        Grid() {
+        GridRow({
+          columns: 12, // 总共12列，便于响应式布局
+          gutter: { x: DesignConstants.SPACING_SM, y: DesignConstants.SPACING_SM }, // 行列间距
+          breakpoints: {
+            reference: BreakpointsReference.WindowSize
+          }
+        }) {
           ForEach(this.getAllTools(), (tool: ToolConfig) => {
-            GridItem() {
+            GridCol({
+              span: {
+                sm: 6, // 小屏幕：每行2个 (12/6=2)
+                md: 4, // 中等屏幕：每行3个 (12/4=3)
+                lg: 3  // 大屏幕：每行4个 (12/3=4)
+              }
+            }) {
               this.buildSimplifiedToolCard(tool)
             }
           })
         }
-        .columnsTemplate('1fr 1fr')
-        .rowsGap(DesignConstants.SPACING_SM) // 减小行间距
-        .columnsGap(DesignConstants.SPACING_SM) // 减小列间距
         .width('100%')
         .padding(DesignConstants.SPACING_XS) // 减小整体内边距
       }
