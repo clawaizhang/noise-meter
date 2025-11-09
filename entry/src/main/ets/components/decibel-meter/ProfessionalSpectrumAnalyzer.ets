@@ -145,6 +145,7 @@ class YAxisValueFormatter implements IAxisValueFormatter {
 export struct ProfessionalSpectrumAnalyzer {
   // 输入参数
   @Param sampleRate: number = 44100
+  @Param isVisible: boolean = true // 图表是否可见
   // 依赖注入
   @Local private sysResourceManager: resourceManager.ResourceManager = resourceManager.getSystemResourceManager();
   @Local private ak: AppKeys = AppStorageV2.connect(AppKeys) ?? new AppKeys()
@@ -206,6 +207,11 @@ export struct ProfessionalSpectrumAnalyzer {
 
   @Monitor('ak.uiDisplayState.displaySpectrumData')
   onSpectrumDataChange(monitor: IMonitor) {
+    // 只有当图表可见时才处理数据更新
+    if (!this.isVisible) {
+      return;
+    }
+    
     const newSpectrum = monitor.value<Float32Array>()?.now;
     if (newSpectrum && this.ak.isDisplayApp) {
       this.currentSpectrumData = newSpectrum;
@@ -215,6 +221,11 @@ export struct ProfessionalSpectrumAnalyzer {
 
   @Monitor('pk.spectrum_display_mode','pk.spectrum_smoothing_factor','pk.spectrum_show_peak_frequency','pk.spectrum_frequency_range','pk.spectrum_db_range')
   onDisplayConfigChange() {
+    // 只有当图表可见时才处理配置变化
+    if (!this.isVisible) {
+      return;
+    }
+    
     this.displayConfig = this.spectrumDisplayService.getDisplayConfig(this.pk);
     this.updateDisplayData();
   }
@@ -232,7 +243,7 @@ export struct ProfessionalSpectrumAnalyzer {
    * 更新显示数据
    */
   private updateDisplayData(): void {
-    if (!this.displayConfig || this.currentSpectrumData.length === 0) {
+    if (!this.displayConfig || this.currentSpectrumData.length === 0 || !this.isVisible) {
       return;
     }
 
@@ -255,7 +266,7 @@ export struct ProfessionalSpectrumAnalyzer {
    * 更新图表数据
    */
   private updateChartData(): void {
-    if (!this.displayData) {
+    if (!this.displayData || !this.isVisible) {
       return;
     }
 

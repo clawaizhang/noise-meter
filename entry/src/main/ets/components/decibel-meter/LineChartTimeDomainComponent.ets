@@ -32,6 +32,7 @@ import {
 export struct LineChartTimeDomainComponent {
   // 输入参数
   @Param sampleRate: number = 44100
+  @Param isVisible: boolean = true // 图表是否可见
   @Local pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys)!;
 
   // 依赖注入
@@ -72,6 +73,11 @@ export struct LineChartTimeDomainComponent {
 
   @Monitor('ak.uiDisplayState.displayTimeDomainData')
   onTimeDomainDataChange(monitor: IMonitor) {
+    // 只有当图表可见时才处理数据更新
+    if (!this.isVisible) {
+      return;
+    }
+    
     if (this.ak.isDisplayApp) {
       // 直接使用最新的时域数据，因为AudioController已经限制了数据量（512个点）
       this.currentTimeDomainData = this.ak.uiDisplayState.displayTimeDomainData;
@@ -85,7 +91,7 @@ export struct LineChartTimeDomainComponent {
    * 更新图表数据
    */
   private updateChartData(): void {
-    if (!this.model || this.currentTimeDomainData.length === 0) {
+    if (!this.model || this.currentTimeDomainData.length === 0 || !this.isVisible) {
       return;
     }
 

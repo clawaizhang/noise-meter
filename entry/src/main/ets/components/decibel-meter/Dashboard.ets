@@ -17,6 +17,15 @@ interface ChartTypeConfig {
   componentId: number;
 }
 
+// 图表可见性状态接口
+interface ChartVisibilityState {
+  professionalSpectrum: boolean;
+  lineChartSpectrum: boolean;
+  spectrumBarChart: boolean;
+  lineChartTimeDomain: boolean;
+  statisticsChart: boolean;
+}
+
 @ComponentV2
 export struct DashBoard {
   @Param @Require meterOn: boolean = true;
@@ -31,6 +40,13 @@ export struct DashBoard {
   @Local private currentTabIndex: number = 0; // 当前选中的图表索引
   @Local private showNavigationButtons: boolean = false; // 是否显示导航按钮
   @Local private navigationButtonsOpacity: number = 0; // 导航按钮透明度
+  @Local private chartVisibilityState: ChartVisibilityState = {
+    professionalSpectrum: false,
+    lineChartSpectrum: false,
+    spectrumBarChart: false,
+    lineChartTimeDomain: false,
+    statisticsChart: false
+  }; // 图表可见性状态
   private animationTimeOutId: number | undefined;
   private navigationButtonsTimeoutId: number | undefined;
   // 服务实例
@@ -47,6 +63,68 @@ export struct DashBoard {
     { title: '时域波形图', componentId: 3 },
     { title: '声级分布图', componentId: 4 }
   ]
+
+  /**
+   * 更新图表可见性状态
+   * 只有当前显示的图表才被标记为可见
+   */
+  private updateChartVisibility(): void {
+    const newVisibilityState: ChartVisibilityState = {
+      professionalSpectrum: false,
+      lineChartSpectrum: false,
+      spectrumBarChart: false,
+      lineChartTimeDomain: false,
+      statisticsChart: false
+    };
+    
+    // 只有当前选中的图表是可见的
+    this.chartTypes.forEach((chartType, index) => {
+      if (index === this.currentTabIndex) {
+        switch (chartType.title) {
+          case '专业频谱分析':
+            newVisibilityState.professionalSpectrum = true;
+            break;
+          case '频率频谱图':
+            newVisibilityState.lineChartSpectrum = true;
+            break;
+          case '频谱柱状图':
+            newVisibilityState.spectrumBarChart = true;
+            break;
+          case '时域波形图':
+            newVisibilityState.lineChartTimeDomain = true;
+            break;
+          case '声级分布图':
+            newVisibilityState.statisticsChart = true;
+            break;
+        }
+      }
+    });
+    
+    // 更新可见性状态
+    this.chartVisibilityState = newVisibilityState;
+    
+    console.info(`[Dashboard] 更新图表可见性状态，当前可见图表: ${this.chartTypes[this.currentTabIndex].title}`);
+  }
+
+  /**
+   * 检查图表是否可见
+   */
+  private isChartVisible(chartTitle: string): boolean {
+    switch (chartTitle) {
+      case '专业频谱分析':
+        return this.chartVisibilityState.professionalSpectrum;
+      case '频率频谱图':
+        return this.chartVisibilityState.lineChartSpectrum;
+      case '频谱柱状图':
+        return this.chartVisibilityState.spectrumBarChart;
+      case '时域波形图':
+        return this.chartVisibilityState.lineChartTimeDomain;
+      case '声级分布图':
+        return this.chartVisibilityState.statisticsChart;
+      default:
+        return false;
+    }
+  }
 
   build() {
     Stack({ alignContent: Alignment.Top }) {
@@ -66,6 +144,8 @@ export struct DashBoard {
       .curve(Curve.EaseInOut) // 设置动画曲线
       .onChange((index: number) => {
         this.currentTabIndex = index;
+        // 更新图表可见性状态
+        this.updateChartVisibility();
       })
       .width('100%')
       .height('100%')
@@ -130,17 +210,30 @@ export struct DashBoard {
   @Builder
   buildChartContent(chartTitle: string) {
     Column() {
-      // 图表组件 - 直接全屏显示
+      // 图表组件 - 直接全屏显示，传递可见性状态
       if (chartTitle === '专业频谱分析') {
-        ProfessionalSpectrumAnalyzer({ sampleRate: 44100 })
+        ProfessionalSpectrumAnalyzer({ 
+          sampleRate: 44100,
+          isVisible: this.isChartVisible(chartTitle)
+        })
       } else if (chartTitle === '频率频谱图') {
-        LineChartSpectrumComponent({ sampleRate: 44100 })
+        LineChartSpectrumComponent({ 
+          sampleRate: 44100,
+          isVisible: this.isChartVisible(chartTitle)
+        })
       } else if (chartTitle === '频谱柱状图') {
-        SpectrumBarChartComponent()
+        SpectrumBarChartComponent({
+          isVisible: this.isChartVisible(chartTitle)
+        })
       } else if (chartTitle === '时域波形图') {
-        LineChartTimeDomainComponent({ sampleRate: 44100 })
+        LineChartTimeDomainComponent({ 
+          sampleRate: 44100,
+          isVisible: this.isChartVisible(chartTitle)
+        })
       } else if (chartTitle === '声级分布图') {
-        StatisticsChartComponent()
+        StatisticsChartComponent({
+          isVisible: this.isChartVisible(chartTitle)
+        })
       }
     }
     .width('100%')
@@ -189,6 +282,9 @@ export struct DashBoard {
     // 确保AudioControllerService已正确初始化
     console.info('[DecibelMeter] AudioControllerService实例状态:',
       this.audioControllerService ? '已初始化' : '未初始化');
+    
+    // 初始化图表可见性状态
+    this.updateChartVisibility();
   }
 
   // 启动折叠动画

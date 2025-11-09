@@ -140,6 +140,7 @@ class YAxisValueFormatter implements IAxisValueFormatter {
 export struct LineChartSpectrumComponent {
   // 输入参数
   @Param sampleRate: number = 44100
+  @Param isVisible: boolean = true // 图表是否可见
   @Local pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys) ?? new PreferenceKeys();
 
   // 依赖注入
@@ -187,6 +188,11 @@ export struct LineChartSpectrumComponent {
 
   @Monitor('ak.uiDisplayState.displaySpectrumData')
   onSpectrumDataChange(monitor: IMonitor) {
+    // 只有当图表可见时才处理数据更新
+    if (!this.isVisible) {
+      return;
+    }
+    
     const newSpectrum = monitor.value<Float32Array>()?.now;
     if (newSpectrum && this.ak.isDisplayApp) {
       this.currentSpectrumData = newSpectrum;
@@ -264,7 +270,7 @@ export struct LineChartSpectrumComponent {
    * 更新图表数据
    */
   private updateChartData(): void {
-    if (!this.model || this.currentSpectrumData.length === 0) {
+    if (!this.model || this.currentSpectrumData.length === 0 || !this.isVisible) {
       return;
     }
 

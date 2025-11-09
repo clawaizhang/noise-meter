@@ -60,6 +60,7 @@ export struct StatisticsChartComponent {
   // 输入参数
   @Param canvasWidthInput: number = 0;
   @Param canvasHeightInput: number = 0;
+  @Param isVisible: boolean = true // 图表是否可见
   // 依赖注入
   @Local private ak: AppKeys = AppStorageV2.connect(AppKeys)!;
   @Local private sysResourceManager: resourceManager.ResourceManager = resourceManager.getSystemResourceManager();
@@ -72,11 +73,19 @@ export struct StatisticsChartComponent {
   // 监听状态变化
   @Monitor('ak.uiDisplayState.displayDb')
   private onDistributionChange() {
+    // 只有当图表可见时才处理数据更新
+    if (!this.isVisible) {
+      return;
+    }
     this.updateChartData();
   }
 
   @Monitor('ak.uiDisplayState.displayStatistics')
   private onStatisticsChange() {
+    // 只有当图表可见时才处理数据更新
+    if (!this.isVisible) {
+      return;
+    }
     this.updateChartData();
   }
 
@@ -212,6 +221,11 @@ export struct StatisticsChartComponent {
 
   // 更新图表数据
   private updateChartData(): void {
+    // 只有当图表可见时才更新数据
+    if (!this.isVisible) {
+      return;
+    }
+    
     const distribution = this.ak.uiDisplayState.displayStatisticsDistribution;
 
     if (distribution.length === 0) {
