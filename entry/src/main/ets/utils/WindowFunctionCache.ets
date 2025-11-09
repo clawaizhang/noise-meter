@@ -201,8 +201,8 @@ export class WindowFunctionCache {
         const beta = kaiserBeta || 6.0;
         const i0Beta = WindowFunctionCache.besselI0(beta);
         for (let i = 0; i < size; i++) {
-          const alpha = N / 2.0;
-          const arg = beta * Math.sqrt(1 - Math.pow((i - alpha) / alpha, 2));
+          const kaiserAlpha = N / 2.0;
+          const arg = beta * Math.sqrt(1 - Math.pow((i - kaiserAlpha) / kaiserAlpha, 2));
           window[i] = WindowFunctionCache.besselI0(arg) / i0Beta;
         }
         correction = WindowFunctionCache.calculateCorrectionFactor(window);
@@ -256,8 +256,8 @@ export class WindowFunctionCache {
         
       case WindowType.TUKEY:
         // Tukey窗，使用传入的alpha参数
-        const alpha = tukeyAlpha || 0.5;
-        const edgeWidth = Math.floor(alpha * N / 2);
+        const tukeyAlphaParam = tukeyAlpha || 0.5;
+        const edgeWidth = Math.floor(tukeyAlphaParam * N / 2);
         for (let i = 0; i < size; i++) {
           if (i < edgeWidth) {
             window[i] = 0.5 * (1 + Math.cos(Math.PI * (i / edgeWidth - 1)));
@@ -273,12 +273,47 @@ export class WindowFunctionCache {
       case WindowType.CHEBYSHEV:
         // Chebyshev窗，使用传入的attenuation参数
         const attenuation = chebyshevAttenuation || 60.0;
-        const ripple = Math.pow(10, attenuation / 20.0);
-        const x0 = Math.cosh(1.0 / (N - 1) * WindowFunctionCache.acosh(ripple));
+        // 转换为线性比例的波纹因子（注意是负数，因为attenuation是dB衰减）
+        const ripple = Math.pow(10, -attenuation / 20.0);
+        
+        // 使用标准的Chebyshev窗实现
+        const M = N / 2.0;
+        const chebyshevAlpha = Math.cosh(1.0 / M * WindowFunctionCache.acosh(1.0 / ripple));
+        
+        // 首先计算未归一化的窗函数
+        let maxValue = 0;
         for (let i = 0; i < size; i++) {
-          const x = x0 * Math.cos(Math.PI * i / N);
-          window[i] = Math.cosh((N - 1) * WindowFunctionCache.acosh(x)) / ripple;
+          const phase = Math.PI * i / N;
+          const x = chebyshevAlpha * Math.cos(phase);
+          
+          // 计算Chebyshev多项式
+          let w = 0;
+          if (Math.abs(x) <= 1.0) {
+            // 使用递归关系计算Chebyshev多项式
+            w = WindowFunctionCache.chebyshevPoly(M, x);
+          } else {
+            w = Math.cosh(M * WindowFunctionCache.acosh(Math.abs(x)));
+          }
+          
+          // 存储未归一化的值
+          window[i] = w;
+          
+          // 跟踪最大值用于归一化
+          if (w > maxValue) {
+            maxValue = w;
+          }
         }
+        
+        // 归一化到[0, 1]范围
+        for (let i = 0; i < size; i++) {
+          window[i] = window[i] / maxValue;
+        }
+        
+        // 确保所有值都是正数且在合理范围内
+        for (let i = 0; i < size; i++) {
+          window[i] = Math.max(0.0, Math.min(1.0, window[i]));
+        }
+        
         correction = WindowFunctionCache.calculateCorrectionFactor(window);
         break;
         
@@ -334,5 +369,32 @@ export class WindowFunctionCache {
    */
   private static acosh(x: number): number {
     return Math.log(x + Math.sqrt(x * x - 1.0));
+  }
+  
+  /**
+   * 计算Chebyshev多项式
+   * @param n 多项式阶数
+   * @param x 输入值
+   * @returns Chebyshev多项式值
+   */
+  private static chebyshevPoly(n: number, x: number): number {
+    if (n === 0) {
+      return 1;
+    } else if (n === 1) {
+      return x;
+    }
+    
+    // 使用递归关系计算Chebyshev多项式: T_n(x) = 2x * T_{n-1}(x) - T_{n-2}(x)
+    let t0 = 1;
+    let t1 = x;
+    let t2 = 0;
+    
+    for (let i = 2; i <= n; i++) {
+      t2 = 2 * x * t1 - t0;
+      t0 = t1;
+      t1 = t2;
+    }
+    
+    return t1;
   }
 }
