@@ -227,20 +227,14 @@ export class ToolNavigationService {
     let param: WindowFunctionDialogParams = {
       currentWindowType: this.pk.window_function_type,
       onSettingsApplied: async (selectedWindowType: WindowType) => {
-        // 即时生效：立即应用新设置
+        // 即时生效：立即应用新设置到持久化存储
         this.pk.window_function_type = selectedWindowType;
         
-        // 应用到AudioService
+        // 触发窗函数配置更新（不中断音频采集）
         const audioService = AudioService.getInstance(this.pk);
-        await audioService.applyWindowFunctionSettings(
-          selectedWindowType,
-          this.pk.window_kaiser_beta,
-          this.pk.window_gaussian_sigma,
-          this.pk.window_tukey_alpha,
-          this.pk.window_chebyshev_attenuation
-        );
+        audioService.updateWindowFunctionConfig();
         
-        console.info(`[窗函数设置] 已应用: 窗函数类型=${selectedWindowType}`);
+        console.info(`[窗函数设置] 已更新持久化存储并触发配置更新: 窗函数类型=${selectedWindowType}`);
       },
       onClose: () => {
         windowFunctionDialog?.dismiss();
@@ -269,7 +263,7 @@ export class ToolNavigationService {
       currentChebyshevAttenuation: this.pk.window_chebyshev_attenuation,
       onSettingsApplied: async (windowType: WindowType, kaiserBeta?: number, gaussianSigma?: number,
         tukeyAlpha?: number, chebyshevAttenuation?: number) => {
-        // 即时生效：立即应用新设置
+        // 即时生效：立即应用新设置到持久化存储
         this.pk.window_function_type = windowType;
         if (kaiserBeta !== undefined) {
           this.pk.window_kaiser_beta = kaiserBeta;
@@ -284,17 +278,11 @@ export class ToolNavigationService {
           this.pk.window_chebyshev_attenuation = chebyshevAttenuation;
         }
 
-        // 应用到AudioService
+        // 触发窗函数配置更新（不中断音频采集）
         const audioService = AudioService.getInstance(this.pk);
-        await audioService.applyWindowFunctionSettings(
-          windowType,
-          this.pk.window_kaiser_beta,
-          this.pk.window_gaussian_sigma,
-          this.pk.window_tukey_alpha,
-          this.pk.window_chebyshev_attenuation
-        );
+        audioService.updateWindowFunctionConfig();
 
-        console.info(`[窗函数参数设置] 已应用: 窗函数类型=${windowType}, KaiserBeta=${this.pk.window_kaiser_beta}, GaussianSigma=${this.pk.window_gaussian_sigma}, TukeyAlpha=${this.pk.window_tukey_alpha}, ChebyshevAttenuation=${this.pk.window_chebyshev_attenuation}`);
+        console.info(`[窗函数参数设置] 已更新持久化存储并触发配置更新: 窗函数类型=${windowType}, KaiserBeta=${this.pk.window_kaiser_beta}, GaussianSigma=${this.pk.window_gaussian_sigma}, TukeyAlpha=${this.pk.window_tukey_alpha}, ChebyshevAttenuation=${this.pk.window_chebyshev_attenuation}`);
       },
       onClose: () => {
         windowFunctionParamsDialog?.dismiss();

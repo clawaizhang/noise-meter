@@ -306,7 +306,7 @@ export struct HomePageContent {
       .justifyContent(FlexAlign.Center)
     }
     .width('100%')
-    .height(100)
+    .height(80)
     .padding(DesignConstants.SPACING_MD)
     .backgroundColor($r('sys.color.comp_background_primary'))
     .borderRadius(DesignConstants.BORDER_RADIUS_LG)

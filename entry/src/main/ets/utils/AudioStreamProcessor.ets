@@ -1,5 +1,5 @@
 import { FFTBufferManager, BufferStatus } from './FFTBufferManager';
-import { AudioAnalysisConfig } from '../common/AudioConfig';
+import { AudioAnalysisConfig, AudioPresets, AudioAnalysisMode } from '../common/AudioConfig';
 
 /**
  * 音频流处理器 - 重构版本
@@ -156,6 +156,24 @@ export class AudioStreamProcessor {
   updateConfig(config: AudioAnalysisConfig): void {
     console.info(`[音频流处理器] 更新配置: FFT大小=${config.fftSize}, 更新间隔=${config.updateInterval}ms, 窗函数类型=${config.windowType}, 重叠=${config.overlap}`);
     
+    // 检查是否只是窗函数变更
+    const isOnlyWindowFunctionChange =
+      this.currentConfig.fftSize === config.fftSize &&
+      this.currentConfig.updateInterval === config.updateInterval &&
+      this.currentConfig.overlap === config.overlap &&
+      this.currentConfig.windowType !== config.windowType;
+    
+    // 如果只是窗函数变更，不需要重置处理流程
+    if (isOnlyWindowFunctionChange) {
+      console.info(`[音频流处理器] 仅更新窗函数类型，不中断处理流程`);
+      this.currentConfig = config;
+      // 重启定时器以应用新的更新间隔（如果有变化）
+      if (this.isProcessing) {
+        this.startProcessingTimer();
+      }
+      return;
+    }
+    
     // 保存处理状态
     const wasProcessing = this.isProcessing;
     
@@ -177,6 +195,39 @@ export class AudioStreamProcessor {
     
     // 重置处理时间，避免配置变更导致的处理间隔问题
     this.lastProcessTime = Date.now();
+  }
+  
+  /**
+   * 从持久化存储更新窗函数配置
+   * 这个方法允许在不中断音频处理的情况下更新窗函数设置
+   */
+  updateWindowFunctionFromPreferences(): void {
+    // 从AudioPresets获取最新配置（包含最新的窗函数设置）
+    const updatedConfig = AudioPresets.getConfig(AudioAnalysisMode.CUSTOM_TIME_WEIGHTING);
+    
+    // 检查窗函数是否有变化
+    if (updatedConfig.windowType !== this.currentConfig.windowType ||
+        updatedConfig.kaiserBeta !== this.currentConfig.kaiserBeta ||
+        updatedConfig.gaussianSigma !== this.currentConfig.gaussianSigma ||
+        updatedConfig.tukeyAlpha !== this.currentConfig.tukeyAlpha ||
+        updatedConfig.chebyshevAttenuation !== this.currentConfig.chebyshevAttenuation) {
+      
+      console.info(`[音频流处理器] 从持久化存储更新窗函数配置: ` +
+        `类型=${updatedConfig.windowType}, KaiserBeta=${updatedConfig.kaiserBeta}, ` +
+        `GaussianSigma=${updatedConfig.gaussianSigma}, TukeyAlpha=${updatedConfig.tukeyAlpha}, ` +
+        `ChebyshevAttenuation=${updatedConfig.chebyshevAttenuation}`);
+      
+      // 只更新窗函数相关配置，保持其他配置不变
+      const newConfig = this.currentConfig.clone();
+      newConfig.windowType = updatedConfig.windowType;
+      newConfig.kaiserBeta = updatedConfig.kaiserBeta;
+      newConfig.gaussianSigma = updatedConfig.gaussianSigma;
+      newConfig.tukeyAlpha = updatedConfig.tukeyAlpha;
+      newConfig.chebyshevAttenuation = updatedConfig.chebyshevAttenuation;
+      
+      // 使用优化的更新方法，只更新窗函数而不中断处理
+      this.updateConfig(newConfig);
+    }
   }
   
   /**
