@@ -28,7 +28,7 @@ interface ChartVisibilityState {
 
 @ComponentV2
 export struct DashBoard {
-  @Param @Require meterOn: boolean = true;
+  @Param @Require navTabIndex: number;
   @Local pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys)!;
   @Local dScale: number = 1; // 页面缩放比例
   @Local translateX: number = 0; // X轴位移
@@ -47,6 +47,7 @@ export struct DashBoard {
     lineChartTimeDomain: false,
     statisticsChart: false
   }; // 图表可见性状态
+  @Local private isDashboardActive: boolean = false; // Dashboard页面是否激活
   private animationTimeOutId: number | undefined;
   private navigationButtonsTimeoutId: number | undefined;
   // 服务实例
@@ -64,9 +65,14 @@ export struct DashBoard {
     { title: '声级分布图', componentId: 4 }
   ]
 
+  @Monitor('ak.currentTabIndex')
+  onTabIndexChange(monitor:IMonitor){
+    this.isDashboardActive = monitor.value<number>()?.now! === 1;
+  }
+
   /**
    * 更新图表可见性状态
-   * 只有当前显示的图表才被标记为可见
+   * 只有当Dashboard页面激活且当前显示的图表才被标记为可见
    */
   private updateChartVisibility(): void {
     const newVisibilityState: ChartVisibilityState = {
@@ -77,39 +83,52 @@ export struct DashBoard {
       statisticsChart: false
     };
     
-    // 只有当前选中的图表是可见的
-    this.chartTypes.forEach((chartType, index) => {
-      if (index === this.currentTabIndex) {
-        switch (chartType.title) {
-          case '专业频谱分析':
-            newVisibilityState.professionalSpectrum = true;
-            break;
-          case '频率频谱图':
-            newVisibilityState.lineChartSpectrum = true;
-            break;
-          case '频谱柱状图':
-            newVisibilityState.spectrumBarChart = true;
-            break;
-          case '时域波形图':
-            newVisibilityState.lineChartTimeDomain = true;
-            break;
-          case '声级分布图':
-            newVisibilityState.statisticsChart = true;
-            break;
+    // 只有当Dashboard页面激活且当前选中的图表是可见的
+    if (this.isDashboardActive) {
+      this.chartTypes.forEach((chartType, index) => {
+        if (index === this.currentTabIndex) {
+          switch (chartType.title) {
+            case '专业频谱分析':
+              newVisibilityState.professionalSpectrum = true;
+              break;
+            case '频率频谱图':
+              newVisibilityState.lineChartSpectrum = true;
+              break;
+            case '频谱柱状图':
+              newVisibilityState.spectrumBarChart = true;
+              break;
+            case '时域波形图':
+              newVisibilityState.lineChartTimeDomain = true;
+              break;
+            case '声级分布图':
+              newVisibilityState.statisticsChart = true;
+              break;
+          }
         }
-      }
-    });
+      });
+    }
     
     // 更新可见性状态
     this.chartVisibilityState = newVisibilityState;
     
-    console.info(`[Dashboard] 更新图表可见性状态，当前可见图表: ${this.chartTypes[this.currentTabIndex].title}`);
+    if (this.isDashboardActive) {
+      console.info(`[Dashboard] 更新图表可见性状态，当前可见图表: ${this.chartTypes[this.currentTabIndex].title}`);
+    } else {
+      console.info(`[Dashboard] Dashboard页面未激活，所有图表设置为不可见`);
+    }
   }
 
   /**
    * 检查图表是否可见
+   * 需要同时满足Dashboard页面激活和图表当前可见的条件
    */
   private isChartVisible(chartTitle: string): boolean {
+    // 首先检查Dashboard页面是否激活
+    if (!this.isDashboardActive) {
+      return false;
+    }
+    
+    // 然后检查图表是否当前可见
     switch (chartTitle) {
       case '专业频谱分析':
         return this.chartVisibilityState.professionalSpectrum;
@@ -243,31 +262,14 @@ export struct DashBoard {
     .alignItems(HorizontalAlign.Center)
   }
 
-  /**
-   * 重置导航按钮超时
-   */
-  private resetNavigationTimeout() {
-    // 清除之前的超时
-    if (this.navigationButtonsTimeoutId) {
-      clearTimeout(this.navigationButtonsTimeoutId);
-    }
-    
-    // 设置3秒后自动隐藏导航按钮
-    this.navigationButtonsTimeoutId = setTimeout(() => {
-      this.getUIContext().animateTo({
-        duration: 300,
-        curve: Curve.EaseOut,
-        onFinish: () => {
-          this.showNavigationButtons = false;
-          this.navigationButtonsOpacity = 0;
-        }
-      }, () => {
-        this.navigationButtonsOpacity = 0;
-      });
-    }, 3000);
-  }
-
   aboutToDisappear() {
+    // 设置Dashboard页面为非激活状态
+    this.isDashboardActive = false;
+    console.info('[Dashboard] Dashboard页面停用');
+    
+    // 更新图表可见性状态，确保所有图表都不可见
+    this.updateChartVisibility();
+    
     // 清理资源
     this.audioControllerService.dispose();
     
@@ -282,6 +284,10 @@ export struct DashBoard {
     // 确保AudioControllerService已正确初始化
     console.info('[DecibelMeter] AudioControllerService实例状态:',
       this.audioControllerService ? '已初始化' : '未初始化');
+    
+    // 设置Dashboard页面为激活状态
+    this.isDashboardActive = true;
+    console.info('[Dashboard] Dashboard页面激活');
     
     // 初始化图表可见性状态
     this.updateChartVisibility();
