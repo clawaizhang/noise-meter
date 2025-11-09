@@ -137,9 +137,21 @@ export struct ReferenceContent {
   private buildReferenceCards() {
     Column({ space: DesignConstants.SPACING_LG }) {
       // 第一行：3个专业参考卡片
-      GridRow({ columns: 2, gutter: DesignConstants.SPACING_MD }) {
+      GridRow({
+        columns: 12, // 总共12列，便于响应式布局
+        gutter: { x: DesignConstants.SPACING_SM, y: DesignConstants.SPACING_SM }, // 行列间距
+        breakpoints: {
+          reference: BreakpointsReference.WindowSize
+        }
+      }) {
         // 健康影响参考
-        GridCol({ span: 1 }) {
+        GridCol({
+          span: {
+            sm: 6, // 小屏幕：每行2个 (12/6=2)
+            md: 4, // 中等屏幕：每行3个 (12/4=3)
+            lg: 4  // 大屏幕：每行3个 (12/4=3)
+          }
+        }) {
           this.buildEnhancedReferenceCard({
             title: '健康影响参考',
             icon: $r('app.media.ic_atom'),
@@ -157,7 +169,13 @@ export struct ReferenceContent {
         }
 
         // 标准对比参考
-        GridCol({ span: 1 }) {
+        GridCol({
+          span: {
+            sm: 6, // 小屏幕：每行2个 (12/6=2)
+            md: 4, // 中等屏幕：每行3个 (12/4=3)
+            lg: 4  // 大屏幕：每行3个 (12/4=3)
+          }
+        }) {
           this.buildEnhancedReferenceCard({
             title: '标准对比参考',
             icon: $r('app.media.ic_document_edit'),
@@ -175,7 +193,13 @@ export struct ReferenceContent {
         }
 
         // 场景化参考
-        GridCol({ span: 1 }) {
+        GridCol({
+          span: {
+            sm: 6, // 小屏幕：每行2个 (12/6=2)
+            md: 4, // 中等屏幕：每行3个 (12/4=3)
+            lg: 4  // 大屏幕：每行3个 (12/4=3)
+          }
+        }) {
           this.buildEnhancedReferenceCard({
             title: '场景化参考',
             icon: $r('app.media.ic_location'),
@@ -194,7 +218,13 @@ export struct ReferenceContent {
 
         // 第二行：3个专业参考卡片
         // 声学参数参考
-        GridCol({ span: 1 }) {
+        GridCol({
+          span: {
+            sm: 6, // 小屏幕：每行2个 (12/6=2)
+            md: 4, // 中等屏幕：每行3个 (12/4=3)
+            lg: 4  // 大屏幕：每行3个 (12/4=3)
+          }
+        }) {
           this.buildEnhancedReferenceCard({
             title: '声学参数参考',
             icon: $r('app.media.ic_audio_analysis'),
@@ -212,7 +242,13 @@ export struct ReferenceContent {
         }
 
         // 设备性能参考
-        GridCol({ span: 1 }) {
+        GridCol({
+          span: {
+            sm: 6, // 小屏幕：每行2个 (12/6=2)
+            md: 4, // 中等屏幕：每行3个 (12/4=3)
+            lg: 4  // 大屏幕：每行3个 (12/4=3)
+          }
+        }) {
           this.buildEnhancedReferenceCard({
             title: '设备性能参考',
             icon: $r('app.media.ic_sensor'),
@@ -230,7 +266,13 @@ export struct ReferenceContent {
         }
 
         // 法规政策参考
-        GridCol({ span: 1 }) {
+        GridCol({
+          span: {
+            sm: 6, // 小屏幕：每行2个 (12/6=2)
+            md: 4, // 中等屏幕：每行3个 (12/4=3)
+            lg: 4  // 大屏幕：每行3个 (12/4=3)
+          }
+        }) {
           this.buildEnhancedReferenceCard({
             title: '法规政策参考',
             icon: $r('app.media.ic_security'),
@@ -248,6 +290,7 @@ export struct ReferenceContent {
         }
       }
       .width('100%')
+      .padding(DesignConstants.SPACING_XS) // 减小整体内边距
 
 
       // 实时对比显示区域（保持不变）
@@ -258,11 +301,11 @@ export struct ReferenceContent {
   @Builder
   private buildEnhancedReferenceCard(config: ReferenceCardConfig) {
     Row({ space: DesignConstants.SPACING_MD }) {
-      // 左侧图标区域 - 根据主题设置颜色
+      // 左侧图标区域 - 使用primary色
       Image(config.icon)
-        .width(28)
-        .height(28)
-        .fillColor(this.getThemeColor(config.theme))
+        .width(32)
+        .height(32)
+        .fillColor($r('sys.color.icon_primary'))
 
       // 右侧内容区域
       Column({ space: DesignConstants.SPACING_XS }) {
@@ -305,7 +348,6 @@ export struct ReferenceContent {
       .alignItems(HorizontalAlign.Start)
     }
     .width('100%')
-    .height(100)
     .padding(DesignConstants.SPACING_MD)
     .backgroundColor($r('sys.color.comp_background_primary'))
     .borderRadius(DesignConstants.BORDER_RADIUS_LG)

@@ -94,10 +94,22 @@ export struct HomePageContent {
 
   @Builder
   private buildFunctionCards() {
-    GridRow({ columns: 2, gutter: DesignConstants.SPACING_MD }) {
+    GridRow({
+      columns: 12, // 总共12列，便于响应式布局
+      gutter: { x: DesignConstants.SPACING_SM, y: DesignConstants.SPACING_SM }, // 行列间距
+      breakpoints: {
+        reference: BreakpointsReference.WindowSize
+      }
+    }) {
       // 仪表盘入口 - 显示趋势数据
-      GridCol({ span: 1 }) {
-        this.buildFunctionCard({
+      GridCol({
+        span: {
+          sm: 6, // 小屏幕：每行2个 (12/6=2)
+          md: 4, // 中等屏幕：每行3个 (12/4=3)
+          lg: 3  // 大屏幕：每行4个 (12/3=4)
+        }
+      }) {
+        this.buildSimplifiedFunctionCard({
           title: '仪表盘',
           icon: $r('app.media.ic_meter'),
           description: '分析图表展示',
@@ -109,10 +121,15 @@ export struct HomePageContent {
         })
       }
 
-
       // 工具入口 - 显示工具状态
-      GridCol({ span: 1 }) {
-        this.buildFunctionCard({
+      GridCol({
+        span: {
+          sm: 6, // 小屏幕：每行2个 (12/6=2)
+          md: 4, // 中等屏幕：每行3个 (12/4=3)
+          lg: 3  // 大屏幕：每行4个 (12/3=4)
+        }
+      }) {
+        this.buildSimplifiedFunctionCard({
           title: '操作台',
           icon: $r('app.media.ic_atom'),
           description: '校准和设置',
@@ -125,8 +142,14 @@ export struct HomePageContent {
       }
 
       // 警报入口 - 显示活跃警报数量
-      GridCol({ span: 1 }) {
-        this.buildFunctionCard({
+      GridCol({
+        span: {
+          sm: 6, // 小屏幕：每行2个 (12/6=2)
+          md: 4, // 中等屏幕：每行3个 (12/4=3)
+          lg: 3  // 大屏幕：每行4个 (12/3=4)
+        }
+      }) {
+        this.buildSimplifiedFunctionCard({
           title: '警报',
           icon: $r('app.media.ic_alarm'),
           description: '噪音警报管理',
@@ -140,8 +163,14 @@ export struct HomePageContent {
       }
 
       // 影响入口 - 显示暴露指数
-      GridCol({ span: 1 }) {
-        this.buildFunctionCard({
+      GridCol({
+        span: {
+          sm: 6, // 小屏幕：每行2个 (12/6=2)
+          md: 4, // 中等屏幕：每行3个 (12/4=3)
+          lg: 3  // 大屏幕：每行4个 (12/3=4)
+        }
+      }) {
+        this.buildSimplifiedFunctionCard({
           title: '影响',
           icon: $r('app.media.i_solar_radar_outline'),
           description: '暴露统计分析',
@@ -153,9 +182,15 @@ export struct HomePageContent {
         })
       }
 
-      // 影响入口 - 显示暴露指数
-      GridCol({ span: 1 }) {
-        this.buildFunctionCard({
+      // 参考入口 - 显示参考信息
+      GridCol({
+        span: {
+          sm: 6, // 小屏幕：每行2个 (12/6=2)
+          md: 4, // 中等屏幕：每行3个 (12/4=3)
+          lg: 3  // 大屏幕：每行4个 (12/3=4)
+        }
+      }) {
+        this.buildSimplifiedFunctionCard({
           title: '参考',
           icon: $r('app.media.ic_book2'),
           description: '参考资料',
@@ -168,8 +203,14 @@ export struct HomePageContent {
       }
 
       // 历史记录入口 - 显示最近记录时间，记录总数显示在徽章中
-      GridCol({ span: 1 }) {
-        this.buildFunctionCard({
+      GridCol({
+        span: {
+          sm: 6, // 小屏幕：每行2个 (12/6=2)
+          md: 4, // 中等屏幕：每行3个 (12/4=3)
+          lg: 3  // 大屏幕：每行4个 (12/3=4)
+        }
+      }) {
+        this.buildSimplifiedFunctionCard({
           title: '历史',
           icon: $r('app.media.ic_history'),
           description: '检测记录查看',
@@ -188,7 +229,7 @@ export struct HomePageContent {
   }
 
   @Builder
-  private buildFunctionCard(config: FunctionCardConfig) {
+  private buildSimplifiedFunctionCard(config: FunctionCardConfig) {
     Row({ space: DesignConstants.SPACING_MD }) {
       // 左侧图标区域 - 垂直居中对齐
       Stack({ alignContent: Alignment.TopEnd }) {
@@ -217,9 +258,9 @@ export struct HomePageContent {
       .height(32)
       .alignSelf(ItemAlign.Center)
 
-      // 右侧内容区域 - 居中对齐
+      // 右侧内容区域 - 垂直居中对齐
       Column({ space: DesignConstants.SPACING_XS }) {
-        // 标题行 - 居中对齐
+        // 标题行
         Row() {
           Text(config.title)
             .fontSize(DesignConstants.FONT_SIZE_MD)
@@ -232,7 +273,7 @@ export struct HomePageContent {
         .width('100%')
         .justifyContent(FlexAlign.Start)
 
-        // 描述行 - 居中对齐
+        // 描述行
         Row() {
           Text(config.description)
             .fontSize(DesignConstants.FONT_SIZE_SM)
@@ -244,7 +285,7 @@ export struct HomePageContent {
         .width('100%')
         .justifyContent(FlexAlign.Start)
 
-        // 数据展示区域 - 居中对齐
+        // 数据展示区域
         if (config.dataDisplay) {
           Row() {
             Text(config.dataDisplay)
@@ -265,7 +306,7 @@ export struct HomePageContent {
       .justifyContent(FlexAlign.Center)
     }
     .width('100%')
-    .height(80)
+    .height(100)
     .padding(DesignConstants.SPACING_MD)
     .backgroundColor($r('sys.color.comp_background_primary'))
     .borderRadius(DesignConstants.BORDER_RADIUS_LG)
@@ -277,6 +318,12 @@ export struct HomePageContent {
         config.onTap();
       });
     })
+    .gesture(
+      TapGesture()
+        .onAction(() => {
+          // 简单的按压效果
+        })
+    )
   }
 
   // 切换到指定Tab
