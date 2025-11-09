@@ -129,7 +129,7 @@ export struct AlertsContent {
         Column({ space: DesignConstants.SPACING_XS }) {
           Text('当前')
             .fontSize(DesignConstants.FONT_SIZE_MD)
-            .fontColor($r('app.color.font_secondary'))
+            .fontColor($r('sys.color.font_secondary'))
           Text(`${this.ak.uiDisplayState.displayDb}dB`)
             .fontSize(48)
             .fontWeight(FontWeight.Bold)
@@ -139,18 +139,18 @@ export struct AlertsContent {
         // 对比符号
         Text(this.getComparisonSymbol())
           .fontSize(32)
-          .fontColor($r('app.color.font_secondary'))
+          .fontColor($r('sys.color.font_secondary'))
           .fontWeight(FontWeight.Bold)
 
         // 阈值
         Column({ space: DesignConstants.SPACING_XS }) {
           Text('阈值')
             .fontSize(DesignConstants.FONT_SIZE_MD)
-            .fontColor($r('app.color.font_secondary'))
+            .fontColor($r('sys.color.font_secondary'))
           Text(`${this.pk.alarm_threshold.currentEffectiveThreshold}dB`)
             .fontSize(48)
             .fontWeight(FontWeight.Bold)
-            .fontColor($r('app.color.font_primary'))
+            .fontColor($r('sys.color.font_primary'))
         }
       }
 
@@ -166,10 +166,10 @@ export struct AlertsContent {
           Image($r('app.media.ic_alarm'))
             .width(16)
             .height(16)
-            .fillColor($r('app.color.alert'))
+            .fillColor($r('sys.color.alert'))
           Text(`持续时间: ${this.stateMachine.FormattedAlertDuration}`)
             .fontSize(DesignConstants.FONT_SIZE_MD)
-            .fontColor($r('app.color.alert'))
+            .fontColor($r('sys.color.alert'))
             .fontWeight(FontWeight.Medium)
         }
       }
@@ -190,13 +190,13 @@ export struct AlertsContent {
         .fontSize(DesignConstants.FONT_SIZE_XL)
         .fontWeight(FontWeight.Bold)
         .alignSelf(ItemAlign.Start)
-        .fontColor($r('app.color.font_primary'))
+        .fontColor($r('sys.color.font_primary'))
 
       // 环境质量评级
       Row({ space: DesignConstants.SPACING_SM }) {
         Text('环境质量:')
           .fontSize(DesignConstants.FONT_SIZE_MD)
-          .fontColor($r('app.color.font_primary'))
+          .fontColor($r('sys.color.font_primary'))
 
         Text(this.environmentQuality)
           .fontSize(DesignConstants.FONT_SIZE_MD)
@@ -210,10 +210,10 @@ export struct AlertsContent {
         Row({ space: DesignConstants.SPACING_SM }) {
           Text('•')
             .fontSize(DesignConstants.FONT_SIZE_SM)
-            .fontColor($r('app.color.font_secondary'))
+            .fontColor($r('sys.color.font_secondary'))
           Text(this.currentStatusDescription)
             .fontSize(DesignConstants.FONT_SIZE_SM)
-            .fontColor($r('app.color.font_secondary'))
+            .fontColor($r('sys.color.font_secondary'))
             .textAlign(TextAlign.Start)
         }
         .alignSelf(ItemAlign.Start)
@@ -222,10 +222,10 @@ export struct AlertsContent {
         Row({ space: DesignConstants.SPACING_SM }) {
           Text('•')
             .fontSize(DesignConstants.FONT_SIZE_SM)
-            .fontColor($r('app.color.font_secondary'))
+            .fontColor($r('sys.color.font_secondary'))
           Text(this.impactDescription)
             .fontSize(DesignConstants.FONT_SIZE_SM)
-            .fontColor($r('app.color.font_secondary'))
+            .fontColor($r('sys.color.font_secondary'))
             .textAlign(TextAlign.Start)
         }
         .alignSelf(ItemAlign.Start)
@@ -234,10 +234,10 @@ export struct AlertsContent {
         Row({ space: DesignConstants.SPACING_SM }) {
           Text('•')
             .fontSize(DesignConstants.FONT_SIZE_SM)
-            .fontColor($r('app.color.font_secondary'))
+            .fontColor($r('sys.color.font_secondary'))
           Text(this.suggestionAction)
             .fontSize(DesignConstants.FONT_SIZE_SM)
-            .fontColor($r('app.color.font_secondary'))
+            .fontColor($r('sys.color.font_secondary'))
             .textAlign(TextAlign.Start)
         }
         .alignSelf(ItemAlign.Start)
@@ -247,7 +247,7 @@ export struct AlertsContent {
     }
     .padding(DesignConstants.SPACING_LG)
     .width('100%')
-    .backgroundColor($r('app.color.comp_background_primary'))
+    .backgroundColor($r('sys.color.comp_background_primary'))
     .borderRadius(DesignConstants.BORDER_RADIUS_LG)
   }
 
@@ -259,15 +259,15 @@ export struct AlertsContent {
       case AlertStatus.ALERT_ACTIVE:
       case AlertStatus.ALERT_PERSISTENT:
       case AlertStatus.ALERT_ESCALATED:
-        return $r('app.color.alert'); // 红色
+        return $r('sys.color.alert'); // 红色
       case AlertStatus.WARNING:
-        return $r('app.color.warning'); // 黄色
+        return $r('sys.color.warning'); // 黄色
       case AlertStatus.MONITORING:
-        return $r('app.color.confirm'); // 绿色
+        return $r('sys.color.confirm'); // 绿色
       case AlertStatus.IDLE:
       case AlertStatus.MUTED:
       default:
-        return $r('app.color.font_secondary'); // 灰色
+        return $r('sys.color.font_secondary'); // 灰色
     }
   }
 
@@ -305,15 +305,15 @@ export struct AlertsContent {
       case AlertStatus.ALERT_ACTIVE:
       case AlertStatus.ALERT_PERSISTENT:
       case AlertStatus.ALERT_ESCALATED:
-        return $r('app.color.warning');
+        return $r('sys.color.warning');
       case AlertStatus.WARNING:
-        return $r('app.color.alert');
+        return $r('sys.color.alert');
       case AlertStatus.MONITORING:
-        return $r('app.color.comp_background_secondary');
+        return $r('sys.color.comp_background_secondary');
       case AlertStatus.IDLE:
       case AlertStatus.MUTED:
       default:
-        return $r('app.color.comp_background_primary');
+        return $r('sys.color.comp_background_primary');
     }
   }
 
@@ -347,15 +347,15 @@ export struct AlertsContent {
       case AlertStatus.ALERT_ACTIVE:
       case AlertStatus.ALERT_PERSISTENT:
       case AlertStatus.ALERT_ESCALATED:
-        return $r('app.color.alert');
+        return $r('sys.color.alert');
       case AlertStatus.WARNING:
-        return $r('app.color.warning');
+        return $r('sys.color.warning');
       case AlertStatus.MONITORING:
-        return $r('app.color.confirm');
+        return $r('sys.color.confirm');
       case AlertStatus.IDLE:
       case AlertStatus.MUTED:
       default:
-        return $r('app.color.confirm');
+        return $r('sys.color.confirm');
     }
   }
 
@@ -676,6 +676,6 @@ export struct AlertsContent {
     .scrollBar(BarState.Off)
     .edgeEffect(EdgeEffect.Spring)
     .padding({ top: DesignConstants.SPACING_XL })
-    .backgroundColor($r('app.color.background_secondary'))
+    .backgroundColor($r('sys.color.background_secondary'))
   }
 }

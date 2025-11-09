@@ -32,7 +32,7 @@ export struct CalibrationStatusIndicator {
       case EnvironmentNoiseLevel.EXCELLENT:
         return CALIBRATION_COLORS.SUCCESS;
       case EnvironmentNoiseLevel.GOOD:
-        return $r('app.color.ohos_id_color_palette5'); // 浅绿色
+        return $r('sys.color.ohos_id_color_palette5'); // 浅绿色
       case EnvironmentNoiseLevel.FAIR:
         return CALIBRATION_COLORS.WARNING;
       default:
@@ -71,11 +71,11 @@ export struct CalibrationStatusIndicator {
           Text(`${this.currentDecibel.toFixed(1)}`)
             .fontSize(DesignConstants.FONT_SIZE_LG)
             .fontWeight(FontWeight.Bold)
-            .fontColor($r('app.color.font_primary'))
+            .fontColor($r('sys.color.font_primary'))
 
           Text('dB')
             .fontSize(DesignConstants.FONT_SIZE_SM)
-            .fontColor($r('app.color.font_secondary'))
+            .fontColor($r('sys.color.font_secondary'))
         }
       }
 

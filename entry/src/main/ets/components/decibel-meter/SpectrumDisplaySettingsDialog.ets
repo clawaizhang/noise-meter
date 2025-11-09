@@ -55,14 +55,14 @@ export struct SpectrumDisplaySettingsDialog {
         Text('频谱显示设置')
           .fontSize(DesignConstants.FONT_SIZE_XL)
           .fontWeight(FontWeight.Bold)
-          .fontColor($r('app.color.font_primary'))
+          .fontColor($r('sys.color.font_primary'))
           .layoutWeight(1)
         
         // 关闭按钮
         Image($r('sys.media.ohos_ic_public_cancel'))
           .width(24)
           .height(24)
-          .fillColor($r('app.color.font_secondary'))
+          .fillColor($r('sys.color.font_secondary'))
           .onClick(() => {
             this.params?.onClose();
           })
@@ -100,7 +100,7 @@ export struct SpectrumDisplaySettingsDialog {
     .width('100%')
     .height('100%')
     .padding(DesignConstants.SPACING_LG)
-    .backgroundColor($r('app.color.background_secondary'))
+    .backgroundColor($r('sys.color.background_secondary'))
   }
   
   @Builder
@@ -109,7 +109,7 @@ export struct SpectrumDisplaySettingsDialog {
       Text('显示模式')
         .fontSize(DesignConstants.FONT_SIZE_LG)
         .fontWeight(FontWeight.Medium)
-        .fontColor($r('app.color.font_primary'))
+        .fontColor($r('sys.color.font_primary'))
         .alignSelf(ItemAlign.Start)
       
       Column({ space: DesignConstants.SPACING_SM }) {
@@ -124,7 +124,7 @@ export struct SpectrumDisplaySettingsDialog {
           
           Text('线形图')
             .fontSize(DesignConstants.FONT_SIZE_MD)
-            .fontColor($r('app.color.font_primary'))
+            .fontColor($r('sys.color.font_primary'))
         }
         .width('100%')
         .justifyContent(FlexAlign.Start)
@@ -143,7 +143,7 @@ export struct SpectrumDisplaySettingsDialog {
           
           Text('柱状图')
             .fontSize(DesignConstants.FONT_SIZE_MD)
-            .fontColor($r('app.color.font_primary'))
+            .fontColor($r('sys.color.font_primary'))
         }
         .width('100%')
         .justifyContent(FlexAlign.Start)
@@ -162,7 +162,7 @@ export struct SpectrumDisplaySettingsDialog {
           
           Text('混合模式')
             .fontSize(DesignConstants.FONT_SIZE_MD)
-            .fontColor($r('app.color.font_primary'))
+            .fontColor($r('sys.color.font_primary'))
         }
         .width('100%')
         .justifyContent(FlexAlign.Start)
@@ -173,7 +173,7 @@ export struct SpectrumDisplaySettingsDialog {
     }
     .width('100%')
     .padding(DesignConstants.SPACING_MD)
-    .backgroundColor($r('app.color.comp_background_primary'))
+    .backgroundColor($r('sys.color.comp_background_primary'))
     .borderRadius(DesignConstants.BORDER_RADIUS_LG)
   }
   
@@ -184,12 +184,12 @@ export struct SpectrumDisplaySettingsDialog {
         Text('数据平滑')
           .fontSize(DesignConstants.FONT_SIZE_LG)
           .fontWeight(FontWeight.Medium)
-          .fontColor($r('app.color.font_primary'))
+          .fontColor($r('sys.color.font_primary'))
           .layoutWeight(1)
         
         Text(`${(this.smoothingFactor * 100).toFixed(0)}%`)
           .fontSize(DesignConstants.FONT_SIZE_MD)
-          .fontColor($r('app.color.font_secondary'))
+          .fontColor($r('sys.color.font_secondary'))
       }
       .width('100%')
       
@@ -201,21 +201,21 @@ export struct SpectrumDisplaySettingsDialog {
         style: SliderStyle.InSet
       })
         .width('100%')
-        .trackColor($r('app.color.comp_background_tertiary'))
-        .selectedColor($r('app.color.icon_emphasize'))
-        .blockColor($r('app.color.icon_emphasize'))
+        .trackColor($r('sys.color.comp_background_tertiary'))
+        .selectedColor($r('sys.color.icon_emphasize'))
+        .blockColor($r('sys.color.icon_emphasize'))
         .onChange((value: number) => {
           this.smoothingFactor = value;
         })
       
       Text('平滑因子越大，频谱变化越平缓')
         .fontSize(DesignConstants.FONT_SIZE_SM)
-        .fontColor($r('app.color.font_secondary'))
+        .fontColor($r('sys.color.font_secondary'))
         .alignSelf(ItemAlign.Start)
     }
     .width('100%')
     .padding(DesignConstants.SPACING_MD)
-    .backgroundColor($r('app.color.comp_background_primary'))
+    .backgroundColor($r('sys.color.comp_background_primary'))
     .borderRadius(DesignConstants.BORDER_RADIUS_LG)
   }
   
@@ -225,19 +225,19 @@ export struct SpectrumDisplaySettingsDialog {
       Text('显示峰值频率')
         .fontSize(DesignConstants.FONT_SIZE_LG)
         .fontWeight(FontWeight.Medium)
-        .fontColor($r('app.color.font_primary'))
+        .fontColor($r('sys.color.font_primary'))
         .layoutWeight(1)
       
       Toggle({ type: ToggleType.Switch, isOn: this.showPeakFrequency })
-        .selectedColor($r('app.color.icon_emphasize'))
-        .switchPointColor($r('app.color.background_primary'))
+        .selectedColor($r('sys.color.icon_emphasize'))
+        .switchPointColor($r('sys.color.background_primary'))
         .onChange((isOn: boolean) => {
           this.showPeakFrequency = isOn;
         })
     }
     .width('100%')
     .padding(DesignConstants.SPACING_MD)
-    .backgroundColor($r('app.color.comp_background_primary'))
+    .backgroundColor($r('sys.color.comp_background_primary'))
     .borderRadius(DesignConstants.BORDER_RADIUS_LG)
     .justifyContent(FlexAlign.SpaceBetween)
     .alignItems(VerticalAlign.Center)
@@ -249,7 +249,7 @@ export struct SpectrumDisplaySettingsDialog {
       Text('频率范围')
         .fontSize(DesignConstants.FONT_SIZE_LG)
         .fontWeight(FontWeight.Medium)
-        .fontColor($r('app.color.font_primary'))
+        .fontColor($r('sys.color.font_primary'))
         .alignSelf(ItemAlign.Start)
       
       Column({ space: DesignConstants.SPACING_SM }) {
@@ -264,7 +264,7 @@ export struct SpectrumDisplaySettingsDialog {
           
           Text('全频段 (16Hz-20kHz)')
             .fontSize(DesignConstants.FONT_SIZE_MD)
-            .fontColor($r('app.color.font_primary'))
+            .fontColor($r('sys.color.font_primary'))
         }
         .width('100%')
         .justifyContent(FlexAlign.Start)
@@ -283,7 +283,7 @@ export struct SpectrumDisplaySettingsDialog {
           
           Text('低频段 (16Hz-250Hz)')
             .fontSize(DesignConstants.FONT_SIZE_MD)
-            .fontColor($r('app.color.font_primary'))
+            .fontColor($r('sys.color.font_primary'))
         }
         .width('100%')
         .justifyContent(FlexAlign.Start)
@@ -302,7 +302,7 @@ export struct SpectrumDisplaySettingsDialog {
           
           Text('中频段 (250Hz-2kHz)')
             .fontSize(DesignConstants.FONT_SIZE_MD)
-            .fontColor($r('app.color.font_primary'))
+            .fontColor($r('sys.color.font_primary'))
         }
         .width('100%')
         .justifyContent(FlexAlign.Start)
@@ -321,7 +321,7 @@ export struct SpectrumDisplaySettingsDialog {
           
           Text('高频段 (2kHz-20kHz)')
             .fontSize(DesignConstants.FONT_SIZE_MD)
-            .fontColor($r('app.color.font_primary'))
+            .fontColor($r('sys.color.font_primary'))
         }
         .width('100%')
         .justifyContent(FlexAlign.Start)
@@ -340,7 +340,7 @@ export struct SpectrumDisplaySettingsDialog {
           
           Text('自定义')
             .fontSize(DesignConstants.FONT_SIZE_MD)
-            .fontColor($r('app.color.font_primary'))
+            .fontColor($r('sys.color.font_primary'))
         }
         .width('100%')
         .justifyContent(FlexAlign.Start)
@@ -355,14 +355,14 @@ export struct SpectrumDisplaySettingsDialog {
           Row({ space: DesignConstants.SPACING_MD }) {
             Text('最小频率 (Hz)')
               .fontSize(DesignConstants.FONT_SIZE_MD)
-              .fontColor($r('app.color.font_primary'))
+              .fontColor($r('sys.color.font_primary'))
               .width(120)
             
             TextInput({ placeholder: '16', text: this.customFrequencyMin.toString() })
               .width(100)
               .fontSize(DesignConstants.FONT_SIZE_MD)
-              .fontColor($r('app.color.font_primary'))
-              .backgroundColor($r('app.color.comp_background_tertiary'))
+              .fontColor($r('sys.color.font_primary'))
+              .backgroundColor($r('sys.color.comp_background_tertiary'))
               .onChange((value: string) => {
                 const numValue = parseFloat(value);
                 if (!isNaN(numValue) && numValue >= 1 && numValue < this.customFrequencyMax) {
@@ -377,14 +377,14 @@ export struct SpectrumDisplaySettingsDialog {
           Row({ space: DesignConstants.SPACING_MD }) {
             Text('最大频率 (Hz)')
               .fontSize(DesignConstants.FONT_SIZE_MD)
-              .fontColor($r('app.color.font_primary'))
+              .fontColor($r('sys.color.font_primary'))
               .width(120)
             
             TextInput({ placeholder: '20000', text: this.customFrequencyMax.toString() })
               .width(100)
               .fontSize(DesignConstants.FONT_SIZE_MD)
-              .fontColor($r('app.color.font_primary'))
-              .backgroundColor($r('app.color.comp_background_tertiary'))
+              .fontColor($r('sys.color.font_primary'))
+              .backgroundColor($r('sys.color.comp_background_tertiary'))
               .onChange((value: string) => {
                 const numValue = parseFloat(value);
                 if (!isNaN(numValue) && numValue > this.customFrequencyMin && numValue <= 20000) {
@@ -400,7 +400,7 @@ export struct SpectrumDisplaySettingsDialog {
     }
     .width('100%')
     .padding(DesignConstants.SPACING_MD)
-    .backgroundColor($r('app.color.comp_background_primary'))
+    .backgroundColor($r('sys.color.comp_background_primary'))
     .borderRadius(DesignConstants.BORDER_RADIUS_LG)
   }
   
@@ -410,7 +410,7 @@ export struct SpectrumDisplaySettingsDialog {
       Text('分贝范围')
         .fontSize(DesignConstants.FONT_SIZE_LG)
         .fontWeight(FontWeight.Medium)
-        .fontColor($r('app.color.font_primary'))
+        .fontColor($r('sys.color.font_primary'))
         .alignSelf(ItemAlign.Start)
       
       Column({ space: DesignConstants.SPACING_SM }) {
@@ -425,7 +425,7 @@ export struct SpectrumDisplaySettingsDialog {
           
           Text('自动')
             .fontSize(DesignConstants.FONT_SIZE_MD)
-            .fontColor($r('app.color.font_primary'))
+            .fontColor($r('sys.color.font_primary'))
         }
         .width('100%')
         .justifyContent(FlexAlign.Start)
@@ -444,7 +444,7 @@ export struct SpectrumDisplaySettingsDialog {
           
           Text('窄范围 (40-80dB)')
             .fontSize(DesignConstants.FONT_SIZE_MD)
-            .fontColor($r('app.color.font_primary'))
+            .fontColor($r('sys.color.font_primary'))
         }
         .width('100%')
         .justifyContent(FlexAlign.Start)
@@ -463,7 +463,7 @@ export struct SpectrumDisplaySettingsDialog {
           
           Text('正常范围 (20-100dB)')
             .fontSize(DesignConstants.FONT_SIZE_MD)
-            .fontColor($r('app.color.font_primary'))
+            .fontColor($r('sys.color.font_primary'))
         }
         .width('100%')
         .justifyContent(FlexAlign.Start)
@@ -482,7 +482,7 @@ export struct SpectrumDisplaySettingsDialog {
           
           Text('宽范围 (0-120dB)')
             .fontSize(DesignConstants.FONT_SIZE_MD)
-            .fontColor($r('app.color.font_primary'))
+            .fontColor($r('sys.color.font_primary'))
         }
         .width('100%')
         .justifyContent(FlexAlign.Start)
@@ -501,7 +501,7 @@ export struct SpectrumDisplaySettingsDialog {
           
           Text('自定义')
             .fontSize(DesignConstants.FONT_SIZE_MD)
-            .fontColor($r('app.color.font_primary'))
+            .fontColor($r('sys.color.font_primary'))
         }
         .width('100%')
         .justifyContent(FlexAlign.Start)
@@ -516,14 +516,14 @@ export struct SpectrumDisplaySettingsDialog {
           Row({ space: DesignConstants.SPACING_MD }) {
             Text('最小分贝 (dB)')
               .fontSize(DesignConstants.FONT_SIZE_MD)
-              .fontColor($r('app.color.font_primary'))
+              .fontColor($r('sys.color.font_primary'))
               .width(120)
             
             TextInput({ placeholder: '-20', text: this.customDecibelMin.toString() })
               .width(100)
               .fontSize(DesignConstants.FONT_SIZE_MD)
-              .fontColor($r('app.color.font_primary'))
-              .backgroundColor($r('app.color.comp_background_tertiary'))
+              .fontColor($r('sys.color.font_primary'))
+              .backgroundColor($r('sys.color.comp_background_tertiary'))
               .onChange((value: string) => {
                 const numValue = parseFloat(value);
                 if (!isNaN(numValue) && numValue < this.customDecibelMax) {
@@ -538,14 +538,14 @@ export struct SpectrumDisplaySettingsDialog {
           Row({ space: DesignConstants.SPACING_MD }) {
             Text('最大分贝 (dB)')
               .fontSize(DesignConstants.FONT_SIZE_MD)
-              .fontColor($r('app.color.font_primary'))
+              .fontColor($r('sys.color.font_primary'))
               .width(120)
             
             TextInput({ placeholder: '140', text: this.customDecibelMax.toString() })
               .width(100)
               .fontSize(DesignConstants.FONT_SIZE_MD)
-              .fontColor($r('app.color.font_primary'))
-              .backgroundColor($r('app.color.comp_background_tertiary'))
+              .fontColor($r('sys.color.font_primary'))
+              .backgroundColor($r('sys.color.comp_background_tertiary'))
               .onChange((value: string) => {
                 const numValue = parseFloat(value);
                 if (!isNaN(numValue) && numValue > this.customDecibelMin) {
@@ -561,7 +561,7 @@ export struct SpectrumDisplaySettingsDialog {
     }
     .width('100%')
     .padding(DesignConstants.SPACING_MD)
-    .backgroundColor($r('app.color.comp_background_primary'))
+    .backgroundColor($r('sys.color.comp_background_primary'))
     .borderRadius(DesignConstants.BORDER_RADIUS_LG)
   }
   
@@ -572,8 +572,8 @@ export struct SpectrumDisplaySettingsDialog {
       .height(48)
       .fontSize(DesignConstants.FONT_SIZE_MD)
       .fontWeight(FontWeight.Medium)
-      .fontColor($r('app.color.font_on_primary'))
-      .backgroundColor($r('app.color.icon_emphasize'))
+      .fontColor($r('sys.color.font_on_primary'))
+      .backgroundColor($r('sys.color.icon_emphasize'))
       .borderRadius(DesignConstants.BORDER_RADIUS_MD)
       .onClick(() => {
         // 创建配置对象

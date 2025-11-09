@@ -10,16 +10,16 @@ export struct PriorityLabel {
     if (this.priority === ToolPriority.ADVANCED) {
       Text('PRO')
         .fontSize(DesignConstants.FONT_SIZE_XXS)
-        .fontColor($r('app.color.background_secondary'))
-        .backgroundColor($r('app.color.warning'))
+        .fontColor($r('sys.color.background_secondary'))
+        .backgroundColor($r('sys.color.warning'))
         .borderRadius(DesignConstants.BORDER_RADIUS_XS)
         .padding({ left: 2, right: 2, top: 1, bottom: 1 })
         .margin({ top: 2 })
     } else if (this.priority === ToolPriority.ESSENTIAL) {
       Text('核心')
         .fontSize(DesignConstants.FONT_SIZE_XXS)
-        .fontColor($r('app.color.background_secondary'))
-        .backgroundColor($r('app.color.confirm'))
+        .fontColor($r('sys.color.background_secondary'))
+        .backgroundColor($r('sys.color.confirm'))
         .borderRadius(DesignConstants.BORDER_RADIUS_XS)
         .padding({ left: 2, right: 2, top: 1, bottom: 1 })
         .margin({ top: 2 })
@@ -36,10 +36,10 @@ export struct LearnMoreButton {
     if (this.learnMore) {
       Text('了解更多')
         .fontSize(DesignConstants.FONT_SIZE_XXS)
-        .fontColor($r('app.color.brand'))
+        .fontColor($r('sys.color.brand'))
         .padding({ left: 4, right: 4, top: 2, bottom: 2 })
         .borderRadius(DesignConstants.BORDER_RADIUS_XS)
-        .backgroundColor($r('app.color.comp_background_secondary'))
+        .backgroundColor($r('sys.color.comp_background_secondary'))
         .onClick(() => {
           this.learnMore?.();
         })
@@ -57,7 +57,7 @@ export struct UsageHint {
     if (this.usageHint && this.showHint) {
       Text(`💡 ${this.usageHint}`)
         .fontSize(DesignConstants.FONT_SIZE_XXS)
-        .fontColor($r('app.color.font_secondary'))
+        .fontColor($r('sys.color.font_secondary'))
         .width('100%')
         .margin({ top: 2 })
         .animation({
@@ -81,7 +81,7 @@ export struct ToolIcon {
       Image(this.icon)
         .width(24)
         .height(24)
-        .fillColor(this.isHovered ? $r('app.color.brand') : $r('app.color.icon_primary'))
+        .fillColor(this.isHovered ? $r('sys.color.brand') : $r('sys.color.icon_primary'))
         .scale({ x: this.isPressed ? 0.9 : 1.0, y: this.isPressed ? 0.9 : 1.0 })
         .animation({
           duration: DesignConstants.ANIMATION_DURATION_XS,

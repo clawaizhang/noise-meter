@@ -102,10 +102,10 @@ export struct MainNoiseMeter {
       Image(config.icon)
         .width(24)
         .height(24)
-        .fillColor(this.currentIndex === config.index ? $r('app.color.icon_emphasize') : $r('app.color.icon_primary'))
+        .fillColor(this.currentIndex === config.index ? $r('sys.color.icon_emphasize') : $r('sys.color.icon_primary'))
       Text(config.title)
         .fontSize(12)
-        .fontColor(this.currentIndex === config.index ? $r('app.color.font_emphasize') : $r('app.color.font_primary'))
+        .fontColor(this.currentIndex === config.index ? $r('sys.color.font_emphasize') : $r('sys.color.font_primary'))
         .margin({ top: 4 })
     }
     .justifyContent(FlexAlign.Center)
@@ -129,7 +129,7 @@ export struct MainNoiseMeter {
           }
         }
         alertsDialog = DialogHub.getSheet()
-          .setStyle({ showClose: false, backgroundColor: $r('app.color.background_secondary') })
+          .setStyle({ showClose: false, backgroundColor: $r('sys.color.background_secondary') })
           .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS })
           .setComponentTargetId('mainId')
           .setContent(wrapBuilder(AlertsSettingsBuilder), props)
@@ -195,7 +195,7 @@ export struct MainNoiseMeter {
       Text(this.title)
         .fontSize(18)
         .fontWeight(FontWeight.Bold)
-        .fontColor($r('app.color.font_primary'))
+        .fontColor($r('sys.color.font_primary'))
         .alignSelf(ItemAlign.Start)
 
       // 副标题 - 在下方（会员标签）
@@ -204,10 +204,10 @@ export struct MainNoiseMeter {
           Image($r('app.media.ic_vip'))
             .width(14)
             .height(14)
-            .fillColor($r('app.color.confirm'))
+            .fillColor($r('sys.color.confirm'))
           Text(this.pro)
             .fontSize(11)
-            .fontColor($r('app.color.confirm'))
+            .fontColor($r('sys.color.confirm'))
         }
         .padding({
           left: 6,
@@ -215,7 +215,7 @@ export struct MainNoiseMeter {
           top: 2,
           bottom: 2
         })
-        .backgroundColor($r('app.color.comp_background_primary'))
+        .backgroundColor($r('sys.color.comp_background_primary'))
         .borderRadius(8)
         .alignSelf(ItemAlign.Start)
       } else {
@@ -223,10 +223,10 @@ export struct MainNoiseMeter {
           Image($r('app.media.ic_vip'))
             .width(14)
             .height(14)
-            .fillColor($r('app.color.font_secondary'))
+            .fillColor($r('sys.color.font_secondary'))
           Text('基础版')
             .fontSize(11)
-            .fontColor($r('app.color.font_secondary'))
+            .fontColor($r('sys.color.font_secondary'))
         }
         .padding({
           left: 6,
@@ -234,7 +234,7 @@ export struct MainNoiseMeter {
           top: 2,
           bottom: 2
         })
-        .backgroundColor($r('app.color.comp_background_primary'))
+        .backgroundColor($r('sys.color.comp_background_primary'))
         .borderRadius(8)
         .alignSelf(ItemAlign.Start)
       }
@@ -375,7 +375,7 @@ export struct MainNoiseMeter {
     .hideTitleBar(this.currentIndex === 1)
     .hideToolBar(true)
     .mode(NavDestinationMode.STANDARD)
-    .backgroundColor($r('app.color.background_secondary'))
+    .backgroundColor($r('sys.color.background_secondary'))
     .animation({ duration: 200, curve: Curve.Linear })
   }
 }

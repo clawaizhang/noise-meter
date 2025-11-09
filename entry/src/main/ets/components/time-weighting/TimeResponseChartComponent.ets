@@ -198,14 +198,14 @@ export struct TimeResponseChartComponent {
       Text('动态响应特性预览')
         .fontSize(DesignConstants.FONT_SIZE_LG)
         .fontWeight(FontWeight.Bold)
-        .fontColor($r('app.color.font_primary'))
+        .fontColor($r('sys.color.font_primary'))
         .alignSelf(ItemAlign.Start)
 
       // Canvas绘制区域
       Canvas(this.canvasContext)
         .width(this.canvasWidth)
         .height(this.canvasHeight)
-        .backgroundColor($r('app.color.black'))
+        .backgroundColor($r('sys.color.black'))
         .onAreaChange((oldArea: Area, newArea: Area) => {
           // 响应式尺寸调整
           this.canvasWidth = newArea.width as number;
@@ -220,15 +220,15 @@ export struct TimeResponseChartComponent {
       Row() {
         Text('0ms')
           .fontSize(DesignConstants.FONT_SIZE_XS)
-          .fontColor($r('app.color.font_tertiary'))
+          .fontColor($r('sys.color.font_tertiary'))
         Text('时间')
           .fontSize(DesignConstants.FONT_SIZE_XS)
-          .fontColor($r('app.color.font_tertiary'))
+          .fontColor($r('sys.color.font_tertiary'))
           .layoutWeight(1)
           .textAlign(TextAlign.Center)
         Text('2000ms')
           .fontSize(DesignConstants.FONT_SIZE_XS)
-          .fontColor($r('app.color.font_tertiary'))
+          .fontColor($r('sys.color.font_tertiary'))
       }
       .width('100%')
       .margin({ top: DesignConstants.SPACING_XS })
@@ -257,7 +257,7 @@ export struct TimeResponseChartComponent {
   // 绘制网格
   private drawGrid() {
     const ctx = this.canvasContext;
-    const gridColor = this.sysResourceManager.getColorSync($r('app.color.font_on_secondary').id);
+    const gridColor = this.sysResourceManager.getColorSync($r('sys.color.font_on_secondary').id);
     
     // 水平网格线
     for (let i = 0; i <= 4; i++) {
@@ -282,7 +282,7 @@ export struct TimeResponseChartComponent {
     }
     
     // Y轴标签
-    ctx.fillStyle = this.sysResourceManager.getColorSync($r('app.color.font_on_tertiary').id);
+    ctx.fillStyle = this.sysResourceManager.getColorSync($r('sys.color.font_on_tertiary').id);
     ctx.font = '10px sans-serif';
     ctx.textAlign = 'right';
     ctx.fillText('1.0', 25, 15);
@@ -298,7 +298,7 @@ export struct TimeResponseChartComponent {
     const step = this.canvasWidth / (this.SAMPLE_COUNT - 1);
     
     ctx.beginPath();
-    ctx.strokeStyle = this.sysResourceManager.getColorSync($r('app.color.font_on_primary').id);
+    ctx.strokeStyle = this.sysResourceManager.getColorSync($r('sys.color.font_on_primary').id);
     ctx.lineWidth = 2;
     
     // 移动到起点
@@ -318,7 +318,7 @@ export struct TimeResponseChartComponent {
   // 绘制时间常数标记
   private drawTimeConstantMarkers() {
     const ctx = this.canvasContext;
-    const markerColor = this.sysResourceManager.getColorSync($r('app.color.confirm').id);
+    const markerColor = this.sysResourceManager.getColorSync($r('sys.color.confirm').id);
     
     ctx.strokeStyle = markerColor;
     ctx.lineWidth = 1;
@@ -357,7 +357,7 @@ export struct TimeResponseChartComponent {
     ctx.stroke();
     
     // 绘制标签
-    ctx.fillStyle = this.sysResourceManager.getColorSync($r('app.color.font_on_secondary').id);
+    ctx.fillStyle = this.sysResourceManager.getColorSync($r('sys.color.font_on_secondary').id);
     ctx.font = '10px sans-serif';
     ctx.textAlign = 'center';
     ctx.fillText(label, x, this.canvasHeight - 10);

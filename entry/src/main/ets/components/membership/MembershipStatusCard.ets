@@ -102,8 +102,8 @@ export struct MembershipStatusCard {
   @Computed
   get membershipStatusColor(): Resource {
     return this.pk.member_ship.can ?
-    $r('app.color.confirm') :
-    $r('app.color.font_secondary');
+    $r('sys.color.confirm') :
+    $r('sys.color.font_secondary');
   }
 
   /**
@@ -122,7 +122,7 @@ export struct MembershipStatusCard {
         Text('会员状态')
           .fontSize(DesignConstants.FONT_SIZE_LG)
           .fontWeight(FontWeight.Bold)
-          .fontColor($r('app.color.font_primary'))
+          .fontColor($r('sys.color.font_primary'))
       }
       .alignItems(VerticalAlign.Center)
 
@@ -134,8 +134,8 @@ export struct MembershipStatusCard {
 
         Text(`🔥连续${this.consecutiveDays}天`)
           .fontSize(DesignConstants.FONT_SIZE_SM)
-          .fontColor($r('app.color.warning'))
-          .backgroundColor($r('app.color.comp_background_primary'))
+          .fontColor($r('sys.color.warning'))
+          .backgroundColor($r('sys.color.comp_background_primary'))
           .borderRadius(DesignConstants.BORDER_RADIUS_SM)
           .padding({
             left: DesignConstants.SPACING_SM,
@@ -161,12 +161,12 @@ export struct MembershipStatusCard {
         Image($r('app.media.ic_time_weighting'))
           .width(DesignConstants.ICON_SIZE_SM)
           .height(DesignConstants.ICON_SIZE_SM)
-          .fillColor($r('app.color.font_primary'))
+          .fillColor($r('sys.color.font_primary'))
 
         Text('今日使用进度')
           .fontSize(DesignConstants.FONT_SIZE_MD)
           .fontWeight(FontWeight.Medium)
-          .fontColor($r('app.color.font_primary'))
+          .fontColor($r('sys.color.font_primary'))
       }
       .alignItems(VerticalAlign.Center)
       .alignSelf(ItemAlign.Start)
@@ -177,14 +177,14 @@ export struct MembershipStatusCard {
         Row()
           .width('100%')
           .height(8)
-          .backgroundColor($r('app.color.comp_background_primary'))
+          .backgroundColor($r('sys.color.comp_background_primary'))
           .borderRadius(4)
 
         // 进度条 - 从左侧开始增长
         Row()
           .width(`${this.progressPercent}%`)
           .height(8)
-          .backgroundColor($r('app.color.confirm'))
+          .backgroundColor($r('sys.color.confirm'))
           .borderRadius(4)
       }
       .width('100%')
@@ -195,15 +195,15 @@ export struct MembershipStatusCard {
         if (this.pk.continuous_usage_data.todayUsageCompleted) {
           Text('🎉 今日使用已完成！')
             .fontSize(DesignConstants.FONT_SIZE_SM)
-            .fontColor($r('app.color.confirm'))
+            .fontColor($r('sys.color.confirm'))
         } else {
           Text(`已使用 ${this.currentSeconds}/60 秒`)
             .fontSize(DesignConstants.FONT_SIZE_SM)
-            .fontColor($r('app.color.font_secondary'))
+            .fontColor($r('sys.color.font_secondary'))
 
           Text(`剩余 ${60 - this.currentSeconds} 秒`)
             .fontSize(DesignConstants.FONT_SIZE_SM)
-            .fontColor($r('app.color.font_tertiary'))
+            .fontColor($r('sys.color.font_tertiary'))
             .layoutWeight(1)
             .textAlign(TextAlign.End)
         }
@@ -224,12 +224,12 @@ export struct MembershipStatusCard {
         Image($r('app.media.ic_favorite'))
           .width(DesignConstants.ICON_SIZE_SM)
           .height(DesignConstants.ICON_SIZE_SM)
-          .fillColor($r('app.color.font_primary'))
+          .fillColor($r('sys.color.font_primary'))
 
         Text('奖励预告')
           .fontSize(DesignConstants.FONT_SIZE_MD)
           .fontWeight(FontWeight.Medium)
-          .fontColor($r('app.color.font_primary'))
+          .fontColor($r('sys.color.font_primary'))
       }
       .alignItems(VerticalAlign.Center)
       .alignSelf(ItemAlign.Start)
@@ -239,11 +239,11 @@ export struct MembershipStatusCard {
         Row() {
           Text('今日奖励：')
             .fontSize(DesignConstants.FONT_SIZE_SM)
-            .fontColor($r('app.color.font_secondary'))
+            .fontColor($r('sys.color.font_secondary'))
 
           Text(`${this.todayReward}天会员`)
             .fontSize(DesignConstants.FONT_SIZE_SM)
-            .fontColor($r('app.color.confirm'))
+            .fontColor($r('sys.color.confirm'))
             .fontWeight(FontWeight.Medium)
         }
         .width('100%')
@@ -253,11 +253,11 @@ export struct MembershipStatusCard {
       Row() {
         Text('明日奖励：')
           .fontSize(DesignConstants.FONT_SIZE_SM)
-          .fontColor($r('app.color.font_secondary'))
+          .fontColor($r('sys.color.font_secondary'))
 
         Text(`${this.tomorrowReward}天会员`)
           .fontSize(DesignConstants.FONT_SIZE_SM)
-          .fontColor($r('app.color.warning'))
+          .fontColor($r('sys.color.warning'))
           .fontWeight(FontWeight.Medium)
       }
       .width('100%')
@@ -267,11 +267,11 @@ export struct MembershipStatusCard {
         Row() {
           Text(`连续${this.nextMilestone.days}天：`)
             .fontSize(DesignConstants.FONT_SIZE_SM)
-            .fontColor($r('app.color.font_secondary'))
+            .fontColor($r('sys.color.font_secondary'))
 
           Text(`${this.nextMilestone.reward}天会员`)
             .fontSize(DesignConstants.FONT_SIZE_SM)
-            .fontColor($r('app.color.brand'))
+            .fontColor($r('sys.color.brand'))
             .fontWeight(FontWeight.Medium)
         }
         .width('100%')
@@ -291,19 +291,19 @@ export struct MembershipStatusCard {
         Image($r('app.media.ic_vip'))
           .width(DesignConstants.ICON_SIZE_MD)
           .height(DesignConstants.ICON_SIZE_MD)
-          .fillColor($r('app.color.brand'))
+          .fillColor($r('sys.color.brand'))
 
         Text('专业版免费送！')
           .fontSize(DesignConstants.FONT_SIZE_LG)
           .fontWeight(FontWeight.Bold)
-          .fontColor($r('app.color.font_primary'))
+          .fontColor($r('sys.color.font_primary'))
       }
       .alignItems(VerticalAlign.Center)
 
       // 描述
       Text('每天使用APP即可获得专业版会员')
         .fontSize(DesignConstants.FONT_SIZE_MD)
-        .fontColor($r('app.color.font_secondary'))
+        .fontColor($r('sys.color.font_secondary'))
         .textAlign(TextAlign.Center)
         .width('100%')
 
@@ -311,15 +311,15 @@ export struct MembershipStatusCard {
       Column({ space: DesignConstants.SPACING_XS }) {
         Text('🎁 每日奖励：使用1分钟获得1天会员')
           .fontSize(DesignConstants.FONT_SIZE_SM)
-          .fontColor($r('app.color.font_secondary'))
+          .fontColor($r('sys.color.font_secondary'))
 
         Text('🔥 连续奖励：连续使用额外赠送会员')
           .fontSize(DesignConstants.FONT_SIZE_SM)
-          .fontColor($r('app.color.font_secondary'))
+          .fontColor($r('sys.color.font_secondary'))
 
         Text('📱 自动累计：奖励天数自动累加')
           .fontSize(DesignConstants.FONT_SIZE_SM)
-          .fontColor($r('app.color.font_secondary'))
+          .fontColor($r('sys.color.font_secondary'))
       }
       .width('100%')
       .padding(DesignConstants.SPACING_MD)
@@ -329,8 +329,8 @@ export struct MembershipStatusCard {
       Button('免费体验')
         .width('100%')
         .fontSize(DesignConstants.FONT_SIZE_MD)
-        .backgroundColor($r('app.color.brand'))
-        .fontColor($r('app.color.font_on_primary'))
+        .backgroundColor($r('sys.color.brand'))
+        .fontColor($r('sys.color.font_on_primary'))
         .borderRadius(DesignConstants.BORDER_RADIUS_MD)
         .onClick(() => {
           Throttle.click(() => {
@@ -367,7 +367,7 @@ export struct MembershipStatusCard {
     };
     const dialog = DialogHub.getSheet()
       .setComponentTargetId('mainId')
-      .setStyle({ backgroundColor: $r('app.color.background_secondary') })
+      .setStyle({ backgroundColor: $r('sys.color.background_secondary') })
       .setContent(wrapBuilder(MembershipAgreementDialogBuilder), props)
       .build();
     dialog.show();
@@ -425,7 +425,7 @@ export struct MembershipStatusCard {
     this.dialog = DialogHub.getSheet()
       .setStyle({
         title: { title: '专业版' },
-        backgroundColor: $r('app.color.background_secondary')
+        backgroundColor: $r('sys.color.background_secondary')
       })
       .setConfig({
         scrollSizeMode: ScrollSizeMode.CONTINUOUS
@@ -449,11 +449,11 @@ export struct MembershipStatusCard {
       }
     }
     .padding(DesignConstants.SPACING_LG)
-    .backgroundColor($r('app.color.comp_background_primary'))
+    .backgroundColor($r('sys.color.comp_background_primary'))
     .borderRadius(DesignConstants.BORDER_RADIUS_LG)
     .border({
       width: DesignConstants.BORDER_WIDTH_SM,
-      color: $r('app.color.comp_border_color')
+      color: $r('sys.color.comp_border_color')
     })
     .width('100%')
     .onClick(() => {

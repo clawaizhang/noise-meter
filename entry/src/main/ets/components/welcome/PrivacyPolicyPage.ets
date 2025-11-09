@@ -15,7 +15,7 @@ export struct PrivacyPolicyPage {
   @Local private buttonsOpacity: number = 0;
   @Local private checkboxShake: number = 0;
   @Local private checkboxScale: number = 1.0;
-  @Local private textColor: Resource = $r('app.color.font_emphasize');
+  @Local private textColor: Resource = $r('sys.color.font_emphasize');
 
   aboutToAppear(): void {
     this.startEntranceAnimation();
@@ -85,7 +85,7 @@ export struct PrivacyPolicyPage {
 
   private startShakeAnimation(): void {
     // 颜色变化 - 变为温和的橙色
-    this.textColor = $r('app.color.alert');
+    this.textColor = $r('sys.color.alert');
     
     // 缩放动画
     animateTo({
@@ -113,7 +113,7 @@ export struct PrivacyPolicyPage {
       }, () => {
         this.checkboxShake = 0;
         this.checkboxScale = 1.0;
-        this.textColor = $r('app.color.font_emphasize');
+        this.textColor = $r('sys.color.font_emphasize');
       });
     }, 400);
   }
@@ -149,7 +149,7 @@ export struct PrivacyPolicyPage {
     }
     .width('100%')
     .height('100%')
-    .backgroundColor($r('app.color.background_primary'))
+    .backgroundColor($r('sys.color.background_primary'))
     .opacity(this.contentOpacity)
   }
 
@@ -163,11 +163,11 @@ export struct PrivacyPolicyPage {
         Image($r('app.media.ic_mic'))
           .width(DesignConstants.ICON_SIZE_MD)
           .height(DesignConstants.ICON_SIZE_MD)
-          .fillColor($r('app.color.font_primary'))
+          .fillColor($r('sys.color.font_primary'))
 
         Text($r('app.string.privacy_policy_microphone_permission'))
           .fontSize(DesignConstants.FONT_SIZE_MD)
-          .fontColor($r('app.color.font_primary'))
+          .fontColor($r('sys.color.font_primary'))
           .layoutWeight(1)
       }
       .width('100%')
@@ -177,11 +177,11 @@ export struct PrivacyPolicyPage {
         Image($r('app.media.ic_location'))
           .width(DesignConstants.ICON_SIZE_MD)
           .height(DesignConstants.ICON_SIZE_MD)
-          .fillColor($r('app.color.font_primary'))
+          .fillColor($r('sys.color.font_primary'))
 
         Text($r('app.string.privacy_policy_location_permission'))
           .fontSize(DesignConstants.FONT_SIZE_MD)
-          .fontColor($r('app.color.font_primary'))
+          .fontColor($r('sys.color.font_primary'))
           .layoutWeight(1)
       }
       .width('100%')
@@ -191,18 +191,18 @@ export struct PrivacyPolicyPage {
         Image($r('app.media.ic_power_on'))
           .width(DesignConstants.ICON_SIZE_MD)
           .height(DesignConstants.ICON_SIZE_MD)
-          .fillColor($r('app.color.font_primary'))
+          .fillColor($r('sys.color.font_primary'))
 
         Text($r('app.string.privacy_policy_background_permission'))
           .fontSize(DesignConstants.FONT_SIZE_MD)
-          .fontColor($r('app.color.font_primary'))
+          .fontColor($r('sys.color.font_primary'))
           .layoutWeight(1)
       }
       .width('100%')
     }
     .width('100%')
     .padding(DesignConstants.SPACING_MD)
-    .backgroundColor($r('app.color.comp_background_secondary'))
+    .backgroundColor($r('sys.color.comp_background_secondary'))
     .borderRadius(DesignConstants.BORDER_RADIUS_MD)
     .opacity(this.permissionsOpacity)
   }
@@ -222,7 +222,7 @@ export struct PrivacyPolicyPage {
         Text($r('app.string.EntryAbility_label'))
           .fontSize(DesignConstants.FONT_SIZE_XL)
           .fontWeight(FontWeight.Bold)
-          .fontColor($r('app.color.font_emphasize'))
+          .fontColor($r('sys.color.font_emphasize'))
       }
       .alignItems(HorizontalAlign.Center)
       .width('100%')
@@ -233,7 +233,7 @@ export struct PrivacyPolicyPage {
       Text('隐私保护')
         .fontSize(DesignConstants.FONT_SIZE_XL)
         .fontWeight(FontWeight.Bold)
-        .fontColor($r('app.color.font_emphasize'))
+        .fontColor($r('sys.color.font_emphasize'))
         .textAlign(TextAlign.Center)
         .width('100%')
         .opacity(this.titleOpacity)
@@ -241,7 +241,7 @@ export struct PrivacyPolicyPage {
       // 隐私政策描述
       Text('我们重视您的隐私安全，请了解我们的数据使用政策')
         .fontSize(DesignConstants.FONT_SIZE_MD)
-        .fontColor($r('app.color.font_primary'))
+        .fontColor($r('sys.color.font_primary'))
         .textAlign(TextAlign.Center)
         .width('100%')
         .lineHeight(20)
@@ -251,7 +251,7 @@ export struct PrivacyPolicyPage {
       Text('应用权限说明')
         .fontSize(DesignConstants.FONT_SIZE_MD)
         .fontWeight(FontWeight.Medium)
-        .fontColor($r('app.color.font_primary'))
+        .fontColor($r('sys.color.font_primary'))
         .alignSelf(ItemAlign.Start)
         .opacity(this.permissionsOpacity)
 
@@ -273,7 +273,7 @@ export struct PrivacyPolicyPage {
       Row({ space: DesignConstants.SPACING_SM }) {
         Text('请阅读并同意')
           .fontSize(DesignConstants.FONT_SIZE_MD)
-          .fontColor($r('app.color.font_primary'))
+          .fontColor($r('sys.color.font_primary'))
 
         Hyperlink($r('app.string.privacy_policy_link'),
           $r('app.string.privacy_policy_link_text'))
@@ -318,8 +318,8 @@ export struct PrivacyPolicyPage {
       Button('同意并继续', { type: ButtonType.Capsule })
         .width('100%')
         .height(56)
-        .backgroundColor($r('app.color.interactive_active'))
-        .fontColor($r('app.color.font_on_primary'))
+        .backgroundColor($r('sys.color.interactive_active'))
+        .fontColor($r('sys.color.font_on_primary'))
         .fontSize(DesignConstants.FONT_SIZE_LG)
         .onClick(() => {
           Throttle.click(() => {
@@ -332,8 +332,8 @@ export struct PrivacyPolicyPage {
       Button('暂不使用', { type: ButtonType.Normal })
         .width('100%')
         .height(48)
-        .backgroundColor($r('app.color.comp_background_primary'))
-        .fontColor($r('app.color.font_primary'))
+        .backgroundColor($r('sys.color.comp_background_primary'))
+        .fontColor($r('sys.color.font_primary'))
         .fontSize(DesignConstants.FONT_SIZE_MD)
         .onClick(() => {
           Throttle.click(() => {

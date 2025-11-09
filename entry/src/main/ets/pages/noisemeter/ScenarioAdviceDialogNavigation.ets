@@ -27,7 +27,7 @@ const scenarioData: ScenarioData[] = [
       '使用白噪音机',
       '避免夜间使用高噪音设备'
     ],
-    color: $r('app.color.confirm')
+    color: $r('sys.color.confirm')
   },
   {
     scenarioType: '居住',
@@ -41,7 +41,7 @@ const scenarioData: ScenarioData[] = [
       '合理安排家电位置',
       '控制电视音量'
     ],
-    color: $r('app.color.confirm')
+    color: $r('sys.color.confirm')
   },
   {
     scenarioType: '工作',
@@ -55,7 +55,7 @@ const scenarioData: ScenarioData[] = [
       '使用降噪耳机',
       '合理安排会议时间'
     ],
-    color: $r('app.color.warning')
+    color: $r('sys.color.warning')
   },
   {
     scenarioType: '工作',
@@ -69,7 +69,7 @@ const scenarioData: ScenarioData[] = [
       '使用定向麦克风',
       '控制参会人数'
     ],
-    color: $r('app.color.warning')
+    color: $r('sys.color.warning')
   },
   {
     scenarioType: '娱乐',
@@ -83,7 +83,7 @@ const scenarioData: ScenarioData[] = [
       '合理布局餐桌',
       '控制背景噪音'
     ],
-    color: $r('app.color.alert')
+    color: $r('sys.color.alert')
   },
   {
     scenarioType: '娱乐',
@@ -97,7 +97,7 @@ const scenarioData: ScenarioData[] = [
       '合理扬声器布局',
       '控制观众噪音'
     ],
-    color: $r('app.color.alert')
+    color: $r('sys.color.alert')
   },
   {
     scenarioType: '交通',
@@ -111,7 +111,7 @@ const scenarioData: ScenarioData[] = [
       '优化列车设计',
       '合理安排运营时间'
     ],
-    color: $r('app.color.font_primary')
+    color: $r('sys.color.font_primary')
   },
   {
     scenarioType: '交通',
@@ -125,7 +125,7 @@ const scenarioData: ScenarioData[] = [
       '优化交通流量',
       '限制重型车辆'
     ],
-    color: $r('app.color.font_primary')
+    color: $r('sys.color.font_primary')
   }
 ];
 
@@ -146,15 +146,15 @@ function buildScenarioAdviceCard(scenario: ScenarioData, ak: AppKeys, isCurrentS
     Row() {
       Text(scenario.scenarioType)
         .fontSize(12)
-        .fontColor($r('app.color.font_secondary'))
+        .fontColor($r('sys.color.font_secondary'))
         .padding(8)
-        .backgroundColor($r('app.color.background_secondary'))
+        .backgroundColor($r('sys.color.background_secondary'))
         .borderRadius(6);
 
       Text(scenario.scenarioName)
         .fontSize(16)
         .fontWeight(FontWeight.Bold)
-        .fontColor($r('app.color.font_primary'))
+        .fontColor($r('sys.color.font_primary'))
         .layoutWeight(1)
         .margin({ left: 8 });
 
@@ -163,7 +163,7 @@ function buildScenarioAdviceCard(scenario: ScenarioData, ak: AppKeys, isCurrentS
         Text('最佳匹配')
           .fontSize(10)
           .fontWeight(FontWeight.Medium)
-          .fontColor($r('app.color.font_primary'))
+          .fontColor($r('sys.color.font_primary'))
           .padding({ left: 6, right: 6, top: 4, bottom: 4 })
           .backgroundColor(scenario.color)
           .borderRadius(6)
@@ -177,7 +177,7 @@ function buildScenarioAdviceCard(scenario: ScenarioData, ak: AppKeys, isCurrentS
       Column({ space: 4 }) {
         Text('理想值')
           .fontSize(11)
-          .fontColor($r('app.color.font_secondary'));
+          .fontColor($r('sys.color.font_secondary'));
 
         Text(`${scenario.idealDb} dB`)
           .fontSize(13)
@@ -189,7 +189,7 @@ function buildScenarioAdviceCard(scenario: ScenarioData, ak: AppKeys, isCurrentS
       Column({ space: 4 }) {
         Text('最大值')
           .fontSize(11)
-          .fontColor($r('app.color.font_secondary'));
+          .fontColor($r('sys.color.font_secondary'));
 
         Text(`${scenario.maxDb} dB`)
           .fontSize(13)
@@ -203,7 +203,7 @@ function buildScenarioAdviceCard(scenario: ScenarioData, ak: AppKeys, isCurrentS
     // 场景描述
     Text(scenario.description)
       .fontSize(12)
-      .fontColor($r('app.color.font_secondary'))
+      .fontColor($r('sys.color.font_secondary'))
       .width('100%')
       .textAlign(TextAlign.Start);
 
@@ -211,18 +211,18 @@ function buildScenarioAdviceCard(scenario: ScenarioData, ak: AppKeys, isCurrentS
     Column({ space: 4 }) {
       Text('改善措施:')
         .fontSize(12)
-        .fontColor($r('app.color.font_secondary'))
+        .fontColor($r('sys.color.font_secondary'))
         .alignSelf(ItemAlign.Start);
 
       ForEach(scenario.improvementMeasures, (measure: string, index: number) => {
         Row({ space: 8 }) {
           Text('•')
             .fontSize(12)
-            .fontColor($r('app.color.font_secondary'));
+            .fontColor($r('sys.color.font_secondary'));
 
           Text(measure)
             .fontSize(11)
-            .fontColor($r('app.color.font_secondary'))
+            .fontColor($r('sys.color.font_secondary'))
             .layoutWeight(1);
         }
         .width('100%')
@@ -235,7 +235,7 @@ function buildScenarioAdviceCard(scenario: ScenarioData, ak: AppKeys, isCurrentS
   .padding(12)
   .width('100%')
   .backgroundBlurStyle(isCurrentScenario ? BlurStyle.COMPONENT_REGULAR : BlurStyle.NONE)
-  .backgroundColor($r('app.color.comp_background_primary'))
+  .backgroundColor($r('sys.color.comp_background_primary'))
   .borderRadius(12)
   .alignItems(HorizontalAlign.Start)
   .transition(TransitionEffect.OPACITY.animation({ curve: curves.springMotion(0.6, 0.8) })
@@ -311,9 +311,9 @@ struct ScenarioAdviceComponent {
         Text(item.label)
           .fontSize(14)
           .fontWeight(FontWeight.Medium)
-          .fontColor(this.selectedScenarioType === item.type ? $r('app.color.font_primary') : $r('app.color.font_secondary'))
+          .fontColor(this.selectedScenarioType === item.type ? $r('sys.color.font_primary') : $r('sys.color.font_secondary'))
           .padding(12)
-          .backgroundColor(this.selectedScenarioType === item.type ? $r('app.color.comp_background_primary') : $r('app.color.background_secondary'))
+          .backgroundColor(this.selectedScenarioType === item.type ? $r('sys.color.comp_background_primary') : $r('sys.color.background_secondary'))
           .borderRadius(8)
           .onClick(() => {
             this.selectedScenarioType = item.type
@@ -333,7 +333,7 @@ struct ScenarioAdviceComponent {
           Row() {
             Text('当前分贝值:')
               .fontSize(14)
-              .fontColor($r('app.color.font_secondary'));
+              .fontColor($r('sys.color.font_secondary'));
 
             Text(`${this.ak.uiDisplayState.displayDb} dB`)
               .fontSize(16)
@@ -348,7 +348,7 @@ struct ScenarioAdviceComponent {
             Row() {
               Text('最适合场景:')
                 .fontSize(14)
-                .fontColor($r('app.color.font_secondary'));
+                .fontColor($r('sys.color.font_secondary'));
 
               Text(getBestMatchingScenario(this.ak.uiDisplayState.displayDb)!.scenarioName)
                 .fontSize(14)
@@ -369,7 +369,7 @@ struct ScenarioAdviceComponent {
         Text(`${this.getScenarioTypeLabel(this.selectedScenarioType)}场景建议`)
           .fontSize(16)
           .fontWeight(FontWeight.Bold)
-          .fontColor($r('app.color.font_primary'))
+          .fontColor($r('sys.color.font_primary'))
           .alignSelf(ItemAlign.Start);
 
         ForEach(this.getFilteredScenarios(), (scenario: ScenarioData) => {
@@ -392,5 +392,5 @@ export function ScenarioAdviceDialogBuilder(ak: AppKeys) {
   }
   .title({ main: '场景化建议', sub: '不同场景的噪音控制参考' })
   .padding(16)
-  .backgroundColor($r('app.color.background_secondary'))
+  .backgroundColor($r('sys.color.background_secondary'))
 }

@@ -10,7 +10,7 @@ export struct SceneTag {
   build() {
     Text(this.scene)
       .fontSize(EnhancedDesignConstants.FONT_SIZE_XXS)
-      .fontColor($r('app.color.background_secondary'))
+      .fontColor($r('sys.color.background_secondary'))
       .backgroundColor(this.color)
       .borderRadius(EnhancedDesignConstants.BORDER_RADIUS_TAG)
       .padding({ left: 6, right: 6, top: 2, bottom: 2 })
@@ -34,7 +34,7 @@ export struct ProgressIndicator {
         .width(60)
         .height(4)
         .color(this.color)
-        .backgroundColor($r('app.color.comp_background_secondary'))
+        .backgroundColor($r('sys.color.comp_background_secondary'))
         .borderRadius(2)
     }
     .alignItems(VerticalAlign.Center)
@@ -56,14 +56,14 @@ export struct ToolPreviewCard {
           Text(this.tool.title)
             .fontSize(EnhancedDesignConstants.FONT_SIZE_SM)
             .fontWeight(EnhancedDesignConstants.FONT_WEIGHT_SEMI_BOLD)
-            .fontColor($r('app.color.font_primary'))
+            .fontColor($r('sys.color.font_primary'))
           
           Blank()
           
           if (this.onQuickAction) {
             Button('快速设置')
               .fontSize(EnhancedDesignConstants.FONT_SIZE_XXS)
-              .fontColor($r('app.color.background_secondary'))
+              .fontColor($r('sys.color.background_secondary'))
               .backgroundColor(EnhancedDesignConstants.COLOR_QUICK_ACTION)
               .borderRadius(EnhancedDesignConstants.BORDER_RADIUS_TAG)
               .height(28)
@@ -77,7 +77,7 @@ export struct ToolPreviewCard {
         // 预览内容
         Text(this.tool.description)
           .fontSize(EnhancedDesignConstants.FONT_SIZE_XS)
-          .fontColor($r('app.color.font_secondary'))
+          .fontColor($r('sys.color.font_secondary'))
           .maxLines(2)
           .textOverflow({ overflow: TextOverflow.Ellipsis })
           .width('100%')
@@ -87,18 +87,18 @@ export struct ToolPreviewCard {
           Row() {
             Text('当前状态:')
               .fontSize(EnhancedDesignConstants.FONT_SIZE_XXS)
-              .fontColor($r('app.color.font_secondary'))
+              .fontColor($r('sys.color.font_secondary'))
             
             Text(this.tool.getStatus?.() || '')
               .fontSize(EnhancedDesignConstants.FONT_SIZE_XXS)
-              .fontColor(this.tool.getStatusColor?.() || $r('app.color.font_primary'))
+              .fontColor(this.tool.getStatusColor?.() || $r('sys.color.font_primary'))
               .fontWeight(EnhancedDesignConstants.FONT_WEIGHT_MEDIUM)
             
             Blank()
             
             ProgressIndicator({
               progress: 0.7, // 示例进度
-              color: this.tool.getStatusColor?.() || $r('app.color.brand'))
+              color: this.tool.getStatusColor?.() || $r('sys.color.brand')
             })
           }
           .width('100%')
@@ -107,12 +107,12 @@ export struct ToolPreviewCard {
       }
       .width('100%')
       .padding(EnhancedDesignConstants.SPACING_SM)
-      .backgroundColor($r('app.color.comp_background_primary'))
+      .backgroundColor($r('sys.color.comp_background_primary'))
       .borderRadius(EnhancedDesignConstants.BORDER_RADIUS_PREVIEW)
       .shadow(EnhancedDesignConstants.SHADOW_SM)
       .border({
         width: 1,
-        color: $r('app.color.comp_background_secondary'))
+        color: $r('sys.color.comp_background_secondary')
       })
       .animation({
         duration: EnhancedDesignConstants.ANIMATION_DURATION_MD,
@@ -151,7 +151,7 @@ export struct EnhancedToolCard {
   // 根据优先级获取背景色
   private getBackgroundColor(): Resource {
     if (this.isPressed) {
-      return $r('app.color.comp_background_emphasize');
+      return $r('sys.color.comp_background_emphasize');
     }
     
     if (this.isHovered) {
@@ -159,15 +159,15 @@ export struct EnhancedToolCard {
         case ToolPriority.ESSENTIAL:
           return $r('app.color.essential_hover');
         case ToolPriority.RECOMMENDED:
-          return $r('app.color.recommended_hover');
+          return $r('sys.color.recommended_hover');
         case ToolPriority.ADVANCED:
-          return $r('app.color.advanced_hover');
+          return $r('sys.color.advanced_hover');
         default:
-          return $r('app.color.comp_background_secondary');
+          return $r('sys.color.comp_background_secondary');
       }
     }
     
-    return $r('app.color.background_secondary');
+    return $r('sys.color.background_secondary');
   }
   
   // 获取卡片阴影
@@ -239,10 +239,10 @@ export struct EnhancedToolCard {
       Image(this.tool.icon)
         .width(this.getCardConfig().iconSize)
         .height(this.getCardConfig().iconSize)
-        .fillColor(this.isHovered ? $r('app.color.brand') :
+        .fillColor(this.isHovered ? $r('sys.color.brand') : 
                  this.tool.priority === ToolPriority.ESSENTIAL ? EnhancedDesignConstants.COLOR_ESSENTIAL :
                  this.tool.priority === ToolPriority.ADVANCED ? EnhancedDesignConstants.COLOR_ADVANCED :
-                 $r('app.color.icon_primary'))
+                 $r('sys.color.icon_primary'))
         .animation({
           duration: EnhancedDesignConstants.ANIMATION_DURATION_XS,
           curve: Curve.EaseInOut
@@ -259,14 +259,14 @@ export struct EnhancedToolCard {
     if (this.tool.priority === ToolPriority.ESSENTIAL) {
       Text('核心')
         .fontSize(EnhancedDesignConstants.FONT_SIZE_XXS)
-        .fontColor($r('app.color.background_secondary'))
+        .fontColor($r('sys.color.background_secondary'))
         .backgroundColor(EnhancedDesignConstants.COLOR_ESSENTIAL)
         .borderRadius(EnhancedDesignConstants.BORDER_RADIUS_TAG)
         .padding({ left: 4, right: 4, top: 1, bottom: 1 })
     } else if (this.tool.priority === ToolPriority.ADVANCED) {
       Text('PRO')
         .fontSize(EnhancedDesignConstants.FONT_SIZE_XXS)
-        .fontColor($r('app.color.background_secondary'))
+        .fontColor($r('sys.color.background_secondary'))
         .backgroundColor(EnhancedDesignConstants.COLOR_ADVANCED)
         .borderRadius(EnhancedDesignConstants.BORDER_RADIUS_TAG)
         .padding({ left: 4, right: 4, top: 1, bottom: 1 })
@@ -281,7 +281,7 @@ export struct EnhancedToolCard {
         Text(this.tool.title)
           .fontSize(this.getCardConfig().fontSize.title)
           .fontWeight(EnhancedDesignConstants.FONT_WEIGHT_SEMI_BOLD)
-          .fontColor(this.isHovered ? $r('app.color.brand') : $r('app.color.font_primary'))
+          .fontColor(this.isHovered ? $r('sys.color.brand') : $r('sys.color.font_primary'))
           .maxLines(1)
           .textOverflow({ overflow: TextOverflow.Ellipsis })
           .layoutWeight(1)
@@ -290,11 +290,11 @@ export struct EnhancedToolCard {
         if (this.tool.learnMore) {
           Button('了解更多')
             .fontSize(EnhancedDesignConstants.FONT_SIZE_XXS)
-            .fontColor($r('app.color.brand'))
-            .backgroundColor($r('app.color.transparent'))
+            .fontColor($r('sys.color.brand'))
+            .backgroundColor($r('sys.color.transparent'))
             .border({
               width: 1,
-              color: $r('app.color.brand')
+              color: $r('sys.color.brand')
             })
             .borderRadius(EnhancedDesignConstants.BORDER_RADIUS_TAG)
             .height(24)
@@ -308,7 +308,7 @@ export struct EnhancedToolCard {
       // 描述行
       Text(this.tool.description)
         .fontSize(this.getCardConfig().fontSize.description)
-        .fontColor($r('app.color.font_secondary'))
+        .fontColor($r('sys.color.font_secondary'))
         .maxLines(1)
         .textOverflow({ overflow: TextOverflow.Ellipsis })
         .width('100%')
@@ -319,7 +319,7 @@ export struct EnhancedToolCard {
           Text(this.tool.getStatus?.() || '')
             .fontSize(this.getCardConfig().fontSize.status)
             .fontWeight(EnhancedDesignConstants.FONT_WEIGHT_MEDIUM)
-            .fontColor(this.tool.getStatusColor?.() || $r('app.color.font_primary'))
+            .fontColor(this.tool.getStatusColor?.() || $r('sys.color.font_primary'))
           
           Blank()
           
@@ -329,7 +329,7 @@ export struct EnhancedToolCard {
               .width(8)
               .height(8)
               .borderRadius(4)
-              .backgroundColor(this.tool.getStatusColor?.() || $r('app.color.confirm'))
+              .backgroundColor(this.tool.getStatusColor?.() || $r('sys.color.confirm'))
           }
         }
         .width('100%')
@@ -348,7 +348,7 @@ export struct EnhancedToolCard {
           Image($r('sys.media.ohos_ic_public_add'))
             .width(16)
             .height(16)
-            .fillColor($r('app.color.background_secondary'))
+            .fillColor($r('sys.color.background_secondary'))
         }
         .width(32)
         .height(32)
@@ -362,7 +362,7 @@ export struct EnhancedToolCard {
       Image($r('sys.media.ohos_ic_public_arrow_right'))
         .width(16)
         .height(16)
-        .fillColor($r('app.color.font_secondary'))
+        .fillColor($r('sys.color.font_secondary'))
         .opacity(this.isHovered ? 1 : 0.6)
         .animation({
           duration: EnhancedDesignConstants.ANIMATION_DURATION_XS,
@@ -385,12 +385,12 @@ export struct SearchBar {
       Image($r('sys.media.ohos_ic_public_search'))
         .width(20)
         .height(20)
-        .fillColor($r('app.color.font_secondary'))
+        .fillColor($r('sys.color.font_secondary'))
       
       TextInput({ placeholder: '搜索功能或设置...', text: this.searchText })
         .fontSize(EnhancedDesignConstants.FONT_SIZE_SM)
-        .fontColor($r('app.color.font_primary'))
-        .backgroundColor($r('app.color.transparent'))
+        .fontColor($r('sys.color.font_primary'))
+        .backgroundColor($r('sys.color.transparent'))
         .border({ width: 0 })
         .layoutWeight(1)
         .onChange((value: string) => {
@@ -402,11 +402,11 @@ export struct SearchBar {
           Image($r('sys.media.ohos_ic_public_cancel'))
             .width(16)
             .height(16)
-            .fillColor($r('app.color.font_secondary'))
+            .fillColor($r('sys.color.font_secondary'))
         }
         .width(24)
         .height(24)
-        .backgroundColor($r('app.color.transparent'))
+        .backgroundColor($r('sys.color.transparent'))
         .onClick(() => {
           this.onClear?.();
         })
@@ -415,11 +415,11 @@ export struct SearchBar {
     .width('100%')
     .height(EnhancedDesignConstants.LAYOUT_SEARCH_HEIGHT)
     .padding(EnhancedDesignConstants.SPACING_SM)
-    .backgroundColor($r('app.color.comp_background_primary'))
+    .backgroundColor($r('sys.color.comp_background_primary'))
     .borderRadius(EnhancedDesignConstants.BORDER_RADIUS_MD)
     .border({
       width: 1,
-      color: $r('app.color.comp_background_secondary')
+      color: $r('sys.color.comp_background_secondary')
     })
   }
 }

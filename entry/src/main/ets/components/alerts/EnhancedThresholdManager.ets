@@ -85,22 +85,22 @@ export struct EnhancedThresholdManager {
         Text(preset.name)
           .fontSize(DesignConstants.FONT_SIZE_MD)
           .fontWeight(FontWeight.Medium)
-          .fontColor(this.currentConfig.currentPreset === presetType ? Color.White : $r('app.color.font_primary'))
+          .fontColor(this.currentConfig.currentPreset === presetType ? Color.White : $r('sys.color.font_primary'))
 
         Text(preset.description)
           .fontSize(DesignConstants.FONT_SIZE_SM)
-          .fontColor(this.currentConfig.currentPreset === presetType ? Color.White : $r('app.color.font_secondary'))
+          .fontColor(this.currentConfig.currentPreset === presetType ? Color.White : $r('sys.color.font_secondary'))
           .maxLines(2)
           .textOverflow({ overflow: TextOverflow.Ellipsis })
       }
       .width('100%')
       .padding(DesignConstants.SPACING_MD)
       .backgroundColor(this.currentConfig.currentPreset === presetType ? preset.color :
-        $r('app.color.comp_background_primary'))
+        $r('sys.color.comp_background_primary'))
       .borderRadius(DesignConstants.BORDER_RADIUS_MD)
       .border({
         width: this.currentConfig.currentPreset === presetType ? 2 : 1,
-        color: this.currentConfig.currentPreset === presetType ? preset.color : $r('app.color.background_secondary')
+        color: this.currentConfig.currentPreset === presetType ? preset.color : $r('sys.color.background_secondary')
       })
       .onClick(() => {
         Throttle.click(() => {
@@ -134,7 +134,7 @@ export struct EnhancedThresholdManager {
         Text('阈值设置')
           .fontSize(DesignConstants.FONT_SIZE_XL)
           .fontWeight(FontWeight.Bold)
-          .fontColor($r('app.color.font_primary'))
+          .fontColor($r('sys.color.font_primary'))
           .layoutWeight(1)
 
         // 时段调度开关
@@ -142,7 +142,7 @@ export struct EnhancedThresholdManager {
           Row({ space: DesignConstants.SPACING_XS }) {
             Text('时段调度')
               .fontSize(DesignConstants.FONT_SIZE_MD)
-              .fontColor($r('app.color.font_primary'))
+              .fontColor($r('sys.color.font_primary'))
 
             Toggle({ type: ToggleType.Switch, isOn: this.currentConfig.timeSchedulingEnabled })
               .onChange((isOn: boolean) => {
@@ -162,7 +162,7 @@ export struct EnhancedThresholdManager {
         '已启用时段调度，白天和夜间使用不同阈值' :
         '时段调度已关闭，全天使用统一阈值')
         .fontSize(DesignConstants.FONT_SIZE_MD)
-        .fontColor($r('app.color.font_secondary'))
+        .fontColor($r('sys.color.font_secondary'))
         .alignSelf(ItemAlign.Start)
 
       // 阈值设置区域
@@ -173,7 +173,7 @@ export struct EnhancedThresholdManager {
         // 引导提示
         Text('选择环境类型快速设置阈值')
           .fontSize(DesignConstants.FONT_SIZE_MD)
-          .fontColor($r('app.color.font_secondary'))
+          .fontColor($r('sys.color.font_secondary'))
           .alignSelf(ItemAlign.Start)
 
         PremiumFeature({ featureName: '选择预设环境', featureDesc: '选择预设环境快速设置阈值' }) {
@@ -187,7 +187,7 @@ export struct EnhancedThresholdManager {
     }
     .width('100%')
     .padding(DesignConstants.SPACING_LG)
-    .backgroundColor($r('app.color.comp_background_primary'))
+    .backgroundColor($r('sys.color.comp_background_primary'))
     .borderRadius(DesignConstants.BORDER_RADIUS_LG)
     .shadow(DesignConstants.SHADOW_SM)
   }
@@ -200,7 +200,7 @@ export struct EnhancedThresholdManager {
         // 自定义模式状态提示
         Text('手动调整阈值设置')
           .fontSize(DesignConstants.FONT_SIZE_MD)
-          .fontColor($r('app.color.font_secondary'))
+          .fontColor($r('sys.color.font_secondary'))
           .alignSelf(ItemAlign.Start)
 
         if (!this.currentConfig.timeSchedulingEnabled) {
@@ -213,7 +213,7 @@ export struct EnhancedThresholdManager {
               this.currentConfig.baseThreshold = value;
               this.updateConfig(this.currentConfig);
             },
-            color: $r('app.color.brand'),
+            color: $r('sys.color.brand'),
             timeRange: '全天统一阈值'
           })
         } else {
@@ -227,7 +227,7 @@ export struct EnhancedThresholdManager {
                 this.currentConfig.daytimeThreshold = value;
                 this.updateConfig(this.currentConfig);
               },
-              color: $r('app.color.brand'),
+              color: $r('sys.color.brand'),
               timeRange: '6:00 - 22:00'
             })
 
@@ -239,7 +239,7 @@ export struct EnhancedThresholdManager {
                 this.currentConfig.nighttimeThreshold = value;
                 this.updateConfig(this.currentConfig);
               },
-              color: $r('app.color.brand'),
+              color: $r('sys.color.brand'),
               timeRange: '22:00 - 6:00'
             })
           }
@@ -253,7 +253,7 @@ export struct EnhancedThresholdManager {
         // 预设环境状态提示
         Text(`当前使用${this.getPresetByType(this.currentConfig.currentPreset).name}预设阈值`)
           .fontSize(DesignConstants.FONT_SIZE_MD)
-          .fontColor($r('app.color.font_secondary'))
+          .fontColor($r('sys.color.font_secondary'))
           .alignSelf(ItemAlign.Start)
 
         if (!this.currentConfig.timeSchedulingEnabled) {
@@ -262,7 +262,7 @@ export struct EnhancedThresholdManager {
             title: '统一阈值',
             value: `${this.currentConfig.baseThreshold}dB`,
             description: '全天使用的统一阈值',
-            color: $r('app.color.brand')
+            color: $r('sys.color.brand')
           })
         } else {
           // 时段调度开启：显示白天和夜间阈值
@@ -271,14 +271,14 @@ export struct EnhancedThresholdManager {
               title: '白天阈值',
               value: `${this.currentConfig.daytimeThreshold}dB`,
               description: '适用于日常活动环境',
-              color: $r('app.color.brand')
+              color: $r('sys.color.brand')
             })
 
             this.buildThresholdInfo({
               title: '夜间阈值',
               value: `${this.currentConfig.nighttimeThreshold}dB`,
               description: '适用于休息睡眠环境',
-              color: $r('app.color.brand')
+              color: $r('sys.color.brand')
             })
           }
           .width('100%')
@@ -296,7 +296,7 @@ export struct EnhancedThresholdManager {
         Text(config.title)
           .fontSize(DesignConstants.FONT_SIZE_LG)
           .fontWeight(FontWeight.Medium)
-          .fontColor($r('app.color.font_primary'))
+          .fontColor($r('sys.color.font_primary'))
           .layoutWeight(1)
 
         Text(config.value)
@@ -309,12 +309,12 @@ export struct EnhancedThresholdManager {
 
       Text(config.description)
         .fontSize(DesignConstants.FONT_SIZE_MD)
-        .fontColor($r('app.color.font_secondary'))
+        .fontColor($r('sys.color.font_secondary'))
         .alignSelf(ItemAlign.Start)
     }
     .width('100%')
     .padding(DesignConstants.SPACING_MD)
-    .backgroundColor($r('app.color.background_secondary'))
+    .backgroundColor($r('sys.color.background_secondary'))
     .borderRadius(DesignConstants.BORDER_RADIUS_MD)
   }
 
@@ -327,7 +327,7 @@ export struct EnhancedThresholdManager {
         Text(config.title)
           .fontSize(DesignConstants.FONT_SIZE_LG)
           .fontWeight(FontWeight.Medium)
-          .fontColor($r('app.color.font_primary'))
+          .fontColor($r('sys.color.font_primary'))
           .layoutWeight(1)
 
         Text(`${config.value}dB`)
@@ -341,7 +341,7 @@ export struct EnhancedThresholdManager {
       // 时间范围
       Text(config.timeRange)
         .fontSize(DesignConstants.FONT_SIZE_SM)
-        .fontColor($r('app.color.font_secondary'))
+        .fontColor($r('sys.color.font_secondary'))
         .alignSelf(ItemAlign.Start)
 
       // 滑动条
@@ -353,7 +353,7 @@ export struct EnhancedThresholdManager {
         style: SliderStyle.InSet
       })
         .blockColor(config.color)
-        .trackColor($r('app.color.background_secondary'))
+        .trackColor($r('sys.color.background_secondary'))
         .selectedColor(config.color)
         .onChange((newValue: number) => {
           this.logStateChange(`调整阈值: ${newValue}dB`);
@@ -371,12 +371,12 @@ export struct EnhancedThresholdManager {
       // 描述
       Text(config.description)
         .fontSize(DesignConstants.FONT_SIZE_MD)
-        .fontColor($r('app.color.font_secondary'))
+        .fontColor($r('sys.color.font_secondary'))
         .alignSelf(ItemAlign.Start)
     }
     .width('100%')
     .padding(DesignConstants.SPACING_MD)
-    .backgroundColor($r('app.color.background_secondary'))
+    .backgroundColor($r('sys.color.background_secondary'))
     .borderRadius(DesignConstants.BORDER_RADIUS_MD)
   }
 
@@ -399,35 +399,35 @@ export struct EnhancedThresholdManager {
         40,
         '安静环境',
         '图书馆、卧室等需要安静的环境',
-        $r('app.color.confirm')
+        $r('sys.color.confirm')
       ),
       new PresetConfig(
         PresetType.GENERAL_ENVIRONMENT,
         55,
         '一般环境',
         '办公室、教室等日常环境',
-        $r('app.color.brand')
+        $r('sys.color.brand')
       ),
       new PresetConfig(
         PresetType.NOISY_ENVIRONMENT,
         70,
         '嘈杂环境',
         '街道、商场等嘈杂环境',
-        $r('app.color.alert')
+        $r('sys.color.alert')
       ),
       new PresetConfig(
         PresetType.DANGEROUS_ENVIRONMENT,
         85,
         '危险环境',
         '工厂、工地等可能损伤听力的环境',
-        $r('app.color.warning')
+        $r('sys.color.warning')
       ),
       new PresetConfig(
         PresetType.CUSTOM,
         60,
         '自定义',
         '手动设置阈值',
-        $r('app.color.ohos_id_color_palette1')
+        $r('sys.color.ohos_id_color_palette1')
       )
     ];
     return presets.find(p => p.type === presetType)!;
@@ -441,7 +441,7 @@ export struct EnhancedThresholdManager {
 
     }
     .width('100%')
-    .backgroundColor($r('app.color.background_secondary'))
+    .backgroundColor($r('sys.color.background_secondary'))
     .alignItems(HorizontalAlign.Start)
   }
 }

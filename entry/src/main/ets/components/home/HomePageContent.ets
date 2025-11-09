@@ -71,13 +71,13 @@ export struct HomePageContent {
         Text(`${this.ak.uiDisplayState.displayDb}dB`)
           .fontSize(56)
           .fontWeight(FontWeight.Bold)
-          .fontColor($r('app.color.alert'))
+          .fontColor($r('sys.color.alert'))
           .transition(TransitionEffect.scale({ x: 0, y: 0 }).animation({ curve: curves.springMotion() }));
       } else {
         Text('--')
           .fontSize(56)
           .fontWeight(FontWeight.Bold)
-          .fontColor($r('app.color.font_secondary'))
+          .fontColor($r('sys.color.font_secondary'))
           .transition(TransitionEffect.scale({ x: 0, y: 0 }).animation({ curve: curves.springMotion() }));
       }
 
@@ -86,7 +86,7 @@ export struct HomePageContent {
     }
     .width('100%')
     .padding(DesignConstants.SPACING_XL)
-    .backgroundColor($r('app.color.comp_background_primary'))
+    .backgroundColor($r('sys.color.comp_background_primary'))
     .borderRadius(DesignConstants.BORDER_RADIUS_XL)
     .justifyContent(FlexAlign.Center)
     .alignItems(HorizontalAlign.Center)
@@ -132,7 +132,7 @@ export struct HomePageContent {
           description: '噪音警报管理',
           badgeCount: this.activeAlertsCount,
           dataDisplay: this.activeAlertsCount > 0 ? '警报中' : '正常',
-          dataColor: this.activeAlertsCount > 0 ? $r('app.color.alert') : $r('app.color.confirm'),
+          dataColor: this.activeAlertsCount > 0 ? $r('sys.color.alert') : $r('sys.color.confirm'),
           onTap: () => {
             this.switchToTab(3)
           }
@@ -174,7 +174,7 @@ export struct HomePageContent {
           icon: $r('app.media.ic_history'),
           description: '检测记录查看',
           dataDisplay: this.lastRecordTime,
-          dataColor: $r('app.color.font_secondary'),
+          dataColor: $r('sys.color.font_secondary'),
           badgeCount: this.ak.totalRecordsCount,
           onTap: () => {
             Throttle.click(() => {
@@ -195,14 +195,14 @@ export struct HomePageContent {
         Image(config.icon)
           .width(32)
           .height(32)
-          .fillColor($r('app.color.icon_primary'))
+          .fillColor($r('sys.color.icon_primary'))
 
         // 徽章计数 - 放在图标右上角
         if (config.badgeCount && config.badgeCount > 0) {
           Text(config.badgeCount.toString())
             .fontSize(DesignConstants.FONT_SIZE_XS)
             .fontColor(Color.White)
-            .backgroundColor($r('app.color.alert'))
+            .backgroundColor($r('sys.color.alert'))
             .borderRadius(DesignConstants.BORDER_RADIUS_FULL)
             .padding({
               left: 6,
@@ -224,7 +224,7 @@ export struct HomePageContent {
           Text(config.title)
             .fontSize(DesignConstants.FONT_SIZE_MD)
             .fontWeight(FontWeight.Medium)
-            .fontColor($r('app.color.font_primary'))
+            .fontColor($r('sys.color.font_primary'))
             .textAlign(TextAlign.Start)
 
           Blank()
@@ -236,7 +236,7 @@ export struct HomePageContent {
         Row() {
           Text(config.description)
             .fontSize(DesignConstants.FONT_SIZE_SM)
-            .fontColor($r('app.color.font_secondary'))
+            .fontColor($r('sys.color.font_secondary'))
             .textAlign(TextAlign.Start)
 
           Blank()
@@ -250,7 +250,7 @@ export struct HomePageContent {
             Text(config.dataDisplay)
               .fontSize(DesignConstants.FONT_SIZE_SM)
               .fontWeight(FontWeight.Medium)
-              .fontColor(config.dataColor || $r('app.color.font_primary'))
+              .fontColor(config.dataColor || $r('sys.color.font_primary'))
               .textAlign(TextAlign.Start)
 
             Blank()
@@ -267,7 +267,7 @@ export struct HomePageContent {
     .width('100%')
     .height(80)
     .padding(DesignConstants.SPACING_MD)
-    .backgroundColor($r('app.color.comp_background_primary'))
+    .backgroundColor($r('sys.color.comp_background_primary'))
     .borderRadius(DesignConstants.BORDER_RADIUS_LG)
     .justifyContent(FlexAlign.Center)
     .alignItems(VerticalAlign.Center)
@@ -300,7 +300,7 @@ export struct HomePageContent {
       Image($r('app.media.ic_location'))
         .width(14)
         .height(14)
-        .fillColor($r('app.color.icon_secondary'))
+        .fillColor($r('sys.color.icon_secondary'))
       Text(this.locationStatus)
         .fontSize(DesignConstants.FONT_SIZE_SM)
         .fontColor(this.locationStatusColor)
@@ -317,15 +317,15 @@ export struct HomePageContent {
   get decibelColor(): Resource {
     const db = this.ak.uiDisplayState.displayDb;
     if (db < 40) {
-      return $r('app.color.confirm');
+      return $r('sys.color.confirm');
     }
     if (db < 60) {
-      return $r('app.color.font_primary');
+      return $r('sys.color.font_primary');
     }
     if (db < 80) {
-      return $r('app.color.warning');
+      return $r('sys.color.warning');
     }
-    return $r('app.color.alert');
+    return $r('sys.color.alert');
   }
 
   @Computed
@@ -358,12 +358,12 @@ export struct HomePageContent {
     try {
       const audioControllerService = AudioControllerService.getInstance(this.ak, this.pk);
       if (audioControllerService && audioControllerService.isInBackground()) {
-        return $r('app.color.warning');
+        return $r('sys.color.warning');
       }
     } catch (error) {
       console.error('获取AudioControllerService实例失败:', error);
     }
-    return $r('app.color.confirm');
+    return $r('sys.color.confirm');
   }
 
   // 仪表盘数据 - 趋势指示器
@@ -389,12 +389,12 @@ export struct HomePageContent {
     const diff = currentDb - previousDb;
 
     if (diff > 1) {
-      return $r('app.color.alert');
+      return $r('sys.color.alert');
     }
     if (diff < -1) {
-      return $r('app.color.confirm');
+      return $r('sys.color.confirm');
     }
-    return $r('app.color.font_secondary');
+    return $r('sys.color.font_secondary');
   }
 
   // 警报数据 - 活跃警报数量
@@ -420,9 +420,9 @@ export struct HomePageContent {
   get toolsStatusColor(): Resource {
     const calibrationValue = this.pk.calibration_value || 0;
     if (calibrationValue === 0) {
-      return $r('app.color.alert');
+      return $r('sys.color.alert');
     }
-    return $r('app.color.confirm');
+    return $r('sys.color.confirm');
   }
 
   // 影响数据 - 暴露指数
@@ -451,15 +451,15 @@ export struct HomePageContent {
   get exposureColor(): Resource {
     const db = this.ak.uiDisplayState.displayDb;
     if (db < 40) {
-      return $r('app.color.confirm');
+      return $r('sys.color.confirm');
     }
     if (db < 60) {
-      return $r('app.color.warning');
+      return $r('sys.color.warning');
     }
     if (db < 80) {
-      return $r('app.color.alert');
+      return $r('sys.color.alert');
     }
-    return $r('app.color.alert');
+    return $r('sys.color.alert');
   }
 
   // 历史数据 - 最近记录时间
@@ -537,18 +537,18 @@ export struct HomePageContent {
   @Computed
   get locationStatusColor(): Resource {
     if (!this.pk.location_enabled) {
-      return $r('app.color.font_secondary');
+      return $r('sys.color.font_secondary');
     }
 
     if (this.isLocationRefreshing) {
-      return $r('app.color.warning');
+      return $r('sys.color.warning');
     }
 
     if (this.currentLocation) {
-      return $r('app.color.confirm');
+      return $r('sys.color.confirm');
     }
 
-    return $r('app.color.font_primary');
+    return $r('sys.color.font_primary');
   }
 
   // 位置服务开关方法 - 已移除，现在只在操作台控制

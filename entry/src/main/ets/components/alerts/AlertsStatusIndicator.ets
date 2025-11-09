@@ -51,7 +51,7 @@ export struct AlertsStatusIndicator {
       case EnvironmentNoiseLevel.EXCELLENT:
         return ALERT_COLORS.SUCCESS;
       case EnvironmentNoiseLevel.GOOD:
-        return $r('app.color.ohos_id_color_palette5'); // 浅绿色
+        return $r('sys.color.ohos_id_color_palette5'); // 浅绿色
       case EnvironmentNoiseLevel.FAIR:
         return ALERT_COLORS.WARNING;
       case EnvironmentNoiseLevel.POOR:
@@ -99,7 +99,7 @@ export struct AlertsStatusIndicator {
   @Computed
   get alertStatusColor(): Resource {
     if (!this.isAlertEnabled) {
-      return $r('app.color.font_secondary');
+      return $r('sys.color.font_secondary');
     }
     
     if (this.currentDecibel >= this.alertThreshold) {
@@ -167,11 +167,11 @@ export struct AlertsStatusIndicator {
           Text(`${this.currentDecibel}`)
             .fontSize(DesignConstants.FONT_SIZE_XL)
             .fontWeight(FontWeight.Bold)
-            .fontColor($r('app.color.font_primary'))
+            .fontColor($r('sys.color.font_primary'))
 
           Text('dB')
             .fontSize(DesignConstants.FONT_SIZE_MD)
-            .fontColor($r('app.color.font_secondary'))
+            .fontColor($r('sys.color.font_secondary'))
         }
       }
 
@@ -184,7 +184,7 @@ export struct AlertsStatusIndicator {
 
         Text(this.environmentDescription)
           .fontSize(DesignConstants.FONT_SIZE_SM)
-          .fontColor($r('app.color.font_secondary'))
+          .fontColor($r('sys.color.font_secondary'))
       }
     }
     .alignItems(HorizontalAlign.Center)

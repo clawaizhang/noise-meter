@@ -88,14 +88,14 @@ export struct RewardCompletionDialog {
       Image($r('app.media.ic_favorite'))
         .width(64)
         .height(64)
-        .fillColor($r('app.color.confirm'))
+        .fillColor($r('sys.color.confirm'))
         .margin({ top: DesignConstants.SPACING_XL })
 
       // 标题
       Text(this.getMilestoneDescription())
         .fontSize(DesignConstants.FONT_SIZE_XL)
         .fontWeight(FontWeight.Bold)
-        .fontColor($r('app.color.font_primary'))
+        .fontColor($r('sys.color.font_primary'))
         .textAlign(TextAlign.Center)
 
       // 奖励信息卡片
@@ -104,13 +104,13 @@ export struct RewardCompletionDialog {
         Row() {
           Text('连续使用')
             .fontSize(DesignConstants.FONT_SIZE_MD)
-            .fontColor($r('app.color.font_secondary'))
+            .fontColor($r('sys.color.font_secondary'))
             .layoutWeight(1)
 
           Text(`${this.consecutiveDays}天`)
             .fontSize(DesignConstants.FONT_SIZE_MD)
             .fontWeight(FontWeight.Bold)
-            .fontColor($r('app.color.warning'))
+            .fontColor($r('sys.color.warning'))
         }
         .width('100%')
 
@@ -118,13 +118,13 @@ export struct RewardCompletionDialog {
         Row() {
           Text('获得奖励')
             .fontSize(DesignConstants.FONT_SIZE_MD)
-            .fontColor($r('app.color.font_secondary'))
+            .fontColor($r('sys.color.font_secondary'))
             .layoutWeight(1)
 
           Text(`${this.rewardDays}天专业会员`)
             .fontSize(DesignConstants.FONT_SIZE_MD)
             .fontWeight(FontWeight.Bold)
-            .fontColor($r('app.color.confirm'))
+            .fontColor($r('sys.color.confirm'))
         }
         .width('100%')
 
@@ -132,29 +132,29 @@ export struct RewardCompletionDialog {
         Row() {
           Text('会员到期')
             .fontSize(DesignConstants.FONT_SIZE_MD)
-            .fontColor($r('app.color.font_secondary'))
+            .fontColor($r('sys.color.font_secondary'))
             .layoutWeight(1)
 
           Text(this.formatDate(this.expiryDate))
             .fontSize(DesignConstants.FONT_SIZE_MD)
             .fontWeight(FontWeight.Medium)
-            .fontColor($r('app.color.font_primary'))
+            .fontColor($r('sys.color.font_primary'))
         }
         .width('100%')
       }
       .padding(DesignConstants.SPACING_LG)
-      .backgroundColor($r('app.color.comp_background_primary'))
+      .backgroundColor($r('sys.color.comp_background_primary'))
       .borderRadius(DesignConstants.BORDER_RADIUS_LG)
       .border({
         width: DesignConstants.BORDER_WIDTH_SM,
-        color: $r('app.color.comp_border_color')
+        color: $r('sys.color.comp_border_color')
       })
       .width('100%')
 
       // 提示文字
       Text('继续坚持使用，解锁更多会员天数！')
         .fontSize(DesignConstants.FONT_SIZE_SM)
-        .fontColor($r('app.color.font_secondary'))
+        .fontColor($r('sys.color.font_secondary'))
         .textAlign(TextAlign.Center)
         .width('100%')
 
@@ -166,8 +166,8 @@ export struct RewardCompletionDialog {
           .height(48)
           .fontSize(DesignConstants.FONT_SIZE_MD)
           .fontWeight(FontWeight.Medium)
-          .backgroundColor($r('app.color.confirm'))
-          .fontColor($r('app.color.font_on_primary'))
+          .backgroundColor($r('sys.color.confirm'))
+          .fontColor($r('sys.color.font_on_primary'))
           .borderRadius(DesignConstants.BORDER_RADIUS_MD)
           .onClick(() => {
             Throttle.click(() => {
@@ -182,10 +182,10 @@ export struct RewardCompletionDialog {
           .fontSize(DesignConstants.FONT_SIZE_MD)
           .fontWeight(FontWeight.Medium)
           .backgroundColor(Color.Transparent)
-          .fontColor($r('app.color.brand'))
+          .fontColor($r('sys.color.brand'))
           .border({
             width: DesignConstants.BORDER_WIDTH_MD,
-            color: $r('app.color.brand'),
+            color: $r('sys.color.brand'),
             radius: DesignConstants.BORDER_RADIUS_MD
           })
           .onClick(() => {
@@ -223,7 +223,7 @@ export function showRewardCompletionDialog(
   }
   const dialog = DialogHub.getSheet()
     .setStyle({
-      backgroundColor: $r('app.color.background_secondary'),
+      backgroundColor: $r('sys.color.background_secondary'),
       title: { title: '奖励完成' }
     })
     .setConfig({

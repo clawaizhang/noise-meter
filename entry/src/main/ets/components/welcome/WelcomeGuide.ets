@@ -132,7 +132,7 @@ export struct WelcomeGuide {
     }
     .width('100%')
     .height('100%')
-    .backgroundColor($r('app.color.background_primary'))
+    .backgroundColor($r('sys.color.background_primary'))
     .gesture(
       PanGesture({ distance: 50 })
         .onActionEnd((event: GestureEvent) => {
@@ -175,7 +175,7 @@ export struct WelcomeGuide {
       Image($r('app.media.ic_arrow_right'))
         .width(36)
         .height(36)
-        .fillColor($r('app.color.font_secondary'))
+        .fillColor($r('sys.color.font_secondary'))
         .rotate({ angle: 90 })
         .translate({ y: this.arrowOffset })
         .opacity(this.arrowOpacity)

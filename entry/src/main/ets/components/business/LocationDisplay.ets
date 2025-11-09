@@ -120,11 +120,11 @@ export struct LocationDisplay {
       Image($r('app.media.ic_location'))
         .width(14)
         .height(14)
-        .fillColor($r('app.color.ohos_id_color_text_secondary'));
+        .fillColor($r('sys.color.ohos_id_color_text_secondary'));
 
       Text(this.pk.location_enabled ? (this.address || '点击刷新按钮获取位置') : '开启位置服务可记录噪音检测位置')
         .fontSize(13)
-        .fontColor($r('app.color.ohos_id_color_text_secondary'))
+        .fontColor($r('sys.color.ohos_id_color_text_secondary'))
         .textOverflow({ overflow: TextOverflow.Ellipsis })
         .maxLines(1)
         .layoutWeight(1);
@@ -147,7 +147,7 @@ export struct LocationDisplay {
       Image($r("app.media.solar_refresh_circle_bold"))
         .width(16)
         .height(16)
-        .fillColor($r('app.color.icon_secondary'))
+        .fillColor($r('sys.color.icon_secondary'))
         .rotate({
           angle: this.isRefreshing ? 360 : 0,
           centerX: '50%',
@@ -161,7 +161,7 @@ export struct LocationDisplay {
     }
     .width(20)
     .height(20)
-    .backgroundColor($r('app.color.comp_background_primary'))
+    .backgroundColor($r('sys.color.comp_background_primary'))
     .enabled(!this.isRefreshing)
     .onClick(() => {
       Throttle.click(() => {

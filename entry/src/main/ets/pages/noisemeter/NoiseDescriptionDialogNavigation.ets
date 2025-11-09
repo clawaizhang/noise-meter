@@ -43,7 +43,7 @@ export function NoiseDescriptionDialogBuilder(ak: AppKeys) {
                 .width('25%')
 
               Text(dd.description)
-                .fontColor($r('app.color.font_secondary'))
+                .fontColor($r('sys.color.font_secondary'))
                 .width('75%')
             }
             .justifyContent(FlexAlign.SpaceBetween)
@@ -51,7 +51,7 @@ export function NoiseDescriptionDialogBuilder(ak: AppKeys) {
           }
           .backgroundBlurStyle(ak.uiDisplayState.displayDb > dd.db - 10 ? BlurStyle.COMPONENT_REGULAR : BlurStyle.NONE)
           .backgroundColor(ak.uiDisplayState.displayDb > dd.db - 10 ? dd.color :
-            $r('app.color.comp_background_primary'))
+            $r('sys.color.comp_background_primary'))
           .padding(12)
           .borderRadius(12)
           .transition(TransitionEffect.OPACITY.animation({
@@ -63,7 +63,7 @@ export function NoiseDescriptionDialogBuilder(ak: AppKeys) {
       }
     }.scrollBar(BarState.Off).edgeEffect(EdgeEffect.Spring)
   }
-  .backgroundColor($r('app.color.background_secondary'))
+  .backgroundColor($r('sys.color.background_secondary'))
   .title('噪音场景参考')
   .padding(16)
 }

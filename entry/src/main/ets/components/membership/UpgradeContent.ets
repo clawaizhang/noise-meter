@@ -119,13 +119,13 @@ export struct UpgradeContent {
           Image(this.icon)
             .width(DesignConstants.ICON_SIZE_XL)
             .height(DesignConstants.ICON_SIZE_XL)
-            .fillColor($r('app.color.brand'))
+            .fillColor($r('sys.color.brand'))
         }
 
         Text(this.featureName)
           .fontSize(DesignConstants.FONT_SIZE_3XL)
           .fontWeight(FontWeight.Bold)
-          .fontColor($r('app.color.font_primary'))
+          .fontColor($r('sys.color.font_primary'))
       }
       .alignItems(VerticalAlign.Center)
       .width('100%')
@@ -133,7 +133,7 @@ export struct UpgradeContent {
       // 副标题
       Text(this.featureDesc)
         .fontSize(DesignConstants.FONT_SIZE_MD)
-        .fontColor($r('app.color.font_secondary'))
+        .fontColor($r('sys.color.font_secondary'))
         .textAlign(TextAlign.Start)
         .width('100%')
 
@@ -155,7 +155,7 @@ export struct UpgradeContent {
       Text('专业版权益')
         .fontSize(DesignConstants.FONT_SIZE_XL)
         .fontWeight(FontWeight.Medium)
-        .fontColor($r('app.color.font_primary'))
+        .fontColor($r('sys.color.font_primary'))
         .alignSelf(ItemAlign.Start)
 
       // 权益水平网格布局
@@ -217,7 +217,7 @@ export struct UpgradeContent {
       Text('选择方案')
         .fontSize(DesignConstants.FONT_SIZE_XL)
         .fontWeight(FontWeight.Medium)
-        .fontColor($r('app.color.font_primary'))
+        .fontColor($r('sys.color.font_primary'))
         .alignSelf(ItemAlign.Start)
 
       // 价格方案横向对比
@@ -245,11 +245,11 @@ export struct UpgradeContent {
       //   Row({ space: DesignConstants.SPACING_SM }) {
       //     Text('7天免费试用')
       //       .fontSize(DesignConstants.FONT_SIZE_MD)
-      //       .fontColor($r('app.color.confirm'))
+      //       .fontColor($r('sys.color.confirm'))
       //
       //     Text('试用结束后自动续费')
       //       .fontSize(DesignConstants.FONT_SIZE_SM)
-      //       .fontColor($r('app.color.font_tertiary'))
+      //       .fontColor($r('sys.color.font_tertiary'))
       //   }
       //   .width('100%')
       //   .justifyContent(FlexAlign.Center)
@@ -260,8 +260,8 @@ export struct UpgradeContent {
         Button('稍后再说')
           .layoutWeight(1)
           .fontSize(DesignConstants.FONT_SIZE_MD)
-          .backgroundColor($r('app.color.comp_background_secondary'))
-          .fontColor($r('app.color.font_primary'))
+          .backgroundColor($r('sys.color.comp_background_secondary'))
+          .fontColor($r('sys.color.font_primary'))
           .borderRadius(DesignConstants.BORDER_RADIUS_MD)
           .onClick(() => {
             Throttle.click(() => {
@@ -272,8 +272,8 @@ export struct UpgradeContent {
         Button('免费体验')
           .layoutWeight(1)
           .fontSize(DesignConstants.FONT_SIZE_MD)
-          .backgroundColor($r('app.color.brand'))
-          .fontColor($r('app.color.font_on_primary'))
+          .backgroundColor($r('sys.color.brand'))
+          .fontColor($r('sys.color.font_on_primary'))
           .borderRadius(DesignConstants.BORDER_RADIUS_MD)
           .enabled(this.purchaseState === 'idle')
           .onClick(() => {
@@ -299,8 +299,8 @@ export struct UpgradeContent {
       if (plans.current.isRecommended) {
         Text('最受欢迎')
           .fontSize(10)
-          .fontColor($r('app.color.white'))
-          .backgroundColor($r('app.color.brand'))
+          .fontColor($r('sys.color.white'))
+          .backgroundColor($r('sys.color.brand'))
           .borderRadius(4)
           .padding({
             left: 4,
@@ -316,7 +316,7 @@ export struct UpgradeContent {
         Text(this.getPlanTypeText(plans.current.type))
           .fontSize(14)
           .fontWeight(FontWeight.Medium)
-          .fontColor($r('app.color.font_primary'))
+          .fontColor($r('sys.color.font_primary'))
 
         Row({ space: 2 }) {
           if (plans.current.type === 'monthly') {
@@ -324,23 +324,23 @@ export struct UpgradeContent {
             Text('¥0')
               .fontSize(18)
               .fontWeight(FontWeight.Bold)
-              .fontColor($r('app.color.brand'))
+              .fontColor($r('sys.color.brand'))
 
             Text(`¥${plans.current.price}`)
               .fontSize(12)
-              .fontColor($r('app.color.font_tertiary'))
+              .fontColor($r('sys.color.font_tertiary'))
               .decoration({ type: TextDecorationType.LineThrough })
           } else {
             // 其他方案正常显示
             Text(`¥${plans.current.price}`)
               .fontSize(18)
               .fontWeight(FontWeight.Bold)
-              .fontColor($r('app.color.brand'))
+              .fontColor($r('sys.color.brand'))
 
             if (plans.current.originalPrice) {
               Text(`¥${plans.current.originalPrice}`)
                 .fontSize(12)
-                .fontColor($r('app.color.font_tertiary'))
+                .fontColor($r('sys.color.font_tertiary'))
                 .decoration({ type: TextDecorationType.LineThrough })
             }
           }
@@ -350,13 +350,13 @@ export struct UpgradeContent {
         if (plans.current.type === 'yearly') {
           Text(`¥${Math.round(plans.current.price / 12 * 10) / 10}/月`)
             .fontSize(10)
-            .fontColor($r('app.color.font_secondary'))
+            .fontColor($r('sys.color.font_secondary'))
         }
 
         if (plans.current.discount) {
           Text(plans.current.discount)
             .fontSize(10)
-            .fontColor($r('app.color.confirm'))
+            .fontColor($r('sys.color.confirm'))
         }
       }
       .width('100%')
@@ -366,21 +366,21 @@ export struct UpgradeContent {
         if (plans.current.type === 'monthly') {
           Text('最灵活')
             .fontSize(12)
-            .fontColor($r('app.color.font_secondary'))
+            .fontColor($r('sys.color.font_secondary'))
           Text('首月零元免费试用')
             .fontSize(10)
-            .fontColor($r('app.color.confirm'))
+            .fontColor($r('sys.color.confirm'))
           Text('试用结束后自动续费')
             .fontSize(10)
-            .fontColor($r('app.color.font_tertiary'))
+            .fontColor($r('sys.color.font_tertiary'))
         } else if (plans.current.type === 'yearly') {
           Text('最划算')
             .fontSize(12)
-            .fontColor($r('app.color.font_secondary'))
+            .fontColor($r('sys.color.font_secondary'))
         } else if (plans.current.type === 'lifetime') {
           Text('永久拥有')
             .fontSize(12)
-            .fontColor($r('app.color.font_secondary'))
+            .fontColor($r('sys.color.font_secondary'))
         }
       }
       .width('100%')
@@ -392,11 +392,11 @@ export struct UpgradeContent {
           Image($r('app.media.ic_favorite'))
             .width(12)
             .height(12)
-            .fillColor($r('app.color.brand'))
+            .fillColor($r('sys.color.brand'))
 
           Text('已选择')
             .fontSize(10)
-            .fontColor($r('app.color.brand'))
+            .fontColor($r('sys.color.brand'))
         }
         .justifyContent(FlexAlign.Center)
         .width('100%')
@@ -409,15 +409,15 @@ export struct UpgradeContent {
         DesignConstants.BORDER_WIDTH_MD :
         DesignConstants.BORDER_WIDTH_SM,
       color: plans.selected?.type === plans.current.type ?
-        $r('app.color.confirm') :
-        $r('app.color.comp_divider')
+        $r('sys.color.confirm') :
+        $r('sys.color.comp_divider')
     })
     .borderRadius(DesignConstants.BORDER_RADIUS_LG)
     .backgroundBlurStyle(BlurStyle.COMPONENT_ULTRA_THICK)
     .backgroundColor(
       plans.selected?.type === plans.current.type ?
-        $r('app.color.confirm') :
-        $r('app.color.comp_background_primary')
+        $r('sys.color.confirm') :
+        $r('sys.color.comp_background_primary')
     )
     .width('30%')
     .height(150)
@@ -435,23 +435,23 @@ export struct UpgradeContent {
       Image(icon)
         .width(DesignConstants.ICON_SIZE_MD)
         .height(DesignConstants.ICON_SIZE_MD)
-        .fillColor($r('app.color.brand'))
+        .fillColor($r('sys.color.brand'))
 
       Text(title)
         .fontSize(DesignConstants.FONT_SIZE_SM)
         .fontWeight(FontWeight.Medium)
-        .fontColor($r('app.color.font_primary'))
+        .fontColor($r('sys.color.font_primary'))
         .textAlign(TextAlign.Center)
 
       Text(desc)
         .fontSize(DesignConstants.FONT_SIZE_XS)
-        .fontColor($r('app.color.font_secondary'))
+        .fontColor($r('sys.color.font_secondary'))
         .textAlign(TextAlign.Center)
         .maxLines(1)
         .textOverflow({ overflow: TextOverflow.Ellipsis })
     }
     .padding(DesignConstants.SPACING_SM)
-    .backgroundColor($r('app.color.comp_background_primary'))
+    .backgroundColor($r('sys.color.comp_background_primary'))
     .borderRadius(DesignConstants.BORDER_RADIUS_MD)
     .width(100)
     .height(80)
@@ -464,7 +464,7 @@ export struct UpgradeContent {
       Image($r('app.media.ic_vip'))
         .width(DesignConstants.ICON_SIZE_SM)
         .height(DesignConstants.ICON_SIZE_SM)
-        .fillColor($r('app.color.icon'))
+        .fillColor($r('sys.color.icon'))
 
       Text('专业版')
         .fontSize(DesignConstants.FONT_SIZE_SM)
@@ -476,7 +476,7 @@ export struct UpgradeContent {
       top: 4,
       bottom: 4
     })
-    .backgroundColor($r('app.color.comp_background_primary'))
+    .backgroundColor($r('sys.color.comp_background_primary'))
     .borderRadius(DesignConstants.BORDER_RADIUS_SM)
     .alignSelf(ItemAlign.Start)
   }
@@ -554,7 +554,7 @@ export struct UpgradeContent {
     };
     const dialog = DialogHub.getSheet()
       .setComponentTargetId('mainId')
-      .setStyle({ backgroundColor: $r('app.color.background_secondary') })
+      .setStyle({ backgroundColor: $r('sys.color.background_secondary') })
       .setContent(wrapBuilder(MembershipAgreementDialogBuilder), props)
       .build();
     dialog.show();
@@ -610,12 +610,12 @@ export struct UpgradeContent {
         Image($r('app.media.ic_vip'))
           .width(DesignConstants.ICON_SIZE_XL)
           .height(DesignConstants.ICON_SIZE_XL)
-          .fillColor($r('app.color.confirm'))
+          .fillColor($r('sys.color.confirm'))
 
         Text('专业版已解锁')
           .fontSize(DesignConstants.FONT_SIZE_3XL)
           .fontWeight(FontWeight.Bold)
-          .fontColor($r('app.color.confirm'))
+          .fontColor($r('sys.color.confirm'))
       }
       .alignItems(VerticalAlign.Center)
       .width('100%')
@@ -623,7 +623,7 @@ export struct UpgradeContent {
       // 副标题
       Text('您已成功解锁所有专业功能')
         .fontSize(DesignConstants.FONT_SIZE_MD)
-        .fontColor($r('app.color.font_secondary'))
+        .fontColor($r('sys.color.font_secondary'))
         .textAlign(TextAlign.Start)
         .width('100%')
 
@@ -645,11 +645,11 @@ export struct UpgradeContent {
       Image($r('app.media.ic_history'))
         .width(DesignConstants.ICON_SIZE_SM)
         .height(DesignConstants.ICON_SIZE_SM)
-        .fillColor($r('app.color.font_secondary'))
+        .fillColor($r('sys.color.font_secondary'))
 
       Text(`有效期至 ${this.formatDate(this.pk.member_ship.expiryDate)}`)
         .fontSize(DesignConstants.FONT_SIZE_SM)
-        .fontColor($r('app.color.font_secondary'))
+        .fontColor($r('sys.color.font_secondary'))
     }
     .padding({
       left: DesignConstants.SPACING_SM,
@@ -657,7 +657,7 @@ export struct UpgradeContent {
       top: 4,
       bottom: 4
     })
-    .backgroundColor($r('app.color.comp_background_primary'))
+    .backgroundColor($r('sys.color.comp_background_primary'))
     .borderRadius(DesignConstants.BORDER_RADIUS_SM)
     .alignSelf(ItemAlign.Start)
   }
@@ -669,7 +669,7 @@ export struct UpgradeContent {
       Text('已解锁的专业功能')
         .fontSize(DesignConstants.FONT_SIZE_XL)
         .fontWeight(FontWeight.Medium)
-        .fontColor($r('app.color.font_primary'))
+        .fontColor($r('sys.color.font_primary'))
         .alignSelf(ItemAlign.Start)
 
       // 直接复用现有的权益网格布局
@@ -729,7 +729,7 @@ export struct UpgradeContent {
       Text('会员信息')
         .fontSize(DesignConstants.FONT_SIZE_XL)
         .fontWeight(FontWeight.Medium)
-        .fontColor($r('app.color.font_primary'))
+        .fontColor($r('sys.color.font_primary'))
         .alignSelf(ItemAlign.Start)
 
       Column({ space: DesignConstants.SPACING_SM }) {
@@ -739,7 +739,7 @@ export struct UpgradeContent {
       }
       .width('100%')
       .padding(DesignConstants.SPACING_MD)
-      .backgroundColor($r('app.color.comp_background_primary'))
+      .backgroundColor($r('sys.color.comp_background_primary'))
       .borderRadius(DesignConstants.BORDER_RADIUS_LG)
     }
     .width('100%')
@@ -755,12 +755,12 @@ export struct UpgradeContent {
     Row({ space: DesignConstants.SPACING_MD }) {
       Text(`${label}：`)
         .fontSize(DesignConstants.FONT_SIZE_MD)
-        .fontColor($r('app.color.font_secondary'))
+        .fontColor($r('sys.color.font_secondary'))
         .layoutWeight(1)
 
       Text(value)
         .fontSize(DesignConstants.FONT_SIZE_MD)
-        .fontColor($r('app.color.font_primary'))
+        .fontColor($r('sys.color.font_primary'))
         .fontWeight(FontWeight.Medium)
     }
     .width('100%')
@@ -774,8 +774,8 @@ export struct UpgradeContent {
         Button('管理订阅')
           .layoutWeight(1)
           .fontSize(DesignConstants.FONT_SIZE_MD)
-          .backgroundColor($r('app.color.comp_background_secondary'))
-          .fontColor($r('app.color.font_primary'))
+          .backgroundColor($r('sys.color.comp_background_secondary'))
+          .fontColor($r('sys.color.font_primary'))
           .borderRadius(DesignConstants.BORDER_RADIUS_MD)
           .onClick(() => {
             Throttle.click(() => {
@@ -786,8 +786,8 @@ export struct UpgradeContent {
         Button('续费升级')
           .layoutWeight(1)
           .fontSize(DesignConstants.FONT_SIZE_MD)
-          .backgroundColor($r('app.color.brand'))
-          .fontColor($r('app.color.font_on_primary'))
+          .backgroundColor($r('sys.color.brand'))
+          .fontColor($r('sys.color.font_on_primary'))
           .borderRadius(DesignConstants.BORDER_RADIUS_MD)
           .onClick(() => {
             this.handleRenewUpgrade();
@@ -809,11 +809,11 @@ export struct UpgradeContent {
         LoadingProgress()
           .width(DesignConstants.ICON_SIZE_MD)
           .height(DesignConstants.ICON_SIZE_MD)
-          .color($r('app.color.brand'))
+          .color($r('sys.color.brand'))
 
         Text('正在处理购买...')
           .fontSize(DesignConstants.FONT_SIZE_MD)
-          .fontColor($r('app.color.font_primary'))
+          .fontColor($r('sys.color.font_primary'))
       }
       .justifyContent(FlexAlign.Center)
       .width('100%')
@@ -823,11 +823,11 @@ export struct UpgradeContent {
         Image($r('app.media.ic_favorite'))
           .width(DesignConstants.ICON_SIZE_MD)
           .height(DesignConstants.ICON_SIZE_MD)
-          .fillColor($r('app.color.confirm'))
+          .fillColor($r('sys.color.confirm'))
 
         Text('购买成功！')
           .fontSize(DesignConstants.FONT_SIZE_MD)
-          .fontColor($r('app.color.confirm'))
+          .fontColor($r('sys.color.confirm'))
           .fontWeight(FontWeight.Medium)
       }
       .justifyContent(FlexAlign.Center)
@@ -838,11 +838,11 @@ export struct UpgradeContent {
         Image($r('app.media.ic_close'))
           .width(DesignConstants.ICON_SIZE_MD)
           .height(DesignConstants.ICON_SIZE_MD)
-          .fillColor($r('app.color.warning'))
+          .fillColor($r('sys.color.warning'))
 
         Text('购买失败，请重试')
           .fontSize(DesignConstants.FONT_SIZE_MD)
-          .fontColor($r('app.color.alert'))
+          .fontColor($r('sys.color.alert'))
       }
       .justifyContent(FlexAlign.Center)
       .width('100%')

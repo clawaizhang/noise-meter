@@ -136,11 +136,11 @@ export struct DecibelDisplayComponent {
       Image($r('app.media.ic_info'))
         .width(16)
         .height(16)
-        .fillColor($r('app.color.font_secondary'));
+        .fillColor($r('sys.color.font_secondary'));
 
       Text(config.description)
         .fontSize(14)
-        .fontColor($r('app.color.font_secondary'))
+        .fontColor($r('sys.color.font_secondary'))
         .fontWeight(FontWeight.Medium);
     }
     .padding({
@@ -156,7 +156,7 @@ export struct DecibelDisplayComponent {
         if (!this.noiseDescriptionDialog) {
           this.noiseDescriptionDialog = DialogHub.getSheet()
             .setContent(wrapBuilder(NoiseDescriptionDialogBuilder), this.ak)
-            .setStyle({ backgroundColor: $r('app.color.background_secondary') })
+            .setStyle({ backgroundColor: $r('sys.color.background_secondary') })
             .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS })
             .setComponentTargetId('mainId')
             .build();
@@ -183,7 +183,7 @@ export struct DecibelDisplayComponent {
       // 技术参数标题
       Text('实时分贝')
         .fontSize(14)
-        .fontColor($r('app.color.ohos_id_color_text_secondary'))
+        .fontColor($r('sys.color.ohos_id_color_text_secondary'))
         .fontWeight(FontWeight.Medium)
       
       // 分贝值 - 缩小字体作为技术参考
@@ -192,13 +192,13 @@ export struct DecibelDisplayComponent {
           Text('-')
             .fontSize(36)
             .fontWeight(FontWeight.Bold)
-            .fontColor($r('app.color.alert'))
+            .fontColor($r('sys.color.alert'))
             .transition(TransitionEffect.scale({ x: 0, y: 0 }).animation({ curve: curves.springMotion() }));
         } else {
           Text(`${config.currentDecibel}dB`)
             .fontSize(36)
             .fontWeight(FontWeight.Bold)
-            .fontColor($r('app.color.alert'))
+            .fontColor($r('sys.color.alert'))
             .transition(TransitionEffect.scale({ x: 0, y: 0 }).animation({ curve: curves.springMotion() }));
         }
       }
@@ -217,14 +217,14 @@ export struct DecibelDisplayComponent {
       Column({ space: 2 }) {
         Text('最小')
           .fontSize(12)
-          .fontColor($r('app.color.ohos_id_color_text_secondary'))
+          .fontColor($r('sys.color.ohos_id_color_text_secondary'))
           .textAlign(TextAlign.Center)
           .width('100%');
 
         Text(config.minDecibel === 0 ? '-' : `${config.minDecibel}`)
           .fontSize(24)
           .fontWeight(FontWeight.Medium)
-          .fontColor($r('app.color.font_secondary'))
+          .fontColor($r('sys.color.font_secondary'))
           .textAlign(TextAlign.Center)
           .width('100%');
       }
@@ -234,7 +234,7 @@ export struct DecibelDisplayComponent {
       Divider()
         .vertical(true)
         .strokeWidth(1)
-        .color($r('app.color.comp_divider'))
+        .color($r('sys.color.comp_divider'))
         .margin({ left: 12, right: 12 })
         .height(32)
 
@@ -242,14 +242,14 @@ export struct DecibelDisplayComponent {
       Column({ space: 2 }) {
         Text('平均')
           .fontSize(12)
-          .fontColor($r('app.color.ohos_id_color_text_secondary'))
+          .fontColor($r('sys.color.ohos_id_color_text_secondary'))
           .textAlign(TextAlign.Center)
           .width('100%');
 
         Text(config.avgDecibel === 0 ? '-' : `${config.avgDecibel}`)
           .fontSize(24)
           .fontWeight(FontWeight.Medium)
-          .fontColor($r('app.color.font_secondary'))
+          .fontColor($r('sys.color.font_secondary'))
           .textAlign(TextAlign.Center)
           .width('100%');
       }
@@ -259,7 +259,7 @@ export struct DecibelDisplayComponent {
       Divider()
         .vertical(true)
         .strokeWidth(1)
-        .color($r('app.color.comp_divider'))
+        .color($r('sys.color.comp_divider'))
         .margin({ left: 12, right: 12 })
         .height(32)
 
@@ -267,14 +267,14 @@ export struct DecibelDisplayComponent {
       Column({ space: 2 }) {
         Text('最大')
           .fontSize(12)
-          .fontColor($r('app.color.ohos_id_color_text_secondary'))
+          .fontColor($r('sys.color.ohos_id_color_text_secondary'))
           .textAlign(TextAlign.Center)
           .width('100%');
 
         Text(config.maxDecibel === 0 ? '-' : `${config.maxDecibel}`)
           .fontSize(24)
           .fontWeight(FontWeight.Medium)
-          .fontColor($r('app.color.font_secondary'))
+          .fontColor($r('sys.color.font_secondary'))
           .textAlign(TextAlign.Center)
           .width('100%');
       }
@@ -300,12 +300,12 @@ export struct DecibelDisplayComponent {
         Image($r('app.media.ic_calibration'))
           .width(14)
           .height(14)
-          .fillColor($r('app.color.ohos_id_color_text_secondary'));
+          .fillColor($r('sys.color.ohos_id_color_text_secondary'));
 
         Text(`校准:${this.calibrationValue} ${this.weightingType === WeightingType.A ? 'dB(A)' :
           this.weightingType === WeightingType.C ? 'dB(C)' : 'dB'}`)
           .fontSize(13)
-          .fontColor($r('app.color.ohos_id_color_text_secondary'));
+          .fontColor($r('sys.color.ohos_id_color_text_secondary'));
       }
 
       Blank()
@@ -317,11 +317,11 @@ export struct DecibelDisplayComponent {
             Image($r('app.media.ic_save'))
               .width(14)
               .height(14)
-              .fillColor($r('app.color.ohos_id_color_text_secondary'));
+              .fillColor($r('sys.color.ohos_id_color_text_secondary'));
           }
           Text(this.ak.uiDisplayState.timeDisplay)
             .fontSize(13)
-            .fontColor($r('app.color.ohos_id_color_text_secondary'));
+            .fontColor($r('sys.color.ohos_id_color_text_secondary'));
         }
       }
     }
@@ -344,11 +344,11 @@ export struct DecibelDisplayComponent {
       Image($r('app.media.ic_info'))
         .width(14)
         .height(14)
-        .fillColor($r('app.color.ohos_id_color_text_secondary'));
+        .fillColor($r('sys.color.ohos_id_color_text_secondary'));
 
       Text('噪音参考标准')
         .fontSize(13)
-        .fontColor($r('app.color.ohos_id_color_text_secondary'))
+        .fontColor($r('sys.color.ohos_id_color_text_secondary'))
         .textOverflow({ overflow: TextOverflow.Ellipsis })
         .maxLines(1)
         .layoutWeight(1);
@@ -356,7 +356,7 @@ export struct DecibelDisplayComponent {
       Image($r('app.media.ic_arrow_right'))
         .width(12)
         .height(12)
-        .fillColor($r('app.color.ohos_id_color_text_secondary'));
+        .fillColor($r('sys.color.ohos_id_color_text_secondary'));
     }
     .padding({
       top: 6,
@@ -374,7 +374,7 @@ export struct DecibelDisplayComponent {
       Throttle.click(() => {
       if (!this.noiseStandardDialog) {
         this.noiseStandardDialog = DialogHub.getSheet()
-        .setStyle({ backgroundColor: $r('app.color.background_secondary') })
+        .setStyle({ backgroundColor: $r('sys.color.background_secondary') })
         .setComponentTargetId('mainId')
         .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS })
         .setContent(wrapBuilder(NoiseStandardDialogBuilder), this.ak)

@@ -76,17 +76,17 @@ export struct StatusAlertsComponent {
       Column() {
         Text('需要麦克风权限才能检测噪音')
           .fontSize(14)
-          .fontColor($r('app.color.ohos_id_color_warning'))
+          .fontColor($r('sys.color.ohos_id_color_warning'))
 
         if (!this.pk.microphone_permission_requested) {
           Text('点击按钮授权')
             .fontSize(12)
-            .fontColor($r('app.color.ohos_id_color_text_secondary'))
+            .fontColor($r('sys.color.ohos_id_color_text_secondary'))
             .margin({ top: 2 })
         } else {
           Text('请在系统设置中开启麦克风权限')
             .fontSize(12)
-            .fontColor($r('app.color.ohos_id_color_text_secondary'))
+            .fontColor($r('sys.color.ohos_id_color_text_secondary'))
             .margin({ top: 2 })
         }
       }
@@ -128,7 +128,7 @@ export struct StatusAlertsComponent {
     }
     .padding(16)
     .width('100%')
-    .backgroundColor($r('app.color.comp_background_warning_secondary'))
+    .backgroundColor($r('sys.color.comp_background_warning_secondary'))
     .borderRadius(16)
   }
 
@@ -141,11 +141,11 @@ export struct StatusAlertsComponent {
             .width(16)
             .height(16)
             .margin({ right: 8 })
-            .fillColor($r('app.color.ohos_id_color_warning'))
+            .fillColor($r('sys.color.ohos_id_color_warning'))
 
           Text(errorMsg)
             .fontSize(14)
-            .fontColor($r('app.color.ohos_id_color_warning'))
+            .fontColor($r('sys.color.ohos_id_color_warning'))
             .layoutWeight(1)
 
           Blank()
@@ -161,7 +161,7 @@ export struct StatusAlertsComponent {
             })
         }
         .width('100%')
-        .backgroundColor($r('app.color.comp_background_warning_secondary'))
+        .backgroundColor($r('sys.color.comp_background_warning_secondary'))
         .borderRadius(8)
         .padding(8)
       })
@@ -175,26 +175,26 @@ export struct StatusAlertsComponent {
         .width(20)
         .height(20)
         .margin({ right: 8 })
-        .fillColor($r('app.color.ohos_id_color_warning'))
+        .fillColor($r('sys.color.ohos_id_color_warning'))
 
       Column() {
         Text('•外接音频设备接入，建议重新校准以确保噪音检测准确。')
           .fontSize(14)
-          .fontColor($r('app.color.ohos_id_color_warning'))
+          .fontColor($r('sys.color.ohos_id_color_warning'))
           .textAlign(TextAlign.Start)
         Text('•使用降噪耳机可能导致音频播放音量变小。')
           .fontSize(14)
-          .fontColor($r('app.color.ohos_id_color_warning'))
+          .fontColor($r('sys.color.ohos_id_color_warning'))
           .textAlign(TextAlign.Start)
         Text('•如您需要听音乐、看视频，建议退出本应用以避免干扰。')
           .fontSize(14)
-          .fontColor($r('app.color.ohos_id_color_warning'))
+          .fontColor($r('sys.color.ohos_id_color_warning'))
           .textAlign(TextAlign.Start)
 
         if (this.connectedDeviceName) {
           Text(`设备: ${this.connectedDeviceName}`)
             .fontSize(12)
-            .fontColor($r('app.color.ohos_id_color_text_secondary'))
+            .fontColor($r('sys.color.ohos_id_color_text_secondary'))
             .margin({ top: 2 })
             .textAlign(TextAlign.Start)
         }
@@ -224,7 +224,7 @@ export struct StatusAlertsComponent {
     }
     .padding(16)
     .width('100%')
-    .backgroundColor($r('app.color.comp_background_warning_secondary'))
+    .backgroundColor($r('sys.color.comp_background_warning_secondary'))
     .borderRadius(16)
   }
 

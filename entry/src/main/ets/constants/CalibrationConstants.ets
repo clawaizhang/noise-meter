@@ -146,10 +146,10 @@ interface CaliColors {
 }
 
 export const CALIBRATION_COLORS: CaliColors = {
-  PRIMARY: $r('app.color.font_emphasize'),
-  SUCCESS: $r('app.color.success'),
-  WARNING: $r('app.color.feedback_warning'),
-  ERROR: $r('app.color.warning'),
-  BACKGROUND: $r('app.color.background_secondary'),
-  CARD_BACKGROUND: $r('app.color.comp_background_primary')
+  PRIMARY: $r('sys.color.font_emphasize'),
+  SUCCESS: $r('sys.color.confirm'),
+  WARNING: $r('sys.color.alert'),
+  ERROR: $r('sys.color.warning'),
+  BACKGROUND: $r('sys.color.background_secondary'),
+  CARD_BACKGROUND: $r('sys.color.comp_background_primary')
 };

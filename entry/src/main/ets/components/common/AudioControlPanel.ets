@@ -12,7 +12,7 @@ import { Throttle } from '../../utils/Debounce';
 class ButtonState {
   @Trace enabled: boolean = false;
   @Trace text: string = '';
-  @Trace backgroundColor: Resource = $r('app.color.font_secondary');
+  @Trace backgroundColor: Resource = $r('sys.color.font_secondary');
 
   constructor(enabled: boolean, text: string, backgroundColor: Resource) {
     this.enabled = enabled;
@@ -38,10 +38,10 @@ class ButtonStates {
 
   constructor() {
     // 初始化默认状态
-    this.startButton = new ButtonState(false, '开始检测', $r('app.color.font_secondary'));
-    this.stopButton = new ButtonState(false, '停止', $r('app.color.font_secondary'));
-    this.resetButton = new ButtonState(false, '重置', $r('app.color.comp_background_secondary'));
-    this.saveButton = new ButtonState(false, '保存', $r('app.color.font_secondary'));
+    this.startButton = new ButtonState(false, '开始检测', $r('sys.color.font_secondary'));
+    this.stopButton = new ButtonState(false, '停止', $r('sys.color.font_secondary'));
+    this.resetButton = new ButtonState(false, '重置', $r('sys.color.comp_background_secondary'));
+    this.saveButton = new ButtonState(false, '保存', $r('sys.color.font_secondary'));
   }
 
   // 根据控制器状态更新所有按钮状态
@@ -52,7 +52,7 @@ class ButtonStates {
         controllerState === AudioControllerLifecycleState.CONTROLLER_ERROR,
       '开始检测',
       controllerState === AudioControllerLifecycleState.CONTROLLER_IDLE ?
-        $r('app.color.font_emphasize') : $r('app.color.font_secondary')
+        $r('sys.color.font_emphasize') : $r('sys.color.font_secondary')
     );
 
     // 停止按钮状态
@@ -60,7 +60,7 @@ class ButtonStates {
       controllerState === AudioControllerLifecycleState.CONTROLLER_RECORDING,
       '停止',
       controllerState === AudioControllerLifecycleState.CONTROLLER_RECORDING ?
-        $r('app.color.alert') : $r('app.color.font_secondary')
+        $r('sys.color.alert') : $r('sys.color.font_secondary')
     );
 
     // 重置按钮状态
@@ -69,14 +69,14 @@ class ButtonStates {
         controllerState === AudioControllerLifecycleState.CONTROLLER_RECORDING ||
         controllerState === AudioControllerLifecycleState.CONTROLLER_ERROR,
       '重置',
-      $r('app.color.comp_background_secondary')
+      $r('sys.color.comp_background_secondary')
     );
 
     // 保存按钮状态
     this.saveButton.update(
       controllerState === AudioControllerLifecycleState.CONTROLLER_RECORDING,
       '保存',
-      $r('app.color.confirm')
+      $r('sys.color.confirm')
     );
   }
 }
@@ -133,7 +133,7 @@ export struct AudioControlPanel {
       Text('音频检测控制')
         .fontSize(DesignConstants.FONT_SIZE_MD)
         .fontWeight(FontWeight.Medium)
-        .fontColor($r('app.color.font_primary'))
+        .fontColor($r('sys.color.font_primary'))
         .alignSelf(ItemAlign.Start)
 
       Row({ space: DesignConstants.SPACING_MD }) {
@@ -176,7 +176,7 @@ export struct AudioControlPanel {
         // 重置按钮
         Button(this.buttonStates.resetButton.text, { type: ButtonType.Capsule })
           .backgroundColor(this.buttonStates.resetButton.backgroundColor)
-          .fontColor($r('app.color.font_primary'))
+          .fontColor($r('sys.color.font_primary'))
           .fontSize(DesignConstants.FONT_SIZE_SM)
           .padding({
             left: 16,
@@ -217,7 +217,7 @@ export struct AudioControlPanel {
       Row({ space: DesignConstants.SPACING_SM }) {
         Text('状态:')
           .fontSize(DesignConstants.FONT_SIZE_SM)
-          .fontColor($r('app.color.font_secondary'))
+          .fontColor($r('sys.color.font_secondary'))
 
         Text(this.DetectionStatusText)
           .fontSize(DesignConstants.FONT_SIZE_SM)
@@ -226,7 +226,7 @@ export struct AudioControlPanel {
 
         Text(this.ak.uiDisplayState.timeDisplay)
           .fontSize(DesignConstants.FONT_SIZE_SM)
-          .fontColor($r('app.color.font_secondary'))
+          .fontColor($r('sys.color.font_secondary'))
           .fontWeight(FontWeight.Medium)
       }
       .width('100%')
@@ -234,7 +234,7 @@ export struct AudioControlPanel {
     }
     .width('100%')
     .padding(DesignConstants.SPACING_MD)
-    .backgroundColor($r('app.color.comp_background_primary'))
+    .backgroundColor($r('sys.color.comp_background_primary'))
     .borderRadius(DesignConstants.BORDER_RADIUS_LG)
   }
 
@@ -362,15 +362,15 @@ export struct AudioControlPanel {
   private getDetectionStatusColor(): Resource {
     switch (this.controllerState) {
       case AudioControllerLifecycleState.CONTROLLER_RECORDING:
-        return $r('app.color.confirm');
+        return $r('sys.color.confirm');
       case AudioControllerLifecycleState.CONTROLLER_STARTING:
       case AudioControllerLifecycleState.CONTROLLER_STOPPING:
       case AudioControllerLifecycleState.CONTROLLER_PAUSING:
-        return $r('app.color.alert');
+        return $r('sys.color.alert');
       case AudioControllerLifecycleState.CONTROLLER_ERROR:
-        return $r('app.color.alert');
+        return $r('sys.color.alert');
       default:
-        return $r('app.color.font_secondary');
+        return $r('sys.color.font_secondary');
     }
   }
 
@@ -398,18 +398,18 @@ export struct AudioControlPanel {
       Text('确认重置')
         .fontSize(DesignConstants.FONT_SIZE_LG)
         .fontWeight(FontWeight.Bold)
-        .fontColor($r('app.color.font_primary'))
+        .fontColor($r('sys.color.font_primary'))
 
       Text('确定要重置所有检测数据吗？此操作不可撤销。')
         .fontSize(DesignConstants.FONT_SIZE_MD)
-        .fontColor($r('app.color.font_secondary'))
+        .fontColor($r('sys.color.font_secondary'))
         .textAlign(TextAlign.Center)
 
       Row({ space: DesignConstants.SPACING_MD }) {
         Button('取消', { type: ButtonType.Normal })
           .layoutWeight(1)
-          .backgroundColor($r('app.color.comp_background_secondary'))
-          .fontColor($r('app.color.font_primary'))
+          .backgroundColor($r('sys.color.comp_background_secondary'))
+          .fontColor($r('sys.color.font_primary'))
           .onClick(() => {
             Throttle.click(() => {
             this.confirmDialogController.close();
@@ -418,7 +418,7 @@ export struct AudioControlPanel {
 
         Button('确认重置', { type: ButtonType.Normal })
           .layoutWeight(1)
-          .backgroundColor($r('app.color.alert'))
+          .backgroundColor($r('sys.color.alert'))
           .fontColor(Color.White)
           .onClick(() => {
             Throttle.click(() => {

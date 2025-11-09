@@ -23,18 +23,18 @@ export struct MembershipAgreementDialog {
         Image($r('app.media.ic_document_edit'))
           .width(DesignConstants.ICON_SIZE_XL)
           .height(DesignConstants.ICON_SIZE_XL)
-          .fillColor($r('app.color.interactive_active'))
+          .fillColor($r('sys.color.interactive_active'))
           .margin({ bottom: DesignConstants.SPACING_SM })
         
         Text('会员奖励计划协议')
           .fontSize(DesignConstants.FONT_SIZE_XL)
           .fontWeight(FontWeight.Bold)
-          .fontColor($r('app.color.font_primary'))
+          .fontColor($r('sys.color.font_primary'))
           .textAlign(TextAlign.Center)
 
         Text('请仔细阅读并同意以下会员奖励规则')
           .fontSize(DesignConstants.FONT_SIZE_SM)
-          .fontColor($r('app.color.font_secondary'))
+          .fontColor($r('sys.color.font_secondary'))
           .textAlign(TextAlign.Center)
       }
       .width('100%')
@@ -109,7 +109,7 @@ export struct MembershipAgreementDialog {
       .scrollBar(BarState.Auto)
       .scrollable(ScrollDirection.Vertical)
       .layoutWeight(1)
-      .backgroundColor($r('app.color.comp_background_primary'))
+      .backgroundColor($r('sys.color.comp_background_primary'))
       .borderRadius(DesignConstants.BORDER_RADIUS_MD)
 
       // 操作按钮区域
@@ -117,12 +117,12 @@ export struct MembershipAgreementDialog {
         Button('取消')
           .layoutWeight(1)
           .fontSize(DesignConstants.FONT_SIZE_MD)
-          .backgroundColor($r('app.color.comp_background_secondary'))
-          .fontColor($r('app.color.font_primary'))
+          .backgroundColor($r('sys.color.comp_background_secondary'))
+          .fontColor($r('sys.color.font_primary'))
           .borderRadius(DesignConstants.BORDER_RADIUS_MD)
           .border({
             width: DesignConstants.BORDER_WIDTH_SM,
-            color: $r('app.color.comp_border_color'),
+            color: $r('sys.color.comp_border_color'),
             style: BorderStyle.Solid
           })
           .onClick(() => {
@@ -134,8 +134,8 @@ export struct MembershipAgreementDialog {
         Button('同意并继续')
           .layoutWeight(1)
           .fontSize(DesignConstants.FONT_SIZE_MD)
-          .backgroundColor($r('app.color.interactive_active'))
-          .fontColor($r('app.color.font_on_primary'))
+          .backgroundColor($r('sys.color.interactive_active'))
+          .fontColor($r('sys.color.font_on_primary'))
           .borderRadius(DesignConstants.BORDER_RADIUS_MD)
           .onClick(() => {
             Throttle.click(() => {
@@ -162,7 +162,7 @@ export struct MembershipAgreementDialog {
       Text(title)
         .fontSize(DesignConstants.FONT_SIZE_LG)
         .fontWeight(FontWeight.Medium)
-        .fontColor($r('app.color.font_primary'))
+        .fontColor($r('sys.color.font_primary'))
         .alignSelf(ItemAlign.Start)
 
       // 段落内容
@@ -170,7 +170,7 @@ export struct MembershipAgreementDialog {
         ForEach(items, (item: string) => {
           Text(item)
             .fontSize(DesignConstants.FONT_SIZE_SM)
-            .fontColor($r('app.color.font_secondary'))
+            .fontColor($r('sys.color.font_secondary'))
             .textAlign(TextAlign.Start)
             .lineHeight(20)
             .width('100%')
@@ -183,11 +183,11 @@ export struct MembershipAgreementDialog {
     }
     .width('100%')
     .padding(DesignConstants.SPACING_MD)
-    .backgroundColor($r('app.color.comp_background_primary'))
+    .backgroundColor($r('sys.color.comp_background_primary'))
     .borderRadius(DesignConstants.BORDER_RADIUS_MD)
     .border({
       width: DesignConstants.BORDER_WIDTH_SM,
-      color: $r('app.color.comp_border_color'),
+      color: $r('sys.color.comp_border_color'),
       style: BorderStyle.Solid
     })
     .shadow(DesignConstants.SHADOW_SM)

@@ -185,7 +185,7 @@ export struct EnhancedExposureContent {
     } else if (this.exposureData.exposurePercentage < 100) {
       return $r('app.color.health_bad'); // 红色 - 危险
     } else {
-      return $r('app.color.alert'); // 深红色 - 严重超标
+      return $r('sys.color.alert'); // 深红色 - 严重超标
     }
   }
 
@@ -200,11 +200,11 @@ export struct EnhancedExposureContent {
         Text('选择计算方式')
           .fontSize(DesignConstants.FONT_SIZE_LG)
           .fontWeight(FontWeight.Medium)
-          .fontColor($r('app.color.font_primary'))
+          .fontColor($r('sys.color.font_primary'))
 
         Text('不同场景使用不同的计算标准')
           .fontSize(DesignConstants.FONT_SIZE_MD)
-          .fontColor($r('app.color.font_secondary'))
+          .fontColor($r('sys.color.font_secondary'))
       }
       .width('100%')
       .alignItems(HorizontalAlign.Start)
@@ -216,30 +216,30 @@ export struct EnhancedExposureContent {
             Text(StandardConfigs[this.selectedStandard].name)
               .fontSize(DesignConstants.FONT_SIZE_MD)
               .fontWeight(FontWeight.Medium)
-              .fontColor($r('app.color.font_primary'))
+              .fontColor($r('sys.color.font_primary'))
 
           }
 
           Text(StandardConfigs[this.selectedStandard].description)
             .fontSize(DesignConstants.FONT_SIZE_XS)
-            .fontColor($r('app.color.font_secondary'))
+            .fontColor($r('sys.color.font_secondary'))
 
           // 标准参数说明
           Text(`基准值: ${StandardConfigs[this.selectedStandard].baseLimit}dB | 时长: ${StandardConfigs[this.selectedStandard].baseDuration >=
             24 * 60 * 60 * 1000 ? '24小时' : '8小时'}`)
             .fontSize(DesignConstants.FONT_SIZE_SM)
-            .fontColor($r('app.color.font_tertiary'))
+            .fontColor($r('sys.color.font_tertiary'))
         }
         .layoutWeight(1)
 
         Image($r('app.media.ic_arrow_right'))
           .width(16)
           .height(16)
-          .fillColor($r('app.color.font_secondary'))
+          .fillColor($r('sys.color.font_secondary'))
       }
       .width('100%')
       .padding(DesignConstants.SPACING_MD)
-      .backgroundColor($r('app.color.comp_background_primary'))
+      .backgroundColor($r('sys.color.comp_background_primary'))
       .borderRadius(DesignConstants.BORDER_RADIUS_MD)
       .onClick(() => {
         Throttle.click(() => {
@@ -257,20 +257,20 @@ export struct EnhancedExposureContent {
                   Row({ space: DesignConstants.SPACING_SM }) {
                     Text(StandardConfigs[standard].name)
                       .fontSize(DesignConstants.FONT_SIZE_SM)
-                      .fontColor($r('app.color.font_primary'))
+                      .fontColor($r('sys.color.font_primary'))
                       .fontWeight(FontWeight.Medium)
 
                   }
 
                   Text(StandardConfigs[standard].code)
                     .fontSize(DesignConstants.FONT_SIZE_XS)
-                    .fontColor($r('app.color.font_secondary'))
+                    .fontColor($r('sys.color.font_secondary'))
 
                   // 标准参数
                   Text(`基准: ${StandardConfigs[standard].baseLimit}dB | 时长: ${StandardConfigs[standard].baseDuration >=
                     24 * 60 * 60 * 1000 ? '24小时' : '8小时'}`)
                     .fontSize(DesignConstants.FONT_SIZE_XS)
-                    .fontColor($r('app.color.font_tertiary'))
+                    .fontColor($r('sys.color.font_tertiary'))
                 }
                 .layoutWeight(1)
 
@@ -278,7 +278,7 @@ export struct EnhancedExposureContent {
                   Image($r('app.media.ic_favorite'))
                     .width(16)
                     .height(16)
-                    .fillColor($r('app.color.font_primary'))
+                    .fillColor($r('sys.color.font_primary'))
                 }
               }
 
@@ -286,20 +286,20 @@ export struct EnhancedExposureContent {
               if (standard === NoiseExposureStandard.WORKPLACE) {
                 Text('• 适用场景：工厂、车间、建筑工地等职业环境')
                   .fontSize(DesignConstants.FONT_SIZE_SM)
-                  .fontColor($r('app.color.font_tertiary'))
+                  .fontColor($r('sys.color.font_tertiary'))
               } else if (standard === NoiseExposureStandard.ENVIRONMENTAL) {
                 Text('• 适用场景：街道、公园、社区等室外环境')
                   .fontSize(DesignConstants.FONT_SIZE_SM)
-                  .fontColor($r('app.color.font_tertiary'))
+                  .fontColor($r('sys.color.font_tertiary'))
               } else if (standard === NoiseExposureStandard.SOCIAL) {
                 Text('• 适用场景：住宅、办公室、学校等室内环境')
                   .fontSize(DesignConstants.FONT_SIZE_SM)
-                  .fontColor($r('app.color.font_tertiary'))
+                  .fontColor($r('sys.color.font_tertiary'))
               }
             }
             .width('100%')
             .padding(DesignConstants.SPACING_MD)
-            .backgroundColor($r('app.color.comp_background_primary'))
+            .backgroundColor($r('sys.color.comp_background_primary'))
             .borderRadius(DesignConstants.BORDER_RADIUS_MD)
             .onClick(() => {
               Throttle.click(() => {
@@ -312,7 +312,7 @@ export struct EnhancedExposureContent {
         }
         .width('100%')
         .padding(DesignConstants.SPACING_SM)
-        .backgroundColor($r('app.color.background_secondary'))
+        .backgroundColor($r('sys.color.background_secondary'))
         .borderRadius(DesignConstants.BORDER_RADIUS_MD)
         .margin({ top: DesignConstants.SPACING_XS })
       }
@@ -328,7 +328,7 @@ export struct EnhancedExposureContent {
     Stack({ alignContent: Alignment.Center }) {
       // 背景环
       Circle({ width: 120, height: 120 })
-        .stroke($r('app.color.comp_background_tertiary'))
+        .stroke($r('sys.color.comp_background_tertiary'))
         .strokeWidth(10)
         .fill(Color.Transparent)
 
@@ -350,7 +350,7 @@ export struct EnhancedExposureContent {
           Image($r('app.media.ic_refresh'))
             .width(32)
             .height(32)
-            .fillColor($r('app.color.font_primary'))
+            .fillColor($r('sys.color.font_primary'))
             .rotate({
               angle: 360,
               centerX: '50%',
@@ -366,12 +366,12 @@ export struct EnhancedExposureContent {
           Text(`${config.percentage}%`)
             .fontSize(DesignConstants.FONT_SIZE_3XL)
             .fontWeight(FontWeight.Bold)
-            .fontColor($r('app.color.font_primary'))
+            .fontColor($r('sys.color.font_primary'))
         }
 
         Text('噪音影响程度')
           .fontSize(DesignConstants.FONT_SIZE_SM)
-          .fontColor($r('app.color.font_secondary'))
+          .fontColor($r('sys.color.font_secondary'))
       }
     }
     .width(120)
@@ -416,7 +416,7 @@ export struct EnhancedExposureContent {
         Image($r('app.media.ic_info'))
           .width(20)
           .height(20)
-          .fillColor($r('app.color.font_secondary'))
+          .fillColor($r('sys.color.font_secondary'))
           .margin({ top: DesignConstants.SPACING_XS, right: DesignConstants.SPACING_XS })
           .onClick(() => {
             Throttle.click(() => {
@@ -439,7 +439,7 @@ export struct EnhancedExposureContent {
 
             Text('还能安全待多久')
               .fontSize(DesignConstants.FONT_SIZE_SM)
-              .fontColor($r('app.color.font_secondary'))
+              .fontColor($r('sys.color.font_secondary'))
               .textAlign(TextAlign.Center)
           }
         }
@@ -464,7 +464,7 @@ export struct EnhancedExposureContent {
           } else {
             Text('噪音影响严重超标，请立即采取保护措施')
               .fontSize(DesignConstants.FONT_SIZE_MD)
-              .fontColor($r('app.color.alert'))
+              .fontColor($r('sys.color.alert'))
               .textAlign(TextAlign.Center)
           }
         }
@@ -480,12 +480,12 @@ export struct EnhancedExposureContent {
           Text(`${this.exposureData.todayPeak.toFixed(1)} dB`)
             .fontSize(DesignConstants.FONT_SIZE_XL)
             .fontWeight(FontWeight.Bold)
-            .fontColor($r('app.color.font_primary'))
+            .fontColor($r('sys.color.font_primary'))
             .textAlign(TextAlign.Center)
 
           Text('今日最高噪音')
             .fontSize(DesignConstants.FONT_SIZE_SM)
-            .fontColor($r('app.color.font_secondary'))
+            .fontColor($r('sys.color.font_secondary'))
             .textAlign(TextAlign.Center)
         }
         .layoutWeight(1)
@@ -497,12 +497,12 @@ export struct EnhancedExposureContent {
           Text(`${this.exposureData.todayAverage.toFixed(1)} dB`)
             .fontSize(DesignConstants.FONT_SIZE_XL)
             .fontWeight(FontWeight.Bold)
-            .fontColor($r('app.color.font_primary'))
+            .fontColor($r('sys.color.font_primary'))
             .textAlign(TextAlign.Center)
 
           Text('今日平均噪音')
             .fontSize(DesignConstants.FONT_SIZE_SM)
-            .fontColor($r('app.color.font_secondary'))
+            .fontColor($r('sys.color.font_secondary'))
             .textAlign(TextAlign.Center)
         }
         .layoutWeight(1)
@@ -516,7 +516,7 @@ export struct EnhancedExposureContent {
     }
     .width('100%')
     .padding(DesignConstants.SPACING_LG)
-    .backgroundColor($r('app.color.comp_background_primary'))
+    .backgroundColor($r('sys.color.comp_background_primary'))
     .borderRadius(DesignConstants.BORDER_RADIUS_LG)
   }
 
@@ -531,7 +531,7 @@ export struct EnhancedExposureContent {
       Text('噪音水平分布')
         .fontSize(DesignConstants.FONT_SIZE_LG)
         .fontWeight(FontWeight.Medium)
-        .fontColor($r('app.color.font_primary'))
+        .fontColor($r('sys.color.font_primary'))
 
       ForEach(config.stats, (stat: DecibelRangeStats) => {
         Column({ space: DesignConstants.SPACING_XS }) {
@@ -539,12 +539,12 @@ export struct EnhancedExposureContent {
           Row({ space: DesignConstants.SPACING_SM }) {
             Text(DecibelRangeConfigs[stat.range].label)
               .fontSize(DesignConstants.FONT_SIZE_SM)
-              .fontColor($r('app.color.font_primary'))
+              .fontColor($r('sys.color.font_primary'))
               .fontWeight(FontWeight.Medium)
 
             Text(`(${DecibelRangeConfigs[stat.range].min}-${DecibelRangeConfigs[stat.range].max}dB)`)
               .fontSize(DesignConstants.FONT_SIZE_XS)
-              .fontColor($r('app.color.font_tertiary'))
+              .fontColor($r('sys.color.font_tertiary'))
           }
           .width('100%')
           .alignItems(VerticalAlign.Top)
@@ -564,7 +564,7 @@ export struct EnhancedExposureContent {
             .justifyContent(FlexAlign.Start)
             .layoutWeight(1)
             .height(8)
-            .backgroundColor($r('app.color.background_tertiary'))
+            .backgroundColor($r('sys.color.background_tertiary'))
             .borderRadius(4)
 
             // 百分比和时长
@@ -576,7 +576,7 @@ export struct EnhancedExposureContent {
 
               Text(stat.duration)
                 .fontSize(DesignConstants.FONT_SIZE_XS)
-                .fontColor($r('app.color.font_secondary'))
+                .fontColor($r('sys.color.font_secondary'))
             }
           }
           .width('100%')
@@ -586,44 +586,44 @@ export struct EnhancedExposureContent {
           Row({ space: DesignConstants.SPACING_XS }) {
             Text(DecibelRangeConfigs[stat.range].description)
               .fontSize(DesignConstants.FONT_SIZE_XS)
-              .fontColor($r('app.color.font_secondary'))
+              .fontColor($r('sys.color.font_secondary'))
 
             // 添加环境比喻
             if (stat.range === DecibelRange.VERY_QUIET) {
               Text('(图书馆环境)')
                 .fontSize(DesignConstants.FONT_SIZE_SM)
-                .fontColor($r('app.color.font_tertiary'))
+                .fontColor($r('sys.color.font_tertiary'))
             } else if (stat.range === DecibelRange.QUIET) {
               Text('(办公室环境)')
                 .fontSize(DesignConstants.FONT_SIZE_SM)
-                .fontColor($r('app.color.font_tertiary'))
+                .fontColor($r('sys.color.font_tertiary'))
             } else if (stat.range === DecibelRange.MODERATE) {
               Text('(正常交谈)')
                 .fontSize(DesignConstants.FONT_SIZE_SM)
-                .fontColor($r('app.color.font_tertiary'))
+                .fontColor($r('sys.color.font_tertiary'))
             } else if (stat.range === DecibelRange.NOISY) {
               Text('(交通噪音)')
                 .fontSize(DesignConstants.FONT_SIZE_SM)
-                .fontColor($r('app.color.font_tertiary'))
+                .fontColor($r('sys.color.font_tertiary'))
             } else if (stat.range === DecibelRange.HIGH) {
               Text('(施工工地)')
                 .fontSize(DesignConstants.FONT_SIZE_SM)
-                .fontColor($r('app.color.font_tertiary'))
+                .fontColor($r('sys.color.font_tertiary'))
             } else if (stat.range === DecibelRange.VERY_HIGH) {
               Text('(音乐会现场)')
                 .fontSize(DesignConstants.FONT_SIZE_SM)
-                .fontColor($r('app.color.font_tertiary'))
+                .fontColor($r('sys.color.font_tertiary'))
             }
           }
           .alignSelf(ItemAlign.Start)
         }
         .width('100%')
         .padding(DesignConstants.SPACING_LG)
-        .backgroundColor($r('app.color.comp_background_primary'))
+        .backgroundColor($r('sys.color.comp_background_primary'))
         .borderRadius(DesignConstants.BORDER_RADIUS_MD)
       })
     }
-    .backgroundColor($r('app.color.background_secondary'))
+    .backgroundColor($r('sys.color.background_secondary'))
     .borderRadius(DesignConstants.BORDER_RADIUS_MD)
     .width('100%')
   }
@@ -637,21 +637,21 @@ export struct EnhancedExposureContent {
       Text(config.value)
         .fontSize(DesignConstants.FONT_SIZE_XL)
         .fontWeight(FontWeight.Bold)
-        .fontColor($r('app.color.font_primary'))
+        .fontColor($r('sys.color.font_primary'))
         .textAlign(TextAlign.Center)
 
       Text(config.title)
         .fontSize(DesignConstants.FONT_SIZE_SM)
-        .fontColor($r('app.color.font_secondary'))
+        .fontColor($r('sys.color.font_secondary'))
         .textAlign(TextAlign.Center)
 
       Text(config.subtitle)
         .fontSize(DesignConstants.FONT_SIZE_XS)
-        .fontColor($r('app.color.font_tertiary'))
+        .fontColor($r('sys.color.font_tertiary'))
         .textAlign(TextAlign.Center)
     }
     .padding(DesignConstants.SPACING_LG)
-    .backgroundColor($r('app.color.comp_background_primary'))
+    .backgroundColor($r('sys.color.comp_background_primary'))
     .borderRadius(DesignConstants.BORDER_RADIUS_MD)
     .width('100%')
     .justifyContent(FlexAlign.Center)
@@ -683,6 +683,6 @@ export struct EnhancedExposureContent {
     .edgeEffect(EdgeEffect.Spring)
     .width('100%')
     .height('100%')
-    .backgroundColor($r('app.color.background_secondary'))
+    .backgroundColor($r('sys.color.background_secondary'))
   }
 }

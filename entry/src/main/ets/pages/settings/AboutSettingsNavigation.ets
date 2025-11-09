@@ -15,7 +15,7 @@ import { privacyManager } from '@kit.StoreKit';
 function itemIcon() {
   .width(DesignConstants.ICON_SIZE_MD)
   .height(DesignConstants.ICON_SIZE_MD)
-  .fillColor($r('app.color.brand'))
+  .fillColor($r('sys.color.brand'))
 }
 
 @Extend(Text)
@@ -25,7 +25,7 @@ function itemTitle() {
 
 @Extend(Text)
 function itemDescription() {
-  .fontColor($r('app.color.font_secondary'))
+  .fontColor($r('sys.color.font_secondary'))
   .fontSize(DesignConstants.FONT_SIZE_MD)
   .textAlign(TextAlign.Start)
   .alignSelf(ItemAlign.Start)
@@ -33,7 +33,7 @@ function itemDescription() {
 
 @Extend(Column)
 function cardStyle() {
-  .backgroundColor($r('app.color.comp_background_primary'))
+  .backgroundColor($r('sys.color.comp_background_primary'))
   .justifyContent(FlexAlign.Start)
   .alignItems(HorizontalAlign.Start)
   .borderRadius(16)
@@ -91,18 +91,18 @@ export struct AboutSettings {
             Text('静喵Sound')
               .fontSize(DesignConstants.FONT_SIZE_XL)
               .fontWeight(FontWeight.Bold)
-              .fontColor($r('app.color.font_primary'))
+              .fontColor($r('sys.color.font_primary'))
 
             // 应用描述
             Text('专业级环境噪音检测分析工具')
               .fontSize(DesignConstants.FONT_SIZE_MD)
-              .fontColor($r('app.color.font_secondary'))
+              .fontColor($r('sys.color.font_secondary'))
               .textAlign(TextAlign.Center)
 
             // 版本号
             Text('v1.6.51')
               .fontSize(DesignConstants.FONT_SIZE_SM)
-              .fontColor($r('app.color.font_tertiary'))
+              .fontColor($r('sys.color.font_tertiary'))
               .textAlign(TextAlign.Center)
           }
           .appInfoCardStyle()
@@ -115,7 +115,7 @@ export struct AboutSettings {
             Text($r('app.string.privacy_policy_management_title'))
               .fontSize(DesignConstants.FONT_SIZE_LG)
               .fontWeight(FontWeight.Bold)
-              .fontColor($r('app.color.brand'))
+              .fontColor($r('sys.color.brand'))
               .alignSelf(ItemAlign.Start)
 
             // 查看隐私政策
@@ -124,7 +124,7 @@ export struct AboutSettings {
                 Image($r('app.media.ic_info'))
                   .itemIcon()
                 Text('撤销隐私授权')
-                  .fontColor($r('app.color.font_emphasize'))
+                  .fontColor($r('sys.color.font_emphasize'))
                   .onClick(() => {
                     Throttle.click(async () => {
                       // 这里添加打开隐私政策的逻辑
@@ -201,7 +201,7 @@ export struct AboutSettings {
       .backgroundColor('transparent')
     }
     .padding(16)
-    .backgroundColor($r('app.color.background_secondary'))
+    .backgroundColor($r('sys.color.background_secondary'))
   }
 
   // 取消隐私授权

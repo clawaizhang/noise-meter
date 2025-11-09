@@ -163,7 +163,7 @@ export class EnhancedToolConfigFactory {
       usageHint: this.getFrequencyWeightingHint(userSkillLevel),
       learnMore: () => this.showLearnMore('频率加权'),
       getStatus: () => getWeightingDisplayName(this.pk.weighting_type),
-      getStatusColor: () => $r('app.color.font_primary'),
+      getStatusColor: () => $r('sys.color.font_primary'),
       onTap: navigateToFrequencyWeighting,
       quickSetup: () => this.quickFrequencyWeighting(),
       usageFrequency: 0.8,
@@ -187,7 +187,7 @@ export class EnhancedToolConfigFactory {
       usageHint: this.getTimeWeightingHint(userSkillLevel),
       learnMore: () => this.showLearnMore('时间加权'),
       getStatus: () => getAnalysisModeDisplayName(this.pk.audio_analysis_mode),
-      getStatusColor: () => $r('app.color.font_primary'),
+      getStatusColor: () => $r('sys.color.font_primary'),
       onTap: navigateToAudioAnalysisMode,
       quickSetup: () => this.quickTimeWeighting(),
       usageFrequency: 0.6,
@@ -236,7 +236,7 @@ export class EnhancedToolConfigFactory {
       usageHint: isLocked ? '升级后可使用' : '更高采样率提供更精确的分析',
       learnMore: isLocked ? undefined : () => this.showLearnMore('采样率'),
       getStatus: () => isLocked ? '未解锁' : getSampleRateDisplayText(),
-      getStatusColor: () => isLocked ? EnhancedDesignConstants.COLOR_LOCKED : $r('app.color.font_primary'),
+      getStatusColor: () => isLocked ? EnhancedDesignConstants.COLOR_LOCKED : $r('sys.color.font_primary'),
       onTap: isLocked ? () => this.showUnlockDialog('采样率设置') : navigateToSampleRateSettings,
       isLocked: isLocked,
       unlockCondition: '提升用户等级至中级',
@@ -262,7 +262,7 @@ export class EnhancedToolConfigFactory {
       usageHint: '根据场景自动优化参数',
       learnMore: () => this.showLearnMore('快速设置'),
       getStatus: () => sceneConfig ? sceneConfig.title : '未选择场景',
-      getStatusColor: () => sceneConfig ? sceneConfig.color : $r('app.color.font_secondary'),
+      getStatusColor: () => sceneConfig ? sceneConfig.color : $r('sys.color.font_secondary'),
       onTap: () => applySceneSettings(currentScene),
       quickSetup: () => applySceneSettings(currentScene),
       usageFrequency: 0.9,
@@ -287,7 +287,7 @@ export class EnhancedToolConfigFactory {
       usageHint: '不同场景有不同推荐设置',
       learnMore: () => this.showLearnMore('测量场景'),
       getStatus: () => sceneConfig ? sceneConfig.title : '未选择',
-      getStatusColor: () => sceneConfig ? sceneConfig.color : $r('app.color.font_secondary'),
+      getStatusColor: () => sceneConfig ? sceneConfig.color : $r('sys.color.font_secondary'),
       onTap: () => this.showSceneSelector(selectScene, currentScene),
       usageFrequency: 0.8,
       progress: currentScene !== MeasurementScene.CUSTOM ? 1.0 : 0.5
@@ -298,16 +298,16 @@ export class EnhancedToolConfigFactory {
 
   private getCalibrationStatusColor(): Resource {
     if (this.pk.calibration_value <= 0) {
-      return $r('app.color.warning');
+      return $r('sys.color.warning');
     }
-    return $r('app.color.confirm');
+    return $r('sys.color.confirm');
   }
 
   private getAlertStatusColor(): Resource {
     if (this.pk.alarm_threshold.currentEffectiveThreshold <= 0) {
-      return $r('app.color.warning');
+      return $r('sys.color.warning');
     }
-    return $r('app.color.confirm');
+    return $r('sys.color.confirm');
   }
 
   private getFrequencyWeightingHint(userSkillLevel: UserSkillLevel): string {

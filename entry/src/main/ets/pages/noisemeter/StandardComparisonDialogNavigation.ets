@@ -29,7 +29,7 @@ const internationalStandards: InternationalStandard[] = [
     industrialDay: 65,
     industrialNight: 55,
     description: '声环境质量标准',
-    color: $r('app.color.confirm')
+    color: $r('sys.color.confirm')
   },
   {
     country: '美国',
@@ -41,7 +41,7 @@ const internationalStandards: InternationalStandard[] = [
     industrialDay: 85,
     industrialNight: 85,
     description: '环境保护署/职业安全健康管理局',
-    color: $r('app.color.warning')
+    color: $r('sys.color.warning')
   },
   {
     country: '欧盟',
@@ -53,7 +53,7 @@ const internationalStandards: InternationalStandard[] = [
     industrialDay: 70,
     industrialNight: 70,
     description: '欧洲环境噪音指令',
-    color: $r('app.color.alert')
+    color: $r('sys.color.alert')
   },
   {
     country: 'WHO',
@@ -65,7 +65,7 @@ const internationalStandards: InternationalStandard[] = [
     industrialDay: 70,
     industrialNight: 70,
     description: '世界卫生组织指南',
-    color: $r('app.color.font_primary')
+    color: $r('sys.color.font_primary')
   }
 ];
 
@@ -129,9 +129,9 @@ struct StandardComparisonComponent {
         Text(item.label)
           .fontSize(14)
           .fontWeight(FontWeight.Medium)
-          .fontColor(this.selectedAreaType === item.type ? $r('app.color.font_primary') : $r('app.color.font_secondary'))
+          .fontColor(this.selectedAreaType === item.type ? $r('sys.color.font_primary') : $r('sys.color.font_secondary'))
           .padding(12)
-          .backgroundColor(this.selectedAreaType === item.type ? $r('app.color.comp_background_primary') : $r('app.color.background_secondary'))
+          .backgroundColor(this.selectedAreaType === item.type ? $r('sys.color.comp_background_primary') : $r('sys.color.background_secondary'))
           .borderRadius(8)
           .onClick(() => {
             Throttle.click(() => {
@@ -163,12 +163,12 @@ struct StandardComparisonComponent {
         Text(standard.country)
           .fontSize(16)
           .fontWeight(FontWeight.Bold)
-          .fontColor($r('app.color.font_primary'))
+          .fontColor($r('sys.color.font_primary'))
           .layoutWeight(1)
 
         Text(standard.standardName)
           .fontSize(12)
-          .fontColor($r('app.color.font_secondary'))
+          .fontColor($r('sys.color.font_secondary'))
       }
       .width('100%')
 
@@ -177,7 +177,7 @@ struct StandardComparisonComponent {
         Column({ space: 4 }) {
           Text('昼间')
             .fontSize(12)
-            .fontColor($r('app.color.font_secondary'))
+            .fontColor($r('sys.color.font_secondary'))
 
           Text(`${this.getAreaLimits(standard, this.selectedAreaType).day} dB`)
             .fontSize(14)
@@ -189,7 +189,7 @@ struct StandardComparisonComponent {
         Column({ space: 4 }) {
           Text('夜间')
             .fontSize(12)
-            .fontColor($r('app.color.font_secondary'))
+            .fontColor($r('sys.color.font_secondary'))
 
           Text(`${this.getAreaLimits(standard, this.selectedAreaType).night} dB`)
             .fontSize(14)
@@ -204,21 +204,21 @@ struct StandardComparisonComponent {
       Row() {
         Text('符合状态:')
           .fontSize(12)
-          .fontColor($r('app.color.font_secondary'))
+          .fontColor($r('sys.color.font_secondary'))
 
         if (this.isCompliant(standard)) {
           Text('符合标准')
             .fontSize(12)
             .fontWeight(FontWeight.Medium)
-            .fontColor($r('app.color.confirm'))
+            .fontColor($r('sys.color.confirm'))
             .margin({ left: 8 })
         } else {
           Text('超出标准')
             .fontSize(12)
             .fontWeight(FontWeight.Medium)
-            .fontColor($r('app.color.font_primary'))
+            .fontColor($r('sys.color.font_primary'))
             .padding({ left: 8, right: 8, top: 4, bottom: 4 })
-            .backgroundColor($r('app.color.alert'))
+            .backgroundColor($r('sys.color.alert'))
             .borderRadius(6)
             .opacity(0.9)
             .margin({ left: 8 })
@@ -229,14 +229,14 @@ struct StandardComparisonComponent {
       // 标准描述
       Text(standard.description)
         .fontSize(11)
-        .fontColor($r('app.color.font_secondary'))
+        .fontColor($r('sys.color.font_secondary'))
         .width('100%')
         .textAlign(TextAlign.Start)
     }
     .padding(12)
     .width('100%')
     .backgroundBlurStyle(this.isCompliant(standard) ? BlurStyle.COMPONENT_ULTRA_THIN : BlurStyle.NONE)
-    .backgroundColor($r('app.color.comp_background_primary'))
+    .backgroundColor($r('sys.color.comp_background_primary'))
     .borderRadius(12)
     .alignItems(HorizontalAlign.Start)
     .transition(TransitionEffect.OPACITY.animation({ curve: curves.springMotion(0.6, 0.8) })
@@ -256,7 +256,7 @@ struct StandardComparisonComponent {
         Row() {
           Text('当前分贝值:')
             .fontSize(14)
-            .fontColor($r('app.color.font_secondary'))
+            .fontColor($r('sys.color.font_secondary'))
 
           Text(`${this.ak.uiDisplayState.displayDb} dB`)
             .fontSize(16)
@@ -274,7 +274,7 @@ struct StandardComparisonComponent {
         Text(`${this.getAreaTypeLabel(this.selectedAreaType)}标准对比`)
           .fontSize(16)
           .fontWeight(FontWeight.Bold)
-          .fontColor($r('app.color.font_primary'))
+          .fontColor($r('sys.color.font_primary'))
           .alignSelf(ItemAlign.Start)
 
         // 国际标准对比
@@ -297,5 +297,5 @@ export function StandardComparisonDialogBuilder(ak: AppKeys) {
   }
   .title({ main: '标准对比参考', sub: '国际噪音标准对比分析' })
   .padding(16)
-  .backgroundColor($r('app.color.background_secondary'))
+  .backgroundColor($r('sys.color.background_secondary'))
 }

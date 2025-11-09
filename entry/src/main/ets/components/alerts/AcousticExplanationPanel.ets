@@ -22,12 +22,12 @@ export struct AcousticExplanationPanel {
         Image($r('app.media.ic_info'))
           .width(DesignConstants.ICON_SIZE_MD)
           .height(DesignConstants.ICON_SIZE_MD)
-          .fillColor($r('app.color.brand'))
+          .fillColor($r('sys.color.brand'))
 
         Text('技术参数')
           .fontSize(DesignConstants.FONT_SIZE_LG)
           .fontWeight(FontWeight.Bold)
-          .fontColor($r('app.color.font_primary'))
+          .fontColor($r('sys.color.font_primary'))
           .layoutWeight(1)
 
         // 展开/收起按钮
@@ -36,7 +36,7 @@ export struct AcousticExplanationPanel {
           $r('sys.media.ohos_ic_public_arrow_down'))
           .width(DesignConstants.ICON_SIZE_SM)
           .height(DesignConstants.ICON_SIZE_SM)
-          .fillColor($r('app.color.font_primary'))
+          .fillColor($r('sys.color.font_primary'))
           .onClick(() => {
             Throttle.click(() => {
               this.isTechnicalPanelExpanded = !this.isTechnicalPanelExpanded;
@@ -103,19 +103,19 @@ export struct AcousticExplanationPanel {
     Column({ space: DesignConstants.SPACING_XS }) {
       Text(label)
         .fontSize(DesignConstants.FONT_SIZE_SM)
-        .fontColor($r('app.color.font_secondary'))
+        .fontColor($r('sys.color.font_secondary'))
         .alignSelf(ItemAlign.Start)
 
       Text(value)
         .fontSize(DesignConstants.FONT_SIZE_MD)
-        .fontColor($r('app.color.font_primary'))
+        .fontColor($r('sys.color.font_primary'))
         .fontWeight(FontWeight.Medium)
         .alignSelf(ItemAlign.Start)
     }
     .width('100%')
     .alignItems(HorizontalAlign.Start)
     .padding(DesignConstants.SPACING_SM)
-    .backgroundColor($r('app.color.background_secondary'))
+    .backgroundColor($r('sys.color.background_secondary'))
     .borderRadius(DesignConstants.BORDER_RADIUS_SM)
   }
 
@@ -128,12 +128,12 @@ export struct AcousticExplanationPanel {
         Image($r('app.media.ic_audio_analysis'))
           .width(DesignConstants.ICON_SIZE_MD)
           .height(DesignConstants.ICON_SIZE_MD)
-          .fillColor($r('app.color.brand'))
+          .fillColor($r('sys.color.brand'))
 
         Text('声学原理')
           .fontSize(DesignConstants.FONT_SIZE_LG)
           .fontWeight(FontWeight.Bold)
-          .fontColor($r('app.color.font_primary'))
+          .fontColor($r('sys.color.font_primary'))
           .layoutWeight(1)
 
         // 展开/收起按钮
@@ -142,7 +142,7 @@ export struct AcousticExplanationPanel {
           $r('sys.media.ohos_ic_public_arrow_down'))
           .width(DesignConstants.ICON_SIZE_SM)
           .height(DesignConstants.ICON_SIZE_SM)
-          .fillColor($r('app.color.font_secondary'))
+          .fillColor($r('sys.color.font_secondary'))
           .onClick(() => {
             Throttle.click(() => {
               this.isAcousticPanelExpanded = !this.isAcousticPanelExpanded;
@@ -165,12 +165,12 @@ export struct AcousticExplanationPanel {
             Text('基本原理')
               .fontSize(DesignConstants.FONT_SIZE_MD)
               .fontWeight(FontWeight.Medium)
-              .fontColor($r('app.color.font_primary'))
+              .fontColor($r('sys.color.font_primary'))
               .alignSelf(ItemAlign.Start)
 
             Text(ACOUSTIC_EXPLANATIONS['alerts'].principle)
               .fontSize(DesignConstants.FONT_SIZE_MD)
-              .fontColor($r('app.color.font_secondary'))
+              .fontColor($r('sys.color.font_secondary'))
               .textAlign(TextAlign.Start)
               .alignSelf(ItemAlign.Start)
           }
@@ -180,12 +180,12 @@ export struct AcousticExplanationPanel {
             Text('健康影响')
               .fontSize(DesignConstants.FONT_SIZE_MD)
               .fontWeight(FontWeight.Medium)
-              .fontColor($r('app.color.font_primary'))
+              .fontColor($r('sys.color.font_primary'))
               .alignSelf(ItemAlign.Start)
 
             Text(ACOUSTIC_EXPLANATIONS['alerts'].healthImpact)
               .fontSize(DesignConstants.FONT_SIZE_MD)
-              .fontColor($r('app.color.font_secondary'))
+              .fontColor($r('sys.color.font_secondary'))
               .textAlign(TextAlign.Start)
               .alignSelf(ItemAlign.Start)
           }
@@ -195,12 +195,12 @@ export struct AcousticExplanationPanel {
             Text('标准依据')
               .fontSize(DesignConstants.FONT_SIZE_MD)
               .fontWeight(FontWeight.Medium)
-              .fontColor($r('app.color.font_primary'))
+              .fontColor($r('sys.color.font_primary'))
               .alignSelf(ItemAlign.Start)
 
             Text(ACOUSTIC_EXPLANATIONS['alerts'].standardReference)
               .fontSize(DesignConstants.FONT_SIZE_MD)
-              .fontColor($r('app.color.font_secondary'))
+              .fontColor($r('sys.color.font_secondary'))
               .textAlign(TextAlign.Start)
               .alignSelf(ItemAlign.Start)
           }
@@ -210,12 +210,12 @@ export struct AcousticExplanationPanel {
             Text('物理原理')
               .fontSize(DesignConstants.FONT_SIZE_MD)
               .fontWeight(FontWeight.Medium)
-              .fontColor($r('app.color.font_primary'))
+              .fontColor($r('sys.color.font_primary'))
               .alignSelf(ItemAlign.Start)
 
             Text(ACOUSTIC_EXPLANATIONS['alerts'].physicalPrinciple)
               .fontSize(DesignConstants.FONT_SIZE_MD)
-              .fontColor($r('app.color.font_secondary'))
+              .fontColor($r('sys.color.font_secondary'))
               .textAlign(TextAlign.Start)
               .alignSelf(ItemAlign.Start)
           }

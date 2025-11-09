@@ -25,7 +25,7 @@ export struct FrequencyPreviewPanel {
       // 曲线说明
       Text(this.getCurveDescription())
         .fontSize(DesignConstants.FONT_SIZE_SM)
-        .fontColor($r('app.color.font_secondary'))
+        .fontColor($r('sys.color.font_secondary'))
         .alignSelf(ItemAlign.Start)
         .margin({ top: DesignConstants.SPACING_SM })
 
@@ -56,38 +56,38 @@ export struct FrequencyPreviewPanel {
       Text('计权类型对比')
         .fontSize(DesignConstants.FONT_SIZE_LG)
         .fontWeight(FontWeight.Bold)
-        .fontColor($r('app.color.font_primary'))
+        .fontColor($r('sys.color.font_primary'))
         .alignSelf(ItemAlign.Start)
 
       if (this.currentWeighting === this.selectedWeighting) {
         Text('当前已选择此计权类型')
           .fontSize(DesignConstants.FONT_SIZE_MD)
-          .fontColor($r('app.color.confirm'))
+          .fontColor($r('sys.color.confirm'))
           .alignSelf(ItemAlign.Start)
       } else {
         Row({ space: DesignConstants.SPACING_SM }) {
           Text('当前:')
             .fontSize(DesignConstants.FONT_SIZE_MD)
-            .fontColor($r('app.color.font_secondary'))
+            .fontColor($r('sys.color.font_secondary'))
 
           Text(FrequencyWeightingConstants.getWeightingDisplayName(this.currentWeighting))
             .fontSize(DesignConstants.FONT_SIZE_MD)
-            .fontColor($r('app.color.font_primary'))
+            .fontColor($r('sys.color.font_primary'))
             .fontWeight(FontWeight.Medium)
 
           Image($r('sys.media.ohos_ic_public_arrow_right'))
             .width(DesignConstants.ICON_SIZE_SM)
             .height(DesignConstants.ICON_SIZE_SM)
-            .fillColor($r('app.color.font_secondary'))
+            .fillColor($r('sys.color.font_secondary'))
             .margin({ left: DesignConstants.SPACING_XS, right: DesignConstants.SPACING_XS })
 
           Text('选择:')
             .fontSize(DesignConstants.FONT_SIZE_MD)
-            .fontColor($r('app.color.font_secondary'))
+            .fontColor($r('sys.color.font_secondary'))
 
           Text(FrequencyWeightingConstants.getWeightingDisplayName(this.selectedWeighting))
             .fontSize(DesignConstants.FONT_SIZE_MD)
-            .fontColor($r('app.color.font_primary'))
+            .fontColor($r('sys.color.font_primary'))
             .fontWeight(FontWeight.Bold)
         }
         .alignSelf(ItemAlign.Start)
@@ -96,7 +96,7 @@ export struct FrequencyPreviewPanel {
       // 简要描述
       Text(this.getBriefDescription())
         .fontSize(DesignConstants.FONT_SIZE_MD)
-        .fontColor($r('app.color.font_secondary'))
+        .fontColor($r('sys.color.font_secondary'))
         .alignSelf(ItemAlign.Start)
         .margin({ top: DesignConstants.SPACING_SM })
 
@@ -128,7 +128,7 @@ export struct FrequencyPreviewPanel {
     }
     .width('100%')
     .padding(DesignConstants.SPACING_MD)
-    .backgroundColor($r('app.color.comp_background_primary'))
+    .backgroundColor($r('sys.color.comp_background_primary'))
     .borderRadius(DesignConstants.BORDER_RADIUS_MD)
   }
 }

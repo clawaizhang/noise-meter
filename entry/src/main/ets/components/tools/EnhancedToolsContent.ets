@@ -298,7 +298,7 @@ export struct EnhancedToolsContent {
     .width('100%')
     .height('100%')
     .padding(EnhancedDesignConstants.SPACING_MD)
-    .backgroundColor($r('app.color.background_primary'))
+    .backgroundColor($r('sys.color.background_primary'))
   }
 
   @Builder
@@ -309,11 +309,11 @@ export struct EnhancedToolsContent {
         Image($r('app.media.ic_user_level'))
           .width(16)
           .height(16)
-          .fillColor($r('app.color.brand'))
+          .fillColor($r('sys.color.brand'))
         
         Text(this.getSkillLevelText())
           .fontSize(EnhancedDesignConstants.FONT_SIZE_XS)
-          .fontColor($r('app.color.font_secondary'))
+          .fontColor($r('sys.color.font_secondary'))
       }
       
       Blank()
@@ -323,11 +323,11 @@ export struct EnhancedToolsContent {
         Image(this.getViewModeIcon())
           .width(20)
           .height(20)
-          .fillColor($r('app.color.font_primary'))
+          .fillColor($r('sys.color.font_primary'))
       }
       .width(36)
       .height(36)
-      .backgroundColor($r('app.color.comp_background_primary'))
+      .backgroundColor($r('sys.color.comp_background_primary'))
       .onClick(() => {
         this.toggleViewMode();
       })
@@ -337,11 +337,11 @@ export struct EnhancedToolsContent {
         Image(this.getLayoutModeIcon())
           .width(20)
           .height(20)
-          .fillColor($r('app.color.font_primary'))
+          .fillColor($r('sys.color.font_primary'))
       }
       .width(36)
       .height(36)
-      .backgroundColor($r('app.color.comp_background_primary'))
+      .backgroundColor($r('sys.color.comp_background_primary'))
       .onClick(() => {
         this.toggleLayoutMode();
       })
@@ -355,7 +355,7 @@ export struct EnhancedToolsContent {
     Row({ space: EnhancedDesignConstants.SPACING_SM }) {
       Text('当前场景:')
         .fontSize(EnhancedDesignConstants.FONT_SIZE_SM)
-        .fontColor($r('app.color.font_secondary'))
+        .fontColor($r('sys.color.font_secondary'))
       
       const sceneConfig = this.enhancedToolFactory.getSceneConfigs()
         .find(config => config.id === this.selectedScene);
@@ -371,11 +371,11 @@ export struct EnhancedToolsContent {
       
       Button('更换场景')
         .fontSize(EnhancedDesignConstants.FONT_SIZE_XS)
-        .fontColor($r('app.color.brand'))
-        .backgroundColor($r('app.color.transparent'))
+        .fontColor($r('sys.color.brand'))
+        .backgroundColor($r('sys.color.transparent'))
         .border({
           width: 1,
-          color: $r('app.color.brand')
+          color: $r('sys.color.brand')
         })
         .borderRadius(EnhancedDesignConstants.BORDER_RADIUS_TAG)
         .height(28)
@@ -385,7 +385,7 @@ export struct EnhancedToolsContent {
     }
     .width('100%')
     .padding(EnhancedDesignConstants.SPACING_SM)
-    .backgroundColor($r('app.color.comp_background_primary'))
+    .backgroundColor($r('sys.color.comp_background_primary'))
     .borderRadius(EnhancedDesignConstants.BORDER_RADIUS_MD)
   }
 
@@ -399,7 +399,7 @@ export struct EnhancedToolsContent {
     }
     .width('100%')
     .padding(EnhancedDesignConstants.SPACING_MD)
-    .backgroundColor($r('app.color.comp_background_primary'))
+    .backgroundColor($r('sys.color.comp_background_primary'))
     .borderRadius(EnhancedDesignConstants.BORDER_RADIUS_MD)
     .margin({ bottom: EnhancedDesignConstants.SPACING_MD })
   }
@@ -410,19 +410,19 @@ export struct EnhancedToolsContent {
       Image($r('app.media.ic_info'))
         .width(20)
         .height(20)
-        .fillColor($r('app.color.brand'))
+        .fillColor($r('sys.color.brand'))
       
       Text('智能助手')
         .fontSize(EnhancedDesignConstants.FONT_SIZE_MD)
         .fontWeight(EnhancedDesignConstants.FONT_WEIGHT_MEDIUM)
-        .fontColor($r('app.color.font_primary'))
+        .fontColor($r('sys.color.font_primary'))
         .margin({ left: EnhancedDesignConstants.SPACING_XS })
       
       Blank()
       
       Text(this.showAdvancedHints ? '收起提示' : '显示提示')
         .fontSize(EnhancedDesignConstants.FONT_SIZE_XS)
-        .fontColor($r('app.color.brand'))
+        .fontColor($r('sys.color.brand'))
         .onClick(() => {
           this.showAdvancedHints = !this.showAdvancedHints;
         })
@@ -435,15 +435,15 @@ export struct EnhancedToolsContent {
     Column({ space: EnhancedDesignConstants.SPACING_XS }) {
       Text('💡 根据您的使用习惯，我们为您推荐以下功能：')
         .fontSize(EnhancedDesignConstants.FONT_SIZE_SM)
-        .fontColor($r('app.color.font_secondary'))
+        .fontColor($r('sys.color.font_secondary'))
       
       Text(this.getSkillLevelTip())
         .fontSize(EnhancedDesignConstants.FONT_SIZE_XS)
-        .fontColor($r('app.color.font_secondary'))
+        .fontColor($r('sys.color.font_secondary'))
       
       Text('📚 点击功能旁的"了解更多"获取详细说明')
         .fontSize(EnhancedDesignConstants.FONT_SIZE_XS)
-        .fontColor($r('app.color.font_secondary'))
+        .fontColor($r('sys.color.font_secondary'))
     }
     .width('100%')
     .padding({ top: EnhancedDesignConstants.SPACING_SM })
@@ -546,7 +546,7 @@ export struct EnhancedToolsContent {
     }
     .width('100%')
     .padding(EnhancedDesignConstants.SPACING_MD)
-    .backgroundColor($r('app.color.comp_background_primary'))
+    .backgroundColor($r('sys.color.comp_background_primary'))
     .borderRadius(EnhancedDesignConstants.BORDER_RADIUS_LG)
     .shadow(EnhancedDesignConstants.SHADOW_SM)
   }
@@ -566,12 +566,12 @@ export struct EnhancedToolsContent {
           Text(this.getCategoryTitle(category))
             .fontSize(EnhancedDesignConstants.FONT_SIZE_MD)
             .fontWeight(EnhancedDesignConstants.FONT_WEIGHT_MEDIUM)
-            .fontColor($r('app.color.font_primary'))
+            .fontColor($r('sys.color.font_primary'))
           
           // 工具数量
           Text(`(${tools.length})`)
             .fontSize(EnhancedDesignConstants.FONT_SIZE_XS)
-            .fontColor($r('app.color.font_secondary'))
+            .fontColor($r('sys.color.font_secondary'))
             .margin({ left: EnhancedDesignConstants.SPACING_XS })
           
           Blank()
@@ -580,7 +580,7 @@ export struct EnhancedToolsContent {
         
         Text(this.getCategoryDescription(category))
           .fontSize(EnhancedDesignConstants.FONT_SIZE_SM)
-          .fontColor($r('app.color.font_secondary'))
+          .fontColor($r('sys.color.font_secondary'))
       }
       .layoutWeight(1)
       .alignItems(HorizontalAlign.Start)
@@ -589,7 +589,7 @@ export struct EnhancedToolsContent {
       Image($r('sys.media.ohos_ic_public_arrow_down'))
         .width(16)
         .height(16)
-        .fillColor($r('app.color.font_secondary'))
+        .fillColor($r('sys.color.font_secondary'))
         .rotate({
           angle: this.expandedCategories.has(category) ? 180 : 0
         })
@@ -716,17 +716,17 @@ export struct EnhancedToolsContent {
   private getCategoryColor(category: ToolCategory): Resource {
     switch (category) {
       case ToolCategory.BASIC_MEASUREMENT:
-        return $r('app.color.brand');
+        return $r('sys.color.brand');
       case ToolCategory.DATA_MANAGEMENT:
-        return $r('app.color.confirm');
+        return $r('sys.color.confirm');
       case ToolCategory.DISPLAY_SETTINGS:
-        return $r('app.color.font_emphasize');
+        return $r('sys.color.font_emphasize');
       case ToolCategory.ALERT_SYSTEM:
-        return $r('app.color.warning');
+        return $r('sys.color.warning');
       case ToolCategory.ADVANCED_SETTINGS:
-        return $r('app.color.font_secondary');
+        return $r('sys.color.font_secondary');
       default:
-        return $r('app.color.brand');
+        return $r('sys.color.brand');
     }
   }
 

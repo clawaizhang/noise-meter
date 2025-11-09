@@ -99,7 +99,7 @@ export struct BaseChartComponent {
       this.canvasWidth,
       this.canvasHeight,
       this.chartConfig.backgroundColor,
-      ChartUtils.getSystemColor(this.sysResourceManager, $r('app.color.font_on_tertiary'))
+      ChartUtils.getSystemColor(this.sysResourceManager, $r('sys.color.font_on_tertiary'))
     );
 
     // 调用具体的图表绘制回调

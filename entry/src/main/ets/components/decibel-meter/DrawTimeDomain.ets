@@ -30,9 +30,9 @@ export function drawTimeDomain(
   canvasContext.clearRect(0, 0, canvasWidth, canvasHeight);
 
   // 设置样式
-  const gridColor: number = sysResourceManager.getColorSync($r('app.color.font_on_tertiary').id);
-  const waveformColor: number = sysResourceManager.getColorSync($r('app.color.font_on_secondary').id);
-  const textColor: number = sysResourceManager.getColorSync($r('app.color.font_on_tertiary').id);
+  const gridColor: number = sysResourceManager.getColorSync($r('sys.color.font_on_tertiary').id);
+  const waveformColor: number = sysResourceManager.getColorSync($r('sys.color.font_on_secondary').id);
+  const textColor: number = sysResourceManager.getColorSync($r('sys.color.font_on_tertiary').id);
 
   // 绘制网格和坐标轴
   drawGridAndAxes(canvasContext, canvasWidth, canvasHeight, gridColor, textColor, fontSize);

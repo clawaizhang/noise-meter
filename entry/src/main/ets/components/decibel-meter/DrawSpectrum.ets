@@ -23,7 +23,7 @@ export function drawSpectrum(canvasContext: CanvasRenderingContext2D, canvasWidt
   fontSize: number = 12): void {
   console.info(`[频谱绘制] 开始绘制频谱，数据长度=${rawSpectrum.length}`);
   if (canvasContext) {
-    let lineColor = sysResourceManager.getColorSync($r('app.color.font_on_tertiary').id);
+    let lineColor = sysResourceManager.getColorSync($r('sys.color.font_on_tertiary').id);
     // 清除画布
     const frequencyHigh: number = frequencySteps[frequencySteps.length - 1];
     console.info(`[频谱绘制] 频率步进点=${frequencySteps.join(', ')}`);
@@ -118,7 +118,7 @@ export function drawSpectrum(canvasContext: CanvasRenderingContext2D, canvasWidt
         // 绘制第一个频率标签
         if (i === 0) {
           canvasContext.fillStyle =
-            sysResourceManager.getColorSync($r('app.color.font_on_tertiary').id);
+            sysResourceManager.getColorSync($r('sys.color.font_on_tertiary').id);
           canvasContext.font = `${vp2px(fontSize)}px sans-serif`;
           canvasContext.textAlign = 'left';
           canvasContext.fillText(
@@ -133,7 +133,7 @@ export function drawSpectrum(canvasContext: CanvasRenderingContext2D, canvasWidt
       // 绘制垂直网格线
       canvasContext.beginPath();
       canvasContext.strokeStyle =
-        sysResourceManager.getColorSync($r('app.color.font_on_tertiary').id);
+        sysResourceManager.getColorSync($r('sys.color.font_on_tertiary').id);
       canvasContext.lineWidth = 0.5;
       canvasContext.moveTo(x, 0);
       canvasContext.lineTo(x, canvasHeight);
@@ -144,7 +144,7 @@ export function drawSpectrum(canvasContext: CanvasRenderingContext2D, canvasWidt
         (freq === 1000 ? '1k' : `${freq / 1000}k`) :
       freq.toString();
       canvasContext.fillStyle =
-        sysResourceManager.getColorSync($r('app.color.font_on_tertiary').id);
+        sysResourceManager.getColorSync($r('sys.color.font_on_tertiary').id);
       canvasContext.font = `${vp2px(fontSize)}px sans-serif`;
       canvasContext.textAlign = 'left';
       canvasContext.fillText(
@@ -176,7 +176,7 @@ export function drawSpectrum(canvasContext: CanvasRenderingContext2D, canvasWidt
     // 绘制主频谱折线
     const spectrumPath = new Path2D(); // 创建新的Path2D对象
     canvasContext.strokeStyle =
-      sysResourceManager.getColorSync($r('app.color.font_on_secondary').id);
+      sysResourceManager.getColorSync($r('sys.color.font_on_secondary').id);
     canvasContext.lineWidth = 0.5;
 
     // 标记是否找到第一个有效点
@@ -245,7 +245,7 @@ export function drawSpectrum(canvasContext: CanvasRenderingContext2D, canvasWidt
       const peakFreqY: number = canvasHeight -
         (maxValue / (maxDb - minDb)) * canvasHeight;
       canvasContext.fillStyle =
-        sysResourceManager.getColorSync($r('app.color.font_on_secondary').id);
+        sysResourceManager.getColorSync($r('sys.color.font_on_secondary').id);
       canvasContext.textAlign = 'center';
       canvasContext.font = `bold ${vp2px(fontSize + 2)}px sans-serif`;
       canvasContext.fillText(

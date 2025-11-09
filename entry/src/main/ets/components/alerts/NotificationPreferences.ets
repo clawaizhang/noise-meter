@@ -53,12 +53,12 @@ export struct NotificationPreferences {
         Image($r('sys.media.anahs_notification_icon'))
           .width(DesignConstants.ICON_SIZE_MD)
           .height(DesignConstants.ICON_SIZE_MD)
-          .fillColor($r('app.color.warning'))
+          .fillColor($r('sys.color.warning'))
 
         Text('系统通知权限提醒')
           .fontSize(DesignConstants.FONT_SIZE_LG)
           .fontWeight(FontWeight.Bold)
-          .fontColor($r('app.color.warning'))
+          .fontColor($r('sys.color.warning'))
       }
       .width('100%')
       .alignItems(VerticalAlign.Center)
@@ -66,14 +66,14 @@ export struct NotificationPreferences {
       // 描述文字
       Text('系统通知权限被拒绝\n即使开启警报通知，也无法收到警报')
         .fontSize(DesignConstants.FONT_SIZE_MD)
-        .fontColor($r('app.color.warning'))
+        .fontColor($r('sys.color.warning'))
         .textAlign(TextAlign.Center)
         .lineHeight(20)
 
       // 操作按钮
       Button('去系统设置开启通知', { type: ButtonType.Normal })
         .width('80%')
-        .backgroundColor($r('app.color.warning'))
+        .backgroundColor($r('sys.color.warning'))
         .fontColor(Color.White)
         .borderRadius(DesignConstants.BORDER_RADIUS_MD)
         .onClick(() => {
@@ -84,8 +84,8 @@ export struct NotificationPreferences {
     }
     .width('100%')
     .padding(DesignConstants.SPACING_LG)
-    .backgroundColor($r('app.color.comp_background_warning_secondary'))
-    .border({ width: 1, color: $r('app.color.warning') })
+    .backgroundColor($r('sys.color.comp_background_warning_secondary'))
+    .border({ width: 1, color: $r('sys.color.warning') })
     .borderRadius(DesignConstants.BORDER_RADIUS_LG)
   }
 
@@ -96,12 +96,12 @@ export struct NotificationPreferences {
         Image($r('app.media.ic_alarm'))
           .width(DesignConstants.ICON_SIZE_MD)
           .height(DesignConstants.ICON_SIZE_MD)
-          .fillColor($r('app.color.brand'))
+          .fillColor($r('sys.color.brand'))
 
         Text('警报通知')
           .fontSize(DesignConstants.FONT_SIZE_XL)
           .fontWeight(FontWeight.Bold)
-          .fontColor($r('app.color.font_primary'))
+          .fontColor($r('sys.color.font_primary'))
           .layoutWeight(1)
 
         // 噪音警报主开关
@@ -120,7 +120,7 @@ export struct NotificationPreferences {
         '警报触发时，系统将发送通知。' :
         '通知已关闭，系统不会通知噪音超标情况。')
         .fontSize(DesignConstants.FONT_SIZE_MD)
-        .fontColor($r('app.color.font_secondary'))
+        .fontColor($r('sys.color.font_secondary'))
         .textAlign(TextAlign.Start)
         .alignSelf(ItemAlign.Start)
 

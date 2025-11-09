@@ -19,7 +19,7 @@ export struct FrequencyScenarioDisplay {
       Text('适用场景')
         .fontSize(DesignConstants.FONT_SIZE_LG)
         .fontWeight(FontWeight.Bold)
-        .fontColor($r('app.color.font_primary'))
+        .fontColor($r('sys.color.font_primary'))
         .alignSelf(ItemAlign.Start)
 
       // 场景列表
@@ -29,20 +29,20 @@ export struct FrequencyScenarioDisplay {
           Image($r('sys.media.ohos_ic_public_select_all'))
             .width(DesignConstants.ICON_SIZE_SM)
             .height(DesignConstants.ICON_SIZE_SM)
-            .fillColor($r('app.color.confirm'))
+            .fillColor($r('sys.color.confirm'))
             .margin({ right: DesignConstants.SPACING_XS })
 
           // 场景描述
           Column({ space: DesignConstants.SPACING_XS }) {
             Text(scenario.title)
               .fontSize(DesignConstants.FONT_SIZE_MD)
-              .fontColor($r('app.color.font_primary'))
+              .fontColor($r('sys.color.font_primary'))
               .fontWeight(FontWeight.Medium)
               .alignSelf(ItemAlign.Start)
 
             Text(scenario.description)
               .fontSize(DesignConstants.FONT_SIZE_SM)
-              .fontColor($r('app.color.font_secondary'))
+              .fontColor($r('sys.color.font_secondary'))
               .alignSelf(ItemAlign.Start)
               .maxLines(2)
               .textOverflow({ overflow: TextOverflow.Ellipsis })
@@ -67,7 +67,7 @@ export struct FrequencyScenarioDisplay {
     }
     .width('100%')
     .padding(DesignConstants.SPACING_MD)
-    .backgroundColor($r('app.color.comp_background_primary'))
+    .backgroundColor($r('sys.color.comp_background_primary'))
     .borderRadius(DesignConstants.BORDER_RADIUS_MD)
   }
 }

@@ -127,7 +127,7 @@ export struct CustomConfigPanel {
     Row({ space: DesignConstants.SPACING_MD }) {
       Text(label)
         .fontSize(DesignConstants.FONT_SIZE_MD)
-        .fontColor($r('app.color.font_primary'))
+        .fontColor($r('sys.color.font_primary'))
         .layoutWeight(1)
 
       Select(options.map(option => {
@@ -148,7 +148,7 @@ export struct CustomConfigPanel {
     }
     .width('100%')
     .padding(DesignConstants.SPACING_MD)
-    .backgroundColor($r('app.color.comp_background_primary'))
+    .backgroundColor($r('sys.color.comp_background_primary'))
     .borderRadius(DesignConstants.BORDER_RADIUS_MD)
   }
 
@@ -165,38 +165,38 @@ export struct CustomConfigPanel {
         Text('当前配置参数')
           .fontSize(DesignConstants.FONT_SIZE_LG)
           .fontWeight(FontWeight.Bold)
-          .fontColor($r('app.color.font_primary'))
+          .fontColor($r('sys.color.font_primary'))
           .width('100%')
 
         Column({ space: DesignConstants.SPACING_XS }) {
           Text(`FFT大小: ${this.tempCustomConfig.fftSize}`)
             .fontSize(DesignConstants.FONT_SIZE_MD)
-            .fontColor($r('app.color.font_primary'))
+            .fontColor($r('sys.color.font_primary'))
 
           Text(`更新间隔: ${this.tempCustomConfig.updateInterval}ms`)
             .fontSize(DesignConstants.FONT_SIZE_MD)
-            .fontColor($r('app.color.font_primary'))
+            .fontColor($r('sys.color.font_primary'))
 
           Text(`窗函数: ${this.tempCustomConfig.windowType === WindowType.HANNING ? '汉宁窗' : '布莱克曼窗'}`)
             .fontSize(DesignConstants.FONT_SIZE_MD)
-            .fontColor($r('app.color.font_primary'))
+            .fontColor($r('sys.color.font_primary'))
 
           Text(`平滑因子: ${this.tempCustomConfig.smoothingFactor}`)
             .fontSize(DesignConstants.FONT_SIZE_MD)
-            .fontColor($r('app.color.font_primary'))
+            .fontColor($r('sys.color.font_primary'))
 
           Text(`重叠率: ${this.tempCustomConfig.overlap}`)
             .fontSize(DesignConstants.FONT_SIZE_MD)
-            .fontColor($r('app.color.font_primary'))
+            .fontColor($r('sys.color.font_primary'))
 
           Text(`缓冲区大小: ${this.tempCustomConfig.bufferSize}字节`)
             .fontSize(DesignConstants.FONT_SIZE_MD)
-            .fontColor($r('app.color.font_primary'))
+            .fontColor($r('sys.color.font_primary'))
         }
         .alignItems(HorizontalAlign.Start)
         .width('100%')
         .padding(DesignConstants.SPACING_MD)
-        .backgroundColor($r('app.color.comp_background_primary'))
+        .backgroundColor($r('sys.color.comp_background_primary'))
         .borderRadius(DesignConstants.BORDER_RADIUS_MD)
       }
       .width('100%')
@@ -206,8 +206,8 @@ export struct CustomConfigPanel {
         .width('100%')
         .height(48)
         .fontSize(DesignConstants.FONT_SIZE_MD)
-        .backgroundColor($r('app.color.interactive_active'))
-        .fontColor($r('app.color.font_on_primary'))
+        .backgroundColor($r('sys.color.interactive_active'))
+        .fontColor($r('sys.color.font_on_primary'))
         .borderRadius(DesignConstants.BORDER_RADIUS_MD)
         .onClick(() => {
           Throttle.click(() => {
@@ -220,7 +220,7 @@ export struct CustomConfigPanel {
           Text('自定义配置')
             .fontSize(DesignConstants.FONT_SIZE_XL)
             .fontWeight(FontWeight.Bold)
-            .fontColor($r('app.color.font_primary'))
+            .fontColor($r('sys.color.font_primary'))
             .width('100%')
 
           // FFT大小选择
@@ -287,6 +287,6 @@ export struct CustomConfigPanel {
     .justifyContent(FlexAlign.Start)
     .margin({ bottom: 100 })
     .padding(DesignConstants.SPACING_LG)
-    .backgroundColor($r('app.color.background_secondary'))
+    .backgroundColor($r('sys.color.background_secondary'))
   }
 }

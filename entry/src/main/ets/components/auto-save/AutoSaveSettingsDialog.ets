@@ -145,18 +145,18 @@ export struct AutoSaveSettingsDialog {
       Text(params.label)
         .fontSize(DesignConstants.FONT_SIZE_MD)
         .fontWeight(FontWeight.Medium)
-        .fontColor(params.selectedIndex === params.index ? $r('app.color.font_on_primary') :
-          $r('app.color.font_primary'))
+        .fontColor(params.selectedIndex === params.index ? $r('sys.color.font_on_primary') :
+          $r('sys.color.font_primary'))
 
       Text(params.description)
         .fontSize(DesignConstants.FONT_SIZE_SM)
-        .fontColor(params.selectedIndex === params.index ? $r('app.color.font_on_primary') :
-          $r('app.color.font_secondary'))
+        .fontColor(params.selectedIndex === params.index ? $r('sys.color.font_on_primary') :
+          $r('sys.color.font_secondary'))
     }
     .width('100%')
     .height(72)
-    .backgroundColor(params.selectedIndex === params.index ? $r('app.color.interactive_active') :
-      $r('app.color.comp_background_primary'))
+    .backgroundColor(params.selectedIndex === params.index ? $r('sys.color.interactive_active') :
+      $r('sys.color.comp_background_primary'))
     .borderRadius(DesignConstants.BORDER_RADIUS_MD)
     .padding(DesignConstants.SPACING_MD)
     .justifyContent(FlexAlign.Center)
@@ -174,7 +174,7 @@ export struct AutoSaveSettingsDialog {
       Row({ space: 8 }) {
         Text('自定义间隔：')
           .fontSize(DesignConstants.FONT_SIZE_MD)
-          .fontColor($r('app.color.font_primary'))
+          .fontColor($r('sys.color.font_primary'))
           .layoutWeight(1)
 
         TextInput({ text: this.tempCustomInterval.toString() })
@@ -188,17 +188,17 @@ export struct AutoSaveSettingsDialog {
 
         Text('分钟')
           .fontSize(DesignConstants.FONT_SIZE_MD)
-          .fontColor($r('app.color.font_primary'))
+          .fontColor($r('sys.color.font_primary'))
       }
 
       Text('（1-60分钟）')
         .fontSize(DesignConstants.FONT_SIZE_SM)
-        .fontColor($r('app.color.font_secondary'))
+        .fontColor($r('sys.color.font_secondary'))
         .alignSelf(ItemAlign.Start)
     }
     .width('100%')
     .padding(DesignConstants.SPACING_MD)
-    .backgroundColor($r('app.color.comp_background_primary'))
+    .backgroundColor($r('sys.color.comp_background_primary'))
     .borderRadius(DesignConstants.BORDER_RADIUS_MD)
   }
 
@@ -228,7 +228,7 @@ export struct AutoSaveSettingsDialog {
             Row({ space: 8 }) {
               Text('启用自动保存')
                 .fontSize(DesignConstants.FONT_SIZE_MD)
-                .fontColor($r('app.color.font_primary'))
+                .fontColor($r('sys.color.font_primary'))
                 .layoutWeight(1)
 
               Toggle({ type: ToggleType.Switch, isOn: this.tempAutoSaveEnabled })
@@ -240,7 +240,7 @@ export struct AutoSaveSettingsDialog {
             }
             .width('100%')
             .padding(DesignConstants.SPACING_MD)
-            .backgroundColor($r('app.color.comp_background_primary'))
+            .backgroundColor($r('sys.color.comp_background_primary'))
             .borderRadius(DesignConstants.BORDER_RADIUS_MD)
           }
 

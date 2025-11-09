@@ -103,7 +103,7 @@ export struct SampleRateSettingsDialog {
         Text('采样率设置')
           .fontSize(DesignConstants.FONT_SIZE_XL)
           .fontWeight(FontWeight.Bold)
-          .fontColor($r('app.color.font_primary'))
+          .fontColor($r('sys.color.font_primary'))
       }
       .width('100%')
       .justifyContent(FlexAlign.Center)
@@ -114,7 +114,7 @@ export struct SampleRateSettingsDialog {
         Text('采样率')
           .fontSize(DesignConstants.FONT_SIZE_MD)
           .fontWeight(FontWeight.Medium)
-          .fontColor($r('app.color.font_primary'))
+          .fontColor($r('sys.color.font_primary'))
           .alignSelf(ItemAlign.Start)
 
         // 采样率选项网格
@@ -135,14 +135,14 @@ export struct SampleRateSettingsDialog {
         Text('降采样设置')
           .fontSize(DesignConstants.FONT_SIZE_MD)
           .fontWeight(FontWeight.Medium)
-          .fontColor($r('app.color.font_primary'))
+          .fontColor($r('sys.color.font_primary'))
           .alignSelf(ItemAlign.Start)
 
         // 降采样开关
         Row({ space: DesignConstants.SPACING_SM }) {
           Text('启用降采样')
             .fontSize(DesignConstants.FONT_SIZE_SM)
-            .fontColor($r('app.color.font_secondary'))
+            .fontColor($r('sys.color.font_secondary'))
 
           Toggle({ type: ToggleType.Switch, isOn: this.decimationEnabled })
             .onChange((isOn: boolean) => {
@@ -157,7 +157,7 @@ export struct SampleRateSettingsDialog {
           Column({ space: DesignConstants.SPACING_SM }) {
             Text('降采样因子')
               .fontSize(DesignConstants.FONT_SIZE_SM)
-              .fontColor($r('app.color.font_secondary'))
+              .fontColor($r('sys.color.font_secondary'))
               .alignSelf(ItemAlign.Start)
 
             // 降采样因子选项网格
@@ -182,12 +182,12 @@ export struct SampleRateSettingsDialog {
         Text('说明')
           .fontSize(DesignConstants.FONT_SIZE_MD)
           .fontWeight(FontWeight.Medium)
-          .fontColor($r('app.color.font_primary'))
+          .fontColor($r('sys.color.font_primary'))
           .alignSelf(ItemAlign.Start)
 
         Text('降采样可以大幅降低计算量，提高处理速度，但会损失高频信号成分。适用于对实时性要求高但不需要高频分析的场景。数值表示降采样的指数，实际降采样倍数为2的指数次方。')
           .fontSize(DesignConstants.FONT_SIZE_SM)
-          .fontColor($r('app.color.font_secondary'))
+          .fontColor($r('sys.color.font_secondary'))
           .lineHeight(20)
 
         // 自定义模式提示
@@ -196,18 +196,18 @@ export struct SampleRateSettingsDialog {
             Text('注意')
               .fontSize(DesignConstants.FONT_SIZE_SM)
               .fontWeight(FontWeight.Medium)
-              .fontColor($r('app.color.warning'))
+              .fontColor($r('sys.color.warning'))
               .alignSelf(ItemAlign.Start)
 
             Text('当前为自定义模式，采样率设置请在自定义配置中管理。此处的设置仅对预设模式（快速、慢速、脉冲）生效。')
               .fontSize(DesignConstants.FONT_SIZE_SM)
-              .fontColor($r('app.color.font_secondary'))
+              .fontColor($r('sys.color.font_secondary'))
               .lineHeight(18)
           }
           .width('100%')
           .alignItems(HorizontalAlign.Start)
           .margin({ top: DesignConstants.SPACING_SM })
-          .backgroundColor($r('app.color.alert'))
+          .backgroundColor($r('sys.color.alert'))
           .borderRadius(DesignConstants.BORDER_RADIUS_SM)
           .padding(DesignConstants.SPACING_SM)
         }
@@ -219,8 +219,8 @@ export struct SampleRateSettingsDialog {
       Row({ space: DesignConstants.SPACING_MD }) {
         Button('取消')
           .fontSize(DesignConstants.FONT_SIZE_MD)
-          .fontColor($r('app.color.font_primary'))
-          .backgroundColor($r('app.color.comp_background_secondary'))
+          .fontColor($r('sys.color.font_primary'))
+          .backgroundColor($r('sys.color.comp_background_secondary'))
           .borderRadius(DesignConstants.BORDER_RADIUS_MD)
           .layoutWeight(1)
           .onClick(() => {
@@ -240,7 +240,7 @@ export struct SampleRateSettingsDialog {
     }
     .width('100%')
     .padding(DesignConstants.SPACING_LG)
-    .backgroundColor($r('app.color.background_secondary'))
+    .backgroundColor($r('sys.color.background_secondary'))
     .borderRadius(DesignConstants.BORDER_RADIUS_LG)
   }
 
@@ -250,14 +250,14 @@ export struct SampleRateSettingsDialog {
       Text(option.label)
         .fontSize(DesignConstants.FONT_SIZE_SM)
         .fontColor(this.selectedSampleRate === option.value ?
-          $r('app.color.font_emphasize') : $r('app.color.font_primary'))
+          $r('sys.color.font_emphasize') : $r('sys.color.font_primary'))
         .textAlign(TextAlign.Center)
     }
     .width('100%')
     .height(40)
     .padding(DesignConstants.SPACING_SM)
     .backgroundColor(this.selectedSampleRate === option.value ?
-      $r('app.color.comp_background_emphasize') : $r('app.color.comp_background_primary'))
+      $r('sys.color.comp_background_emphasize') : $r('sys.color.comp_background_primary'))
     .borderRadius(DesignConstants.BORDER_RADIUS_SM)
     .justifyContent(FlexAlign.Center)
     .onClick(() => {
@@ -271,14 +271,14 @@ export struct SampleRateSettingsDialog {
       Text(option.label)
         .fontSize(DesignConstants.FONT_SIZE_SM)
         .fontColor(this.selectedDecimationFactor === option.value ?
-          $r('app.color.font_emphasize') : $r('app.color.font_primary'))
+          $r('sys.color.font_emphasize') : $r('sys.color.font_primary'))
         .textAlign(TextAlign.Center)
     }
     .width('100%')
     .height(40)
     .padding(DesignConstants.SPACING_SM)
     .backgroundColor(this.selectedDecimationFactor === option.value ?
-      $r('app.color.comp_background_emphasize') : $r('app.color.comp_background_primary'))
+      $r('sys.color.comp_background_emphasize') : $r('sys.color.comp_background_primary'))
     .borderRadius(DesignConstants.BORDER_RADIUS_SM)
     .justifyContent(FlexAlign.Center)
     .onClick(() => {

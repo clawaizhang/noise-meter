@@ -52,12 +52,12 @@ export struct MyContentComponent {
                 Image($r('app.media.ic_display'))
                   .width(24)
                   .height(24)
-                  .fillColor($r('app.color.brand'))
+                  .fillColor($r('sys.color.brand'))
                   .margin({ right: 12 })
 
                 Text('色彩模式')
                   .fontSize(16)
-                  .fontColor($r('app.color.font_primary'))
+                  .fontColor($r('sys.color.font_primary'))
                   .layoutWeight(1)
               }.layoutWeight(1)
 
@@ -65,7 +65,7 @@ export struct MyContentComponent {
               Text(this.pk.display_mode === 'default' ? '跟随系统' :
                    this.pk.display_mode === 'light' ? '浅色主题' : '深色主题')
                 .fontSize(14)
-                .fontColor($r('app.color.font_secondary'))
+                .fontColor($r('sys.color.font_secondary'))
             }
             .width('100%')
             .height(56)
@@ -76,7 +76,7 @@ export struct MyContentComponent {
             .alignItems(VerticalAlign.Center)
           }
           .borderRadius(16)
-          .backgroundColor($r('app.color.comp_background_primary'))
+          .backgroundColor($r('sys.color.comp_background_primary'))
           .margin({
             top: DesignConstants.SPACING_LG,
             left: 16,
@@ -87,7 +87,7 @@ export struct MyContentComponent {
             DialogHub.getSheet()
             .setStyle({
               title: { title: '色彩模式' },
-              backgroundColor: $r('app.color.background_secondary')
+              backgroundColor: $r('sys.color.background_secondary')
             })
             .setConfig({ scrollSizeMode: ScrollSizeMode.FOLLOW_DETENT })
             .setComponentTargetId('mainId')
@@ -106,12 +106,12 @@ export struct MyContentComponent {
           //         Image($r('app.media.ic_running'))
           //           .width(24)
           //           .height(24)
-          //           .fillColor($r('app.color.brand'))
+          //           .fillColor($r('sys.color.brand'))
           //           .margin({ right: 12 })
           //
           //         Text($r('app.string.background_running'))
           //           .fontSize(16)
-          //           .fontColor($r('app.color.font_primary'))
+          //           .fontColor($r('sys.color.font_primary'))
           //           .layoutWeight(1)
           //       }.layoutWeight(1)
           //
@@ -134,7 +134,7 @@ export struct MyContentComponent {
           //     // 描述文本区域（使用间距分隔）
           //     Text(this.pk.background_running ? $r('app.string.background_running_desc_on') : $r('app.string.background_running_desc_off'))
           //       .fontSize(DesignConstants.FONT_SIZE_SM)
-          //       .fontColor($r('app.color.font_secondary'))
+          //       .fontColor($r('sys.color.font_secondary'))
           //       .width('100%')
           //       .textAlign(TextAlign.Start)
           //       .padding({
@@ -147,7 +147,7 @@ export struct MyContentComponent {
           //   .width('100%')
           // }
           // .borderRadius(16)
-          // .backgroundColor($r('app.color.comp_background_primary'))
+          // .backgroundColor($r('sys.color.comp_background_primary'))
           // .margin({
           //   top: DesignConstants.SPACING_LG,
           //   left: 16,
@@ -171,7 +171,7 @@ export struct MyContentComponent {
             '关于',
             () => {
               DialogHub.getSheet()
-                .setStyle({ title: { title: '关于' }, backgroundColor: $r('app.color.background_secondary') })
+                .setStyle({ title: { title: '关于' }, backgroundColor: $r('sys.color.background_secondary') })
                 .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS })
                 .setComponentTargetId('mainId')
                 .setContent(wrapBuilder(AboutSettingsBuilder))

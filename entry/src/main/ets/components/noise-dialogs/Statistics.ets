@@ -273,7 +273,7 @@ export struct Statistics {
       }
     }
     .padding(16)
-    .backgroundColor($r('app.color.comp_background_primary'))
+    .backgroundColor($r('sys.color.comp_background_primary'))
     .borderRadius(16)
   }
 }

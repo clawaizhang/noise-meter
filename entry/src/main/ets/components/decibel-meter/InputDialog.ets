@@ -29,12 +29,12 @@ export struct InputDialog {
           Text(this.title)
             .fontSize(18)
             .fontWeight(FontWeight.Medium)
-            .fontColor($r('app.color.font_emphasize'))
+            .fontColor($r('sys.color.font_emphasize'))
 
           TextArea({ placeholder: '可选备注(最多64字)', text: this.default })
             .maxLength(140)
             .enterKeyType(EnterKeyType.Go)
-            .fontColor((this.comment.length > 64) ? $r('app.color.alert') : $r('app.color.font_primary'))
+            .fontColor((this.comment.length > 64) ? $r('sys.color.alert') : $r('sys.color.font_primary'))
             .onChange((value: string) => {
               this.comment = value;
               if (value.length > 64) {
@@ -49,8 +49,8 @@ export struct InputDialog {
           GridCol({ span: 1 }) {
             Button('取消')
               .height(36)
-              .fontColor($r('app.color.font_secondary'))
-              .backgroundColor($r('app.color.comp_background_secondary'))
+              .fontColor($r('sys.color.font_secondary'))
+              .backgroundColor($r('sys.color.comp_background_secondary'))
               .onClick(() => {
                 Throttle.click(() => {
                   this.onClose();
@@ -62,7 +62,7 @@ export struct InputDialog {
             Button('保存')
               .height(36)
               .fontColor(Color.White)
-              .backgroundColor($r('app.color.font_emphasize'))
+              .backgroundColor($r('sys.color.font_emphasize'))
               .onClick(() => {
                 Throttle.click(() => {
                 this.onClose();
