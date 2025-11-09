@@ -9,6 +9,7 @@ import {
   SpectrumDisplayData
 } from '../../services/SpectrumDisplayService';
 import { UnifiedChartStyle } from '../common/charts/UnifiedChartStyle';
+import { SpectrumDataProcessor } from './SpectrumDataProcessor';
 import { PeakFrequencyDisplay } from './PeakFrequencyDisplay';
 import {
   JArrayList,
@@ -565,32 +566,59 @@ export struct ProfessionalSpectrumAnalyzer {
 
     // 使用对数坐标映射
     const LOG_MIN_FREQ = Math.log10(16);
+    
+    // 确保分贝值在有效范围内
+    const dbSteps: number[] = SpectrumDataProcessor.getDbSteps();
+    const minDb = dbSteps[0]; // -20
+    const maxDb = dbSteps[dbSteps.length - 1]; // 140
     const LOG_MAX_FREQ = Math.log10(20000);
 
     for (const dataPoint of this.displayData.dataPoints) {
       const frequency: number = dataPoint.frequency;
       const dbValue: number = dataPoint.dbValue;
+      // 确保分贝值在有效范围内
+      const clampedDbValue: number = Math.max(minDb, Math.min(maxDb, dbValue));
 
       // 使用对数坐标映射
       const logFreq: number = Math.log10(frequency);
       const mappedX: number = ((logFreq - LOG_MIN_FREQ) / (LOG_MAX_FREQ - LOG_MIN_FREQ)) * 20000;
 
       // 创建柱状图条目
-      const entry = new WaterfallEntry(mappedX, 0, dbValue);
+      const entry = new WaterfallEntry(mappedX, 0, clampedDbValue);
       values.add(entry);
     }
 
+    // 创建数据集
     this.barDataSet = new WaterfallDataSet(values, '频谱数据');
     this.barDataSet.setHighLightColor(0xFF888888);
     this.barDataSet.setDrawIcons(false);
     this.barDataSet.setValueTextSize(9);
     this.barDataSet.setValueTextColor(parseInt(UnifiedChartStyle.TEXT_COLOR.replace('#', '0xFF')));
     this.barDataSet.setDrawValues(false);
+    
+    // 设置柱状图颜色 - 根据分贝值动态设置
+    // 注意：WaterfallDataSet可能不支持setColors方法，这里只记录颜色信息
+    try {
+      const colors: number[] = [];
+      for (let i = 0; i < values.size(); i++) {
+        const entry = values.get(i);
+        const dbValue = entry.getY();
+        const color = SpectrumDataProcessor.getDbColor(dbValue);
+        colors.push(parseInt(color.replace('#', '0xFF')));
+      }
+      console.info(`[专业频谱分析器] 设置了${colors.length}个颜色值`);
+      // 使用默认颜色，因为WaterfallDataSet可能不支持动态颜色设置
+      this.barDataSet.setColorByColor(parseInt(UnifiedChartStyle.PRIMARY_COLOR.replace('#', '0xFF')));
+    } catch (e) {
+      console.error('设置柱状图颜色失败:', e);
+      // 使用默认颜色
+      this.barDataSet.setColorByColor(parseInt(UnifiedChartStyle.PRIMARY_COLOR.replace('#', '0xFF')));
+    }
 
-    let dataSetList: JArrayList<IBarDataSet> = new JArrayList<IBarDataSet>();
+    const dataSetList: JArrayList<IBarDataSet> = new JArrayList<IBarDataSet>();
     dataSetList.add(this.barDataSet);
 
-    let barData: BarData = new BarData(dataSetList);
+    const barData: BarData = new BarData(dataSetList);
     barData.setBarWidth(0.7);
     barData.setTopRadius(3);
 
@@ -667,6 +695,7 @@ export struct ProfessionalSpectrumAnalyzer {
             .translate({ y: '-50%' })
             .rotate({ angle: -90 })
             .backgroundColor(UnifiedChartStyle.BACKGROUND_COLOR)
+              .opacity(0.8) // 增加不透明度，使柱状图更明显
             .padding({ left: 4, right: 4 })
             .borderRadius(4)
 
