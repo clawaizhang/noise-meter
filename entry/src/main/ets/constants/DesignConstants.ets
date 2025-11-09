@@ -90,6 +90,7 @@ export class DesignConstants {
   static readonly SPACING_3XL: number = 32;
   static readonly SPACING_4XL: number = 40;
   // 字体大小系统 (font size)
+  static readonly FONT_SIZE_XXS: number = 8;
   static readonly FONT_SIZE_XS: number = 10;
   static readonly FONT_SIZE_SM: number = 12;
   static readonly FONT_SIZE_MD: number = 14;
