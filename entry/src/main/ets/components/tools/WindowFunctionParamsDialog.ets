@@ -171,6 +171,13 @@ export struct WindowFunctionParamsDialogBuilder {
         .fontWeight(FontWeight.Medium)
         .fontColor($r('sys.color.font_primary'))
       
+      Text('简单理解：像调节帽子的厚度，值越大帽子越厚，能更好地阻挡干扰，但可能会模糊一些细节')
+        .fontSize(DesignConstants.FONT_SIZE_SM)
+        .fontColor($r('sys.color.font_primary'))
+        .fontWeight(FontWeight.Medium)
+        .width('100%')
+        .margin({ bottom: DesignConstants.SPACING_SM })
+      
       Text('Beta参数控制旁瓣衰减，值越大旁瓣衰减越好，但主瓣越宽')
         .fontSize(DesignConstants.FONT_SIZE_SM)
         .fontColor($r('sys.color.font_secondary'))
@@ -219,6 +226,13 @@ export struct WindowFunctionParamsDialogBuilder {
         .fontSize(DesignConstants.FONT_SIZE_MD)
         .fontWeight(FontWeight.Medium)
         .fontColor($r('sys.color.font_primary'))
+      
+      Text('简单理解：像调节钟形帽子的宽度，值越大帽子越宽，适合分析持续时间长的声音')
+        .fontSize(DesignConstants.FONT_SIZE_SM)
+        .fontColor($r('sys.color.font_primary'))
+        .fontWeight(FontWeight.Medium)
+        .width('100%')
+        .margin({ bottom: DesignConstants.SPACING_SM })
       
       Text('Sigma参数控制窗函数的标准差，值越大窗函数越宽')
         .fontSize(DesignConstants.FONT_SIZE_SM)

@@ -19,6 +19,7 @@ interface WindowFunctionInfo {
   displayName: string;
   description: string;
   characteristics: string;
+  simpleExplanation: string; // 通俗易懂的解释
 }
 
 /**
@@ -149,6 +150,15 @@ export struct WindowFunctionDialogBuilder {
       }
       .width('100%')
 
+      // 通俗易懂的解释
+      Text(windowInfo.simpleExplanation)
+        .fontSize(DesignConstants.FONT_SIZE_SM)
+        .fontColor(this.selectedWindowType === windowInfo.type ? $r('sys.color.font_on_secondary') : $r('sys.color.font_primary'))
+        .width('100%')
+        .fontWeight(FontWeight.Medium)
+        .maxLines(2)
+        .textOverflow({ overflow: TextOverflow.Ellipsis })
+
       // 描述
       Text(windowInfo.description)
         .fontSize(DesignConstants.FONT_SIZE_SM)
@@ -185,73 +195,85 @@ export struct WindowFunctionDialogBuilder {
         type: WindowType.HANNING,
         displayName: '汉宁窗 (Hanning)',
         description: '最常用的窗函数之一，具有良好的频谱特性和较低的旁瓣',
-        characteristics: '主瓣宽度较宽，旁瓣衰减-31dB，适用于一般频谱分析'
+        characteristics: '主瓣宽度较宽，旁瓣衰减-31dB，适用于一般频谱分析',
+        simpleExplanation: '像给声音信号戴上一个平滑的帽子，让声音开始和结束时都很柔和，适合大多数日常测量'
       },
       {
         type: WindowType.BLACKMAN,
         displayName: '布莱克曼窗 (Blackman)',
         description: '具有更好的旁瓣抑制性能，但主瓣更宽',
-        characteristics: '主瓣宽度宽，旁瓣衰减-58dB，适用于需要高旁瓣抑制的场景'
+        characteristics: '主瓣宽度宽，旁瓣衰减-58dB，适用于需要高旁瓣抑制的场景',
+        simpleExplanation: '像给声音戴上一个更厚更软的帽子，能更好地减少干扰，但可能会模糊一些细节，适合精密测量'
       },
       {
         type: WindowType.HAMMING,
         displayName: '汉明窗 (Hamming)',
         description: '优化的余弦窗，具有良好的旁瓣特性',
-        characteristics: '主瓣宽度中等，旁瓣衰减-42dB，旁瓣峰值较低'
+        characteristics: '主瓣宽度中等，旁瓣衰减-42dB，旁瓣峰值较低',
+        simpleExplanation: '像给声音戴上一个特别设计的帽子，能很好地平衡精确度和清晰度，适合语音分析'
       },
       {
         type: WindowType.BARTLETT,
         displayName: '巴特利特窗 (Bartlett)',
         description: '三角窗，简单且计算效率高',
-        characteristics: '主瓣宽度中等，旁瓣衰减-26dB，计算简单'
+        characteristics: '主瓣宽度中等，旁瓣衰减-26dB，计算简单',
+        simpleExplanation: '像给声音戴上一个三角形的帽子，形状简单，计算速度快，适合快速分析'
       },
       {
         type: WindowType.KAISER,
         displayName: '凯泽窗 (Kaiser)',
         description: '可调节的窗函数，通过β参数控制旁瓣衰减',
-        characteristics: '主瓣宽度和旁瓣衰减可调，β=6.0时旁瓣衰减-44dB'
+        characteristics: '主瓣宽度和旁瓣衰减可调，β=6.0时旁瓣衰减-44dB',
+        simpleExplanation: '像给声音戴上一个可调节厚度的帽子，可以根据需要调整，非常灵活，适合专业分析'
       },
       {
         type: WindowType.FLATTOP,
         displayName: '平顶窗 (Flat Top)',
         description: '专门用于幅度测量的窗函数',
-        characteristics: '主瓣很宽但顶部平坦，旁瓣衰减-44dB，适合精确幅度测量'
+        characteristics: '主瓣很宽但顶部平坦，旁瓣衰减-44dB，适合精确幅度测量',
+        simpleExplanation: '像给声音戴上一个平顶的帽子，能非常准确地测量声音大小，但可能会影响频率精度，适合校准仪器'
       },
       {
         type: WindowType.TRIANGULAR,
         displayName: '三角窗 (Triangular)',
         description: '简单的三角形状窗函数',
-        characteristics: '主瓣宽度中等，旁瓣衰减-26dB，与Bartlett窗类似'
+        characteristics: '主瓣宽度中等，旁瓣衰减-26dB，与Bartlett窗类似',
+        simpleExplanation: '像给声音戴上一个简单的三角形帽子，计算简单，适合教学和基础分析'
       },
       {
         type: WindowType.WELCH,
         displayName: '韦尔奇窗 (Welch)',
         description: '抛物线形状的窗函数',
-        characteristics: '主瓣宽度中等，旁瓣衰减-31dB，端点平滑过渡到零'
+        characteristics: '主瓣宽度中等，旁瓣衰减-31dB，端点平滑过渡到零',
+        simpleExplanation: '像给声音戴上一个圆滑的帽子，边缘特别柔和，适合分析变化平缓的声音'
       },
       {
         type: WindowType.SINE,
         displayName: '正弦窗 (Sine)',
         description: '半周期正弦波窗函数',
-        characteristics: '主瓣宽度较宽，旁瓣衰减-23dB，适用于某些特殊应用'
+        characteristics: '主瓣宽度较宽，旁瓣衰减-23dB，适用于某些特殊应用',
+        simpleExplanation: '像给声音戴上一个波浪形的帽子，适合分析周期性强的声音，如音乐'
       },
       {
         type: WindowType.GAUSSIAN,
         displayName: '高斯窗 (Gaussian)',
         description: '基于高斯函数的窗函数',
-        characteristics: '主瓣宽度可调，旁瓣衰减-44dB，时频局部化特性好'
+        characteristics: '主瓣宽度可调，旁瓣衰减-44dB，时频局部化特性好',
+        simpleExplanation: '像给声音戴上一个钟形帽，中间高两边低，适合分析瞬态声音，如敲击声'
       },
       {
         type: WindowType.TUKEY,
         displayName: '图基窗 (Tukey)',
         description: '余弦锥度窗，可调节平坦部分宽度',
-        characteristics: '主瓣宽度可调，旁瓣衰减-15dB，α=0.5时性能均衡'
+        characteristics: '主瓣宽度可调，旁瓣衰减-15dB，α=0.5时性能均衡',
+        simpleExplanation: '像给声音戴上一个顶部平坦边缘圆滑的帽子，可以调节平坦部分的大小，适合分析脉冲信号'
       },
       {
         type: WindowType.CHEBYSHEV,
         displayName: '切比雪夫窗 (Chebyshev)',
         description: '等波纹旁瓣的窗函数',
-        characteristics: '所有旁瓣等高，衰减60dB，适用于需要均匀旁瓣的场景'
+        characteristics: '所有旁瓣等高，衰减60dB，适用于需要均匀旁瓣的场景',
+        simpleExplanation: '像给声音戴上一个特殊的帽子，能均匀地减少所有干扰，适合需要精确控制干扰的专业应用'
       }
     ];
   }
