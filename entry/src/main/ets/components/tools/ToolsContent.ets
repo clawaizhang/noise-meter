@@ -184,7 +184,7 @@ export struct ToolsContent {
       title: '基础测量',
       icon: $r('app.media.ic_meter'),
       description: '核心测量功能设置',
-      color: $r('sys.color.brand'),
+      color: $r('sys.color.brand'), // 统一使用主色调
       tools: [
         this.toolFactory.createCalibrationTool(this.navigationService.navigateToAudioCalibration),
         this.toolFactory.createFrequencyWeightingTool(this.navigationService.navigateToFrequencyWeighting,
@@ -201,7 +201,7 @@ export struct ToolsContent {
       title: '数据管理',
       icon: $r('app.media.ic_save'),
       description: '数据记录和存储设置',
-      color: $r('sys.color.confirm'),
+      color: $r('sys.color.brand'), // 统一使用主色调
       tools: [
         this.toolFactory.createAudioRecordingTool(this.navigationService.toggleAudioRecording),
         this.toolFactory.createAutoSaveTool(this.navigationService.navigateToAutoSave),
@@ -218,7 +218,7 @@ export struct ToolsContent {
       title: '显示设置',
       icon: $r('app.media.ic_frequency_weighting'),
       description: '频谱显示配置',
-      color: $r('sys.color.font_emphasize'),
+      color: $r('sys.color.brand'), // 统一使用主色调
       tools: [
         this.toolFactory.createSpectrumDisplayTool(this.navigationService.navigateToSpectrumDisplaySettings,
           this.statusService.getSpectrumDisplayModeText.bind(this.statusService))
@@ -232,7 +232,7 @@ export struct ToolsContent {
       title: '警报系统',
       icon: $r('app.media.ic_alarm'),
       description: '阈值和通知管理',
-      color: $r('sys.color.warning'),
+      color: $r('sys.color.brand'), // 统一使用主色调
       tools: [
         this.toolFactory.createAlertsTool(this.navigationService.navigateToAlerts)
       ]
@@ -245,7 +245,7 @@ export struct ToolsContent {
       title: '专业设置',
       icon: $r('app.media.ic_filter'),
       description: '高级音频处理和分析',
-      color: $r('sys.color.font_secondary'),
+      color: $r('sys.color.brand'), // 统一使用主色调
       tools: [
         this.toolFactory.createSampleRateTool(this.navigationService.navigateToSampleRateSettings,
           this.statusService.getSampleRateDisplayText.bind(this.statusService)),
@@ -260,13 +260,22 @@ export struct ToolsContent {
   build() {
     Scroll() {
       Column({ space: DesignConstants.SPACING_LG }) {
-        // 智能提示区域
-        this.buildSmartTips()
+        // 智能提示区域 - 简化版本
+        this.buildSimplifiedTips()
 
-        // 功能分类列表 - 显示所有分类
-        ForEach(this.getCategories(), (category: CategoryConfig) => {
-          this.buildCategorySection(category)
-        })
+        // 工具网格布局 - 扁平化展示所有工具
+        Grid() {
+          ForEach(this.getAllTools(), (tool: ToolConfig) => {
+            GridItem() {
+              this.buildSimplifiedToolCard(tool)
+            }
+          })
+        }
+        .columnsTemplate('1fr 1fr')
+        .rowsGap(DesignConstants.SPACING_SM) // 减小行间距
+        .columnsGap(DesignConstants.SPACING_SM) // 减小列间距
+        .width('100%')
+        .padding(DesignConstants.SPACING_XS) // 减小整体内边距
       }
       .width('100%')
     }
@@ -280,18 +289,44 @@ export struct ToolsContent {
   }
 
   @Builder
-  private buildSmartTips() {
-    Column({ space: DesignConstants.SPACING_SM }) {
-      this.buildTipsHeader()
-      if (this.showAdvancedHints) {
-        this.buildTipsContent()
-      }
+  private buildSimplifiedTips() {
+    Row() {
+      Image($r('app.media.ic_info'))
+        .width(20)
+        .height(20)
+        .fillColor($r('sys.color.brand'))
+
+      Text('工具使用提示')
+        .fontSize(DesignConstants.FONT_SIZE_MD)
+        .fontWeight(FontWeight.Medium)
+        .fontColor($r('sys.color.font_primary'))
+        .margin({ left: DesignConstants.SPACING_XS })
+
+      Blank()
+
+      Text('查看')
+        .fontSize(DesignConstants.FONT_SIZE_XS)
+        .fontColor($r('sys.color.brand'))
+        .onClick(() => {
+          this.showAdvancedHints = !this.showAdvancedHints;
+        })
     }
     .width('100%')
     .padding(DesignConstants.SPACING_MD)
     .backgroundColor($r('sys.color.comp_background_primary'))
     .borderRadius(DesignConstants.BORDER_RADIUS_MD)
-    .margin({ bottom: DesignConstants.SPACING_MD })
+    
+    // 简化的提示内容
+    if (this.showAdvancedHints) {
+      Text('💡 根据您的使用习惯，我们为您推荐适合的功能配置')
+        .fontSize(DesignConstants.FONT_SIZE_SM)
+        .fontColor($r('sys.color.font_secondary'))
+        .width('100%')
+        .padding({ top: DesignConstants.SPACING_SM, left: DesignConstants.SPACING_MD, right: DesignConstants.SPACING_MD, bottom: DesignConstants.SPACING_SM })
+        .backgroundColor($r('sys.color.comp_background_primary'))
+        .borderRadius({ bottomLeft: DesignConstants.BORDER_RADIUS_MD, bottomRight: DesignConstants.BORDER_RADIUS_MD })
+        .margin({ top: -DesignConstants.SPACING_XS })
+    }
   }
 
   @Builder
@@ -341,6 +376,20 @@ export struct ToolsContent {
       duration: DesignConstants.ANIMATION_DURATION_MD,
       curve: Curve.EaseInOut
     })
+  }
+
+  // 获取所有工具 - 扁平化处理
+  private getAllTools(): ToolConfig[] {
+    const allTools: ToolConfig[] = [];
+    const categories = this.getCategories();
+    
+    categories.forEach(category => {
+      category.tools.forEach(tool => {
+        allTools.push(tool);
+      });
+    });
+    
+    return allTools;
   }
 
   // 获取技能水平提示
@@ -543,6 +592,79 @@ export struct ToolsContent {
     .onHover((isHovered: boolean) => {
       this.hoveredTool = isHovered ? tool.id : '';
     })
+  }
+
+  @Builder
+  private buildSimplifiedToolCard(tool: ToolConfig) {
+    Column({ space: DesignConstants.SPACING_SM }) {
+      // 图标和标题区域
+      Row({ space: DesignConstants.SPACING_SM }) {
+        Image(tool.icon)
+          .width(28)
+          .height(28)
+          .fillColor($r('sys.color.brand'))
+
+        Text(tool.title)
+          .fontSize(DesignConstants.FONT_SIZE_MD) // 增大标题字体
+          .fontWeight(FontWeight.Medium)
+          .fontColor($r('sys.color.font_primary'))
+          .layoutWeight(1)
+
+        // 优先级标识 - 简化版本
+        if (tool.priority === ToolPriority.ADVANCED) {
+          Text('PRO')
+            .fontSize(DesignConstants.FONT_SIZE_XS) // 增大PRO标签字体
+            .fontColor($r('sys.color.background_secondary'))
+            .backgroundColor($r('sys.color.brand'))
+            .borderRadius(DesignConstants.BORDER_RADIUS_XS)
+            .padding({ left: 4, right: 4, top: 2, bottom: 2 })
+        }
+      }
+      .width('100%')
+
+      // 描述文本
+      Text(tool.description)
+        .fontSize(DesignConstants.FONT_SIZE_SM) // 增大描述字体
+        .fontColor($r('sys.color.font_secondary'))
+        .maxLines(2)
+        .textOverflow({ overflow: TextOverflow.Ellipsis })
+        .width('100%')
+        .lineHeight(16) // 增加行高，提高可读性
+
+      // 状态区域 - 简化显示
+      if (tool.getStatus?.()) {
+        Row() {
+          Text(tool.getStatus())
+            .fontSize(DesignConstants.FONT_SIZE_XS) // 增大状态字体
+            .fontColor(tool.getStatusColor?.() || $r('sys.color.font_secondary'))
+            .backgroundColor($r('sys.color.comp_background_secondary'))
+            .borderRadius(DesignConstants.BORDER_RADIUS_XS)
+            .padding({ left: 6, right: 6, top: 2, bottom: 2 })
+
+          Blank()
+        }
+        .width('100%')
+      }
+    }
+    .width('100%')
+    .height(100) // 减小卡片高度，让内容更紧凑
+    .padding(DesignConstants.SPACING_SM) // 减小内边距
+    .backgroundColor($r('sys.color.comp_background_primary'))
+    .borderRadius(DesignConstants.BORDER_RADIUS_MD)
+    .shadow(DesignConstants.SHADOW_SM)
+    .justifyContent(FlexAlign.Start)
+    .alignItems(HorizontalAlign.Start)
+    .onClick(() => {
+      Throttle.click(() => {
+        tool.onTap()
+      });
+    })
+    .gesture(
+      TapGesture()
+        .onAction(() => {
+          // 简单的按压效果
+        })
+    )
   }
 
   // 切换分类展开状态

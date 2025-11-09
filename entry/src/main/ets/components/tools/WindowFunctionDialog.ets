@@ -134,7 +134,7 @@ export struct WindowFunctionDialogBuilder {
         Text(windowInfo.displayName)
           .fontSize(DesignConstants.FONT_SIZE_MD)
           .fontWeight(FontWeight.Medium)
-          .fontColor($r('sys.color.font_primary'))
+          .fontColor(this.selectedWindowType === windowInfo.type ? $r('sys.color.font_on_primary') : $r('sys.color.font_primary'))
 
         Blank()
 
@@ -152,7 +152,7 @@ export struct WindowFunctionDialogBuilder {
       // 描述
       Text(windowInfo.description)
         .fontSize(DesignConstants.FONT_SIZE_SM)
-        .fontColor($r('sys.color.font_secondary'))
+        .fontColor( this.selectedWindowType === windowInfo.type ? $r('sys.color.font_on_secondary') :  $r('sys.color.font_secondary'))
         .width('100%')
         .maxLines(2)
         .textOverflow({ overflow: TextOverflow.Ellipsis })
@@ -160,7 +160,7 @@ export struct WindowFunctionDialogBuilder {
       // 特性
       Text(windowInfo.characteristics)
         .fontSize(DesignConstants.FONT_SIZE_SM)
-        .fontColor($r('sys.color.font_secondary'))
+        .fontColor(this.selectedWindowType === windowInfo.type ? $r('sys.color.font_on_secondary') :$r('sys.color.font_secondary'))
         .width('100%')
         .maxLines(3)
         .textOverflow({ overflow: TextOverflow.Ellipsis })

@@ -250,7 +250,7 @@ export struct SampleRateSettingsDialog {
       Text(option.label)
         .fontSize(DesignConstants.FONT_SIZE_SM)
         .fontColor(this.selectedSampleRate === option.value ?
-          $r('sys.color.font_emphasize') : $r('sys.color.font_primary'))
+          $r('sys.color.font_on_primary') : $r('sys.color.font_primary'))
         .textAlign(TextAlign.Center)
     }
     .width('100%')
@@ -271,7 +271,7 @@ export struct SampleRateSettingsDialog {
       Text(option.label)
         .fontSize(DesignConstants.FONT_SIZE_SM)
         .fontColor(this.selectedDecimationFactor === option.value ?
-          $r('sys.color.font_emphasize') : $r('sys.color.font_primary'))
+          $r('sys.color.font_on_primary') : $r('sys.color.font_primary'))
         .textAlign(TextAlign.Center)
     }
     .width('100%')
