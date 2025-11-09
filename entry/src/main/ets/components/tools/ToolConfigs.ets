@@ -100,7 +100,7 @@ export class ToolConfigFactory {
   }
 
   // 创建位置服务工具
-  createLocationServiceTool(toggleLocationService: () => void, locationStatus: string, locationStatusColor: Resource): ToolConfig {
+  createLocationServiceTool(toggleLocationService: () => void, getLocationStatus: () => string, getLocationStatusColor: () => Resource): ToolConfig {
     return {
       id: 'location_service',
       title: '位置服务',
@@ -109,8 +109,8 @@ export class ToolConfigFactory {
       category: ToolCategory.DATA_MANAGEMENT,
       priority: ToolPriority.RECOMMENDED,
       usageHint: '为测量数据添加地理标签',
-      getStatus: () => locationStatus,
-      getStatusColor: () => locationStatusColor,
+      getStatus: getLocationStatus,
+      getStatusColor: getLocationStatusColor,
       onTap: toggleLocationService
     };
   }

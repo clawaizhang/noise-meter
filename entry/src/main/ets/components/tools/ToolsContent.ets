@@ -205,9 +205,11 @@ export struct ToolsContent {
       tools: [
         this.toolFactory.createAudioRecordingTool(this.navigationService.toggleAudioRecording),
         this.toolFactory.createAutoSaveTool(this.navigationService.navigateToAutoSave),
-        this.toolFactory.createLocationServiceTool(this.navigationService.toggleLocationService.bind(this.navigationService,
-          this.refreshLocation.bind(this)), this.statusService.getLocationStatus.bind(this.statusService),
-          this.statusService.getLocationStatusColor.bind(this.statusService))
+        this.toolFactory.createLocationServiceTool(
+          this.navigationService.toggleLocationService.bind(this.navigationService, this.refreshLocation.bind(this)),
+          this.statusService.getLocationStatus.bind(this.statusService),
+          this.statusService.getLocationStatusColor.bind(this.statusService)
+        )
       ]
     };
   }
