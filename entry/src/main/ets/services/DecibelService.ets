@@ -104,21 +104,21 @@ export class DecibelService {
    */
   static getDecibelColor(value: number): Resource {
     if (value < 20) {
-      return $r('sys.color.confirm');
+      return $r('app.color.success');
     } // 非常安静 - 绿色
     if (value < 40) {
-      return $r('sys.color.confirm');
+      return $r('app.color.success');
     } // 安静 - 浅绿色
     if (value < 60) {
-      return $r('sys.color.alert');
+      return $r('app.color.feedback_warning');
     } // 一般 - 黄色
     if (value < 80) {
-      return $r('sys.color.alert');
+      return $r('app.color.feedback_warning');
     } // 吵闹 - 橙色
     if (value < 100) {
-      return $r('sys.color.warning');
+      return $r('app.color.warning');
     } // 非常吵闹 - 红色
-    return $r('sys.color.warning'); // 难以忍受 - 深红色
+    return $r('app.color.warning'); // 难以忍受 - 深红色
   }
 
   /**

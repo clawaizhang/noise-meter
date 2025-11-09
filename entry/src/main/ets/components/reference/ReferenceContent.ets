@@ -121,15 +121,15 @@ export struct ReferenceContent {
       Text('参考信息')
         .fontSize(DesignConstants.FONT_SIZE_XL)
         .fontWeight(FontWeight.Bold)
-        .fontColor($r('sys.color.font_primary'))
+        .fontColor($r('app.color.font_primary'))
 
       Text('噪音场景和标准参考')
         .fontSize(DesignConstants.FONT_SIZE_MD)
-        .fontColor($r('sys.color.font_secondary'))
+        .fontColor($r('app.color.font_secondary'))
     }
     .width('100%')
     .padding(DesignConstants.SPACING_MD)
-    .backgroundColor($r('sys.color.comp_background_primary'))
+    .backgroundColor($r('app.color.comp_background_primary'))
     .borderRadius(DesignConstants.BORDER_RADIUS_LG)
   }
 
@@ -271,7 +271,7 @@ export struct ReferenceContent {
           Text(config.title)
             .fontSize(DesignConstants.FONT_SIZE_MD)
             .fontWeight(FontWeight.Medium)
-            .fontColor($r('sys.color.font_primary'))
+            .fontColor($r('app.color.font_primary'))
 
           Blank()
         }
@@ -281,7 +281,7 @@ export struct ReferenceContent {
         Row() {
           Text(config.description)
             .fontSize(DesignConstants.FONT_SIZE_SM)
-            .fontColor($r('sys.color.font_secondary'))
+            .fontColor($r('app.color.font_secondary'))
 
           Blank()
         }
@@ -307,7 +307,7 @@ export struct ReferenceContent {
     .width('100%')
     .height(100)
     .padding(DesignConstants.SPACING_MD)
-    .backgroundColor($r('sys.color.comp_background_primary'))
+    .backgroundColor($r('app.color.comp_background_primary'))
     .borderRadius(DesignConstants.BORDER_RADIUS_LG)
     .justifyContent(FlexAlign.Center)
     .alignItems(VerticalAlign.Center)
@@ -325,14 +325,14 @@ export struct ReferenceContent {
       Text('实时对比')
         .fontSize(DesignConstants.FONT_SIZE_MD)
         .fontWeight(FontWeight.Medium)
-        .fontColor($r('sys.color.font_primary'))
+        .fontColor($r('app.color.font_primary'))
         .alignSelf(ItemAlign.Start)
 
       // 当前分贝值显示
       Row() {
         Text('当前分贝值:')
           .fontSize(DesignConstants.FONT_SIZE_SM)
-          .fontColor($r('sys.color.font_secondary'))
+          .fontColor($r('app.color.font_secondary'))
 
         Text(`${this.ak.uiDisplayState.displayDb} dB`)
           .fontSize(DesignConstants.FONT_SIZE_SM)
@@ -348,7 +348,7 @@ export struct ReferenceContent {
         Row() {
           Text('最接近场景:')
             .fontSize(DesignConstants.FONT_SIZE_SM)
-            .fontColor($r('sys.color.font_secondary'))
+            .fontColor($r('app.color.font_secondary'))
 
           Text(this.ClosestNoiseScene.description)
             .fontSize(DesignConstants.FONT_SIZE_SM)
@@ -364,7 +364,7 @@ export struct ReferenceContent {
       Row() {
         Text('标准符合:')
           .fontSize(DesignConstants.FONT_SIZE_SM)
-          .fontColor($r('sys.color.font_secondary'))
+          .fontColor($r('app.color.font_secondary'))
 
         Text(this.StandardCompliance)
           .fontSize(DesignConstants.FONT_SIZE_SM)
@@ -378,7 +378,7 @@ export struct ReferenceContent {
     .width('100%')
     .margin({ top: DesignConstants.SPACING_MD })
     .padding(DesignConstants.SPACING_MD)
-    .backgroundColor($r('sys.color.comp_background_primary'))
+    .backgroundColor($r('app.color.comp_background_primary'))
     .borderRadius(DesignConstants.BORDER_RADIUS_LG)
   }
 
@@ -420,11 +420,11 @@ export struct ReferenceContent {
     const residentialStandard = NoiseStandards[0]; // 居住区标准
 
     if (currentDb < residentialStandard.dayLimit) {
-      return $r('sys.color.confirm');
+      return $r('app.color.confirm');
     } else if (currentDb < residentialStandard.dayLimit + 10) {
-      return $r('sys.color.warning');
+      return $r('app.color.warning');
     } else {
-      return $r('sys.color.alert');
+      return $r('app.color.alert');
     }
   }
 
@@ -449,11 +449,11 @@ export struct ReferenceContent {
     const residentialStandard = NoiseStandards[0]; // 居住区标准
 
     if (currentDb < residentialStandard.dayLimit) {
-      return $r('sys.color.confirm');
+      return $r('app.color.confirm');
     } else if (currentDb < residentialStandard.nightLimit) {
-      return $r('sys.color.warning');
+      return $r('app.color.warning');
     } else {
-      return $r('sys.color.alert');
+      return $r('app.color.alert');
     }
   }
 
@@ -461,7 +461,7 @@ export struct ReferenceContent {
   private openNoiseDescriptionDialog() {
     Throttle.click(() => {
       const noiseDescriptionDialog = DialogHub.getSheet()
-        .setStyle({ backgroundColor: $r('sys.color.background_secondary') })
+        .setStyle({ backgroundColor: $r('app.color.background_secondary') })
         .setComponentTargetId('mainId')
         .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS })
         .setContent(wrapBuilder(NoiseDescriptionDialogBuilder), this.ak)
@@ -485,7 +485,7 @@ export struct ReferenceContent {
   private openNoiseStandardDialog() {
     Throttle.click(() => {
       const noiseStandardDialog = DialogHub.getSheet()
-        .setStyle({ backgroundColor: $r('sys.color.background_secondary') })
+        .setStyle({ backgroundColor: $r('app.color.background_secondary') })
         .setComponentTargetId('mainId')
         .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS })
         .setContent(wrapBuilder(NoiseStandardDialogBuilder), this.ak)
@@ -507,19 +507,19 @@ export struct ReferenceContent {
   private getThemeColor(theme?: string): Resource {
     switch (theme) {
       case 'red':
-        return $r('sys.color.alert');
+        return $r('app.color.alert');
       case 'blue':
-        return $r('sys.color.font_primary');
+        return $r('app.color.font_primary');
       case 'green':
-        return $r('sys.color.confirm');
+        return $r('app.color.confirm');
       case 'purple':
-        return $r('sys.color.comp_background_primary');
+        return $r('app.color.comp_background_primary');
       case 'orange':
-        return $r('sys.color.warning');
+        return $r('app.color.warning');
       case 'gray':
-        return $r('sys.color.font_secondary');
+        return $r('app.color.font_secondary');
       default:
-        return $r('sys.color.icon_primary');
+        return $r('app.color.icon_primary');
     }
   }
 
@@ -545,12 +545,12 @@ export struct ReferenceContent {
   private getHealthImpactColor(): Resource {
     const currentDb = this.ak.uiDisplayState.displayDb;
     if (currentDb < 85) {
-      return $r('sys.color.confirm');
+      return $r('app.color.confirm');
     }
     if (currentDb < 90) {
-      return $r('sys.color.warning');
+      return $r('app.color.warning');
     }
-    return $r('sys.color.alert');
+    return $r('app.color.alert');
   }
 
   // 标准对比计算方法
@@ -568,12 +568,12 @@ export struct ReferenceContent {
   private getStandardComparisonColor(): Resource {
     const currentDb = this.ak.uiDisplayState.displayDb;
     if (currentDb < 55) {
-      return $r('sys.color.confirm');
+      return $r('app.color.confirm');
     }
     if (currentDb < 65) {
-      return $r('sys.color.warning');
+      return $r('app.color.warning');
     }
-    return $r('sys.color.alert');
+    return $r('app.color.alert');
   }
 
   // 场景化建议计算方法
@@ -591,12 +591,12 @@ export struct ReferenceContent {
   private getScenarioAdviceColor(): Resource {
     const currentDb = this.ak.uiDisplayState.displayDb;
     if (currentDb < 50) {
-      return $r('sys.color.confirm');
+      return $r('app.color.confirm');
     }
     if (currentDb < 70) {
-      return $r('sys.color.warning');
+      return $r('app.color.warning');
     }
-    return $r('sys.color.alert');
+    return $r('app.color.alert');
   }
 
   // 声学参数计算方法
@@ -605,7 +605,7 @@ export struct ReferenceContent {
   }
 
   private getAcousticParamsColor(): Resource {
-    return $r('sys.color.font_primary');
+    return $r('app.color.font_primary');
   }
 
   // 设备性能计算方法
@@ -614,7 +614,7 @@ export struct ReferenceContent {
   }
 
   private getDevicePerformanceColor(): Resource {
-    return $r('sys.color.confirm');
+    return $r('app.color.confirm');
   }
 
   // 法规政策计算方法
@@ -632,19 +632,19 @@ export struct ReferenceContent {
   private getLegalReferenceColor(): Resource {
     const currentDb = this.ak.uiDisplayState.displayDb;
     if (currentDb < 55) {
-      return $r('sys.color.confirm');
+      return $r('app.color.confirm');
     }
     if (currentDb < 65) {
-      return $r('sys.color.warning');
+      return $r('app.color.warning');
     }
-    return $r('sys.color.alert');
+    return $r('app.color.alert');
   }
 
   // 健康影响参考对话框
   private openHealthImpactDialog() {
     Throttle.click(() => {
       const healthImpactDialog = DialogHub.getSheet()
-        .setStyle({ backgroundColor: $r('sys.color.background_secondary') })
+        .setStyle({ backgroundColor: $r('app.color.background_secondary') })
         .setComponentTargetId('mainId')
         .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS })
         .setContent(wrapBuilder(HealthImpactDialogBuilder), this.ak)
@@ -666,7 +666,7 @@ export struct ReferenceContent {
   private openStandardComparisonDialog() {
     Throttle.click(() => {
       const standardComparisonDialog = DialogHub.getSheet()
-        .setStyle({ backgroundColor: $r('sys.color.background_secondary') })
+        .setStyle({ backgroundColor: $r('app.color.background_secondary') })
         .setComponentTargetId('mainId')
         .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS })
         .setContent(wrapBuilder(StandardComparisonDialogBuilder), this.ak)
@@ -688,7 +688,7 @@ export struct ReferenceContent {
   private openScenarioAdviceDialog() {
     Throttle.click(() => {
       const scenarioAdviceDialog = DialogHub.getSheet()
-        .setStyle({ backgroundColor: $r('sys.color.background_secondary') })
+        .setStyle({ backgroundColor: $r('app.color.background_secondary') })
         .setComponentTargetId('mainId')
         .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS })
         .setContent(wrapBuilder(ScenarioAdviceDialogBuilder), this.ak)
@@ -710,7 +710,7 @@ export struct ReferenceContent {
   private openAcousticParamsDialog() {
     Throttle.click(() => {
       const acousticParamsDialog = DialogHub.getSheet()
-        .setStyle({ backgroundColor: $r('sys.color.background_secondary') })
+        .setStyle({ backgroundColor: $r('app.color.background_secondary') })
         .setComponentTargetId('mainId')
         .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS })
         .setContent(wrapBuilder(AcousticParamsDialogBuilder), this.ak)
@@ -732,7 +732,7 @@ export struct ReferenceContent {
   private openDevicePerformanceDialog() {
     Throttle.click(() => {
       const devicePerformanceDialog = DialogHub.getSheet()
-        .setStyle({ backgroundColor: $r('sys.color.background_secondary') })
+        .setStyle({ backgroundColor: $r('app.color.background_secondary') })
         .setComponentTargetId('mainId')
         .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS })
         .setContent(wrapBuilder(DevicePerformanceDialogBuilder), this.ak)
@@ -754,7 +754,7 @@ export struct ReferenceContent {
   private openLegalReferenceDialog() {
     Throttle.click(() => {
       const legalReferenceDialog = DialogHub.getSheet()
-        .setStyle({ backgroundColor: $r('sys.color.background_secondary') })
+        .setStyle({ backgroundColor: $r('app.color.background_secondary') })
         .setComponentTargetId('mainId')
         .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS })
         .setContent(wrapBuilder(LegalReferenceDialogBuilder), this.ak)

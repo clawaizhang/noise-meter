@@ -44,11 +44,11 @@ export struct FrequencyTechnicalParamsDisplay {
   private getChangeColor(changeType: ParamChangeType): Resource {
     switch (changeType) {
       case ParamChangeType.INCREASE:
-        return $r('sys.color.warning');
+        return $r('app.color.warning');
       case ParamChangeType.DECREASE:
-        return $r('sys.color.confirm');
+        return $r('app.color.confirm');
       default:
-        return $r('sys.color.font_secondary');
+        return $r('app.color.font_secondary');
     }
   }
 
@@ -71,13 +71,13 @@ export struct FrequencyTechnicalParamsDisplay {
       // 参数标签
       Text(param.label)
         .fontSize(DesignConstants.FONT_SIZE_MD)
-        .fontColor($r('sys.color.font_secondary'))
+        .fontColor($r('app.color.font_secondary'))
         .layoutWeight(1)
 
       // 参数值
       Text(param.value)
         .fontSize(DesignConstants.FONT_SIZE_MD)
-        .fontColor($r('sys.color.font_primary'))
+        .fontColor($r('app.color.font_primary'))
         .fontWeight(FontWeight.Medium)
 
       // 变化指示器
@@ -137,13 +137,13 @@ export struct FrequencyTechnicalParamsDisplay {
         Text('技术参数')
           .fontSize(DesignConstants.FONT_SIZE_LG)
           .fontWeight(FontWeight.Bold)
-          .fontColor($r('sys.color.font_primary'))
+          .fontColor($r('app.color.font_primary'))
           .layoutWeight(1)
 
         if (this.currentWeighting !== this.selectedWeighting) {
           Text('与当前模式对比')
             .fontSize(DesignConstants.FONT_SIZE_SM)
-            .fontColor($r('sys.color.font_secondary'))
+            .fontColor($r('app.color.font_secondary'))
         }
       }
       .width('100%')
@@ -167,11 +167,11 @@ export struct FrequencyTechnicalParamsDisplay {
       Row({ space: DesignConstants.SPACING_XS }) {
         Text('标准依据:')
           .fontSize(DesignConstants.FONT_SIZE_MD)
-          .fontColor($r('sys.color.font_secondary'))
+          .fontColor($r('app.color.font_secondary'))
 
         Text(FrequencyWeightingConstants.ACOUSTIC_EXPLANATIONS[this.selectedWeighting].standardReference)
           .fontSize(DesignConstants.FONT_SIZE_MD)
-          .fontColor($r('sys.color.font_primary'))
+          .fontColor($r('app.color.font_primary'))
           .fontWeight(FontWeight.Medium)
           .layoutWeight(1)
       }
@@ -182,7 +182,7 @@ export struct FrequencyTechnicalParamsDisplay {
     }
     .width('100%')
     .padding(DesignConstants.SPACING_MD)
-    .backgroundColor($r('sys.color.comp_background_primary'))
+    .backgroundColor($r('app.color.comp_background_primary'))
     .borderRadius(DesignConstants.BORDER_RADIUS_MD)
   }
 }

@@ -179,7 +179,7 @@ export class UIDisplayState {
   @Trace previousDb: number = 0;
 
   @Trace displayDescription: string = '几乎无声';
-  @Trace displayColor: Resource = $r('sys.color.confirm');
+  @Trace displayColor: Resource = $r('app.color.success');
 
   // 显示频谱数据（UI专用）
   @Trace displaySpectrumData: Float32Array = new Float32Array();

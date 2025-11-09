@@ -51,7 +51,7 @@ export struct PremiumFeature {
   private createDialog(): InfSheet {
     return DialogHub.getSheet()
       .setStyle({
-        backgroundColor: $r('sys.color.background_secondary'),
+        backgroundColor: $r('app.color.background_secondary'),
       })
       .setContent(wrapBuilder(UpgradeContentBuilder), this.props)
       .setComponentTargetId('mainId')
@@ -85,15 +85,15 @@ export struct PremiumFeature {
           .width(DesignConstants.ICON_SIZE_MD)
           .height(DesignConstants.ICON_SIZE_MD)
           .margin({ top: DesignConstants.SPACING_XS, right: DesignConstants.SPACING_XS })
-          .fillColor($r('sys.color.icon_emphasize'))
+          .fillColor($r('app.color.icon_emphasize'))
 
       }
       .border({
         width: DesignConstants.BORDER_WIDTH_SM,
-        color: $r('sys.color.comp_border_color')
+        color: $r('app.color.comp_border_color')
       })
       .borderRadius(DesignConstants.BORDER_RADIUS_MD)
-      .backgroundColor($r('sys.color.background_secondary'))
+      .backgroundColor($r('app.color.background_secondary'))
       .onClick(() => {
         Throttle.click(() => {
           this.showUpgradeDialog();

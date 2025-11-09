@@ -42,7 +42,7 @@ export struct WindowFunctionDialogBuilder {
         Text('窗函数设置')
           .fontSize(DesignConstants.FONT_SIZE_XL)
           .fontWeight(FontWeight.Bold)
-          .fontColor($r('sys.color.font_primary'))
+          .fontColor($r('app.color.font_primary'))
           .textAlign(TextAlign.Start)
 
         Blank()
@@ -51,7 +51,7 @@ export struct WindowFunctionDialogBuilder {
         Image($r('app.media.ic_close'))
           .width(24)
           .height(24)
-          .fillColor($r('sys.color.icon_secondary'))
+          .fillColor($r('app.color.icon_secondary'))
           .onClick(() => {
             this.onClose();
           })
@@ -63,16 +63,16 @@ export struct WindowFunctionDialogBuilder {
       Row() {
         Text('当前选择: ')
           .fontSize(DesignConstants.FONT_SIZE_MD)
-          .fontColor($r('sys.color.font_secondary'))
+          .fontColor($r('app.color.font_secondary'))
 
         Text(this.getWindowDisplayName(this.selectedWindowType))
           .fontSize(DesignConstants.FONT_SIZE_MD)
           .fontWeight(FontWeight.Medium)
-          .fontColor($r('sys.color.font_primary'))
+          .fontColor($r('app.color.font_primary'))
       }
       .width('100%')
       .padding(DesignConstants.SPACING_SM)
-      .backgroundColor($r('sys.color.comp_background_tertiary'))
+      .backgroundColor($r('app.color.comp_background_tertiary'))
       .borderRadius(DesignConstants.BORDER_RADIUS_MD)
       .margin({ bottom: DesignConstants.SPACING_MD })
 
@@ -97,8 +97,8 @@ export struct WindowFunctionDialogBuilder {
           .width('48%')
           .height(48)
           .fontSize(DesignConstants.FONT_SIZE_MD)
-          .fontColor($r('sys.color.font_primary'))
-          .backgroundColor($r('sys.color.comp_background_secondary'))
+          .fontColor($r('app.color.font_primary'))
+          .backgroundColor($r('app.color.comp_background_secondary'))
           .borderRadius(DesignConstants.BORDER_RADIUS_MD)
           .onClick(() => {
             this.onClose();
@@ -108,8 +108,8 @@ export struct WindowFunctionDialogBuilder {
           .width('48%')
           .height(48)
           .fontSize(DesignConstants.FONT_SIZE_MD)
-          .fontColor($r('sys.color.font_primary'))
-          .backgroundColor($r('sys.color.confirm'))
+          .fontColor($r('app.color.font_primary'))
+          .backgroundColor($r('app.color.confirm'))
           .borderRadius(DesignConstants.BORDER_RADIUS_MD)
           .onClick(() => {
             this.onSettingsApplied(this.selectedWindowType);
@@ -122,7 +122,7 @@ export struct WindowFunctionDialogBuilder {
     }
     .width('100%')
     .padding(DesignConstants.SPACING_LG)
-    .backgroundColor($r('sys.color.background_secondary'))
+    .backgroundColor($r('app.color.background_secondary'))
     .borderRadius({ topLeft: DesignConstants.BORDER_RADIUS_XL, topRight: DesignConstants.BORDER_RADIUS_XL })
   }
 
@@ -134,7 +134,7 @@ export struct WindowFunctionDialogBuilder {
         Text(windowInfo.displayName)
           .fontSize(DesignConstants.FONT_SIZE_MD)
           .fontWeight(FontWeight.Medium)
-          .fontColor($r('sys.color.font_primary'))
+          .fontColor($r('app.color.font_primary'))
 
         Blank()
 
@@ -152,7 +152,7 @@ export struct WindowFunctionDialogBuilder {
       // 描述
       Text(windowInfo.description)
         .fontSize(DesignConstants.FONT_SIZE_SM)
-        .fontColor($r('sys.color.font_secondary'))
+        .fontColor($r('app.color.font_secondary'))
         .width('100%')
         .maxLines(2)
         .textOverflow({ overflow: TextOverflow.Ellipsis })
@@ -160,7 +160,7 @@ export struct WindowFunctionDialogBuilder {
       // 特性
       Text(windowInfo.characteristics)
         .fontSize(DesignConstants.FONT_SIZE_SM)
-        .fontColor($r('sys.color.font_secondary'))
+        .fontColor($r('app.color.font_secondary'))
         .width('100%')
         .maxLines(3)
         .textOverflow({ overflow: TextOverflow.Ellipsis })
@@ -168,7 +168,7 @@ export struct WindowFunctionDialogBuilder {
     .width('100%')
     .padding(DesignConstants.SPACING_MD)
     .backgroundColor(this.selectedWindowType === windowInfo.type ?
-      $r('sys.color.comp_background_emphasize') : $r('sys.color.comp_background_primary'))
+      $r('app.color.comp_background_emphasize') : $r('app.color.comp_background_primary'))
     .borderRadius(DesignConstants.BORDER_RADIUS_MD)
     .shadow(DesignConstants.SHADOW_SM)
     .onClick(() => {

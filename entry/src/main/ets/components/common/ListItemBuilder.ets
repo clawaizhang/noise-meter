@@ -17,13 +17,13 @@ export function ListItemBuilder(
       Image(icon)
         .width(24)
         .height(24)
-        .fillColor($r('sys.color.brand'))
+        .fillColor($r('app.color.brand'))
         .margin({ right: 12 })
 
       // 标题文本
       Text(title)
         .fontSize(16)
-        .fontColor($r('sys.color.font_primary'))
+        .fontColor($r('app.color.font_primary'))
         .layoutWeight(1)
 
       // 右侧箭头（可选）
@@ -31,7 +31,7 @@ export function ListItemBuilder(
         Image($r('app.media.ic_arrow_right'))
           .width(16)
           .height(16)
-          .fillColor($r('sys.color.font_secondary'))
+          .fillColor($r('app.color.font_secondary'))
       }
     }
     .width('100%')
@@ -43,7 +43,7 @@ export function ListItemBuilder(
     .alignItems(VerticalAlign.Center)
   }
   .borderRadius(16)
-  .backgroundColor($r('sys.color.comp_background_primary'))
+  .backgroundColor($r('app.color.comp_background_primary'))
   .margin({
     top: marginTop,
     left: 16,

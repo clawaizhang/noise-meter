@@ -8,7 +8,7 @@ import { curves, PersistenceV2 } from '@kit.ArkUI';
 function itemIcon() {
   .width(DesignConstants.ICON_SIZE_MD)
   .height(DesignConstants.ICON_SIZE_MD)
-  .fillColor($r('sys.color.font_primary'))
+  .fillColor($r('app.color.content_primary'))
 }
 
 @Extend(Text)
@@ -18,7 +18,7 @@ function itemTitle() {
 
 @Extend(Text)
 function itemDescription() {
-  .fontColor($r('sys.color.font_secondary'))
+  .fontColor($r('app.color.content_secondary'))
   .fontSize(DesignConstants.FONT_SIZE_MD)
   .textAlign(TextAlign.Start)
   .alignSelf(ItemAlign.Start)
@@ -26,7 +26,7 @@ function itemDescription() {
 
 @Extend(Column)
 function cardStyle() {
-  .backgroundColor($r('sys.color.comp_background_primary'))
+  .backgroundColor($r('app.color.comp_background_primary'))
   .justifyContent(FlexAlign.Start)
   .alignItems(HorizontalAlign.Start)
   .borderRadius(16)
@@ -111,7 +111,7 @@ export struct DataPrivacySettings {
         .cardStyle()
       }
     }
-    .backgroundColor($r('sys.color.background_secondary')).padding(16)
+    .backgroundColor($r('app.color.background_secondary')).padding(16)
   }
 }
 

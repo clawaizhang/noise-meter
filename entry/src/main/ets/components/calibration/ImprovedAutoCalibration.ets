@@ -40,7 +40,7 @@ export struct ImprovedAutoCalibration {
 
         Text('当前环境非常安静（<20dB），可获得最佳精度')
           .fontSize(DesignConstants.FONT_SIZE_SM)
-          .fontColor($r('sys.color.font_secondary'))
+          .fontColor($r('app.color.font_secondary'))
       } else if (this.environmentNoise < 25) {
         Row({ space: DesignConstants.SPACING_SM }) {
           Image($r('sys.media.ohos_ic_public_ok'))
@@ -54,7 +54,7 @@ export struct ImprovedAutoCalibration {
 
         Text('当前环境适合自动校准（20-25dB）')
           .fontSize(DesignConstants.FONT_SIZE_SM)
-          .fontColor($r('sys.color.font_secondary'))
+          .fontColor($r('app.color.font_secondary'))
       } else if (this.environmentNoise < 30) {
         Row({ space: DesignConstants.SPACING_SM }) {
           Image($r('sys.media.ohos_ic_public_close')) // 警告图标
@@ -68,7 +68,7 @@ export struct ImprovedAutoCalibration {
 
         Text('建议寻找更安静的环境（当前25-30dB）')
           .fontSize(DesignConstants.FONT_SIZE_SM)
-          .fontColor($r('sys.color.font_secondary'))
+          .fontColor($r('app.color.font_secondary'))
       } else {
         Row({ space: DesignConstants.SPACING_SM }) {
           Image($r('sys.media.ohos_ic_public_close')) // 错误图标
@@ -82,12 +82,12 @@ export struct ImprovedAutoCalibration {
 
         Text('环境嘈杂（>30dB），建议在安静环境中校准')
           .fontSize(DesignConstants.FONT_SIZE_SM)
-          .fontColor($r('sys.color.font_secondary'))
+          .fontColor($r('app.color.font_secondary'))
       }
     }
     .width('100%')
     .padding(DesignConstants.SPACING_MD)
-    .backgroundColor($r('sys.color.comp_background_primary'))
+    .backgroundColor($r('app.color.comp_background_primary'))
     .borderRadius(DesignConstants.BORDER_RADIUS_MD)
     .margin({ bottom: DesignConstants.SPACING_MD })
   }
@@ -100,7 +100,7 @@ export struct ImprovedAutoCalibration {
       Stack({ alignContent: Alignment.Center }) {
         // 背景环
         Circle({ width: 60, height: 60 })
-          .stroke($r('sys.color.background_secondary'))
+          .stroke($r('app.color.background_secondary'))
           .strokeWidth(6)
           .fill(Color.Transparent)
 
@@ -141,7 +141,7 @@ export struct ImprovedAutoCalibration {
 
       Text('请保持设备稳定，避免发出声音')
         .fontSize(DesignConstants.FONT_SIZE_SM)
-        .fontColor($r('sys.color.font_secondary'))
+        .fontColor($r('app.color.font_secondary'))
     }
     .alignItems(HorizontalAlign.Center)
   }
@@ -164,12 +164,12 @@ export struct ImprovedAutoCalibration {
 
       Text(`新校准值: ${this.calibrationValue.toFixed(1)}dB`)
         .fontSize(DesignConstants.FONT_SIZE_LG)
-        .fontColor($r('sys.color.font_primary'))
+        .fontColor($r('app.color.font_primary'))
         .fontWeight(FontWeight.Bold)
 
       Text('自动校准已完成，测量精度已优化')
         .fontSize(DesignConstants.FONT_SIZE_MD)
-        .fontColor($r('sys.color.font_secondary'))
+        .fontColor($r('app.color.font_secondary'))
     }
     .alignItems(HorizontalAlign.Center)
   }
@@ -185,8 +185,8 @@ export struct ImprovedAutoCalibration {
       Button('开始自动校准', { type: ButtonType.Normal })
         .fontSize(DesignConstants.FONT_SIZE_LG)
         .fontWeight(FontWeight.Medium)
-        .backgroundColor($r('sys.color.comp_background_tertiary'))
-        .fontColor($r('sys.color.font_primary'))
+        .backgroundColor($r('app.color.comp_background_tertiary'))
+        .fontColor($r('app.color.font_primary'))
         .borderRadius(DesignConstants.BORDER_RADIUS_LG)
         .height(48)
         .width('100%')
@@ -200,7 +200,7 @@ export struct ImprovedAutoCalibration {
                 buttons: [
                   {
                     text: '取消',
-                    color: $r('sys.color.font_secondary')
+                    color: $r('app.color.font_secondary')
                   },
                   {
                     text: '继续校准',
@@ -221,7 +221,7 @@ export struct ImprovedAutoCalibration {
               buttons: [
                 {
                   text: '取消',
-                  color: $r('sys.color.font_secondary')
+                  color: $r('app.color.font_secondary')
                 },
                 {
                   text: '开始校准',
@@ -245,18 +245,18 @@ export struct ImprovedAutoCalibration {
         Image($r('app.media.ic_calibration'))
           .width(DesignConstants.ICON_SIZE_MD)
           .height(DesignConstants.ICON_SIZE_MD)
-          .fillColor($r('sys.color.brand'))
+          .fillColor($r('app.color.brand'))
 
         Text('自动校准')
           .fontSize(DesignConstants.FONT_SIZE_LG)
           .fontWeight(FontWeight.Bold)
-          .fontColor($r('sys.color.font_primary'))
+          .fontColor($r('app.color.font_primary'))
           .layoutWeight(1)
 
         if (!this.isCalibrating && this.calibrationValue !== 0) {
           Text(`${this.calibrationValue.toFixed(1)}dB`)
             .fontSize(DesignConstants.FONT_SIZE_MD)
-            .fontColor($r('sys.color.font_secondary'))
+            .fontColor($r('app.color.font_secondary'))
         }
       }
       .width('100%')
@@ -275,7 +275,7 @@ export struct ImprovedAutoCalibration {
       // 说明文本
       Text('自动计算并设置最佳校准值，确保测量准确性。')
         .fontSize(DesignConstants.FONT_SIZE_MD)
-        .fontColor($r('sys.color.font_secondary'))
+        .fontColor($r('app.color.font_secondary'))
         .textAlign(TextAlign.Start)
         .alignSelf(ItemAlign.Start)
     }

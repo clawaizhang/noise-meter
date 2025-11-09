@@ -22,7 +22,7 @@ const acousticParameters: AcousticParameter[] = [
     unit: '',
     description: '模拟人耳对声音的感知特性，适用于环境噪声测量',
     application: '环境噪声评估、职业健康监测',
-    color: $r('sys.color.confirm')
+    color: $r('app.color.confirm')
   },
   {
     category: '频率加权',
@@ -31,7 +31,7 @@ const acousticParameters: AcousticParameter[] = [
     unit: '',
     description: '相对平坦的频率响应，适用于高声压级测量',
     application: '工业噪声、脉冲噪声测量',
-    color: $r('sys.color.warning')
+    color: $r('app.color.warning')
   },
   {
     category: '频率加权',
@@ -40,7 +40,7 @@ const acousticParameters: AcousticParameter[] = [
     unit: '',
     description: '零加权，平坦频率响应，保留原始信号',
     application: '声学分析、信号处理',
-    color: $r('sys.color.alert')
+    color: $r('app.color.alert')
   },
   {
     category: '时间加权',
@@ -49,7 +49,7 @@ const acousticParameters: AcousticParameter[] = [
     unit: '',
     description: '时间常数125ms，适用于快速变化的噪声',
     application: '交通噪声、瞬时噪声测量',
-    color: $r('sys.color.confirm')
+    color: $r('app.color.confirm')
   },
   {
     category: '时间加权',
@@ -58,7 +58,7 @@ const acousticParameters: AcousticParameter[] = [
     unit: '',
     description: '时间常数1s，适用于稳定噪声测量',
     application: '环境背景噪声、工业噪声',
-    color: $r('sys.color.warning')
+    color: $r('app.color.warning')
   },
   {
     category: '时间加权',
@@ -67,7 +67,7 @@ const acousticParameters: AcousticParameter[] = [
     unit: '',
     description: '时间常数35ms，适用于脉冲噪声测量',
     application: '冲击噪声、枪声测量',
-    color: $r('sys.color.alert')
+    color: $r('app.color.alert')
   },
   {
     category: '技术参数',
@@ -76,7 +76,7 @@ const acousticParameters: AcousticParameter[] = [
     unit: 'kHz',
     description: '音频信号采样频率',
     application: 'CD质量音频、语音分析',
-    color: $r('sys.color.font_primary')
+    color: $r('app.color.font_primary')
   },
   {
     category: '技术参数',
@@ -85,7 +85,7 @@ const acousticParameters: AcousticParameter[] = [
     unit: 'bit',
     description: '音频信号量化精度',
     application: '标准音频质量、动态范围',
-    color: $r('sys.color.font_primary')
+    color: $r('app.color.font_primary')
   },
   {
     category: '技术参数',
@@ -94,7 +94,7 @@ const acousticParameters: AcousticParameter[] = [
     unit: 'Hz',
     description: '可测量的频率范围',
     application: '人耳可听范围、声学分析',
-    color: $r('sys.color.font_primary')
+    color: $r('app.color.font_primary')
   },
   {
     category: '技术参数',
@@ -103,7 +103,7 @@ const acousticParameters: AcousticParameter[] = [
     unit: 'dB',
     description: '最大和最小可测量声压级差值',
     application: '环境噪声测量精度',
-    color: $r('sys.color.font_primary')
+    color: $r('app.color.font_primary')
   }
 ];
 
@@ -122,15 +122,15 @@ function buildAcousticParamCard(param: AcousticParameter, ak: AppKeys) {
     Row() {
       Text(param.category)
         .fontSize(12)
-        .fontColor($r('sys.color.font_secondary'))
+        .fontColor($r('app.color.font_secondary'))
         .padding({ left: 8, top: 4, bottom: 4, right: 8 })
-        .backgroundColor($r('sys.color.background_secondary'))
+        .backgroundColor($r('app.color.background_secondary'))
         .borderRadius(6);
 
       Text(param.parameterName)
         .fontSize(16)
         .fontWeight(FontWeight.Bold)
-        .fontColor($r('sys.color.font_primary'))
+        .fontColor($r('app.color.font_primary'))
         .layoutWeight(1)
         .margin({ left: 8 });
     }
@@ -146,7 +146,7 @@ function buildAcousticParamCard(param: AcousticParameter, ak: AppKeys) {
       if (param.unit) {
         Text(param.unit)
           .fontSize(14)
-          .fontColor($r('sys.color.font_secondary'))
+          .fontColor($r('app.color.font_secondary'))
           .margin({ left: 4 });
       }
     }
@@ -156,7 +156,7 @@ function buildAcousticParamCard(param: AcousticParameter, ak: AppKeys) {
     // 参数描述
     Text(param.description)
       .fontSize(12)
-      .fontColor($r('sys.color.font_secondary'))
+      .fontColor($r('app.color.font_secondary'))
       .width('100%')
       .textAlign(TextAlign.Start);
 
@@ -164,12 +164,12 @@ function buildAcousticParamCard(param: AcousticParameter, ak: AppKeys) {
     Column({ space: 4 }) {
       Text('应用场景:')
         .fontSize(12)
-        .fontColor($r('sys.color.font_secondary'))
+        .fontColor($r('app.color.font_secondary'))
         .alignSelf(ItemAlign.Start);
 
       Text(param.application)
         .fontSize(11)
-        .fontColor($r('sys.color.font_secondary'))
+        .fontColor($r('app.color.font_secondary'))
         .width('100%')
         .textAlign(TextAlign.Start);
     }
@@ -178,7 +178,7 @@ function buildAcousticParamCard(param: AcousticParameter, ak: AppKeys) {
   }
   .padding(12)
   .width('100%')
-  .backgroundColor($r('sys.color.comp_background_primary'))
+  .backgroundColor($r('app.color.comp_background_primary'))
   .borderRadius(12)
   .alignItems(HorizontalAlign.Start)
   .transition(TransitionEffect.OPACITY.animation({ curve: curves.springMotion(0.6, 0.8) })
@@ -244,9 +244,9 @@ struct AcousticParamsComponent {
         Text(item.label)
           .fontSize(14)
           .fontWeight(FontWeight.Medium)
-          .fontColor(this.selectedCategory === item.category ? $r('sys.color.font_primary') : $r('sys.color.font_secondary'))
+          .fontColor(this.selectedCategory === item.category ? $r('app.color.font_primary') : $r('app.color.font_secondary'))
           .padding(12)
-          .backgroundColor(this.selectedCategory === item.category ? $r('sys.color.comp_background_primary') : $r('sys.color.background_secondary'))
+          .backgroundColor(this.selectedCategory === item.category ? $r('app.color.comp_background_primary') : $r('app.color.background_secondary'))
           .borderRadius(8)
           .onClick(() => {
             Throttle.click(() => {
@@ -271,7 +271,7 @@ struct AcousticParamsComponent {
         Text(`${this.getCategoryLabel(this.selectedCategory)}参数`)
           .fontSize(16)
           .fontWeight(FontWeight.Bold)
-          .fontColor($r('sys.color.font_primary'))
+          .fontColor($r('app.color.font_primary'))
           .alignSelf(ItemAlign.Start);
 
         ForEach(this.getFilteredParameters(), (param: AcousticParameter) => {
@@ -295,5 +295,5 @@ export function AcousticParamsDialogBuilder(ak: AppKeys) {
   }
   .title({ main: '声学参数参考', sub: '专业声学测量参数说明' })
   .padding(16)
-  .backgroundColor($r('sys.color.background_secondary'))
+  .backgroundColor($r('app.color.background_secondary'))
 }

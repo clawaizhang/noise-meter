@@ -39,11 +39,11 @@ export struct TechnicalParamsDisplay {
   private getChangeColor(changeType: ParamChangeType): Resource {
     switch (changeType) {
       case ParamChangeType.INCREASE:
-        return $r('sys.color.warning');
+        return $r('app.color.warning');
       case ParamChangeType.DECREASE:
-        return $r('sys.color.confirm');
+        return $r('app.color.confirm');
       default:
-        return $r('sys.color.font_secondary');
+        return $r('app.color.font_secondary');
     }
   }
 
@@ -66,13 +66,13 @@ export struct TechnicalParamsDisplay {
       // 参数标签
       Text(param.label)
         .fontSize(DesignConstants.FONT_SIZE_MD)
-        .fontColor($r('sys.color.font_secondary'))
+        .fontColor($r('app.color.font_secondary'))
         .layoutWeight(1)
 
       // 参数值
       Text(`${param.value}${param.unit}`)
         .fontSize(DesignConstants.FONT_SIZE_MD)
-        .fontColor($r('sys.color.font_primary'))
+        .fontColor($r('app.color.font_primary'))
         .fontWeight(FontWeight.Medium)
 
       // 变化指示器
@@ -140,13 +140,13 @@ export struct TechnicalParamsDisplay {
         Text('技术参数')
           .fontSize(DesignConstants.FONT_SIZE_LG)
           .fontWeight(FontWeight.Bold)
-          .fontColor($r('sys.color.font_primary'))
+          .fontColor($r('app.color.font_primary'))
           .layoutWeight(1)
 
         if (this.currentMode !== this.selectedMode) {
           Text('与当前模式对比')
             .fontSize(DesignConstants.FONT_SIZE_SM)
-            .fontColor($r('sys.color.font_secondary'))
+            .fontColor($r('app.color.font_secondary'))
         }
       }
       .width('100%')
@@ -171,11 +171,11 @@ export struct TechnicalParamsDisplay {
         Row({ space: DesignConstants.SPACING_XS }) {
           Text('窗函数:')
             .fontSize(DesignConstants.FONT_SIZE_MD)
-            .fontColor($r('sys.color.font_secondary'))
+            .fontColor($r('app.color.font_secondary'))
 
           Text(TimeWeightingConstants.TECHNICAL_PARAMS[this.selectedMode].windowType)
             .fontSize(DesignConstants.FONT_SIZE_MD)
-            .fontColor($r('sys.color.font_primary'))
+            .fontColor($r('app.color.font_primary'))
             .fontWeight(FontWeight.Medium)
         }
         .width('100%')
@@ -186,7 +186,7 @@ export struct TechnicalParamsDisplay {
     }
     .width('100%')
     .padding(DesignConstants.SPACING_MD)
-    .backgroundColor($r('sys.color.comp_background_primary'))
+    .backgroundColor($r('app.color.comp_background_primary'))
     .borderRadius(DesignConstants.BORDER_RADIUS_MD)
   }
 }

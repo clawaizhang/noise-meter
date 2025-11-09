@@ -79,20 +79,20 @@ export struct WelcomePage {
         Text('静喵Sound')
           .fontSize(DesignConstants.FONT_SIZE_4XL)
           .fontWeight(FontWeight.Bold)
-          .fontColor($r('sys.color.font_emphasize'))
+          .fontColor($r('app.color.font_emphasize'))
           .textAlign(TextAlign.Center)
           .opacity(this.contentOpacity)
 
         Text('专业噪音分析工具')
           .fontSize(DesignConstants.FONT_SIZE_XL)
           .fontWeight(FontWeight.Medium)
-          .fontColor($r('sys.color.font_primary'))
+          .fontColor($r('app.color.font_primary'))
           .textAlign(TextAlign.Center)
           .opacity(this.contentOpacity)
 
         Text('精准检测环境噪音，专业数据分析')
           .fontSize(DesignConstants.FONT_SIZE_MD)
-          .fontColor($r('sys.color.font_secondary'))
+          .fontColor($r('app.color.font_secondary'))
           .textAlign(TextAlign.Center)
           .lineHeight(20)
           .margin({ top: DesignConstants.SPACING_LG })
@@ -105,7 +105,7 @@ export struct WelcomePage {
         Text('为什么需要噪音监测？')
           .fontSize(DesignConstants.FONT_SIZE_LG)
           .fontWeight(FontWeight.Medium)
-          .fontColor($r('sys.color.font_emphasize'))
+          .fontColor($r('app.color.font_emphasize'))
           .opacity(this.featuresOpacity)
 
         // 价值主张描述
@@ -133,7 +133,7 @@ export struct WelcomePage {
       right: DesignConstants.SPACING_XL
     })
     .justifyContent(FlexAlign.Center)  // 垂直居中
-    .backgroundColor($r('sys.color.background_secondary'))
+    .backgroundColor($r('app.color.background_secondary'))
     .backgroundBlurStyle(BlurStyle.Thin)
   }
 
@@ -145,15 +145,15 @@ export struct WelcomePage {
         // 根据价值主张选择对应的图标
         if (title.includes('保护听力健康')) {
           Image($r('app.media.ic_user'))
-            .fillColor($r('sys.color.brand'))
+            .fillColor($r('app.color.brand'))
             .width(DesignConstants.ICON_SIZE_MD)
         } else if (title.includes('提升生活质量')) {
           Image($r('app.media.ic_smile'))
-            .fillColor($r('sys.color.brand'))
+            .fillColor($r('app.color.brand'))
             .width(DesignConstants.ICON_SIZE_MD)
         } else if (title.includes('工作环境优化')) {
           Image($r('app.media.ic_security'))
-            .fillColor($r('sys.color.brand'))
+            .fillColor($r('app.color.brand'))
             .width(DesignConstants.ICON_SIZE_MD)
         }
       }
@@ -165,13 +165,13 @@ export struct WelcomePage {
         Text(title)
           .fontSize(DesignConstants.FONT_SIZE_MD)
           .fontWeight(FontWeight.Medium)
-          .fontColor($r('sys.color.font_primary'))
+          .fontColor($r('app.color.font_primary'))
           .textAlign(TextAlign.Start)
           .width('100%')
 
         Text(description)
           .fontSize(DesignConstants.FONT_SIZE_SM)
-          .fontColor($r('sys.color.font_secondary'))
+          .fontColor($r('app.color.font_secondary'))
           .textAlign(TextAlign.Start)
           .width('100%')
       }
@@ -186,7 +186,7 @@ export struct WelcomePage {
       left: DesignConstants.SPACING_LG,
       right: DesignConstants.SPACING_LG
     })
-    .backgroundColor($r('sys.color.background_primary'))
+    .backgroundColor($r('app.color.background_primary'))
     .borderRadius(DesignConstants.BORDER_RADIUS_MD)
     .shadow(DesignConstants.SHADOW_SM)
     .opacity(this.featuresOpacity)

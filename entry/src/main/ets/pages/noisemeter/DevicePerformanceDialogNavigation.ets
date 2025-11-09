@@ -22,7 +22,7 @@ const devicePerformanceData: DevicePerformanceData[] = [
     unit: 'dB',
     description: '可测量的声压级范围',
     status: '正常',
-    color: $r('sys.color.confirm')
+    color: $r('app.color.confirm')
   },
   {
     category: '基本规格',
@@ -31,7 +31,7 @@ const devicePerformanceData: DevicePerformanceData[] = [
     unit: 'Hz',
     description: '可测量的频率范围',
     status: '正常',
-    color: $r('sys.color.confirm')
+    color: $r('app.color.confirm')
   },
   {
     category: '基本规格',
@@ -40,7 +40,7 @@ const devicePerformanceData: DevicePerformanceData[] = [
     unit: 'kHz',
     description: '音频信号采样频率',
     status: '正常',
-    color: $r('sys.color.confirm')
+    color: $r('app.color.confirm')
   },
   {
     category: '精度指标',
@@ -49,7 +49,7 @@ const devicePerformanceData: DevicePerformanceData[] = [
     unit: 'dB',
     description: '典型测量精度误差',
     status: '良好',
-    color: $r('sys.color.warning')
+    color: $r('app.color.warning')
   },
   {
     category: '精度指标',
@@ -58,7 +58,7 @@ const devicePerformanceData: DevicePerformanceData[] = [
     unit: 'dB',
     description: '频率响应平坦度',
     status: '良好',
-    color: $r('sys.color.warning')
+    color: $r('app.color.warning')
   },
   {
     category: '精度指标',
@@ -67,7 +67,7 @@ const devicePerformanceData: DevicePerformanceData[] = [
     unit: 'dB',
     description: '最大和最小可测量声压级差值',
     status: '良好',
-    color: $r('sys.color.warning')
+    color: $r('app.color.warning')
   },
   {
     category: '传感器信息',
@@ -76,7 +76,7 @@ const devicePerformanceData: DevicePerformanceData[] = [
     unit: '',
     description: '微机电系统麦克风',
     status: '正常',
-    color: $r('sys.color.comp_background_emphasize')
+    color: $r('app.color.comp_background_emphasize')
   },
   {
     category: '传感器信息',
@@ -85,7 +85,7 @@ const devicePerformanceData: DevicePerformanceData[] = [
     unit: 'dBFS',
     description: '麦克风灵敏度',
     status: '正常',
-    color: $r('sys.color.comp_background_emphasize')
+    color: $r('app.color.comp_background_emphasize')
   },
   {
     category: '传感器信息',
@@ -94,7 +94,7 @@ const devicePerformanceData: DevicePerformanceData[] = [
     unit: 'dB',
     description: '信号与噪声比值',
     status: '良好',
-    color: $r('sys.color.comp_background_emphasize')
+    color: $r('app.color.comp_background_emphasize')
   },
 ];
 
@@ -113,15 +113,15 @@ function buildDevicePerformanceCard(performance: DevicePerformanceData, ak: AppK
     Row() {
       Text(performance.category)
         .fontSize(12)
-        .fontColor($r('sys.color.font_secondary'))
+        .fontColor($r('app.color.font_secondary'))
         .padding(8)
-        .backgroundColor($r('sys.color.background_secondary'))
+        .backgroundColor($r('app.color.background_secondary'))
         .borderRadius(6);
 
       Text(performance.parameterName)
         .fontSize(16)
         .fontWeight(FontWeight.Bold)
-        .fontColor($r('sys.color.font_primary'))
+        .fontColor($r('app.color.font_primary'))
         .layoutWeight(1)
         .margin({ left: 8 });
     }
@@ -137,7 +137,7 @@ function buildDevicePerformanceCard(performance: DevicePerformanceData, ak: AppK
       if (performance.unit) {
         Text(performance.unit)
           .fontSize(14)
-          .fontColor($r('sys.color.font_secondary'))
+          .fontColor($r('app.color.font_secondary'))
           .margin({ left: 4 });
       }
 
@@ -146,7 +146,7 @@ function buildDevicePerformanceCard(performance: DevicePerformanceData, ak: AppK
       // 状态指示
       Text(performance.status)
         .fontSize(12)
-        .fontColor($r('sys.color.font_primary'))
+        .fontColor($r('app.color.font_primary'))
         .padding({ left: 8, right: 8, top: 4, bottom: 4 })
         .backgroundColor(performance.color)
         .opacity(0.9)
@@ -157,13 +157,13 @@ function buildDevicePerformanceCard(performance: DevicePerformanceData, ak: AppK
     // 参数描述
     Text(performance.description)
       .fontSize(12)
-      .fontColor($r('sys.color.font_secondary'))
+      .fontColor($r('app.color.font_secondary'))
       .width('100%')
       .textAlign(TextAlign.Start);
   }
   .padding(12)
   .width('100%')
-  .backgroundColor($r('sys.color.comp_background_primary'))
+  .backgroundColor($r('app.color.comp_background_primary'))
   .borderRadius(12)
   .alignItems(HorizontalAlign.Start)
   .transition(TransitionEffect.OPACITY.animation({ curve: curves.springMotion(0.6, 0.8) })
@@ -237,9 +237,9 @@ struct DevicePerformanceComponent {
         Text(item.label)
           .fontSize(14)
           .fontWeight(FontWeight.Medium)
-          .fontColor(this.selectedCategory === item.category ? $r('sys.color.font_primary') : $r('sys.color.font_secondary'))
+          .fontColor(this.selectedCategory === item.category ? $r('app.color.font_primary') : $r('app.color.font_secondary'))
           .padding(12)
-          .backgroundColor(this.selectedCategory === item.category ? $r('sys.color.comp_background_primary') : $r('sys.color.background_secondary'))
+          .backgroundColor(this.selectedCategory === item.category ? $r('app.color.comp_background_primary') : $r('app.color.background_secondary'))
           .borderRadius(8)
           .onClick(() => {
             Throttle.click(() => {
@@ -261,7 +261,7 @@ struct DevicePerformanceComponent {
           Text('设备状态摘要')
             .fontSize(16)
             .fontWeight(FontWeight.Bold)
-            .fontColor($r('sys.color.font_primary'))
+            .fontColor($r('app.color.font_primary'))
             .alignSelf(ItemAlign.Start);
 
           Row({ space: 12 }) {
@@ -269,11 +269,11 @@ struct DevicePerformanceComponent {
               Text(this.getDeviceStatusSummary().normal.toString())
                 .fontSize(18)
                 .fontWeight(FontWeight.Bold)
-                .fontColor($r('sys.color.confirm'));
+                .fontColor($r('app.color.confirm'));
 
               Text('正常')
                 .fontSize(12)
-                .fontColor($r('sys.color.font_secondary'));
+                .fontColor($r('app.color.font_secondary'));
             }
             .layoutWeight(1)
 
@@ -281,11 +281,11 @@ struct DevicePerformanceComponent {
               Text(this.getDeviceStatusSummary().warning.toString())
                 .fontSize(18)
                 .fontWeight(FontWeight.Bold)
-                .fontColor($r('sys.color.warning'));
+                .fontColor($r('app.color.warning'))
 
               Text('良好')
                 .fontSize(12)
-                .fontColor($r('sys.color.font_secondary'));
+                .fontColor($r('app.color.font_secondary'));
             }
             .layoutWeight(1)
 
@@ -293,17 +293,17 @@ struct DevicePerformanceComponent {
               Text(this.getDeviceStatusSummary().total.toString())
                 .fontSize(18)
                 .fontWeight(FontWeight.Bold)
-                .fontColor($r('sys.color.font_primary'));
+                .fontColor($r('app.color.font_primary'))
 
               Text('总计')
                 .fontSize(12)
-                .fontColor($r('sys.color.font_secondary'));
+                .fontColor($r('app.color.font_secondary'));
             }
             .layoutWeight(1)
           }
           .width('100%')
           .padding(12)
-          .backgroundColor($r('sys.color.comp_background_primary'))
+          .backgroundColor($r('app.color.comp_background_primary'))
           .borderRadius(12)
         }
         .width('100%')
@@ -315,7 +315,7 @@ struct DevicePerformanceComponent {
         Text(`${this.getCategoryLabel(this.selectedCategory)}参数`)
           .fontSize(16)
           .fontWeight(FontWeight.Bold)
-          .fontColor($r('sys.color.font_primary'))
+          .fontColor($r('app.color.font_primary'))
           .alignSelf(ItemAlign.Start);
 
         ForEach(this.getFilteredPerformanceData(), (performance: DevicePerformanceData) => {
@@ -339,5 +339,5 @@ export function DevicePerformanceDialogBuilder(ak: AppKeys) {
   }
   .title({ main: '设备性能参考', sub: '测量设备技术规格参考' })
   .padding(16)
-  .backgroundColor($r('sys.color.background_secondary'))
+  .backgroundColor($r('app.color.background_secondary'))
 }

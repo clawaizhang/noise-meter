@@ -35,11 +35,11 @@ export struct TimeWeightingCard {
     
     return ({
       backgroundColor: isSelected ?
-      $r('sys.color.interactive_active') :
-      $r('sys.color.comp_background_primary'),
+      $r('app.color.interactive_active') :
+      $r('app.color.comp_background_primary'),
       borderColor: isSelected ?
-      $r('sys.color.interactive_active') :
-      $r('sys.color.comp_border_color'),
+      $r('app.color.interactive_active') :
+      $r('app.color.comp_border_color'),
       borderWidth: isSelected ? 2 : 1,
       scale: this.isHovered && !isSelected ? 1.02 : 1.0
     } as TimeWeightingCardStyle);
@@ -52,8 +52,8 @@ export struct TimeWeightingCard {
     return ({
       fontWeight: isSelected ? FontWeight.Bold : FontWeight.Medium,
       fontColor: isSelected ?
-      $r('sys.color.font_on_primary') :
-      $r('sys.color.font_primary')
+      $r('app.color.font_on_primary') :
+      $r('app.color.font_primary')
     } as TitleStyle);
   }
 
@@ -80,7 +80,7 @@ export struct TimeWeightingCard {
           Image($r('sys.media.ohos_ic_public_select_all'))
             .width(DesignConstants.ICON_SIZE_SM)
             .height(DesignConstants.ICON_SIZE_SM)
-            .fillColor($r('sys.color.font_on_primary'))
+            .fillColor($r('app.color.font_on_primary'))
         }
       }
       .width('100%')
@@ -89,7 +89,7 @@ export struct TimeWeightingCard {
       // 模式描述
       Text(TimeWeightingConstants.MODE_DESCRIPTIONS[this.modeInfo])
         .fontSize(DesignConstants.FONT_SIZE_MD)
-        .fontColor(this.selectedMode === this.modeInfo ? $r('sys.color.font_on_primary') :$r('sys.color.font_secondary'))
+        .fontColor(this.selectedMode === this.modeInfo ? $r('app.color.font_on_primary') :$r('app.color.font_secondary'))
         .textAlign(TextAlign.Start)
         .alignSelf(ItemAlign.Start)
         .maxLines(2)

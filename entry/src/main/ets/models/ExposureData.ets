@@ -72,13 +72,13 @@ export class ExposureData {
    */
   public getExposureColor(): Resource {
     if (this.exposurePercentage < 30) {
-      return $r('sys.color.confirm');     // 绿色
+      return $r('app.color.success');     // 绿色
     } else if (this.exposurePercentage < 60) {
-      return $r('sys.color.warning');     // 黄色
+      return $r('app.color.warning');     // 黄色
     } else if (this.exposurePercentage < 80) {
-      return $r('sys.color.alert');       // 橙色
+      return $r('app.color.feedback_warning');       // 橙色
     } else {
-      return $r('sys.color.alert');       // 红色
+      return $r('app.color.feedback_warning');       // 红色
     }
   }
 }

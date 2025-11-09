@@ -29,7 +29,7 @@ const legalReferenceData: LegalReferenceData[] = [
     nightLimit: 45,
     penalty: '责令改正，处以罚款',
     description: '规定了不同声环境功能区的环境噪声限值',
-    color: $r('sys.color.confirm')
+    color: $r('app.color.confirm')
   },
   {
     category: '国家标准',
@@ -41,7 +41,7 @@ const legalReferenceData: LegalReferenceData[] = [
     nightLimit: 40,
     penalty: '责令改正，处以罚款',
     description: '规定了社会生活噪声排放限值',
-    color: $r('sys.color.confirm')
+    color: $r('app.color.confirm')
   },
   {
     category: '国家标准',
@@ -53,7 +53,7 @@ const legalReferenceData: LegalReferenceData[] = [
     nightLimit: 55,
     penalty: '责令改正，处以罚款',
     description: '规定了工业企业厂界环境噪声排放限值',
-    color: $r('sys.color.confirm')
+    color: $r('app.color.confirm')
   },
   {
     category: '国家标准',
@@ -65,7 +65,7 @@ const legalReferenceData: LegalReferenceData[] = [
     nightLimit: 55,
     penalty: '责令改正，处以罚款',
     description: '规定了建筑施工场界环境噪声排放限值',
-    color: $r('sys.color.warning')
+    color: $r('app.color.warning')
   },
   {
     category: '地方法规',
@@ -77,7 +77,7 @@ const legalReferenceData: LegalReferenceData[] = [
     nightLimit: 45,
     penalty: '责令改正，处以罚款',
     description: '北京市环境噪声污染防治的具体规定',
-    color: $r('sys.color.alert')
+    color: $r('app.color.alert')
   },
   {
     category: '地方法规',
@@ -89,7 +89,7 @@ const legalReferenceData: LegalReferenceData[] = [
     nightLimit: 40,
     penalty: '责令改正，处以罚款',
     description: '上海市社会生活噪声污染防治的具体规定',
-    color: $r('sys.color.alert')
+    color: $r('app.color.alert')
   },
   {
     category: '行业标准',
@@ -101,7 +101,7 @@ const legalReferenceData: LegalReferenceData[] = [
     nightLimit: 45,
     penalty: '参考相关法规',
     description: '城市区域环境噪声的测量和评价标准',
-    color: $r('sys.color.font_primary')
+    color: $r('app.color.font_primary')
   },
   {
     category: '行业标准',
@@ -113,7 +113,7 @@ const legalReferenceData: LegalReferenceData[] = [
     nightLimit: 45,
     penalty: '技术规范',
     description: '环境噪声监测的技术要求和方法',
-    color: $r('sys.color.font_primary')
+    color: $r('app.color.font_primary')
   }
 ];
 
@@ -133,15 +133,15 @@ function buildLegalReferenceCard(legal: LegalReferenceData, ak: AppKeys, isCompl
     Row() {
       Text(legal.category)
         .fontSize(12)
-        .fontColor($r('sys.color.font_secondary'))
+        .fontColor($r('app.color.font_secondary'))
         .padding(8)
-        .backgroundColor($r('sys.color.background_secondary'))
+        .backgroundColor($r('app.color.background_secondary'))
         .borderRadius(6);
 
       Text(legal.lawName)
         .fontSize(16)
         .fontWeight(FontWeight.Bold)
-        .fontColor($r('sys.color.font_primary'))
+        .fontColor($r('app.color.font_primary'))
         .layoutWeight(1)
         .margin({ left: 8 });
     }
@@ -151,11 +151,11 @@ function buildLegalReferenceCard(legal: LegalReferenceData, ak: AppKeys, isCompl
     Row() {
       Text(legal.code)
         .fontSize(12)
-        .fontColor($r('sys.color.font_secondary'));
+        .fontColor($r('app.color.font_secondary'));
 
       Text(legal.effectiveDate)
         .fontSize(12)
-        .fontColor($r('sys.color.font_secondary'))
+        .fontColor($r('app.color.font_secondary'))
         .margin({ left: 8 });
     }
     .width('100%')
@@ -165,7 +165,7 @@ function buildLegalReferenceCard(legal: LegalReferenceData, ak: AppKeys, isCompl
       Column({ space: 4 }) {
         Text('昼间限值')
           .fontSize(12)
-          .fontColor($r('sys.color.font_secondary'));
+          .fontColor($r('app.color.font_secondary'));
 
         Text(`${legal.dayLimit} dB`)
           .fontSize(14)
@@ -177,7 +177,7 @@ function buildLegalReferenceCard(legal: LegalReferenceData, ak: AppKeys, isCompl
       Column({ space: 4 }) {
         Text('夜间限值')
           .fontSize(12)
-          .fontColor($r('sys.color.font_secondary'));
+          .fontColor($r('app.color.font_secondary'));
 
         Text(`${legal.nightLimit} dB`)
           .fontSize(14)
@@ -192,15 +192,15 @@ function buildLegalReferenceCard(legal: LegalReferenceData, ak: AppKeys, isCompl
     Row() {
       Text('符合状态:')
         .fontSize(12)
-        .fontColor($r('sys.color.font_secondary'));
+        .fontColor($r('app.color.font_secondary'));
 
       Text(isCompliant ? '符合法规' : '超出法规限值')
         .fontSize(12)
         .fontWeight(FontWeight.Medium)
-        .fontColor($r('sys.color.font_secondary'))
+        .fontColor($r('app.color.font_secondary'))
         .margin({ left: 8 })
         .padding({ left: 8, right: 8, top: 2, bottom: 2 })
-        .backgroundColor(isCompliant ? $r('sys.color.confirm') : $r('sys.color.alert'))
+        .backgroundColor(isCompliant ? $r('app.color.confirm') : $r('app.color.alert'))
         .opacity(0.9)
         .borderRadius(4);
     }
@@ -209,7 +209,7 @@ function buildLegalReferenceCard(legal: LegalReferenceData, ak: AppKeys, isCompl
     // 适用范围
     Text(`适用范围: ${legal.applicableScope}`)
       .fontSize(11)
-      .fontColor($r('sys.color.font_secondary'))
+      .fontColor($r('app.color.font_secondary'))
       .width('100%')
       .textAlign(TextAlign.Start);
 
@@ -217,7 +217,7 @@ function buildLegalReferenceCard(legal: LegalReferenceData, ak: AppKeys, isCompl
     if (legal.penalty && legal.penalty !== '技术规范') {
       Text(`处罚措施: ${legal.penalty}`)
         .fontSize(11)
-        .fontColor($r('sys.color.font_secondary'))
+        .fontColor($r('app.color.font_secondary'))
         .width('100%')
         .textAlign(TextAlign.Start);
     }
@@ -225,14 +225,14 @@ function buildLegalReferenceCard(legal: LegalReferenceData, ak: AppKeys, isCompl
     // 法规描述
     Text(legal.description)
       .fontSize(11)
-      .fontColor($r('sys.color.font_secondary'))
+      .fontColor($r('app.color.font_secondary'))
       .width('100%')
       .textAlign(TextAlign.Start);
   }
   .padding(12)
   .width('100%')
   .backgroundBlurStyle(BlurStyle.COMPONENT_ULTRA_THIN)
-  .backgroundColor($r('sys.color.comp_background_primary'))
+  .backgroundColor($r('app.color.comp_background_primary'))
   .borderRadius(12)
   .alignItems(HorizontalAlign.Start)
   .transition(TransitionEffect.OPACITY.animation({ curve: curves.springMotion(0.6, 0.8) })
@@ -304,9 +304,9 @@ struct LegalReferenceComponent {
         Text(item.label)
           .fontSize(14)
           .fontWeight(FontWeight.Medium)
-          .fontColor(this.selectedCategory === item.category ? $r('sys.color.font_primary') : $r('sys.color.font_secondary'))
+          .fontColor(this.selectedCategory === item.category ? $r('app.color.font_primary') : $r('app.color.font_secondary'))
           .padding(8)
-          .backgroundColor(this.selectedCategory === item.category ? $r('sys.color.comp_background_primary') : $r('sys.color.background_secondary'))
+          .backgroundColor(this.selectedCategory === item.category ? $r('app.color.comp_background_primary') : $r('app.color.background_secondary'))
           .borderRadius(8)
           .onClick(() => {
             Throttle.click(() => {
@@ -328,7 +328,7 @@ struct LegalReferenceComponent {
           Text('法规合规统计')
             .fontSize(16)
             .fontWeight(FontWeight.Bold)
-            .fontColor($r('sys.color.font_primary'))
+            .fontColor($r('app.color.font_primary'))
             .alignSelf(ItemAlign.Start);
 
           Row({ space: 12 }) {
@@ -336,11 +336,11 @@ struct LegalReferenceComponent {
               Text(this.getComplianceStats(this.ak.uiDisplayState.displayDb).compliant.toString())
                 .fontSize(18)
                 .fontWeight(FontWeight.Bold)
-                .fontColor($r('sys.color.confirm'));
+                .fontColor($r('app.color.confirm'));
 
               Text('合规')
                 .fontSize(12)
-                .fontColor($r('sys.color.font_secondary'));
+                .fontColor($r('app.color.font_secondary'));
             }
             .layoutWeight(1)
 
@@ -348,11 +348,11 @@ struct LegalReferenceComponent {
               Text(this.getComplianceStats(this.ak.uiDisplayState.displayDb).nonCompliant.toString())
                 .fontSize(18)
                 .fontWeight(FontWeight.Bold)
-                .fontColor($r('sys.color.alert'));
+                .fontColor($r('app.color.alert'))
 
               Text('不合规')
                 .fontSize(12)
-                .fontColor($r('sys.color.font_secondary'));
+                .fontColor($r('app.color.font_secondary'));
             }
             .layoutWeight(1)
 
@@ -360,17 +360,17 @@ struct LegalReferenceComponent {
               Text(this.getComplianceStats(this.ak.uiDisplayState.displayDb).total.toString())
                 .fontSize(18)
                 .fontWeight(FontWeight.Bold)
-                .fontColor($r('sys.color.font_primary'));
+                .fontColor($r('app.color.font_primary'))
 
               Text('总计')
                 .fontSize(12)
-                .fontColor($r('sys.color.font_secondary'));
+                .fontColor($r('app.color.font_secondary'));
             }
             .layoutWeight(1)
           }
           .width('100%')
           .padding(12)
-          .backgroundColor($r('sys.color.comp_background_primary'))
+          .backgroundColor($r('app.color.comp_background_primary'))
           .borderRadius(12)
         }
         .width('100%')
@@ -382,7 +382,7 @@ struct LegalReferenceComponent {
         Text(`${this.getCategoryLabel(this.selectedCategory)}法规`)
           .fontSize(16)
           .fontWeight(FontWeight.Bold)
-          .fontColor($r('sys.color.font_primary'))
+          .fontColor($r('app.color.font_primary'))
           .alignSelf(ItemAlign.Start);
 
         ForEach(this.getFilteredLegalData(), (legal: LegalReferenceData) => {
@@ -420,5 +420,5 @@ export function LegalReferenceDialogBuilder(ak: AppKeys) {
   }
   .title({ main: '法规政策参考', sub: '噪音相关法律法规参考' })
   .padding(16)
-  .backgroundColor($r('sys.color.background_secondary'))
+  .backgroundColor($r('app.color.background_secondary'))
 }

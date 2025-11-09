@@ -141,7 +141,7 @@ export class EnhancedDesignConstants extends DesignConstants {
   // 渐变配置
   static readonly GRADIENT_BRAND = {
     colors: [
-      $r('sys.color.brand'),
+      $r('app.color.brand_primary'),
       $r('app.color.brand_secondary')
     ],
     direction: GradientDirection.Right

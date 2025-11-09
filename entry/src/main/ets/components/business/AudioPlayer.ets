@@ -22,10 +22,10 @@ export struct AudioPlayer {
           Image($r('app.media.ic_stop'))
             .width(20)
             .height(20)
-            .fillColor($r('sys.color.font_primary'))
+            .fillColor($r('app.color.font_primary'))
         }
         .type(ButtonType.Normal)
-        .backgroundColor($r('sys.color.comp_background_secondary'))
+        .backgroundColor($r('app.color.comp_background_secondary'))
         .margin({ right: 8 })
         .onClick(async () => {
           Throttle.click(async () => {
@@ -45,7 +45,7 @@ export struct AudioPlayer {
             $r('app.media.ic_play'))
             .width(20)
             .height(20)
-            .fillColor($r('sys.color.font_primary'))
+            .fillColor($r('app.color.font_primary'))
             .margin({ right: 8 })
           Text(this.playerState === 'playing' ? '暂停播放' :
             this.playerState === 'paused' ? '继续播放' : '播放录音')
@@ -54,7 +54,7 @@ export struct AudioPlayer {
         .justifyContent(FlexAlign.Center)
       }
       .type(ButtonType.Capsule)
-      .backgroundColor($r('sys.color.comp_background_secondary'))
+      .backgroundColor($r('app.color.comp_background_secondary'))
       .height(36)
       .padding({ left: 16, right: 16 })
       .onClick(async () => {

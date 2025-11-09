@@ -137,7 +137,7 @@ export struct DecibelHistory {
       }
       .width('100%')
       .height('100%')
-    }.title(this.TitleBuilder).backgroundColor($r('sys.color.background_secondary')).menus([
+    }.title(this.TitleBuilder).backgroundColor($r('app.color.background_secondary')).menus([
       {
         value: '',
         icon: $r('app.media.ic_filter'),
@@ -177,7 +177,7 @@ export struct DecibelHistory {
         })
       }
       .width('85%')
-      .backgroundColor($r('sys.color.comp_background_primary'))
+      .backgroundColor($r('app.color.comp_background_primary'))
       .borderRadius(DesignConstants.BORDER_RADIUS_LG)
       .shadow({
         radius: 16,
@@ -330,7 +330,7 @@ export struct DecibelHistory {
       // 右侧区域：分贝值信息
       this.decibelInfoPlayer(record) // 禁止收缩
     }
-    .backgroundColor($r('sys.color.comp_background_primary'))
+    .backgroundColor($r('app.color.comp_background_primary'))
     .justifyContent(FlexAlign.SpaceBetween)
     .alignItems(VerticalAlign.Top)
     .padding(16)
@@ -361,7 +361,7 @@ export struct DecibelHistory {
           Button('删除并清空检测报告')
             .height(36)
             .type(ButtonType.Capsule)
-            .backgroundColor($r('sys.color.warning'))
+            .backgroundColor($r('app.color.warning'))
             .animation({ curve: Curve.EaseInOut })
             .transition(TransitionEffect.scale({ x: 0, y: 0 })
               .combine(TransitionEffect.opacity(1))
@@ -375,7 +375,7 @@ export struct DecibelHistory {
           Button('删除')
             .height(36)
             .type(ButtonType.Capsule)
-            .backgroundColor($r('sys.color.alert'))
+            .backgroundColor($r('app.color.alert'))
             .animation({ curve: Curve.EaseInOut })
             .transition(TransitionEffect.scale({ x: 0, y: 0 })
               .combine(TransitionEffect.opacity(1))
@@ -394,7 +394,7 @@ export struct DecibelHistory {
           Button('确认删除音频文件')
             .height(36)
             .type(ButtonType.Capsule)
-            .backgroundColor($r('sys.color.warning'))
+            .backgroundColor($r('app.color.warning'))
             .animation({ curve: Curve.EaseInOut })
             .transition(TransitionEffect.scale({ x: 0, y: 0 })
               .combine(TransitionEffect.opacity(1))
@@ -409,7 +409,7 @@ export struct DecibelHistory {
             Button('删除音频文件')
               .height(36)
               .type(ButtonType.Capsule)
-              .backgroundColor($r('sys.color.alert'))
+              .backgroundColor($r('app.color.alert'))
               .animation({ curve: Curve.EaseInOut })
               .transition(TransitionEffect.scale({ x: 0, y: 0 })
                 .combine(TransitionEffect.opacity(1))
@@ -649,7 +649,7 @@ export struct DecibelHistory {
       };
       let detailDialog = DialogHub.getSheet()
         .setComponentTargetId('mainId')
-        .setStyle({ backgroundColor: $r('sys.color.background_secondary') })
+        .setStyle({ backgroundColor: $r('app.color.background_secondary') })
         .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS })
         .setContent(wrapBuilder(DetailDialogBuilder), params)
         .build();
@@ -670,13 +670,13 @@ export struct DecibelHistory {
         Text(this.currentModeName)
           .fontSize(DesignConstants.FONT_SIZE_2XL) // 使用标准标题字体大小
           .fontWeight(FontWeight.Bold)
-          .fontColor($r('sys.color.font_primary'))
+          .fontColor($r('app.color.font_primary'))
 
         Button() {
           Image($r('app.media.ic_close'))
             .width(24)
             .height(24)
-            .fillColor($r('sys.color.warning'))
+            .fillColor($r('app.color.warning'))
         }
         .type(ButtonType.Circle)
         .backgroundColor(Color.Transparent)
@@ -698,7 +698,7 @@ export struct DecibelHistory {
       Text('历史记录')
         .fontSize(DesignConstants.FONT_SIZE_2XL) // 使用标准标题字体大小
         .fontWeight(FontWeight.Bold)
-        .fontColor($r('sys.color.font_primary'))
+        .fontColor($r('app.color.font_primary'))
         .textAlign(TextAlign.Start)     // 靠左对齐
         .width('100%')
         .height('100%')                 // 确保垂直居中
@@ -716,11 +716,11 @@ export struct DecibelHistory {
           Image($r('app.media.ic_favorite'))
             .width(20)
             .height(20)
-            .fillColor($r('sys.color.brand'))
+            .fillColor($r('app.color.brand'))
             .margin({ right: 8 })
           Text('收藏')
             .fontSize(16)
-            .fontColor($r('sys.color.font_primary'))
+            .fontColor($r('app.color.font_primary'))
         }
         .width('100%')
         .justifyContent(FlexAlign.Start)
@@ -728,7 +728,7 @@ export struct DecibelHistory {
       .width('100%')
       .height(40)
       .padding({ left: 16, right: 16 })
-      .backgroundColor($r('sys.color.comp_background_primary'))
+      .backgroundColor($r('app.color.comp_background_primary'))
       .borderRadius(8)
       .onClick(() => {
         this.shouChangMode = !this.shouChangMode;
@@ -749,11 +749,11 @@ export struct DecibelHistory {
           Image($r('app.media.ic_delete'))
             .width(20)
             .height(20)
-            .fillColor($r('sys.color.warning'))
+            .fillColor($r('app.color.warning'))
             .margin({ right: 8 })
           Text('删除记录')
             .fontSize(16)
-            .fontColor($r('sys.color.font_primary'))
+            .fontColor($r('app.color.font_primary'))
         }
         .width('100%')
         .justifyContent(FlexAlign.Start)
@@ -761,7 +761,7 @@ export struct DecibelHistory {
       .width('100%')
       .height(40)
       .padding({ left: 16, right: 16 })
-      .backgroundColor($r('sys.color.comp_background_primary'))
+      .backgroundColor($r('app.color.comp_background_primary'))
       .borderRadius(8)
       .onClick(() => {
         this.deleteRecordMode = !this.deleteRecordMode;
@@ -782,11 +782,11 @@ export struct DecibelHistory {
           Image($r('app.media.ic_audio_analysis'))
             .width(20)
             .height(20)
-            .fillColor($r('sys.color.warning'))
+            .fillColor($r('app.color.warning'))
             .margin({ right: 8 })
           Text('删除音频')
             .fontSize(16)
-            .fontColor($r('sys.color.font_primary'))
+            .fontColor($r('app.color.font_primary'))
         }
         .width('100%')
         .justifyContent(FlexAlign.Start)
@@ -794,7 +794,7 @@ export struct DecibelHistory {
       .width('100%')
       .height(40)
       .padding({ left: 16, right: 16 })
-      .backgroundColor($r('sys.color.comp_background_primary'))
+      .backgroundColor($r('app.color.comp_background_primary'))
       .borderRadius(8)
       .onClick(() => {
         this.deleteAudioMode = !this.deleteAudioMode;
@@ -819,7 +819,7 @@ export struct DecibelHistory {
     Column() {
       Image($r('app.media.ic_empty'))
         .width(120)
-        .fillColor($r('sys.color.font_primary'))
+        .fillColor($r('app.color.font_primary'))
         .height(120)
         .margin({ bottom: DesignConstants.SPACING_LG })
       Text('暂无检测记录')
@@ -876,7 +876,7 @@ export struct DecibelHistory {
         } else if (this.totalRecords > 0) {
           Text('已加载全部记录')
             .fontSize(DesignConstants.FONT_SIZE_SM)
-            .fontColor($r('sys.color.font_secondary'))
+            .fontColor($r('app.color.font_secondary'))
             .textAlign(TextAlign.Center)
             .alignSelf(ItemAlign.Center)
             .margin({ top: 16 })
@@ -905,15 +905,15 @@ export struct DecibelHistory {
           .enableLoading(true)
           .width(32)
           .height(32)
-          .color($r('sys.color.font_primary'))
+          .color($r('app.color.font_primary'))
         Text('正在加载更多记录...')
           .fontSize(DesignConstants.FONT_SIZE_SM)
-          .fontColor($r('sys.color.font_secondary'))
+          .fontColor($r('app.color.font_secondary'))
           .margin({ top: 8 })
       } else {
         Text('滚动加载更多记录')
           .fontSize(DesignConstants.FONT_SIZE_SM)
-          .fontColor($r('sys.color.font_secondary'))
+          .fontColor($r('app.color.font_secondary'))
       }
     }
     .width('100%')

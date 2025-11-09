@@ -100,7 +100,7 @@ export struct FrequencyWeightingDialog {
     .width('92%')
     .alignItems(VerticalAlign.Center)
     .justifyContent(FlexAlign.SpaceAround)
-    .backgroundColor($r('sys.color.comp_background_primary'))
+    .backgroundColor($r('app.color.comp_background_primary'))
     .margin(16)
     .borderRadius(16)
     .height(56)
@@ -132,29 +132,29 @@ export struct FrequencyWeightingDialog {
         .width(DesignConstants.ICON_SIZE_SM)
         .height(DesignConstants.ICON_SIZE_SM)
         .fillColor(this.tempSelectedWeighting === weighting ?
-        $r('sys.color.font_on_primary') :
+        $r('app.color.font_on_primary') :
           (this.hoveredWeighting === weighting ?
-          $r('sys.color.interactive_active') :
-          $r('sys.color.font_primary')))
+          $r('app.color.interactive_active') :
+          $r('app.color.font_primary')))
 
       // 计权类型名称
       Text(displayName)
         .fontSize(DesignConstants.FONT_SIZE_MD)
         .fontWeight(this.tempSelectedWeighting === weighting ? FontWeight.Bold : FontWeight.Medium)
         .fontColor(this.tempSelectedWeighting === weighting ?
-        $r('sys.color.font_on_primary') :
+        $r('app.color.font_on_primary') :
           (this.hoveredWeighting === weighting ?
-          $r('sys.color.interactive_active') :
-          $r('sys.color.font_primary')))
+          $r('app.color.interactive_active') :
+          $r('app.color.font_primary')))
     }
     .alignItems(VerticalAlign.Center)
     .justifyContent(FlexAlign.Center)
     .height(56)
     .backgroundColor(this.tempSelectedWeighting === weighting ?
-    $r('sys.color.interactive_active') :
+    $r('app.color.interactive_active') :
       (this.hoveredWeighting === weighting ?
-      $r('sys.color.comp_background_secondary') :
-      $r('sys.color.comp_background_primary')))
+      $r('app.color.comp_background_secondary') :
+      $r('app.color.comp_background_primary')))
     .borderRadius(DesignConstants.BORDER_RADIUS_MD)
     .padding(DesignConstants.SPACING_MD)
     .onClick(() => {
@@ -254,7 +254,7 @@ export struct FrequencyWeightingDialog {
         .width('100%')
         .margin({ bottom: 72 })
         .padding(DesignConstants.SPACING_LG)
-        .backgroundColor($r('sys.color.background_secondary'))
+        .backgroundColor($r('app.color.background_secondary'))
         .alignItems(HorizontalAlign.Start)
       }
       .scrollBar(BarState.Auto)
@@ -267,7 +267,7 @@ export struct FrequencyWeightingDialog {
     }
     .width('100%')
     .height('100%')
-    .backgroundColor($r('sys.color.background_secondary'))
+    .backgroundColor($r('app.color.background_secondary'))
     .justifyContent(FlexAlign.Start)
   }
 }

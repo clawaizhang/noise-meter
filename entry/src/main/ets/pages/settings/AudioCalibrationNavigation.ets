@@ -150,7 +150,7 @@ export struct AudioCalibrationSettings {
         .width('100%')
         .margin({ bottom: 72 })
         .padding(DesignConstants.SPACING_LG)
-        .backgroundColor($r('sys.color.background_secondary'))
+        .backgroundColor($r('app.color.background_secondary'))
         .alignItems(HorizontalAlign.Start)
       }
       .scrollBar(BarState.Auto)

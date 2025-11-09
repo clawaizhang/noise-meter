@@ -28,7 +28,7 @@ export class ToolConfigFactory {
       usageHint: '确保测量精度的关键步骤',
       learnMore: () => this.showLearnMore('校准'),
       getStatus: () => `当前: ${this.pk.calibration_value}dB`,
-      getStatusColor: () => $r('sys.color.font_primary'),
+      getStatusColor: () => $r('app.color.font_primary'),
       onTap: navigateToAudioCalibration
     };
   }
@@ -45,7 +45,7 @@ export class ToolConfigFactory {
       usageHint: 'A计权适用于环境噪声测量',
       learnMore: () => this.showLearnMore('频率加权'),
       getStatus: () => getWeightingDisplayName(this.pk.weighting_type),
-      getStatusColor: () => $r('sys.color.font_primary'),
+      getStatusColor: () => $r('app.color.font_primary'),
       onTap: navigateToFrequencyWeighting
     };
   }
@@ -62,7 +62,7 @@ export class ToolConfigFactory {
       usageHint: '快速模式适用于实时测量',
       learnMore: () => this.showLearnMore('时间加权'),
       getStatus: () => getAnalysisModeDisplayName(this.pk.audio_analysis_mode),
-      getStatusColor: () => $r('sys.color.font_primary'),
+      getStatusColor: () => $r('app.color.font_primary'),
       onTap: navigateToAudioAnalysisMode
     };
   }
@@ -78,7 +78,7 @@ export class ToolConfigFactory {
       priority: ToolPriority.RECOMMENDED,
       usageHint: '记录音频用于后续分析',
       getStatus: () => this.pk.record_enabled ? '已开启' : '已关闭',
-      getStatusColor: () => this.pk.record_enabled ? $r('sys.color.confirm') : $r('sys.color.font_secondary'),
+      getStatusColor: () => this.pk.record_enabled ? $r('app.color.confirm') : $r('app.color.font_secondary'),
       onTap: toggleAudioRecording
     };
   }
@@ -94,7 +94,7 @@ export class ToolConfigFactory {
       priority: ToolPriority.ESSENTIAL,
       usageHint: '防止数据丢失的重要功能',
       getStatus: () => this.pk.auto_save_enabled ? '已开启' : '已关闭',
-      getStatusColor: () => this.pk.auto_save_enabled ? $r('sys.color.confirm') : $r('sys.color.font_secondary'),
+      getStatusColor: () => this.pk.auto_save_enabled ? $r('app.color.confirm') : $r('app.color.font_secondary'),
       onTap: navigateToAutoSave
     };
   }
@@ -127,7 +127,7 @@ export class ToolConfigFactory {
       usageHint: '选择最适合的分析视图',
       learnMore: () => this.showLearnMore('频谱显示'),
       getStatus: () => getSpectrumDisplayModeText(),
-      getStatusColor: () => $r('sys.color.font_primary'),
+      getStatusColor: () => $r('app.color.font_primary'),
       onTap: navigateToSpectrumDisplaySettings
     };
   }
@@ -144,7 +144,7 @@ export class ToolConfigFactory {
       usageHint: '及时响应噪声超标',
       learnMore: () => this.showLearnMore('警报系统'),
       getStatus: () => `阈值: ${this.pk.alarm_threshold.currentEffectiveThreshold}dB`,
-      getStatusColor: () => $r('sys.color.font_primary'),
+      getStatusColor: () => $r('app.color.font_primary'),
       onTap: navigateToAlerts
     };
   }
@@ -161,7 +161,7 @@ export class ToolConfigFactory {
       usageHint: '更高采样率提供更精确的分析',
       learnMore: () => this.showLearnMore('采样率'),
       getStatus: () => getSampleRateDisplayText(),
-      getStatusColor: () => $r('sys.color.font_primary'),
+      getStatusColor: () => $r('app.color.font_primary'),
       onTap: navigateToSampleRateSettings
     };
   }
@@ -178,7 +178,7 @@ export class ToolConfigFactory {
       usageHint: '不同窗函数适用于不同信号类型',
       learnMore: () => this.showLearnMore('窗函数'),
       getStatus: () => getWindowFunctionDisplayName(this.pk.window_function_type),
-      getStatusColor: () => $r('sys.color.font_primary'),
+      getStatusColor: () => $r('app.color.font_primary'),
       onTap: navigateToWindowFunctionSettings
     };
   }
@@ -195,7 +195,7 @@ export class ToolConfigFactory {
       usageHint: '精细调整窗函数特性',
       learnMore: () => this.showLearnMore('窗函数参数'),
       getStatus: () => getWindowParamsDisplayName(),
-      getStatusColor: () => $r('sys.color.font_primary'),
+      getStatusColor: () => $r('app.color.font_primary'),
       onTap: navigateToWindowFunctionParamsSettings
     };
   }

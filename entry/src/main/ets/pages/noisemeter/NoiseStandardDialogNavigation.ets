@@ -11,13 +11,13 @@ function buildNoiseStandardCard(standard: NoiseStandard, ak: AppKeys) {
     Text(standard.typeName)
       .fontSize(16)
       .fontWeight(FontWeight.Bold)
-      .fontColor($r('sys.color.font_primary'));
+      .fontColor($r('app.color.font_primary'));
 
     // 白天分贝
     Row() {
       Text('白天')
         .fontSize(16)
-        .fontColor($r('sys.color.font_secondary'));
+        .fontColor($r('app.color.font_secondary'));
       Text(`${standard.dayLimit} dB`)
         .fontColor(DecibelService.getDecibelColor(standard.dayLimit))
         .fontWeight(FontWeight.Bold)
@@ -25,7 +25,7 @@ function buildNoiseStandardCard(standard: NoiseStandard, ak: AppKeys) {
 
       Text('夜间')
         .fontSize(16)
-        .fontColor($r('sys.color.font_secondary')).margin({ left: 16 });
+        .fontColor($r('app.color.font_secondary')).margin({ left: 16 });
       Text(`${standard.nightLimit} dB`)
         .fontColor(DecibelService.getDecibelColor(standard.nightLimit))
         .fontWeight(FontWeight.Bold)
@@ -34,14 +34,14 @@ function buildNoiseStandardCard(standard: NoiseStandard, ak: AppKeys) {
 
     Text(standard.description)
       .fontSize(14)
-      .fontColor($r('sys.color.font_secondary'));
+      .fontColor($r('app.color.font_secondary'));
 
   }
   .padding(16)
   .width('100%')
   .backgroundBlurStyle(ak.uiDisplayState.displayDb < standard.dayLimit ? BlurStyle.COMPONENT_ULTRA_THIN : BlurStyle.NONE)
-  .backgroundColor(ak.uiDisplayState.displayDb < standard.dayLimit ? $r('sys.color.comp_background_primary') :
-  $r('sys.color.warning'))
+  .backgroundColor(ak.uiDisplayState.displayDb < standard.dayLimit ? $r('app.color.comp_background_primary') :
+  $r('app.color.warning'))
   .borderRadius(16)
   .alignItems(HorizontalAlign.Start)
   .transition(TransitionEffect.OPACITY.animation({ curve: curves.springMotion(0.6, 0.8) }) // 透明度动画，使用springMotion曲线
@@ -65,5 +65,5 @@ export function NoiseStandardDialogBuilder(ak: AppKeys) {
   }
   .title({ main: '噪音参考标准', sub: '白天：6:00-22:00，夜间：22:00-6:00' })
   .padding(16)
-  .backgroundColor($r('sys.color.background_secondary'))
+  .backgroundColor($r('app.color.background_secondary'))
 }

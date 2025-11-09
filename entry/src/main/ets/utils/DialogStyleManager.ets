@@ -27,7 +27,7 @@ export class DialogStyleManager {
     DialogStyleManager.dialogs.forEach(dialog => {
       try {
         dialog.updateStyle({
-          backgroundColor: $r('sys.color.background_secondary')
+          backgroundColor: $r('app.color.background_secondary')
         });
       } catch (error) {
         // Dialog可能已销毁，从集合中移除

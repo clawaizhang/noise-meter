@@ -129,7 +129,7 @@ export struct TimeWeightingDialog {
       Row({ space: DesignConstants.SPACING_MD }) {
         Text('自定义模式')
           .fontSize(DesignConstants.FONT_SIZE_MD)
-          .fontColor($r('sys.color.font_primary'))
+          .fontColor($r('app.color.font_primary'))
           .fontWeight(FontWeight.Medium)
           .layoutWeight(1)
 
@@ -141,7 +141,7 @@ export struct TimeWeightingDialog {
       .justifyContent(FlexAlign.Center)
       .alignItems(VerticalAlign.Center)
       .width('100%')
-      .backgroundColor($r('sys.color.comp_background_primary'))
+      .backgroundColor($r('app.color.comp_background_primary'))
       .padding(16)
       .borderRadius(16)
       .height(56)
@@ -168,7 +168,7 @@ export struct TimeWeightingDialog {
         }
       })
     }
-    .backgroundColor($r('sys.color.comp_background_primary'))
+    .backgroundColor($r('app.color.comp_background_primary'))
     .margin({ left: 16, right: 16, bottom: 16 })
     .borderRadius(16)
     .height(56)
@@ -183,30 +183,30 @@ export struct TimeWeightingDialog {
         .width(DesignConstants.ICON_SIZE_SM)
         .height(DesignConstants.ICON_SIZE_SM)
         .fillColor(this.tempSelectedMode === mode ?
-        $r('sys.color.font_on_primary') :
+        $r('app.color.font_on_primary') :
           (this.hoveredMode === mode ?
-          $r('sys.color.interactive_active') :
-          $r('sys.color.font_primary')));
+          $r('app.color.interactive_active') :
+          $r('app.color.font_primary')));
 
       // 模式名称
       Text(TimeWeightingConstants.MODE_DISPLAY_NAMES[mode])
         .fontSize(DesignConstants.FONT_SIZE_MD)
         .fontWeight(this.tempSelectedMode === mode ? FontWeight.Bold : FontWeight.Medium)
         .fontColor(this.tempSelectedMode === mode ?
-        $r('sys.color.font_on_primary') :
+        $r('app.color.font_on_primary') :
           (this.hoveredMode === mode ?
-          $r('sys.color.interactive_active') :
-          $r('sys.color.font_primary')));
+          $r('app.color.interactive_active') :
+          $r('app.color.font_primary')));
     }
     .alignItems(VerticalAlign.Center)
     .justifyContent(FlexAlign.Center)
     .layoutWeight(1)
     .height(56)
     .backgroundColor(this.tempSelectedMode === mode ?
-    $r('sys.color.interactive_active') :
+    $r('app.color.interactive_active') :
       (this.hoveredMode === mode ?
-      $r('sys.color.comp_background_secondary') :
-      $r('sys.color.comp_background_primary')))
+      $r('app.color.comp_background_secondary') :
+      $r('app.color.comp_background_primary')))
     .borderRadius(DesignConstants.BORDER_RADIUS_MD)
     .padding(DesignConstants.SPACING_MD)
     .onClick(() => {
@@ -314,7 +314,7 @@ export struct TimeWeightingDialog {
           .width('100%')
           .margin({ bottom: 72 })
           .padding(DesignConstants.SPACING_LG)
-          .backgroundColor($r('sys.color.background_secondary'))
+          .backgroundColor($r('app.color.background_secondary'))
           .alignItems(HorizontalAlign.Start)
         }
         .scrollBar(BarState.Auto)
@@ -350,7 +350,7 @@ export struct TimeWeightingDialog {
     }
     .width('100%')
     .height('100%')
-    .backgroundColor($r('sys.color.background_secondary'))
+    .backgroundColor($r('app.color.background_secondary'))
     .justifyContent(FlexAlign.Start)
   }
 }

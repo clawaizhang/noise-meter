@@ -43,11 +43,11 @@ export function DetailDialogBuilder(param: DetailDialogParams) {
           }) {
             NoiseChart({ playAudio: true, selectedRecord: param.selectedRecord })
           }
-        }.id("detailDialogRoot").backgroundColor($r('sys.color.background_secondary'))
+        }.id("detailDialogRoot").backgroundColor($r('app.color.background_secondary'))
       }.scrollBar(BarState.Off).edgeEffect(EdgeEffect.Spring)
     }
   }
   .title('噪音检测报告')
   .padding(16)
-  .backgroundColor($r('sys.color.background_secondary'))
+  .backgroundColor($r('app.color.background_secondary'))
 }

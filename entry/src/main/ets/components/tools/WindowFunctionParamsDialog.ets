@@ -43,7 +43,7 @@ export struct WindowFunctionParamsDialogBuilder {
         Text('窗函数参数设置')
           .fontSize(DesignConstants.FONT_SIZE_XL)
           .fontWeight(FontWeight.Bold)
-          .fontColor($r('sys.color.font_primary'))
+          .fontColor($r('app.color.font_primary'))
           .textAlign(TextAlign.Start)
         
         Blank()
@@ -52,7 +52,7 @@ export struct WindowFunctionParamsDialogBuilder {
         Image($r('app.media.ic_close'))
           .width(24)
           .height(24)
-          .fillColor($r('sys.color.icon_secondary'))
+          .fillColor($r('app.color.icon_secondary'))
           .onClick(() => {
             this.params.onClose();
           })
@@ -65,23 +65,23 @@ export struct WindowFunctionParamsDialogBuilder {
         Text('窗函数类型')
           .fontSize(DesignConstants.FONT_SIZE_MD)
           .fontWeight(FontWeight.Medium)
-          .fontColor($r('sys.color.font_primary'))
+          .fontColor($r('app.color.font_primary'))
           .width('100%')
           .textAlign(TextAlign.Start)
         
         Row() {
           Text('当前选择: ')
             .fontSize(DesignConstants.FONT_SIZE_SM)
-            .fontColor($r('sys.color.font_secondary'))
+            .fontColor($r('app.color.font_secondary'))
           
           Text(this.getWindowDisplayName(this.selectedWindowType))
             .fontSize(DesignConstants.FONT_SIZE_SM)
             .fontWeight(FontWeight.Medium)
-            .fontColor($r('sys.color.font_primary'))
+            .fontColor($r('app.color.font_primary'))
         }
         .width('100%')
         .padding(DesignConstants.SPACING_SM)
-        .backgroundColor($r('sys.color.comp_background_tertiary'))
+        .backgroundColor($r('app.color.comp_background_tertiary'))
         .borderRadius(DesignConstants.BORDER_RADIUS_MD)
         .margin({ bottom: DesignConstants.SPACING_MD })
       }
@@ -128,8 +128,8 @@ export struct WindowFunctionParamsDialogBuilder {
           .width('48%')
           .height(48)
           .fontSize(DesignConstants.FONT_SIZE_MD)
-          .fontColor($r('sys.color.font_primary'))
-          .backgroundColor($r('sys.color.comp_background_secondary'))
+          .fontColor($r('app.color.font_primary'))
+          .backgroundColor($r('app.color.comp_background_secondary'))
           .borderRadius(DesignConstants.BORDER_RADIUS_MD)
           .onClick(() => {
             this.params.onClose();
@@ -139,8 +139,8 @@ export struct WindowFunctionParamsDialogBuilder {
           .width('48%')
           .height(48)
           .fontSize(DesignConstants.FONT_SIZE_MD)
-          .fontColor($r('sys.color.font_primary'))
-          .backgroundColor($r('sys.color.confirm'))
+          .fontColor($r('app.color.font_primary'))
+          .backgroundColor($r('app.color.confirm'))
           .borderRadius(DesignConstants.BORDER_RADIUS_MD)
           .onClick(() => {
             this.params.onSettingsApplied(
@@ -159,7 +159,7 @@ export struct WindowFunctionParamsDialogBuilder {
     }
     .width('100%')
     .padding(DesignConstants.SPACING_LG)
-    .backgroundColor($r('sys.color.background_secondary'))
+    .backgroundColor($r('app.color.background_secondary'))
     .borderRadius({ topLeft: DesignConstants.BORDER_RADIUS_XL, topRight: DesignConstants.BORDER_RADIUS_XL })
   }
 
@@ -169,24 +169,24 @@ export struct WindowFunctionParamsDialogBuilder {
       Text('Kaiser窗参数')
         .fontSize(DesignConstants.FONT_SIZE_MD)
         .fontWeight(FontWeight.Medium)
-        .fontColor($r('sys.color.font_primary'))
+        .fontColor($r('app.color.font_primary'))
       
       Text('Beta参数控制旁瓣衰减，值越大旁瓣衰减越好，但主瓣越宽')
         .fontSize(DesignConstants.FONT_SIZE_SM)
-        .fontColor($r('sys.color.font_secondary'))
+        .fontColor($r('app.color.font_secondary'))
         .width('100%')
         .margin({ bottom: DesignConstants.SPACING_SM })
       
       Row() {
         Text(`Beta值: ${this.kaiserBeta.toFixed(1)}`)
           .fontSize(DesignConstants.FONT_SIZE_SM)
-          .fontColor($r('sys.color.font_primary'))
+          .fontColor($r('app.color.font_primary'))
         
         Blank()
         
         Text('范围: 1.0 - 12.0')
           .fontSize(DesignConstants.FONT_SIZE_SM)
-          .fontColor($r('sys.color.font_secondary'))
+          .fontColor($r('app.color.font_secondary'))
       }
       .width('100%')
       .margin({ bottom: DesignConstants.SPACING_SM })
@@ -199,16 +199,16 @@ export struct WindowFunctionParamsDialogBuilder {
         style: SliderStyle.InSet
       })
         .width('100%')
-        .trackColor($r('sys.color.comp_background_tertiary'))
-        .selectedColor($r('sys.color.confirm'))
-        .blockColor($r('sys.color.confirm'))
+        .trackColor($r('app.color.comp_background_tertiary'))
+        .selectedColor($r('app.color.confirm'))
+        .blockColor($r('app.color.confirm'))
         .onChange((value: number) => {
           this.kaiserBeta = value;
         })
     }
     .width('100%')
     .padding(DesignConstants.SPACING_MD)
-    .backgroundColor($r('sys.color.comp_background_primary'))
+    .backgroundColor($r('app.color.comp_background_primary'))
     .borderRadius(DesignConstants.BORDER_RADIUS_MD)
   }
 
@@ -218,24 +218,24 @@ export struct WindowFunctionParamsDialogBuilder {
       Text('Gaussian窗参数')
         .fontSize(DesignConstants.FONT_SIZE_MD)
         .fontWeight(FontWeight.Medium)
-        .fontColor($r('sys.color.font_primary'))
+        .fontColor($r('app.color.font_primary'))
       
       Text('Sigma参数控制窗函数的标准差，值越大窗函数越宽')
         .fontSize(DesignConstants.FONT_SIZE_SM)
-        .fontColor($r('sys.color.font_secondary'))
+        .fontColor($r('app.color.font_secondary'))
         .width('100%')
         .margin({ bottom: DesignConstants.SPACING_SM })
       
       Row() {
         Text(`Sigma值: ${this.gaussianSigma.toFixed(2)}`)
           .fontSize(DesignConstants.FONT_SIZE_SM)
-          .fontColor($r('sys.color.font_primary'))
+          .fontColor($r('app.color.font_primary'))
         
         Blank()
         
         Text('范围: 0.1 - 1.0')
           .fontSize(DesignConstants.FONT_SIZE_SM)
-          .fontColor($r('sys.color.font_secondary'))
+          .fontColor($r('app.color.font_secondary'))
       }
       .width('100%')
       .margin({ bottom: DesignConstants.SPACING_SM })
@@ -248,16 +248,16 @@ export struct WindowFunctionParamsDialogBuilder {
         style: SliderStyle.InSet
       })
         .width('100%')
-        .trackColor($r('sys.color.comp_background_tertiary'))
-        .selectedColor($r('sys.color.confirm'))
-        .blockColor($r('sys.color.confirm'))
+        .trackColor($r('app.color.comp_background_tertiary'))
+        .selectedColor($r('app.color.confirm'))
+        .blockColor($r('app.color.confirm'))
         .onChange((value: number) => {
           this.gaussianSigma = value;
         })
     }
     .width('100%')
     .padding(DesignConstants.SPACING_MD)
-    .backgroundColor($r('sys.color.comp_background_primary'))
+    .backgroundColor($r('app.color.comp_background_primary'))
     .borderRadius(DesignConstants.BORDER_RADIUS_MD)
   }
 
@@ -267,24 +267,24 @@ export struct WindowFunctionParamsDialogBuilder {
       Text('Tukey窗参数')
         .fontSize(DesignConstants.FONT_SIZE_MD)
         .fontWeight(FontWeight.Medium)
-        .fontColor($r('sys.color.font_primary'))
+        .fontColor($r('app.color.font_primary'))
       
       Text('Alpha参数控制平坦部分的宽度比例，值越大平坦部分越宽')
         .fontSize(DesignConstants.FONT_SIZE_SM)
-        .fontColor($r('sys.color.font_secondary'))
+        .fontColor($r('app.color.font_secondary'))
         .width('100%')
         .margin({ bottom: DesignConstants.SPACING_SM })
       
       Row() {
         Text(`Alpha值: ${this.tukeyAlpha.toFixed(2)}`)
           .fontSize(DesignConstants.FONT_SIZE_SM)
-          .fontColor($r('sys.color.font_primary'))
+          .fontColor($r('app.color.font_primary'))
         
         Blank()
         
         Text('范围: 0.0 - 1.0')
           .fontSize(DesignConstants.FONT_SIZE_SM)
-          .fontColor($r('sys.color.font_secondary'))
+          .fontColor($r('app.color.font_secondary'))
       }
       .width('100%')
       .margin({ bottom: DesignConstants.SPACING_SM })
@@ -297,16 +297,16 @@ export struct WindowFunctionParamsDialogBuilder {
         style: SliderStyle.InSet
       })
         .width('100%')
-        .trackColor($r('sys.color.comp_background_tertiary'))
-        .selectedColor($r('sys.color.confirm'))
-        .blockColor($r('sys.color.confirm'))
+        .trackColor($r('app.color.comp_background_tertiary'))
+        .selectedColor($r('app.color.confirm'))
+        .blockColor($r('app.color.confirm'))
         .onChange((value: number) => {
           this.tukeyAlpha = value;
         })
     }
     .width('100%')
     .padding(DesignConstants.SPACING_MD)
-    .backgroundColor($r('sys.color.comp_background_primary'))
+    .backgroundColor($r('app.color.comp_background_primary'))
     .borderRadius(DesignConstants.BORDER_RADIUS_MD)
   }
 
@@ -316,24 +316,24 @@ export struct WindowFunctionParamsDialogBuilder {
       Text('Chebyshev窗参数')
         .fontSize(DesignConstants.FONT_SIZE_MD)
         .fontWeight(FontWeight.Medium)
-        .fontColor($r('sys.color.font_primary'))
+        .fontColor($r('app.color.font_primary'))
       
       Text('Attenuation参数控制旁瓣衰减，单位为dB')
         .fontSize(DesignConstants.FONT_SIZE_SM)
-        .fontColor($r('sys.color.font_secondary'))
+        .fontColor($r('app.color.font_secondary'))
         .width('100%')
         .margin({ bottom: DesignConstants.SPACING_SM })
       
       Row() {
         Text(`衰减值: ${this.chebyshevAttenuation.toFixed(0)}dB`)
           .fontSize(DesignConstants.FONT_SIZE_SM)
-          .fontColor($r('sys.color.font_primary'))
+          .fontColor($r('app.color.font_primary'))
         
         Blank()
         
         Text('范围: 40 - 100 dB')
           .fontSize(DesignConstants.FONT_SIZE_SM)
-          .fontColor($r('sys.color.font_secondary'))
+          .fontColor($r('app.color.font_secondary'))
       }
       .width('100%')
       .margin({ bottom: DesignConstants.SPACING_SM })
@@ -346,16 +346,16 @@ export struct WindowFunctionParamsDialogBuilder {
         style: SliderStyle.InSet
       })
         .width('100%')
-        .trackColor($r('sys.color.comp_background_tertiary'))
-        .selectedColor($r('sys.color.confirm'))
-        .blockColor($r('sys.color.confirm'))
+        .trackColor($r('app.color.comp_background_tertiary'))
+        .selectedColor($r('app.color.confirm'))
+        .blockColor($r('app.color.confirm'))
         .onChange((value: number) => {
           this.chebyshevAttenuation = value;
         })
     }
     .width('100%')
     .padding(DesignConstants.SPACING_MD)
-    .backgroundColor($r('sys.color.comp_background_primary'))
+    .backgroundColor($r('app.color.comp_background_primary'))
     .borderRadius(DesignConstants.BORDER_RADIUS_MD)
   }
 
@@ -365,22 +365,22 @@ export struct WindowFunctionParamsDialogBuilder {
       Text(`${this.getWindowDisplayName(this.selectedWindowType)}参数`)
         .fontSize(DesignConstants.FONT_SIZE_MD)
         .fontWeight(FontWeight.Medium)
-        .fontColor($r('sys.color.font_primary'))
+        .fontColor($r('app.color.font_primary'))
       
       Text('此窗函数使用固定参数，无需额外配置')
         .fontSize(DesignConstants.FONT_SIZE_SM)
-        .fontColor($r('sys.color.font_secondary'))
+        .fontColor($r('app.color.font_secondary'))
         .width('100%')
         .margin({ bottom: DesignConstants.SPACING_SM })
       
       Text('如需调整窗函数特性，请选择其他可调参数的窗函数')
         .fontSize(DesignConstants.FONT_SIZE_SM)
-        .fontColor($r('sys.color.font_secondary'))
+        .fontColor($r('app.color.font_secondary'))
         .width('100%')
     }
     .width('100%')
     .padding(DesignConstants.SPACING_MD)
-    .backgroundColor($r('sys.color.comp_background_primary'))
+    .backgroundColor($r('app.color.comp_background_primary'))
     .borderRadius(DesignConstants.BORDER_RADIUS_MD)
   }
 
@@ -441,7 +441,7 @@ export function showWindowFunctionParamsDialog(params: WindowFunctionParamsDialo
   return DialogHub.getSheet()
     .setStyle({
       showClose: false,
-      backgroundColor: $r('sys.color.comp_background_primary')
+      backgroundColor: $r('app.color.comp_background_primary')
     })
     .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS })
     .setComponentTargetId('mainId')

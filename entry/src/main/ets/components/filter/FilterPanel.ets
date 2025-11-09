@@ -60,7 +60,7 @@ export struct FilterPanel {
     }
     .width('100%')
     .padding(DesignConstants.SPACING_MD)
-    .backgroundColor($r('sys.color.comp_background_primary'))
+    .backgroundColor($r('app.color.comp_background_primary'))
     .borderRadius(DesignConstants.BORDER_RADIUS_LG)
     .shadow({ radius: 8, color: '#1A000000', offsetX: 0, offsetY: 2 })
   }
@@ -74,12 +74,12 @@ export struct FilterPanel {
       Text('分贝范围')
         .fontSize(DesignConstants.FONT_SIZE_LG)
         .fontWeight(FontWeight.Bold)
-        .fontColor($r('sys.color.font_primary'))
+        .fontColor($r('app.color.font_primary'))
         .alignSelf(ItemAlign.Start)
 
       Text('基于平均分贝值')
         .fontSize(DesignConstants.FONT_SIZE_XS)
-        .fontColor($r('sys.color.font_secondary'))
+        .fontColor($r('app.color.font_secondary'))
         .alignSelf(ItemAlign.Start)
         .margin({ bottom: DesignConstants.SPACING_SM })
 
@@ -104,13 +104,13 @@ export struct FilterPanel {
                 group: 'decibelRanges'
               })
               .select(this.isDecibelRangeSelected(range))
-              .selectedColor($r('sys.color.brand'))
+              .selectedColor($r('app.color.brand'))
               .onChange((value: boolean) => {
                 this.toggleDecibelRange(range, value);
               })
               Text(range.desc)
                 .fontSize(DesignConstants.FONT_SIZE_XS)
-                .fontColor($r('sys.color.font_primary'))
+                .fontColor($r('app.color.font_primary'))
                 .maxLines(1)
                 .textOverflow({ overflow: TextOverflow.Ellipsis })
                 .layoutWeight(1)
@@ -120,7 +120,7 @@ export struct FilterPanel {
             .width('100%')
           }
           .padding({ left: 8, right: 8, top: 6, bottom: 6 })
-          .backgroundColor($r('sys.color.comp_background_secondary'))
+          .backgroundColor($r('app.color.comp_background_secondary'))
           .borderRadius(DesignConstants.BORDER_RADIUS_MD)
           .width('100%')
           .onClick(() => {
@@ -135,7 +135,7 @@ export struct FilterPanel {
       Row({ space: DesignConstants.SPACING_SM }) {
         Text('自定义:')
           .fontSize(DesignConstants.FONT_SIZE_SM)
-          .fontColor($r('sys.color.font_primary'))
+          .fontColor($r('app.color.font_primary'))
 
         TextInput({ placeholder: '最小值' })
           .width(80)
@@ -143,7 +143,7 @@ export struct FilterPanel {
           .type(InputType.Number)
           .maxLength(3)
           .textAlign(TextAlign.Center)
-          .backgroundColor($r('sys.color.comp_background_secondary'))
+          .backgroundColor($r('app.color.comp_background_secondary'))
           .borderRadius(DesignConstants.BORDER_RADIUS_MD)
           .onChange((value: string) => {
             this.customMinDecibel = value;
@@ -151,7 +151,7 @@ export struct FilterPanel {
 
         Text('-')
           .fontSize(DesignConstants.FONT_SIZE_SM)
-          .fontColor($r('sys.color.font_secondary'))
+          .fontColor($r('app.color.font_secondary'))
 
         TextInput({ placeholder: '最大值' })
           .width(80)
@@ -159,7 +159,7 @@ export struct FilterPanel {
           .type(InputType.Number)
           .maxLength(3)
           .textAlign(TextAlign.Center)
-          .backgroundColor($r('sys.color.comp_background_secondary'))
+          .backgroundColor($r('app.color.comp_background_secondary'))
           .borderRadius(DesignConstants.BORDER_RADIUS_MD)
           .onChange((value: string) => {
             this.customMaxDecibel = value;
@@ -167,7 +167,7 @@ export struct FilterPanel {
 
         Text('dB')
           .fontSize(DesignConstants.FONT_SIZE_SM)
-          .fontColor($r('sys.color.font_secondary'))
+          .fontColor($r('app.color.font_secondary'))
       }
       .justifyContent(FlexAlign.Start)
       .alignItems(VerticalAlign.Center)
@@ -186,7 +186,7 @@ export struct FilterPanel {
       Text('状态')
         .fontSize(DesignConstants.FONT_SIZE_LG)
         .fontWeight(FontWeight.Bold)
-        .fontColor($r('sys.color.font_primary'))
+        .fontColor($r('app.color.font_primary'))
         .alignSelf(ItemAlign.Start)
 
       GridRow({
@@ -208,7 +208,7 @@ export struct FilterPanel {
               group: 'status'
             })
             .select(this.filterConfig.status?.favoriteOnly || false)
-            .selectedColor($r('sys.color.brand'))
+            .selectedColor($r('app.color.brand'))
             .onChange((value: boolean) => {
               if (!this.filterConfig.status) {
                 this.filterConfig.status = new StatusFilter();
@@ -217,7 +217,7 @@ export struct FilterPanel {
             })
             Text('仅收藏')
               .fontSize(DesignConstants.FONT_SIZE_SM)
-              .fontColor($r('sys.color.font_primary'))
+              .fontColor($r('app.color.font_primary'))
               .maxLines(1)
           }
           .justifyContent(FlexAlign.Start)
@@ -225,7 +225,7 @@ export struct FilterPanel {
           .width('100%')
         }
         .padding({ left: 8, right: 8, top: 6, bottom: 6 })
-        .backgroundColor($r('sys.color.comp_background_secondary'))
+        .backgroundColor($r('app.color.comp_background_secondary'))
         .borderRadius(DesignConstants.BORDER_RADIUS_MD)
         .onClick(() => {
           Throttle.click(() => {
@@ -243,7 +243,7 @@ export struct FilterPanel {
               group: 'status'
             })
             .select(this.filterConfig.status?.hasAudio || false)
-            .selectedColor($r('sys.color.brand'))
+            .selectedColor($r('app.color.brand'))
             .onChange((value: boolean) => {
               if (!this.filterConfig.status) {
                 this.filterConfig.status = new StatusFilter();
@@ -252,7 +252,7 @@ export struct FilterPanel {
             })
             Text('有音频')
               .fontSize(DesignConstants.FONT_SIZE_SM)
-              .fontColor($r('sys.color.font_primary'))
+              .fontColor($r('app.color.font_primary'))
               .maxLines(1)
           }
           .justifyContent(FlexAlign.Start)
@@ -260,7 +260,7 @@ export struct FilterPanel {
           .width('100%')
         }
         .padding({ left: 8, right: 8, top: 6, bottom: 6 })
-        .backgroundColor($r('sys.color.comp_background_secondary'))
+        .backgroundColor($r('app.color.comp_background_secondary'))
         .borderRadius(DesignConstants.BORDER_RADIUS_MD)
         .onClick(() => {
           Throttle.click(() => {
@@ -278,7 +278,7 @@ export struct FilterPanel {
               group: 'status'
             })
             .select(this.filterConfig.status?.hasLocation || false)
-            .selectedColor($r('sys.color.brand'))
+            .selectedColor($r('app.color.brand'))
             .onChange((value: boolean) => {
               if (!this.filterConfig.status) {
                 this.filterConfig.status = new StatusFilter();
@@ -287,7 +287,7 @@ export struct FilterPanel {
             })
             Text('有位置')
               .fontSize(DesignConstants.FONT_SIZE_SM)
-              .fontColor($r('sys.color.font_primary'))
+              .fontColor($r('app.color.font_primary'))
               .maxLines(1)
           }
           .justifyContent(FlexAlign.Start)
@@ -295,7 +295,7 @@ export struct FilterPanel {
           .width('100%')
         }
         .padding({ left: 8, right: 8, top: 6, bottom: 6 })
-        .backgroundColor($r('sys.color.comp_background_secondary'))
+        .backgroundColor($r('app.color.comp_background_secondary'))
         .borderRadius(DesignConstants.BORDER_RADIUS_MD)
         .onClick(() => {
           Throttle.click(() => {
@@ -320,7 +320,7 @@ export struct FilterPanel {
       Text('权重类型')
         .fontSize(DesignConstants.FONT_SIZE_LG)
         .fontWeight(FontWeight.Bold)
-        .fontColor($r('sys.color.font_primary'))
+        .fontColor($r('app.color.font_primary'))
         .alignSelf(ItemAlign.Start)
 
       GridRow({
@@ -342,13 +342,13 @@ export struct FilterPanel {
               group: 'weighting'
             })
             .select(this.isWeightingTypeSelected(WeightingType.A))
-            .selectedColor($r('sys.color.brand'))
+            .selectedColor($r('app.color.brand'))
             .onChange((value: boolean) => {
               this.toggleWeightingType(WeightingType.A, value);
             })
             Text('A计权')
               .fontSize(DesignConstants.FONT_SIZE_SM)
-              .fontColor($r('sys.color.font_primary'))
+              .fontColor($r('app.color.font_primary'))
               .maxLines(1)
           }
           .justifyContent(FlexAlign.Start)
@@ -356,7 +356,7 @@ export struct FilterPanel {
           .width('100%')
         }
         .padding({ left: 8, right: 8, top: 6, bottom: 6 })
-        .backgroundColor($r('sys.color.comp_background_secondary'))
+        .backgroundColor($r('app.color.comp_background_secondary'))
         .borderRadius(DesignConstants.BORDER_RADIUS_MD)
         .onClick(() => {
           Throttle.click(() => {
@@ -371,13 +371,13 @@ export struct FilterPanel {
               group: 'weighting'
             })
             .select(this.isWeightingTypeSelected(WeightingType.C))
-            .selectedColor($r('sys.color.brand'))
+            .selectedColor($r('app.color.brand'))
             .onChange((value: boolean) => {
               this.toggleWeightingType(WeightingType.C, value);
             })
             Text('C计权')
               .fontSize(DesignConstants.FONT_SIZE_SM)
-              .fontColor($r('sys.color.font_primary'))
+              .fontColor($r('app.color.font_primary'))
               .maxLines(1)
           }
           .justifyContent(FlexAlign.Start)
@@ -385,7 +385,7 @@ export struct FilterPanel {
           .width('100%')
         }
         .padding({ left: 8, right: 8, top: 6, bottom: 6 })
-        .backgroundColor($r('sys.color.comp_background_secondary'))
+        .backgroundColor($r('app.color.comp_background_secondary'))
         .borderRadius(DesignConstants.BORDER_RADIUS_MD)
         .onClick(() => {
           Throttle.click(() => {
@@ -400,13 +400,13 @@ export struct FilterPanel {
               group: 'weighting'
             })
             .select(this.isWeightingTypeSelected(WeightingType.Z))
-            .selectedColor($r('sys.color.brand'))
+            .selectedColor($r('app.color.brand'))
             .onChange((value: boolean) => {
               this.toggleWeightingType(WeightingType.Z, value);
             })
             Text('Z计权')
               .fontSize(DesignConstants.FONT_SIZE_SM)
-              .fontColor($r('sys.color.font_primary'))
+              .fontColor($r('app.color.font_primary'))
               .maxLines(1)
           }
           .justifyContent(FlexAlign.Start)
@@ -414,7 +414,7 @@ export struct FilterPanel {
           .width('100%')
         }
         .padding({ left: 8, right: 8, top: 6, bottom: 6 })
-        .backgroundColor($r('sys.color.comp_background_secondary'))
+        .backgroundColor($r('app.color.comp_background_secondary'))
         .borderRadius(DesignConstants.BORDER_RADIUS_MD)
         .onClick(() => {
           Throttle.click(() => {
@@ -436,19 +436,19 @@ export struct FilterPanel {
       Text('搜索')
         .fontSize(DesignConstants.FONT_SIZE_LG)
         .fontWeight(FontWeight.Bold)
-        .fontColor($r('sys.color.font_primary'))
+        .fontColor($r('app.color.font_primary'))
         .alignSelf(ItemAlign.Start)
 
       Column({ space: DesignConstants.SPACING_SM }) {
         Text('位置:')
           .fontSize(DesignConstants.FONT_SIZE_SM)
-          .fontColor($r('sys.color.font_primary'))
+          .fontColor($r('app.color.font_primary'))
           .alignSelf(ItemAlign.Start)
 
         TextInput({ placeholder: '输入位置关键词...' })
           .width('100%')
           .height(36)
-          .backgroundColor($r('sys.color.comp_background_secondary'))
+          .backgroundColor($r('app.color.comp_background_secondary'))
           .borderRadius(DesignConstants.BORDER_RADIUS_MD)
           .onChange((value: string) => {
             this.locationKeyword = value;
@@ -458,13 +458,13 @@ export struct FilterPanel {
       Column({ space: DesignConstants.SPACING_SM }) {
         Text('备注:')
           .fontSize(DesignConstants.FONT_SIZE_SM)
-          .fontColor($r('sys.color.font_primary'))
+          .fontColor($r('app.color.font_primary'))
           .alignSelf(ItemAlign.Start)
 
         TextInput({ placeholder: '输入备注关键词...' })
           .width('100%')
           .height(36)
-          .backgroundColor($r('sys.color.comp_background_secondary'))
+          .backgroundColor($r('app.color.comp_background_secondary'))
           .borderRadius(DesignConstants.BORDER_RADIUS_MD)
           .onChange((value: string) => {
             this.commentKeyword = value;
@@ -485,8 +485,8 @@ export struct FilterPanel {
         .layoutWeight(1)
         .height(40)
         .fontSize(DesignConstants.FONT_SIZE_MD)
-        .fontColor($r('sys.color.font_primary'))
-        .backgroundColor($r('sys.color.comp_background_secondary'))
+        .fontColor($r('app.color.font_primary'))
+        .backgroundColor($r('app.color.comp_background_secondary'))
         .borderRadius(DesignConstants.BORDER_RADIUS_MD)
         .onClick(() => {
           Throttle.click(() => {
@@ -500,7 +500,7 @@ export struct FilterPanel {
         .height(40)
         .fontSize(DesignConstants.FONT_SIZE_MD)
         .fontColor(Color.White)
-        .backgroundColor($r('sys.color.brand'))
+        .backgroundColor($r('app.color.brand'))
         .borderRadius(DesignConstants.BORDER_RADIUS_MD)
         .onClick(() => {
           Throttle.click(() => {

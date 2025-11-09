@@ -156,7 +156,7 @@ export struct AdvancedFeaturesPage {
       Stack({ alignContent: Alignment.Center }) {
         // 品牌色半透明背景光晕效果
         Circle({ width: 100, height: 100 })
-          .fill($r('sys.color.brand'))
+          .fill($r('app.color.brand'))
           .opacity(0.1)
           .scale({ x: this.featureIconScale, y: this.featureIconScale })
 
@@ -164,7 +164,7 @@ export struct AdvancedFeaturesPage {
         Image($r('app.media.ic_audio_analysis'))
           .width(80)
           .height(80)
-          .fillColor($r('sys.color.brand'))
+          .fillColor($r('app.color.brand'))
           .scale({ x: this.featureIconScale, y: this.featureIconScale })
           .rotate({ angle: this.featureIconRotation })
       } .onClick(() => {
@@ -184,13 +184,13 @@ export struct AdvancedFeaturesPage {
       Text('专业分析，精准守护')
         .fontSize(DesignConstants.FONT_SIZE_XL)
         .fontWeight(FontWeight.Bold)
-        .fontColor($r('sys.color.font_emphasize'))
+        .fontColor($r('app.color.font_emphasize'))
         .textAlign(TextAlign.Center)
         .opacity(this.titleOpacity)
 
       Text('可视化音频分析，智能噪音防护')
         .fontSize(DesignConstants.FONT_SIZE_MD)
-        .fontColor($r('sys.color.font_secondary'))
+        .fontColor($r('app.color.font_secondary'))
         .textAlign(TextAlign.Center)
         .opacity(this.titleOpacity)
     }
@@ -228,25 +228,25 @@ export struct AdvancedFeaturesPage {
   private buildFeatureCard(item: FeatureCard, index: number) {
     Column({ space: DesignConstants.SPACING_XS }) {
       Image(item.icon)
-        .fillColor($r('sys.color.brand'))
+        .fillColor($r('app.color.brand'))
         .width(DesignConstants.ICON_SIZE_MD)
 
       Text(item.title)
         .fontSize(DesignConstants.FONT_SIZE_SM)
         .fontWeight(FontWeight.Medium)
-        .fontColor($r('sys.color.font_primary'))
+        .fontColor($r('app.color.font_primary'))
         .textAlign(TextAlign.Center)
 
       Text(item.description)
         .fontSize(DesignConstants.FONT_SIZE_XS)
-        .fontColor($r('sys.color.font_secondary'))
+        .fontColor($r('app.color.font_secondary'))
         .textAlign(TextAlign.Center)
         .maxLines(2)
     }
     .width('30%')
     .height(80)
     .padding(DesignConstants.SPACING_MD)
-    .backgroundColor($r('sys.color.background_primary'))
+    .backgroundColor($r('app.color.background_primary'))
     .borderRadius(DesignConstants.BORDER_RADIUS_MD)
     .shadow(DesignConstants.SHADOW_SM)
     .scale({ x: this.cardScales[index], y: this.cardScales[index] })
@@ -260,8 +260,8 @@ export struct AdvancedFeaturesPage {
       Button('立即使用', { type: ButtonType.Capsule })
         .width('80%')
         .height(56)
-        .backgroundColor($r('sys.color.interactive_active'))
-        .fontColor($r('sys.color.font_on_primary'))
+        .backgroundColor($r('app.color.interactive_active'))
+        .fontColor($r('app.color.font_on_primary'))
         .fontSize(DesignConstants.FONT_SIZE_XL)
         .fontWeight(FontWeight.Bold)
         .borderRadius(28)

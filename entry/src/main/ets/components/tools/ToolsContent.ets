@@ -184,7 +184,7 @@ export struct ToolsContent {
       title: '基础测量',
       icon: $r('app.media.ic_meter'),
       description: '核心测量功能设置',
-      color: $r('sys.color.brand'),
+      color: $r('app.color.brand_primary'),
       tools: [
         this.toolFactory.createCalibrationTool(this.navigationService.navigateToAudioCalibration),
         this.toolFactory.createFrequencyWeightingTool(this.navigationService.navigateToFrequencyWeighting,
@@ -201,7 +201,7 @@ export struct ToolsContent {
       title: '数据管理',
       icon: $r('app.media.ic_save'),
       description: '数据记录和存储设置',
-      color: $r('sys.color.confirm'),
+      color: $r('app.color.success'),
       tools: [
         this.toolFactory.createAudioRecordingTool(this.navigationService.toggleAudioRecording),
         this.toolFactory.createAutoSaveTool(this.navigationService.navigateToAutoSave),
@@ -218,7 +218,7 @@ export struct ToolsContent {
       title: '显示设置',
       icon: $r('app.media.ic_frequency_weighting'),
       description: '频谱显示配置',
-      color: $r('sys.color.font_emphasize'),
+      color: $r('app.color.content_primary'),
       tools: [
         this.toolFactory.createSpectrumDisplayTool(this.navigationService.navigateToSpectrumDisplaySettings,
           this.statusService.getSpectrumDisplayModeText.bind(this.statusService))
@@ -232,7 +232,7 @@ export struct ToolsContent {
       title: '警报系统',
       icon: $r('app.media.ic_alarm'),
       description: '阈值和通知管理',
-      color: $r('sys.color.warning'),
+      color: $r('app.color.warning'),
       tools: [
         this.toolFactory.createAlertsTool(this.navigationService.navigateToAlerts)
       ]
@@ -245,7 +245,7 @@ export struct ToolsContent {
       title: '专业设置',
       icon: $r('app.media.ic_filter'),
       description: '高级音频处理和分析',
-      color: $r('sys.color.font_secondary'),
+      color: $r('app.color.content_secondary'),
       tools: [
         this.toolFactory.createSampleRateTool(this.navigationService.navigateToSampleRateSettings,
           this.statusService.getSampleRateDisplayText.bind(this.statusService)),
@@ -289,7 +289,7 @@ export struct ToolsContent {
     }
     .width('100%')
     .padding(DesignConstants.SPACING_MD)
-    .backgroundColor($r('sys.color.comp_background_primary'))
+    .backgroundColor($r('app.color.comp_background_primary'))
     .borderRadius(DesignConstants.BORDER_RADIUS_MD)
     .margin({ bottom: DesignConstants.SPACING_MD })
   }
@@ -300,19 +300,19 @@ export struct ToolsContent {
       Image($r('app.media.ic_info'))
         .width(20)
         .height(20)
-        .fillColor($r('sys.color.brand'))
+        .fillColor($r('app.color.brand_primary'))
 
       Text('智能助手')
         .fontSize(DesignConstants.FONT_SIZE_MD)
         .fontWeight(FontWeight.Medium)
-        .fontColor($r('sys.color.font_primary'))
+        .fontColor($r('app.color.content_primary'))
         .margin({ left: DesignConstants.SPACING_XS })
 
       Blank()
 
       Text(this.showAdvancedHints ? '收起提示' : '显示提示')
         .fontSize(DesignConstants.FONT_SIZE_XS)
-        .fontColor($r('sys.color.brand'))
+        .fontColor($r('app.color.brand_primary'))
         .onClick(() => {
           this.showAdvancedHints = !this.showAdvancedHints;
         })
@@ -325,15 +325,15 @@ export struct ToolsContent {
     Column({ space: DesignConstants.SPACING_XS }) {
       Text('💡 根据您的使用习惯，我们为您推荐以下功能：')
         .fontSize(DesignConstants.FONT_SIZE_SM)
-        .fontColor($r('sys.color.font_secondary'))
+        .fontColor($r('app.color.content_secondary'))
 
       Text(this.getSkillLevelTip())
         .fontSize(DesignConstants.FONT_SIZE_XS)
-        .fontColor($r('sys.color.font_secondary'))
+        .fontColor($r('app.color.content_secondary'))
 
       Text('📚 点击功能旁的"了解更多"获取详细说明')
         .fontSize(DesignConstants.FONT_SIZE_XS)
-        .fontColor($r('sys.color.font_secondary'))
+        .fontColor($r('app.color.content_secondary'))
     }
     .width('100%')
     .padding({ top: DesignConstants.SPACING_SM })
@@ -382,7 +382,7 @@ export struct ToolsContent {
     }
     .width('100%')
     .padding(DesignConstants.SPACING_MD)
-    .backgroundColor($r('sys.color.comp_background_primary'))
+    .backgroundColor($r('app.color.comp_background_primary'))
     .borderRadius(DesignConstants.BORDER_RADIUS_LG)
     .shadow(DesignConstants.SHADOW_SM)
   }
@@ -406,13 +406,13 @@ export struct ToolsContent {
           Text(category.title)
             .fontSize(DesignConstants.FONT_SIZE_MD)
             .fontWeight(FontWeight.Medium)
-            .fontColor($r('sys.color.font_primary'))
+            .fontColor($r('app.color.content_primary'))
 
           // 专业标识
           if (category.title === '专业设置') {
             Text('PRO')
               .fontSize(DesignConstants.FONT_SIZE_XS)
-              .fontColor($r('sys.color.background_secondary'))
+              .fontColor($r('app.color.background_secondary'))
               .backgroundColor(category.color)
               .borderRadius(DesignConstants.BORDER_RADIUS_XS)
               .padding({
@@ -434,7 +434,7 @@ export struct ToolsContent {
 
         Text(category.description)
           .fontSize(DesignConstants.FONT_SIZE_SM)
-          .fontColor($r('sys.color.font_secondary'))
+          .fontColor($r('app.color.content_secondary'))
       }
       .layoutWeight(1)
       .alignItems(HorizontalAlign.Start)
@@ -443,7 +443,7 @@ export struct ToolsContent {
       Image($r('sys.media.ohos_ic_public_arrow_down'))
         .width(16)
         .height(16)
-        .fillColor($r('sys.color.font_secondary'))
+        .fillColor($r('app.color.content_secondary'))
         .rotate({
           angle: this.expandedCategories.has(category.tools[0].category) ? 180 : 0
         })
@@ -484,7 +484,7 @@ export struct ToolsContent {
           Text(tool.title)
             .fontSize(DesignConstants.FONT_SIZE_SM)
             .fontWeight(FontWeight.Medium)
-            .fontColor(this.hoveredTool === tool.id ? $r('sys.color.brand') : $r('sys.color.font_primary'))
+            .fontColor(this.hoveredTool === tool.id ? $r('app.color.brand_primary') : $r('app.color.content_primary'))
             .animation({
               duration: DesignConstants.ANIMATION_DURATION_XS,
               curve: Curve.EaseInOut
@@ -502,7 +502,7 @@ export struct ToolsContent {
         Row() {
           Text(tool.description)
             .fontSize(DesignConstants.FONT_SIZE_XS)
-            .fontColor($r('sys.color.font_secondary'))
+            .fontColor($r('app.color.content_secondary'))
             .layoutWeight(1)
 
           ToolStatus({
@@ -524,9 +524,9 @@ export struct ToolsContent {
     .width('100%')
     .height(tool.usageHint && this.showAdvancedHints ? 80 : 60)
     .padding(DesignConstants.SPACING_MD)
-    .backgroundColor(this.pressedTool === tool.id ? $r('sys.color.comp_background_emphasize') :
-      this.hoveredTool === tool.id ? $r('sys.color.comp_background_secondary') :
-        $r('sys.color.background_secondary'))
+    .backgroundColor(this.pressedTool === tool.id ? $r('app.color.background_card_pressed') :
+      this.hoveredTool === tool.id ? $r('app.color.background_card_hover') :
+        $r('app.color.background_secondary'))
     .borderRadius(DesignConstants.BORDER_RADIUS_MD)
     .justifyContent(FlexAlign.Center)
     .alignItems(VerticalAlign.Center)

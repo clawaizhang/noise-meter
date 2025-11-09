@@ -42,7 +42,7 @@ export struct ActionPanel {
           baseIcon: $r('app.media.solar_restart_circle_bold'),
           iconSize: LengthMetrics.vp(24),
           width: LengthMetrics.vp(48),
-          backgroundColor: ColorMetrics.resourceColor($r('sys.color.comp_background_primary')),
+          backgroundColor: ColorMetrics.resourceColor($r('app.color.comp_background_primary')),
           hoverTips: '重置当前数据',
           accessibilityText: '重置按钮',
           accessibilityDescription: '重置当前数据',
@@ -57,7 +57,7 @@ export struct ActionPanel {
           baseIcon: $r('app.media.solar_download_square_bold'),
           iconSize: LengthMetrics.vp(24),
           width: LengthMetrics.vp(48),
-          backgroundColor: ColorMetrics.resourceColor($r('sys.color.comp_background_primary')),
+          backgroundColor: ColorMetrics.resourceColor($r('app.color.comp_background_primary')),
           hoverTips: '保存当前数据',
           accessibilityText: '保存按钮',
           accessibilityDescription: '保存当前噪音数据',
@@ -90,11 +90,11 @@ export struct ActionPanel {
         Image($r("app.media.solar_restart_circle_bold"))
           .width(24)
           .height(24)
-          .fillColor($r('sys.color.icon_secondary'))
+          .fillColor($r('app.color.icon_secondary'))
       }
       .width(48)
       .height(48)
-      .backgroundColor($r('sys.color.comp_background_primary'))
+      .backgroundColor($r('app.color.comp_background_primary'))
       .accessibilityDescription('重置当前数据')
       .onClick(() => {
         Throttle.click(() => {
@@ -109,12 +109,12 @@ export struct ActionPanel {
         Image($r("app.media.solar_download_square_bold"))
           .width(24)
           .height(24)
-          .fillColor($r('sys.color.icon_secondary'))
+          .fillColor($r('app.color.icon_secondary'))
       }
       .id('showNoiseDetailDialogFromActionPanels')
       .width(48)
       .height(48)
-      .backgroundColor($r('sys.color.comp_background_primary'))
+      .backgroundColor($r('app.color.comp_background_primary'))
       .accessibilityDescription('保存当前数据')
       .onClick(() => {
         Throttle.click(() => {
@@ -141,7 +141,7 @@ export struct ActionPanel {
     .height(48)
     .justifyContent(FlexAlign.SpaceBetween)
     .alignItems(VerticalAlign.Center)
-    .backgroundColor($r('sys.color.comp_background_primary'))
+    .backgroundColor($r('app.color.comp_background_primary'))
     .borderRadius(32)
     .margin({ bottom: 16 })
     .animation({ curve: Curve.EaseOut })

@@ -59,7 +59,7 @@ export struct NoiseChart {
           Image($r('app.media.ic_empty'))
             .width(32)
             .height(32)
-            .fillColor($r('sys.color.font_primary'))
+            .fillColor($r('app.color.font_primary'))
           Text('暂无分贝值变化数据')
         }
         .justifyContent(FlexAlign.Center)

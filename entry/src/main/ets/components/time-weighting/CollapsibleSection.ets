@@ -23,7 +23,7 @@ export struct CollapsibleSection {
       Text(this.title)
         .fontSize(DesignConstants.FONT_SIZE_LG)
         .fontWeight(FontWeight.Bold)
-        .fontColor($r('sys.color.font_primary'))
+        .fontColor($r('app.color.font_primary'))
         .layoutWeight(1)
 
       // 展开/折叠图标
@@ -32,15 +32,15 @@ export struct CollapsibleSection {
         $r('sys.media.ohos_ic_public_arrow_down'))
         .width(DesignConstants.ICON_SIZE_SM)
         .height(DesignConstants.ICON_SIZE_SM)
-        .fillColor($r('sys.color.font_secondary'))
+        .fillColor($r('app.color.font_secondary'))
         .transition(TransitionEffect.OPACITY.animation({ duration: 200 }))
     }
     .width('100%')
     .alignItems(VerticalAlign.Center)
     .padding(DesignConstants.SPACING_MD)
-    .backgroundColor(this.isHovered ? 
-      $r('sys.color.comp_background_secondary') : 
-      $r('sys.color.comp_background_primary'))
+    .backgroundColor(this.isHovered ?
+      $r('app.color.comp_background_secondary') :
+      $r('app.color.comp_background_primary'))
     .borderRadius(DesignConstants.BORDER_RADIUS_MD)
     .onClick(() => {
       Throttle.click(() => {
@@ -67,7 +67,7 @@ export struct CollapsibleSection {
         right: DesignConstants.SPACING_MD,
         bottom: DesignConstants.SPACING_MD 
       })
-      .backgroundColor($r('sys.color.comp_background_primary'))
+      .backgroundColor($r('app.color.comp_background_primary'))
       .transition(TransitionEffect.OPACITY.animation({ duration: 300 }))
     }
   }
@@ -81,11 +81,11 @@ export struct CollapsibleSection {
       this.buildContent()
     }
     .width('100%')
-    .backgroundColor($r('sys.color.comp_background_primary'))
+    .backgroundColor($r('app.color.comp_background_primary'))
     .borderRadius(DesignConstants.BORDER_RADIUS_MD)
     .border({
       width: 1,
-      color: $r('sys.color.comp_border_color'),
+      color: $r('app.color.comp_border_color'),
       style: BorderStyle.Solid
     })
   }

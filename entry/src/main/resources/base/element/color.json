@@ -835,6 +835,118 @@
     {
       "name": "gradient_error_end",
       "value": "#D32F2F"
+    },
+    {
+      "name": "font_emphasize",
+      "value": "#1890FF"
+    },
+    {
+      "name": "comp_background_tertiary",
+      "value": "#ffe5e5ea"
+    },
+    {
+      "name": "comp_background_emphasize",
+      "value": "#E3F2FD"
+    },
+    {
+      "name": "confirm",
+      "value": "#52C41A"
+    },
+    {
+      "name": "alert",
+      "value": "#FAAD14"
+    },
+    {
+      "name": "icon_emphasize",
+      "value": "#1890FF"
+    },
+    {
+      "name": "interactive_active",
+      "value": "#1890FF"
+    },
+    {
+      "name": "font_on_primary",
+      "value": "#FFFFFF"
+    },
+    {
+      "name": "font_on_secondary",
+      "value": "#FFFFFF"
+    },
+    {
+      "name": "font_on_tertiary",
+      "value": "#FFFFFF"
+    },
+    {
+      "name": "comp_divider",
+      "value": "#E0E0E0"
+    },
+    {
+      "name": "black",
+      "value": "#000000"
+    },
+    {
+      "name": "transparent",
+      "value": "#00000000"
+    },
+    {
+      "name": "ohos_id_color_palette2",
+      "value": "#3EA665"
+    },
+    {
+      "name": "ohos_id_color_palette3",
+      "value": "#FFC107"
+    },
+    {
+      "name": "ohos_id_color_palette4",
+      "value": "#F44336"
+    },
+    {
+      "name": "ohos_id_color_palette5",
+      "value": "#2196F3"
+    },
+    {
+      "name": "ohos_id_color_text_secondary",
+      "value": "#666666"
+    },
+    {
+      "name": "recommended_hover",
+      "value": "#E3F2FD"
+    },
+    {
+      "name": "advanced_hover",
+      "value": "#FFF3E0"
+    },
+    {
+      "name": "brand",
+      "value": "#1890FF"
+    },
+    {
+      "name": "font_tertiary",
+      "value": "#999999"
+    },
+    {
+      "name": "comp_background_warning_secondary",
+      "value": "#FFF8E1"
+    },
+    {
+      "name": "ohos_id_color_warning",
+      "value": "#FF9800"
+    },
+    {
+      "name": "comp_border_color",
+      "value": "#E0E0E0"
+    },
+    {
+      "name": "background_emphasize",
+      "value": "#E3F2FD"
+    },
+    {
+      "name": "icon",
+      "value": "#757575"
+    },
+    {
+      "name": "ohos_id_color_palette1",
+      "value": "#1890FF"
     }
   ]
 }

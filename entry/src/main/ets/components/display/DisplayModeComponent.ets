@@ -115,7 +115,7 @@ export struct DisplayModeComponent {
       Image(this.getDisplayModeIcon(params.displayMode))
         .width(24)
         .height(24)
-        .fillColor(params.isSelected ? $r('sys.color.font_on_primary') : $r('sys.color.font_primary'))
+        .fillColor(params.isSelected ? $r('app.color.font_on_primary') : $r('app.color.font_primary'))
 
       // 文本区域
       Column({ space: 2 }) {
@@ -123,13 +123,13 @@ export struct DisplayModeComponent {
         Text(this.getDisplayModePrimaryText(params.displayMode))
           .fontSize(14)
           .fontWeight(FontWeight.Medium)
-          .fontColor(params.isSelected ? $r('sys.color.font_on_primary') : $r('sys.color.font_primary'))
+          .fontColor(params.isSelected ? $r('app.color.font_on_primary') : $r('app.color.font_primary'))
           .textAlign(TextAlign.Center)
 
         // 副标签
         Text(this.getDisplayModeSecondaryText(params.displayMode))
           .fontSize(12)
-          .fontColor(params.isSelected ? $r('sys.color.font_on_primary') : $r('sys.color.font_secondary'))
+          .fontColor(params.isSelected ? $r('app.color.font_on_primary') : $r('app.color.font_secondary'))
           .textAlign(TextAlign.Center)
       }
     }
@@ -137,10 +137,10 @@ export struct DisplayModeComponent {
     .height(80)
     .justifyContent(FlexAlign.Center)
     .alignItems(HorizontalAlign.Center)
-    .backgroundColor(params.isSelected ? $r('sys.color.interactive_active') : $r('sys.color.comp_background_primary'))
+    .backgroundColor(params.isSelected ? $r('app.color.interactive_active') : $r('app.color.comp_background_primary'))
     .border({
       width: params.isSelected ? 2 : 1,
-      color: params.isSelected ? $r('sys.color.interactive_active') : $r('sys.color.comp_background_primary')
+      color: params.isSelected ? $r('app.color.interactive_active') : $r('app.color.comp_background_primary')
     })
     .borderRadius(16)
     .shadow(params.isHovered ? {
@@ -192,10 +192,10 @@ export struct DisplayModeComponent {
         Image($r('app.media.ic_display'))
           .width(24)
           .height(24)
-          .fillColor($r('sys.color.brand'))
+          .fillColor($r('app.color.brand'))
         Text($r('app.string.display_mode_title'))
           .fontSize(16)
-          .fontColor($r('sys.color.font_primary'))
+          .fontColor($r('app.color.font_primary'))
           .fontWeight(FontWeight.Medium)
       }
       .width('100%')
@@ -208,12 +208,12 @@ export struct DisplayModeComponent {
       // 描述文本区域
       Text(this.displayModeDescription)
         .fontSize(12)
-        .fontColor($r('sys.color.font_secondary'))
+        .fontColor($r('app.color.font_secondary'))
         .width('100%')
         .textAlign(TextAlign.Start)
         .lineHeight(16)
     }
-    .backgroundColor($r('sys.color.comp_background_primary'))
+    .backgroundColor($r('app.color.comp_background_primary'))
     .justifyContent(FlexAlign.Start)
     .alignItems(HorizontalAlign.Start)
     .borderRadius(16)

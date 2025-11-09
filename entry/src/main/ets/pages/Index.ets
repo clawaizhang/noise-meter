@@ -332,12 +332,12 @@ struct Index {
         .size({ width: '100%' })
         .hideTitleBar(true)
         .titleMode(NavigationTitleMode.Free)
-        .backgroundColor($r('sys.color.background_primary'))
+        .backgroundColor($r('app.color.background_primary'))
         .mode(NavigationMode.Stack)
       }
     }
-    .backgroundColor(this.pk.show_welcome_guide ? $r('sys.color.background_primary') :
-      $r('sys.color.background_secondary'))
+    .backgroundColor(this.pk.show_welcome_guide ? $r('app.color.background_primary') :
+      $r('app.color.background_secondary'))
     .expandSafeArea([SafeAreaType.SYSTEM], [SafeAreaEdge.TOP, SafeAreaEdge.BOTTOM])
     .height('100%')
     .width('100%')

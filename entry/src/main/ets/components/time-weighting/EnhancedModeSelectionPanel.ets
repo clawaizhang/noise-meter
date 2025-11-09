@@ -35,11 +35,11 @@ export struct EnhancedModeSelectionPanel {
     
     return ({
       backgroundColor: isSelected ?
-      $r('sys.color.interactive_active') :
-      $r('sys.color.comp_background_primary'),
+      $r('app.color.interactive_active') :
+      $r('app.color.comp_background_primary'),
       borderColor: isSelected ?
-      $r('sys.color.interactive_active') :
-      $r('sys.color.comp_border_color'),
+      $r('app.color.interactive_active') :
+      $r('app.color.comp_border_color'),
       borderWidth: isSelected ? 2 : 1,
       scale: isHovered && !isSelected ? 1.02 : 1.0
     } as CardStyle);
@@ -52,8 +52,8 @@ export struct EnhancedModeSelectionPanel {
     return ({
       fontWeight: isSelected ? FontWeight.Bold : FontWeight.Medium,
       fontColor: isSelected ?
-      $r('sys.color.font_on_primary') :
-      $r('sys.color.font_primary')
+      $r('app.color.font_on_primary') :
+      $r('app.color.font_primary')
     } as TitleStyle);
   }
 
@@ -79,9 +79,9 @@ export struct EnhancedModeSelectionPanel {
 
           Text(TimeWeightingConstants.MODE_DESCRIPTIONS[mode])
             .fontSize(DesignConstants.FONT_SIZE_SM)
-            .fontColor(this.selectedMode === mode ? 
-              $r('sys.color.font_on_primary') : 
-              $r('sys.color.font_secondary'))
+            .fontColor(this.selectedMode === mode ?
+              $r('app.color.font_on_primary') :
+              $r('app.color.font_secondary'))
             .maxLines(2)
             .textOverflow({ overflow: TextOverflow.Ellipsis })
         }
@@ -92,7 +92,7 @@ export struct EnhancedModeSelectionPanel {
           Image($r('sys.media.ohos_ic_public_select_all'))
             .width(DesignConstants.ICON_SIZE_MD)
             .height(DesignConstants.ICON_SIZE_MD)
-            .fillColor($r('sys.color.font_on_primary'))
+            .fillColor($r('app.color.font_on_primary'))
         }
       }
       .width('100%')
@@ -130,7 +130,7 @@ export struct EnhancedModeSelectionPanel {
       Text('选择音频分析模式')
         .fontSize(DesignConstants.FONT_SIZE_XL)
         .fontWeight(FontWeight.Bold)
-        .fontColor($r('sys.color.font_primary'))
+        .fontColor($r('app.color.font_primary'))
         .alignSelf(ItemAlign.Start)
 
       // 模式卡片列表
@@ -144,7 +144,7 @@ export struct EnhancedModeSelectionPanel {
     }
     .width('100%')
     .padding(DesignConstants.SPACING_MD)
-    .backgroundColor($r('sys.color.comp_background_primary'))
+    .backgroundColor($r('app.color.comp_background_primary'))
     .borderRadius(DesignConstants.BORDER_RADIUS_MD)
   }
 }

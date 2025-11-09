@@ -122,6 +122,6 @@ export class ToolStatusService {
   }
 
   getLocationStatusColor(): Resource {
-    return this.pk.location_enabled ? $r('sys.color.confirm') : $r('sys.color.font_secondary');
+    return this.pk.location_enabled ? $r('app.color.confirm') : $r('app.color.font_secondary');
   }
 }

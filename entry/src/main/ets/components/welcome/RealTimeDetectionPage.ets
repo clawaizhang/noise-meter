@@ -167,7 +167,7 @@ export struct RealTimeDetectionPage {
       Stack({ alignContent: Alignment.Center }) {
         // 外圈背景
         Circle({ width: 120, height: 120 })
-          .fill($r('sys.color.comp_background_secondary'))
+          .fill($r('app.color.comp_background_secondary'))
           .scale({ x: this.meterScale, y: this.meterScale })
 
         // 进度环
@@ -185,7 +185,7 @@ export struct RealTimeDetectionPage {
 
           Text('分贝')
             .fontSize(DesignConstants.FONT_SIZE_MD)
-            .fontColor($r('sys.color.font_secondary'))
+            .fontColor($r('app.color.font_secondary'))
         }
       }
 
@@ -205,7 +205,7 @@ export struct RealTimeDetectionPage {
       Text('实时噪音监测分析')
         .fontSize(DesignConstants.FONT_SIZE_XL)
         .fontWeight(FontWeight.Bold)
-        .fontColor($r('sys.color.font_emphasize'))
+        .fontColor($r('app.color.font_emphasize'))
         .textAlign(TextAlign.Center)
         .margin({ bottom: DesignConstants.SPACING_MD })
         .opacity(this.titleOpacity)
@@ -230,7 +230,7 @@ export struct RealTimeDetectionPage {
       // 图标区域 - 固定宽度确保对齐
       Column() {
         Image(icon)
-          .fillColor($r('sys.color.brand'))
+          .fillColor($r('app.color.brand'))
           .width(DesignConstants.ICON_SIZE_SM)
       }
       .width(32)  // 固定图标容器宽度
@@ -239,7 +239,7 @@ export struct RealTimeDetectionPage {
       // 文本区域
       Text(text)
         .fontSize(DesignConstants.FONT_SIZE_MD)
-        .fontColor($r('sys.color.font_secondary'))
+        .fontColor($r('app.color.font_secondary'))
         .textAlign(TextAlign.Start)
         .layoutWeight(1)  // 文本区域占据剩余空间
     }
@@ -275,21 +275,21 @@ export struct RealTimeDetectionPage {
       // 根据场景类型选择对应的图标
       if (title === '图书馆') {
         Image($r('app.media.ic_document_edit'))
-          .fillColor($r('sys.color.brand'))
+          .fillColor($r('app.color.brand'))
           .width(DesignConstants.ICON_SIZE_MD)
       } else if (title === '办公室') {
         Image($r('app.media.ic_user'))
-          .fillColor($r('sys.color.brand'))
+          .fillColor($r('app.color.brand'))
           .width(DesignConstants.ICON_SIZE_MD)
       } else if (title === '街道') {
         Image($r('app.media.ic_location'))
-          .fillColor($r('sys.color.brand'))
+          .fillColor($r('app.color.brand'))
           .width(DesignConstants.ICON_SIZE_MD)
       }
       
       Text(title)
         .fontSize(DesignConstants.FONT_SIZE_SM)
-        .fontColor($r('sys.color.font_secondary'))
+        .fontColor($r('app.color.font_secondary'))
 
       Text(value)
         .fontSize(DesignConstants.FONT_SIZE_LG)

@@ -66,7 +66,7 @@ export class ToolNavigationService {
       }
     }
     calibrationDialog = DialogHub.getSheet()
-      .setStyle({ showClose: false, backgroundColor: $r('sys.color.background_secondary') })
+      .setStyle({ showClose: false, backgroundColor: $r('app.color.background_secondary') })
       .setConfig({ scrollSizeMode: ScrollSizeMode.FOLLOW_DETENT })
       .setComponentTargetId('mainId')
       .setContent(wrapBuilder(AudioCalibrationSettingsBuilder), props)
@@ -86,7 +86,7 @@ export class ToolNavigationService {
       }
     }
     alertsDialog = DialogHub.getSheet()
-      .setStyle({ showClose: false, backgroundColor: $r('sys.color.background_secondary') })
+      .setStyle({ showClose: false, backgroundColor: $r('app.color.background_secondary') })
       .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS })
       .setComponentTargetId('mainId')
       .setContent(wrapBuilder(AlertsSettingsBuilder), props)
@@ -110,7 +110,7 @@ export class ToolNavigationService {
     frequencyDialog = DialogHub.getSheet()
       .setStyle({
         showClose: false,
-        backgroundColor: $r('sys.color.background_secondary')
+        backgroundColor: $r('app.color.background_secondary')
       })
       .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS })
       .setComponentTargetId('mainId')
@@ -135,7 +135,7 @@ export class ToolNavigationService {
     autoSaveDialog = DialogHub.getSheet()
       .setStyle({
         showClose: false,
-        backgroundColor: $r('sys.color.background_secondary')
+        backgroundColor: $r('app.color.background_secondary')
       })
       .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS })
       .setComponentTargetId('mainId')
@@ -161,7 +161,7 @@ export class ToolNavigationService {
     audioAnalysisDialog = DialogHub.getSheet()
       .setStyle({
         showClose: false,
-        backgroundColor: $r('sys.color.background_secondary')
+        backgroundColor: $r('app.color.background_secondary')
       })
       .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS })
       .setComponentTargetId('mainId')
@@ -186,7 +186,7 @@ export class ToolNavigationService {
     spectrumDialog = DialogHub.getSheet()
       .setStyle({
         showClose: false,
-        backgroundColor: $r('sys.color.background_secondary')
+        backgroundColor: $r('app.color.background_secondary')
       })
       .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS })
       .setComponentTargetId('mainId')
@@ -211,7 +211,7 @@ export class ToolNavigationService {
     sampleRateDialog = DialogHub.getSheet()
       .setStyle({
         showClose: false,
-        backgroundColor: $r('sys.color.background_secondary')
+        backgroundColor: $r('app.color.background_secondary')
       })
       .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS })
       .setComponentTargetId('mainId')
@@ -249,7 +249,7 @@ export class ToolNavigationService {
     windowFunctionDialog = DialogHub.getSheet()
       .setStyle({
         showClose: false,
-        backgroundColor: $r('sys.color.comp_background_primary'),
+        backgroundColor: $r('app.color.comp_background_primary'),
       })
       .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS })
       .setComponentTargetId('mainId')

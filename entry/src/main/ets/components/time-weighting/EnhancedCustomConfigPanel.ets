@@ -203,11 +203,11 @@ export struct EnhancedCustomConfigPanel {
           Text(this.parameterDetails.get(paramKey)!.name)
             .fontSize(DesignConstants.FONT_SIZE_LG)
             .fontWeight(FontWeight.Medium)
-            .fontColor($r('sys.color.font_primary'))
+            .fontColor($r('app.color.font_primary'))
           
           Text(this.parameterDetails.get(paramKey)!.description)
             .fontSize(DesignConstants.FONT_SIZE_SM)
-            .fontColor($r('sys.color.font_secondary'))
+            .fontColor($r('app.color.font_secondary'))
             .maxLines(2)
             .textOverflow({ overflow: TextOverflow.Ellipsis })
         }
@@ -219,11 +219,11 @@ export struct EnhancedCustomConfigPanel {
           Text(value.toString())
             .fontSize(DesignConstants.FONT_SIZE_LG)
             .fontWeight(FontWeight.Bold)
-            .fontColor($r('sys.color.icon_emphasize'))
+            .fontColor($r('app.color.icon_emphasize'))
           
           Text('当前值')
             .fontSize(DesignConstants.FONT_SIZE_XS)
-            .fontColor($r('sys.color.font_secondary'))
+            .fontColor($r('app.color.font_secondary'))
         }
         .alignItems(HorizontalAlign.End)
       }
@@ -247,9 +247,9 @@ export struct EnhancedCustomConfigPanel {
         // 展开/收起按钮
         Button(this.expandedParameter === paramKey ? '收起详情' : '查看详情')
           .fontSize(DesignConstants.FONT_SIZE_SM)
-          .fontColor($r('sys.color.icon_emphasize'))
+          .fontColor($r('app.color.icon_emphasize'))
           .backgroundColor(Color.Transparent)
-          .border({ width: 1, color: $r('sys.color.icon_emphasize') })
+          .border({ width: 1, color: $r('app.color.icon_emphasize') })
           .height(32)
           .onClick(() => {
             this.expandedParameter = this.expandedParameter === paramKey ? '' : paramKey;
@@ -266,18 +266,18 @@ export struct EnhancedCustomConfigPanel {
             Text('参数影响')
               .fontSize(DesignConstants.FONT_SIZE_MD)
               .fontWeight(FontWeight.Medium)
-              .fontColor($r('sys.color.font_primary'))
+              .fontColor($r('app.color.font_primary'))
               .alignSelf(ItemAlign.Start)
              
             Text(this.parameterDetails.get(paramKey)!.impact)
               .fontSize(DesignConstants.FONT_SIZE_SM)
-              .fontColor($r('sys.color.font_secondary'))
+              .fontColor($r('app.color.font_secondary'))
               .alignSelf(ItemAlign.Start)
           }
           .width('100%')
           .alignItems(HorizontalAlign.Start)
           .padding(DesignConstants.SPACING_SM)
-          .backgroundColor($r('sys.color.comp_background_tertiary'))
+          .backgroundColor($r('app.color.comp_background_tertiary'))
           .borderRadius(DesignConstants.BORDER_RADIUS_SM)
 
           // 推荐场景
@@ -285,18 +285,18 @@ export struct EnhancedCustomConfigPanel {
             Text('推荐场景')
               .fontSize(DesignConstants.FONT_SIZE_MD)
               .fontWeight(FontWeight.Medium)
-              .fontColor($r('sys.color.font_primary'))
+              .fontColor($r('app.color.font_primary'))
               .alignSelf(ItemAlign.Start)
              
             ForEach(this.parameterDetails.get(paramKey)!.recommendedScenarios, (scenario: string) => {
               Row({ space: DesignConstants.SPACING_SM }) {
                 Text('•')
                   .fontSize(DesignConstants.FONT_SIZE_SM)
-                  .fontColor($r('sys.color.icon_emphasize'))
+                  .fontColor($r('app.color.icon_emphasize'))
                  
                 Text(scenario)
                   .fontSize(DesignConstants.FONT_SIZE_SM)
-                  .fontColor($r('sys.color.font_secondary'))
+                  .fontColor($r('app.color.font_secondary'))
                   .layoutWeight(1)
               }
               .width('100%')
@@ -306,7 +306,7 @@ export struct EnhancedCustomConfigPanel {
           .width('100%')
           .alignItems(HorizontalAlign.Start)
           .padding(DesignConstants.SPACING_SM)
-          .backgroundColor($r('sys.color.comp_background_tertiary'))
+          .backgroundColor($r('app.color.comp_background_tertiary'))
           .borderRadius(DesignConstants.BORDER_RADIUS_SM)
 
           // 技术说明
@@ -314,18 +314,18 @@ export struct EnhancedCustomConfigPanel {
             Text('技术说明')
               .fontSize(DesignConstants.FONT_SIZE_MD)
               .fontWeight(FontWeight.Medium)
-              .fontColor($r('sys.color.font_primary'))
+              .fontColor($r('app.color.font_primary'))
               .alignSelf(ItemAlign.Start)
              
             Text(this.parameterDetails.get(paramKey)!.technicalNote)
               .fontSize(DesignConstants.FONT_SIZE_SM)
-              .fontColor($r('sys.color.font_secondary'))
+              .fontColor($r('app.color.font_secondary'))
               .alignSelf(ItemAlign.Start)
           }
           .width('100%')
           .alignItems(HorizontalAlign.Start)
           .padding(DesignConstants.SPACING_SM)
-          .backgroundColor($r('sys.color.comp_background_tertiary'))
+          .backgroundColor($r('app.color.comp_background_tertiary'))
           .borderRadius(DesignConstants.BORDER_RADIUS_SM)
         }
         .width('100%')
@@ -334,9 +334,9 @@ export struct EnhancedCustomConfigPanel {
     }
     .width('100%')
     .padding(DesignConstants.SPACING_MD)
-    .backgroundColor($r('sys.color.comp_background_primary'))
+    .backgroundColor($r('app.color.comp_background_primary'))
     .borderRadius(DesignConstants.BORDER_RADIUS_LG)
-    .border({ width: 1, color: $r('sys.color.comp_border_color') })
+    .border({ width: 1, color: $r('app.color.comp_border_color') })
   }
 
   // 查找选项索引
@@ -361,7 +361,7 @@ export struct EnhancedCustomConfigPanel {
       Text('技术指标')
         .fontSize(DesignConstants.FONT_SIZE_LG)
         .fontWeight(FontWeight.Bold)
-        .fontColor($r('sys.color.font_primary'))
+        .fontColor($r('app.color.font_primary'))
         .width('100%')
       
       Row({ space: DesignConstants.SPACING_MD }) {
@@ -369,11 +369,11 @@ export struct EnhancedCustomConfigPanel {
           Text(this.calculateTechnicalMetrics().frequencyResolution + ' Hz')
             .fontSize(DesignConstants.FONT_SIZE_XL)
             .fontWeight(FontWeight.Bold)
-            .fontColor($r('sys.color.icon_emphasize'))
+            .fontColor($r('app.color.icon_emphasize'))
           
           Text('频率分辨率')
             .fontSize(DesignConstants.FONT_SIZE_SM)
-            .fontColor($r('sys.color.font_secondary'))
+            .fontColor($r('app.color.font_secondary'))
         }
         .layoutWeight(1)
         .alignItems(HorizontalAlign.Center)
@@ -382,11 +382,11 @@ export struct EnhancedCustomConfigPanel {
           Text(this.calculateTechnicalMetrics().timeResolution + ' ms')
             .fontSize(DesignConstants.FONT_SIZE_XL)
             .fontWeight(FontWeight.Bold)
-            .fontColor($r('sys.color.icon_emphasize'))
+            .fontColor($r('app.color.icon_emphasize'))
           
           Text('时间分辨率')
             .fontSize(DesignConstants.FONT_SIZE_SM)
-            .fontColor($r('sys.color.font_secondary'))
+            .fontColor($r('app.color.font_secondary'))
         }
         .layoutWeight(1)
         .alignItems(HorizontalAlign.Center)
@@ -395,11 +395,11 @@ export struct EnhancedCustomConfigPanel {
           Text(this.calculateTechnicalMetrics().effectiveUpdateRate + ' Hz')
             .fontSize(DesignConstants.FONT_SIZE_XL)
             .fontWeight(FontWeight.Bold)
-            .fontColor($r('sys.color.icon_emphasize'))
+            .fontColor($r('app.color.icon_emphasize'))
           
           Text('有效更新率')
             .fontSize(DesignConstants.FONT_SIZE_SM)
-            .fontColor($r('sys.color.font_secondary'))
+            .fontColor($r('app.color.font_secondary'))
         }
         .layoutWeight(1)
         .alignItems(HorizontalAlign.Center)
@@ -408,11 +408,11 @@ export struct EnhancedCustomConfigPanel {
           Text(this.calculateTechnicalMetrics().bufferSizeKB + ' KB')
             .fontSize(DesignConstants.FONT_SIZE_XL)
             .fontWeight(FontWeight.Bold)
-            .fontColor($r('sys.color.icon_emphasize'))
+            .fontColor($r('app.color.icon_emphasize'))
           
           Text('缓冲区大小')
             .fontSize(DesignConstants.FONT_SIZE_SM)
-            .fontColor($r('sys.color.font_secondary'))
+            .fontColor($r('app.color.font_secondary'))
         }
         .layoutWeight(1)
         .alignItems(HorizontalAlign.Center)
@@ -422,7 +422,7 @@ export struct EnhancedCustomConfigPanel {
     }
     .width('100%')
     .padding(DesignConstants.SPACING_MD)
-    .backgroundColor($r('sys.color.comp_background_primary'))
+    .backgroundColor($r('app.color.comp_background_primary'))
     .borderRadius(DesignConstants.BORDER_RADIUS_LG)
   }
 
@@ -433,12 +433,12 @@ export struct EnhancedCustomConfigPanel {
         Text('自定义音频分析配置')
           .fontSize(DesignConstants.FONT_SIZE_XL)
           .fontWeight(FontWeight.Bold)
-          .fontColor($r('sys.color.font_primary'))
+          .fontColor($r('app.color.font_primary'))
           .width('100%')
         
         Text('调整以下参数以优化您的音频分析体验。点击"查看详情"了解每个参数的具体影响和推荐场景。')
           .fontSize(DesignConstants.FONT_SIZE_MD)
-          .fontColor($r('sys.color.font_secondary'))
+          .fontColor($r('app.color.font_secondary'))
           .width('100%')
           .maxLines(3)
           .textOverflow({ overflow: TextOverflow.Ellipsis })
@@ -515,8 +515,8 @@ export struct EnhancedCustomConfigPanel {
         .width('100%')
         .height(48)
         .fontSize(DesignConstants.FONT_SIZE_MD)
-        .backgroundColor($r('sys.color.interactive_active'))
-        .fontColor($r('sys.color.font_on_primary'))
+        .backgroundColor($r('app.color.interactive_active'))
+        .fontColor($r('app.color.font_on_primary'))
         .borderRadius(DesignConstants.BORDER_RADIUS_MD)
         .onClick(() => {
           Throttle.click(() => {
@@ -528,6 +528,6 @@ export struct EnhancedCustomConfigPanel {
     .justifyContent(FlexAlign.Start)
     .margin({ bottom: 100 })
     .padding(DesignConstants.SPACING_LG)
-    .backgroundColor($r('sys.color.background_secondary'))
+    .backgroundColor($r('app.color.background_secondary'))
   }
 }

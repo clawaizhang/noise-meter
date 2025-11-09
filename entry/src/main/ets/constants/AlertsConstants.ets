@@ -87,25 +87,25 @@ export const PRESET_THRESHOLDS: PresetThreshold[] = [
     name: '安静环境',
     value: 40,
     description: '图书馆、卧室等需要安静的环境',
-    color: $r('sys.color.confirm') // 绿色
+    color: $r('app.color.confirm') // 绿色
   },
   {
     name: '一般环境',
     value: 55,
     description: '办公室、教室等日常环境',
-    color: $r('sys.color.brand') // 浅蓝色
+    color: $r('app.color.brand') // 浅蓝色
   },
   {
     name: '嘈杂环境',
     value: 70,
     description: '街道、商场等嘈杂环境',
-    color: $r('sys.color.warning') // 黄色
+    color: $r('app.color.warning') // 黄色
   },
   {
     name: '危险环境',
     value: 85,
     description: '工厂、工地等可能损伤听力的环境',
-    color: $r('sys.color.alert') // 红色
+    color: $r('app.color.alert') // 红色
   }
 ];
 
@@ -173,12 +173,12 @@ interface AlertColors {
 }
 
 export const ALERT_COLORS: AlertColors = {
-  PRIMARY: $r('sys.color.brand'),
-  SUCCESS: $r('sys.color.confirm'),
-  WARNING: $r('sys.color.warning'),
-  ERROR: $r('sys.color.alert'),
-  BACKGROUND: $r('sys.color.background_secondary'),
-  CARD_BACKGROUND: $r('sys.color.comp_background_primary')
+  PRIMARY: $r('app.color.brand_primary'),
+  SUCCESS: $r('app.color.success'),
+  WARNING: $r('app.color.warning'),
+  ERROR: $r('app.color.feedback_warning'),
+  BACKGROUND: $r('app.color.background_secondary'),
+  CARD_BACKGROUND: $r('app.color.comp_background_primary')
 };
 
 // ==================== 状态机相关定义 ====================
@@ -242,11 +242,11 @@ export const ALERT_STATUS_DESCRIPTIONS: Record<AlertStatus, string> = {
 
 // 状态颜色映射
 export const ALERT_STATUS_COLORS: Record<AlertStatus, Resource> = {
-  [AlertStatus.IDLE]: $r('sys.color.font_secondary'),
-  [AlertStatus.MONITORING]: $r('sys.color.confirm'),
-  [AlertStatus.WARNING]: $r('sys.color.warning'),
-  [AlertStatus.ALERT_ACTIVE]: $r('sys.color.alert'),
-  [AlertStatus.ALERT_PERSISTENT]: $r('sys.color.alert'),
-  [AlertStatus.ALERT_ESCALATED]: $r('sys.color.alert'),
-  [AlertStatus.MUTED]: $r('sys.color.font_secondary')
+  [AlertStatus.IDLE]: $r('app.color.content_secondary'),
+  [AlertStatus.MONITORING]: $r('app.color.success'),
+  [AlertStatus.WARNING]: $r('app.color.warning'),
+  [AlertStatus.ALERT_ACTIVE]: $r('app.color.feedback_warning'),
+  [AlertStatus.ALERT_PERSISTENT]: $r('app.color.feedback_warning'),
+  [AlertStatus.ALERT_ESCALATED]: $r('app.color.feedback_warning'),
+  [AlertStatus.MUTED]: $r('app.color.content_secondary')
 };

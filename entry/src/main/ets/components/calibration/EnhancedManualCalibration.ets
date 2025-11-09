@@ -38,12 +38,12 @@ export struct EnhancedManualCalibration {
           Circle({ width: 6, height: 6 })
             .fill(this.isPresetValue(this.calibrationValue) && this.calibrationValue === preset ?
               CALIBRATION_COLORS.PRIMARY :
-              $r('sys.color.font_tertiary'))
+              $r('app.color.font_tertiary'))
 
           // 预设值标签
           Text(preset.toString())
             .fontSize(DesignConstants.FONT_SIZE_XS)
-            .fontColor($r('sys.color.font_secondary'))
+            .fontColor($r('app.color.font_secondary'))
             .fontWeight(FontWeight.Medium)
         }
         .layoutWeight(1)
@@ -60,7 +60,7 @@ export struct EnhancedManualCalibration {
     Row({ space: DesignConstants.SPACING_SM }) {
       Text('当前校准值:')
         .fontSize(DesignConstants.FONT_SIZE_MD)
-        .fontColor($r('sys.color.font_secondary'))
+        .fontColor($r('app.color.font_secondary'))
 
       Text(`${this.calibrationValue.toFixed(1)}dB`)
         .fontSize(DesignConstants.FONT_SIZE_LG)
@@ -76,7 +76,7 @@ export struct EnhancedManualCalibration {
         Text('预设点')
           .fontSize(DesignConstants.FONT_SIZE_SM)
           .fontColor(CALIBRATION_COLORS.SUCCESS)
-          .backgroundColor($r('sys.color.background_emphasize'))
+          .backgroundColor($r('app.color.background_emphasize'))
           .borderRadius(DesignConstants.BORDER_RADIUS_XS)
           .padding({
             left: DesignConstants.SPACING_SM,
@@ -96,8 +96,8 @@ export struct EnhancedManualCalibration {
       // 快速重置按钮
       Button('重置为0', { type: ButtonType.Normal })
         .fontSize(DesignConstants.FONT_SIZE_MD)
-        .backgroundColor($r('sys.color.comp_background_tertiary'))
-        .fontColor($r('sys.color.font_primary'))
+        .backgroundColor($r('app.color.comp_background_tertiary'))
+        .fontColor($r('app.color.font_primary'))
         .borderRadius(DesignConstants.BORDER_RADIUS_MD)
         .height(32)
         .layoutWeight(1)
@@ -110,8 +110,8 @@ export struct EnhancedManualCalibration {
       // 吸附到预设点按钮
       Button('吸附预设点', { type: ButtonType.Normal })
         .fontSize(DesignConstants.FONT_SIZE_MD)
-        .backgroundColor($r('sys.color.comp_background_tertiary'))
-        .fontColor($r('sys.color.font_primary'))
+        .backgroundColor($r('app.color.comp_background_tertiary'))
+        .fontColor($r('app.color.font_primary'))
         .borderRadius(DesignConstants.BORDER_RADIUS_MD)
         .height(32)
         .layoutWeight(1)
@@ -132,17 +132,17 @@ export struct EnhancedManualCalibration {
         Image($r('app.media.ic_calibration'))
           .width(DesignConstants.ICON_SIZE_MD)
           .height(DesignConstants.ICON_SIZE_MD)
-          .fillColor($r('sys.color.brand'))
+          .fillColor($r('app.color.brand'))
 
         Text('手动校准')
           .fontSize(DesignConstants.FONT_SIZE_LG)
           .fontWeight(FontWeight.Bold)
-          .fontColor($r('sys.color.font_primary'))
+          .fontColor($r('app.color.font_primary'))
           .layoutWeight(1)
 
         Text('精确调整')
           .fontSize(DesignConstants.FONT_SIZE_MD)
-          .fontColor($r('sys.color.font_secondary'))
+          .fontColor($r('app.color.font_secondary'))
       }
       .width('100%')
       .alignItems(VerticalAlign.Center)
@@ -160,7 +160,7 @@ export struct EnhancedManualCalibration {
           style: SliderStyle.InSet
         })
           .blockColor(CALIBRATION_COLORS.PRIMARY)
-          .trackColor($r('sys.color.background_secondary'))
+          .trackColor($r('app.color.background_secondary'))
           .selectedColor(CALIBRATION_COLORS.PRIMARY)
           .onChange((value: number) => {
             this.onValueChange(value);
@@ -196,7 +196,7 @@ export struct EnhancedManualCalibration {
       // 说明文本
       Text('手动校准操作：\n1. 将设备与专业声级计放置在同一位置\n2. 对照标准设备读数\n3. 调整校准值使读数一致')
         .fontSize(DesignConstants.FONT_SIZE_MD)
-        .fontColor($r('sys.color.font_secondary'))
+        .fontColor($r('app.color.font_secondary'))
         .textAlign(TextAlign.Start)
         .alignSelf(ItemAlign.Start)
     }

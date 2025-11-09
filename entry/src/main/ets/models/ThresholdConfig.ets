@@ -113,28 +113,28 @@ export const PRESET_THRESHOLDS: PresetThreshold[] = [
     name: '安静环境',
     baseValue: 40,
     description: '图书馆、卧室等需要安静的环境',
-    color: $r('sys.color.ohos_id_color_palette2') // 绿色
+    color: $r('app.color.ohos_id_color_palette2') // 绿色
   },
   {
     type: PresetType.GENERAL_ENVIRONMENT,
     name: '一般环境',
     baseValue: 55,
     description: '办公室、教室等日常环境',
-    color: $r('sys.color.ohos_id_color_palette5') // 浅蓝色
+    color: $r('app.color.ohos_id_color_palette5') // 浅蓝色
   },
   {
     type: PresetType.NOISY_ENVIRONMENT,
     name: '嘈杂环境',
     baseValue: 70,
     description: '街道、商场等嘈杂环境',
-    color: $r('sys.color.ohos_id_color_palette3') // 黄色
+    color: $r('app.color.ohos_id_color_palette3') // 黄色
   },
   {
     type: PresetType.DANGEROUS_ENVIRONMENT,
     name: '危险环境',
     baseValue: 85,
     description: '工厂、工地等可能损伤听力的环境',
-    color: $r('sys.color.ohos_id_color_palette4') // 红色
+    color: $r('app.color.ohos_id_color_palette4') // 红色
   }
 ];
 
@@ -143,7 +143,7 @@ export const CUSTOM_THRESHOLD_CONFIG: PresetThreshold = {
   name: '自定义环境',
   baseValue: 55,
   description: '自定义环境',
-  color: $r('sys.color.ohos_id_color_palette5')
+  color: $r('app.color.ohos_id_color_palette5')
 };
 
 // 时段调度配置
