@@ -2,39 +2,39 @@
   "color": [
     {
       "name": "start_window_background",
-      "value": "#0D1B2A"
+      "value": "#000000"
     },
     {
       "name": "background_primary",
-      "value": "#ffffffff"
+      "value": "#121212"
     },
     {
       "name": "background_secondary",
-      "value": "#F5F5F5"
+      "value": "#1E1E1E"
     },
     {
       "name": "background_tertiary",
-      "value": "#ffe5e5ea"
+      "value": "#2D2D2D"
     },
     {
       "name": "text_primary",
-      "value": "#e5000000"
+      "value": "#FFFFFF"
     },
     {
       "name": "text_secondary",
-      "value": "#666666"
+      "value": "#B3B3B3"
     },
     {
       "name": "text_tertiary",
-      "value": "#999999"
+      "value": "#808080"
     },
     {
       "name": "text_disabled",
-      "value": "#BDBDBD"
+      "value": "#424242"
     },
     {
       "name": "primary",
-      "value": "#1890FF"
+      "value": "#2196F3"
     },
     {
       "name": "secondary",
@@ -42,11 +42,11 @@
     },
     {
       "name": "error",
-      "value": "#ffe84026"
+      "value": "#CF6679"
     },
     {
       "name": "button_primary",
-      "value": "#ff0a59f7"
+      "value": "#2196F3"
     },
     {
       "name": "button_secondary",
@@ -54,7 +54,7 @@
     },
     {
       "name": "button_danger",
-      "value": "#ffe84026"
+      "value": "#CF6679"
     },
     {
       "name": "icon_accent",
@@ -62,15 +62,15 @@
     },
     {
       "name": "icon_primary",
-      "value": "#e5000000"
+      "value": "#FFFFFF"
     },
     {
       "name": "icon_active",
-      "value": "#ff0a59f7"
+      "value": "#2196F3"
     },
     {
       "name": "icon_inactive",
-      "value": "#BDBDBD"
+      "value": "#424242"
     },
     {
       "name": "icon_favorite",
@@ -78,19 +78,19 @@
     },
     {
       "name": "icon_secondary",
-      "value": "#999999"
+      "value": "#808080"
     },
     {
       "name": "divider",
-      "value": "#33000000"
+      "value": "#33FFFFFF"
     },
     {
       "name": "divider_primary",
-      "value": "#616161"
+      "value": "#B3B3B3"
     },
     {
       "name": "divider_secondary",
-      "value": "#BDBDBD"
+      "value": "#424242"
     },
     {
       "name": "decibel_safe",
@@ -106,19 +106,19 @@
     },
     {
       "name": "toggle_active",
-      "value": "#ff0a59f7"
+      "value": "#2196F3"
     },
     {
       "name": "button_background",
-      "value": "#EEEEEE"
+      "value": "#2D2D2D"
     },
     {
       "name": "button_red",
-      "value": "#ffe84026"
+      "value": "#CF6679"
     },
     {
       "name": "accent_red",
-      "value": "#ffe84026"
+      "value": "#CF6679"
     },
     {
       "name": "decibel_very_quiet",
@@ -146,15 +146,15 @@
     },
     {
       "name": "shadow_light",
-      "value": "#00000010"
+      "value": "#FFFFFF10"
     },
     {
       "name": "shadow_medium",
-      "value": "#33000000"
+      "value": "#33FFFFFF"
     },
     {
       "name": "shadow_dark",
-      "value": "#4D000000"
+      "value": "#4DFFFFFF"
     },
     {
       "name": "white",
@@ -170,15 +170,15 @@
     },
     {
       "name": "button_cancel",
-      "value": "#666666"
+      "value": "#808080"
     },
     {
       "name": "button_confirm",
-      "value": "#ff0a59f7"
+      "value": "#2196F3"
     },
     {
       "name": "button_warning",
-      "value": "#ffe84026"
+      "value": "#CF6679"
     },
     {
       "name": "weighting_a",
@@ -194,11 +194,11 @@
     },
     {
       "name": "weighting_default",
-      "value": "#F0F0F0"
+      "value": "#2D2D2D"
     },
     {
       "name": "primary_active",
-      "value": "#19000000"
+      "value": "#19FFFFFF"
     },
     {
       "name": "success",
@@ -218,23 +218,23 @@
     },
     {
       "name": "skeleton_background",
-      "value": "#E0E0E0"
+      "value": "#2D2D2D"
     },
     {
       "name": "border_primary",
-      "value": "#E0E0E0"
+      "value": "#424242"
     },
     {
       "name": "brand_primary",
-      "value": "#1890FF"
+      "value": "#2196F3"
     },
     {
       "name": "font_primary",
-      "value": "#e5000000"
+      "value": "#FFFFFF"
     },
     {
       "name": "font_secondary",
-      "value": "#666666"
+      "value": "#B3B3B3"
     },
     {
       "name": "warning",
@@ -242,107 +242,107 @@
     },
     {
       "name": "warning_container",
-      "value": "#FFF8E1"
+      "value": "#3E2723"
     },
     {
       "name": "primary_container",
-      "value": "#E3F2FD"
+      "value": "#1A237E"
     },
     {
       "name": "comp_background_primary",
-      "value": "#FFFFFF"
+      "value": "#1E1E1E"
     },
     {
       "name": "comp_background_secondary",
-      "value": "#F5F5F5"
+      "value": "#2D2D2D"
     },
     {
       "name": "dormitory_very_quiet",
-      "value": "#E8F5E9"
+      "value": "#1B5E20"
     },
     {
       "name": "dormitory_quiet",
-      "value": "#C8E6C9"
+      "value": "#2E7D32"
     },
     {
       "name": "dormitory_acceptable",
-      "value": "#FFF9C4"
+      "value": "#F57F17"
     },
     {
       "name": "dormitory_noisy",
-      "value": "#FFCCBC"
+      "value": "#E64A19"
     },
     {
       "name": "dormitory_very_noisy",
-      "value": "#FFCDD2"
+      "value": "#C62828"
     },
     {
       "name": "dormitory_unacceptable",
-      "value": "#F8BBD9"
+      "value": "#AD1457"
     },
     {
       "name": "study_quiet",
-      "value": "#E1F5FE"
+      "value": "#01579B"
     },
     {
       "name": "study_normal",
-      "value": "#B3E5FC"
+      "value": "#0277BD"
     },
     {
       "name": "study_noisy",
-      "value": "#FFE0B2"
+      "value": "#E65100"
     },
     {
       "name": "study_very_noisy",
-      "value": "#FFCDD2"
+      "value": "#C62828"
     },
     {
       "name": "sleep_optimal",
-      "value": "#E8EAF6"
+      "value": "#283593"
     },
     {
       "name": "sleep_acceptable",
-      "value": "#C5CAE9"
+      "value": "#3949AB"
     },
     {
       "name": "sleep_disturbing",
-      "value": "#FFECB3"
+      "value": "#F57F17"
     },
     {
       "name": "sleep_disruptive",
-      "value": "#FFCCBC"
+      "value": "#E64A19"
     },
     {
       "name": "relaxation_ideal",
-      "value": "#F3E5F5"
+      "value": "#4527A0"
     },
     {
       "name": "relaxation_good",
-      "value": "#E1BEE7"
+      "value": "#512DA8"
     },
     {
       "name": "relaxation_acceptable",
-      "value": "#FFCDD2"
+      "value": "#C62828"
     },
     {
       "name": "relaxation_poor",
-      "value": "#FFCCBC"
+      "value": "#E64A19"
     },
     {
       "name": "background_card",
-      "value": "#FFFFFF"
+      "value": "#1E1E1E"
     },
     {
       "name": "background_card_hover",
-      "value": "#FAFAFA"
+      "value": "#252525"
     },
     {
       "name": "background_card_pressed",
-      "value": "#F5F5F5"
+      "value": "#2D2D2D"
     },
     {
       "name": "background_section",
-      "value": "#FAFAFA"
+      "value": "#252525"
     },
     {
       "name": "background_overlay",
@@ -350,19 +350,19 @@
     },
     {
       "name": "text_hint",
-      "value": "#9E9E9E"
+      "value": "#757575"
     },
     {
       "name": "text_link",
-      "value": "#2196F3"
+      "value": "#64B5F6"
     },
     {
       "name": "text_inverse",
-      "value": "#FFFFFF"
+      "value": "#000000"
     },
     {
       "name": "button_outline",
-      "value": "#2196F3"
+      "value": "#64B5F6"
     },
     {
       "name": "button_ghost",
@@ -370,83 +370,83 @@
     },
     {
       "name": "button_ghost_pressed",
-      "value": "#10000000"
+      "value": "#10FFFFFF"
     },
     {
       "name": "icon_tint",
-      "value": "#757575"
+      "value": "#B3B3B3"
     },
     {
       "name": "icon_hint",
-      "value": "#BDBDBD"
+      "value": "#757575"
     },
     {
       "name": "chart_grid",
-      "value": "#E0E0E0"
+      "value": "#424242"
     },
     {
       "name": "chart_axis",
-      "value": "#9E9E9E"
+      "value": "#757575"
     },
     {
       "name": "chart_data_safe",
-      "value": "#4CAF50"
+      "value": "#66BB6A"
     },
     {
       "name": "chart_data_warning",
-      "value": "#FF9800"
+      "value": "#FFB74D"
     },
     {
       "name": "chart_data_danger",
-      "value": "#F44336"
+      "value": "#EF5350"
     },
     {
       "name": "status_online",
-      "value": "#4CAF50"
+      "value": "#66BB6A"
     },
     {
       "name": "status_offline",
-      "value": "#9E9E9E"
+      "value": "#757575"
     },
     {
       "name": "status_busy",
-      "value": "#FF9800"
+      "value": "#FFB74D"
     },
     {
       "name": "status_error",
-      "value": "#F44336"
+      "value": "#EF5350"
     },
     {
       "name": "tag_default",
-      "value": "#E0E0E0"
+      "value": "#424242"
     },
     {
       "name": "tag_primary",
-      "value": "#E3F2FD"
+      "value": "#1565C0"
     },
     {
       "name": "tag_success",
-      "value": "#E8F5E9"
+      "value": "#2E7D32"
     },
     {
       "name": "tag_warning",
-      "value": "#FFF3E0"
+      "value": "#F57F17"
     },
     {
       "name": "tag_error",
-      "value": "#FFEBEE"
+      "value": "#C62828"
     },
     {
       "name": "progress_track",
-      "value": "#E0E0E0"
+      "value": "#424242"
     },
     {
       "name": "progress_fill",
-      "value": "#2196F3"
+      "value": "#64B5F6"
     },
     {
       "name": "switch_track",
-      "value": "#BDBDBD"
+      "value": "#757575"
     },
     {
       "name": "switch_thumb",
@@ -454,387 +454,387 @@
     },
     {
       "name": "switch_track_active",
-      "value": "#90CAF9"
+      "value": "#1976D2"
     },
     {
       "name": "input_background",
-      "value": "#FAFAFA"
+      "value": "#2D2D2D"
     },
     {
       "name": "input_background_focused",
-      "value": "#FFFFFF"
+      "value": "#1E1E1E"
     },
     {
       "name": "input_border",
-      "value": "#E0E0E0"
-    },
-    {
-      "name": "input_border_focused",
-      "value": "#2196F3"
-    },
-    {
-      "name": "ripple_light",
-      "value": "#10000000"
-    },
-    {
-      "name": "ripple_medium",
-      "value": "#20000000"
-    },
-    {
-      "name": "ripple_dark",
-      "value": "#30000000"
-    },
-    {
-      "name": "brand_blue_50",
-      "value": "#E3F2FD"
-    },
-    {
-      "name": "brand_blue_100",
-      "value": "#BBDEFB"
-    },
-    {
-      "name": "brand_blue_200",
-      "value": "#90CAF9"
-    },
-    {
-      "name": "brand_blue_300",
-      "value": "#64B5F6"
-    },
-    {
-      "name": "brand_blue_400",
-      "value": "#42A5F5"
-    },
-    {
-      "name": "brand_blue_500",
-      "value": "#2196F3"
-    },
-    {
-      "name": "brand_blue_600",
-      "value": "#1E88E5"
-    },
-    {
-      "name": "brand_blue_700",
-      "value": "#1976D2"
-    },
-    {
-      "name": "brand_blue_800",
-      "value": "#1565C0"
-    },
-    {
-      "name": "brand_blue_900",
-      "value": "#0D47A1"
-    },
-    {
-      "name": "semantic_info",
-      "value": "#2196F3"
-    },
-    {
-      "name": "semantic_info_light",
-      "value": "#E3F2FD"
-    },
-    {
-      "name": "semantic_success",
-      "value": "#4CAF50"
-    },
-    {
-      "name": "semantic_success_light",
-      "value": "#E8F5E9"
-    },
-    {
-      "name": "semantic_warning",
-      "value": "#FF9800"
-    },
-    {
-      "name": "semantic_warning_light",
-      "value": "#FFF3E0"
-    },
-    {
-      "name": "semantic_error",
-      "value": "#F44336"
-    },
-    {
-      "name": "semantic_error_light",
-      "value": "#FFEBEE"
-    },
-    {
-      "name": "neutral_50",
-      "value": "#FAFAFA"
-    },
-    {
-      "name": "neutral_100",
-      "value": "#F5F5F5"
-    },
-    {
-      "name": "neutral_200",
-      "value": "#EEEEEE"
-    },
-    {
-      "name": "neutral_300",
-      "value": "#E0E0E0"
-    },
-    {
-      "name": "neutral_400",
-      "value": "#BDBDBD"
-    },
-    {
-      "name": "neutral_500",
-      "value": "#9E9E9E"
-    },
-    {
-      "name": "neutral_600",
-      "value": "#757575"
-    },
-    {
-      "name": "neutral_700",
-      "value": "#616161"
-    },
-    {
-      "name": "neutral_800",
       "value": "#424242"
     },
     {
-      "name": "neutral_900",
-      "value": "#212121"
+      "name": "input_border_focused",
+      "value": "#64B5F6"
     },
     {
-      "name": "surface_elevated",
-      "value": "#FFFFFF"
+      "name": "ripple_light",
+      "value": "#10FFFFFF"
     },
     {
-      "name": "surface_overlay",
-      "value": "#F5F5F5"
+      "name": "ripple_medium",
+      "value": "#20FFFFFF"
     },
     {
-      "name": "surface_disabled",
-      "value": "#FAFAFA"
+      "name": "ripple_dark",
+      "value": "#30FFFFFF"
     },
     {
-      "name": "content_primary",
-      "value": "#000000"
+      "name": "brand_blue_50",
+      "value": "#0D47A1"
     },
     {
-      "name": "content_secondary",
-      "value": "#666666"
-    },
-    {
-      "name": "content_tertiary",
-      "value": "#999999"
-    },
-    {
-      "name": "content_disabled",
-      "value": "#CCCCCC"
-    },
-    {
-      "name": "content_on_primary",
-      "value": "#FFFFFF"
-    },
-    {
-      "name": "content_on_secondary",
-      "value": "#FFFFFF"
-    },
-    {
-      "name": "border_default",
-      "value": "#E0E0E0"
-    },
-    {
-      "name": "border_focus",
-      "value": "#2196F3"
-    },
-    {
-      "name": "border_error",
-      "value": "#F44336"
-    },
-    {
-      "name": "border_disabled",
-      "value": "#F0F0F0"
-    },
-    {
-      "name": "interactive_default",
-      "value": "#2196F3"
-    },
-    {
-      "name": "interactive_hover",
-      "value": "#1976D2"
-    },
-    {
-      "name": "interactive_pressed",
+      "name": "brand_blue_100",
       "value": "#1565C0"
     },
     {
-      "name": "interactive_disabled",
-      "value": "#BDBDBD"
-    },
-    {
-      "name": "interactive_secondary_default",
-      "value": "#FFFFFF"
-    },
-    {
-      "name": "interactive_secondary_hover",
-      "value": "#F5F5F5"
-    },
-    {
-      "name": "interactive_secondary_pressed",
-      "value": "#EEEEEE"
-    },
-    {
-      "name": "feedback_success",
-      "value": "#4CAF50"
-    },
-    {
-      "name": "feedback_warning",
-      "value": "#FF9800"
-    },
-    {
-      "name": "feedback_error",
-      "value": "#F44336"
-    },
-    {
-      "name": "feedback_info",
-      "value": "#2196F3"
-    },
-    {
-      "name": "chart_background",
-      "value": "#FAFAFA"
-    },
-    {
-      "name": "chart_grid_line",
-      "value": "#E0E0E0"
-    },
-    {
-      "name": "chart_axis_line",
-      "value": "#9E9E9E"
-    },
-    {
-      "name": "chart_data_line",
-      "value": "#2196F3"
-    },
-    {
-      "name": "chart_data_fill",
-      "value": "#E3F2FD"
-    },
-    {
-      "name": "chart_data_positive",
-      "value": "#4CAF50"
-    },
-    {
-      "name": "chart_data_negative",
-      "value": "#F44336"
-    },
-    {
-      "name": "chart_data_neutral",
-      "value": "#FF9800"
-    },
-    {
-      "name": "noise_level_excellent",
-      "value": "#4CAF50"
-    },
-    {
-      "name": "noise_level_good",
-      "value": "#8BC34A"
-    },
-    {
-      "name": "noise_level_fair",
-      "value": "#FFEB3B"
-    },
-    {
-      "name": "noise_level_poor",
-      "value": "#FF9800"
-    },
-    {
-      "name": "noise_level_bad",
-      "value": "#F44336"
-    },
-    {
-      "name": "noise_level_hazardous",
-      "value": "#8B0000"
-    },
-    {
-      "name": "measurement_active",
-      "value": "#4CAF50"
-    },
-    {
-      "name": "measurement_idle",
-      "value": "#9E9E9E"
-    },
-    {
-      "name": "measurement_recording",
-      "value": "#F44336"
-    },
-    {
-      "name": "measurement_calibrating",
-      "value": "#FF9800"
-    },
-    {
-      "name": "device_connected",
-      "value": "#4CAF50"
-    },
-    {
-      "name": "device_disconnected",
-      "value": "#9E9E9E"
-    },
-    {
-      "name": "device_connecting",
-      "value": "#FF9800"
-    },
-    {
-      "name": "device_error",
-      "value": "#F44336"
-    },
-    {
-      "name": "premium_free",
-      "value": "#9E9E9E"
-    },
-    {
-      "name": "premium_basic",
-      "value": "#2196F3"
-    },
-    {
-      "name": "premium_pro",
-      "value": "#9C27B0"
-    },
-    {
-      "name": "premium_enterprise",
-      "value": "#FFD700"
-    },
-    {
-      "name": "gradient_primary_start",
-      "value": "#2196F3"
-    },
-    {
-      "name": "gradient_primary_end",
+      "name": "brand_blue_200",
       "value": "#1976D2"
     },
     {
+      "name": "brand_blue_300",
+      "value": "#1E88E5"
+    },
+    {
+      "name": "brand_blue_400",
+      "value": "#2196F3"
+    },
+    {
+      "name": "brand_blue_500",
+      "value": "#42A5F5"
+    },
+    {
+      "name": "brand_blue_600",
+      "value": "#64B5F6"
+    },
+    {
+      "name": "brand_blue_700",
+      "value": "#90CAF9"
+    },
+    {
+      "name": "brand_blue_800",
+      "value": "#BBDEFB"
+    },
+    {
+      "name": "brand_blue_900",
+      "value": "#E3F2FD"
+    },
+    {
+      "name": "semantic_info",
+      "value": "#64B5F6"
+    },
+    {
+      "name": "semantic_info_light",
+      "value": "#0D47A1"
+    },
+    {
+      "name": "semantic_success",
+      "value": "#66BB6A"
+    },
+    {
+      "name": "semantic_success_light",
+      "value": "#1B5E20"
+    },
+    {
+      "name": "semantic_warning",
+      "value": "#FFB74D"
+    },
+    {
+      "name": "semantic_warning_light",
+      "value": "#E65100"
+    },
+    {
+      "name": "semantic_error",
+      "value": "#EF5350"
+    },
+    {
+      "name": "semantic_error_light",
+      "value": "#B71C1C"
+    },
+    {
+      "name": "neutral_50",
+      "value": "#212121"
+    },
+    {
+      "name": "neutral_100",
+      "value": "#424242"
+    },
+    {
+      "name": "neutral_200",
+      "value": "#616161"
+    },
+    {
+      "name": "neutral_300",
+      "value": "#757575"
+    },
+    {
+      "name": "neutral_400",
+      "value": "#9E9E9E"
+    },
+    {
+      "name": "neutral_500",
+      "value": "#BDBDBD"
+    },
+    {
+      "name": "neutral_600",
+      "value": "#E0E0E0"
+    },
+    {
+      "name": "neutral_700",
+      "value": "#EEEEEE"
+    },
+    {
+      "name": "neutral_800",
+      "value": "#F5F5F5"
+    },
+    {
+      "name": "neutral_900",
+      "value": "#FAFAFA"
+    },
+    {
+      "name": "surface_elevated",
+      "value": "#1E1E1E"
+    },
+    {
+      "name": "surface_overlay",
+      "value": "#252525"
+    },
+    {
+      "name": "surface_disabled",
+      "value": "#2D2D2D"
+    },
+    {
+      "name": "content_primary",
+      "value": "#FFFFFF"
+    },
+    {
+      "name": "content_secondary",
+      "value": "#B3B3B3"
+    },
+    {
+      "name": "content_tertiary",
+      "value": "#808080"
+    },
+    {
+      "name": "content_disabled",
+      "value": "#424242"
+    },
+    {
+      "name": "content_on_primary",
+      "value": "#000000"
+    },
+    {
+      "name": "content_on_secondary",
+      "value": "#000000"
+    },
+    {
+      "name": "border_default",
+      "value": "#424242"
+    },
+    {
+      "name": "border_focus",
+      "value": "#64B5F6"
+    },
+    {
+      "name": "border_error",
+      "value": "#EF5350"
+    },
+    {
+      "name": "border_disabled",
+      "value": "#616161"
+    },
+    {
+      "name": "interactive_default",
+      "value": "#64B5F6"
+    },
+    {
+      "name": "interactive_hover",
+      "value": "#42A5F5"
+    },
+    {
+      "name": "interactive_pressed",
+      "value": "#2196F3"
+    },
+    {
+      "name": "interactive_disabled",
+      "value": "#757575"
+    },
+    {
+      "name": "interactive_secondary_default",
+      "value": "#2D2D2D"
+    },
+    {
+      "name": "interactive_secondary_hover",
+      "value": "#3D3D3D"
+    },
+    {
+      "name": "interactive_secondary_pressed",
+      "value": "#4D4D4D"
+    },
+    {
+      "name": "feedback_success",
+      "value": "#66BB6A"
+    },
+    {
+      "name": "feedback_warning",
+      "value": "#FFB74D"
+    },
+    {
+      "name": "feedback_error",
+      "value": "#EF5350"
+    },
+    {
+      "name": "feedback_info",
+      "value": "#64B5F6"
+    },
+    {
+      "name": "chart_background",
+      "value": "#1E1E1E"
+    },
+    {
+      "name": "chart_grid_line",
+      "value": "#424242"
+    },
+    {
+      "name": "chart_axis_line",
+      "value": "#757575"
+    },
+    {
+      "name": "chart_data_line",
+      "value": "#64B5F6"
+    },
+    {
+      "name": "chart_data_fill",
+      "value": "#0D47A1"
+    },
+    {
+      "name": "chart_data_positive",
+      "value": "#66BB6A"
+    },
+    {
+      "name": "chart_data_negative",
+      "value": "#EF5350"
+    },
+    {
+      "name": "chart_data_neutral",
+      "value": "#FFB74D"
+    },
+    {
+      "name": "noise_level_excellent",
+      "value": "#66BB6A"
+    },
+    {
+      "name": "noise_level_good",
+      "value": "#9CCC65"
+    },
+    {
+      "name": "noise_level_fair",
+      "value": "#FFF176"
+    },
+    {
+      "name": "noise_level_poor",
+      "value": "#FFB74D"
+    },
+    {
+      "name": "noise_level_bad",
+      "value": "#EF5350"
+    },
+    {
+      "name": "noise_level_hazardous",
+      "value": "#B71C1C"
+    },
+    {
+      "name": "measurement_active",
+      "value": "#66BB6A"
+    },
+    {
+      "name": "measurement_idle",
+      "value": "#757575"
+    },
+    {
+      "name": "measurement_recording",
+      "value": "#EF5350"
+    },
+    {
+      "name": "measurement_calibrating",
+      "value": "#FFB74D"
+    },
+    {
+      "name": "device_connected",
+      "value": "#66BB6A"
+    },
+    {
+      "name": "device_disconnected",
+      "value": "#757575"
+    },
+    {
+      "name": "device_connecting",
+      "value": "#FFB74D"
+    },
+    {
+      "name": "device_error",
+      "value": "#EF5350"
+    },
+    {
+      "name": "premium_free",
+      "value": "#757575"
+    },
+    {
+      "name": "premium_basic",
+      "value": "#64B5F6"
+    },
+    {
+      "name": "premium_pro",
+      "value": "#BA68C8"
+    },
+    {
+      "name": "premium_enterprise",
+      "value": "#FFD54F"
+    },
+    {
+      "name": "gradient_primary_start",
+      "value": "#64B5F6"
+    },
+    {
+      "name": "gradient_primary_end",
+      "value": "#42A5F5"
+    },
+    {
       "name": "gradient_secondary_start",
-      "value": "#03DAC6"
+      "value": "#80CBC4"
     },
     {
       "name": "gradient_secondary_end",
-      "value": "#018786"
+      "value": "#4DB6AC"
     },
     {
       "name": "gradient_success_start",
-      "value": "#4CAF50"
+      "value": "#66BB6A"
     },
     {
       "name": "gradient_success_end",
-      "value": "#388E3C"
+      "value": "#4CAF50"
     },
     {
       "name": "gradient_warning_start",
-      "value": "#FF9800"
+      "value": "#FFB74D"
     },
     {
       "name": "gradient_warning_end",
-      "value": "#F57C00"
+      "value": "#FF9800"
     },
     {
       "name": "gradient_error_start",
-      "value": "#F44336"
+      "value": "#EF5350"
     },
     {
       "name": "gradient_error_end",
-      "value": "#D32F2F"
+      "value": "#F44336"
     }
   ]
 }
