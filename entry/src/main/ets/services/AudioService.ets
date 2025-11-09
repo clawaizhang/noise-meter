@@ -609,9 +609,11 @@ export class AudioService {
     }
 
     try {
+      // 发送原始数据到回调（如果有）
       if (this.originAudioDataCallBack) {
         this.originAudioDataCallBack(buffer.slice(0));
       }
+      
       // 使用音频流处理器处理数据
       this.audioStreamProcessor.processAudioData(buffer);
     } catch (err) {

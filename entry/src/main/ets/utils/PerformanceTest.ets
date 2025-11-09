@@ -13,6 +13,15 @@ import {
 } from '../types/DeviceHealthInfo'
 import { MemoryUtils } from './MemoryUtils'
 
+/**
+ * 性能测试结果接口
+ */
+export interface PerformanceTestResult {
+  totalTime: number;
+  avgTime: number;
+  results: number[];
+}
+
 export class PerformanceTest {
   // 模拟测试数据
   private static testHealthInfo: DeviceHealthInfo = new DeviceHealthInfo(
@@ -43,11 +52,7 @@ export class PerformanceTest {
   /**
    * 运行内存计算性能测试
    */
-  static runMemoryCalculationTest(iterations: number = 1000): { 
-    totalTime: number, 
-    avgTime: number,
-    results: number[] 
-  } {
+  static runMemoryCalculationTest(iterations: number = 1000): PerformanceTestResult {
     console.log(`开始内存计算性能测试 (${iterations}次迭代)`);
     
     const results: number[] = [];
@@ -81,11 +86,7 @@ export class PerformanceTest {
   /**
    * 运行存储计算性能测试
    */
-  static runStorageCalculationTest(iterations: number = 1000): { 
-    totalTime: number, 
-    avgTime: number,
-    results: number[] 
-  } {
+  static runStorageCalculationTest(iterations: number = 1000): PerformanceTestResult {
     console.log(`开始存储计算性能测试 (${iterations}次迭代)`);
     
     const results: number[] = [];
@@ -119,11 +120,7 @@ export class PerformanceTest {
   /**
    * 运行内存格式化性能测试
    */
-  static runMemoryFormatTest(iterations: number = 1000): { 
-    totalTime: number, 
-    avgTime: number,
-    results: number[] 
-  } {
+  static runMemoryFormatTest(iterations: number = 1000): PerformanceTestResult {
     console.log(`开始内存格式化性能测试 (${iterations}次迭代)`);
     
     const results: number[] = [];

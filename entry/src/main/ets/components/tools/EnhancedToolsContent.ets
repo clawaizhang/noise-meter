@@ -27,6 +27,14 @@ enum ViewMode {
   CATEGORY = 'category'
 }
 
+/**
+ * 分类工具组接口
+ */
+interface CategoryToolGroup {
+  category: ToolCategory;
+  tools: EnhancedToolConfig[];
+}
+
 @ComponentV2
 export struct EnhancedToolsContent {
   @Local ak: AppKeys = AppStorageV2.connect(AppKeys)!;
@@ -659,7 +667,7 @@ export struct EnhancedToolsContent {
     }
   }
 
-  private getCategoriesByPriority(): { category: ToolCategory, tools: EnhancedToolConfig[] }[] {
+  private getCategoriesByPriority(): CategoryToolGroup[] {
     const toolsByCategory = new Map<ToolCategory, EnhancedToolConfig[]>();
     
     // 按分类分组
@@ -671,7 +679,7 @@ export struct EnhancedToolsContent {
     });
     
     // 转换为数组并按优先级排序
-    const result: { category: ToolCategory, tools: EnhancedToolConfig[] }[] = [];
+    const result: CategoryToolGroup[] = [];
     
     // 按照优先级顺序添加分类
     [ToolCategory.BASIC_MEASUREMENT, ToolCategory.DATA_MANAGEMENT, 

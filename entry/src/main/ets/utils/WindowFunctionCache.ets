@@ -169,7 +169,8 @@ export class WindowFunctionCache {
         for (let i = 0; i < size; i++) {
           window[i] = 0.5 * (1 - Math.cos(2 * Math.PI * i / N));
         }
-        correction = 2.67; // Hanning窗的能量校正因子 (8/3)
+        // 精确计算能量校正因子
+        correction = WindowFunctionCache.calculateCorrectionFactor(window);
         break;
         
       case WindowType.BLACKMAN:
@@ -177,21 +178,22 @@ export class WindowFunctionCache {
           window[i] = 0.42 - 0.5 * Math.cos(2 * Math.PI * i / N) + 
                      0.08 * Math.cos(4 * Math.PI * i / N);
         }
-        correction = 2.38; // Blackman窗的能量校正因子
+        correction = WindowFunctionCache.calculateCorrectionFactor(window);
         break;
         
       case WindowType.HAMMING:
         for (let i = 0; i < size; i++) {
           window[i] = 0.54 - 0.46 * Math.cos(2 * Math.PI * i / N);
         }
-        correction = 1.85; // Hamming窗的能量校正因子
+        correction = WindowFunctionCache.calculateCorrectionFactor(window);
         break;
         
       case WindowType.BARTLETT:
+        // 修正巴特利特窗公式，使用N-1而不是N
         for (let i = 0; i < size; i++) {
-          window[i] = 2.0 / N * (i <= N / 2 ? i : N - i);
+          window[i] = 2.0 / (N - 1) * (i <= N / 2 ? i : N - 1 - i);
         }
-        correction = 2.0; // Bartlett窗的能量校正因子
+        correction = WindowFunctionCache.calculateCorrectionFactor(window);
         break;
         
       case WindowType.KAISER:
@@ -203,8 +205,7 @@ export class WindowFunctionCache {
           const arg = beta * Math.sqrt(1 - Math.pow((i - alpha) / alpha, 2));
           window[i] = WindowFunctionCache.besselI0(arg) / i0Beta;
         }
-        // 根据beta值计算能量校正因子
-        correction = 2.0 * (1.0 + beta * beta / 8.0); // 近似计算
+        correction = WindowFunctionCache.calculateCorrectionFactor(window);
         break;
         
       case WindowType.FLATTOP:
@@ -215,14 +216,17 @@ export class WindowFunctionCache {
                      0.083578947 * Math.cos(3 * phase) + 
                      0.006947368 * Math.cos(4 * phase);
         }
-        correction = 4.64; // Flat Top窗的能量校正因子
+        correction = WindowFunctionCache.calculateCorrectionFactor(window);
         break;
         
       case WindowType.TRIANGULAR:
+        // 修正三角窗实现，使其与巴特利特窗区分开来
+        // 三角窗是巴特利特窗的周期版本
         for (let i = 0; i < size; i++) {
-          window[i] = 2.0 / size * (i <= size / 2 ? i : size - i);
+          const n = i - N / 2;
+          window[i] = 1.0 - Math.abs(2.0 * n / (N + 1));
         }
-        correction = 1.33; // Triangular窗的能量校正因子
+        correction = WindowFunctionCache.calculateCorrectionFactor(window);
         break;
         
       case WindowType.WELCH:
@@ -230,14 +234,14 @@ export class WindowFunctionCache {
           const x = (i - N / 2) / (N / 2);
           window[i] = 1 - x * x;
         }
-        correction = 1.5; // Welch窗的能量校正因子
+        correction = WindowFunctionCache.calculateCorrectionFactor(window);
         break;
         
       case WindowType.SINE:
         for (let i = 0; i < size; i++) {
           window[i] = Math.sin(Math.PI * i / N);
         }
-        correction = 1.5; // Sine窗的能量校正因子
+        correction = WindowFunctionCache.calculateCorrectionFactor(window);
         break;
         
       case WindowType.GAUSSIAN:
@@ -247,7 +251,7 @@ export class WindowFunctionCache {
           const x = (i - N / 2) / (sigma * N / 2);
           window[i] = Math.exp(-0.5 * x * x);
         }
-        correction = 1.0 / (sigma * Math.sqrt(2 * Math.PI)); // Gaussian窗的能量校正因子
+        correction = WindowFunctionCache.calculateCorrectionFactor(window);
         break;
         
       case WindowType.TUKEY:
@@ -263,7 +267,7 @@ export class WindowFunctionCache {
             window[i] = 1.0;
           }
         }
-        correction = 1.0 / (1.0 - alpha / 2.0); // Tukey窗的能量校正因子
+        correction = WindowFunctionCache.calculateCorrectionFactor(window);
         break;
         
       case WindowType.CHEBYSHEV:
@@ -275,7 +279,7 @@ export class WindowFunctionCache {
           const x = x0 * Math.cos(Math.PI * i / N);
           window[i] = Math.cosh((N - 1) * WindowFunctionCache.acosh(x)) / ripple;
         }
-        correction = 1.0 / (1.0 - 1.0 / (N - 1)); // Chebyshev窗的能量校正因子
+        correction = WindowFunctionCache.calculateCorrectionFactor(window);
         break;
         
       default:
@@ -283,10 +287,24 @@ export class WindowFunctionCache {
         for (let i = 0; i < size; i++) {
           window[i] = 0.5 * (1 - Math.cos(2 * Math.PI * i / N));
         }
-        correction = 2.67;
+        correction = WindowFunctionCache.calculateCorrectionFactor(window);
     }
     
     return { window, correction };
+  }
+  
+  /**
+   * 精确计算窗函数的能量校正因子
+   * @param window 窗函数数组
+   * @returns 能量校正因子
+   */
+  private static calculateCorrectionFactor(window: Float32Array): number {
+    let sumSquares = 0;
+    for (let i = 0; i < window.length; i++) {
+      sumSquares += window[i] * window[i];
+    }
+    // 能量校正因子 = N / sum(w[n]^2)
+    return window.length / sumSquares;
   }
   
   /**
