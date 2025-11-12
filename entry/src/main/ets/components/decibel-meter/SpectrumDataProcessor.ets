@@ -6,7 +6,14 @@ import { resourceManager } from '@kit.LocalizationKit';
 export enum PeakInterpolationMethod {
   NONE = 'none',           // 不使用插值
   PARABOLIC = 'parabolic', // 抛物线插值
-  CENTROID = 'centroid'    // 重心法
+  CENTROID = 'centroid',    // 重心法
+  QUADRATIC = 'quadratic',  // 二次拟合插值
+  GAUSSIAN = 'gaussian',   // 高斯拟合插值
+  INTERPOLATIVE = 'interpolative', // 插值法（改进的抛物线）
+  SINC = 'sinc',          // Sinc插值法
+  PHASE_VOCODER = 'phase_vocoder', // 相位声码器法
+  ADAPTIVE = 'adaptive', // 自适应算法，根据频率范围自动选择
+  HYBRID = 'hybrid' // 混合算法，结合多种算法的结果
 }
 
 /**
@@ -156,7 +163,416 @@ export class SpectrumDataProcessor {
     };
     return result;
   }
-
+  
+  /**
+   * 二次拟合插值方法
+   * 使用三点二次拟合来提高频率精度，比抛物线插值更稳定
+   * @param spectrumData 频谱数据
+   * @param peakIndex 峰值索引
+   * @param fftSize FFT大小
+   * @param sampleRate 采样率
+   * @returns 插值后的频率和幅度
+   */
+  static quadraticInterpolation(
+    spectrumData: Float32Array,
+    peakIndex: number,
+    fftSize: number,
+    sampleRate: number
+  ): FrequencyAmplitudeResult {
+    // 边界检查
+    if (peakIndex <= 0 || peakIndex >= spectrumData.length - 1) {
+      const result: FrequencyAmplitudeResult = {
+        frequency: SpectrumDataProcessor.getIndexFrequency(peakIndex, fftSize, sampleRate),
+        amplitude: Math.abs(spectrumData[peakIndex])
+      };
+      return result;
+    }
+    
+    const y1 = Math.abs(spectrumData[peakIndex - 1]);
+    const y2 = Math.abs(spectrumData[peakIndex]);
+    const y3 = Math.abs(spectrumData[peakIndex + 1]);
+    
+    // 使用二次拟合公式
+    // δ = (y1 - y3) / (2 * (y1 - 2*y2 + y3))
+    const denominator = 2 * (y1 - 2 * y2 + y3);
+    if (Math.abs(denominator) < 1e-10) {
+      // 避免除零，返回离散值
+      const result: FrequencyAmplitudeResult = {
+        frequency: SpectrumDataProcessor.getIndexFrequency(peakIndex, fftSize, sampleRate),
+        amplitude: y2
+      };
+      return result;
+    }
+    
+    const delta = (y1 - y3) / denominator;
+    const preciseIndex = peakIndex + delta;
+    
+    // 计算精确峰值幅度
+    const amplitude = y2 - 0.25 * (y1 - y3) * delta;
+    
+    const result: FrequencyAmplitudeResult = {
+      frequency: (preciseIndex * sampleRate) / fftSize,
+      amplitude: amplitude
+    };
+    return result;
+  }
+  
+  /**
+   * 高斯拟合插值方法
+   * 使用高斯函数拟合峰值区域，提供更精确的频率估计
+   * @param spectrumData 频谱数据
+   * @param peakIndex 峰值索引
+   * @param windowSize 窗口大小
+   * @param fftSize FFT大小
+   * @param sampleRate 采样率
+   * @returns 插值后的频率和幅度
+   */
+  static gaussianInterpolation(
+    spectrumData: Float32Array,
+    peakIndex: number,
+    windowSize: number = 5,
+    fftSize: number,
+    sampleRate: number
+  ): FrequencyAmplitudeResult {
+    const start = Math.max(0, peakIndex - windowSize);
+    const end = Math.min(spectrumData.length - 1, peakIndex + windowSize);
+    
+    let sumX = 0, sumY = 0, sumXY = 0, sumX2 = 0, sumX2Y = 0;
+    let maxAmplitude = 0;
+    let maxIndex = peakIndex;
+    
+    // 高斯拟合：ln(y) = a*x^2 + b*x + c
+    for (let i = start; i <= end; i++) {
+      const amplitude = Math.abs(spectrumData[i]);
+      if (amplitude > maxAmplitude) {
+        maxAmplitude = amplitude;
+        maxIndex = i;
+      }
+      
+      const x = i - peakIndex;
+      const y = Math.log(Math.max(amplitude, 1e-10)); // 避免log(0)
+      
+      sumX += x;
+      sumY += y;
+      sumXY += x * y;
+      sumX2 += x * x;
+      sumX2Y += x * x * y;
+    }
+    
+    const n = end - start + 1;
+    const denominator = n * sumX2 - sumX * sumX;
+    
+    if (Math.abs(denominator) < 1e-10) {
+      // 拟合失败，返回离散值
+      const result: FrequencyAmplitudeResult = {
+        frequency: SpectrumDataProcessor.getIndexFrequency(maxIndex, fftSize, sampleRate),
+        amplitude: maxAmplitude
+      };
+      return result;
+    }
+    
+    // 计算二次拟合系数
+    const a = (n * sumX2Y - sumX2 * sumY) / denominator;
+    const b = (sumXY * sumX2 - sumX * sumX2Y) / denominator;
+    
+    // 高斯拟合的峰值位置：x = -b/(2a)
+    const peakOffset = -b / (2 * a);
+    const preciseIndex = peakIndex + peakOffset;
+    
+    // 计算峰值幅度
+    const amplitude = maxAmplitude * Math.exp(-a * peakOffset * peakOffset);
+    
+    const result: FrequencyAmplitudeResult = {
+      frequency: (preciseIndex * sampleRate) / fftSize,
+      amplitude: amplitude
+    };
+    return result;
+  }
+  
+  /**
+   * Sinc插值方法
+   * 使用Sinc函数进行频域插值，提供高精度的频率估计
+   * @param spectrumData 频谱数据
+   * @param peakIndex 峰值索引
+   * @param fftSize FFT大小
+   * @param sampleRate 采样率
+   * @param interpolationPoints 插值点数
+   * @returns 插值后的频率和幅度
+   */
+  static sincInterpolation(
+    spectrumData: Float32Array,
+    peakIndex: number,
+    fftSize: number,
+    sampleRate: number,
+    interpolationPoints: number = 10
+  ): FrequencyAmplitudeResult {
+    // 边界检查
+    if (peakIndex <= 0 || peakIndex >= spectrumData.length - 1) {
+      const result: FrequencyAmplitudeResult = {
+        frequency: SpectrumDataProcessor.getIndexFrequency(peakIndex, fftSize, sampleRate),
+        amplitude: Math.abs(spectrumData[peakIndex])
+      };
+      return result;
+    }
+    
+    let maxAmplitude = 0;
+    let bestOffset = 0;
+    
+    // 在峰值附近进行Sinc插值
+    for (let offset = -0.5; offset <= 0.5; offset += 1.0 / interpolationPoints) {
+      let interpolatedValue = 0;
+      
+      // Sinc插值公式
+      for (let i = -2; i <= 2; i++) {
+        const dataIndex = peakIndex + i;
+        if (dataIndex >= 0 && dataIndex < spectrumData.length) {
+          const sincArg = Math.PI * (offset - i);
+          const sincValue = (Math.abs(sincArg) < 1e-10) ? 1 : Math.sin(sincArg) / sincArg;
+          interpolatedValue += Math.abs(spectrumData[dataIndex]) * sincValue;
+        }
+      }
+      
+      if (interpolatedValue > maxAmplitude) {
+        maxAmplitude = interpolatedValue;
+        bestOffset = offset;
+      }
+    }
+    
+    const preciseIndex = peakIndex + bestOffset;
+    
+    const result: FrequencyAmplitudeResult = {
+      frequency: (preciseIndex * sampleRate) / fftSize,
+      amplitude: maxAmplitude
+    };
+    return result;
+  }
+  
+  /**
+   * 相位声码器法
+   * 利用相位信息进行高精度频率估计
+   * @param spectrumData 频谱数据
+   * @param phaseData 相位数据（如果可用）
+   * @param peakIndex 峰值索引
+   * @param fftSize FFT大小
+   * @param sampleRate 采样率
+   * @returns 插值后的频率和幅度
+   */
+  static phaseVocoderMethod(
+    spectrumData: Float32Array,
+    phaseData: Float32Array | null,
+    peakIndex: number,
+    fftSize: number,
+    sampleRate: number
+  ): FrequencyAmplitudeResult {
+    // 边界检查
+    if (peakIndex <= 0 || peakIndex >= spectrumData.length - 1) {
+      const result: FrequencyAmplitudeResult = {
+        frequency: SpectrumDataProcessor.getIndexFrequency(peakIndex, fftSize, sampleRate),
+        amplitude: Math.abs(spectrumData[peakIndex])
+      };
+      return result;
+    }
+    
+    const amplitude = Math.abs(spectrumData[peakIndex]);
+    
+    // 如果没有相位数据，使用抛物线插值
+    if (!phaseData || peakIndex >= phaseData.length) {
+      return SpectrumDataProcessor.parabolicInterpolation(spectrumData, peakIndex, fftSize, sampleRate);
+    }
+    
+    // 使用相位差估计真实频率
+    const currentPhase = phaseData[peakIndex];
+    const prevPhase = peakIndex > 0 ? phaseData[peakIndex - 1] : currentPhase;
+    
+    // 计算相位差
+    let phaseDiff = currentPhase - prevPhase;
+    
+    // 相位解缠绕
+    while (phaseDiff > Math.PI) phaseDiff -= 2 * Math.PI;
+    while (phaseDiff < -Math.PI) phaseDiff += 2 * Math.PI;
+    
+    // 估计频率偏移
+    const freqOffset = phaseDiff / (2 * Math.PI);
+    const preciseIndex = peakIndex + freqOffset;
+    
+    const result: FrequencyAmplitudeResult = {
+      frequency: (preciseIndex * sampleRate) / fftSize,
+      amplitude: amplitude
+    };
+    return result;
+  }
+  
+  /**
+   * 改进的抛物线插值法
+   * 结合多种技术的混合方法，提供更稳定的峰值估计
+   * @param spectrumData 频谱数据
+   * @param peakIndex 峰值索引
+   * @param fftSize FFT大小
+   * @param sampleRate 采样率
+   * @returns 插值后的频率和幅度
+   */
+  static interpolativeMethod(
+    spectrumData: Float32Array,
+    peakIndex: number,
+    fftSize: number,
+    sampleRate: number
+  ): FrequencyAmplitudeResult {
+    // 边界检查
+    if (peakIndex <= 0 || peakIndex >= spectrumData.length - 1) {
+      const result: FrequencyAmplitudeResult = {
+        frequency: SpectrumDataProcessor.getIndexFrequency(peakIndex, fftSize, sampleRate),
+        amplitude: Math.abs(spectrumData[peakIndex])
+      };
+      return result;
+    }
+    
+    // 获取三个点的幅度
+    const y1 = Math.abs(spectrumData[peakIndex - 1]);
+    const y2 = Math.abs(spectrumData[peakIndex]);
+    const y3 = Math.abs(spectrumData[peakIndex + 1]);
+    
+    // 使用改进的插值公式
+    // 首先尝试标准抛物线插值
+    const denominator = 2 * (y1 - 2 * y2 + y3);
+    if (Math.abs(denominator) < 1e-10) {
+      // 避免除零，返回离散值
+      const result: FrequencyAmplitudeResult = {
+        frequency: SpectrumDataProcessor.getIndexFrequency(peakIndex, fftSize, sampleRate),
+        amplitude: y2
+      };
+      return result;
+    }
+    
+    // 计算偏移量
+    let delta = (y1 - y3) / denominator;
+    
+    // 限制偏移量在合理范围内
+    delta = Math.max(-0.5, Math.min(0.5, delta));
+    
+    // 使用加权平均来提高稳定性
+    const weight = 0.7; // 抛物线插值的权重
+    const preciseIndex = peakIndex + delta * weight;
+    
+    // 计算精确峰值幅度
+    const amplitude = y2 - 0.25 * (y1 - y3) * delta * weight;
+    
+    const result: FrequencyAmplitudeResult = {
+      frequency: (preciseIndex * sampleRate) / fftSize,
+      amplitude: amplitude
+    };
+    return result;
+  }
+  
+  /**
+   * 自适应峰值检测方法
+   * 根据频率范围自动选择最适合的峰值检测算法
+   * @param spectrumData 频谱数据
+   * @param peakIndex 峰值索引
+   * @param fftSize FFT大小
+   * @param sampleRate 采样率
+   * @param minFreq 最小频率
+   * @param maxFreq 最大频率
+   * @returns 插值后的频率和幅度
+   */
+  static adaptivePeakDetection(
+    spectrumData: Float32Array,
+    peakIndex: number,
+    fftSize: number,
+    sampleRate: number,
+    minFreq: number,
+    maxFreq: number
+  ): FrequencyAmplitudeResult {
+    // 边界检查
+    if (peakIndex <= 0 || peakIndex >= spectrumData.length - 1) {
+      const result: FrequencyAmplitudeResult = {
+        frequency: SpectrumDataProcessor.getIndexFrequency(peakIndex, fftSize, sampleRate),
+        amplitude: Math.abs(spectrumData[peakIndex])
+      };
+      return result;
+    }
+    
+    // 根据频率范围选择最适合的算法
+    const freqRange = maxFreq - minFreq;
+    const centerFreq = (minFreq + maxFreq) / 2;
+    
+    // 低频段 (16-250Hz): 使用重心法，因为低频信号通常较宽，重心法更稳定
+    if (centerFreq <= 250) {
+      console.info(`[自适应峰值检测] 低频段(${centerFreq.toFixed(1)}Hz)，使用重心法`);
+      return SpectrumDataProcessor.centroidMethod(spectrumData, peakIndex, 5, fftSize, sampleRate);
+    }
+    
+    // 中频段 (250-2000Hz): 使用改进的抛物线插值，平衡精度和稳定性
+    if (centerFreq <= 2000) {
+      console.info(`[自适应峰值检测] 中频段(${centerFreq.toFixed(1)}Hz)，使用改进的抛物线插值`);
+      return SpectrumDataProcessor.interpolativeMethod(spectrumData, peakIndex, fftSize, sampleRate);
+    }
+    
+    // 高频段 (2000-8000Hz): 使用二次拟合插值，高频信号需要更高精度
+    if (centerFreq <= 8000) {
+      console.info(`[自适应峰值检测] 高频段(${centerFreq.toFixed(1)}Hz)，使用二次拟合插值`);
+      return SpectrumDataProcessor.quadraticInterpolation(spectrumData, peakIndex, fftSize, sampleRate);
+    }
+    
+    // 甚高频段 (8000-20000Hz): 使用Sinc插值，甚高频需要最高精度
+    console.info(`[自适应峰值检测] 甚高频段(${centerFreq.toFixed(1)}Hz)，使用Sinc插值`);
+    return SpectrumDataProcessor.sincInterpolation(spectrumData, peakIndex, fftSize, sampleRate, 15);
+  }
+  
+  /**
+   * 混合峰值检测方法
+   * 结合多种算法的结果，提供最可靠的峰值估计
+   * @param spectrumData 频谱数据
+   * @param peakIndex 峰值索引
+   * @param fftSize FFT大小
+   * @param sampleRate 采样率
+   * @param minFreq 最小频率
+   * @param maxFreq 最大频率
+   * @returns 插值后的频率和幅度
+   */
+  static hybridPeakDetection(
+    spectrumData: Float32Array,
+    peakIndex: number,
+    fftSize: number,
+    sampleRate: number,
+    minFreq: number,
+    maxFreq: number
+  ): FrequencyAmplitudeResult {
+    // 边界检查
+    if (peakIndex <= 0 || peakIndex >= spectrumData.length - 1) {
+      const result: FrequencyAmplitudeResult = {
+        frequency: SpectrumDataProcessor.getIndexFrequency(peakIndex, fftSize, sampleRate),
+        amplitude: Math.abs(spectrumData[peakIndex])
+      };
+      return result;
+    }
+    
+    // 获取多种算法的结果
+    const parabolicResult = SpectrumDataProcessor.parabolicInterpolation(spectrumData, peakIndex, fftSize, sampleRate);
+    const quadraticResult = SpectrumDataProcessor.quadraticInterpolation(spectrumData, peakIndex, fftSize, sampleRate);
+    const interpolativeResult = SpectrumDataProcessor.interpolativeMethod(spectrumData, peakIndex, fftSize, sampleRate);
+    
+    // 计算频率一致性
+    const freqDiff1 = Math.abs(parabolicResult.frequency - quadraticResult.frequency);
+    const freqDiff2 = Math.abs(parabolicResult.frequency - interpolativeResult.frequency);
+    const freqDiff3 = Math.abs(quadraticResult.frequency - interpolativeResult.frequency);
+    
+    // 如果三种算法结果很接近，使用加权平均
+    if (freqDiff1 < 1.0 && freqDiff2 < 1.0 && freqDiff3 < 1.0) {
+      console.info(`[混合峰值检测] 算法结果一致，使用加权平均`);
+      const avgFrequency = (parabolicResult.frequency + quadraticResult.frequency + interpolativeResult.frequency) / 3;
+      const avgAmplitude = (parabolicResult.amplitude + quadraticResult.amplitude + interpolativeResult.amplitude) / 3;
+      
+      return {
+        frequency: avgFrequency,
+        amplitude: avgAmplitude
+      };
+    }
+    
+    // 否则使用最稳定的结果（改进的抛物线插值）
+    console.info(`[混合峰值检测] 算法结果不一致，使用最稳定的改进抛物线插值`);
+    return interpolativeResult;
+  }
+  
   /**
    * 获取标准频率步进点
    */
@@ -268,6 +684,41 @@ export class SpectrumDataProcessor {
         case PeakInterpolationMethod.CENTROID:
           interpolated = SpectrumDataProcessor.centroidMethod(
             spectrumData, maxIndexInRange, 3, fftSize, sampleRate
+          );
+          break;
+        case PeakInterpolationMethod.QUADRATIC:
+          interpolated = SpectrumDataProcessor.quadraticInterpolation(
+            spectrumData, maxIndexInRange, fftSize, sampleRate
+          );
+          break;
+        case PeakInterpolationMethod.GAUSSIAN:
+          interpolated = SpectrumDataProcessor.gaussianInterpolation(
+            spectrumData, maxIndexInRange, 5, fftSize, sampleRate
+          );
+          break;
+        case PeakInterpolationMethod.SINC:
+          interpolated = SpectrumDataProcessor.sincInterpolation(
+            spectrumData, maxIndexInRange, fftSize, sampleRate, 10
+          );
+          break;
+        case PeakInterpolationMethod.PHASE_VOCODER:
+          interpolated = SpectrumDataProcessor.phaseVocoderMethod(
+            spectrumData, null, maxIndexInRange, fftSize, sampleRate
+          );
+          break;
+        case PeakInterpolationMethod.INTERPOLATIVE:
+          interpolated = SpectrumDataProcessor.interpolativeMethod(
+            spectrumData, maxIndexInRange, fftSize, sampleRate
+          );
+          break;
+        case PeakInterpolationMethod.ADAPTIVE:
+          interpolated = SpectrumDataProcessor.adaptivePeakDetection(
+            spectrumData, maxIndexInRange, fftSize, sampleRate, actualMinFreq, actualMaxFreq
+          );
+          break;
+        case PeakInterpolationMethod.HYBRID:
+          interpolated = SpectrumDataProcessor.hybridPeakDetection(
+            spectrumData, maxIndexInRange, fftSize, sampleRate, actualMinFreq, actualMaxFreq
           );
           break;
         default:
@@ -564,7 +1015,7 @@ export class SpectrumDataProcessor {
   
   /**
    * 生成增强的频谱数据（包含低频插值点）
-   * 解决不同FFT大小导致的低频数据缺失问题
+   * 解决不同FFT大小导致的低频数据缺失问题，提供更密集的低频数据点
    * @param spectrumData 原始频谱数据
    * @param fftSize FFT大小
    * @param sampleRate 采样率
@@ -615,7 +1066,16 @@ export class SpectrumDataProcessor {
       }
     }
     
-    // 3. 按频率排序并去重
+    // 3. 为低频区域添加额外的插值点，确保显示密集
+    // 特别是在频率分辨率较粗的情况下
+    if (freqResolution > 20) { // 如果频率分辨率大于20Hz，添加额外插值点
+      const additionalPoints = SpectrumDataProcessor.generateAdditionalLowFrequencyPoints(
+        spectrumData, fftSize, sampleRate, minFreq, maxFreq
+      );
+      dataPoints.push(...additionalPoints);
+    }
+    
+    // 4. 按频率排序并去重
     dataPoints.sort((a, b) => a.frequency - b.frequency);
     const uniqueDataPoints: SpectrumDataPoint[] = [];
     const seenFrequencies = new Set<number>();
@@ -634,8 +1094,101 @@ export class SpectrumDataProcessor {
   }
   
   /**
+   * 为低频区域生成额外的插值点
+   * 确保在频率分辨率较粗的情况下，低频区域仍有足够密集的数据点
+   * @param spectrumData 原始频谱数据
+   * @param fftSize FFT大小
+   * @param sampleRate 采样率
+   * @param minFreq 最小频率
+   * @param maxFreq 最大频率
+   * @returns 额外的低频插值点数组
+   */
+  private static generateAdditionalLowFrequencyPoints(
+    spectrumData: Float32Array,
+    fftSize: number,
+    sampleRate: number,
+    minFreq: number,
+    maxFreq: number
+  ): SpectrumDataPoint[] {
+    const additionalPoints: SpectrumDataPoint[] = [];
+    const freqResolution = sampleRate / fftSize;
+    
+    // 在16-250Hz范围内生成更密集的频率点
+    // 使用对数间隔，符合人耳听觉特性
+    const startFreq = Math.max(minFreq, 16);
+    const endFreq = Math.min(maxFreq, 250);
+    
+    // 生成约50个低频点，确保显示密集
+    const numPoints = 50;
+    const logStart = Math.log10(startFreq);
+    const logEnd = Math.log10(endFreq);
+    
+    for (let i = 0; i < numPoints; i++) {
+      const logFreq = logStart + (logEnd - logStart) * (i / (numPoints - 1));
+      const frequency = Math.pow(10, logFreq);
+      
+      // 计算对应的FFT索引
+      const index = Math.round(frequency / freqResolution);
+      
+      if (index >= 0 && index < spectrumData.length && index < fftSize / 2) {
+        // 使用线性插值计算分贝值
+        const dbValue = SpectrumDataProcessor.interpolateDbValue(
+          spectrumData, frequency, index, freqResolution
+        );
+        
+        additionalPoints.push({
+          frequency,
+          amplitude: Math.pow(10, dbValue / 20),
+          dbValue,
+          index
+        });
+      }
+    }
+    
+    console.info(`[频谱处理] 生成了${additionalPoints.length}个额外低频插值点，频率分辨率=${freqResolution.toFixed(1)}Hz`);
+    return additionalPoints;
+  }
+  
+  /**
+   * 线性插值计算分贝值
+   * @param spectrumData 频谱数据
+   * @param targetFrequency 目标频率
+   * @param nearestIndex 最近FFT索引
+   * @param freqResolution 频率分辨率
+   * @returns 插值后的分贝值
+   */
+  private static interpolateDbValue(
+    spectrumData: Float32Array,
+    targetFrequency: number,
+    nearestIndex: number,
+    freqResolution: number
+  ): number {
+    // 如果正好在FFT点上，直接返回
+    if (Math.abs(targetFrequency - nearestIndex * freqResolution) < 0.1) {
+      return spectrumData[nearestIndex];
+    }
+    
+    // 计算插值位置
+    const position = targetFrequency / freqResolution;
+    const lowerIndex = Math.floor(position);
+    const upperIndex = Math.ceil(position);
+    
+    // 确保索引在有效范围内
+    if (lowerIndex < 0 || upperIndex >= spectrumData.length) {
+      return spectrumData[Math.max(0, Math.min(nearestIndex, spectrumData.length - 1))];
+    }
+    
+    // 线性插值
+    const fraction = position - lowerIndex;
+    const lowerValue = spectrumData[lowerIndex];
+    const upperValue = spectrumData[upperIndex];
+    
+    return lowerValue + fraction * (upperValue - lowerValue);
+  }
+  
+  /**
    * 生成低频插值点
-   * 根据FFT大小动态调整插值策略
+   * 根据FFT大小动态调整插值策略，提供更密集的低频数据点
    * @param fftSize FFT大小
    * @param sampleRate 采样率
    * @returns 低频插值点数组
@@ -647,26 +1200,46 @@ export class SpectrumDataProcessor {
     const freqResolution = sampleRate / fftSize;
     let points: FrequencyIndexPoint[] = [];
     
+    // 根据FFT大小和频率分辨率计算低频插值密度
+    // 确保低频区域有足够密集的数据点，符合专业音频分析标准
     if (fftSize <= 1024) {
-      // 脉冲模式：频率分辨率约43Hz，需要更多插值点
-      const point1: FrequencyIndexPoint = { freq: 16, index: Math.round(16 / freqResolution) };
-      const point2: FrequencyIndexPoint = { freq: 20, index: Math.round(20 / freqResolution) };
-      const point3: FrequencyIndexPoint = { freq: 25, index: Math.round(25 / freqResolution) };
-      const point4: FrequencyIndexPoint = { freq: 31.5, index: Math.round(31.5 / freqResolution) };
-      const point5: FrequencyIndexPoint = { freq: 40, index: Math.round(40 / freqResolution) };
-      points = [point1, point2, point3, point4, point5];
+      // 脉冲模式：频率分辨率约43Hz，需要密集插值点
+      // 在16-250Hz范围内提供更多数据点，确保低频显示密集
+      const lowFreqPoints = [16, 20, 25, 31.5, 40, 50, 63, 80, 100, 125, 160, 200, 250];
+      points = lowFreqPoints.map(freq => {
+        const point: FrequencyIndexPoint = {
+          freq: freq,
+          index: Math.round(freq / freqResolution)
+        };
+        return point;
+      });
     } else if (fftSize <= 2048) {
-      // 快速模式：频率分辨率约21.5Hz，需要适量插值点
-      const point1: FrequencyIndexPoint = { freq: 16, index: Math.round(16 / freqResolution) };
-      const point2: FrequencyIndexPoint = { freq: 20, index: Math.round(20 / freqResolution) };
-      const point3: FrequencyIndexPoint = { freq: 31.5, index: Math.round(31.5 / freqResolution) };
-      points = [point1, point2, point3];
+      // 快速模式：频率分辨率约21.5Hz，中等密度插值点
+      // 在16-250Hz范围内提供适量数据点
+      const lowFreqPoints = [16, 20, 25, 31.5, 40, 50, 63, 80, 100, 125, 160, 200, 250];
+      points = lowFreqPoints.map(freq => {
+        const point: FrequencyIndexPoint = {
+          freq: freq,
+          index: Math.round(freq / freqResolution)
+        };
+        return point;
+      });
     } else {
-      // 慢速模式：频率分辨率约10.8Hz，已经足够，只需要关键点
-      const point1: FrequencyIndexPoint = { freq: 16, index: Math.round(16 / freqResolution) };
-      const point2: FrequencyIndexPoint = { freq: 31.5, index: Math.round(31.5 / freqResolution) };
-      points = [point1, point2];
+      // 慢速模式：频率分辨率约10.8Hz，相对较少但仍需保证关键点
+      // 在16-250Hz范围内提供关键频率点
+      const lowFreqPoints = [16, 20, 25, 31.5, 40, 50, 63, 80, 100, 125, 160, 200, 250];
+      points = lowFreqPoints.map(freq => {
+        const point: FrequencyIndexPoint = {
+          freq: freq,
+          index: Math.round(freq / freqResolution)
+        };
+        return point;
+      });
     }
+    
+    // 过滤掉超出FFT范围的点
+    const maxIndex = fftSize / 2;
+    points = points.filter(point => point.index >= 0 && point.index < maxIndex);
     
     console.info(`[频谱处理] 生成${points.length}个低频插值点，频率分辨率=${freqResolution.toFixed(1)}Hz`);
     return points;

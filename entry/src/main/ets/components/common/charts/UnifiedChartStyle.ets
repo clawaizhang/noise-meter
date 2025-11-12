@@ -32,6 +32,7 @@ export interface FontSizes {
 
 // 线条宽度配置接口
 export interface LineWidths {
+  ultra_thin:number;
   thin: number;
   normal: number;
   thick: number;
@@ -98,10 +99,11 @@ export class UnifiedChartStyle {
   
   // 线条宽度配置
   static readonly LINE_WIDTHS: LineWidths = {
+    ultra_thin:0.2,
     thin: 1.0,
     normal: 1.5,
     thick: 2.0,
-    grid: 0.5
+    grid: 0.5,
   };
   
   // 透明度配置

@@ -289,7 +289,7 @@ export struct AudioController {
             16, // 最小频率
             20000, // 最大频率
             true, // 默认启用插值
-            PeakInterpolationMethod.PARABOLIC // 默认使用抛物线插值
+            PeakInterpolationMethod.ADAPTIVE
           );
           
           if (peakInfo) {

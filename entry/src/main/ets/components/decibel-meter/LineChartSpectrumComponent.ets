@@ -211,8 +211,8 @@ export struct LineChartSpectrumComponent {
       // 使用处理后的峰值信息
       this.peakInfo = displayData.peakInfo;
       
-      // 应用峰值平滑处理
-      this.applyPeakSmoothing();
+      // 直接使用计算出的峰值信息，不进行平滑处理
+      this.smoothedPeakInfo = this.peakInfo;
       
       // 更新图表数据
       this.updateChartData();
@@ -348,7 +348,7 @@ export struct LineChartSpectrumComponent {
     }
     this.dataSet.setGradientFillColor(gradientArrayList);
     this.dataSet.setDrawFilled(true);
-    this.dataSet.setLineWidth(UnifiedChartStyle.LINE_WIDTHS.normal); // 使用统一样式线宽
+    this.dataSet.setLineWidth(UnifiedChartStyle.LINE_WIDTHS.ultra_thin); // 使用统一样式线宽
     
     // 禁用高亮指示器
     this.dataSet.setDrawHighlightIndicators(false); // 禁用高亮指示器
