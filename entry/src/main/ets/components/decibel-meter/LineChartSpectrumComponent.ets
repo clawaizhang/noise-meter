@@ -144,8 +144,6 @@ export struct LineChartSpectrumComponent {
   @Param isVisible: boolean = true // 图表是否可见
   @Local pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys) ?? new PreferenceKeys();
 
-  // 依赖注入
-  @Local private sysResourceManager: resourceManager.ResourceManager = resourceManager.getSystemResourceManager();
   // 频谱显示服务
   private spectrumDisplayService: SpectrumDisplayService = SpectrumDisplayService.getInstance();
   @Local private ak: AppKeys = AppStorageV2.connect(AppKeys) ?? new AppKeys()
@@ -157,7 +155,6 @@ export struct LineChartSpectrumComponent {
   
   // 峰值平滑处理相关
   @Local private smoothedPeakInfo: PeakInfo | null = null;
-  @Local private lastPeakUpdateTime: number = 0;
   @Local private readonly PEAK_UPDATE_THRESHOLD_MS: number = 200; // 峰值更新最小间隔(ms)
   @Local private readonly PEAK_CHANGE_THRESHOLD_DB: number = 2.0; // 峰值变化阈值(dB)
   @Local private readonly PEAK_CHANGE_THRESHOLD_HZ: number = 100; // 峰值频率变化阈值(Hz)
@@ -241,13 +238,7 @@ export struct LineChartSpectrumComponent {
         index: this.peakInfo.index,
         amplitude: this.peakInfo.amplitude
       };
-      this.lastPeakUpdateTime = currentTime;
       return;
-    }
-
-    // 检查是否满足时间间隔要求
-    if (currentTime - this.lastPeakUpdateTime < this.PEAK_UPDATE_THRESHOLD_MS) {
-      return; // 时间间隔太短，不更新
     }
 
     // 检查峰值变化是否超过阈值
@@ -267,7 +258,6 @@ export struct LineChartSpectrumComponent {
       amplitude: smoothingFactor * this.peakInfo.amplitude + (1 - smoothingFactor) * this.smoothedPeakInfo.amplitude
     };
     
-    this.lastPeakUpdateTime = currentTime;
   }
 
   /**

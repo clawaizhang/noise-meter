@@ -46,12 +46,12 @@ export class AudioAnalysisConfig {
 
   static fast() {
     let fast = new AudioAnalysisConfig();
-    fast.fftSize = 2048;
+    fast.fftSize = 4096; // 增加FFT大小以提高低频分辨率
     fast.updateInterval = 200;
     fast.smoothingFactor = 0.2;
     fast.windowType = WindowType.BLACKMAN;
     fast.overlap = 0.4;
-    fast.bufferSize = 2048 * 2;
+    fast.bufferSize = 4096 * 2;
     fast.sampleRate = 44100;
     fast.decimationEnabled = false;
     fast.decimationFactor = 2;
@@ -84,12 +84,12 @@ export class AudioAnalysisConfig {
 
   static impulse() {
     let impulse = new AudioAnalysisConfig();
-    impulse.fftSize = 1024;
+    impulse.fftSize = 2048; // 增加FFT大小以提高低频分辨率
     impulse.updateInterval = 35;
     impulse.smoothingFactor = 0.3;
     impulse.windowType = WindowType.BLACKMAN;
     impulse.overlap = 0.75;
-    impulse.bufferSize = 1024 * 2;
+    impulse.bufferSize = 2048 * 2;
     impulse.sampleRate = 44100;
     impulse.decimationEnabled = false;
     impulse.decimationFactor = 2;

@@ -153,15 +153,48 @@ export class FFTAnalyzer {
       return magnitudes;
     }
 
-    // 使用指数平滑
+    // 使用分频段平滑，不同频段使用不同的平滑因子
+    const sampleRate = this.decimationEnabled ?
+      this.sampleRate / this.decimationFactor : this.sampleRate;
+    const freqResolution = sampleRate / this.size;
+    
     for (let i = 0; i < magnitudes.length; i++) {
-      magnitudes[i] = this.smoothingFactor * magnitudes[i] +
-        (1 - this.smoothingFactor) * this.previousMagnitudes[i];
+      const frequency = i * freqResolution;
+      const smoothingFactor = this.getFrequencyBasedSmoothingFactor(frequency);
+      
+      magnitudes[i] = smoothingFactor * magnitudes[i] +
+        (1 - smoothingFactor) * this.previousMagnitudes[i];
     }
 
     // 更新上一帧数据
     this.previousMagnitudes.set(magnitudes);
     return magnitudes;
+  }
+  
+  /**
+   * 根据频率获取平滑因子
+   * 低频使用较少平滑保持细节，高频使用较多平滑减少噪声
+   * @param frequency 频率值
+   * @returns 平滑因子
+   */
+  private getFrequencyBasedSmoothingFactor(frequency: number): number {
+    // 基础平滑因子
+    const baseSmoothingFactor = this.smoothingFactor;
+    
+    // 根据频率调整平滑因子
+    if (frequency < 250) {
+      // 低频段：使用较少平滑，保持细节
+      return Math.min(0.8, baseSmoothingFactor * 1.5);
+    } else if (frequency < 2000) {
+      // 中频段：使用标准平滑
+      return baseSmoothingFactor;
+    } else if (frequency < 8000) {
+      // 高频段：使用较多平滑，减少噪声
+      return Math.max(0.1, baseSmoothingFactor * 0.7);
+    } else {
+      // 甚高频段：使用更多平滑，进一步减少噪声
+      return Math.max(0.05, baseSmoothingFactor * 0.5);
+    }
   }
 
   /**
