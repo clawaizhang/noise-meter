@@ -220,47 +220,6 @@ export struct LineChartSpectrumComponent {
   }
 
   /**
-   * 应用峰值平滑处理
-   * 减少峰值显示的抖动，提高用户体验
-   */
-  private applyPeakSmoothing(): void {
-    if (!this.peakInfo) {
-      return;
-    }
-
-    const currentTime = Date.now();
-    
-    // 如果是第一次检测到峰值，直接使用
-    if (!this.smoothedPeakInfo) {
-      this.smoothedPeakInfo = {
-        frequency: this.peakInfo.frequency,
-        dbValue: this.peakInfo.dbValue,
-        index: this.peakInfo.index,
-        amplitude: this.peakInfo.amplitude
-      };
-      return;
-    }
-
-    // 检查峰值变化是否超过阈值
-    const dbChange = Math.abs(this.peakInfo.dbValue - this.smoothedPeakInfo.dbValue);
-    const freqChange = Math.abs(this.peakInfo.frequency - this.smoothedPeakInfo.frequency);
-
-    if (dbChange < this.PEAK_CHANGE_THRESHOLD_DB && freqChange < this.PEAK_CHANGE_THRESHOLD_HZ) {
-      return; // 变化太小，不更新
-    }
-
-    // 应用平滑算法：加权平均
-    const smoothingFactor = 0.15; // 平滑因子，越小越平滑
-    this.smoothedPeakInfo = {
-      frequency: smoothingFactor * this.peakInfo.frequency + (1 - smoothingFactor) * this.smoothedPeakInfo.frequency,
-      dbValue: smoothingFactor * this.peakInfo.dbValue + (1 - smoothingFactor) * this.smoothedPeakInfo.dbValue,
-      index: this.peakInfo.index,
-      amplitude: smoothingFactor * this.peakInfo.amplitude + (1 - smoothingFactor) * this.smoothedPeakInfo.amplitude
-    };
-    
-  }
-
-  /**
    * 更新图表数据
    */
   private updateChartData(): void {

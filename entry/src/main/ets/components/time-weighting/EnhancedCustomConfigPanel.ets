@@ -74,13 +74,19 @@ export struct EnhancedCustomConfigPanel {
     { value: 8192, label: '8192', index: 7 }
   ];
   
-  // 更新间隔选项
+  // 更新间隔选项 (包含专业级间隔)
   private readonly updateIntervalOptions: SelectOption[] = [
-    { value: 35, label: '35ms', index: 0 },
-    { value: 100, label: '100ms', index: 1 },
-    { value: 200, label: '200ms', index: 2 },
-    { value: 500, label: '500ms', index: 3 },
-    { value: 1000, label: '1000ms', index: 4 }
+    { value: 10, label: '10ms (100Hz)', index: 0 },
+    { value: 15, label: '15ms (67Hz)', index: 1 },
+    { value: 20, label: '20ms (50Hz)', index: 2 },
+    { value: 25, label: '25ms (40Hz)', index: 3 },
+    { value: 30, label: '30ms (33Hz)', index: 4 },
+    { value: 35, label: '35ms (29Hz)', index: 5 },
+    { value: 50, label: '50ms (20Hz)', index: 6 },
+    { value: 100, label: '100ms (10Hz)', index: 7 },
+    { value: 200, label: '200ms (5Hz)', index: 8 },
+    { value: 500, label: '500ms (2Hz)', index: 9 },
+    { value: 1000, label: '1000ms (1Hz)', index: 10 }
   ];
   
   // 窗函数选项
@@ -129,7 +135,19 @@ export struct EnhancedCustomConfigPanel {
       '更新间隔',
       '音频分析结果的更新频率',
       '间隔越短，响应越快，但CPU占用越高。间隔越长，显示越平滑，但可能错过瞬时变化。',
-      ['35ms: 实时监测，适合脉冲噪声测量', '100ms: 快速响应，适合一般噪声监测', '200ms: 标准响应，适合大多数应用', '500ms: 平滑显示，适合稳态噪声', '1000ms: 超平滑，适合长期趋势分析'],
+      [
+        '10ms: 极高实时性，适合瞬时脉冲分析',
+        '15ms: 高实时性，适合快速变化信号',
+        '20ms: 较高实时性，适合一般瞬态分析',
+        '25ms: 平衡实时性和性能，适合快速测量',
+        '30ms: 标准实时性，适合大多数应用',
+        '35ms: 实时监测，适合脉冲噪声测量',
+        '50ms: 平滑显示，适合稳态噪声',
+        '100ms: 快速响应，适合一般噪声监测',
+        '200ms: 标准响应，适合大多数应用',
+        '500ms: 平滑显示，适合稳态噪声',
+        '1000ms: 超平滑，适合长期趋势分析'
+      ],
       '更新频率 = 1000 / 更新间隔 (Hz)'
     )],
     ['windowType', new ParameterDetail(
@@ -178,12 +196,14 @@ export struct EnhancedCustomConfigPanel {
     const sampleRate = 44100; // 假设采样率
     const frequencyResolution = sampleRate / this.tempCustomConfig.fftSize;
     const timeResolution = (this.tempCustomConfig.fftSize / sampleRate) * 1000;
-    const effectiveUpdateRate = this.tempCustomConfig.updateInterval / (1 - this.tempCustomConfig.overlap);
+    
+    // 计算有效更新率 (Hz)
+    const effectiveUpdateRateHz = 1000 / this.tempCustomConfig.updateInterval;
     
     return new TechnicalMetrics(
       frequencyResolution.toFixed(1),
       timeResolution.toFixed(1),
-      effectiveUpdateRate.toFixed(0),
+      effectiveUpdateRateHz.toFixed(0),
       (this.tempCustomConfig.bufferSize / 1024).toFixed(1)
     );
   }

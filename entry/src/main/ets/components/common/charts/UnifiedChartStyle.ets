@@ -99,7 +99,7 @@ export class UnifiedChartStyle {
   
   // 线条宽度配置
   static readonly LINE_WIDTHS: LineWidths = {
-    ultra_thin:0.2,
+    ultra_thin:0.5,
     thin: 1.0,
     normal: 1.5,
     thick: 2.0,
