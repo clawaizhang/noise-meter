@@ -140,6 +140,12 @@ export class PreferenceKeys {
   spectrum_smoothing_factor: number = PreferencesUtil.getNumberSync('spectrum_smoothing_factor', 0.3);
   
   /**
+   * 指数平滑因子
+   */
+  @Trace
+  exponential_smoothing_factor: number = PreferencesUtil.getNumberSync('exponential_smoothing_factor', 0.3);
+  
+  /**
    * 是否显示峰值频率
    */
   @Trace

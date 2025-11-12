@@ -273,7 +273,8 @@ export struct AudioController {
           config.kaiserBeta,
           config.gaussianSigma,
           config.tukeyAlpha,
-          config.chebyshevAttenuation
+          config.chebyshevAttenuation,
+          config.exponentialSmoothingFactor
         );
         
         // 获取最近的音频缓冲区
@@ -637,7 +638,7 @@ export struct AudioController {
 
       let config = AudioPresets.getConfig(this.pk.audio_analysis_mode);
       // 计算频谱数据（用于频谱图显示）
-      taskpool.execute<[ArrayBuffer, WeightingType, number, number, WindowType, number, number, number, boolean, number, number, number, number, number], Float32Array>(
+      taskpool.execute<[ArrayBuffer, WeightingType, number, number, WindowType, number, number, number, boolean, number, number, number, number, number, number], Float32Array>(
         concurrentCalculateSpectrum,
         buffer.slice(0),
         this.pk.weighting_type,
@@ -652,7 +653,8 @@ export struct AudioController {
         config.kaiserBeta,
         config.gaussianSigma,
         config.tukeyAlpha,
-        config.chebyshevAttenuation
+        config.chebyshevAttenuation,
+        config.exponentialSmoothingFactor
       ).then((spectrum) => {
         // 双管线架构：频谱数据通过状态管理，不再通过事件传递
 
@@ -669,7 +671,8 @@ export struct AudioController {
           config.kaiserBeta,
           config.gaussianSigma,
           config.tukeyAlpha,
-          config.chebyshevAttenuation
+          config.chebyshevAttenuation,
+          config.exponentialSmoothingFactor
         );
         
         const db: number = fftAnalyzer.calculateAverageDb(spectrum);

@@ -17,6 +17,7 @@ export struct SpectrumDisplaySettingsDialog {
   
   // 当前配置
   @Local private smoothingFactor: number = 0.3;
+  @Local private exponentialSmoothingFactor: number = 0.3;
   @Local private showPeakFrequency: boolean = true;
   @Local private peakCount: number = 1; // 新增：峰值数量
   @Local private frequencyRange: FrequencyRange = FrequencyRange.FULL;
@@ -36,6 +37,7 @@ export struct SpectrumDisplaySettingsDialog {
     // 从PreferenceKeys加载当前配置
     const config = this.spectrumDisplayService.getDisplayConfig(this.pk);
     this.smoothingFactor = config.smoothingFactor;
+    this.exponentialSmoothingFactor = this.pk.exponential_smoothing_factor;
     this.showPeakFrequency = config.showPeakFrequency;
     this.peakCount = config.peakCount; // 新增：加载峰值数量
     this.frequencyRange = config.frequencyRange;
@@ -74,6 +76,9 @@ export struct SpectrumDisplaySettingsDialog {
         Column({ space: DesignConstants.SPACING_LG }) {
           // 平滑设置
           this.buildSmoothingSection()
+          
+          // 指数平滑设置
+          this.buildExponentialSmoothingSection()
           
           // 峰值显示设置
           this.buildPeakDisplaySection()
@@ -133,6 +138,48 @@ export struct SpectrumDisplaySettingsDialog {
         })
       
       Text('平滑因子越大，频谱变化越平缓')
+        .fontSize(DesignConstants.FONT_SIZE_SM)
+        .fontColor($r('sys.color.font_secondary'))
+        .alignSelf(ItemAlign.Start)
+    }
+    .width('100%')
+    .padding(DesignConstants.SPACING_MD)
+    .backgroundColor($r('sys.color.comp_background_primary'))
+    .borderRadius(DesignConstants.BORDER_RADIUS_LG)
+  }
+  
+  @Builder
+  private buildExponentialSmoothingSection() {
+    Column({ space: DesignConstants.SPACING_MD }) {
+      Row() {
+        Text('指数平滑')
+          .fontSize(DesignConstants.FONT_SIZE_LG)
+          .fontWeight(FontWeight.Medium)
+          .fontColor($r('sys.color.font_primary'))
+          .layoutWeight(1)
+        
+        Text(`${(this.exponentialSmoothingFactor * 100).toFixed(0)}%`)
+          .fontSize(DesignConstants.FONT_SIZE_MD)
+          .fontColor($r('sys.color.font_secondary'))
+      }
+      .width('100%')
+      
+      Slider({
+        value: this.exponentialSmoothingFactor,
+        min: 0,
+        max: 0.95,
+        step: 0.05,
+        style: SliderStyle.InSet
+      })
+        .width('100%')
+        .trackColor($r('sys.color.comp_background_tertiary'))
+        .selectedColor($r('sys.color.icon_emphasize'))
+        .blockColor($r('sys.color.icon_emphasize'))
+        .onChange((value: number) => {
+          this.exponentialSmoothingFactor = value;
+        })
+      
+      Text('指数平滑因子越大，频谱变化越平缓，抖动越少')
         .fontSize(DesignConstants.FONT_SIZE_SM)
         .fontColor($r('sys.color.font_secondary'))
         .alignSelf(ItemAlign.Start)
@@ -548,17 +595,21 @@ export struct SpectrumDisplaySettingsDialog {
       .onClick(() => {
         // 创建配置对象，固定使用线性图模式
         const config: SpectrumDisplayConfig = {
-          displayMode: SpectrumDisplayMode.LINE, // 固定为线性图模式
+          displayMode: SpectrumDisplayMode.LINE,
           smoothingFactor: this.smoothingFactor,
           showPeakFrequency: this.showPeakFrequency,
-          peakCount: this.peakCount, // 新增：保存峰值数量
+          peakCount: this.peakCount,
           frequencyRange: this.frequencyRange,
           decibelRange: this.decibelRange,
           customFrequencyMin: this.customFrequencyMin,
           customFrequencyMax: this.customFrequencyMax,
           customDecibelMin: this.customDecibelMin,
-          customDecibelMax: this.customDecibelMax
+          customDecibelMax: this.customDecibelMax,
+          exponentialSmoothingFactor: this.exponentialSmoothingFactor
         };
+        
+        // 保存指数平滑因子到PreferenceKeys
+        this.pk.exponential_smoothing_factor = this.exponentialSmoothingFactor;
         
         // 应用设置
         this.params?.onSettingsApplied(config);

@@ -43,6 +43,8 @@ export class AudioAnalysisConfig {
   tukeyAlpha: number = 0.5; // Tukey窗的Alpha参数
   @Trace
   chebyshevAttenuation: number = 60.0; // Chebyshev窗的衰减参数(dB)
+  @Trace
+  exponentialSmoothingFactor: number = 0.3; // 指数平滑因子 (0-0.99)
 
   static fast() {
     let fast = new AudioAnalysisConfig();
@@ -59,6 +61,7 @@ export class AudioAnalysisConfig {
     fast.gaussianSigma = 0.5;
     fast.tukeyAlpha = 0.5;
     fast.chebyshevAttenuation = 60.0;
+    fast.exponentialSmoothingFactor = 0.3;
     
     return fast;
   }
@@ -78,6 +81,7 @@ export class AudioAnalysisConfig {
     slow.gaussianSigma = 0.5;
     slow.tukeyAlpha = 0.5;
     slow.chebyshevAttenuation = 60.0;
+    slow.exponentialSmoothingFactor = 0.5;
     
     return slow;
   }
@@ -97,6 +101,7 @@ export class AudioAnalysisConfig {
     impulse.gaussianSigma = 0.5;
     impulse.tukeyAlpha = 0.5;
     impulse.chebyshevAttenuation = 60.0;
+    impulse.exponentialSmoothingFactor = 0.1;
     
     return impulse;
   }
@@ -116,6 +121,7 @@ export class AudioAnalysisConfig {
     clone.gaussianSigma = this.gaussianSigma;
     clone.tukeyAlpha = this.tukeyAlpha;
     clone.chebyshevAttenuation = this.chebyshevAttenuation;
+    clone.exponentialSmoothingFactor = this.exponentialSmoothingFactor;
     
     return clone;
   }

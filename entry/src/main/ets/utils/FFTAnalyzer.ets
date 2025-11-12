@@ -44,6 +44,8 @@ export class FFTAnalyzer {
   private systemGain: number = 0; // 系统增益校正（dB）
   private decimationEnabled: boolean = false; // 是否启用降采样
   private decimationFactor: number = 1; // 降采样因子
+  private readonly exponentialSmoothingFactor: number; // 指数平滑因子
+  private previousExponentialSpectrum: Float32Array | null = null; // 上一次指数平滑后的频谱
 
   /**
    * 设置系统增益
@@ -71,7 +73,8 @@ export class FFTAnalyzer {
    */
   constructor(size: number = 2048, windowType: WindowType = WindowType.HANNING, smoothingFactor: number = 0.2,
     overlap: number = 0.5, sampleRate: number = 44100, decimationEnabled: boolean = false, decimationFactor: number = 1,
-    kaiserBeta: number = 6.0, gaussianSigma: number = 0.5, tukeyAlpha: number = 0.5, chebyshevAttenuation: number = 60.0) {
+    kaiserBeta: number = 6.0, gaussianSigma: number = 0.5, tukeyAlpha: number = 0.5, chebyshevAttenuation: number = 60.0,
+    exponentialSmoothingFactor: number = 0.3) {
     // 确保size是2的幂次方
     if (!this.isPowerOf2(size)) {
       throw new Error('FFT大小必须是2的幂');
@@ -86,6 +89,7 @@ export class FFTAnalyzer {
     this.sampleRate = sampleRate;
     this.decimationEnabled = decimationEnabled;
     this.decimationFactor = decimationFactor;
+    this.exponentialSmoothingFactor = exponentialSmoothingFactor;
 
     // 使用预缓存的窗函数和能量校正因子，传递窗函数参数
     const windowData = WindowFunctionCache.getWindowDataWithParams(size, windowType, kaiserBeta, gaussianSigma, tukeyAlpha, chebyshevAttenuation);
@@ -168,7 +172,9 @@ export class FFTAnalyzer {
 
     // 更新上一帧数据
     this.previousMagnitudes.set(magnitudes);
-    return magnitudes;
+    
+    // 应用指数平滑
+    return this.applyExponentialSmoothing(magnitudes);
   }
   
   /**
@@ -195,6 +201,32 @@ export class FFTAnalyzer {
       // 甚高频段：使用更多平滑，进一步减少噪声
       return Math.max(0.05, baseSmoothingFactor * 0.5);
     }
+  }
+  
+  /**
+   * 应用指数平滑算法
+   * @param magnitudes 当前幅度谱
+   * @returns 指数平滑后的幅度谱
+   */
+  private applyExponentialSmoothing(magnitudes: Float32Array): Float32Array {
+    // 如果是第一次或者长度不匹配，直接返回当前数据并保存
+    if (!this.previousExponentialSpectrum || this.previousExponentialSpectrum.length !== magnitudes.length) {
+      this.previousExponentialSpectrum = new Float32Array(magnitudes.length);
+      this.previousExponentialSpectrum.set(magnitudes);
+      return magnitudes;
+    }
+    
+    // 应用指数平滑算法: 新值 = 指数平滑因子 × 当前值 + (1 - 指数平滑因子) × 上次值
+    for (let i = 0; i < magnitudes.length; i++) {
+      const smoothedValue = this.exponentialSmoothingFactor * magnitudes[i] +
+                          (1 - this.exponentialSmoothingFactor) * this.previousExponentialSpectrum[i];
+      magnitudes[i] = smoothedValue;
+    }
+    
+    // 更新上一次的数据
+    this.previousExponentialSpectrum.set(magnitudes);
+    
+    return magnitudes;
   }
 
   /**
@@ -552,6 +584,7 @@ export class FFTAnalyzer {
    */
   public reset(): void {
     this.previousMagnitudes = null;
+    this.previousExponentialSpectrum = null;
     this.cachedSamples = null;
     this.cachedCosSin.clear(); // 清理旋转因子缓存
     if (this.DEBUG) {

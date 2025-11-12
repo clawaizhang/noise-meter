@@ -64,6 +64,7 @@ export class DecibelRangeConfig {
 export interface SpectrumDisplayConfig {
   displayMode: SpectrumDisplayMode;
   smoothingFactor: number;
+  exponentialSmoothingFactor: number; // 新增：指数平滑因子
   showPeakFrequency: boolean;
   peakCount: number; // 新增：显示峰值数量
   frequencyRange: FrequencyRange;
@@ -116,6 +117,7 @@ export class SpectrumDisplayService {
     return {
       displayMode: SpectrumDisplayMode.LINE, // 固定为线性图模式
       smoothingFactor: pk.spectrum_smoothing_factor,
+      exponentialSmoothingFactor: pk.exponential_smoothing_factor, // 新增：加载指数平滑因子
       showPeakFrequency: pk.spectrum_show_peak_frequency,
       peakCount: pk.spectrum_peak_count || 1, // 新增：默认显示1个峰值
       frequencyRange: pk.spectrum_frequency_range as FrequencyRange || FrequencyRange.FULL,
@@ -133,6 +135,7 @@ export class SpectrumDisplayService {
   applyDisplayConfig(pk: PreferenceKeys, config: SpectrumDisplayConfig): void {
     pk.spectrum_display_mode = config.displayMode;
     pk.spectrum_smoothing_factor = config.smoothingFactor;
+    pk.exponential_smoothing_factor = config.exponentialSmoothingFactor; // 新增：保存指数平滑因子
     pk.spectrum_show_peak_frequency = config.showPeakFrequency;
     pk.spectrum_peak_count = config.peakCount; // 新增：保存峰值数量
     pk.spectrum_frequency_range = config.frequencyRange;

@@ -109,6 +109,30 @@ export struct EnhancedCustomConfigPanel {
     { value: 0.5, label: '0.5', index: 9 }
   ];
   
+  // 指数平滑因子选项
+  private readonly exponentialSmoothingFactorOptions: SelectOption[] = [
+    { value: 0.0, label: '0.0', index: 0 },
+    { value: 0.05, label: '0.05', index: 1 },
+    { value: 0.1, label: '0.1', index: 2 },
+    { value: 0.15, label: '0.15', index: 3 },
+    { value: 0.2, label: '0.2', index: 4 },
+    { value: 0.25, label: '0.25', index: 5 },
+    { value: 0.3, label: '0.3', index: 6 },
+    { value: 0.35, label: '0.35', index: 7 },
+    { value: 0.4, label: '0.4', index: 8 },
+    { value: 0.45, label: '0.45', index: 9 },
+    { value: 0.5, label: '0.5', index: 10 },
+    { value: 0.55, label: '0.55', index: 11 },
+    { value: 0.6, label: '0.6', index: 12 },
+    { value: 0.65, label: '0.65', index: 13 },
+    { value: 0.7, label: '0.7', index: 14 },
+    { value: 0.75, label: '0.75', index: 15 },
+    { value: 0.8, label: '0.8', index: 16 },
+    { value: 0.85, label: '0.85', index: 17 },
+    { value: 0.9, label: '0.9', index: 18 },
+    { value: 0.95, label: '0.95', index: 19 }
+  ];
+  
   // 重叠率选项
   private readonly overlapOptions: SelectOption[] = [
     { value: 0.1, label: '0.1', index: 0 },
@@ -164,6 +188,13 @@ export struct EnhancedCustomConfigPanel {
       ['0.05-0.15: 高灵敏度，适合快速变化信号', '0.2-0.3: 平衡模式，适合一般应用', '0.35-0.5: 高平滑度，适合稳态信号'],
       '平滑算法: 新值 = 平滑因子 × 当前值 + (1-平滑因子) × 上次值'
     )],
+    ['exponentialSmoothingFactor', new ParameterDetail(
+      '指数平滑因子',
+      '控制频谱显示的指数平滑程度',
+      '值越大，频谱变化越平缓，抖动越少。值越小，响应越快，但可能抖动更明显。',
+      ['0.0-0.2: 无或低平滑，适合快速变化信号', '0.25-0.4: 轻度平滑，适合一般应用', '0.45-0.6: 中等平滑，适合稳态信号', '0.65-0.8: 高平滑，适合需要稳定显示的场景', '0.85-0.95: 极高平滑，适合需要极稳定显示的场景'],
+      '指数平滑算法: 新值 = 指数平滑因子 × 当前值 + (1-指数平滑因子) × 上次值'
+    )],
     ['overlap', new ParameterDetail(
       '重叠率',
       '连续FFT分析之间的数据重叠比例',
@@ -182,6 +213,7 @@ export struct EnhancedCustomConfigPanel {
     this.tempCustomConfig.fftSize = DEFAULT_CUSTOM_CONFIG.fftSize;
     this.tempCustomConfig.updateInterval = DEFAULT_CUSTOM_CONFIG.updateInterval;
     this.tempCustomConfig.smoothingFactor = DEFAULT_CUSTOM_CONFIG.smoothingFactor;
+    this.tempCustomConfig.exponentialSmoothingFactor = DEFAULT_CUSTOM_CONFIG.exponentialSmoothingFactor;
     this.tempCustomConfig.windowType = DEFAULT_CUSTOM_CONFIG.windowType;
     this.tempCustomConfig.overlap = DEFAULT_CUSTOM_CONFIG.overlap;
     this.tempCustomConfig.bufferSize = DEFAULT_CUSTOM_CONFIG.bufferSize;
@@ -510,6 +542,16 @@ export struct EnhancedCustomConfigPanel {
             this.smoothingFactorOptions,
             (newValue: number | string) => {
               this.tempCustomConfig.smoothingFactor = newValue as number;
+            }
+          )
+
+          // 指数平滑因子选择
+          this.buildEnhancedParameterSelector(
+            'exponentialSmoothingFactor',
+            this.tempCustomConfig.exponentialSmoothingFactor,
+            this.exponentialSmoothingFactorOptions,
+            (newValue: number | string) => {
+              this.tempCustomConfig.exponentialSmoothingFactor = newValue as number;
             }
           )
 
