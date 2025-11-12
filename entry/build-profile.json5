@@ -29,48 +29,11 @@
           "pages/Index",
         ],
         "sourceRoots": [
-          "./src/noise_meter_pages"
+          "./src/main"
         ]
       },
       "resource": {
         "directories": [
-          "./src/main/noise_meter/resources",
-          "./src/main/resources"
-        ]
-      }
-    },
-    {
-      "name": "device_manager",
-      "runtimeOS": "HarmonyOS",
-      "source": {
-        "pages": [
-          "pages/Index",
-        ],
-        "sourceRoots": [
-          "./src/device_manager_pages"
-        ]
-      },
-      "resource": {
-        "directories": [
-          "./src/main/device_manager/resources",
-          "./src/main/resources"
-        ]
-      }
-    },
-    {
-      "name": "local_send",
-      "runtimeOS": "HarmonyOS",
-      "source": {
-        "pages": [
-          "pages/Index",
-        ],
-        "sourceRoots": [
-          "./src/local_send_pages"
-        ]
-      },
-      "resource": {
-        "directories": [
-          "./src/main/local_send/resources",
           "./src/main/resources"
         ]
       }

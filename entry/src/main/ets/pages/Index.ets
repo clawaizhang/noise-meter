@@ -4,7 +4,6 @@ import { PrivacyPolicyStandalone } from '../components/privacy/PrivacyPolicyStan
 import { PreferenceKeys } from '../models/PreferenceKeys'
 import { DatabaseUpgradeConfig } from '../interfaces/DatabaseInterfaces'
 import hilog from '@ohos.hilog'
-import { dbConfig, MainPage } from 'entry/MainPage'
 import { common, Want } from '@kit.AbilityKit'
 import { AppStorageV2, PersistenceV2 } from '@kit.ArkUI'
 import { WindowManager } from '../utils/WindowManager'
@@ -26,6 +25,7 @@ import { SecondTimerService } from '../services/SecondTimerService';
 import { showRewardCompletionDialog } from '../components/membership/RewardCompletionDialog'
 import { Throttle } from '../utils/Debounce'
 import { WelcomeGuide } from '../components/welcome/WelcomeGuide'
+import { dbConfig, MainPage } from './MainPage'
 
 const TAG = 'Index';
 const DOMAIN = 0x0000;

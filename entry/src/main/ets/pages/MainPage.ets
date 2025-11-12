@@ -1,7 +1,7 @@
-import { DatabaseConstants } from '../main/ets/constants/DatabaseConstants';
-import { TableCreateSql } from '../main/ets/constants/TableCreateSql';
-import { DbConfig } from '../main/ets/interfaces/DatabaseInterfaces';
-import { MainNoiseMeter } from '../main/ets/pages/noisemeter/NoiseMeterNavigation';
+import { DatabaseConstants } from '../constants/DatabaseConstants';
+import { TableCreateSql } from '../constants/TableCreateSql';
+import { DbConfig } from '../interfaces/DatabaseInterfaces';
+import { MainNoiseMeter } from './noisemeter/NoiseMeterNavigation';
 
 @ComponentV2
 export struct MainPage {
