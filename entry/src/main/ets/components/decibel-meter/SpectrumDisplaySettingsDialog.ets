@@ -18,6 +18,7 @@ export struct SpectrumDisplaySettingsDialog {
   // 当前配置
   @Local private smoothingFactor: number = 0.3;
   @Local private showPeakFrequency: boolean = true;
+  @Local private peakCount: number = 1; // 新增：峰值数量
   @Local private frequencyRange: FrequencyRange = FrequencyRange.FULL;
   @Local private decibelRange: DecibelRange = DecibelRange.AUTO;
   
@@ -36,6 +37,7 @@ export struct SpectrumDisplaySettingsDialog {
     const config = this.spectrumDisplayService.getDisplayConfig(this.pk);
     this.smoothingFactor = config.smoothingFactor;
     this.showPeakFrequency = config.showPeakFrequency;
+    this.peakCount = config.peakCount; // 新增：加载峰值数量
     this.frequencyRange = config.frequencyRange;
     this.decibelRange = config.decibelRange;
     
@@ -143,26 +145,72 @@ export struct SpectrumDisplaySettingsDialog {
   
   @Builder
   private buildPeakDisplaySection() {
-    Row({ space: DesignConstants.SPACING_MD }) {
-      Text('显示峰值频率')
-        .fontSize(DesignConstants.FONT_SIZE_LG)
-        .fontWeight(FontWeight.Medium)
-        .fontColor($r('sys.color.font_primary'))
-        .layoutWeight(1)
+    Column({ space: DesignConstants.SPACING_MD }) {
+      // 显示峰值频率开关
+      Row({ space: DesignConstants.SPACING_MD }) {
+        Text('显示峰值频率')
+          .fontSize(DesignConstants.FONT_SIZE_LG)
+          .fontWeight(FontWeight.Medium)
+          .fontColor($r('sys.color.font_primary'))
+          .layoutWeight(1)
+        
+        Toggle({ type: ToggleType.Switch, isOn: this.showPeakFrequency })
+          .selectedColor($r('sys.color.icon_emphasize'))
+          .switchPointColor($r('sys.color.background_primary'))
+          .onChange((isOn: boolean) => {
+            this.showPeakFrequency = isOn;
+          })
+      }
+      .width('100%')
+      .justifyContent(FlexAlign.SpaceBetween)
+      .alignItems(VerticalAlign.Center)
       
-      Toggle({ type: ToggleType.Switch, isOn: this.showPeakFrequency })
-        .selectedColor($r('sys.color.icon_emphasize'))
-        .switchPointColor($r('sys.color.background_primary'))
-        .onChange((isOn: boolean) => {
-          this.showPeakFrequency = isOn;
-        })
+      // 峰值数量选择
+      if (this.showPeakFrequency) {
+        Column({ space: DesignConstants.SPACING_SM }) {
+          Row() {
+            Text('峰值数量')
+              .fontSize(DesignConstants.FONT_SIZE_LG)
+              .fontWeight(FontWeight.Medium)
+              .fontColor($r('sys.color.font_primary'))
+              .layoutWeight(1)
+            
+            Text(`${this.peakCount}`)
+              .fontSize(DesignConstants.FONT_SIZE_MD)
+              .fontColor($r('sys.color.font_secondary'))
+          }
+          .width('100%')
+          
+          Slider({
+            value: this.peakCount,
+            min: 1,
+            max: 5,
+            step: 1,
+            style: SliderStyle.InSet
+          })
+            .width('100%')
+            .trackColor($r('sys.color.comp_background_tertiary'))
+            .selectedColor($r('sys.color.icon_emphasize'))
+            .blockColor($r('sys.color.icon_emphasize'))
+            .onChange((value: number) => {
+              this.peakCount = Math.round(value);
+            })
+          
+          Text('选择要显示的峰值数量（1-5个）')
+            .fontSize(DesignConstants.FONT_SIZE_SM)
+            .fontColor($r('sys.color.font_secondary'))
+            .alignSelf(ItemAlign.Start)
+        }
+        .width('100%')
+        .padding(DesignConstants.SPACING_MD)
+        .backgroundColor($r('sys.color.comp_background_primary'))
+        .borderRadius(DesignConstants.BORDER_RADIUS_LG)
+      }
     }
     .width('100%')
     .padding(DesignConstants.SPACING_MD)
     .backgroundColor($r('sys.color.comp_background_primary'))
     .borderRadius(DesignConstants.BORDER_RADIUS_LG)
-    .justifyContent(FlexAlign.SpaceBetween)
-    .alignItems(VerticalAlign.Center)
   }
   
   @Builder
@@ -503,6 +551,7 @@ export struct SpectrumDisplaySettingsDialog {
           displayMode: SpectrumDisplayMode.LINE, // 固定为线性图模式
           smoothingFactor: this.smoothingFactor,
           showPeakFrequency: this.showPeakFrequency,
+          peakCount: this.peakCount, // 新增：保存峰值数量
           frequencyRange: this.frequencyRange,
           decibelRange: this.decibelRange,
           customFrequencyMin: this.customFrequencyMin,

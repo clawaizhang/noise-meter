@@ -7,6 +7,7 @@ import { SpectrumDataProcessor, PeakInfo, PeakInterpolationMethod } from './Spec
 import { UnifiedChartStyle } from '../common/charts/UnifiedChartStyle';
 import { SpectrumDisplayService } from '../../services/SpectrumDisplayService';
 import { PeakFrequencyDisplay } from './PeakFrequencyDisplay';
+import { MultiplePeakFrequencyDisplay } from './MultiplePeakFrequencyDisplay';
 import {
   JArrayList,
   XAxis,
@@ -152,6 +153,7 @@ export struct LineChartSpectrumComponent {
   // 频谱数据
   @Local private currentSpectrumData: Float32Array = new Float32Array();
   @Local private peakInfo: PeakInfo | null = null;
+  @Local private peakInfos: PeakInfo[] = []; // 新增：多个峰值信息
   
   // 峰值平滑处理相关
   @Local private smoothedPeakInfo: PeakInfo | null = null;
@@ -210,6 +212,7 @@ export struct LineChartSpectrumComponent {
       
       // 使用处理后的峰值信息
       this.peakInfo = displayData.peakInfo;
+      this.peakInfos = displayData.peakInfos; // 新增：获取多个峰值信息
       
       // 直接使用计算出的峰值信息，不进行平滑处理
       this.smoothedPeakInfo = this.peakInfo;
@@ -552,11 +555,23 @@ export struct LineChartSpectrumComponent {
           
           // 峰值频率信息 - 根据设置决定是否显示
           if (this.spectrumDisplayService.getDisplayConfig(this.pk).showPeakFrequency) {
-            PeakFrequencyDisplay({
-              peakInfo: this.smoothedPeakInfo,
-              positionX: '86%',
-              positionY: '15%'
-            })
+
+            // 根据峰值数量选择显示组件
+            if (this.spectrumDisplayService.getDisplayConfig(this.pk).peakCount > 1) {
+              // 多峰值显示
+              MultiplePeakFrequencyDisplay({
+                peakInfos: this.peakInfos,
+                positionX: '86%',
+                positionY: '15%'
+              })
+            } else {
+              // 单峰值显示
+              PeakFrequencyDisplay({
+                peakInfo: this.smoothedPeakInfo,
+                positionX: '86%',
+                positionY: '15%'
+              })
+            }
           }
         }
         .width('100%')

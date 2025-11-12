@@ -1,4 +1,4 @@
-import { SpectrumDataProcessor, SpectrumDataPoint, PeakInfo, PeakInterpolationMethod } from '../components/decibel-meter/SpectrumDataProcessor';
+import { SpectrumDataProcessor, SpectrumDataPoint, PeakInfo, PeakInterpolationMethod, PeakStabilizer } from '../components/decibel-meter/SpectrumDataProcessor';
 import { PreferenceKeys } from '../models/PreferenceKeys';
 
 /**
@@ -65,6 +65,7 @@ export interface SpectrumDisplayConfig {
   displayMode: SpectrumDisplayMode;
   smoothingFactor: number;
   showPeakFrequency: boolean;
+  peakCount: number; // 新增：显示峰值数量
   frequencyRange: FrequencyRange;
   decibelRange: DecibelRange;
   customFrequencyMin?: number;
@@ -79,6 +80,7 @@ export interface SpectrumDisplayConfig {
 export interface SpectrumDisplayData {
   dataPoints: SpectrumDataPoint[];
   peakInfo: PeakInfo | null;
+  peakInfos: PeakInfo[]; // 新增：多个峰值信息
   frequencyLabels: string[];
   decibelSteps: number[];
   frequencySteps: number[];
@@ -93,6 +95,7 @@ export class SpectrumDisplayService {
   private previousSpectrumData: Float32Array = new Float32Array();
   private smoothedPeakInfo: PeakInfo | null = null;
   private lastPeakUpdateTime: number = 0;
+  private peakStabilizer: PeakStabilizer = new PeakStabilizer(); // 新增：峰值稳定器
   
   private constructor() {}
   
@@ -114,6 +117,7 @@ export class SpectrumDisplayService {
       displayMode: SpectrumDisplayMode.LINE, // 固定为线性图模式
       smoothingFactor: pk.spectrum_smoothing_factor,
       showPeakFrequency: pk.spectrum_show_peak_frequency,
+      peakCount: pk.spectrum_peak_count || 1, // 新增：默认显示1个峰值
       frequencyRange: pk.spectrum_frequency_range as FrequencyRange || FrequencyRange.FULL,
       decibelRange: pk.spectrum_db_range as DecibelRange || DecibelRange.AUTO,
       customFrequencyMin: pk.spectrum_custom_frequency_min,
@@ -130,6 +134,7 @@ export class SpectrumDisplayService {
     pk.spectrum_display_mode = config.displayMode;
     pk.spectrum_smoothing_factor = config.smoothingFactor;
     pk.spectrum_show_peak_frequency = config.showPeakFrequency;
+    pk.spectrum_peak_count = config.peakCount; // 新增：保存峰值数量
     pk.spectrum_frequency_range = config.frequencyRange;
     pk.spectrum_db_range = config.decibelRange;
     
@@ -183,18 +188,25 @@ export class SpectrumDisplayService {
     // 5. 查找峰值频率
     const peakInfo = this.findPeakFrequency(filteredDataPoints, fftSize, sampleRate);
     
-    // 6. 生成频率标签
+    // 6. 查找多个峰值频率
+    const rawPeakInfos = this.findMultiplePeakFrequencies(filteredDataPoints, fftSize, sampleRate, config.peakCount);
+    
+    // 7. 应用峰值稳定算法
+    const peakInfos = this.peakStabilizer.stabilizePeaks(rawPeakInfos);
+    
+    // 8. 生成频率标签
     const frequencyLabels = this.generateFrequencyLabels(minFreq, maxFreq);
     
-    // 7. 获取分贝步进
+    // 9. 获取分贝步进
     const decibelSteps = this.getDecibelSteps(minDb, maxDb);
     
-    // 8. 获取频率步进
+    // 10. 获取频率步进
     const frequencySteps = this.getFrequencySteps(minFreq, maxFreq);
     
     return {
       dataPoints: filteredDataPoints,
       peakInfo,
+      peakInfos, // 新增：多个峰值信息
       frequencyLabels,
       decibelSteps,
       frequencySteps
@@ -390,6 +402,38 @@ export class SpectrumDisplayService {
       index: maxPoint.index,
       amplitude: maxPoint.amplitude
     };
+  }
+  
+  /**
+   * 查找多个峰值频率
+   */
+  private findMultiplePeakFrequencies(
+    dataPoints: SpectrumDataPoint[],
+    fftSize: number,
+    sampleRate: number,
+    peakCount: number
+  ): PeakInfo[] {
+    if (dataPoints.length === 0 || peakCount <= 0) {
+      return [];
+    }
+    
+    // 将数据点转换为频谱数据格式，以便使用SpectrumDataProcessor的方法
+    const spectrumData = new Float32Array(dataPoints.length);
+    for (let i = 0; i < dataPoints.length; i++) {
+      spectrumData[i] = dataPoints[i].amplitude;
+    }
+    
+    // 使用SpectrumDataProcessor的findMultiplePeaks方法
+    return SpectrumDataProcessor.findMultiplePeaks(
+      spectrumData,
+      fftSize,
+      sampleRate,
+      peakCount,
+      10, // 最小峰值间隔
+      -60, // 最小峰值高度
+      true, // 使用插值
+      PeakInterpolationMethod.ADAPTIVE // 使用自适应插值方法
+    );
   }
   
   /**

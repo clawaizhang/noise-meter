@@ -146,6 +146,12 @@ export class PreferenceKeys {
   spectrum_show_peak_frequency: boolean = PreferencesUtil.getBooleanSync('spectrum_show_peak_frequency', true);
   
   /**
+   * 频谱显示峰值数量
+   */
+  @Trace
+  spectrum_peak_count: number = PreferencesUtil.getNumberSync('spectrum_peak_count', 1);
+  
+  /**
    * 频谱频率范围
    */
   @Trace
