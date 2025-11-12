@@ -197,18 +197,19 @@ export struct LineChartSpectrumComponent {
     if (newSpectrum && this.ak.isDisplayApp) {
       this.currentSpectrumData = newSpectrum;
       
-      // 注意：峰值频率的主要计算已经在AudioController中使用未加权频谱完成
-      // 这里我们使用已加权的频谱数据进行峰值计算，但实际显示的峰值频率
-      // 来自AudioController中基于未加权频谱的计算结果
-      this.peakInfo = SpectrumDataProcessor.findPeakFrequency(
+      // 获取频谱显示配置
+      const spectrumConfig = this.spectrumDisplayService.getDisplayConfig(this.pk);
+      
+      // 使用SpectrumDisplayService处理频谱数据
+      const displayData = this.spectrumDisplayService.processSpectrumData(
         this.currentSpectrumData,
         this.fftSize,
         this.sampleRate,
-        SpectrumDataProcessor.MIN_FREQUENCY,
-        SpectrumDataProcessor.MAX_FREQUENCY,
-        true, // 默认启用插值
-        PeakInterpolationMethod.PARABOLIC // 默认使用抛物线插值
+        spectrumConfig
       );
+      
+      // 使用处理后的峰值信息
+      this.peakInfo = displayData.peakInfo;
       
       // 应用峰值平滑处理
       this.applyPeakSmoothing();
@@ -289,30 +290,32 @@ export struct LineChartSpectrumComponent {
   private generateLineData(): LineData {
     const values: JArrayList<EntryOhos> = new JArrayList<EntryOhos>();
     
-    // 获取频率步进和分贝步进
-    const dbSteps: number[] = SpectrumDataProcessor.getDbSteps();
-    const frequencySteps: number[] = SpectrumDataProcessor.getFrequencySteps();
+    // 获取频谱显示配置
+    const spectrumConfig = this.spectrumDisplayService.getDisplayConfig(this.pk);
     
-    // 与原来的Canvas实现保持一致：使用对数坐标映射
-    const LOG_MIN_FREQ = Math.log10(16); // 16Hz
-    const logMaxFreq = Math.log10(20000); // 20kHz
-    
-    // 使用SpectrumDataProcessor生成增强的频谱数据点（包含低频插值）
-    const enhancedDataPoints = SpectrumDataProcessor.generateEnhancedSpectrumData(
+    // 使用SpectrumDisplayService处理频谱数据
+    const displayData = this.spectrumDisplayService.processSpectrumData(
       this.currentSpectrumData,
       this.fftSize,
       this.sampleRate,
-      16, // 最小频率16Hz
-      SpectrumDataProcessor.MAX_FREQUENCY
+      spectrumConfig
     );
     
-    // 遍历增强后的数据点
-    for (const dataPoint of enhancedDataPoints) {
+    // 获取频率和分贝范围
+    const frequencyRangeConfig = this.spectrumDisplayService.getFrequencyRange(spectrumConfig, this.fftSize, this.sampleRate);
+    const decibelRangeConfig = this.spectrumDisplayService.getDecibelRange(spectrumConfig);
+    
+    // 与原来的Canvas实现保持一致：使用对数坐标映射
+    const LOG_MIN_FREQ = Math.log10(frequencyRangeConfig.minFreq);
+    const logMaxFreq = Math.log10(frequencyRangeConfig.maxFreq);
+    
+    // 遍历处理后的数据点
+    for (const dataPoint of displayData.dataPoints) {
       const frequency: number = dataPoint.frequency;
       const dbValue: number = dataPoint.dbValue;
       
-      // 确保分贝值在合理范围内
-      const clampedDbValue: number = Math.max(dbSteps[0], Math.min(dbSteps[dbSteps.length - 1], dbValue));
+      // 确保分贝值在配置范围内
+      const clampedDbValue: number = Math.max(decibelRangeConfig.minDb, Math.min(decibelRangeConfig.maxDb, dbValue));
       
       // 使用对数坐标映射，与原来的Canvas实现完全一致
       // 这样低频率部分会有更多的显示空间，高频率部分会被压缩
@@ -320,7 +323,7 @@ export struct LineChartSpectrumComponent {
       const mappedX: number = ((logFreq - LOG_MIN_FREQ) / (logMaxFreq - LOG_MIN_FREQ)) * 20000;
       
       // 调试信息：只记录前几个数据点
-      if (enhancedDataPoints.indexOf(dataPoint) < 5) {
+      if (displayData.dataPoints.indexOf(dataPoint) < 5) {
         console.info(`[频谱图] 数据点: 频率=${frequency}Hz, 映射X值=${mappedX}, 分贝=${clampedDbValue}dB`);
       }
       
@@ -366,6 +369,11 @@ export struct LineChartSpectrumComponent {
       return;
     }
 
+    // 获取频谱显示配置
+    const spectrumConfig = this.spectrumDisplayService.getDisplayConfig(this.pk);
+    const decibelRangeConfig = this.spectrumDisplayService.getDecibelRange(spectrumConfig);
+    const frequencyRangeConfig = this.spectrumDisplayService.getFrequencyRange(spectrumConfig, this.fftSize, this.sampleRate);
+
     // 为图表添加数据选择的监听器
     this.model.setOnChartValueSelectedListener(this.valueSelectedListener);
     
@@ -401,16 +409,16 @@ export struct LineChartSpectrumComponent {
     this.leftAxis = this.model.getAxisLeft();
     if (this.leftAxis) {
       // 获取分贝步进值并设置正确的标签数量
-      const dbSteps: number[] = SpectrumDataProcessor.getDbSteps();
+      const dbSteps: number[] = this.spectrumDisplayService.getDecibelSteps(decibelRangeConfig.minDb, decibelRangeConfig.maxDb);
       this.leftAxis.setLabelCount(dbSteps.length, true); // 使用实际的分贝步进数量
       // 设置标签位置为内部
       this.leftAxis.setPosition(YAxisLabelPosition.INSIDE_CHART);
       // 设置距离顶部距离
       this.leftAxis.setSpaceTop(15);
       this.leftAxis.setSpaceBottom(15); // 为内部标签添加底部间距
-      // 设置最小值和最大值，确保使用正确的分贝范围
-      this.leftAxis.setAxisMinimum(dbSteps[0]); // -20
-      this.leftAxis.setAxisMaximum(dbSteps[dbSteps.length - 1]); // 140
+      // 设置最小值和最大值，确保使用配置的分贝范围
+      this.leftAxis.setAxisMinimum(decibelRangeConfig.minDb);
+      this.leftAxis.setAxisMaximum(decibelRangeConfig.maxDb);
       this.leftAxis.setYOffset(-10)
       // 设置网格线样式
       this.leftAxis.setDrawGridLines(true);
@@ -440,9 +448,8 @@ export struct LineChartSpectrumComponent {
       this.rightAxis.setLabelCount(7, true);
       this.rightAxis.setDrawGridLines(false);
       this.rightAxis.setSpaceTop(15);
-      const dbSteps: number[] = SpectrumDataProcessor.getDbSteps();
-      this.rightAxis.setAxisMinimum(dbSteps[0]);
-      this.rightAxis.setAxisMaximum(dbSteps[dbSteps.length - 1]);
+      this.rightAxis.setAxisMinimum(decibelRangeConfig.minDb);
+      this.rightAxis.setAxisMaximum(decibelRangeConfig.maxDb);
       this.rightAxis.setEnabled(false);
     }
     
@@ -460,7 +467,6 @@ export struct LineChartSpectrumComponent {
       this.xAxis.setXOffset(20);
       this.xAxis.setAvoidFirstLastClipping(true); // 避免首尾标签被裁剪
       // 设置图表X轴显示范围，与映射后的X值保持一致
-      // 由于跳过了16Hz以下的数据，所以最小值应该对应16Hz的映射值
       
       // 直接设置范围，因为16Hz映射到0，20kHz映射到20000
       this.xAxis.setAxisMinimum(0);     // 16Hz对应的映射值
@@ -544,12 +550,14 @@ export struct LineChartSpectrumComponent {
             .padding({ left: 4, right: 4 })
             .borderRadius(4)
           
-          // 峰值频率信息 - 使用通用组件
-          PeakFrequencyDisplay({
-            peakInfo: this.smoothedPeakInfo,
-            positionX: '86%',
-            positionY: '15%'
-          })
+          // 峰值频率信息 - 根据设置决定是否显示
+          if (this.spectrumDisplayService.getDisplayConfig(this.pk).showPeakFrequency) {
+            PeakFrequencyDisplay({
+              peakInfo: this.smoothedPeakInfo,
+              positionX: '86%',
+              positionY: '15%'
+            })
+          }
         }
         .width('100%')
         .layoutWeight(1)

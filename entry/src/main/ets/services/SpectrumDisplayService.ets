@@ -111,7 +111,7 @@ export class SpectrumDisplayService {
    */
   getDisplayConfig(pk: PreferenceKeys): SpectrumDisplayConfig {
     return {
-      displayMode: pk.spectrum_display_mode as SpectrumDisplayMode || SpectrumDisplayMode.LINE,
+      displayMode: SpectrumDisplayMode.LINE, // 固定为线性图模式
       smoothingFactor: pk.spectrum_smoothing_factor,
       showPeakFrequency: pk.spectrum_show_peak_frequency,
       frequencyRange: pk.spectrum_frequency_range as FrequencyRange || FrequencyRange.FULL,
@@ -285,7 +285,7 @@ export class SpectrumDisplayService {
   /**
    * 获取频率范围
    */
-  private getFrequencyRange(
+  getFrequencyRange(
     config: SpectrumDisplayConfig,
     fftSize: number,
     sampleRate: number
@@ -318,7 +318,7 @@ export class SpectrumDisplayService {
   /**
    * 获取分贝范围
    */
-  private getDecibelRange(config: SpectrumDisplayConfig): DecibelRangeConfig {
+  getDecibelRange(config: SpectrumDisplayConfig): DecibelRangeConfig {
     // 默认分贝范围
     let minDb = -20;
     let maxDb = 140;
@@ -413,7 +413,7 @@ export class SpectrumDisplayService {
   /**
    * 获取分贝步进
    */
-  private getDecibelSteps(minDb: number, maxDb: number): number[] {
+  getDecibelSteps(minDb: number, maxDb: number): number[] {
     // 使用SpectrumDataProcessor的静态方法获取标准分贝步进
     const allDbSteps = SpectrumDataProcessor.getDbSteps();
     
@@ -424,7 +424,7 @@ export class SpectrumDisplayService {
   /**
    * 获取频率步进
    */
-  private getFrequencySteps(minFreq: number, maxFreq: number): number[] {
+  getFrequencySteps(minFreq: number, maxFreq: number): number[] {
     // 使用SpectrumDataProcessor的静态方法获取标准频率步进
     const allFreqSteps = SpectrumDataProcessor.getFrequencySteps();
     

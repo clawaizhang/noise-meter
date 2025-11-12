@@ -16,7 +16,6 @@ export struct SpectrumDisplaySettingsDialog {
   @Param params: SpectrumDisplaySettingsParams | null = null;
   
   // 当前配置
-  @Local private displayMode: SpectrumDisplayMode = SpectrumDisplayMode.LINE;
   @Local private smoothingFactor: number = 0.3;
   @Local private showPeakFrequency: boolean = true;
   @Local private frequencyRange: FrequencyRange = FrequencyRange.FULL;
@@ -35,7 +34,6 @@ export struct SpectrumDisplaySettingsDialog {
   aboutToAppear() {
     // 从PreferenceKeys加载当前配置
     const config = this.spectrumDisplayService.getDisplayConfig(this.pk);
-    this.displayMode = config.displayMode;
     this.smoothingFactor = config.smoothingFactor;
     this.showPeakFrequency = config.showPeakFrequency;
     this.frequencyRange = config.frequencyRange;
@@ -72,9 +70,6 @@ export struct SpectrumDisplaySettingsDialog {
       
       Scroll() {
         Column({ space: DesignConstants.SPACING_LG }) {
-          // 显示模式设置
-          this.buildDisplayModeSection()
-          
           // 平滑设置
           this.buildSmoothingSection()
           
@@ -103,79 +98,6 @@ export struct SpectrumDisplaySettingsDialog {
     .backgroundColor($r('sys.color.background_secondary'))
   }
   
-  @Builder
-  private buildDisplayModeSection() {
-    Column({ space: DesignConstants.SPACING_MD }) {
-      Text('显示模式')
-        .fontSize(DesignConstants.FONT_SIZE_LG)
-        .fontWeight(FontWeight.Medium)
-        .fontColor($r('sys.color.font_primary'))
-        .alignSelf(ItemAlign.Start)
-      
-      Column({ space: DesignConstants.SPACING_SM }) {
-        Row({ space: DesignConstants.SPACING_SM }) {
-          Radio({ value: SpectrumDisplayMode.LINE, group: 'displayMode' })
-            .checked(this.displayMode === SpectrumDisplayMode.LINE)
-            .onChange((isChecked: boolean) => {
-              if (isChecked) {
-                this.displayMode = SpectrumDisplayMode.LINE;
-              }
-            })
-          
-          Text('线形图')
-            .fontSize(DesignConstants.FONT_SIZE_MD)
-            .fontColor($r('sys.color.font_primary'))
-        }
-        .width('100%')
-        .justifyContent(FlexAlign.Start)
-        .onClick(() => {
-          this.displayMode = SpectrumDisplayMode.LINE;
-        })
-        
-        Row({ space: DesignConstants.SPACING_SM }) {
-          Radio({ value: SpectrumDisplayMode.BAR, group: 'displayMode' })
-            .checked(this.displayMode === SpectrumDisplayMode.BAR)
-            .onChange((isChecked: boolean) => {
-              if (isChecked) {
-                this.displayMode = SpectrumDisplayMode.BAR;
-              }
-            })
-          
-          Text('柱状图')
-            .fontSize(DesignConstants.FONT_SIZE_MD)
-            .fontColor($r('sys.color.font_primary'))
-        }
-        .width('100%')
-        .justifyContent(FlexAlign.Start)
-        .onClick(() => {
-          this.displayMode = SpectrumDisplayMode.BAR;
-        })
-        
-        Row({ space: DesignConstants.SPACING_SM }) {
-          Radio({ value: SpectrumDisplayMode.HYBRID, group: 'displayMode' })
-            .checked(this.displayMode === SpectrumDisplayMode.HYBRID)
-            .onChange((isChecked: boolean) => {
-              if (isChecked) {
-                this.displayMode = SpectrumDisplayMode.HYBRID;
-              }
-            })
-          
-          Text('混合模式')
-            .fontSize(DesignConstants.FONT_SIZE_MD)
-            .fontColor($r('sys.color.font_primary'))
-        }
-        .width('100%')
-        .justifyContent(FlexAlign.Start)
-        .onClick(() => {
-          this.displayMode = SpectrumDisplayMode.HYBRID;
-        })
-      }
-    }
-    .width('100%')
-    .padding(DesignConstants.SPACING_MD)
-    .backgroundColor($r('sys.color.comp_background_primary'))
-    .borderRadius(DesignConstants.BORDER_RADIUS_LG)
-  }
   
   @Builder
   private buildSmoothingSection() {
@@ -576,9 +498,9 @@ export struct SpectrumDisplaySettingsDialog {
       .backgroundColor($r('sys.color.icon_emphasize'))
       .borderRadius(DesignConstants.BORDER_RADIUS_MD)
       .onClick(() => {
-        // 创建配置对象
+        // 创建配置对象，固定使用线性图模式
         const config: SpectrumDisplayConfig = {
-          displayMode: this.displayMode,
+          displayMode: SpectrumDisplayMode.LINE, // 固定为线性图模式
           smoothingFactor: this.smoothingFactor,
           showPeakFrequency: this.showPeakFrequency,
           frequencyRange: this.frequencyRange,
