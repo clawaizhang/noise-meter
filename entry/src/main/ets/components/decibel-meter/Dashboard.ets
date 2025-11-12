@@ -1,8 +1,6 @@
 import { navigationStack } from '../../constants/ProviderConstant';
-import { AppStorageV2, display, PersistenceV2 } from '@kit.ArkUI';
-import { SpectrumBarChartComponent } from './SpectrumBarChartComponent';
+import { AppStorageV2, PersistenceV2 } from '@kit.ArkUI';
 import { LineChartSpectrumComponent } from './LineChartSpectrumComponent';
-import { ProfessionalSpectrumAnalyzer } from './ProfessionalSpectrumAnalyzer';
 import { LineChartTimeDomainComponent } from './LineChartTimeDomainComponent';
 import { StatisticsChartComponent } from '../statistics/StatisticsChartComponent';
 import { PreferenceKeys } from '../../models/PreferenceKeys';
@@ -58,11 +56,9 @@ export struct DashBoard {
 
   // 图表类型配置
   private readonly chartTypes: ChartTypeConfig[] = [
-    { title: '专业频谱分析', componentId: 0 },
-    { title: '频率频谱图', componentId: 1 },
-    { title: '频谱柱状图', componentId: 2 },
-    { title: '时域波形图', componentId: 3 },
-    { title: '声级分布图', componentId: 4 }
+    { title: '频率频谱图', componentId: 0 },
+    { title: '时域波形图', componentId: 1 },
+    { title: '声级分布图', componentId: 2 }
   ]
 
   @Monitor('ak.currentTabIndex')
@@ -88,14 +84,8 @@ export struct DashBoard {
       this.chartTypes.forEach((chartType, index) => {
         if (index === this.currentTabIndex) {
           switch (chartType.title) {
-            case '专业频谱分析':
-              newVisibilityState.professionalSpectrum = true;
-              break;
             case '频率频谱图':
               newVisibilityState.lineChartSpectrum = true;
-              break;
-            case '频谱柱状图':
-              newVisibilityState.spectrumBarChart = true;
               break;
             case '时域波形图':
               newVisibilityState.lineChartTimeDomain = true;
@@ -230,18 +220,9 @@ export struct DashBoard {
   buildChartContent(chartTitle: string) {
     Column() {
       // 图表组件 - 直接全屏显示，传递可见性状态
-      if (chartTitle === '专业频谱分析') {
-        ProfessionalSpectrumAnalyzer({ 
-          sampleRate: 44100,
-          isVisible: this.isChartVisible(chartTitle)
-        })
-      } else if (chartTitle === '频率频谱图') {
+      if (chartTitle === '频率频谱图') {
         LineChartSpectrumComponent({ 
           sampleRate: 44100,
-          isVisible: this.isChartVisible(chartTitle)
-        })
-      } else if (chartTitle === '频谱柱状图') {
-        SpectrumBarChartComponent({
           isVisible: this.isChartVisible(chartTitle)
         })
       } else if (chartTitle === '时域波形图') {
