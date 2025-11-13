@@ -361,10 +361,10 @@ export class FFTAnalyzer {
       spectrum[i] = db;
     }
 
-    // 应用平滑处理
-    const smoothedSpectrum = this.smoothMagnitudes(spectrum);
+    // 不再在此处应用平滑处理，由调用方决定是否需要平滑
+    // 平滑处理将在AudioController中统一进行
     
-    return smoothedSpectrum;
+    return spectrum;
   }
 
   /**

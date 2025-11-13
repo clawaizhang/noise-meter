@@ -32,16 +32,8 @@ export function concurrentCalculateSpectrum(buffer: ArrayBuffer,
   fftAnalyzer.setSystemGain(calibrationGain);
   const rawSpectrum = fftAnalyzer.transform(buffer, weightingType);
 
-  // 使用全局平滑管理器应用平滑处理
-  const effectiveSampleRate = decimationEnabled ? sampleRate / decimationFactor : sampleRate;
-  const smoothedSpectrum = smoothingManager.applySpectrumSmoothing(
-    rawSpectrum,
-    fftSize,
-    smoothingFactor,
-    exponentialSmoothingFactor,
-    weightingType,
-    effectiveSampleRate
-  );
-
-  return smoothedSpectrum;
+  // 不再在此处应用平滑处理，由调用方（AudioController）统一进行平滑处理
+  // 这避免了重复平滑的问题
+  
+  return rawSpectrum;
 }

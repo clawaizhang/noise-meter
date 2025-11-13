@@ -611,11 +611,22 @@ export struct AudioController {
         config.tukeyAlpha,
         config.chebyshevAttenuation,
         config.exponentialSmoothingFactor
-      ).then((spectrum) => {
+      ).then((rawSpectrum) => {
         // 双管线架构：频谱数据通过状态管理，不再通过事件传递
 
-        // 计算分贝值
+        // 应用平滑处理（只进行一次平滑）
         const config = AudioPresets.getConfig(this.pk.audio_analysis_mode);
+        const smoothingManager = SpectrumSmoothingManager.getInstance();
+        const smoothedSpectrum = smoothingManager.applySpectrumSmoothing(
+          rawSpectrum,
+          config.fftSize,
+          config.smoothingFactor,
+          config.exponentialSmoothingFactor,
+          this.pk.weighting_type,
+          config.sampleRate
+        );
+        
+        // 计算分贝值（使用平滑后的频谱）
         const fftAnalyzer = new FFTAnalyzer(
           config.fftSize,
           config.windowType,
@@ -631,7 +642,7 @@ export struct AudioController {
           config.exponentialSmoothingFactor
         );
         
-        const db: number = fftAnalyzer.calculateAverageDb(spectrum);
+        const db: number = fftAnalyzer.calculateAverageDb(smoothedSpectrum);
         let currentDecibel = Number(Math.round(db).toFixed(1));
 
         // 收集分贝值和加权类型（带时间戳）
@@ -641,10 +652,10 @@ export struct AudioController {
 
         // 计算峰值频率（使用稳定的峰值检测）
         try {
-          // 使用全局平滑管理器检测稳定峰值
+          // 使用全局平滑管理器检测稳定峰值（使用已平滑的频谱）
           const smoothingManager = SpectrumSmoothingManager.getInstance();
           const stablePeaks = smoothingManager.detectStablePeaks(
-            spectrum,
+            smoothedSpectrum,
             config.fftSize,
             config.sampleRate,
             smoothingManager.generateConfigKey(config.fftSize, config.smoothingFactor, config.exponentialSmoothingFactor, this.pk.weighting_type)
@@ -663,9 +674,9 @@ export struct AudioController {
                 stablePeaks.slice(1, 3).map(p => `${p.frequency.toFixed(1)}Hz(${p.stability.toFixed(2)})`));
             }
           } else {
-            // 回退到传统峰值检测
+            // 回退到传统峰值检测（使用已平滑的频谱）
             const peakInfo = SpectrumDataProcessor.findPeakFrequency(
-              spectrum,
+              smoothedSpectrum,
               config.fftSize,
               config.sampleRate,
               16,
@@ -683,8 +694,8 @@ export struct AudioController {
           console.warn(`[峰值检测] 错误: ${error}`);
         }
 
-        // 更新统计信息
-        this.updateStatistics(currentDecibel, spectrum);
+        // 更新统计信息（使用平滑后的频谱）
+        this.updateStatistics(currentDecibel, smoothedSpectrum);
 
         // 检查报警状态
         this.checkAlarmStatus(currentDecibel);
