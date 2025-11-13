@@ -426,24 +426,22 @@ export class AudioService {
    * 处理音频分析模式变更
    */
   handleModeChange(value: AudioAnalysisMode): void {
-    void Promise.resolve().then(async () => {
-      try {
-        // 验证并转换模式
-        if (!Object.values(AudioAnalysisMode).includes(value)) {
-          throw new Error(`无效的音频分析模式: ${value}`);
-        }
-        const mode = value as AudioAnalysisMode;
-
-        // 更新配置
-        this.currentConfig = AudioPresets.getConfig(mode);
-        this.applySampleRateConfig();
-        this.audioStreamProcessor.updateConfig(this.currentConfig);
-
-        console.info(`[音频采集] 模式已更新为: ${mode}, 采样率=${this.currentConfig.sampleRate}Hz`);
-      } catch (err) {
-        console.error(`[音频采集] 更新模式失败: ${err instanceof Error ? err.message : String(err)}`);
+    try {
+      // 验证并转换模式
+      if (!Object.values(AudioAnalysisMode).includes(value)) {
+        throw new Error(`无效的音频分析模式: ${value}`);
       }
-    });
+      const mode = value as AudioAnalysisMode;
+
+      // 更新配置
+      this.currentConfig = AudioPresets.getConfig(mode);
+      this.applySampleRateConfig();
+      this.audioStreamProcessor.updateConfig(this.currentConfig);
+
+      console.info(`[音频采集] 模式已更新为: ${mode}, 采样率=${this.currentConfig.sampleRate}Hz`);
+    } catch (err) {
+      console.error(`[音频采集] 更新模式失败: ${err instanceof Error ? err.message : String(err)}`);
+    }
   }
 
   /**

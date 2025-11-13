@@ -55,10 +55,9 @@ struct Index {
     this.setDisplayMode(mode);
   } // 初始化首选项默认值
 
-  @Monitor('pk.audio_analysis_mode')
+  @Monitor('pk.audio_analysis_mode','pk.custom_audio_config.updateInterval')
   audioAnalysisModeChange(monitor: IMonitor) {
-    let mode = monitor.value<AudioAnalysisMode>()?.now!;
-    this.audioService.handleModeChange(mode)
+    this.audioService.handleModeChange(this.pk.audio_analysis_mode)
   }
 
   @Monitor('pk.show_welcome_guide')

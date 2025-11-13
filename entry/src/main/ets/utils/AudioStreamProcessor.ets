@@ -49,8 +49,7 @@ export class AudioStreamProcessor {
    */
   stopProcessing(): void {
     this.isProcessing = false;
-    this.calculateAudioDataCallBack = null;
-    
+
     // 停止定时处理
     this.stopProcessingTimer();
     
