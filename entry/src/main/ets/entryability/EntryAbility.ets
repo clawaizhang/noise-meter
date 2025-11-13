@@ -18,6 +18,7 @@ import { DataProcessingState } from '../models/DataProcessingState';
 import { UIDisplayState } from '../models/UIDisplayState';
 import { of } from 'rxjs';
 import { AudioControllerService } from '../services/AudioControllerService';
+import { AudioPresets } from '../common/AudioConfig';
 
 const TAG = 'EntryAbility';
 const DOMAIN = 0x0000;
@@ -59,13 +60,14 @@ export default class EntryAbility extends UIAbility {
     windowManager.registerWindowStage(windowStage);
     windowManager.loadContent('pages/Index', (windowStageRegistered) => {
       AppUtil.init(this.context);
-      PersistenceV2.connect(PreferenceKeys, () => new PreferenceKeys());
+      let pk = PersistenceV2.connect(PreferenceKeys, () => new PreferenceKeys())!;
       AppStorageV2.connect(AppKeys, () => new AppKeys())!;
       AppStorageV2.connect(DataProcessingState, () => new DataProcessingState())!;
       AppStorageV2.connect(UIDisplayState, () => new UIDisplayState())!;
       PersistenceV2.notifyOnError((key: string, reason: string, msg: string) => {
         console.error(`error key: ${key}, reason: ${reason}, message: ${msg}`);
       });
+      AudioPresets.init(pk);
       // 获取设备类型并设置窗口方向
       windowStageRegistered?.getMainWindow((err: BusinessError, windowClass) => {
         if (err.code || !windowClass) {

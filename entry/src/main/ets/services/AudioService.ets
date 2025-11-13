@@ -475,6 +475,9 @@ export class AudioService {
         break;
     }
 
+    // 从custom_audio_config中获取指数平滑因子并应用到当前配置
+    this.currentConfig.exponentialSmoothingFactor = this.pk.custom_audio_config.exponentialSmoothingFactor;
+
     // 计算有效采样率（考虑降采样）
     const effectiveSampleRate = this.currentConfig.decimationEnabled ?
       this.currentConfig.sampleRate / this.currentConfig.decimationFactor :
@@ -482,7 +485,7 @@ export class AudioService {
 
     console.info(`[音频采集] 采样率配置已应用: 原始采样率=${this.currentConfig.sampleRate}Hz, ` +
       `有效采样率=${effectiveSampleRate}Hz, 降采样启用=${this.currentConfig.decimationEnabled}, ` +
-      `降采样因子=${this.currentConfig.decimationFactor}`);
+      `降采样因子=${this.currentConfig.decimationFactor}, 指数平滑因子=${this.currentConfig.exponentialSmoothingFactor}`);
   }
 
   /**
@@ -508,7 +511,7 @@ export class AudioService {
     // AudioStreamProcessor会自动从配置中获取最新的窗函数设置
     this.audioStreamProcessor.updateConfig(this.currentConfig);
 
-    console.info(`[音频采集] 采样率设置已应用: ${sampleRate}Hz, 降采样=${decimationEnabled}, 降采样因子=${decimationFactor}`);
+    console.info(`[音频采集] 采样率设置已应用: ${sampleRate}Hz, 降采样=${decimationEnabled}, 降采样因子=${decimationFactor}, 指数平滑因子=${this.currentConfig.exponentialSmoothingFactor}`);
     
     // 如果之前在采集，重新开始采集
     if (wasCapturing) {

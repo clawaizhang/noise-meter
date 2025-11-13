@@ -37,7 +37,7 @@ export struct SpectrumDisplaySettingsDialog {
     // 从PreferenceKeys加载当前配置
     const config = this.spectrumDisplayService.getDisplayConfig(this.pk);
     this.smoothingFactor = config.smoothingFactor;
-    this.exponentialSmoothingFactor = this.pk.exponential_smoothing_factor;
+    this.exponentialSmoothingFactor = this.pk.custom_audio_config.exponentialSmoothingFactor;
     this.showPeakFrequency = config.showPeakFrequency;
     this.peakCount = config.peakCount; // 新增：加载峰值数量
     this.frequencyRange = config.frequencyRange;
@@ -608,8 +608,8 @@ export struct SpectrumDisplaySettingsDialog {
           exponentialSmoothingFactor: this.exponentialSmoothingFactor
         };
         
-        // 保存指数平滑因子到PreferenceKeys
-        this.pk.exponential_smoothing_factor = this.exponentialSmoothingFactor;
+        // 保存指数平滑因子到custom_audio_config
+        this.pk.custom_audio_config.exponentialSmoothingFactor = this.exponentialSmoothingFactor;
         
         // 应用设置
         this.params?.onSettingsApplied(config);

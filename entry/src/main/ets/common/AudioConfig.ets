@@ -150,6 +150,11 @@ export class AudioPresets {
   public static readonly SLOW_TIME_WEIGHTING: AudioAnalysisConfig = AudioAnalysisConfig.slow();
   // 脉冲音频分析模式配置（I）
   public static readonly IMPULSE_TIME_WEIGHTING: AudioAnalysisConfig = AudioAnalysisConfig.impulse();
+  public static pk:PreferenceKeys ;
+
+  public static init(pk:PreferenceKeys){
+    AudioPresets.pk = pk;
+  }
 
   /**
    * 根据模式获取配置
@@ -172,7 +177,7 @@ export class AudioPresets {
         break;
       case AudioAnalysisMode.CUSTOM_TIME_WEIGHTING:
         // 自定义模式使用用户保存的配置
-        config = PersistenceV2.connect(PreferenceKeys)!.custom_audio_config;
+        config = AudioPresets.pk.custom_audio_config;
         console.info(`[音频配置] 使用自定义配置`);
         break;
       default:
@@ -180,34 +185,36 @@ export class AudioPresets {
     }
 
     // 从PreferenceKeys加载采样率配置（仅对非自定义模式应用）
-    const pk = PersistenceV2.connect(PreferenceKeys)!;
     if (mode !== AudioAnalysisMode.CUSTOM_TIME_WEIGHTING) {
       // 对于预设模式，应用全局采样率设置
-      config.sampleRate = pk.audio_sample_rate;
-      config.decimationEnabled = pk.audio_decimation_enabled;
-      config.decimationFactor = pk.audio_decimation_factor;
+      config.sampleRate = AudioPresets.pk.audio_sample_rate;
+      config.decimationEnabled = AudioPresets.pk.audio_decimation_enabled;
+      config.decimationFactor = AudioPresets.pk.audio_decimation_factor;
       // 应用窗函数类型设置
-      config.windowType = pk.window_function_type;
+      config.windowType = AudioPresets.pk.window_function_type;
       // 应用窗函数参数设置
-      config.kaiserBeta = pk.window_kaiser_beta;
-      config.gaussianSigma = pk.window_gaussian_sigma;
-      config.tukeyAlpha = pk.window_tukey_alpha;
-      config.chebyshevAttenuation = pk.window_chebyshev_attenuation;
+      config.kaiserBeta = AudioPresets.pk.window_kaiser_beta;
+      config.gaussianSigma = AudioPresets.pk.window_gaussian_sigma;
+      config.tukeyAlpha = AudioPresets.pk.window_tukey_alpha;
+      config.chebyshevAttenuation = AudioPresets.pk.window_chebyshev_attenuation;
+      // 应用指数平滑因子设置（从custom_audio_config中获取）
+      config.exponentialSmoothingFactor = AudioPresets.pk.custom_audio_config.exponentialSmoothingFactor;
     } else {
       // 对于自定义模式，保留自定义配置中的采样率设置，但确保有默认值
       if (config.sampleRate === 0) {
-        config.sampleRate = pk.audio_sample_rate;
+        config.sampleRate = AudioPresets.pk.audio_sample_rate;
       }
       if (config.decimationFactor === 0) {
-        config.decimationFactor = pk.audio_decimation_factor;
+        config.decimationFactor = AudioPresets.pk.audio_decimation_factor;
       }
       // 对于自定义模式，应用窗函数类型设置
-      config.windowType = pk.window_function_type;
+      config.windowType = AudioPresets.pk.window_function_type;
       // 应用窗函数参数设置
-      config.kaiserBeta = pk.window_kaiser_beta;
-      config.gaussianSigma = pk.window_gaussian_sigma;
-      config.tukeyAlpha = pk.window_tukey_alpha;
-      config.chebyshevAttenuation = pk.window_chebyshev_attenuation;
+      config.kaiserBeta = AudioPresets.pk.window_kaiser_beta;
+      config.gaussianSigma = AudioPresets.pk.window_gaussian_sigma;
+      config.tukeyAlpha = AudioPresets.pk.window_tukey_alpha;
+      config.chebyshevAttenuation = AudioPresets.pk.window_chebyshev_attenuation;
+      // 指数平滑因子已经在custom_audio_config中设置，不需要重复设置
     }
 
     console.info(`[音频配置] 配置详情: FFT大小=${config.fftSize}, ` +

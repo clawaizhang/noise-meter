@@ -209,12 +209,13 @@ export class AudioStreamProcessor {
         updatedConfig.kaiserBeta !== this.currentConfig.kaiserBeta ||
         updatedConfig.gaussianSigma !== this.currentConfig.gaussianSigma ||
         updatedConfig.tukeyAlpha !== this.currentConfig.tukeyAlpha ||
-        updatedConfig.chebyshevAttenuation !== this.currentConfig.chebyshevAttenuation) {
+        updatedConfig.chebyshevAttenuation !== this.currentConfig.chebyshevAttenuation ||
+        updatedConfig.exponentialSmoothingFactor !== this.currentConfig.exponentialSmoothingFactor) {
       
       console.info(`[音频流处理器] 从持久化存储更新窗函数配置: ` +
         `类型=${updatedConfig.windowType}, KaiserBeta=${updatedConfig.kaiserBeta}, ` +
         `GaussianSigma=${updatedConfig.gaussianSigma}, TukeyAlpha=${updatedConfig.tukeyAlpha}, ` +
-        `ChebyshevAttenuation=${updatedConfig.chebyshevAttenuation}`);
+        `ChebyshevAttenuation=${updatedConfig.chebyshevAttenuation}, 指数平滑因子=${updatedConfig.exponentialSmoothingFactor}`);
       
       // 只更新窗函数相关配置，保持其他配置不变
       const newConfig = this.currentConfig.clone();
@@ -223,6 +224,7 @@ export class AudioStreamProcessor {
       newConfig.gaussianSigma = updatedConfig.gaussianSigma;
       newConfig.tukeyAlpha = updatedConfig.tukeyAlpha;
       newConfig.chebyshevAttenuation = updatedConfig.chebyshevAttenuation;
+      newConfig.exponentialSmoothingFactor = updatedConfig.exponentialSmoothingFactor;
       
       // 使用优化的更新方法，只更新窗函数而不中断处理
       this.updateConfig(newConfig);
