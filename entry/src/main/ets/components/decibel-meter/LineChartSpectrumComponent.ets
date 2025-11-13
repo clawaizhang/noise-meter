@@ -152,12 +152,6 @@ export struct LineChartSpectrumComponent {
   @Local private currentSpectrumData: Float32Array = new Float32Array();
   @Local private peakInfo: PeakInfo | null = null;
   @Local private peakInfos: PeakInfo[] = []; // 新增：多个峰值信息
-  
-  // 峰值平滑处理相关
-  @Local private smoothedPeakInfo: PeakInfo | null = null;
-  @Local private readonly PEAK_UPDATE_THRESHOLD_MS: number = 200; // 峰值更新最小间隔(ms)
-  @Local private readonly PEAK_CHANGE_THRESHOLD_DB: number = 2.0; // 峰值变化阈值(dB)
-  @Local private readonly PEAK_CHANGE_THRESHOLD_HZ: number = 100; // 峰值频率变化阈值(Hz)
 
   // LineChart 相关
   @Local private model: LineChartModel | null = null;
@@ -211,9 +205,6 @@ export struct LineChartSpectrumComponent {
       this.peakInfo = displayData.peakInfo;
       this.peakInfos = displayData.peakInfos; // 新增：获取多个峰值信息
       
-      // 直接使用计算出的峰值信息，不进行平滑处理
-      this.smoothedPeakInfo = this.peakInfo;
-      
       // 更新图表数据
       this.updateChartData();
     }
@@ -238,6 +229,7 @@ export struct LineChartSpectrumComponent {
 
   /**
    * 生成频谱图数据
+   * 直接使用SpectrumDisplayService处理后的数据
    */
   private generateLineData(): LineData {
     const values: JArrayList<EntryOhos> = new JArrayList<EntryOhos>();
@@ -514,9 +506,9 @@ export struct LineChartSpectrumComponent {
                 positionY: '15%'
               })
             } else {
-              // 单峰值显示
+              // 单峰值显示 - 直接使用处理后的峰值信息，不再进行额外平滑
               PeakFrequencyDisplay({
-                peakInfo: this.smoothedPeakInfo,
+                peakInfo: this.peakInfo,
                 positionX: '86%',
                 positionY: '15%'
               })
