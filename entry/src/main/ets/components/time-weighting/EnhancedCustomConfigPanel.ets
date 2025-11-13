@@ -111,10 +111,10 @@ export struct EnhancedCustomConfigPanel {
   
   // 指数平滑因子选项
   private readonly exponentialSmoothingFactorOptions: SelectOption[] = [
-    { value: 0.0, label: '0.0', index: 0 },
-    { value: 0.05, label: '0.05', index: 1 },
-    { value: 0.1, label: '0.1', index: 2 },
-    { value: 0.15, label: '0.15', index: 3 },
+    { value: 0.05, label: '0.05', index: 0 },
+    { value: 0.1, label: '0.1', index: 1 },
+    { value: 0.15, label: '0.15', index: 2 },
+    { value: 0.2, label: '0.2', index: 3 },
     { value: 0.2, label: '0.2', index: 4 },
     { value: 0.25, label: '0.25', index: 5 },
     { value: 0.3, label: '0.3', index: 6 },

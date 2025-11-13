@@ -166,7 +166,7 @@ export struct SpectrumDisplaySettingsDialog {
       
       Slider({
         value: this.exponentialSmoothingFactor,
-        min: 0,
+        min: 0.05,
         max: 0.95,
         step: 0.05,
         style: SliderStyle.InSet

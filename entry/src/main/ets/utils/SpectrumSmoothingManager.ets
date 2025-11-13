@@ -137,10 +137,12 @@ export class SpectrumSmoothingManager {
     
     for (let i = 0; i < spectrum.length; i++) {
       const frequency = i * freqResolution;
+      // 调整平滑因子语义：值越大，平滑效果越强
       const adaptiveSmoothingFactor = this.getFrequencyBasedSmoothingFactor(frequency, smoothingFactor);
       
-      result[i] = adaptiveSmoothingFactor * spectrum[i] +
-                  (1 - adaptiveSmoothingFactor) * state.previousMagnitudes[i];
+      // 修正平滑公式：值越大，更重视历史值（平滑效果越强）
+      result[i] = (1 - adaptiveSmoothingFactor) * spectrum[i] +
+                  adaptiveSmoothingFactor * state.previousMagnitudes[i];
     }
     
     state.previousMagnitudes.set(result);
@@ -164,8 +166,9 @@ export class SpectrumSmoothingManager {
     const result = new Float32Array(spectrum.length);
     
     for (let i = 0; i < spectrum.length; i++) {
-      result[i] = exponentialSmoothingFactor * spectrum[i] +
-                  (1 - exponentialSmoothingFactor) * state.previousExponentialSpectrum[i];
+      // 修正指数平滑公式：值越大，更重视历史值（平滑效果越强）
+      result[i] = (1 - exponentialSmoothingFactor) * spectrum[i] +
+                  exponentialSmoothingFactor * state.previousExponentialSpectrum[i];
     }
     
     state.previousExponentialSpectrum.set(result);
