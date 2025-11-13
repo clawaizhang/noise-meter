@@ -1,6 +1,7 @@
 import { WindowType } from '../common/WindowType';
 import { WeightingType } from '../constants/WeightingConstants';
 import { WindowFunctionCache } from './WindowFunctionCache';
+import { SpectrumSmoothingManager, PeakInfo } from './SpectrumSmoothingManager';
 
 /**
  * 复数类型接口
@@ -45,7 +46,7 @@ export class FFTAnalyzer {
   private decimationEnabled: boolean = false; // 是否启用降采样
   private decimationFactor: number = 1; // 降采样因子
   private readonly exponentialSmoothingFactor: number; // 指数平滑因子
-  private previousExponentialSpectrum: Float32Array | null = null; // 上一次指数平滑后的频谱
+  private readonly smoothingManager: SpectrumSmoothingManager; // 平滑管理器实例
 
   /**
    * 设置系统增益
@@ -63,6 +64,8 @@ export class FFTAnalyzer {
   private cachedReal: Float32Array | null = null;
   private cachedImag: Float32Array | null = null;
   private previousMagnitudes: Float32Array | null = null;
+  private previousExponentialSpectrum: Float32Array | null = null;
+  private peakHistory: Map<number, number[]> = new Map();
   private cachedCosSin: Map<number, ComplexNumber> = new Map();
 
   /**
@@ -90,6 +93,7 @@ export class FFTAnalyzer {
     this.decimationEnabled = decimationEnabled;
     this.decimationFactor = decimationFactor;
     this.exponentialSmoothingFactor = exponentialSmoothingFactor;
+    this.smoothingManager = SpectrumSmoothingManager.getInstance();
 
     // 使用预缓存的窗函数和能量校正因子，传递窗函数参数
     const windowData = WindowFunctionCache.getWindowDataWithParams(size, windowType, kaiserBeta, gaussianSigma, tukeyAlpha, chebyshevAttenuation);
@@ -152,29 +156,15 @@ export class FFTAnalyzer {
    * @param magnitudes 当前幅度谱
    */
   private smoothMagnitudes(magnitudes: Float32Array): Float32Array {
-    if (!this.previousMagnitudes) {
-      this.previousMagnitudes = magnitudes.slice();
-      return magnitudes;
-    }
-
-    // 使用分频段平滑，不同频段使用不同的平滑因子
-    const sampleRate = this.decimationEnabled ?
-      this.sampleRate / this.decimationFactor : this.sampleRate;
-    const freqResolution = sampleRate / this.size;
-    
-    for (let i = 0; i < magnitudes.length; i++) {
-      const frequency = i * freqResolution;
-      const smoothingFactor = this.getFrequencyBasedSmoothingFactor(frequency);
-      
-      magnitudes[i] = smoothingFactor * magnitudes[i] +
-        (1 - smoothingFactor) * this.previousMagnitudes[i];
-    }
-
-    // 更新上一帧数据
-    this.previousMagnitudes.set(magnitudes);
-    
-    // 应用指数平滑
-    return this.applyExponentialSmoothing(magnitudes);
+    // 使用全局平滑管理器进行平滑处理
+    return this.smoothingManager.applySpectrumSmoothing(
+      magnitudes,
+      this.size,
+      this.smoothingFactor,
+      this.exponentialSmoothingFactor,
+      WeightingType.A, // 默认使用A计权，实际使用时会重新计算
+      this.decimationEnabled ? this.sampleRate / this.decimationFactor : this.sampleRate
+    );
   }
   
   /**
@@ -216,17 +206,27 @@ export class FFTAnalyzer {
       return magnitudes;
     }
     
-    // 应用指数平滑算法: 新值 = 指数平滑因子 × 当前值 + (1 - 指数平滑因子) × 上次值
+    // 创建新数组存储平滑结果
+    const smoothedMagnitudes = new Float32Array(magnitudes.length);
+    
+    // 真正的指数平滑算法：S_t = α * X_t + (1 - α) * S_{t-1}
+    // 其中：
+    // - S_t 是当前平滑值
+    // - X_t 是当前观测值
+    // - S_{t-1} 是上一次的平滑值
+    // - α 是平滑因子 (0 < α ≤ 1)
+    // - (1 - α) 是衰减因子，随时间呈指数衰减
+    
     for (let i = 0; i < magnitudes.length; i++) {
-      const smoothedValue = this.exponentialSmoothingFactor * magnitudes[i] +
-                          (1 - this.exponentialSmoothingFactor) * this.previousExponentialSpectrum[i];
-      magnitudes[i] = smoothedValue;
+      // 指数平滑公式：当前平滑值 = 平滑因子 × 当前值 + 衰减因子 × 上次平滑值
+      smoothedMagnitudes[i] = this.exponentialSmoothingFactor * magnitudes[i] +
+                            (1 - this.exponentialSmoothingFactor) * this.previousExponentialSpectrum[i];
     }
     
-    // 更新上一次的数据
-    this.previousExponentialSpectrum.set(magnitudes);
+    // 更新上一次的数据为当前平滑值
+    this.previousExponentialSpectrum.set(smoothedMagnitudes);
     
-    return magnitudes;
+    return smoothedMagnitudes;
   }
 
   /**
@@ -361,7 +361,10 @@ export class FFTAnalyzer {
       spectrum[i] = db;
     }
 
-    return this.smoothMagnitudes(spectrum);
+    // 应用平滑处理
+    const smoothedSpectrum = this.smoothMagnitudes(spectrum);
+    
+    return smoothedSpectrum;
   }
 
   /**
@@ -580,6 +583,25 @@ export class FFTAnalyzer {
   }
 
   /**
+   * 检测稳定的峰值
+   * @param spectrum 频谱数据
+   * @param weightingType 计权类型
+   * @returns 稳定峰值数组 {frequency: number, amplitude: number, stability: number}
+   */
+  public detectStablePeaks(spectrum: Float32Array, weightingType: WeightingType = WeightingType.A): PeakInfo[] {
+    // 使用全局平滑管理器进行峰值检测
+    const configKey = this.smoothingManager.generateConfigKey?.(this.size, this.smoothingFactor, this.exponentialSmoothingFactor, weightingType) ||
+                    `${this.size}_${this.smoothingFactor}_${this.exponentialSmoothingFactor}_${weightingType}`;
+    
+    return this.smoothingManager.detectStablePeaks(
+      spectrum,
+      this.size,
+      this.decimationEnabled ? this.sampleRate / this.decimationFactor : this.sampleRate,
+      configKey
+    );
+  }
+  
+  /**
    * 重置分析器状态
    */
   public reset(): void {
@@ -587,6 +609,7 @@ export class FFTAnalyzer {
     this.previousExponentialSpectrum = null;
     this.cachedSamples = null;
     this.cachedCosSin.clear(); // 清理旋转因子缓存
+    this.peakHistory.clear(); // 清理峰值历史
     if (this.DEBUG) {
       console.info('FFT分析器状态已重置');
     }

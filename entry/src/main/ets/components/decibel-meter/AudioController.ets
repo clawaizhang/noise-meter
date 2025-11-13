@@ -11,6 +11,7 @@ import { LocationInfo } from '../../services/LocationService';
 import { WeightingType } from '../../constants/WeightingConstants';
 import { AppKeys } from '../../models/AppKeys';
 import { FFTAnalyzer } from '../../utils/FFTAnalyzer';
+import { SpectrumSmoothingManager } from '../../utils/SpectrumSmoothingManager';
 import { AudioControllerService } from '../../services/AudioControllerService';
 import { WindowType } from '../../common/WindowType';
 import { Subscription } from 'rxjs';
@@ -52,6 +53,8 @@ export struct AudioController {
   @Local ak: AppKeys = AppStorageV2.connect(AppKeys)!;
   // 配置参数
   @Local pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys)!;
+  // 调试开关
+  private readonly DEBUG: boolean = true;
   // RxJS订阅管理
   private locationSubscription?: Subscription;
   private errorSubscription?: Subscription;
@@ -636,21 +639,45 @@ export struct AudioController {
         this.timedValues.push({ timestamp: currentTime, value: currentDecibel });
         this.timedWeightingTypes.push({ timestamp: currentTime, type: this.pk.weighting_type });
 
-        // 计算峰值频率
+        // 计算峰值频率（使用稳定的峰值检测）
         try {
-          const peakInfo = SpectrumDataProcessor.findPeakFrequency(
+          // 使用全局平滑管理器检测稳定峰值
+          const smoothingManager = SpectrumSmoothingManager.getInstance();
+          const stablePeaks = smoothingManager.detectStablePeaks(
             spectrum,
             config.fftSize,
-            config.sampleRate, // 采样率
-            16, // 最小频率
-            20000, // 最大频率
-            true, // 默认启用插值
-            PeakInterpolationMethod.ADAPTIVE
+            config.sampleRate,
+            smoothingManager.generateConfigKey(config.fftSize, config.smoothingFactor, config.exponentialSmoothingFactor, this.pk.weighting_type)
           );
           
-          if (peakInfo) {
-            this.ak.dataProcessingState.processingPeakFreq = peakInfo.frequency;
-            console.info(`[峰值检测] 峰值频率: ${peakInfo.frequency.toFixed(1)}Hz (使用已计算的频谱数据)`);
+          if (stablePeaks.length > 0) {
+            // 使用最稳定的峰值
+            const mostStablePeak = stablePeaks[0];
+            this.ak.dataProcessingState.processingPeakFreq = mostStablePeak.frequency;
+            
+            console.info(`[稳定峰值检测] 峰值频率: ${mostStablePeak.frequency.toFixed(1)}Hz (幅度: ${mostStablePeak.amplitude.toFixed(1)}dB, 稳定性: ${(mostStablePeak.stability*100).toFixed(0)}%)`);
+            
+            // 如果有多个稳定峰值，可以记录到调试信息
+            if (this.DEBUG && stablePeaks.length > 1) {
+              console.info(`[稳定峰值检测] 其他稳定峰值:`,
+                stablePeaks.slice(1, 3).map(p => `${p.frequency.toFixed(1)}Hz(${p.stability.toFixed(2)})`));
+            }
+          } else {
+            // 回退到传统峰值检测
+            const peakInfo = SpectrumDataProcessor.findPeakFrequency(
+              spectrum,
+              config.fftSize,
+              config.sampleRate,
+              16,
+              20000,
+              true,
+              PeakInterpolationMethod.ADAPTIVE
+            );
+            
+            if (peakInfo) {
+              this.ak.dataProcessingState.processingPeakFreq = peakInfo.frequency;
+              console.info(`[传统峰值检测] 峰值频率: ${peakInfo.frequency.toFixed(1)}Hz (未找到稳定峰值)`);
+            }
           }
         } catch (error) {
           console.warn(`[峰值检测] 错误: ${error}`);

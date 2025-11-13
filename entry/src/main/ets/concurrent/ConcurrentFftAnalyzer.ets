@@ -1,6 +1,7 @@
 import { WindowType } from '../common/WindowType';
 import { WeightingType } from '../constants/WeightingConstants';
 import { FFTAnalyzer } from '../utils/FFTAnalyzer';
+import { SpectrumSmoothingManager } from '../utils/SpectrumSmoothingManager';
 
 @Concurrent
 export function concurrentCalculateSpectrum(buffer: ArrayBuffer,
@@ -8,7 +9,10 @@ export function concurrentCalculateSpectrum(buffer: ArrayBuffer,
   smoothingFactor: number, overlap: number, sampleRate: number = 44100, decimationEnabled: boolean = false,
   decimationFactor: number = 1, kaiserBeta: number = 6.0, gaussianSigma: number = 0.5,
   tukeyAlpha: number = 0.5, chebyshevAttenuation: number = 60.0, exponentialSmoothingFactor: number = 0.3): Float32Array {
-  // 初始化权分析器
+  // 获取全局平滑管理器实例
+  const smoothingManager = SpectrumSmoothingManager.getInstance();
+  
+  // 初始化FFT分析器（用于基础FFT计算，不使用内部平滑）
   let fftAnalyzer = new FFTAnalyzer(
     fftSize,
     windowType,
@@ -23,10 +27,21 @@ export function concurrentCalculateSpectrum(buffer: ArrayBuffer,
     chebyshevAttenuation,
     exponentialSmoothingFactor
   );
+  
   // 执行FFT变换并获取频谱数据（transform方法内部已经应用了计权）
   fftAnalyzer.setSystemGain(calibrationGain);
-  const spectrum = fftAnalyzer.transform(buffer, weightingType);
+  const rawSpectrum = fftAnalyzer.transform(buffer, weightingType);
 
-  // 直接返回频谱，无需再次应用计权（transform方法已经处理了计权）
-  return spectrum;
+  // 使用全局平滑管理器应用平滑处理
+  const effectiveSampleRate = decimationEnabled ? sampleRate / decimationFactor : sampleRate;
+  const smoothedSpectrum = smoothingManager.applySpectrumSmoothing(
+    rawSpectrum,
+    fftSize,
+    smoothingFactor,
+    exponentialSmoothingFactor,
+    weightingType,
+    effectiveSampleRate
+  );
+
+  return smoothedSpectrum;
 }
