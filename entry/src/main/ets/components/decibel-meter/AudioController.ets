@@ -256,53 +256,6 @@ export struct AudioController {
     this.ak.dataProcessingState.processingSpectrumData = spectrumData;
     this.ak.dataProcessingState.statisticsData.updateStatistics(currentDb, values);
 
-    // 使用改进的峰值检测（默认启用抛物线插值）
-    if (spectrumData.length > 0) {
-      try {
-        // 获取未加权的频谱数据用于峰值频率计算
-        // 这样可以确保峰值频率反映实际信号的最大能量频率，而不是加权后的频率
-        const config = AudioPresets.getConfig(this.pk.audio_analysis_mode);
-        const fftAnalyzer = new FFTAnalyzer(
-          config.fftSize,
-          config.windowType,
-          config.smoothingFactor,
-          config.overlap,
-          config.sampleRate,
-          config.decimationEnabled,
-          config.decimationFactor,
-          config.kaiserBeta,
-          config.gaussianSigma,
-          config.tukeyAlpha,
-          config.chebyshevAttenuation,
-          config.exponentialSmoothingFactor
-        );
-        
-        // 获取最近的音频缓冲区
-        if (this.timedAudioBuffers.length > 0) {
-          const recentBuffer = this.timedAudioBuffers[this.timedAudioBuffers.length - 1].buffer;
-          // 使用Z加权（无加权）计算频谱用于峰值频率检测
-          const unweightedSpectrum = fftAnalyzer.transform(recentBuffer, WeightingType.Z);
-          
-          const peakInfo = SpectrumDataProcessor.findPeakFrequency(
-            unweightedSpectrum,
-            config.fftSize,
-            config.sampleRate, // 采样率
-            16, // 最小频率
-            20000, // 最大频率
-            true, // 默认启用插值
-            PeakInterpolationMethod.ADAPTIVE
-          );
-          
-          if (peakInfo) {
-            this.ak.dataProcessingState.processingPeakFreq = peakInfo.frequency;
-            console.info(`[峰值检测] 峰值频率: ${peakInfo.frequency.toFixed(1)}Hz (使用未加权频谱)`);
-          }
-        }
-      } catch (error) {
-        console.warn(`[峰值检测] 错误: ${error}`);
-      }
-    }
-
     // 同步到UI显示状态（仅在UI更新启用时）
     this.ak.uiDisplayState.syncFromProcessingState(this.ak.dataProcessingState);
 
@@ -683,7 +636,27 @@ export struct AudioController {
         this.timedValues.push({ timestamp: currentTime, value: currentDecibel });
         this.timedWeightingTypes.push({ timestamp: currentTime, type: this.pk.weighting_type });
 
-        // 更新统计信息（使用改进的峰值检测）
+        // 计算峰值频率
+        try {
+          const peakInfo = SpectrumDataProcessor.findPeakFrequency(
+            spectrum,
+            config.fftSize,
+            config.sampleRate, // 采样率
+            16, // 最小频率
+            20000, // 最大频率
+            true, // 默认启用插值
+            PeakInterpolationMethod.ADAPTIVE
+          );
+          
+          if (peakInfo) {
+            this.ak.dataProcessingState.processingPeakFreq = peakInfo.frequency;
+            console.info(`[峰值检测] 峰值频率: ${peakInfo.frequency.toFixed(1)}Hz (使用已计算的频谱数据)`);
+          }
+        } catch (error) {
+          console.warn(`[峰值检测] 错误: ${error}`);
+        }
+
+        // 更新统计信息
         this.updateStatistics(currentDecibel, spectrum);
 
         // 检查报警状态
