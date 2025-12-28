@@ -71,7 +71,7 @@ export struct HomePageContent {
         Text(`${this.ak.uiDisplayState.displayDb}dB`)
           .fontSize(56)
           .fontWeight(FontWeight.Bold)
-          .fontColor($r('sys.color.alert'))
+          .fontColor(this.decibelColor)
           .transition(TransitionEffect.scale({ x: 0, y: 0 }).animation({ curve: curves.springMotion() }));
       } else {
         Text('--')
@@ -367,12 +367,12 @@ export struct HomePageContent {
       return $r('sys.color.confirm');
     }
     if (db < 60) {
-      return $r('sys.color.font_primary');
+      return $r('sys.color.alert');
     }
     if (db < 80) {
-      return $r('sys.color.warning');
+      return $r('sys.color.alert');
     }
-    return $r('sys.color.alert');
+    return $r('sys.color.warning');
   }
 
   @Computed
