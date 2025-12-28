@@ -99,6 +99,9 @@ struct Index {
     // 初始化使用追踪服务
     this.initUsageTracking();
 
+    // 初始化福利活动
+    this.initBenefitActivity();
+
     // 初始化音频设备监听服务
     this.initAudioDeviceMonitoring();
 
@@ -229,6 +232,18 @@ struct Index {
 
     // 开始追踪使用时长
     usageTrackingService.startTracking();
+  }
+
+  // 初始化福利活动
+  private initBenefitActivity(): void {
+    const membershipRewardService = MembershipRewardService.getInstance(this.pk);
+
+    // 检查是否已初始化福利活动
+    if (!this.pk.benefit_activity_data.hasBenefitActivity) {
+      // 初始化福利活动
+      membershipRewardService.initBenefitActivity();
+      console.info('[福利活动] 福利活动已初始化');
+    }
   }
 
   // 处理使用完成

@@ -6,6 +6,7 @@ import { WeightingType } from '../constants/WeightingConstants';
 import { WindowType } from '../common/WindowType';
 import { MembershipStatus } from '../services/MembershipManager';
 import { ContinuousUsageData } from './ContinuousUsageData';
+import { BenefitActivityData } from './BenefitActivityData';
 import { CUSTOM_THRESHOLD_CONFIG, DEFAULT_THRESHOLD_CONFIG, PresetType, ThresholdConfig } from './ThresholdConfig';
 
 /**
@@ -121,6 +122,12 @@ export class PreferenceKeys {
    */
   @Trace
   continuous_usage_data: ContinuousUsageData = new ContinuousUsageData();
+
+  /**
+   * 福利活动数据
+   */
+  @Trace
+  benefit_activity_data: BenefitActivityData = new BenefitActivityData();
 
   /**
    * 最后进入前台时间戳
