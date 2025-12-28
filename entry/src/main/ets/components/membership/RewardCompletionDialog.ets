@@ -10,7 +10,7 @@ import { Throttle } from '../../utils/Debounce';
 import { CommentService } from '../../services/CommentService';
 import { common } from '@kit.AbilityKit';
 import { PreferenceKeys } from '../../models/PreferenceKeys';
-import { AppStorageV2 } from '@kit.ArkUI';
+import { AppStorageV2, PersistenceV2 } from '@kit.ArkUI';
 
 interface RewardCompletionDialogProps {
   consecutiveDays: number;
@@ -39,7 +39,7 @@ export struct RewardCompletionDialog {
   @Param @Require showRewardDialog: boolean;
   @Event onClose: () => void;
 
-  @Local pk: PreferenceKeys = AppStorageV2.connect(PreferenceKeys)!;
+  @Local pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys)!;
 
   // 显示评论对话框
   private showCommentDialog = () => {

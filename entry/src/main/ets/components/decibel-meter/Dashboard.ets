@@ -8,6 +8,8 @@ import { resourceManager } from '@kit.LocalizationKit';
 import { image } from '@kit.ImageKit';
 import { AppKeys } from '../../models/AppKeys';
 import { AudioControllerService } from '../../services/AudioControllerService';
+import { WindowManager } from '../../utils/WindowManager';
+import window from '@ohos.window';
 
 // 图表类型配置接口
 interface ChartTypeConfig {
@@ -204,6 +206,30 @@ export struct DashBoard {
           .zIndex(10) // 确保标题在最上层
       }
 
+      // 横屏切换按钮 - 浮动在右上角
+      if (this.isDashboardActive) {
+        Button() {
+          Text(this.ak.isDashboardInLandscape ? '竖屏' : '横屏')
+            .fontSize(12)
+            .fontColor(Color.White)
+        }
+        .width(60)
+        .height(36)
+        .backgroundColor('rgba(0, 0, 0, 0.6)')
+        .borderRadius(18)
+        .position({ x: '100%', y: 24 })
+        .translate({ x: -70, y: 0 })
+        .onClick(() => {
+          this.toggleLandscape();
+        })
+        .opacity(this.showNavigationButtons ? this.navigationButtonsOpacity : 0)
+        .animation({
+          duration: 300,
+          curve: Curve.EaseInOut
+        })
+        .zIndex(10)
+      }
+
       Column()
         .width(this.dWidthHeight)
         .height(this.dWidthHeight)
@@ -272,6 +298,20 @@ export struct DashBoard {
     
     // 初始化图表可见性状态
     this.updateChartVisibility();
+  }
+
+  /**
+   * 切换横屏/竖屏
+   */
+  private async toggleLandscape(): Promise<void> {
+    const windowManager = WindowManager.getInstance();
+    const newOrientation = this.ak.isDashboardInLandscape ?
+      window.Orientation.PORTRAIT : window.Orientation.LANDSCAPE;
+    
+    const success = await windowManager.setOrientation(newOrientation);
+    if (success) {
+      this.ak.isDashboardInLandscape = !this.ak.isDashboardInLandscape;
+    }
   }
 
   // 启动折叠动画

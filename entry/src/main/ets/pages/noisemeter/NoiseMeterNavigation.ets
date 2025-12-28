@@ -12,6 +12,8 @@ import { HomePageContent } from '../../components/home/HomePageContent';
 import { AudioController } from '../../components/decibel-meter/AudioController';
 import { ReferenceContent } from '../../components/reference/ReferenceContent';
 import { ToolsContent } from '../../components/tools/ToolsContent';
+import { WindowManager } from '../../utils/WindowManager';
+import window from '@ohos.window';
 
 // 导航菜单项接口定义
 interface NavigationMenuItem {
@@ -81,6 +83,9 @@ export struct MainNoiseMeter {
     }
     // 同步到AppKeys
     this.ak.currentTabIndex = currentValue!;
+    
+    // 仪表盘横屏控制
+    this.handleDashboardOrientationChange(currentValue!);
   }
 
   @Monitor('ak.currentTabIndex')
@@ -89,6 +94,49 @@ export struct MainNoiseMeter {
     if (targetIndex !== undefined && targetIndex !== this.currentIndex) {
       this.currentIndex = targetIndex;
     }
+  }
+
+  /**
+   * 处理仪表盘横屏切换
+   * @param currentIndex 当前Tab索引
+   */
+  private async handleDashboardOrientationChange(currentIndex: number): Promise<void> {
+    // 进入仪表盘页面 (index === 1)
+    if (currentIndex === 1) {
+      if (this.ak.isDashboardInLandscape) {
+        // 恢复横屏状态
+        await WindowManager.getInstance().setOrientation(window.Orientation.LANDSCAPE);
+      }
+    } else {
+      // 离开仪表盘页面，恢复默认方向
+      await this.restoreDefaultOrientation();
+    }
+  }
+
+  /**
+   * 恢复默认窗口方向
+   */
+  private async restoreDefaultOrientation(): Promise<void> {
+    if (!this.ak.isDashboardInLandscape) {
+      // 如果当前不是横屏状态，无需恢复
+      return;
+    }
+    
+    const windowManager = WindowManager.getInstance();
+    const mainWindow = await windowManager.getMainWindow();
+    if (!mainWindow) {
+      return;
+    }
+    
+    const uiContext = mainWindow.getUIContext();
+    const widthBp = uiContext.getWindowWidthBreakpoint();
+    
+    let orientation = window.Orientation.AUTO_ROTATION;
+    if (widthBp <= WidthBreakpoint.WIDTH_SM) {
+      orientation = window.Orientation.PORTRAIT;
+    }
+    
+    await windowManager.setOrientation(orientation);
   }
 
   @Computed
