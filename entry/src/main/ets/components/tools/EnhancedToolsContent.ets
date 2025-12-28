@@ -110,9 +110,10 @@ export struct EnhancedToolsContent {
       case UserSkillLevel.EXPERT:
         this.expandedCategories.add(ToolCategory.BASIC_MEASUREMENT);
         this.expandedCategories.add(ToolCategory.DATA_MANAGEMENT);
-        this.expandedCategories.add(ToolCategory.DISPLAY_SETTINGS);
+        // 显示设置和专业设置已隐藏，不展开
+        // this.expandedCategories.add(ToolCategory.DISPLAY_SETTINGS);
         this.expandedCategories.add(ToolCategory.ALERT_SYSTEM);
-        this.expandedCategories.add(ToolCategory.ADVANCED_SETTINGS);
+        // this.expandedCategories.add(ToolCategory.ADVANCED_SETTINGS);
         break;
     }
   }
@@ -173,11 +174,11 @@ export struct EnhancedToolsContent {
         this.statusService.getLocationStatusColor.bind(this.statusService)
       ),
       
-      // 显示设置工具
-      this.enhancedToolFactory.createSpectrumDisplayTool(
-        this.navigationService.navigateToSpectrumDisplaySettings,
-        this.statusService.getSpectrumDisplayModeText.bind(this.statusService)
-      ),
+      // 显示设置工具已隐藏
+      // this.enhancedToolFactory.createSpectrumDisplayTool(
+      //   this.navigationService.navigateToSpectrumDisplaySettings,
+      //   this.statusService.getSpectrumDisplayModeText.bind(this.statusService)
+      // ),
       
       // 警报系统工具
       this.enhancedToolFactory.createEnhancedAlertsTool(
@@ -185,20 +186,20 @@ export struct EnhancedToolsContent {
         this.userSkillLevel
       ),
       
-      // 专业设置工具
-      this.enhancedToolFactory.createEnhancedSampleRateTool(
-        this.navigationService.navigateToSampleRateSettings,
-        this.statusService.getSampleRateDisplayText.bind(this.statusService),
-        this.userSkillLevel
-      ),
-      this.enhancedToolFactory.createWindowFunctionTool(
-        this.navigationService.navigateToWindowFunctionSettings,
-        this.statusService.getWindowFunctionDisplayName.bind(this.statusService)
-      ),
-      this.enhancedToolFactory.createWindowParamsTool(
-        this.navigationService.navigateToWindowFunctionParamsSettings,
-        this.statusService.getWindowParamsDisplayName.bind(this.statusService)
-      )
+      // 专业设置工具已隐藏
+      // this.enhancedToolFactory.createEnhancedSampleRateTool(
+      //   this.navigationService.navigateToSampleRateSettings,
+      //   this.statusService.getSampleRateDisplayText.bind(this.statusService),
+      //   this.userSkillLevel
+      // ),
+      // this.enhancedToolFactory.createWindowFunctionTool(
+      //   this.navigationService.navigateToWindowFunctionSettings,
+      //   this.statusService.getWindowFunctionDisplayName.bind(this.statusService)
+      // ),
+      // this.enhancedToolFactory.createWindowParamsTool(
+      //   this.navigationService.navigateToWindowFunctionParamsSettings,
+      //   this.statusService.getWindowParamsDisplayName.bind(this.statusService)
+      // )
     ];
   }
 

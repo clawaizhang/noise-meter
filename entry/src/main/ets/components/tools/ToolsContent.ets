@@ -105,12 +105,13 @@ export struct ToolsContent {
       this.refreshLocation();
     }
 
-    // 默认展开所有分类，让用户自由探索
+    // 默认展开有工具的分类
     this.expandedCategories.add(ToolCategory.BASIC_MEASUREMENT);
     this.expandedCategories.add(ToolCategory.DATA_MANAGEMENT);
-    this.expandedCategories.add(ToolCategory.DISPLAY_SETTINGS);
+    // 显示设置和专业设置已隐藏，不展开
+    // this.expandedCategories.add(ToolCategory.DISPLAY_SETTINGS);
     this.expandedCategories.add(ToolCategory.ALERT_SYSTEM);
-    this.expandedCategories.add(ToolCategory.ADVANCED_SETTINGS);
+    // this.expandedCategories.add(ToolCategory.ADVANCED_SETTINGS);
 
 
     // 根据使用历史评估用户水平
@@ -131,9 +132,10 @@ export struct ToolsContent {
       case UserSkillLevel.EXPERT:
         this.expandedCategories.add(ToolCategory.BASIC_MEASUREMENT);
         this.expandedCategories.add(ToolCategory.DATA_MANAGEMENT);
-        this.expandedCategories.add(ToolCategory.DISPLAY_SETTINGS);
+        // 显示设置和专业设置已隐藏，不展开
+        // this.expandedCategories.add(ToolCategory.DISPLAY_SETTINGS);
         this.expandedCategories.add(ToolCategory.ALERT_SYSTEM);
-        this.expandedCategories.add(ToolCategory.ADVANCED_SETTINGS);
+        // this.expandedCategories.add(ToolCategory.ADVANCED_SETTINGS);
         break;
     }
   }
@@ -222,8 +224,7 @@ export struct ToolsContent {
       description: '频谱显示配置',
       color: $r('sys.color.icon_primary'), // 统一使用primary色
       tools: [
-        this.toolFactory.createSpectrumDisplayTool(this.navigationService.navigateToSpectrumDisplaySettings,
-          this.statusService.getSpectrumDisplayModeText.bind(this.statusService))
+        // 频谱显示设置已隐藏
       ]
     };
   }
@@ -249,12 +250,9 @@ export struct ToolsContent {
       description: '高级音频处理和分析',
       color: $r('sys.color.icon_primary'), // 统一使用primary色
       tools: [
-        this.toolFactory.createSampleRateTool(this.navigationService.navigateToSampleRateSettings,
-          this.statusService.getSampleRateDisplayText.bind(this.statusService)),
-        this.toolFactory.createWindowFunctionTool(this.navigationService.navigateToWindowFunctionSettings,
-          this.statusService.getWindowFunctionDisplayName.bind(this.statusService)),
-        this.toolFactory.createWindowParamsTool(this.navigationService.navigateToWindowFunctionParamsSettings,
-          this.statusService.getWindowParamsDisplayName.bind(this.statusService))
+        // 采样率设置已隐藏
+        // 窗函数设置已隐藏
+        // 窗函数参数设置已隐藏
       ]
     };
   }
