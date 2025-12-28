@@ -217,7 +217,7 @@ export struct DashBoard {
         .height(36)
         .backgroundColor($r('sys.color.comp_background_secondary'))
         .borderRadius(18)
-        .position({ x: '100%', y: '93%' })
+        .position({ x: '100%', y: '90%' })
         .translate({ x: -70, y: 0 })
         .onClick(() => {
           this.toggleLandscape();

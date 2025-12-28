@@ -302,7 +302,7 @@ export struct MainNoiseMeter {
         TabContent() {
           this.HomeContent()
         }
-        .tabBar(this.TabBuilder({
+        .tabBar(this.ak.isDashboardInLandscape && this.currentIndex === 1 ? undefined : this.TabBuilder({
           title: '主页',
           icon: this.currentIndex == 0 ? $r("app.media.ic_home_bold") : $r("app.media.ic_home"),
           index: 0
@@ -315,7 +315,7 @@ export struct MainNoiseMeter {
         .layoutWeight(1)
         .width('100%')
         .height('100%')
-        .tabBar(this.TabBuilder({
+        .tabBar(this.ak.isDashboardInLandscape && this.currentIndex === 1 ? undefined : this.TabBuilder({
           title: '仪表盘',
           icon: this.currentIndex == 1 ? $r("app.media.solar_spedometer_middle_bold") : $r("app.media.ic_meter"),
           index: 1
@@ -334,7 +334,7 @@ export struct MainNoiseMeter {
               playMode: PlayMode.Normal
             })
         }
-        .tabBar(this.TabBuilder({
+        .tabBar(this.ak.isDashboardInLandscape && this.currentIndex === 1 ? undefined : this.TabBuilder({
           title: '操作台',
           icon: this.currentIndex == 2 ? $r("app.media.ic_atom_bold") : $r("app.media.ic_atom"),
           index: 2
@@ -353,7 +353,7 @@ export struct MainNoiseMeter {
               playMode: PlayMode.Normal
             })
         }
-        .tabBar(this.TabBuilder({
+        .tabBar(this.ak.isDashboardInLandscape && this.currentIndex === 1 ? undefined : this.TabBuilder({
           title: '警报',
           icon: this.currentIndex == 3 ? $r("app.media.bell_bing_bold") : $r("app.media.ic_alarm"),
           index: 3
@@ -371,7 +371,7 @@ export struct MainNoiseMeter {
               playMode: PlayMode.Normal
             })
         }
-        .tabBar(this.TabBuilder({
+        .tabBar(this.ak.isDashboardInLandscape && this.currentIndex === 1 ? undefined : this.TabBuilder({
           title: '影响',
           icon: this.currentIndex == 4 ? $r("app.media.i_solar_radar_bold") : $r("app.media.i_solar_radar_outline"),
           index: 4
@@ -390,7 +390,7 @@ export struct MainNoiseMeter {
               playMode: PlayMode.Normal
             })
         }
-        .tabBar(this.TabBuilder({
+        .tabBar(this.ak.isDashboardInLandscape && this.currentIndex === 1 ? undefined : this.TabBuilder({
           title: '参考',
           icon: this.currentIndex == 5 ? $r("app.media.ic_book2_bold") : $r("app.media.ic_book2"),
           index: 5
@@ -400,7 +400,7 @@ export struct MainNoiseMeter {
           MyContentComponent().opacity(this.currentIndex === 6 ? 1 : 0)
             .scale({ x: this.currentIndex === 6 ? 1 : 0.95, y: this.currentIndex === 6 ? 1 : 0.95 })
         }
-        .tabBar(this.TabBuilder({
+        .tabBar(this.ak.isDashboardInLandscape && this.currentIndex === 1 ? undefined : this.TabBuilder({
           title: '我的',
           icon: this.currentIndex == 6 ? $r("app.media.solar_user_circle_bold") : $r("app.media.ic_user"),
           index: 6
@@ -411,7 +411,8 @@ export struct MainNoiseMeter {
         this.currentIndex = index;
       })
       .barMode(BarMode.Fixed)
-      .barWidth('100%')
+      .barWidth(this.ak.isDashboardInLandscape && this.currentIndex === 1 ?  0 : '100%')
+      .barHeight(this.ak.isDashboardInLandscape && this.currentIndex === 1 ?  0 : 56)
       .animationDuration(0)
     }
     .title(this.currentIndex === 1 ? undefined : this.buildTitleContent, {
