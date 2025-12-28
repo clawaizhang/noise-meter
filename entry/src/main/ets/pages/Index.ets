@@ -253,8 +253,15 @@ struct Index {
     const rewardDays = membershipRewardService.calculateRewardDays(consecutiveDays);
     const expiryDate = this.pk.member_ship.expiryDate;
 
+    // 检查用户是否选择不再显示弹框
+    if (!this.pk.show_reward_dialog) {
+      // 用户选择不再显示，只记录日志
+      console.info(`[使用完成] 连续${consecutiveDays}天，获得${rewardDays}天会员，用户已选择不再显示弹框`);
+      return;
+    }
+
     // 显示完成弹窗
-    showRewardCompletionDialog(consecutiveDays, rewardDays, expiryDate);
+    showRewardCompletionDialog(consecutiveDays, rewardDays, expiryDate, this.pk.show_reward_dialog);
 
     console.info(`[使用完成] 连续${consecutiveDays}天，获得${rewardDays}天会员`);
   }

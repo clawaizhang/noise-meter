@@ -107,6 +107,12 @@ export class PreferenceKeys {
   @Trace
   has_agreed_membership_reward: boolean = PreferencesUtil.getBooleanSync('has_agreed_membership_reward', false);
 
+  /**
+   * 是否显示奖励完成弹框
+   */
+  @Trace
+  show_reward_dialog: boolean = PreferencesUtil.getBooleanSync('show_reward_dialog', true);
+
   @Trace
   member_ship: MembershipStatus = new MembershipStatus();
 

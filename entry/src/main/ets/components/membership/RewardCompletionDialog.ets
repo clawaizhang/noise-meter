@@ -9,11 +9,14 @@ import { DialogStyleManager } from '../../utils/DialogStyleManager';
 import { Throttle } from '../../utils/Debounce';
 import { CommentService } from '../../services/CommentService';
 import { common } from '@kit.AbilityKit';
+import { PreferenceKeys } from '../../models/PreferenceKeys';
+import { AppStorageV2 } from '@kit.ArkUI';
 
 interface RewardCompletionDialogProps {
   consecutiveDays: number;
   rewardDays: number;
   expiryDate: number;
+  showRewardDialog: boolean;
   onClose: () => void;
 }
 
@@ -23,6 +26,7 @@ export function RewardComplationBuilder(props: RewardCompletionDialogProps) {
     consecutiveDays: props.consecutiveDays,
     rewardDays: props.rewardDays,
     expiryDate: props.expiryDate,
+    showRewardDialog: props.showRewardDialog,
     onClose: props.onClose
   })
 }
@@ -32,7 +36,10 @@ export struct RewardCompletionDialog {
   @Param @Require consecutiveDays: number;
   @Param @Require rewardDays: number;
   @Param @Require expiryDate: number;
+  @Param @Require showRewardDialog: boolean;
   @Event onClose: () => void;
+
+  @Local pk: PreferenceKeys = AppStorageV2.connect(PreferenceKeys)!;
 
   // 显示评论对话框
   private showCommentDialog = () => {
@@ -80,6 +87,29 @@ export struct RewardCompletionDialog {
     } else {
       return '🎉 恭喜完成今日使用！';
     }
+  }
+
+  /**
+   * 显示"不再提示"确认对话框
+   */
+  private showNoShowConfirm() {
+    AlertDialog.show({
+      title: '确认不再提示',
+      message: '关闭后将不再显示此奖励弹框，您可以在设置中重新开启',
+      primaryButton: {
+        value: '取消',
+        action: () => {
+          console.info('用户取消不再提示');
+        }
+      },
+      secondaryButton: {
+        value: '确认',
+        action: () => {
+          this.pk.show_reward_dialog = false;
+          console.info('用户选择不再显示奖励弹框');
+        }
+      }
+    });
   }
 
   build() {
@@ -196,6 +226,17 @@ export struct RewardCompletionDialog {
       }
       .width('100%')
       .margin({ top: DesignConstants.SPACING_LG })
+
+      // "不再提示"文字链接
+      Text('不再提示')
+        .fontSize(12)
+        .fontColor($r('sys.color.font_tertiary'))
+        .margin({ top: 8 })
+        .onClick(() => {
+          Throttle.click(() => {
+            this.showNoShowConfirm();
+          });
+        })
     }
     .padding(DesignConstants.SPACING_LG)
     .width('100%')
@@ -207,16 +248,19 @@ export struct RewardCompletionDialog {
  * @param consecutiveDays 连续天数
  * @param rewardDays 奖励天数
  * @param expiryDate 会员到期时间
+ * @param showRewardDialog 是否显示奖励弹框
  */
 export function showRewardCompletionDialog(
   consecutiveDays: number,
   rewardDays: number,
-  expiryDate: number
+  expiryDate: number,
+  showRewardDialog: boolean
 ): void {
   let props: RewardCompletionDialogProps = {
     consecutiveDays,
     rewardDays,
     expiryDate,
+    showRewardDialog,
     onClose: () => {
       dialog.dismiss();
     }
