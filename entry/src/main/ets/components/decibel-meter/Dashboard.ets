@@ -215,14 +215,13 @@ export struct DashBoard {
         }
         .width(60)
         .height(36)
-        .backgroundColor('rgba(0, 0, 0, 0.6)')
+        .backgroundColor($r('sys.color.comp_background_secondary'))
         .borderRadius(18)
-        .position({ x: '100%', y: 24 })
+        .position({ x: '100%', y: '93%' })
         .translate({ x: -70, y: 0 })
         .onClick(() => {
           this.toggleLandscape();
         })
-        .opacity(this.showNavigationButtons ? this.navigationButtonsOpacity : 0)
         .animation({
           duration: 300,
           curve: Curve.EaseInOut
