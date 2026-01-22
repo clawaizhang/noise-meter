@@ -338,6 +338,9 @@ export class MembershipRewardService {
     benefitData.signDates.push(Date.now());
     benefitData.lastSignDate = Date.now();
 
+    // 更新今日签到获得的天数
+    benefitData.todayReward = baseReward + bonusReward;
+
     // 更新累计奖励
     benefitData.totalRewardDays += baseReward + bonusReward;
 

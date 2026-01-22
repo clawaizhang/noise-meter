@@ -30,6 +30,12 @@ export class BenefitActivityData {
   totalRewardDays: number = 0;
 
   /**
+   * 今日签到获得的天数
+   */
+  @Trace
+  todayReward: number = 0;
+
+  /**
    * 上次签到日期
    */
   @Trace
@@ -61,6 +67,7 @@ export class BenefitActivityData {
     this.benefitActivityCompleted = false;
     this.currentStreak = 0;
     this.totalRewardDays = 0;
+    this.todayReward = 0;
     this.lastSignDate = 0;
     this.signDates = [];
     this.activityStartDate = 0;

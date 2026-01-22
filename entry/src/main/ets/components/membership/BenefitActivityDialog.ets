@@ -257,17 +257,69 @@ export struct BenefitActivityDialog {
   @Builder
   private buildSignedTip() {
     Column({ space: DesignConstants.SPACING_SM }) {
-      Text('今日已签到')
-        .fontSize(DesignConstants.FONT_SIZE_MD)
-        .fontColor($r('sys.color.font_secondary'))
-        .textAlign(TextAlign.Center)
-        .width('100%')
+      // 今日签到状态
+      Row({ space: DesignConstants.SPACING_XS }) {
+        Text('✓')
+          .fontSize(DesignConstants.FONT_SIZE_MD)
+          .fontColor($r('sys.color.confirm'))
+        
+        Text('今日已签到')
+          .fontSize(DesignConstants.FONT_SIZE_MD)
+          .fontColor($r('sys.color.font_secondary'))
+          .fontWeight(FontWeight.Medium)
+      }
+      .width('100%')
+      .justifyContent(FlexAlign.Center)
 
+      // 今日奖励信息 - 突出显示
+      Column({ space: DesignConstants.SPACING_XS }) {
+        Text('今日获得')
+          .fontSize(DesignConstants.FONT_SIZE_SM)
+          .fontColor($r('sys.color.font_tertiary'))
+          .textAlign(TextAlign.Center)
+          .width('100%')
+
+        Row({ space: 4 }) {
+          Text(`${this.pk.benefit_activity_data.todayReward}`)
+            .fontSize(24)
+            .fontColor($r('sys.color.confirm'))
+            .fontWeight(FontWeight.Bold)
+
+          Text('天会员')
+            .fontSize(14)
+            .fontColor($r('sys.color.font_secondary'))
+            .fontWeight(FontWeight.Medium)
+        }
+        .justifyContent(FlexAlign.Center)
+      }
+      .width('100%')
+      .padding({ top: 4, bottom: 4 })
+
+      // 累计奖励信息
+      Row({ space: 4 }) {
+        Text('累计获得')
+          .fontSize(DesignConstants.FONT_SIZE_SM)
+          .fontColor($r('sys.color.font_tertiary'))
+
+        Text(`${this.pk.benefit_activity_data.totalRewardDays}`)
+          .fontSize(DesignConstants.FONT_SIZE_SM)
+          .fontColor($r('sys.color.brand'))
+          .fontWeight(FontWeight.Bold)
+
+        Text('天会员')
+          .fontSize(DesignConstants.FONT_SIZE_SM)
+          .fontColor($r('sys.color.font_tertiary'))
+      }
+      .justifyContent(FlexAlign.Center)
+      .width('100%')
+
+      // 明日提示
       Text('明日再来签到吧')
-        .fontSize(DesignConstants.FONT_SIZE_SM)
+        .fontSize(DesignConstants.FONT_SIZE_XS)
         .fontColor($r('sys.color.font_tertiary'))
         .textAlign(TextAlign.Center)
         .width('100%')
+        .margin({ top: 4 })
     }
     .width('100%')
     .padding(DesignConstants.SPACING_MD)
