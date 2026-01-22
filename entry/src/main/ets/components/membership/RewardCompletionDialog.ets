@@ -106,6 +106,7 @@ export struct RewardCompletionDialog {
         value: '确认',
         action: () => {
           this.pk.show_reward_dialog = false;
+          this.onClose();
           console.info('用户选择不再显示奖励弹框');
         }
       }

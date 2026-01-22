@@ -101,7 +101,7 @@ export struct HomePageContent {
         reference: BreakpointsReference.WindowSize
       }
     }) {
-      // 仪表盘入口 - 显示趋势数据
+      // 仪表入口 - 显示趋势数据
       GridCol({
         span: {
           sm: 6, // 小屏幕：每行2个 (12/6=2)
@@ -110,7 +110,7 @@ export struct HomePageContent {
         }
       }) {
         this.buildSimplifiedFunctionCard({
-          title: '仪表盘',
+          title: '仪表',
           icon: $r('app.media.ic_meter'),
           description: '分析图表展示',
           dataDisplay: this.dashboardTrend,
@@ -130,7 +130,7 @@ export struct HomePageContent {
         }
       }) {
         this.buildSimplifiedFunctionCard({
-          title: '操作台',
+          title: '设置',
           icon: $r('app.media.ic_atom'),
           description: '校准和设置',
           dataDisplay: this.toolsStatus,
@@ -413,7 +413,7 @@ export struct HomePageContent {
     return $r('sys.color.confirm');
   }
 
-  // 仪表盘数据 - 趋势指示器
+  // 仪表数据 - 趋势指示器
   @Computed
   get dashboardTrend(): string {
     const currentDb = this.ak.uiDisplayState.displayDb;
@@ -598,7 +598,7 @@ export struct HomePageContent {
     return $r('sys.color.font_primary');
   }
 
-  // 位置服务开关方法 - 已移除，现在只在操作台控制
+  // 位置服务开关方法 - 已移除，现在只在设置控制
 
   // 刷新位置信息方法
   private async refreshLocation(): Promise<void> {

@@ -143,7 +143,7 @@ export struct RealTimeDetectionPage {
 
   build() {
     Column({ space: DesignConstants.SPACING_XL }) {
-      // 分贝显示区域 - 圆形仪表盘
+      // 分贝显示区域 - 圆形仪表
       this.buildDecibelMeter()
 
       // 功能描述
@@ -163,7 +163,7 @@ export struct RealTimeDetectionPage {
   @Builder
   private buildDecibelMeter() {
     Column({ space: DesignConstants.SPACING_MD }) {
-      // 圆形仪表盘
+      // 圆形仪表
       Stack({ alignContent: Alignment.Center }) {
         // 外圈背景
         Circle({ width: 120, height: 120 })

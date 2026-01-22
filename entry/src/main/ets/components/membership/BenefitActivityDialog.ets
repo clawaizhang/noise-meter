@@ -112,12 +112,18 @@ export struct BenefitActivityDialog {
       .setComponentTargetId('mainId')
       .setContent(wrapBuilder(BonusRewardDialogBuilder), props)
       .build();
-    props.onDismiss = () => {
-      // 显示签到成功弹窗
-      dialog.dismiss();
+    const props2: BonusRewardDialogProps = {
+      day: result.day,
+      baseReward: result.baseReward,
+      bonusReward: result.bonusReward,
+      totalRewardDays: result.totalRewardDays,
+      isCompleted: result.isCompleted,
+      onDismiss: () => {
+        dialog.hide()
+      }
     };
+    dialog.updateContent(props2);
     dialog.show();
-    dialog.updateContent(props);
   }
 
   /**
@@ -521,16 +527,6 @@ build() {
     }
     .width('100%')
 
-    // 确定按钮
-    Button('太棒了')
-      .width('100%')
-      .fontSize(DesignConstants.FONT_SIZE_MD)
-      .backgroundColor($r('sys.color.brand'))
-      .fontColor($r('sys.color.font_on_primary'))
-      .borderRadius(DesignConstants.BORDER_RADIUS_MD)
-      .onClick(() => {
-        this.onDismiss();
-      })
   }
   .width('100%')
   .padding(DesignConstants.SPACING_LG)

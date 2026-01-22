@@ -58,11 +58,11 @@ export struct MainNoiseMeter {
       this.menuItems = this.homeMenus;
     }
     if (currentValue === 1) {
-      this.title = '仪表盘';
+      this.title = '仪表';
       this.menuItems = this.noiseMeterMenus;
     }
     if (currentValue === 2) {
-      this.title = '操作台';
+      this.title = '设置';
       this.menuItems = this.toolsMenus;
     }
     if (currentValue === 3) {
@@ -84,7 +84,7 @@ export struct MainNoiseMeter {
     // 同步到AppKeys
     this.ak.currentTabIndex = currentValue!;
     
-    // 仪表盘横屏控制
+    // 仪表横屏控制
     this.handleDashboardOrientationChange(currentValue!);
   }
 
@@ -97,18 +97,18 @@ export struct MainNoiseMeter {
   }
 
   /**
-   * 处理仪表盘横屏切换
+   * 处理仪表横屏切换
    * @param currentIndex 当前Tab索引
    */
   private async handleDashboardOrientationChange(currentIndex: number): Promise<void> {
-    // 进入仪表盘页面 (index === 1)
+    // 进入仪表页面 (index === 1)
     if (currentIndex === 1) {
       if (this.ak.isDashboardInLandscape) {
         // 恢复横屏状态
         await WindowManager.getInstance().setOrientation(window.Orientation.LANDSCAPE);
       }
     } else {
-      // 离开仪表盘页面，恢复默认方向
+      // 离开仪表页面，恢复默认方向
       await this.restoreDefaultOrientation();
     }
   }
@@ -316,7 +316,7 @@ export struct MainNoiseMeter {
         .width('100%')
         .height('100%')
         .tabBar(this.ak.isDashboardInLandscape && this.currentIndex === 1 ? undefined : this.TabBuilder({
-          title: '仪表盘',
+          title: '仪表',
           icon: this.currentIndex == 1 ? $r("app.media.solar_spedometer_middle_bold") : $r("app.media.ic_meter"),
           index: 1
         }))
@@ -335,7 +335,7 @@ export struct MainNoiseMeter {
             })
         }
         .tabBar(this.ak.isDashboardInLandscape && this.currentIndex === 1 ? undefined : this.TabBuilder({
-          title: '操作台',
+          title: '设置',
           icon: this.currentIndex == 2 ? $r("app.media.ic_atom_bold") : $r("app.media.ic_atom"),
           index: 2
         }))

@@ -16,7 +16,7 @@ export class AppKeys {
   isLandscape: boolean = false; // 是否为横屏模式
 
   @Trace
-  isDashboardInLandscape: boolean = false; // 仪表盘当前是否处于横屏模式
+  isDashboardInLandscape: boolean = false; // 仪表当前是否处于横屏模式
 
   @Trace
   microphonePermissionGranted: boolean = false; // 实时麦克风权限状态
