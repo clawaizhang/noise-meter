@@ -11,6 +11,9 @@ import { LocationInfo, LocationService } from '../../services/LocationService';
 import { AudioControlPanel } from '../common/AudioControlPanel';
 import { StatusAlertsComponent } from '../status-alerts/StatusAlertsComponent';
 import { DecibelService } from '../../services/DecibelService';
+import { SpringFestivalConstants } from '../../constants/SpringFestivalConstants';
+import { DialogHub, type InfSheet } from '@hadss/dialoghub';
+import { BenefitActivityDialogBuilder, BenefitActivityDialogProps } from '../membership/BenefitActivityDialog';
 
 // 功能卡片配置接口
 interface FunctionCardConfig {
@@ -38,10 +41,16 @@ export struct HomePageContent {
   @Local private isLocationRefreshing: boolean = false;
   private decibelRecordService: DecibelRecordService = new DecibelRecordService(this.context);
   private locationService: LocationService = LocationService.getInstance();
+  
+  // 抽签活动弹窗
+  private benefitActivityDialog?: InfSheet;
 
   build() {
     Scroll() {
       Column({ space: DesignConstants.SPACING_LG }) {
+        // 马年抽签活动入口（最顶部）
+        this.buildNewYearActivityCard()
+        
         StatusAlertsComponent()
         // 核心分贝显示区
         this.buildDecibelDisplay()
@@ -62,7 +71,7 @@ export struct HomePageContent {
     .scrollBar(BarState.Off)
     .edgeEffect(EdgeEffect.Spring)
   }
-
+  
   @Builder
   private buildDecibelDisplay() {
     Column({ space: DesignConstants.SPACING_MD }) {
@@ -224,8 +233,131 @@ export struct HomePageContent {
           }
         })
       }
+      
     }
     .width('100%')
+  }
+  
+  /**
+   * 新年活动卡片 - 马年抽签入口
+   * 设计特点：使用渐变色彩营造节日氛围，突出但不突兀
+   */
+  @Builder
+  private buildNewYearActivityCard() {
+    Row({ space: DesignConstants.SPACING_MD }) {
+      // 左侧：活动图标
+      Stack({ alignContent: Alignment.Center }) {
+        // 背景光晕
+        Column()
+          .width(44)
+          .height(44)
+          .backgroundColor(Color.White)
+          .borderRadius(22)
+          .opacity(0.3)
+        
+        // 签筒图标
+        Text('🧧')
+          .fontSize(28)
+      }
+      .width(44)
+      .height(44)
+      .alignSelf(ItemAlign.Center)
+      
+      // 中间：活动信息
+      Column({ space: DesignConstants.SPACING_XS }) {
+        Row() {
+          Text('马年抽签')
+            .fontSize(DesignConstants.FONT_SIZE_MD)
+            .fontWeight(FontWeight.Bold)
+            .fontColor(Color.White)
+            .textAlign(TextAlign.Start)
+          
+          // 限时标签
+          Text('限时')
+            .fontSize(10)
+            .fontColor(SpringFestivalConstants.COLOR_CHINESE_RED)
+            .backgroundColor(Color.White)
+            .padding({ left: 6, right: 6, top: 2, bottom: 2 })
+            .borderRadius(8)
+            .margin({ left: 8 })
+          
+          Blank()
+        }
+        .width('100%')
+        .justifyContent(FlexAlign.Start)
+        
+        Row() {
+          Text('抽取新年好运，赢取会员天数')
+            .fontSize(DesignConstants.FONT_SIZE_SM)
+            .fontColor('rgba(255, 255, 255, 0.9)')
+            .textAlign(TextAlign.Start)
+          
+          Blank()
+        }
+        .width('100%')
+        .justifyContent(FlexAlign.Start)
+      }
+      .layoutWeight(1)
+      .alignItems(HorizontalAlign.Start)
+      .justifyContent(FlexAlign.Center)
+      
+      // 右侧：箭头
+      Text('›')
+        .fontSize(24)
+        .fontColor(Color.White)
+        .fontWeight(FontWeight.Lighter)
+        .opacity(0.8)
+    }
+    .width('100%')
+    .height(72)
+    .padding(DesignConstants.SPACING_MD)
+    .linearGradient({
+      direction: GradientDirection.Right,
+      colors: [
+        ['#D42426', 0.0],
+        ['#E85D5D', 0.5],
+        ['#F08A8A', 1.0]
+      ]
+    })
+    .borderRadius(DesignConstants.BORDER_RADIUS_LG)
+    .justifyContent(FlexAlign.Center)
+    .alignItems(VerticalAlign.Center)
+    .shadow({
+      radius: 8,
+      color: 'rgba(212, 36, 38, 0.25)',
+      offsetY: 3
+    })
+    .onClick(() => {
+      Throttle.click(() => {
+        // 显示马年抽签活动弹窗
+        this.showBenefitActivityDialog();
+      });
+    })
+  }
+  
+  /**
+   * 显示马年抽签活动弹窗
+   */
+  private showBenefitActivityDialog(): void {
+    const props: BenefitActivityDialogProps = {
+      onDismiss: () => {
+        if (this.benefitActivityDialog) {
+          this.benefitActivityDialog.dismiss();
+          this.benefitActivityDialog = undefined;
+        }
+      }
+    };
+    
+    this.benefitActivityDialog = DialogHub.getSheet()
+      .setStyle({
+        title: { title: '🐎 马年鸿运抽吉签' },
+        backgroundColor: $r('sys.color.background_secondary')
+      })
+      .setComponentTargetId('mainId')
+      .setContent(wrapBuilder(BenefitActivityDialogBuilder), props)
+      .build();
+    
+    this.benefitActivityDialog.show();
   }
 
   @Builder
