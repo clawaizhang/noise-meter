@@ -43,6 +43,19 @@ interface ConsecutiveRewards {
 }
 
 /**
+ * 吉利签文接口
+ */
+export interface LuckySign {
+  id: string;
+  name: string;      // 签文名称
+  emoji: string;     // 表情图标
+  meaning: string;   // 寓意解释
+  rewardDays: number; // 奖励天数（全吉利数字）
+  probability: number; // 概率
+  level: '上上签' | '上签' | '中签'; // 签文等级
+}
+
+/**
  * 福利活动签到结果接口
  */
 export interface BenefitSignResult {
@@ -52,10 +65,11 @@ export interface BenefitSignResult {
   bonusReward: number;
   totalRewardDays: number;
   isCompleted: boolean;
+  luckySign?: LuckySign; // 抽中的吉利签（可选，用于向后兼容）
 }
 
 /**
- * 随机加成配置接口
+ * 随机加成配置接口（保留用于其他功能）
  */
 export interface BonusProbabilityConfig {
   max: number;
@@ -235,7 +249,19 @@ export class MembershipRewardService {
 
   // ==================== 福利活动相关方法 ====================
 
-  // 每日基础奖励配置（7天）
+  // 马年吉利签文配置（5天签到，全吉利数字）
+  private readonly LUCKY_SIGNS: LuckySign[] = [
+    { id: 'success_horse', name: '马到成功', emoji: '🐎', meaning: '事业顺利，快速成功', rewardDays: 28, probability: 0.20, level: '上上签' },
+    { id: 'congrat_wealth', name: '恭喜发财', emoji: '🧧', meaning: '财运亨通，财源广进', rewardDays: 18, probability: 0.20, level: '上上签' },
+    { id: 'surplus_yearly', name: '年年有余', emoji: '🎋', meaning: '生活富足，年年有余', rewardDays: 16, probability: 0.15, level: '上签' },
+    { id: 'good_luck', name: '大吉大利', emoji: '🍊', meaning: '万事如意，吉祥顺利', rewardDays: 12, probability: 0.15, level: '上签' },
+    { id: 'lucky_star', name: '福星高照', emoji: '🏮', meaning: '福气满满，好运连连', rewardDays: 10, probability: 0.12, level: '中签' },
+    { id: 'wish_come_true', name: '心想事成', emoji: '🎆', meaning: '愿望实现，梦想成真', rewardDays: 8, probability: 0.10, level: '中签' },
+    { id: 'family_reunion', name: '团团圆圆', emoji: '🥟', meaning: '家庭和睦，幸福美满', rewardDays: 6, probability: 0.05, level: '中签' },
+    { id: 'sweet_life', name: '甜甜蜜蜜', emoji: '🍬', meaning: '生活甜蜜，感情美满', rewardDays: 5, probability: 0.03, level: '中签' }
+  ];
+
+  // 每日基础奖励配置（7天）- 保留用于向后兼容
   private readonly DAILY_BASE_REWARDS: Record<number, number> = {
     1: 25,
     2: 25,
@@ -246,11 +272,11 @@ export class MembershipRewardService {
     7: 30
   };
 
-  // 随机加成范围
+  // 随机加成范围 - 保留用于向后兼容
   private readonly BONUS_MIN: number = 0;
   private readonly BONUS_MAX: number = 130;
 
-  // 随机加成概率配置
+  // 随机加成概率配置 - 保留用于向后兼容
   private readonly BONUS_PROBABILITIES: BonusProbabilityConfig[] = [
     { max: 0, probability: 0.10 },      // 0天：10%
     { max: 30, probability: 0.30 },    // 1-30天：30%
@@ -302,7 +328,27 @@ export class MembershipRewardService {
   }
 
   /**
-   * 执行福利活动签到
+   * 执行抽签
+   * @returns 抽中的吉利签
+   */
+  private drawLuckySign(): LuckySign {
+    const random = Math.random();
+    let cumulative = 0;
+    
+    for (const sign of this.LUCKY_SIGNS) {
+      cumulative += sign.probability;
+      if (random <= cumulative) {
+        return sign;
+      }
+    }
+    
+    // 保底：返回最后一个签（甜甜蜜蜜，5天）
+    return this.LUCKY_SIGNS[this.LUCKY_SIGNS.length - 1];
+  }
+
+  /**
+   * 执行福利活动签到（马年抽签版 - 优化版）
+   * 第5天增加额外随机加成，形成高峰体验
    * @returns 签到结果
    */
   public signBenefitActivity(): BenefitSignResult {
@@ -327,39 +373,74 @@ export class MembershipRewardService {
 
     // 增加连续天数
     benefitData.currentStreak++;
+    const currentDay = benefitData.currentStreak;
 
-    // 获取今日基础奖励
-    const baseReward = this.getBenefitDailyBaseReward(benefitData.currentStreak);
+    // 执行抽签
+    const luckySign = this.drawLuckySign();
+    let baseReward = luckySign.rewardDays;
+    let bonusReward = 0;
 
-    // 计算随机加成
-    const bonusReward = this.calculateBonusReward();
+    // 第5天特殊处理：增加额外随机加成，形成高峰体验
+    if (currentDay === 5) {
+      bonusReward = this.calculateFinalDayBonus();
+      // 第5天保底调整为更高
+      if (baseReward < 8) {
+        baseReward = 8; // 第5天保底8天
+      }
+    }
+
+    const totalReward = baseReward + bonusReward;
 
     // 记录签到日期
     benefitData.signDates.push(Date.now());
     benefitData.lastSignDate = Date.now();
 
-    // 更新今日签到获得的天数
-    benefitData.todayReward = baseReward + bonusReward;
+    // 更新今日签到获得的天数和签文信息
+    benefitData.todayReward = totalReward;
+    
+    // 记录签文历史
+    if (luckySign) {
+      benefitData.signHistory.push(luckySign.id);
+    }
 
     // 更新累计奖励
-    benefitData.totalRewardDays += baseReward + bonusReward;
+    benefitData.totalRewardDays += totalReward;
 
-    // 检查是否完成7天签到
-    if (benefitData.currentStreak >= 7) {
+    // 检查是否完成5天签到（改为5天）
+    if (currentDay >= 5) {
       benefitData.benefitActivityCompleted = true;
     }
 
     // 应用奖励
-    this.applyBenefitReward(baseReward + bonusReward);
+    this.applyBenefitReward(totalReward);
 
     return {
       success: true,
-      day: benefitData.currentStreak,
+      day: currentDay,
       baseReward: baseReward,
       bonusReward: bonusReward,
       totalRewardDays: benefitData.totalRewardDays,
-      isCompleted: benefitData.benefitActivityCompleted
+      isCompleted: benefitData.benefitActivityCompleted,
+      luckySign: luckySign
     };
+  }
+
+  /**
+   * 计算第5天额外加成（高峰体验设计）
+   * @returns 额外加成天数
+   */
+  private calculateFinalDayBonus(): number {
+    const random = Math.random();
+    // 第5天额外加成概率分布（都是正面惊喜）
+    if (random < 0.40) {
+      return 5;  // 40%概率：+5天（小惊喜）
+    } else if (random < 0.70) {
+      return 10; // 30%概率：+10天（中惊喜）
+    } else if (random < 0.90) {
+      return 15; // 20%概率：+15天（大惊喜）
+    } else {
+      return 20; // 10%概率：+20天（超大惊喜）
+    }
   }
 
   /**

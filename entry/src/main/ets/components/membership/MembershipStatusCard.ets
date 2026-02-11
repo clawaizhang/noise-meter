@@ -15,6 +15,7 @@ import {
 } from './UpgradeContent';
 import { Throttle } from '../../utils/Debounce';
 import { BenefitActivityDialogBuilder, BenefitActivityDialogProps } from './BenefitActivityDialog';
+import { SpringFestivalConstants } from '../../constants/SpringFestivalConstants';
 
 @ComponentV2
 export struct MembershipStatusCard {
@@ -282,45 +283,82 @@ export struct MembershipStatusCard {
   }
  
   /**
-   * 构建福利活动入口
+   * 构建福利活动入口（马年春节主题）
    */
   @Builder
   private buildBenefitEntry() {
     // 检查是否有福利活动资格且未完成
     if (this.membershipRewardService.isBenefitActivityValid()) {
       Column({ space: DesignConstants.SPACING_SM }) {
+        // 活动标题行
         Row({ space: DesignConstants.SPACING_SM }) {
-          Image($r('app.media.ic_favorite'))
-            .width(DesignConstants.ICON_SIZE_SM)
-            .height(DesignConstants.ICON_SIZE_SM)
-            .fillColor($r('sys.color.warning'))
-
-          Text('7天签到领福利')
-            .fontSize(DesignConstants.FONT_SIZE_MD)
-            .fontWeight(FontWeight.Medium)
-            .fontColor($r('sys.color.font_primary'))
+          Text('🐎')
+            .fontSize(DesignConstants.FONT_SIZE_LG)
+          
+          Column({ space: 2 }) {
+            Text('马年鸿运抽吉签')
+              .fontSize(DesignConstants.FONT_SIZE_MD)
+              .fontWeight(FontWeight.Bold)
+              .fontColor(SpringFestivalConstants.COLOR_CHINESE_RED)
+            
+            Text('100%中奖 · 最高48天会员')
+              .fontSize(DesignConstants.FONT_SIZE_SM)
+              .fontColor(SpringFestivalConstants.COLOR_GOLD_DARK)
+          }
+          
+          Blank()
+          
+          // 倒计时角标
+          Text('限时')
+            .fontSize(10)
+            .fontColor(Color.White)
+            .padding({ left: 6, right: 6, top: 2, bottom: 2 })
+            .backgroundColor(SpringFestivalConstants.COLOR_CHINESE_RED)
+            .borderRadius(8)
         }
         .alignItems(VerticalAlign.Center)
-        .alignSelf(ItemAlign.Start)
+        .width('100%')
 
-        Button('7天签到领福利')
-          .width('100%')
-          .fontSize(DesignConstants.FONT_SIZE_MD)
-          .backgroundColor($r('sys.color.warning'))
-          .fontColor($r('sys.color.font_on_primary'))
-          .borderRadius(DesignConstants.BORDER_RADIUS_MD)
-          .onClick(() => {
-            Throttle.click(() => {
-              this.showBenefitActivityDialog();
-            });
-          })
+        // 春节主题按钮
+        Button() {
+          Row({ space: 8 }) {
+            Text('🧧')
+              .fontSize(18)
+            
+            Text('立即参与抽签')
+              .fontSize(DesignConstants.FONT_SIZE_MD)
+              .fontWeight(FontWeight.Medium)
+          }
+        }
+        .width('100%')
+        .height(48)
+        .backgroundColor(SpringFestivalConstants.COLOR_CHINESE_RED)
+        .fontColor(Color.White)
+        .borderRadius(DesignConstants.BORDER_RADIUS_MD)
+        .shadow({
+          radius: 6,
+          color: 'rgba(229, 57, 53, 0.3)',
+          offsetY: 3
+        })
+        .onClick(() => {
+          Throttle.click(() => {
+            this.showBenefitActivityDialog();
+          });
+        })
       }
       .width('100%')
+      .padding(DesignConstants.SPACING_MD)
+      .backgroundColor(SpringFestivalConstants.COLOR_BG_WARM)
+      .borderRadius(DesignConstants.BORDER_RADIUS_MD)
+      .border({
+        width: 1,
+        color: SpringFestivalConstants.COLOR_GOLD
+      })
     }
   }
 
   /**
-   * 显示福利活动弹窗
+   * 显示福利活动弹窗（马年抽签活动）
    */
   private showBenefitActivityDialog(): void {
     let props: BenefitActivityDialogProps = {
@@ -332,7 +370,7 @@ export struct MembershipStatusCard {
     };
     this.dialog = DialogHub.getSheet()
       .setStyle({
-        title: { title: '7天签到领福利' },
+        title: { title: '🐎 马年鸿运抽吉签' },
         backgroundColor: $r('sys.color.background_secondary')
       })
       .setComponentTargetId('mainId')

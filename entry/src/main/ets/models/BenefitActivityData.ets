@@ -1,6 +1,6 @@
 /**
  * 福利活动数据模型
- * 用于存储7天签到领福利活动的相关数据
+ * 用于存储新年特别活动活动的相关数据
  */
 
 @ObservedV2
@@ -60,6 +60,12 @@ export class BenefitActivityData {
   activityExpiryDate: number = 0;
 
   /**
+   * 签文历史记录（存储抽中的签文ID列表）
+   */
+  @Trace
+  signHistory: string[] = [];
+
+  /**
    * 重置活动数据
    */
   public reset(): void {
@@ -72,5 +78,6 @@ export class BenefitActivityData {
     this.signDates = [];
     this.activityStartDate = 0;
     this.activityExpiryDate = 0;
+    this.signHistory = [];
   }
 }
