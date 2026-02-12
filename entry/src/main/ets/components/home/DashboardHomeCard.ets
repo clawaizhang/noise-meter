@@ -6,8 +6,6 @@ import { LineChartSpectrumComponent } from '../decibel-meter/LineChartSpectrumCo
 import { LineChartTimeDomainComponent } from '../decibel-meter/LineChartTimeDomainComponent';
 import { StatisticsChartComponent } from '../statistics/StatisticsChartComponent';
 import { AudioControllerService } from '../../services/AudioControllerService';
-import { WindowManager } from '../../utils/WindowManager';
-import window from '@ohos.window';
 
 // 图表类型配置接口
 interface ChartTypeConfig {
@@ -25,7 +23,6 @@ export struct DashboardHomeCard {
   @Local pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys)!;
   @Local private isExpanded: boolean = false; // 是否展开
   @Local private currentChartIndex: number = 0; // 当前选中的图表索引
-  @Local private isLandscape: boolean = false; // 是否横屏模式
   private readonly chartHeight: number = 320; // 图表区域高度
   private audioControllerService: AudioControllerService = AudioControllerService.getInstance(this.ak, this.pk);
 
@@ -115,10 +112,10 @@ export struct DashboardHomeCard {
           })
         }
 
-        // 横屏按钮（仅展开模式显示）
+        // 全屏按钮（仅展开模式显示）
         if (this.isExpanded) {
           Button() {
-            Text(this.isLandscape ? '竖' : '横')
+            Text('全')
               .fontSize(11)
               .fontColor($r('sys.color.font_on_primary'))
               .fontWeight(FontWeight.Medium)
@@ -128,7 +125,7 @@ export struct DashboardHomeCard {
           .backgroundColor($r('sys.color.comp_background_secondary'))
           .borderRadius(16)
           .onClick(() => {
-            this.toggleLandscape()
+            this.enterFullscreen()
           })
         }
 
@@ -266,17 +263,11 @@ export struct DashboardHomeCard {
   }
 
   /**
-   * 切换横屏/竖屏
+   * 进入全屏横屏模式
    */
-  private async toggleLandscape(): Promise<void> {
-    const windowManager = WindowManager.getInstance()
-    const newOrientation = this.isLandscape ?
-      window.Orientation.PORTRAIT : window.Orientation.LANDSCAPE
-
-    const success = await windowManager.setOrientation(newOrientation)
-    if (success) {
-      this.isLandscape = !this.isLandscape
-      console.info(`[DashboardHomeCard] 切换至${this.isLandscape ? '横屏' : '竖屏'}`)
-    }
+  private async enterFullscreen(): Promise<void> {
+    // 设置全屏状态，这会触发 NoiseMeterNavigation 显示全屏仪表
+    this.ak.isDashboardFullscreen = true;
+    console.info('[DashboardHomeCard] 进入全屏横屏模式');
   }
 }

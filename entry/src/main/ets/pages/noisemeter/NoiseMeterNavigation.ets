@@ -11,6 +11,9 @@ import { HomePageContent } from '../../components/home/HomePageContent';
 import { AudioController } from '../../components/decibel-meter/AudioController';
 import { ReferenceContent } from '../../components/reference/ReferenceContent';
 import { ToolsContent } from '../../components/tools/ToolsContent';
+import { DashboardFullscreen } from '../../components/home/DashboardFullscreen';
+import { WindowManager } from '../../utils/WindowManager';
+import window from '@ohos.window';
 
 // 导航菜单项接口定义
 interface NavigationMenuItem {
@@ -99,6 +102,47 @@ export struct MainNoiseMeter {
     if (targetIndex !== undefined && targetIndex !== this.currentIndex) {
       this.currentIndex = targetIndex;
     }
+  }
+
+  @Monitor('ak.isDashboardFullscreen')
+  onDashboardFullscreenChange(monitor: IMonitor) {
+    const isFullscreen = monitor.value<boolean>()?.now;
+    if (isFullscreen) {
+      // 进入全屏模式，自动切换横屏
+      this.enterLandscapeMode();
+    } else {
+      // 退出全屏模式，恢复竖屏
+      this.exitLandscapeMode();
+    }
+  }
+
+  /**
+   * 进入横屏模式
+   */
+  private async enterLandscapeMode(): Promise<void> {
+    const windowManager = WindowManager.getInstance();
+    await windowManager.setOrientation(window.Orientation.LANDSCAPE);
+    console.info('[MainNoiseMeter] 进入横屏模式');
+  }
+
+  /**
+   * 退出横屏模式
+   */
+  private async exitLandscapeMode(): Promise<void> {
+    const windowManager = WindowManager.getInstance();
+    const mainWindow = await windowManager.getMainWindow();
+    if (!mainWindow) return;
+
+    const uiContext = mainWindow.getUIContext();
+    const widthBp = uiContext.getWindowWidthBreakpoint();
+
+    let orientation = window.Orientation.AUTO_ROTATION;
+    if (widthBp <= WidthBreakpoint.WIDTH_SM) {
+      orientation = window.Orientation.PORTRAIT;
+    }
+
+    await windowManager.setOrientation(orientation);
+    console.info('[MainNoiseMeter] 退出横屏模式');
   }
 
   @Computed
@@ -303,80 +347,88 @@ export struct MainNoiseMeter {
     NavDestination() {
       // 音频控制器（逻辑组件，不渲染UI）- 使用RxJS数据流
       AudioController()
-      Tabs({ barPosition: BarPosition.End, index: this.currentIndex }) {
-        // 主页 - 使用HomeContent组件
-        TabContent() {
-          this.HomeContent()
-        }
-        .tabBar(this.TabBuilder({
-          title: '主页',
-          icon: this.currentIndex == 0 ? $r("app.media.ic_home_bold") : $r("app.media.ic_home"),
-          index: 0
-        }))
 
-        // 工具页面 - 使用ToolsContent组件
-        TabContent() {
-          this.ToolsContentBuilder()
-        }
-        .tabBar(this.TabBuilder({
-          title: '设置',
-          icon: this.currentIndex == 1 ? $r("app.media.ic_atom_bold") : $r("app.media.ic_atom"),
-          index: 1
-        }))
+      if (this.ak.isDashboardFullscreen) {
+        // 全屏横屏模式：只显示仪表全屏组件
+        DashboardFullscreen()
+      } else {
+        // 正常模式：显示Tabs
+        Tabs({ barPosition: BarPosition.End, index: this.currentIndex }) {
+          // 主页 - 使用HomeContent组件
+          TabContent() {
+            this.HomeContent()
+          }
+          .tabBar(this.TabBuilder({
+            title: '主页',
+            icon: this.currentIndex == 0 ? $r("app.media.ic_home_bold") : $r("app.media.ic_home"),
+            index: 0
+          }))
 
-        // 警报页面 - 使用独立的AlertsContent组件
-        TabContent() {
-          this.AlertsContentBuilder()
-        }
-        .tabBar(this.TabBuilder({
-          title: '警报',
-          icon: this.currentIndex == 2 ? $r("app.media.bell_bing_bold") : $r("app.media.ic_alarm"),
-          index: 2
-        }))
+          // 工具页面 - 使用ToolsContent组件
+          TabContent() {
+            this.ToolsContentBuilder()
+          }
+          .tabBar(this.TabBuilder({
+            title: '设置',
+            icon: this.currentIndex == 1 ? $r("app.media.ic_atom_bold") : $r("app.media.ic_atom"),
+            index: 1
+          }))
 
-        TabContent() {
-          this.ExposureContentBuilder()
-        }
-        .tabBar(this.TabBuilder({
-          title: '影响',
-          icon: this.currentIndex == 3 ? $r("app.media.i_solar_radar_bold") : $r("app.media.i_solar_radar_outline"),
-          index: 3
-        }))
+          // 警报页面 - 使用独立的AlertsContent组件
+          TabContent() {
+            this.AlertsContentBuilder()
+          }
+          .tabBar(this.TabBuilder({
+            title: '警报',
+            icon: this.currentIndex == 2 ? $r("app.media.bell_bing_bold") : $r("app.media.ic_alarm"),
+            index: 2
+          }))
 
-        // 参考页面 - 使用ReferenceContent组件
-        TabContent() {
-          this.ReferenceContentBuilder()
-        }
-        .tabBar(this.TabBuilder({
-          title: '参考',
-          icon: this.currentIndex == 4 ? $r("app.media.ic_book2_bold") : $r("app.media.ic_book2"),
-          index: 4
-        }))
+          TabContent() {
+            this.ExposureContentBuilder()
+          }
+          .tabBar(this.TabBuilder({
+            title: '影响',
+            icon: this.currentIndex == 3 ? $r("app.media.i_solar_radar_bold") : $r("app.media.i_solar_radar_outline"),
+            index: 3
+          }))
 
-        TabContent() {
-          this.MyContentBuilder()
+          // 参考页面 - 使用ReferenceContent组件
+          TabContent() {
+            this.ReferenceContentBuilder()
+          }
+          .tabBar(this.TabBuilder({
+            title: '参考',
+            icon: this.currentIndex == 4 ? $r("app.media.ic_book2_bold") : $r("app.media.ic_book2"),
+            index: 4
+          }))
+
+          TabContent() {
+            this.MyContentBuilder()
+          }
+          .tabBar(this.TabBuilder({
+            title: '我的',
+            icon: this.currentIndex == 5 ? $r("app.media.solar_user_circle_bold") : $r("app.media.ic_user"),
+            index: 5
+          }))
         }
-        .tabBar(this.TabBuilder({
-          title: '我的',
-          icon: this.currentIndex == 5 ? $r("app.media.solar_user_circle_bold") : $r("app.media.ic_user"),
-          index: 5
-        }))
+        .scrollable(false)
+        .onChange((index: number) => {
+          this.currentIndex = index;
+        })
+        .barMode(BarMode.Fixed)
+        .barWidth('100%')
+        .barHeight(56)
+        .animationDuration(0)
       }
-      .scrollable(false)
-      .onChange((index: number) => {
-        this.currentIndex = index;
-      })
-      .barMode(BarMode.Fixed)
-      .barWidth('100%')
-      .barHeight(56)
-      .animationDuration(0)
     }
-    .title(this.buildTitleContent, {
+    .title(this.ak.isDashboardFullscreen ? undefined : this.buildTitleContent, {
       barStyle: BarStyle.STANDARD,
       backgroundBlurStyle: BlurStyle.BACKGROUND_REGULAR,
     })
+    .hideTitleBar(this.ak.isDashboardFullscreen)
     .id('mainAppId')
-    .menus(this.menuItems)
+    .menus(this.ak.isDashboardFullscreen ? [] : this.menuItems)
     .hideToolBar(true)
     .mode(NavDestinationMode.STANDARD)
     .backgroundColor($r('sys.color.background_secondary'))

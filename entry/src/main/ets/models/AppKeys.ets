@@ -48,4 +48,7 @@ export class AppKeys {
 
   @Trace
   totalRecordsCount: number = 0; // 记录总数
+
+  @Trace
+  isDashboardFullscreen: boolean = false; // 仪表是否处于全屏横屏模式
 }
