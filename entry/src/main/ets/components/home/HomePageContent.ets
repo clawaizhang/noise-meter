@@ -48,7 +48,8 @@ export struct HomePageContent {
 
   build() {
     Scroll() {
-      Column({ space: DesignConstants.SPACING_LG }) {
+      // 减小间距，让卡片之间更紧凑
+      Column({ space: DesignConstants.SPACING_MD }) {
         // 马年抽签活动入口（最顶部）
         this.buildNewYearActivityCard()
         

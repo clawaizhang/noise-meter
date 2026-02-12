@@ -57,7 +57,10 @@ export struct DashboardFullscreen {
           .zIndex(10)
       }
 
-      // 悬浮控制层 - 最上层
+      // 分贝值显示层 - 始终可见，不受控制按钮影响
+      this.buildDecibelDisplay()
+
+      // 悬浮控制层 - 最上层（不包含分贝值）
       if (this.showControls) {
         this.buildFloatingControls()
       }
@@ -125,6 +128,37 @@ export struct DashboardFullscreen {
   }
 
   /**
+   * 构建分贝值显示层 - 始终可见
+   */
+  @Builder
+  private buildDecibelDisplay() {
+    Column() {
+      // 分贝值 - 使用固定白色，因为背景始终是深灰色
+      Row() {
+        Text(`${this.ak.uiDisplayState.displayDb.toFixed(1)}`)
+          .fontSize(48)
+          .fontWeight(FontWeight.Bold)
+          .fontColor(Color.White)
+
+        Text('dB')
+          .fontSize(20)
+          .fontWeight(FontWeight.Medium)
+          .fontColor('rgba(255, 255, 255, 0.8)')
+          .margin({ left: 4, bottom: 8 })
+          .alignSelf(ItemAlign.End)
+      }
+      .padding({ left: 36 })
+      .width('100%')
+    }
+    .width('100%')
+    // 大幅增加顶部边距，让分贝值往屏幕中间移动
+    .padding({ left: 16, right: 16, top: 36 })
+    .position({ x: 0, y: 0 })
+    .align(Alignment.Top)
+    .zIndex(15)
+  }
+
+  /**
    * 构建悬浮控制层
    */
   @Builder
@@ -164,17 +198,17 @@ export struct DashboardFullscreen {
     Column() {
       // 第一行：频谱标签 + 退出按钮
       Row() {
-        // 左侧：当前图表标题 - 半透明悬浮卡片
+        // 左侧：当前图表标题 - 半透明悬浮卡片，文字固定白色
         Row({ space: 6 }) {
           Image($r('app.media.ic_meter'))
             .width(16)
             .height(16)
-            .fillColor($r('sys.color.font_primary'))
+            .fillColor(Color.White)
 
           Text(this.chartTypes[this.currentChartIndex].title)
             .fontSize(13)
             .fontWeight(FontWeight.Medium)
-            .fontColor($r('sys.color.font_primary'))
+            .fontColor(Color.White)
         }
         .padding({ left: 12, right: 12, top: 6, bottom: 6 })
         .backgroundColor('rgba(128, 128, 128, 0.6)')
@@ -182,11 +216,11 @@ export struct DashboardFullscreen {
 
         Blank()
 
-        // 右侧：退出按钮 - 半透明悬浮
+        // 右侧：退出按钮 - 半透明悬浮，文字固定白色
         Button() {
           Text('退出')
             .fontSize(11)
-            .fontColor($r('sys.color.font_primary'))
+            .fontColor(Color.White)
         }
         .width(48)
         .height(32)
@@ -197,26 +231,9 @@ export struct DashboardFullscreen {
         })
       }
       .width('100%')
-
-      // 第二行：当前分贝值（大字体显示）
-      Row() {
-        // 分贝值
-        Text(`${this.ak.uiDisplayState.displayDb.toFixed(1)}`)
-          .fontSize(48)
-          .fontWeight(FontWeight.Bold)
-          .fontColor($r('sys.color.font_primary'))
-
-        Text('dB')
-          .fontSize(20)
-          .fontWeight(FontWeight.Medium)
-          .fontColor($r('sys.color.font_secondary'))
-          .margin({ left: 4, bottom: 8 })
-          .alignSelf(ItemAlign.End)
-      }
-      .padding({ left: 12, top: 8 })
-      .width('100%')
     }
     .width('100%')
+    // 保持靠边，顶部内边距小一些
     .padding({ left: 16, right: 16, top: 12 })
     .position({ x: 0, y: 0 })
     .align(Alignment.Top).zIndex(22)
@@ -228,13 +245,13 @@ export struct DashboardFullscreen {
   @Builder
   private buildBottomFloatingControls() {
     Row({ space: 8 }) {
-      // 三个图表切换按钮 - 半透明悬浮胶囊
+      // 三个图表切换按钮 - 半透明悬浮胶囊，文字固定白色
       ForEach(this.chartTypes, (item: ChartTypeConfig, index?: number) => {
         Button() {
           Text(item.shortTitle)
             .fontSize(11)
-            .fontColor(this.currentChartIndex === index ? 
-              $r('sys.color.font_emphasize') : $r('sys.color.font_primary'))
+            // 固定白色，因为背景始终是深灰色
+            .fontColor(this.currentChartIndex === index ? Color.White : 'rgba(255, 255, 255, 0.8)')
             .fontWeight(this.currentChartIndex === index ? FontWeight.Medium : FontWeight.Normal)
         }
         .width(52)
