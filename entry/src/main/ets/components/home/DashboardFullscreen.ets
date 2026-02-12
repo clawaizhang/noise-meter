@@ -161,38 +161,60 @@ export struct DashboardFullscreen {
    */
   @Builder
   private buildTopFloatingControls() {
-    Row() {
-      // 左侧：当前图表标题 - 半透明悬浮卡片
-      Row({ space: 6 }) {
-        Image($r('app.media.ic_meter'))
-          .width(16)
-          .height(16)
-          .fillColor($r('sys.color.font_primary'))
+    Column() {
+      // 第一行：频谱标签 + 退出按钮
+      Row() {
+        // 左侧：当前图表标题 - 半透明悬浮卡片
+        Row({ space: 6 }) {
+          Image($r('app.media.ic_meter'))
+            .width(16)
+            .height(16)
+            .fillColor($r('sys.color.font_primary'))
 
-        Text(this.chartTypes[this.currentChartIndex].title)
-          .fontSize(13)
+          Text(this.chartTypes[this.currentChartIndex].title)
+            .fontSize(13)
+            .fontWeight(FontWeight.Medium)
+            .fontColor($r('sys.color.font_primary'))
+        }
+        .padding({ left: 12, right: 12, top: 6, bottom: 6 })
+        .backgroundColor('rgba(128, 128, 128, 0.6)')
+        .borderRadius(16)
+
+        Blank()
+
+        // 右侧：退出按钮 - 半透明悬浮
+        Button() {
+          Text('退出')
+            .fontSize(11)
+            .fontColor($r('sys.color.font_primary'))
+        }
+        .width(48)
+        .height(32)
+        .backgroundColor('rgba(128, 128, 128, 0.6)')
+        .borderRadius(16)
+        .onClick(() => {
+          this.exitFullscreen();
+        })
+      }
+      .width('100%')
+
+      // 第二行：当前分贝值（大字体显示）
+      Row() {
+        // 分贝值
+        Text(`${this.ak.uiDisplayState.displayDb.toFixed(1)}`)
+          .fontSize(48)
+          .fontWeight(FontWeight.Bold)
+          .fontColor($r('sys.color.font_primary'))
+
+        Text('dB')
+          .fontSize(20)
           .fontWeight(FontWeight.Medium)
-          .fontColor($r('sys.color.font_primary'))
+          .fontColor($r('sys.color.font_secondary'))
+          .margin({ left: 4, bottom: 8 })
+          .alignSelf(ItemAlign.End)
       }
-      .padding({ left: 12, right: 12, top: 6, bottom: 6 })
-      .backgroundColor('rgba(128, 128, 128, 0.6)')
-      .borderRadius(16)
-
-      Blank()
-
-      // 右侧：退出按钮 - 半透明悬浮
-      Button() {
-        Text('退出')
-          .fontSize(11)
-          .fontColor($r('sys.color.font_primary'))
-      }
-      .width(48)
-      .height(32)
-      .backgroundColor('rgba(128, 128, 128, 0.6)')
-      .borderRadius(16)
-      .onClick(() => {
-        this.exitFullscreen();
-      })
+      .padding({ left: 12, top: 8 })
+      .width('100%')
     }
     .width('100%')
     .padding({ left: 16, right: 16, top: 12 })

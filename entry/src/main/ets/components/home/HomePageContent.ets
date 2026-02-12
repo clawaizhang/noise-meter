@@ -53,12 +53,13 @@ export struct HomePageContent {
         this.buildNewYearActivityCard()
         
         StatusAlertsComponent()
-        // 核心分贝显示区
-        this.buildDecibelDisplay()
 
-        // 主页仪表卡片（频谱分析）
+        // 主页仪表卡片（频谱分析）- 放在分贝显示上方
         DashboardHomeCard()
           .transition(TransitionEffect.scale({ x: 0.95, y: 0.95 }).animation({ curve: curves.springMotion() }))
+
+        // 核心分贝显示区
+        this.buildDecibelDisplay()
 
         AudioControlPanel()
         // 功能入口卡片区

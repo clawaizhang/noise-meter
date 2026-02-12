@@ -21,7 +21,6 @@ interface ChartTypeConfig {
 export struct DashboardHomeCard {
   @Local ak: AppKeys = AppStorageV2.connect(AppKeys)!;
   @Local pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys)!;
-  @Local private isExpanded: boolean = false; // 是否展开
   @Local private currentChartIndex: number = 0; // 当前选中的图表索引
   private readonly chartHeight: number = 320; // 图表区域高度
   private audioControllerService: AudioControllerService = AudioControllerService.getInstance(this.ak, this.pk);
@@ -40,23 +39,15 @@ export struct DashboardHomeCard {
   }
 
   build() {
-    Column() {
+    Column({ space: DesignConstants.SPACING_SM }) {
       // 头部区域：标题+操作按钮
       this.buildHeader()
 
-      // 图表内容区域（仅展开时显示）
-      if (this.isExpanded) {
-        Column({ space: DesignConstants.SPACING_SM }) {
-          this.buildChartContent()
-          this.buildFooter()
-        }
-        .width('100%')
-        .margin({ top: DesignConstants.SPACING_SM })
-        .animation({
-          duration: 300,
-          curve: Curve.EaseInOut
-        })
-      }
+      // 图表内容区域（始终显示）
+      this.buildChartContent()
+      
+      // 底部提示
+      this.buildFooter()
     }
     .width('100%')
     .padding(DesignConstants.SPACING_MD)
@@ -84,7 +75,7 @@ export struct DashboardHomeCard {
             .fontWeight(FontWeight.Medium)
             .fontColor($r('sys.color.font_primary'))
 
-          Text(this.isExpanded ? this.chartTypes[this.currentChartIndex].title : '点击展开查看')
+          Text(this.chartTypes[this.currentChartIndex].title)
             .fontSize(DesignConstants.FONT_SIZE_SM)
             .fontColor($r('sys.color.font_secondary'))
         }
@@ -93,45 +84,11 @@ export struct DashboardHomeCard {
 
       Blank()
 
-      // 右侧：操作按钮组
+      // 右侧：操作按钮组（切换和全屏）
       Row({ space: DesignConstants.SPACING_SM }) {
-        // 图表切换按钮（仅展开模式显示）
-        if (this.isExpanded) {
-          Button() {
-            Text('切')
-              .fontSize(11)
-              .fontColor($r('sys.color.font_on_primary'))
-              .fontWeight(FontWeight.Medium)
-          }
-          .width(32)
-          .height(32)
-          .backgroundColor($r('sys.color.comp_background_secondary'))
-          .borderRadius(16)
-          .onClick(() => {
-            this.switchChart()
-          })
-        }
-
-        // 全屏按钮（仅展开模式显示）
-        if (this.isExpanded) {
-          Button() {
-            Text('全')
-              .fontSize(11)
-              .fontColor($r('sys.color.font_on_primary'))
-              .fontWeight(FontWeight.Medium)
-          }
-          .width(32)
-          .height(32)
-          .backgroundColor($r('sys.color.comp_background_secondary'))
-          .borderRadius(16)
-          .onClick(() => {
-            this.enterFullscreen()
-          })
-        }
-
-        // 展开/收起按钮
+        // 图表切换按钮
         Button() {
-          Text(this.isExpanded ? '收' : '展')
+          Text('切')
             .fontSize(11)
             .fontColor($r('sys.color.font_on_primary'))
             .fontWeight(FontWeight.Medium)
@@ -141,11 +98,22 @@ export struct DashboardHomeCard {
         .backgroundColor($r('sys.color.comp_background_secondary'))
         .borderRadius(16)
         .onClick(() => {
-          this.toggleExpand()
+          this.switchChart()
         })
-        .animation({
-          duration: 200,
-          curve: Curve.EaseInOut
+
+        // 全屏按钮
+        Button() {
+          Text('全')
+            .fontSize(11)
+            .fontColor($r('sys.color.font_on_primary'))
+            .fontWeight(FontWeight.Medium)
+        }
+        .width(32)
+        .height(32)
+        .backgroundColor($r('sys.color.comp_background_secondary'))
+        .borderRadius(16)
+        .onClick(() => {
+          this.enterFullscreen()
         })
       }
     }
@@ -245,14 +213,6 @@ export struct DashboardHomeCard {
     }
     .width('100%')
     .height(24)
-  }
-
-  /**
-   * 切换展开/收起状态
-   */
-  private toggleExpand(): void {
-    this.isExpanded = !this.isExpanded
-    console.info(`[DashboardHomeCard] 卡片状态: ${this.isExpanded ? '展开' : '收起'}`)
   }
 
   /**
