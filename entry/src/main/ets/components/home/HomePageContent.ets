@@ -14,6 +14,7 @@ import { DecibelService } from '../../services/DecibelService';
 import { SpringFestivalConstants } from '../../constants/SpringFestivalConstants';
 import { DialogHub, type InfSheet } from '@hadss/dialoghub';
 import { BenefitActivityDialogBuilder, BenefitActivityDialogProps } from '../membership/BenefitActivityDialog';
+import { DashboardHomeCard } from './DashboardHomeCard';
 
 // 功能卡片配置接口
 interface FunctionCardConfig {
@@ -54,6 +55,10 @@ export struct HomePageContent {
         StatusAlertsComponent()
         // 核心分贝显示区
         this.buildDecibelDisplay()
+
+        // 主页仪表卡片（频谱分析）
+        DashboardHomeCard()
+          .transition(TransitionEffect.scale({ x: 0.95, y: 0.95 }).animation({ curve: curves.springMotion() }))
 
         AudioControlPanel()
         // 功能入口卡片区
@@ -110,26 +115,6 @@ export struct HomePageContent {
         reference: BreakpointsReference.WindowSize
       }
     }) {
-      // 仪表入口 - 显示趋势数据
-      GridCol({
-        span: {
-          sm: 6, // 小屏幕：每行2个 (12/6=2)
-          md: 4, // 中等屏幕：每行3个 (12/4=3)
-          lg: 3  // 大屏幕：每行4个 (12/3=4)
-        }
-      }) {
-        this.buildSimplifiedFunctionCard({
-          title: '仪表',
-          icon: $r('app.media.ic_meter'),
-          description: '分析图表展示',
-          dataDisplay: this.dashboardTrend,
-          dataColor: this.dashboardTrendColor,
-          onTap: () => {
-            this.switchToTab(1)
-          }
-        })
-      }
-
       // 工具入口 - 显示工具状态
       GridCol({
         span: {
@@ -145,7 +130,7 @@ export struct HomePageContent {
           dataDisplay: this.toolsStatus,
           dataColor: this.toolsStatusColor,
           onTap: () => {
-            this.switchToTab(2)
+            this.switchToTab(1) // 设置
           }
         })
       }
@@ -166,7 +151,7 @@ export struct HomePageContent {
           dataDisplay: this.activeAlertsCount > 0 ? '警报中' : '正常',
           dataColor: this.activeAlertsCount > 0 ? $r('sys.color.alert') : $r('sys.color.confirm'),
           onTap: () => {
-            this.switchToTab(3)
+            this.switchToTab(2) // 警报
           }
         })
       }
@@ -186,7 +171,7 @@ export struct HomePageContent {
           dataDisplay: this.exposureIndex,
           dataColor: this.exposureColor,
           onTap: () => {
-            this.switchToTab(4)
+            this.switchToTab(3) // 影响
           }
         })
       }
@@ -206,7 +191,7 @@ export struct HomePageContent {
           dataDisplay: this.reference,
           dataColor: this.exposureColor,
           onTap: () => {
-            this.switchToTab(5)
+            this.switchToTab(4) // 参考
           }
         })
       }

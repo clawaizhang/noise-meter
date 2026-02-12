@@ -108,9 +108,10 @@ export struct ToolsContent {
     // 默认展开有工具的分类
     this.expandedCategories.add(ToolCategory.BASIC_MEASUREMENT);
     this.expandedCategories.add(ToolCategory.DATA_MANAGEMENT);
-    // 显示设置和专业设置已隐藏，不展开
+    // 显示设置目前没有工具，不展开
     // this.expandedCategories.add(ToolCategory.DISPLAY_SETTINGS);
     this.expandedCategories.add(ToolCategory.ALERT_SYSTEM);
+    // 专业设置已隐藏，不展开
     // this.expandedCategories.add(ToolCategory.ADVANCED_SETTINGS);
 
 
@@ -132,9 +133,8 @@ export struct ToolsContent {
       case UserSkillLevel.EXPERT:
         this.expandedCategories.add(ToolCategory.BASIC_MEASUREMENT);
         this.expandedCategories.add(ToolCategory.DATA_MANAGEMENT);
-        // 显示设置和专业设置已隐藏，不展开
-        // this.expandedCategories.add(ToolCategory.DISPLAY_SETTINGS);
         this.expandedCategories.add(ToolCategory.ALERT_SYSTEM);
+        // 专业设置已隐藏，不展开
         // this.expandedCategories.add(ToolCategory.ADVANCED_SETTINGS);
         break;
     }
@@ -224,7 +224,7 @@ export struct ToolsContent {
       description: '频谱显示配置',
       color: $r('sys.color.icon_primary'), // 统一使用primary色
       tools: [
-        // 频谱显示设置已隐藏
+        // 频谱显示相关设置
       ]
     };
   }

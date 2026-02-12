@@ -33,6 +33,7 @@ export struct LineChartTimeDomainComponent {
   // 输入参数
   @Param sampleRate: number = 44100
   @Param isVisible: boolean = true // 图表是否可见
+  @Param isPreviewMode: boolean = false // 是否为预览模式（紧凑显示）
   @Local pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys)!;
 
   // 依赖注入

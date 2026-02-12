@@ -61,6 +61,7 @@ export struct StatisticsChartComponent {
   @Param canvasWidthInput: number = 0;
   @Param canvasHeightInput: number = 0;
   @Param isVisible: boolean = true // 图表是否可见
+  @Param isPreviewMode: boolean = false // 是否为预览模式（紧凑显示）
   // 依赖注入
   @Local private ak: AppKeys = AppStorageV2.connect(AppKeys)!;
   @Local private sysResourceManager: resourceManager.ResourceManager = resourceManager.getSystemResourceManager();
