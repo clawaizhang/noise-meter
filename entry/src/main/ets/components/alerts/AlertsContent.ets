@@ -2,7 +2,7 @@ import { AppKeys } from '../../models/AppKeys';
 import { PreferenceKeys } from '../../models/PreferenceKeys';
 import { DesignConstants } from '../../constants/DesignConstants';
 import { AlertService } from '../../services/AlertService';
-import { AppStorageV2, PersistenceV2 } from '@kit.ArkUI';
+import { AppStorageV2, PersistenceV2, curves } from '@kit.ArkUI';
 import { common } from '@kit.AbilityKit';
 import { PresetType } from '../../models/ThresholdConfig';
 import { AlertStateMachine } from '../../utils/AlertStateMachine';
@@ -10,6 +10,14 @@ import { AlertEvent, AlertStatus } from '../../constants/AlertsConstants';
 import { DialogHub, type InfSheet } from '@hadss/dialoghub';
 import { AlertsSettingsBuilder, AlertsSettingsProps } from '../../pages/settings/AlertsSettingsNavigation';
 import { Throttle } from '../../utils/Debounce';
+
+// 阴影样式接口
+interface ShadowStyle {
+  radius: number;
+  color: Resource | Color | string;
+  offsetX: number;
+  offsetY: number;
+}
 
 // 警报记录数据模型
 interface AlertRecord {
@@ -32,6 +40,10 @@ export struct AlertsContent {
   private stateMachine: AlertStateMachine = new AlertStateMachine();
   // 警报历史记录（模拟数据，实际应从服务获取）
   @Local private alertHistory: AlertRecord[] = [];
+  // 动画相关状态
+  @Local private pulseAnimation: number = 0;  // 脉冲动画值
+  @Local private isAlertActive: boolean = false; // 是否处于警报状态
+  private pulseInterval?: number;  // 脉冲动画定时器
 
   aboutToAppear(): void {
     // 组件加载时更新权限状态
@@ -40,6 +52,8 @@ export struct AlertsContent {
     this.stateMachine.handleEvent(AlertEvent.START_MONITORING);
     // 加载警报历史
     this.loadAlertHistory();
+    // 启动脉冲动画
+    this.startPulseAnimation();
   }
 
   aboutToDisappear(): void {
@@ -48,6 +62,24 @@ export struct AlertsContent {
     // 停止状态机监控
     this.stateMachine.handleEvent(AlertEvent.STOP_MONITORING);
     this.stateMachine.destroy();
+    // 停止脉冲动画
+    this.stopPulseAnimation();
+  }
+
+  // 启动脉冲动画（警报状态下）
+  private startPulseAnimation(): void {
+    this.pulseInterval = setInterval(() => {
+      this.isAlertActive = this.stateMachine.AlertActive;
+      this.pulseAnimation = Date.now();
+    }, 500); // 每500ms更新一次
+  }
+
+  // 停止脉冲动画
+  private stopPulseAnimation(): void {
+    if (this.pulseInterval) {
+      clearInterval(this.pulseInterval);
+      this.pulseInterval = undefined;
+    }
   }
 
   // 加载警报历史（模拟数据）
@@ -141,87 +173,207 @@ export struct AlertsContent {
     this.alertService.resetAlertState();
   }
 
-  // ========== 1. 实时状态区 ==========
+  // ========== 1. 实时状态区（优化版） ==========
   @Builder
   private buildStatusDisplay() {
-    Column({ space: DesignConstants.SPACING_MD }) {
-      // 状态指示器 - 强化显示
+    Column({ space: 0 }) {
+      // 主内容区（固定高度，避免布局抖动）
+      Row({ space: DesignConstants.SPACING_LG }) {
+        // 左侧：超大字号分贝值
+        this.buildDecibelDisplay()
+
+        // 右侧：状态徽章
+        this.buildStatusBadge()
+      }
+      .width('100%')
+      .height(120) // 固定高度
+      .padding({
+        top: DesignConstants.SPACING_XL,
+        bottom: DesignConstants.SPACING_LG,
+        left: DesignConstants.SPACING_XL,
+        right: DesignConstants.SPACING_XL
+      })
+      .justifyContent(FlexAlign.SpaceBetween)
+
+      // 底部：阈值进度条
+      this.buildThresholdProgressBar()
+    }
+    // 使用中性背景，不随状态变色，保持专业稳定的视觉感受
+    .backgroundColor($r('sys.color.comp_background_primary'))
+    .backgroundBlurStyle(BlurStyle.COMPONENT_THICK)
+    .borderRadius(DesignConstants.BORDER_RADIUS_XL)
+    .width('100%')
+    .height(200) // 固定卡片总高度
+  }
+
+  // 分贝值显示（左侧大字号）
+  @Builder
+  private buildDecibelDisplay() {
+    Column({ space: DesignConstants.SPACING_XS }) {
+      Text(`${this.ak.uiDisplayState.displayDb}`)
+        .fontSize(56)
+        .fontWeight(FontWeight.Bold)
+        .fontColor(this.statusColor)
+        // 数值变化动画
+        .animation({
+          duration: 400,
+          curve: curves.springMotion(0.5, 0.8)
+        })
+
+      Text('dB')
+        .fontSize(DesignConstants.FONT_SIZE_MD)
+        .fontColor($r('sys.color.font_secondary'))
+    }
+    .alignItems(HorizontalAlign.Start)
+  }
+
+  // 状态徽章（右侧）
+  @Builder
+  private buildStatusBadge() {
+    Column({ space: DesignConstants.SPACING_SM }) {
+      // 状态图标和文字
       Row({ space: DesignConstants.SPACING_SM }) {
-        Circle({ width: 20, height: 20 })
-          .fill(this.statusColor)
-          .shadow({
-            radius: 8,
-            color: this.statusColor,
-            offsetX: 0,
-            offsetY: 2
-          })
+        // 状态图标
+        Text(this.getStatusIcon())
+          .fontSize(DesignConstants.FONT_SIZE_XL)
 
         Text(this.statusText)
-          .fontSize(DesignConstants.FONT_SIZE_XL)
+          .fontSize(DesignConstants.FONT_SIZE_LG)
           .fontColor(this.statusColor)
           .fontWeight(FontWeight.Bold)
       }
-
-      // 分贝值与阈值对比显示
-      Row({ space: DesignConstants.SPACING_LG }) {
-        // 当前分贝值
-        Column({ space: DesignConstants.SPACING_XS }) {
-          Text('当前')
-            .fontSize(DesignConstants.FONT_SIZE_MD)
-            .fontColor($r('sys.color.font_secondary'))
-          Text(`${this.ak.uiDisplayState.displayDb}dB`)
-            .fontSize(48)
-            .fontWeight(FontWeight.Bold)
-            .fontColor(this.statusColor)
-        }
-
-        // 对比符号
-        Text(this.getComparisonSymbol())
-          .fontSize(32)
-          .fontColor($r('sys.color.font_secondary'))
-          .fontWeight(FontWeight.Bold)
-
-        // 阈值
-        Column({ space: DesignConstants.SPACING_XS }) {
-          Text('阈值')
-            .fontSize(DesignConstants.FONT_SIZE_MD)
-            .fontColor($r('sys.color.font_secondary'))
-          Text(`${this.pk.alarm_threshold.currentEffectiveThreshold}dB`)
-            .fontSize(48)
-            .fontWeight(FontWeight.Bold)
-            .fontColor($r('sys.color.font_primary'))
-        }
-      }
+      .padding({
+        top: DesignConstants.SPACING_SM,
+        bottom: DesignConstants.SPACING_SM,
+        left: DesignConstants.SPACING_MD,
+        right: DesignConstants.SPACING_MD
+      })
+      .backgroundColor(this.getBadgeBackgroundColor())
+      .borderRadius(DesignConstants.BORDER_RADIUS_LG)
+      // 警报状态下的边框（静态，无脉冲）
+      .border({
+        width: this.isAlertActive ? 2 : 0,
+        color: this.statusColor,
+        style: BorderStyle.Solid
+      })
 
       // 差值显示
       Text(this.getDifferenceText())
-        .fontSize(DesignConstants.FONT_SIZE_LG)
+        .fontSize(DesignConstants.FONT_SIZE_MD)
         .fontColor(this.statusColor)
         .fontWeight(FontWeight.Medium)
 
-      // 警报持续时间区域（固定高度，避免闪烁）
-      Row({ space: DesignConstants.SPACING_SM }) {
+      // 持续时间（固定高度区域，避免布局跳动）
+      Row({ space: DesignConstants.SPACING_XS }) {
         if (this.stateMachine.AlertActive) {
           Image($r('app.media.ic_alarm'))
-            .width(16)
-            .height(16)
+            .width(14)
+            .height(14)
             .fillColor($r('sys.color.alert'))
-          Text(`持续时间: ${this.stateMachine.FormattedAlertDuration}`)
+
+          Text(this.stateMachine.FormattedAlertDuration)
             .fontSize(DesignConstants.FONT_SIZE_MD)
             .fontColor($r('sys.color.alert'))
             .fontWeight(FontWeight.Medium)
         }
       }
       .height(24) // 固定高度
-      .width('100%')
       .justifyContent(FlexAlign.Center)
     }
-    .padding(DesignConstants.SPACING_XL)
-    .backgroundColor(this.statusBackground)
-    .backgroundBlurStyle(BlurStyle.COMPONENT_THICK)
-    .borderRadius(DesignConstants.BORDER_RADIUS_XL)
+    .height(100) // 固定整体高度
+    .alignItems(HorizontalAlign.End)
+    .justifyContent(FlexAlign.Center)
+  }
+
+  // 阈值进度条
+  @Builder
+  private buildThresholdProgressBar() {
+    Column({ space: DesignConstants.SPACING_SM }) {
+      // 进度条轨道
+      Stack({ alignContent: Alignment.Start }) {
+        // 背景轨道（渐变：绿→黄→红）
+        Row()
+          .width('100%')
+          .height(8)
+          .backgroundColor($r('sys.color.comp_divider'))
+          .borderRadius(DesignConstants.BORDER_RADIUS_FULL)
+
+        // 渐变填充层
+        Row()
+          .width('100%')
+          .height(8)
+          .backgroundColor(this.getProgressGradient())
+          .borderRadius(DesignConstants.BORDER_RADIUS_FULL)
+          .opacity(0.3)
+
+        // 当前位置指示器（发光圆点）
+        // 使用 offset 替代 position，避免布局抖动
+        Row()
+          .width(16)
+          .height(16)
+          .backgroundColor(this.statusColor)
+          .borderRadius(DesignConstants.BORDER_RADIUS_FULL)
+          .shadow({
+            radius: 6,
+            color: this.statusColor,
+            offsetX: 0,
+            offsetY: 0
+          })
+          .offset({
+            x: this.getProgressPositionRatio() * 100 + '%',
+            y: -4
+          })
+        // 移除缩放动画，避免抖动问题
+
+        // 阈值线标记
+        Row()
+          .width(3)
+          .height(12)
+          .backgroundColor(Color.White)
+          .borderRadius(1)
+          .offset({
+            x: this.getThresholdLineRatio() * 100 + '%',
+            y: -2
+          })
+          .shadow({
+            radius: 2,
+            color: 'rgba(0, 0, 0, 0.2)',
+            offsetX: 0,
+            offsetY: 1
+          })
+      }
+      .width('100%')
+      .height(16)
+      .padding({ left: 8, right: 8 })
+
+      // 阈值标记文字
+      Row() {
+        Text(`30dB`)
+          .fontSize(DesignConstants.FONT_SIZE_SM)
+          .fontColor($r('sys.color.font_tertiary'))
+
+        Blank()
+
+        Text(`警报阈值 ${this.pk.alarm_threshold.currentEffectiveThreshold}dB`)
+          .fontSize(DesignConstants.FONT_SIZE_SM)
+          .fontColor($r('sys.color.font_secondary'))
+          .fontWeight(FontWeight.Medium)
+
+        Blank()
+
+        Text(`85dB`)
+          .fontSize(DesignConstants.FONT_SIZE_SM)
+          .fontColor($r('sys.color.font_tertiary'))
+      }
+      .width('100%')
+      .padding({ left: DesignConstants.SPACING_SM, right: DesignConstants.SPACING_SM })
+    }
     .width('100%')
-    .alignItems(HorizontalAlign.Center)
+    .padding({
+      left: DesignConstants.SPACING_LG,
+      right: DesignConstants.SPACING_LG,
+      bottom: DesignConstants.SPACING_LG
+    })
   }
 
   // ========== 2. 设置摘要区（方案A：极简卡片） ==========
@@ -813,6 +965,119 @@ export struct AlertsContent {
       return '如需专注，建议佩戴降噪耳机';
     } else {
       return '当前环境适合工作和学习，继续保持';
+    }
+  }
+
+  // ========== 新增：UI 辅助方法 ==========
+
+  // 获取状态图标
+  private getStatusIcon(): string {
+    const currentState = this.stateMachine.CurrentState;
+
+    switch (currentState) {
+      case AlertStatus.ALERT_ACTIVE:
+      case AlertStatus.ALERT_PERSISTENT:
+      case AlertStatus.ALERT_ESCALATED:
+        return '🚨';
+      case AlertStatus.WARNING:
+        return '⚠️';
+      case AlertStatus.MONITORING:
+        return '✅';
+      case AlertStatus.IDLE:
+        return '⏸️';
+      case AlertStatus.MUTED:
+        return '🔕';
+      default:
+        return '●';
+    }
+  }
+
+  // 获取徽章背景色
+  private getBadgeBackgroundColor(): Resource | string {
+    const currentState = this.stateMachine.CurrentState;
+
+    switch (currentState) {
+      case AlertStatus.ALERT_ACTIVE:
+      case AlertStatus.ALERT_PERSISTENT:
+      case AlertStatus.ALERT_ESCALATED:
+        return 'rgba(244, 67, 54, 0.1)';
+      case AlertStatus.WARNING:
+        return 'rgba(255, 152, 0, 0.1)';
+      case AlertStatus.MONITORING:
+        return 'rgba(76, 175, 80, 0.1)';
+      default:
+        return $r('sys.color.comp_background_secondary');
+    }
+  }
+
+  // 获取脉冲透明度（用于警报动画）
+  private getPulseOpacity(): number {
+    if (!this.isAlertActive) {
+      return 1;
+    }
+    // 基于时间计算脉冲值：0.6 → 1.0 → 0.6
+    const time = this.pulseAnimation % 1000;
+    if (time < 500) {
+      return 0.6 + (time / 500) * 0.4;
+    } else {
+      return 1.0 - ((time - 500) / 500) * 0.4;
+    }
+  }
+
+  // 获取卡片阴影（警报状态下更强烈）
+  private getCardShadow(): ShadowStyle {
+    if (this.isAlertActive) {
+      return {
+        radius: 12,
+        color: this.statusColor,
+        offsetX: 0,
+        offsetY: 4
+      };
+    }
+    return {
+      radius: 8,
+      color: 'rgba(0, 0, 0, 0.15)',
+      offsetX: 0,
+      offsetY: 2
+    };
+  }
+
+  // 获取进度条位置（基于当前分贝值在30-85dB范围内的位置）
+  // 返回 0-1 之间的小数，用于 offset 计算
+  private getProgressPositionRatio(): number {
+    const currentDecibel = this.ak.uiDisplayState.displayDb;
+    const minDb = 30;
+    const maxDb = 85;
+    const range = maxDb - minDb;
+
+    // 计算比例（限制在0-1）
+    let ratio = (currentDecibel - minDb) / range;
+    ratio = Math.max(0, Math.min(1, ratio));
+    return ratio;
+  }
+
+  // 获取阈值线在进度条上的位置比例
+  private getThresholdLineRatio(): number {
+    const threshold = this.pk.alarm_threshold.currentEffectiveThreshold;
+    const minDb = 30;
+    const maxDb = 85;
+    const range = maxDb - minDb;
+
+    let ratio = (threshold - minDb) / range;
+    ratio = Math.max(0, Math.min(1, ratio));
+    return ratio;
+  }
+
+  // 获取进度渐变（根据分贝值返回不同颜色）
+  private getProgressGradient(): Resource {
+    const currentDecibel = this.ak.uiDisplayState.displayDb;
+
+    if (currentDecibel >= this.pk.alarm_threshold.currentEffectiveThreshold) {
+      return $r('sys.color.alert'); // 红色
+    } else if (currentDecibel >= this.pk.alarm_threshold.currentEffectiveThreshold - 10) {
+      return $r('sys.color.warning'); // 橙色
+    } else {
+      return $r('sys.color.confirm'); // 绿色
     }
   }
 
