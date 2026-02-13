@@ -66,6 +66,13 @@ export class BenefitActivityData {
   signHistory: string[] = [];
 
   /**
+   * 用户是否关闭了主页活动横幅
+   * 关闭后不再显示，但可以从"我的"页面进入
+   */
+  @Trace
+  bannerClosed: boolean = false;
+
+  /**
    * 重置活动数据
    */
   public reset(): void {

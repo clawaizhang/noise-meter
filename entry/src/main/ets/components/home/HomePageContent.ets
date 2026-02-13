@@ -366,6 +366,11 @@ export struct HomePageContent {
         .textOverflow({ overflow: TextOverflow.Ellipsis })
         .layoutWeight(1)
       
+      // 刷新按钮
+      if (this.pk.location_enabled) {
+        this.locationRefreshButton()
+      }
+      
       // 展开提示图标
       if (this.canExpandLocation) {
         Image($r('app.media.ic_arrow_right'))
@@ -382,6 +387,36 @@ export struct HomePageContent {
     .borderRadius(DesignConstants.BORDER_RADIUS_MD)
     .justifyContent(FlexAlign.Center)
     .bindMenu(this.buildLocationDetailMenu, { placement: Placement.Bottom })
+  }
+
+  // 位置刷新按钮
+  @Builder
+  private locationRefreshButton() {
+    Button({ type: ButtonType.Circle, stateEffect: true }) {
+      Image($r("app.media.solar_refresh_circle_bold"))
+        .width(12)
+        .height(12)
+        .fillColor($r('sys.color.icon_secondary'))
+        .rotate({
+          angle: this.isLocationRefreshing ? 360 : 0,
+          centerX: '50%',
+          centerY: '50%'
+        })
+        .animation({
+          duration: this.isLocationRefreshing ? 1000 : 0,
+          iterations: this.isLocationRefreshing ? -1 : 0,
+          curve: Curve.Linear
+        });
+    }
+    .width(18)
+    .height(18)
+    .backgroundColor(Color.Transparent)
+    .enabled(!this.isLocationRefreshing)
+    .onClick(() => {
+      Throttle.click(() => {
+        this.refreshLocation();
+      });
+    })
   }
 
   // 位置信息详情 Menu Builder
@@ -515,10 +550,14 @@ export struct HomePageContent {
   /**
    * 新年活动卡片 - 马年抽签入口
    * 设计特点：使用渐变色彩营造节日氛围，突出但不突兀
+   * 用户可关闭，关闭后可在"我的"页面找到入口
    */
   @Builder
   private buildNewYearActivityCard() {
-    Row({ space: DesignConstants.SPACING_MD }) {
+    Column() {
+      // 只有当用户未关闭横幅时才显示
+      if (!this.pk.benefit_activity_data.bannerClosed) {
+        Row({ space: DesignConstants.SPACING_MD }) {
       // 左侧：活动图标
       Stack({ alignContent: Alignment.Center }) {
         // 背景光晕
@@ -537,7 +576,7 @@ export struct HomePageContent {
       .height(44)
       .alignSelf(ItemAlign.Center)
       
-      // 中间：活动信息
+      // 中间：活动信息（点击可进入）
       Column({ space: DesignConstants.SPACING_XS }) {
         Row() {
           Text('马年抽签')
@@ -574,17 +613,32 @@ export struct HomePageContent {
       .layoutWeight(1)
       .alignItems(HorizontalAlign.Start)
       .justifyContent(FlexAlign.Center)
+      .onClick(() => {
+        Throttle.click(() => {
+          // 显示马年抽签活动弹窗
+          this.showBenefitActivityDialog();
+        });
+      })
       
-      // 右侧：箭头
-      Text('›')
-        .fontSize(24)
-        .fontColor(Color.White)
-        .fontWeight(FontWeight.Lighter)
-        .opacity(0.8)
+      // 右侧：关闭按钮
+      Button({ type: ButtonType.Circle, stateEffect: true }) {
+        Image($r('app.media.ic_close'))
+          .width(14)
+          .height(14)
+          .fillColor('rgba(255, 255, 255, 0.9)')
+      }
+      .width(28)
+      .height(28)
+      .backgroundColor('rgba(0, 0, 0, 0.15)')
+      .onClick(() => {
+        Throttle.click(() => {
+          this.showCloseBannerConfirmDialog();
+        });
+      })
     }
     .width('100%')
     .height(72)
-    .padding(DesignConstants.SPACING_MD)
+    .padding({ left: DesignConstants.SPACING_MD, right: DesignConstants.SPACING_SM })
     .linearGradient({
       direction: GradientDirection.Right,
       colors: [
@@ -601,12 +655,37 @@ export struct HomePageContent {
       color: 'rgba(212, 36, 38, 0.25)',
       offsetY: 3
     })
-    .onClick(() => {
-      Throttle.click(() => {
-        // 显示马年抽签活动弹窗
-        this.showBenefitActivityDialog();
-      });
-    })
+      }
+    }
+  }
+  
+  /**
+   * 显示关闭横幅确认对话框
+   */
+  private showCloseBannerConfirmDialog(): void {
+    promptAction.showDialog({
+      title: '关闭活动入口',
+      message: '关闭后，您可以在"我的"页面找到马年抽签活动入口。确定要关闭吗？',
+      buttons: [
+        {
+          text: '保持显示',
+          color: $r('sys.color.font_secondary')
+        },
+        {
+          text: '关闭',
+          color: '#D42426'
+        }
+      ]
+    }).then((result) => {
+      if (result.index === 1) {
+        // 用户选择关闭
+        this.pk.benefit_activity_data.bannerClosed = true;
+        promptAction.showToast({ 
+          message: '已关闭，可在"我的"页面找到活动入口',
+          duration: 2000 
+        });
+      }
+    });
   }
   
   /**
