@@ -1,6 +1,5 @@
 import { PreferenceKeys } from '../../models/PreferenceKeys';
 import { PersistenceV2, AppStorageV2 } from '@kit.ArkUI';
-import { ListItemBuilder } from '../common/ListItemBuilder';
 import { AboutSettingsBuilder } from '../../pages/settings/AboutSettingsNavigation';
 import { DialogHub, InfSheet } from '@hadss/dialoghub';
 import { common } from '@kit.AbilityKit';
@@ -10,69 +9,21 @@ import { DesignConstants } from '../../constants/DesignConstants';
 import { Throttle } from '../../utils/Debounce';
 import { CommentService } from '../../services/CommentService';
 import { AppKeys } from '../../models/AppKeys';
-import { DecibelRecordService } from '../../services/DecibelRecordService';
 import { AlertService } from '../../services/AlertService';
-import { ExposureStatisticsService } from '../../services/ExposureStatisticsService';
-import { ToolsContent } from '../tools/ToolsContent';
-
-// 今日统计数据
-interface TodayStats {
-  detectionCount: number;
-  totalDuration: string;
-  alertCount: number;
-}
+import { MeasurementPrecisionContent } from './MeasurementPrecisionContent';
+import { DataAndAlertsContent } from './DataAndAlertsContent';
 
 /**
- * 我的内容页面组件
- * 整合设置、警报、影响、参考入口，以及原有功能
+ * 我的内容页面组件 - 重新设计版
+ * 优化信息层级，融合原有弹窗功能
  */
 @ComponentV2
 export struct MyContentComponent {
   @Local pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys)!;
   @Local ak: AppKeys = AppStorageV2.connect(AppKeys)!;
-  @Local private todayStats: TodayStats = {
-    detectionCount: 0,
-    totalDuration: '0分钟',
-    alertCount: 0
-  };
-  @Local private isLoadingStats: boolean = false;
-  
+
   private context: Context = getContext(this);
-  private recordService: DecibelRecordService = new DecibelRecordService(this.context);
   private alertService: AlertService = AlertService.getInstance(getContext() as common.UIAbilityContext, this.pk);
-  private exposureService: ExposureStatisticsService = ExposureStatisticsService.getInstance();
-
-  aboutToAppear() {
-    this.loadTodayStats();
-  }
-
-  // 加载今日统计数据
-  private async loadTodayStats(): Promise<void> {
-    this.isLoadingStats = true;
-    try {
-      // 获取今日检测次数
-      const todayCount = await this.recordService.getTodayRecordCount();
-      
-      // 获取今日总检测时长（分钟）
-      const todayDuration = await this.recordService.getTodayTotalDuration();
-      const formattedDuration = todayDuration < 60 
-        ? `${todayDuration}分钟` 
-        : `${(todayDuration / 60).toFixed(1)}小时`;
-      
-      // 获取今日警报次数
-      const todayAlerts = await this.recordService.getTodayAlertCount(this.pk.alarm_threshold.baseThreshold);
-
-      this.todayStats = {
-        detectionCount: todayCount,
-        totalDuration: formattedDuration,
-        alertCount: todayAlerts
-      };
-    } catch (error) {
-      console.error('加载今日统计失败:', error);
-    } finally {
-      this.isLoadingStats = false;
-    }
-  }
 
   // 显示评论对话框
   private showCommentDialog = () => {
@@ -89,22 +40,20 @@ export struct MyContentComponent {
   }
 
   build() {
-    // 可滚动内容区域
     Scroll() {
       Column({ space: DesignConstants.SPACING_LG }) {
         // 会员状态卡片
         MembershipStatusCard()
           .margin({ left: 16, right: 16 })
 
-        // 今日统计卡片（紧凑型）
-        this.buildTodayStatsCard()
+        // 测量精度设置入口
+        this.buildMeasurementPrecisionEntry()
 
-        // 统一设置入口
-        this.buildUnifiedSettingsEntry()
+        // 数据与警报设置入口
+        this.buildDataAndAlertsEntry()
 
         // 其他设置列表
         this.buildOtherSettingsList()
-
       }
       .justifyContent(FlexAlign.Start)
       .alignItems(HorizontalAlign.Start)
@@ -119,162 +68,78 @@ export struct MyContentComponent {
     .height('100%')
   }
 
-  // 今日统计卡片（参考色彩模式卡片样式）
+  // ==================== 测量精度设置入口 ====================
+
   @Builder
-  private buildTodayStatsCard() {
+  private buildMeasurementPrecisionEntry() {
     Column({ space: DesignConstants.SPACING_SM }) {
-      // 标题行（在卡片外部，像色彩模式一样）
-      Row() {
-        Text('今日统计')
-          .fontSize(DesignConstants.FONT_SIZE_MD)
-          .fontWeight(FontWeight.Medium)
-          .fontColor($r('sys.color.font_primary'))
-        
-        Blank()
-        
-        // 刷新按钮
-        Button() {
-          Image($r('app.media.ic_refresh'))
-            .width(16)
-            .height(16)
-            .fillColor($r('sys.color.font_secondary'))
-            .rotate({ angle: this.isLoadingStats ? 360 : 0 })
-            .animation({
-              duration: 1000,
-              iterations: this.isLoadingStats ? -1 : 0,
-              curve: Curve.Linear
-            })
-        }
-        .width(28)
-        .height(28)
-        .backgroundColor(Color.Transparent)
-        .enabled(!this.isLoadingStats)
-        .onClick(() => {
-          Throttle.click(() => this.loadTodayStats());
-        })
-      }
-      .width('100%')
-      .padding({ left: 16, right: 16 })
-
-      // 统计数据卡片（参考色彩模式样式）
-      Row({ space: DesignConstants.SPACING_SM }) {
-        // 检测次数
-        Column({ space: 2 }) {
-          Text(`${this.todayStats.detectionCount}`)
-            .fontSize(DesignConstants.FONT_SIZE_LG)
-            .fontWeight(FontWeight.Bold)
-            .fontColor($r('sys.color.font_primary'))
-          Text('检测次数')
-            .fontSize(DesignConstants.FONT_SIZE_XS)
-            .fontColor($r('sys.color.font_secondary'))
-        }
-        .layoutWeight(1)
-        .padding(DesignConstants.SPACING_SM)
-        .backgroundColor($r('sys.color.comp_background_secondary'))
-        .borderRadius(DesignConstants.BORDER_RADIUS_MD)
-
-        // 检测时长
-        Column({ space: 2 }) {
-          Text(this.todayStats.totalDuration)
-            .fontSize(DesignConstants.FONT_SIZE_LG)
-            .fontWeight(FontWeight.Bold)
-            .fontColor($r('sys.color.font_primary'))
-          Text('累计时长')
-            .fontSize(DesignConstants.FONT_SIZE_XS)
-            .fontColor($r('sys.color.font_secondary'))
-        }
-        .layoutWeight(1)
-        .padding(DesignConstants.SPACING_SM)
-        .backgroundColor($r('sys.color.comp_background_secondary'))
-        .borderRadius(DesignConstants.BORDER_RADIUS_MD)
-
-        // 警报次数
-        Column({ space: 2 }) {
-          Text(`${this.todayStats.alertCount}`)
-            .fontSize(DesignConstants.FONT_SIZE_LG)
-            .fontWeight(FontWeight.Bold)
-            .fontColor(this.todayStats.alertCount > 0 ? $r('sys.color.alert') : $r('sys.color.font_primary'))
-          Text('警报次数')
-            .fontSize(DesignConstants.FONT_SIZE_XS)
-            .fontColor($r('sys.color.font_secondary'))
-        }
-        .layoutWeight(1)
-        .padding(DesignConstants.SPACING_SM)
-        .backgroundColor($r('sys.color.comp_background_secondary'))
-        .borderRadius(DesignConstants.BORDER_RADIUS_MD)
-      }
-      .width('100%')
-      .height(56)
-      .padding({ left: 16, right: 16 })
-      .backgroundColor($r('sys.color.comp_background_primary'))
-      .borderRadius(16)
-      .margin({ left: 16, right: 16 })
-    }
-    .width('100%')
-  }
-
-  // 统一设置入口（参考色彩模式卡片样式）
-  @Builder
-  private buildUnifiedSettingsEntry() {
-    Column({ space: DesignConstants.SPACING_SM }) {
-      // 标题（在卡片外部）
-      Text('设置')
+      // 标题
+      Text('测量精度')
         .fontSize(DesignConstants.FONT_SIZE_MD)
         .fontWeight(FontWeight.Medium)
         .fontColor($r('sys.color.font_primary'))
         .alignSelf(ItemAlign.Start)
         .margin({ left: 16 })
 
-      // 设置入口卡片（参考色彩模式样式）
-      Row({ space: 8 }) {
-        // 左侧图标
-        Image($r('app.media.ic_settings'))
-          .width(24)
-          .height(24)
-          .fillColor($r('sys.color.icon_primary'))
-          .margin({ right: 12 })
+      // 设置入口卡片
+      Column() {
+        // 标题行
+        Row({ space: 12 }) {
+          // 左侧图标
+          Row() {
+            Image($r('app.media.ic_calibration'))
+              .width(24)
+              .height(24)
+              .fillColor($r('sys.color.icon_primary'))
+          }
+          .width(44)
+          .height(44)
+          .backgroundColor($r('sys.color.comp_background_secondary'))
+          .borderRadius(12)
+          .justifyContent(FlexAlign.Center)
+          .alignItems(VerticalAlign.Center)
 
-        // 中间内容
-        Column({ space: 2 }) {
-          Text('测量设置')
-            .fontSize(16)
-            .fontColor($r('sys.color.font_primary'))
-            .textAlign(TextAlign.Start)
+          // 中间内容
+          Column({ space: 4 }) {
+            Text('精度设置')
+              .fontSize(16)
+              .fontWeight(FontWeight.Medium)
+              .fontColor($r('sys.color.font_primary'))
 
-          Text(this.getSettingsSummary())
-            .fontSize(14)
-            .fontColor($r('sys.color.font_secondary'))
-            .textAlign(TextAlign.Start)
-            .maxLines(1)
-            .textOverflow({ overflow: TextOverflow.Ellipsis })
+            // 状态摘要
+            Text(this.getPrecisionSummary())
+              .fontSize(13)
+              .fontColor($r('sys.color.font_secondary'))
+              .maxLines(1)
+              .textOverflow({ overflow: TextOverflow.Ellipsis })
+          }
+          .layoutWeight(1)
+          .alignItems(HorizontalAlign.Start)
+
+          // 箭头
+          Image($r('app.media.ic_arrow_right'))
+            .width(16)
+            .height(16)
+            .fillColor($r('sys.color.font_tertiary'))
         }
-        .layoutWeight(1)
-        .alignItems(HorizontalAlign.Start)
-        .justifyContent(FlexAlign.Center)
-
-        // 箭头
-        Image($r('app.media.ic_arrow_right'))
-          .width(16)
-          .height(16)
-          .fillColor($r('sys.color.font_tertiary'))
+        .width('100%')
       }
       .width('100%')
-      .height(56)
-      .padding({ left: 16, right: 16 })
+      .padding(16)
       .backgroundColor($r('sys.color.comp_background_primary'))
       .borderRadius(16)
       .margin({ left: 16, right: 16 })
       .onClick(() => {
-        Throttle.click(() => this.openSettingsPage());
+        Throttle.click(() => this.openMeasurementPrecisionPage());
       })
     }
     .width('100%')
   }
 
-  // 获取设置摘要
-  private getSettingsSummary(): string {
+  // 获取测量精度摘要
+  private getPrecisionSummary(): string {
     const parts: string[] = [];
-    
+
     // 校准状态
     const calibrationValue = this.pk.calibration_value || 0;
     if (calibrationValue !== 0) {
@@ -282,117 +147,344 @@ export struct MyContentComponent {
     } else {
       parts.push('未校准');
     }
-    
-    // 显示模式
-    const modeMap: Record<string, string> = {
-      'default': '跟随系统',
-      'light': '浅色',
-      'dark': '深色'
+
+    // 频率加权
+    const weightingMap: Record<string, string> = {
+      'A': 'A计权',
+      'C': 'C计权',
+      'Z': 'Z计权'
     };
-    parts.push(modeMap[this.pk.display_mode] || '跟随系统');
-    
+    parts.push(weightingMap[this.pk.weighting_type] || 'A计权');
+
+    // 时间加权
+    const modeMap: Record<string, string> = {
+      'FAST_TIME_WEIGHTING': '快速',
+      'SLOW_TIME_WEIGHTING': '慢速',
+      'IMPULSE_TIME_WEIGHTING': '脉冲',
+      'CUSTOM_TIME_WEIGHTING': '自定义'
+    };
+    parts.push(modeMap[this.pk.audio_analysis_mode] || '快速');
+
     return parts.join(' · ');
   }
 
-  // 其他设置列表
+  // ==================== 数据与警报设置入口 ====================
+
   @Builder
-  private buildOtherSettingsList() {
-    List() {
-      // 色彩模式列表项
-      ListItem() {
-        Row({ space: 8 }) {
+  private buildDataAndAlertsEntry() {
+    Column({ space: DesignConstants.SPACING_SM }) {
+      // 标题
+      Text('数据与警报')
+        .fontSize(DesignConstants.FONT_SIZE_MD)
+        .fontWeight(FontWeight.Medium)
+        .fontColor($r('sys.color.font_primary'))
+        .alignSelf(ItemAlign.Start)
+        .margin({ left: 16 })
+
+      // 设置入口卡片
+      Column() {
+        // 标题行
+        Row({ space: 12 }) {
+          // 左侧图标
           Row() {
-            Image($r('app.media.ic_display'))
+            Image($r('app.media.ic_save'))
               .width(24)
               .height(24)
-              .fillColor($r('sys.color.brand'))
-              .margin({ right: 12 })
+              .fillColor($r('sys.color.icon_primary'))
+          }
+          .width(44)
+          .height(44)
+          .backgroundColor($r('sys.color.comp_background_secondary'))
+          .borderRadius(12)
+          .justifyContent(FlexAlign.Center)
+          .alignItems(VerticalAlign.Center)
 
-            Text('色彩模式')
+          // 中间内容
+          Column({ space: 4 }) {
+            Text('数据与警报')
               .fontSize(16)
+              .fontWeight(FontWeight.Medium)
               .fontColor($r('sys.color.font_primary'))
-              .layoutWeight(1)
-          }.layoutWeight(1)
 
-          // 当前模式显示
-          Text(this.pk.display_mode === 'default' ? '跟随系统' :
-               this.pk.display_mode === 'light' ? '浅色主题' : '深色主题')
-            .fontSize(14)
-            .fontColor($r('sys.color.font_secondary'))
+            // 状态摘要
+            Text(this.getDataAlertsSummary())
+              .fontSize(13)
+              .fontColor($r('sys.color.font_secondary'))
+              .maxLines(1)
+              .textOverflow({ overflow: TextOverflow.Ellipsis })
+          }
+          .layoutWeight(1)
+          .alignItems(HorizontalAlign.Start)
+
+          // 箭头
+          Image($r('app.media.ic_arrow_right'))
+            .width(16)
+            .height(16)
+            .fillColor($r('sys.color.font_tertiary'))
         }
         .width('100%')
-        .height(56)
-        .padding({ left: 16, right: 16 })
-        .alignItems(VerticalAlign.Center)
       }
-      .borderRadius(16)
+      .width('100%')
+      .padding(16)
       .backgroundColor($r('sys.color.comp_background_primary'))
-      .margin({ top: DesignConstants.SPACING_LG, left: 16, right: 16 })
+      .borderRadius(16)
+      .margin({ left: 16, right: 16 })
       .onClick(() => {
-        Throttle.click(() => {
-          DialogHub.getSheet()
-            .setStyle({
-              title: { title: '色彩模式' },
-              backgroundColor: $r('sys.color.background_secondary')
-            })
-            .setConfig({ scrollSizeMode: ScrollSizeMode.FOLLOW_DETENT })
-            .setComponentTargetId('mainId')
-            .setContent(wrapBuilder(DisplayModeCardBuilder))
-            .build()
-            .show();
-        });
+        Throttle.click(() => this.openDataAndAlertsPage());
       })
-
-      // 给作者五星好评设置
-      ListItemBuilder(
-        $r('app.media.ic_smile'),
-        '五星好评',
-        () => {
-          this.showCommentDialog();
-        },
-        DesignConstants.SPACING_LG
-      )
-
-      // 关于列表项
-      ListItemBuilder(
-        $r('app.media.ic_info'),
-        '关于',
-        () => {
-          DialogHub.getSheet()
-            .setStyle({ title: { title: '关于' }, backgroundColor: $r('sys.color.background_secondary') })
-            .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS })
-            .setComponentTargetId('mainId')
-            .setContent(wrapBuilder(AboutSettingsBuilder))
-            .build()
-            .show();
-        },
-        DesignConstants.SPACING_LG
-      )
     }
     .width('100%')
-    .alignListItem(ListItemAlign.Start)
+  }
+
+  // 获取数据与警报摘要
+  private getDataAlertsSummary(): string {
+    const parts: string[] = [];
+
+    // 自动保存
+    if (this.pk.auto_save_enabled) {
+      parts.push(`自动保存每${this.pk.auto_save_interval}分钟`);
+    } else {
+      parts.push('自动保存关');
+    }
+
+    // 录音
+    parts.push(this.pk.record_enabled ? '录音开' : '录音关');
+
+    // 定位
+    parts.push(this.pk.location_enabled ? '定位开' : '定位关');
+
+    // 警报
+    parts.push(`警报阈值${this.pk.alarm_threshold.currentEffectiveThreshold}dB`);
+
+    return parts.join(' · ');
+  }
+
+  // ==================== 其他设置列表 ====================
+
+  @Builder
+  private buildOtherSettingsList() {
+    Column({ space: DesignConstants.SPACING_LG }) {
+      // 色彩模式设置项
+      this.buildColorModeItem()
+
+      // 给作者五星好评设置项
+      this.buildRatingItem()
+
+      // 关于设置项
+      this.buildAboutItem()
+    }
+    .width('100%')
+    .margin({ top: DesignConstants.SPACING_LG })
+  }
+
+  // 色彩模式设置项
+  @Builder
+  private buildColorModeItem() {
+    Row({ space: 12 }) {
+      // 左侧图标容器
+      Row() {
+        Image($r('app.media.ic_display'))
+          .width(22)
+          .height(22)
+          .fillColor($r('sys.color.icon_primary'))
+      }
+      .width(40)
+      .height(40)
+      .backgroundColor($r('sys.color.comp_background_secondary'))
+      .borderRadius(10)
+      .justifyContent(FlexAlign.Center)
+      .alignItems(VerticalAlign.Center)
+
+      // 内容区
+      Row() {
+        Text('色彩模式')
+          .fontSize(16)
+          .fontColor($r('sys.color.font_primary'))
+          .layoutWeight(1)
+
+        // 当前模式显示
+        Text(this.pk.display_mode === 'default' ? '跟随系统' :
+             this.pk.display_mode === 'light' ? '浅色主题' : '深色主题')
+          .fontSize(14)
+          .fontColor($r('sys.color.font_secondary'))
+
+        // 右侧箭头
+        Image($r('app.media.ic_arrow_right'))
+          .width(16)
+          .height(16)
+          .fillColor($r('sys.color.font_tertiary'))
+          .margin({ left: 8 })
+      }
+      .layoutWeight(1)
+      .height(40)
+      .alignItems(VerticalAlign.Center)
+    }
+    .width('100%')
+    .height(64)
+    .padding({ left: 12, right: 16 })
+    .backgroundColor($r('sys.color.comp_background_primary'))
+    .borderRadius(16)
+    .margin({ left: 16, right: 16 })
+    .alignItems(VerticalAlign.Center)
+    .onClick(() => {
+      Throttle.click(() => {
+        DialogHub.getSheet()
+          .setStyle({
+            title: { title: '色彩模式' },
+            backgroundColor: $r('sys.color.background_secondary')
+          })
+          .setConfig({ scrollSizeMode: ScrollSizeMode.FOLLOW_DETENT })
+          .setComponentTargetId('mainId')
+          .setContent(wrapBuilder(DisplayModeCardBuilder))
+          .build()
+          .show();
+      });
+    })
+  }
+
+  // 五星好评设置项
+  @Builder
+  private buildRatingItem() {
+    Row({ space: 12 }) {
+      // 左侧图标容器
+      Row() {
+        Image($r('app.media.ic_smile'))
+          .width(22)
+          .height(22)
+          .fillColor($r('sys.color.icon_primary'))
+      }
+      .width(40)
+      .height(40)
+      .backgroundColor($r('sys.color.comp_background_secondary'))
+      .borderRadius(10)
+      .justifyContent(FlexAlign.Center)
+      .alignItems(VerticalAlign.Center)
+
+      // 内容区
+      Row() {
+        Text('五星好评')
+          .fontSize(16)
+          .fontColor($r('sys.color.font_primary'))
+          .layoutWeight(1)
+
+        // 右侧箭头
+        Image($r('app.media.ic_arrow_right'))
+          .width(16)
+          .height(16)
+          .fillColor($r('sys.color.font_tertiary'))
+      }
+      .layoutWeight(1)
+      .height(40)
+      .alignItems(VerticalAlign.Center)
+    }
+    .width('100%')
+    .height(64)
+    .padding({ left: 12, right: 16 })
+    .backgroundColor($r('sys.color.comp_background_primary'))
+    .borderRadius(16)
+    .margin({ left: 16, right: 16 })
+    .alignItems(VerticalAlign.Center)
+    .onClick(() => {
+      this.showCommentDialog();
+    })
+  }
+
+  // 关于设置项
+  @Builder
+  private buildAboutItem() {
+    Row({ space: 12 }) {
+      // 左侧图标容器
+      Row() {
+        Image($r('app.media.ic_info'))
+          .width(22)
+          .height(22)
+          .fillColor($r('sys.color.icon_primary'))
+      }
+      .width(40)
+      .height(40)
+      .backgroundColor($r('sys.color.comp_background_secondary'))
+      .borderRadius(10)
+      .justifyContent(FlexAlign.Center)
+      .alignItems(VerticalAlign.Center)
+
+      // 内容区
+      Row() {
+        Text('关于')
+          .fontSize(16)
+          .fontColor($r('sys.color.font_primary'))
+          .layoutWeight(1)
+
+        // 右侧箭头
+        Image($r('app.media.ic_arrow_right'))
+          .width(16)
+          .height(16)
+          .fillColor($r('sys.color.font_tertiary'))
+      }
+      .layoutWeight(1)
+      .height(40)
+      .alignItems(VerticalAlign.Center)
+    }
+    .width('100%')
+    .height(64)
+    .padding({ left: 12, right: 16 })
+    .backgroundColor($r('sys.color.comp_background_primary'))
+    .borderRadius(16)
+    .margin({ left: 16, right: 16 })
+    .alignItems(VerticalAlign.Center)
+    .onClick(() => {
+      Throttle.click(() => {
+        DialogHub.getSheet()
+          .setStyle({ title: { title: '关于' }, backgroundColor: $r('sys.color.background_secondary') })
+          .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS })
+          .setComponentTargetId('mainId')
+          .setContent(wrapBuilder(AboutSettingsBuilder))
+          .build()
+          .show();
+      });
+    })
   }
 
   // ==================== 页面打开方法 ====================
 
-  // 打开设置页面
-  private openSettingsPage(): void {
+  // 打开测量精度设置页面
+  private openMeasurementPrecisionPage(): void {
     let settingsDialog: InfSheet;
     settingsDialog = DialogHub.getSheet()
-      .setStyle({ 
-        title: { title: '设置' },
-        backgroundColor: $r('sys.color.background_secondary') 
+      .setStyle({
+        title: { title: '测量精度' },
+        backgroundColor: $r('sys.color.background_secondary')
       })
       .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS })
       .setComponentTargetId('mainId')
-      .setContent(wrapBuilder(SettingsContentBuilder))
+      .setContent(wrapBuilder(MeasurementPrecisionContentBuilder))
+      .build();
+    settingsDialog.show();
+  }
+
+  // 打开数据与警报设置页面
+  private openDataAndAlertsPage(): void {
+    let settingsDialog: InfSheet;
+    settingsDialog = DialogHub.getSheet()
+      .setStyle({
+        title: { title: '数据与警报' },
+        backgroundColor: $r('sys.color.background_secondary')
+      })
+      .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS })
+      .setComponentTargetId('mainId')
+      .setContent(wrapBuilder(DataAndAlertsContentBuilder))
       .build();
     settingsDialog.show();
   }
 }
 
-// 设置内容Builder
+// 测量精度设置内容Builder
 @Builder
-function SettingsContentBuilder() {
-  ToolsContent()
+function MeasurementPrecisionContentBuilder() {
+  MeasurementPrecisionContent()
+}
+
+// 数据与警报设置内容Builder
+@Builder
+function DataAndAlertsContentBuilder() {
+  DataAndAlertsContent()
 }
