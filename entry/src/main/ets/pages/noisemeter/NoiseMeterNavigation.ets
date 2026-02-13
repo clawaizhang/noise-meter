@@ -1,26 +1,14 @@
 import { navigationStack } from '../../constants/ProviderConstant';
-import { DialogHub, InfSheet } from '@hadss/dialoghub';
 import { AppKeys } from '../../models/AppKeys';
 import { AppStorageV2, PersistenceV2 } from '@kit.ArkUI';
 import { PreferenceKeys } from '../../models/PreferenceKeys';
-import { AlertsContent } from '../../components/alerts/AlertsContent';
-import { AlertsSettingsBuilder, AlertsSettingsProps } from '../settings/AlertsSettingsNavigation';
 import { MyContentComponent } from '../../components/my-content/MyContentComponent';
-import { EnhancedExposureContent } from '../../components/exposure/EnhancedExposureContent';
 import { HomePageContent } from '../../components/home/HomePageContent';
 import { AudioController } from '../../components/decibel-meter/AudioController';
-import { ReferenceContent } from '../../components/reference/ReferenceContent';
-import { ToolsContent } from '../../components/tools/ToolsContent';
 import { DashboardFullscreen } from '../../components/home/DashboardFullscreen';
 import { WindowManager } from '../../utils/WindowManager';
+import { HistoryContent } from '../../components/history/HistoryContent';
 import window from '@ohos.window';
-
-// 导航菜单项接口定义
-interface NavigationMenuItem {
-  value: string;
-  icon: Resource;
-  action: () => void;
-}
 
 // Tab配置接口定义
 interface TabConfig {
@@ -29,14 +17,11 @@ interface TabConfig {
   index: number;
 }
 
-// Tab 类型定义（移除仪表Tab后的索引）
+// Tab 类型定义（精简为3个Tab）
 enum TabType {
-  HOME = 0,
-  TOOLS = 1,
-  ALERTS = 2,
-  EXPOSURE = 3,
-  REFERENCE = 4,
-  MY = 5
+  DETECTION = 0,  // 检测（原主页）
+  HISTORY = 1,    // 历史
+  MY = 2          // 我的（整合设置/警报/影响/参考）
 }
 
 @Builder
@@ -48,8 +33,7 @@ export function NoiseMeterBuilder() {
 export struct MainNoiseMeter {
   @Consumer(navigationStack) navStack: NavPathStack = new NavPathStack()
   @Local currentIndex: number = 0
-  @Local title: string = '主页';
-  @Local menuItems: Array<NavigationMenuItem> = [];
+  @Local title: string = '检测';
   @Local ak: AppKeys = AppStorageV2.connect(AppKeys)!;
   @Local pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys)!;
 
@@ -57,38 +41,22 @@ export struct MainNoiseMeter {
   }
 
   aboutToAppear(): void {
-    this.menuItems = this.homeMenus;
   }
 
   @Monitor('currentIndex')
   onTabIndexChange(monitor: IMonitor) {
     const currentValue = monitor.value<number>()?.now;
     
-    // 根据索引设置标题和菜单
+    // 根据索引设置标题
     switch (currentValue) {
-      case TabType.HOME:
-        this.title = '主页';
-        this.menuItems = this.homeMenus;
+      case TabType.DETECTION:
+        this.title = '检测';
         break;
-      case TabType.TOOLS:
-        this.title = '设置';
-        this.menuItems = this.toolsMenus;
-        break;
-      case TabType.ALERTS:
-        this.title = '警报';
-        this.menuItems = this.alertsMenus;
-        break;
-      case TabType.EXPOSURE:
-        this.title = '影响';
-        this.menuItems = this.exposureMenus;
-        break;
-      case TabType.REFERENCE:
-        this.title = '参考';
-        this.menuItems = this.referenceMenus;
+      case TabType.HISTORY:
+        this.title = '历史';
         break;
       case TabType.MY:
         this.title = '我的';
-        this.menuItems = [];
         break;
     }
     
@@ -108,10 +76,8 @@ export struct MainNoiseMeter {
   onDashboardFullscreenChange(monitor: IMonitor) {
     const isFullscreen = monitor.value<boolean>()?.now;
     if (isFullscreen) {
-      // 进入全屏模式，自动切换横屏
       this.enterLandscapeMode();
     } else {
-      // 退出全屏模式，恢复竖屏
       this.exitLandscapeMode();
     }
   }
@@ -166,49 +132,12 @@ export struct MainNoiseMeter {
     .flexGrow(1)
   }
 
-  private homeMenus: Array<NavigationMenuItem> = []
-  private alertsMenus: Array<NavigationMenuItem> = [
-    {
-      value: '警报设置',
-      icon: $r('app.media.ic_alarm'),
-      action: () => {
-        let alertsDialog: InfSheet;
-        let props: AlertsSettingsProps = {
-          onSave: () => {
-            alertsDialog.dismiss();
-          },
-          onClose: () => {
-            alertsDialog.dismiss();
-          }
-        }
-        alertsDialog = DialogHub.getSheet()
-          .setStyle({ showClose: false, backgroundColor: $r('sys.color.background_secondary') })
-          .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS })
-          .setComponentTargetId('mainId')
-          .setContent(wrapBuilder(AlertsSettingsBuilder), props)
-          .build();
-        alertsDialog.show();
-      }
-    }
-  ]
-  private exposureMenus: Array<NavigationMenuItem> = [
-    {
-      value: '历史趋势',
-      icon: $r('app.media.ic_history'),
-      action: () => {
-        this.navStack.pushPathByName('DecibelHistory', null);
-      }
-    }
-  ]
-  private referenceMenus: Array<NavigationMenuItem> = []
-  private toolsMenus: Array<NavigationMenuItem> = []
-
   @Builder
-  HomeContent() {
+  DetectionContent() {
     HomePageContent()
-      .opacity(this.currentIndex === TabType.HOME ? 1 : 0)
-      .scale({ x: this.currentIndex === TabType.HOME ? 1 : 0.95, 
-              y: this.currentIndex === TabType.HOME ? 1 : 0.95 })
+      .opacity(this.currentIndex === TabType.DETECTION ? 1 : 0)
+      .scale({ x: this.currentIndex === TabType.DETECTION ? 1 : 0.95, 
+              y: this.currentIndex === TabType.DETECTION ? 1 : 0.95 })
       .animation({
         duration: 300,
         curve: Curve.EaseOut,
@@ -219,56 +148,11 @@ export struct MainNoiseMeter {
   }
 
   @Builder
-  ToolsContentBuilder() {
-    ToolsContent()
-      .opacity(this.currentIndex === TabType.TOOLS ? 1 : 0)
-      .scale({ x: this.currentIndex === TabType.TOOLS ? 1 : 0.95, 
-              y: this.currentIndex === TabType.TOOLS ? 1 : 0.95 })
-      .animation({
-        duration: 300,
-        curve: Curve.EaseOut,
-        delay: 0,
-        iterations: 1,
-        playMode: PlayMode.Normal
-      })
-  }
-
-  @Builder
-  AlertsContentBuilder() {
-    AlertsContent()
-      .opacity(this.currentIndex === TabType.ALERTS ? 1 : 0)
-      .scale({ x: this.currentIndex === TabType.ALERTS ? 1 : 0.95, 
-              y: this.currentIndex === TabType.ALERTS ? 1 : 0.95 })
-      .animation({
-        duration: 300,
-        curve: Curve.EaseOut,
-        delay: 0,
-        iterations: 1,
-        playMode: PlayMode.Normal
-      })
-  }
-
-  @Builder
-  ExposureContentBuilder() {
-    EnhancedExposureContent()
-      .opacity(this.currentIndex === TabType.EXPOSURE ? 1 : 0)
-      .scale({ x: this.currentIndex === TabType.EXPOSURE ? 1 : 0.95, 
-              y: this.currentIndex === TabType.EXPOSURE ? 1 : 0.95 })
-      .animation({
-        duration: 300,
-        curve: Curve.EaseOut,
-        delay: 0,
-        iterations: 1,
-        playMode: PlayMode.Normal
-      })
-  }
-
-  @Builder
-  ReferenceContentBuilder() {
-    ReferenceContent()
-      .opacity(this.currentIndex === TabType.REFERENCE ? 1 : 0)
-      .scale({ x: this.currentIndex === TabType.REFERENCE ? 1 : 0.95, 
-              y: this.currentIndex === TabType.REFERENCE ? 1 : 0.95 })
+  HistoryContentBuilder() {
+    HistoryContent()
+      .opacity(this.currentIndex === TabType.HISTORY ? 1 : 0)
+      .scale({ x: this.currentIndex === TabType.HISTORY ? 1 : 0.95, 
+              y: this.currentIndex === TabType.HISTORY ? 1 : 0.95 })
       .animation({
         duration: 300,
         curve: Curve.EaseOut,
@@ -339,77 +223,49 @@ export struct MainNoiseMeter {
     }
     .alignItems(HorizontalAlign.Start)
     .justifyContent(FlexAlign.Center)
-    .padding({ left: 16 }) // 左侧边距
+    .padding({ left: 16 })
     .height('100%')
   }
 
   build() {
     NavDestination() {
-      // 音频控制器（逻辑组件，不渲染UI）- 使用RxJS数据流
+      // 音频控制器（逻辑组件，不渲染UI）
       AudioController()
 
       if (this.ak.isDashboardFullscreen) {
         // 全屏横屏模式：只显示仪表全屏组件
         DashboardFullscreen()
       } else {
-        // 正常模式：显示Tabs
+        // 正常模式：显示Tabs（精简为3个）
         Tabs({ barPosition: BarPosition.End, index: this.currentIndex }) {
-          // 主页 - 使用HomeContent组件
+          // 检测Tab（原主页）
           TabContent() {
-            this.HomeContent()
+            this.DetectionContent()
           }
           .tabBar(this.TabBuilder({
-            title: '主页',
+            title: '检测',
             icon: this.currentIndex == 0 ? $r("app.media.ic_home_bold") : $r("app.media.ic_home"),
             index: 0
           }))
 
-          // 工具页面 - 使用ToolsContent组件
+          // 历史Tab
           TabContent() {
-            this.ToolsContentBuilder()
+            this.HistoryContentBuilder()
           }
           .tabBar(this.TabBuilder({
-            title: '设置',
-            icon: this.currentIndex == 1 ? $r("app.media.ic_atom_bold") : $r("app.media.ic_atom"),
+            title: '历史',
+            icon: this.currentIndex == 1 ? $r("app.media.ic_history") : $r("app.media.ic_history"),
             index: 1
           }))
 
-          // 警报页面 - 使用独立的AlertsContent组件
-          TabContent() {
-            this.AlertsContentBuilder()
-          }
-          .tabBar(this.TabBuilder({
-            title: '警报',
-            icon: this.currentIndex == 2 ? $r("app.media.bell_bing_bold") : $r("app.media.ic_alarm"),
-            index: 2
-          }))
-
-          TabContent() {
-            this.ExposureContentBuilder()
-          }
-          .tabBar(this.TabBuilder({
-            title: '影响',
-            icon: this.currentIndex == 3 ? $r("app.media.i_solar_radar_bold") : $r("app.media.i_solar_radar_outline"),
-            index: 3
-          }))
-
-          // 参考页面 - 使用ReferenceContent组件
-          TabContent() {
-            this.ReferenceContentBuilder()
-          }
-          .tabBar(this.TabBuilder({
-            title: '参考',
-            icon: this.currentIndex == 4 ? $r("app.media.ic_book2_bold") : $r("app.media.ic_book2"),
-            index: 4
-          }))
-
+          // 我的Tab（整合设置/警报/影响/参考）
           TabContent() {
             this.MyContentBuilder()
           }
           .tabBar(this.TabBuilder({
             title: '我的',
-            icon: this.currentIndex == 5 ? $r("app.media.solar_user_circle_bold") : $r("app.media.ic_user"),
-            index: 5
+            icon: this.currentIndex == 2 ? $r("app.media.solar_user_circle_bold") : $r("app.media.ic_user"),
+            index: 2
           }))
         }
         .scrollable(false)
@@ -422,13 +278,9 @@ export struct MainNoiseMeter {
         .animationDuration(0)
       }
     }
-    .title(this.ak.isDashboardFullscreen ? undefined : this.buildTitleContent, {
-      barStyle: BarStyle.STANDARD,
-      backgroundBlurStyle: BlurStyle.BACKGROUND_REGULAR,
-    })
-    .hideTitleBar(this.ak.isDashboardFullscreen)
+    .hideTitleBar(true)  // 隐藏顶部标题栏，节省空间
     .id('mainAppId')
-    .menus(this.ak.isDashboardFullscreen ? [] : this.menuItems)
+    .menus([])
     .hideToolBar(true)
     .mode(NavDestinationMode.STANDARD)
     .backgroundColor($r('sys.color.background_secondary'))

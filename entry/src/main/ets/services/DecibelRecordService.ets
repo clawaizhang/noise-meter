@@ -520,4 +520,88 @@ export class DecibelRecordService {
       throw new Error('获取过滤后记录总数失败');
     }
   }
+
+  /**
+   * 获取今日检测记录数
+   */
+  async getTodayRecordCount(): Promise<number> {
+    try {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const todayTimestamp = today.getTime();
+      
+      const sql = 'SELECT COUNT(*) as count FROM decibel_records WHERE timestamp >= ?';
+      const resultSet = await this.relationalStoreService.query(sql, [todayTimestamp]);
+      
+      let count = 0;
+      if (resultSet.goToFirstRow()) {
+        count = resultSet.getLong(resultSet.getColumnIndex('count'));
+      }
+      resultSet.close();
+      
+      hilog.info(DOMAIN, TAG, '今日检测记录数: %{public}d', count);
+      return count;
+    } catch (error) {
+      hilog.error(DOMAIN, TAG, '获取今日检测记录数失败: %{public}s',
+        error instanceof Error ? error.message : String(error));
+      return 0;
+    }
+  }
+
+  /**
+   * 获取今日总检测时长（分钟）
+   */
+  async getTodayTotalDuration(): Promise<number> {
+    try {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const todayTimestamp = today.getTime();
+      
+      const sql = 'SELECT SUM(duration) as totalDuration FROM decibel_records WHERE timestamp >= ?';
+      const resultSet = await this.relationalStoreService.query(sql, [todayTimestamp]);
+      
+      let totalDuration = 0;
+      if (resultSet.goToFirstRow()) {
+        totalDuration = resultSet.getLong(resultSet.getColumnIndex('totalDuration'));
+      }
+      resultSet.close();
+      
+      // 转换为分钟
+      const minutes = Math.floor(totalDuration / 60);
+      hilog.info(DOMAIN, TAG, '今日总检测时长: %{public}d分钟', minutes);
+      return minutes;
+    } catch (error) {
+      hilog.error(DOMAIN, TAG, '获取今日总检测时长失败: %{public}s',
+        error instanceof Error ? error.message : String(error));
+      return 0;
+    }
+  }
+
+  /**
+   * 获取今日警报记录数（超过阈值的记录）
+   * @param threshold 警报阈值（dB）
+   */
+  async getTodayAlertCount(threshold: number): Promise<number> {
+    try {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const todayTimestamp = today.getTime();
+      
+      const sql = 'SELECT COUNT(*) as count FROM decibel_records WHERE timestamp >= ? AND maxDecibel >= ?';
+      const resultSet = await this.relationalStoreService.query(sql, [todayTimestamp, threshold]);
+      
+      let count = 0;
+      if (resultSet.goToFirstRow()) {
+        count = resultSet.getLong(resultSet.getColumnIndex('count'));
+      }
+      resultSet.close();
+      
+      hilog.info(DOMAIN, TAG, '今日警报记录数: %{public}d (阈值: %{public}d)', count, threshold);
+      return count;
+    } catch (error) {
+      hilog.error(DOMAIN, TAG, '获取今日警报记录数失败: %{public}s',
+        error instanceof Error ? error.message : String(error));
+      return 0;
+    }
+  }
 }
