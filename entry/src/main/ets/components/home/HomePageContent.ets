@@ -7,13 +7,27 @@ import { common } from '@kit.AbilityKit';
 import { DecibelRecordService } from '../../services/DecibelRecordService';
 import { AudioControllerService } from '../../services/AudioControllerService';
 import { LocationInfo, LocationService } from '../../services/LocationService';
+import { ExposureStatisticsService } from '../../services/ExposureStatisticsService';
+import { NoiseExposureStandard } from '../../constants/ExposureStandardConstants';
 import { AudioControllerLifecycleState, StateTransitionEvent } from '../../models/AudioControllerLifecycleState';
 import { StatusAlertsComponent } from '../status-alerts/StatusAlertsComponent';
-import { SpringFestivalConstants } from '../../constants/SpringFestivalConstants';
+import { AlertsContent } from '../alerts/AlertsContent';
+import { EnhancedExposureContent } from '../exposure/EnhancedExposureContent';
+import { ReferenceContent } from '../reference/ReferenceContent';
+import { ToolsContent } from '../tools/ToolsContent';
 import { DialogHub, type InfSheet } from '@hadss/dialoghub';
+import { SpringFestivalConstants } from '../../constants/SpringFestivalConstants';
 import { BenefitActivityDialogBuilder, BenefitActivityDialogProps } from '../membership/BenefitActivityDialog';
 import { DashboardHomeCard } from './DashboardHomeCard';
 import { InputDialog } from '../decibel-meter/InputDialog';
+
+// 数据摘要卡片配置接口
+interface SummaryCardConfig {
+  title: string;
+  value: string;
+  subtitle: string;
+  onTap: () => void;
+}
 
 @ComponentV2
 export struct HomePageContent {
@@ -24,9 +38,11 @@ export struct HomePageContent {
   @Local private isLocationRefreshing: boolean = false;
   @Local private controllerState: AudioControllerLifecycleState = AudioControllerLifecycleState.CONTROLLER_IDLE;
   @Local private saveAnimationOpacity: number = 1.0;
+  @Local private todayPeak: number = 0;
   private decibelRecordService: DecibelRecordService = new DecibelRecordService(this.context);
   private locationService: LocationService = LocationService.getInstance();
   private audioControllerService: AudioControllerService = AudioControllerService.getInstance(this.ak, this.pk);
+  private exposureService: ExposureStatisticsService = ExposureStatisticsService.getInstance();
   private inputDialogController: CustomDialogController = new CustomDialogController({
     builder: this.buildSaveInputDialog,
     cancel: () => { },
@@ -61,6 +77,12 @@ export struct HomePageContent {
 
         // 核心分贝显示区 + 音频控制整合
         this.buildCombinedDecibelControlCard()
+
+        // 警报状态条
+        this.buildAlertStatusBar()
+
+        // 数据摘要和工具区
+        this.buildDataSummarySection()
       }
       .width('100%')
       .padding(DesignConstants.SPACING_MD)
@@ -696,6 +718,19 @@ export struct HomePageContent {
     }
     // 初始化音频控制器状态监听
     this.initializeAudioStateListener();
+    // 加载今日峰值
+    this.loadTodayPeak();
+  }
+
+  // 加载今日峰值
+  private async loadTodayPeak(): Promise<void> {
+    try {
+      const exposureData = await this.exposureService.calculateTodayExposure(NoiseExposureStandard.SOCIAL);
+      this.todayPeak = exposureData.todayPeak;
+    } catch (error) {
+      console.error('加载今日峰值失败:', error);
+      this.todayPeak = 0;
+    }
   }
 
   // 刷新位置信息方法
@@ -944,4 +979,276 @@ export struct HomePageContent {
     .width('100%')
     .padding(DesignConstants.SPACING_MD)
   }
+
+  // ==================== 警报状态条（从"我的"页面迁移）====================
+
+  @Builder
+  private buildAlertStatusBar() {
+    Row({ space: DesignConstants.SPACING_SM }) {
+      // 状态圆点
+      Circle()
+        .width(10)
+        .height(10)
+        .fill(this.getAlertStatusColor())
+        .shadow({
+          radius: 4,
+          color: this.getAlertStatusColor(),
+          offsetX: 0,
+          offsetY: 0
+        })
+
+      // 状态文字
+      Text(this.getAlertStatusText())
+        .fontSize(DesignConstants.FONT_SIZE_MD)
+        .fontColor($r('sys.color.font_primary'))
+        .fontWeight(FontWeight.Medium)
+
+      Blank()
+
+      // 阈值信息
+      Text(`阈值: ${this.pk.alarm_threshold.baseThreshold}dB`)
+        .fontSize(DesignConstants.FONT_SIZE_SM)
+        .fontColor($r('sys.color.font_secondary'))
+
+      // 设置箭头
+      Image($r('app.media.ic_arrow_right'))
+        .width(16)
+        .height(16)
+        .fillColor($r('sys.color.font_tertiary'))
+    }
+    .width('100%')
+    .height(56)
+    .padding({ left: DesignConstants.SPACING_MD, right: DesignConstants.SPACING_MD })
+    .backgroundColor($r('sys.color.comp_background_primary'))
+    .borderRadius(DesignConstants.BORDER_RADIUS_LG)
+    .onClick(() => {
+      Throttle.click(() => this.openAlertsPage());
+    })
+  }
+
+  // 获取警报状态颜色
+  private getAlertStatusColor(): Resource {
+    const db = this.ak.uiDisplayState.displayDb;
+    const threshold = this.pk.alarm_threshold.baseThreshold || 70;
+    if (db > threshold) {
+      return $r('sys.color.alert');
+    }
+    if (db > threshold - 10) {
+      return $r('sys.color.warning');
+    }
+    return $r('sys.color.confirm');
+  }
+
+  // 获取警报状态文字
+  private getAlertStatusText(): string {
+    const db = this.ak.uiDisplayState.displayDb;
+    const threshold = this.pk.alarm_threshold.baseThreshold || 70;
+    if (db > threshold) {
+      return '⚠️ 超过阈值';
+    }
+    if (db > threshold - 10) {
+      return '⚡ 接近阈值';
+    }
+    return '🟢 环境安全';
+  }
+
+  // 打开警报页面
+  private openAlertsPage(): void {
+    let alertsDialog: InfSheet;
+    alertsDialog = DialogHub.getSheet()
+      .setStyle({
+        title: { title: '警报中心' },
+        backgroundColor: $r('sys.color.background_secondary')
+      })
+      .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS })
+      .setComponentTargetId('mainId')
+      .setContent(wrapBuilder(AlertsContentBuilder))
+      .build();
+    alertsDialog.show();
+  }
+
+  // ==================== 数据摘要和工具区 ====================
+
+  @Builder
+  private buildDataSummarySection() {
+    Column({ space: DesignConstants.SPACING_MD }) {
+      // 数据摘要卡片行
+      Row({ space: DesignConstants.SPACING_MD }) {
+        // 噪音影响程度卡片
+        this.buildSummaryCard({
+          title: '噪音影响',
+          value: this.getExposurePercentage(),
+          subtitle: '查看详情',
+          onTap: () => this.openExposurePage()
+        })
+
+        // 今日峰值卡片
+        this.buildSummaryCard({
+          title: '今日峰值',
+          value: this.getTodayPeak(),
+          subtitle: '查看分布',
+          onTap: () => this.openExposurePage()
+        })
+
+        // 工具箱卡片
+        this.buildToolsCard()
+      }
+      .width('100%')
+    }
+    .width('100%')
+  }
+
+  // 数据摘要卡片
+  @Builder
+  private buildSummaryCard(config: SummaryCardConfig) {
+    Column({ space: DesignConstants.SPACING_XS }) {
+      Text(config.title)
+        .fontSize(DesignConstants.FONT_SIZE_SM)
+        .fontColor($r('sys.color.font_secondary'))
+
+      Text(config.value)
+        .fontSize(DesignConstants.FONT_SIZE_XL)
+        .fontWeight(FontWeight.Bold)
+        .fontColor($r('sys.color.font_primary'))
+
+      Text(config.subtitle)
+        .fontSize(DesignConstants.FONT_SIZE_XS)
+        .fontColor($r('sys.color.font_emphasize'))
+    }
+    .layoutWeight(1)
+    .height(90)
+    .padding(DesignConstants.SPACING_SM)
+    .backgroundColor($r('sys.color.comp_background_primary'))
+    .borderRadius(DesignConstants.BORDER_RADIUS_LG)
+    .justifyContent(FlexAlign.Center)
+    .onClick(() => {
+      Throttle.click(() => config.onTap());
+    })
+  }
+
+  // 工具箱卡片
+  @Builder
+  private buildToolsCard() {
+    Column({ space: DesignConstants.SPACING_XS }) {
+      Text('工具箱')
+        .fontSize(DesignConstants.FONT_SIZE_SM)
+        .fontColor($r('sys.color.font_secondary'))
+
+      Image($r('app.media.ic_settings'))
+        .width(28)
+        .height(28)
+        .fillColor($r('sys.color.icon_primary'))
+
+      Text('更多工具')
+        .fontSize(DesignConstants.FONT_SIZE_XS)
+        .fontColor($r('sys.color.font_emphasize'))
+    }
+    .layoutWeight(1)
+    .height(90)
+    .padding(DesignConstants.SPACING_SM)
+    .backgroundColor($r('sys.color.comp_background_primary'))
+    .borderRadius(DesignConstants.BORDER_RADIUS_LG)
+    .justifyContent(FlexAlign.Center)
+    .bindMenu(this.buildToolsMenu, { placement: Placement.Top })
+  }
+
+  // 工具箱菜单
+  @Builder
+  private buildToolsMenu() {
+    Menu() {
+      MenuItem({ content: '健康影响参考' })
+        .onClick(() => {
+          Throttle.click(() => this.openReferencePage());
+        })
+      MenuItem({ content: '标准对比' })
+        .onClick(() => {
+          Throttle.click(() => this.openReferencePage());
+        })
+      MenuItem({ content: '场景化建议' })
+        .onClick(() => {
+          Throttle.click(() => this.openReferencePage());
+        })
+      MenuItem({ content: '声学参数' })
+        .onClick(() => {
+          Throttle.click(() => this.openReferencePage());
+        })
+      MenuItem({ content: '设备性能' })
+        .onClick(() => {
+          Throttle.click(() => this.openReferencePage());
+        })
+      MenuItem({ content: '法规政策' })
+        .onClick(() => {
+          Throttle.click(() => this.openReferencePage());
+        })
+    }
+  }
+
+  // 获取噪音影响程度百分比
+  private getExposurePercentage(): string {
+    // 简化显示，实际可以从服务获取
+    const db = this.ak.uiDisplayState.displayDb;
+    if (db < 70) {
+      return '低';
+    }
+    if (db < 85) {
+      return '中';
+    }
+    return '高';
+  }
+
+  // 获取今日峰值
+  private getTodayPeak(): string {
+    if (this.todayPeak > 0) {
+      return `${this.todayPeak.toFixed(1)} dB`;
+    }
+    return '-- dB';
+  }
+
+  // 打开影响分析页面
+  private openExposurePage(): void {
+    let exposureDialog: InfSheet;
+    exposureDialog = DialogHub.getSheet()
+      .setStyle({
+        title: { title: '影响分析' },
+        backgroundColor: $r('sys.color.background_secondary')
+      })
+      .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS })
+      .setComponentTargetId('mainId')
+      .setContent(wrapBuilder(ExposureContentBuilder))
+      .build();
+    exposureDialog.show();
+  }
+
+  // 打开参考页面
+  private openReferencePage(): void {
+    let referenceDialog: InfSheet;
+    referenceDialog = DialogHub.getSheet()
+      .setStyle({
+        title: { title: '参考标准' },
+        backgroundColor: $r('sys.color.background_secondary')
+      })
+      .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS })
+      .setComponentTargetId('mainId')
+      .setContent(wrapBuilder(ReferenceContentBuilder))
+      .build();
+    referenceDialog.show();
+  }
+}
+
+// 警报内容Builder
+@Builder
+function AlertsContentBuilder() {
+  AlertsContent()
+}
+
+// 影响内容Builder
+@Builder
+function ExposureContentBuilder() {
+  EnhancedExposureContent()
+}
+
+// 参考内容Builder
+@Builder
+function ReferenceContentBuilder() {
+  ReferenceContent()
 }

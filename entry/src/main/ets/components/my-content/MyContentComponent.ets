@@ -14,25 +14,12 @@ import { DecibelRecordService } from '../../services/DecibelRecordService';
 import { AlertService } from '../../services/AlertService';
 import { ExposureStatisticsService } from '../../services/ExposureStatisticsService';
 import { ToolsContent } from '../tools/ToolsContent';
-import { AlertsContent } from '../alerts/AlertsContent';
-import { EnhancedExposureContent } from '../exposure/EnhancedExposureContent';
-import { ReferenceContent } from '../reference/ReferenceContent';
 
 // 今日统计数据
 interface TodayStats {
   detectionCount: number;
   totalDuration: string;
   alertCount: number;
-}
-
-// 功能入口配置
-interface FeatureEntry {
-  id: string;
-  title: string;
-  icon: Resource;
-  subtitle: string;
-  statusColor: Resource;
-  onTap: () => void;
 }
 
 /**
@@ -112,11 +99,8 @@ export struct MyContentComponent {
         // 今日统计卡片（紧凑型）
         this.buildTodayStatsCard()
 
-        // 设置入口（单独列出）
-        this.buildSettingsEntry()
-
-        // 功能入口区域（警报/影响/参考）
-        this.buildFeatureEntrySection()
+        // 统一设置入口
+        this.buildUnifiedSettingsEntry()
 
         // 其他设置列表
         this.buildOtherSettingsList()
@@ -135,11 +119,11 @@ export struct MyContentComponent {
     .height('100%')
   }
 
-  // 今日统计卡片（紧凑型，修复宽度问题）
+  // 今日统计卡片（参考色彩模式卡片样式）
   @Builder
   private buildTodayStatsCard() {
-    Column({ space: DesignConstants.SPACING_MD }) {
-      // 标题行
+    Column({ space: DesignConstants.SPACING_SM }) {
+      // 标题行（在卡片外部，像色彩模式一样）
       Row() {
         Text('今日统计')
           .fontSize(DesignConstants.FONT_SIZE_MD)
@@ -170,13 +154,14 @@ export struct MyContentComponent {
         })
       }
       .width('100%')
+      .padding({ left: 16, right: 16 })
 
-      // 统计数据横向排列（更紧凑）
+      // 统计数据卡片（参考色彩模式样式）
       Row({ space: DesignConstants.SPACING_SM }) {
         // 检测次数
         Column({ space: 2 }) {
           Text(`${this.todayStats.detectionCount}`)
-            .fontSize(DesignConstants.FONT_SIZE_XL)
+            .fontSize(DesignConstants.FONT_SIZE_LG)
             .fontWeight(FontWeight.Bold)
             .fontColor($r('sys.color.font_primary'))
           Text('检测次数')
@@ -191,7 +176,7 @@ export struct MyContentComponent {
         // 检测时长
         Column({ space: 2 }) {
           Text(this.todayStats.totalDuration)
-            .fontSize(DesignConstants.FONT_SIZE_XL)
+            .fontSize(DesignConstants.FONT_SIZE_LG)
             .fontWeight(FontWeight.Bold)
             .fontColor($r('sys.color.font_primary'))
           Text('累计时长')
@@ -206,7 +191,7 @@ export struct MyContentComponent {
         // 警报次数
         Column({ space: 2 }) {
           Text(`${this.todayStats.alertCount}`)
-            .fontSize(DesignConstants.FONT_SIZE_XL)
+            .fontSize(DesignConstants.FONT_SIZE_LG)
             .fontWeight(FontWeight.Bold)
             .fontColor(this.todayStats.alertCount > 0 ? $r('sys.color.alert') : $r('sys.color.font_primary'))
           Text('警报次数')
@@ -219,19 +204,20 @@ export struct MyContentComponent {
         .borderRadius(DesignConstants.BORDER_RADIUS_MD)
       }
       .width('100%')
+      .height(56)
+      .padding({ left: 16, right: 16 })
+      .backgroundColor($r('sys.color.comp_background_primary'))
+      .borderRadius(16)
+      .margin({ left: 16, right: 16 })
     }
     .width('100%')
-    .padding(DesignConstants.SPACING_MD)
-    .backgroundColor($r('sys.color.comp_background_primary'))
-    .borderRadius(DesignConstants.BORDER_RADIUS_LG)
-    .margin({ left: 16, right: 16 })
   }
 
-  // 设置入口（单独列出）
+  // 统一设置入口（参考色彩模式卡片样式）
   @Builder
-  private buildSettingsEntry() {
+  private buildUnifiedSettingsEntry() {
     Column({ space: DesignConstants.SPACING_SM }) {
-      // 标题
+      // 标题（在卡片外部）
       Text('设置')
         .fontSize(DesignConstants.FONT_SIZE_MD)
         .fontWeight(FontWeight.Medium)
@@ -239,25 +225,25 @@ export struct MyContentComponent {
         .alignSelf(ItemAlign.Start)
         .margin({ left: 16 })
 
-      // 设置入口卡片
-      Row({ space: DesignConstants.SPACING_MD }) {
+      // 设置入口卡片（参考色彩模式样式）
+      Row({ space: 8 }) {
         // 左侧图标
-        Image($r('app.media.ic_atom'))
-          .width(32)
-          .height(32)
+        Image($r('app.media.ic_settings'))
+          .width(24)
+          .height(24)
           .fillColor($r('sys.color.icon_primary'))
+          .margin({ right: 12 })
 
         // 中间内容
-        Column({ space: DesignConstants.SPACING_XS }) {
+        Column({ space: 2 }) {
           Text('测量设置')
-            .fontSize(DesignConstants.FONT_SIZE_MD)
-            .fontWeight(FontWeight.Medium)
+            .fontSize(16)
             .fontColor($r('sys.color.font_primary'))
             .textAlign(TextAlign.Start)
 
-          Text(this.getSettingsStatus())
-            .fontSize(DesignConstants.FONT_SIZE_SM)
-            .fontColor(this.getSettingsStatusColor())
+          Text(this.getSettingsSummary())
+            .fontSize(14)
+            .fontColor($r('sys.color.font_secondary'))
             .textAlign(TextAlign.Start)
             .maxLines(1)
             .textOverflow({ overflow: TextOverflow.Ellipsis })
@@ -273,10 +259,10 @@ export struct MyContentComponent {
           .fillColor($r('sys.color.font_tertiary'))
       }
       .width('100%')
-      .height(72)
-      .padding(DesignConstants.SPACING_MD)
+      .height(56)
+      .padding({ left: 16, right: 16 })
       .backgroundColor($r('sys.color.comp_background_primary'))
-      .borderRadius(DesignConstants.BORDER_RADIUS_LG)
+      .borderRadius(16)
       .margin({ left: 16, right: 16 })
       .onClick(() => {
         Throttle.click(() => this.openSettingsPage());
@@ -285,100 +271,27 @@ export struct MyContentComponent {
     .width('100%')
   }
 
-  // 功能入口区域（警报/影响/参考）
-  @Builder
-  private buildFeatureEntrySection() {
-    Column({ space: DesignConstants.SPACING_SM }) {
-      // 标题
-      Text('功能')
-        .fontSize(DesignConstants.FONT_SIZE_MD)
-        .fontWeight(FontWeight.Medium)
-        .fontColor($r('sys.color.font_primary'))
-        .alignSelf(ItemAlign.Start)
-        .margin({ left: 16 })
-
-      // 3个功能入口（警报/影响/参考）
-      Column({ space: DesignConstants.SPACING_MD }) {
-        // 警报入口
-        this.buildFeatureEntryCard({
-          id: 'alerts',
-          title: '警报中心',
-          icon: $r('app.media.ic_alarm'),
-          subtitle: this.getAlertsStatus(),
-          statusColor: this.getAlertsStatusColor(),
-          onTap: () => this.openAlertsPage()
-        })
-
-        // 影响入口
-        this.buildFeatureEntryCard({
-          id: 'exposure',
-          title: '影响分析',
-          icon: $r('app.media.i_solar_radar_outline'),
-          subtitle: this.getExposureStatus(),
-          statusColor: this.getExposureStatusColor(),
-          onTap: () => this.openExposurePage()
-        })
-
-        // 参考入口
-        this.buildFeatureEntryCard({
-          id: 'reference',
-          title: '参考标准',
-          icon: $r('app.media.ic_book2'),
-          subtitle: this.getReferenceStatus(),
-          statusColor: this.getReferenceStatusColor(),
-          onTap: () => this.openReferencePage()
-        })
-      }
-      .width('100%')
-      .padding({ left: 16, right: 16 })
+  // 获取设置摘要
+  private getSettingsSummary(): string {
+    const parts: string[] = [];
+    
+    // 校准状态
+    const calibrationValue = this.pk.calibration_value || 0;
+    if (calibrationValue !== 0) {
+      parts.push(`已校准${calibrationValue > 0 ? '+' : ''}${calibrationValue}dB`);
+    } else {
+      parts.push('未校准');
     }
-    .width('100%')
-    .margin({ top: DesignConstants.SPACING_SM })
-  }
-
-  // 功能入口卡片
-  @Builder
-  private buildFeatureEntryCard(entry: FeatureEntry) {
-    Row({ space: DesignConstants.SPACING_MD }) {
-      // 左侧图标
-      Image(entry.icon)
-        .width(32)
-        .height(32)
-        .fillColor($r('sys.color.icon_primary'))
-
-      // 中间内容
-      Column({ space: DesignConstants.SPACING_XS }) {
-        Text(entry.title)
-          .fontSize(DesignConstants.FONT_SIZE_MD)
-          .fontWeight(FontWeight.Medium)
-          .fontColor($r('sys.color.font_primary'))
-          .textAlign(TextAlign.Start)
-
-        Text(entry.subtitle)
-          .fontSize(DesignConstants.FONT_SIZE_SM)
-          .fontColor(entry.statusColor)
-          .textAlign(TextAlign.Start)
-          .maxLines(1)
-          .textOverflow({ overflow: TextOverflow.Ellipsis })
-      }
-      .layoutWeight(1)
-      .alignItems(HorizontalAlign.Start)
-      .justifyContent(FlexAlign.Center)
-
-      // 箭头
-      Image($r('app.media.ic_arrow_right'))
-        .width(16)
-        .height(16)
-        .fillColor($r('sys.color.font_tertiary'))
-    }
-    .width('100%')
-    .height(72)
-    .padding(DesignConstants.SPACING_MD)
-    .backgroundColor($r('sys.color.comp_background_primary'))
-    .borderRadius(DesignConstants.BORDER_RADIUS_LG)
-    .onClick(() => {
-      Throttle.click(() => entry.onTap());
-    })
+    
+    // 显示模式
+    const modeMap: Record<string, string> = {
+      'default': '跟随系统',
+      'light': '浅色',
+      'dark': '深色'
+    };
+    parts.push(modeMap[this.pk.display_mode] || '跟随系统');
+    
+    return parts.join(' · ');
   }
 
   // 其他设置列表
@@ -460,99 +373,6 @@ export struct MyContentComponent {
     .alignListItem(ListItemAlign.Start)
   }
 
-  // ==================== 状态获取方法 ====================
-
-  // 设置状态
-  private getSettingsStatus(): string {
-    const calibrationValue = this.pk.calibration_value || 0;
-    if (calibrationValue === 0) {
-      return '未校准';
-    }
-    return `已校准 ${calibrationValue > 0 ? '+' : ''}${calibrationValue}dB`;
-  }
-
-  private getSettingsStatusColor(): Resource {
-    const calibrationValue = this.pk.calibration_value || 0;
-    if (calibrationValue === 0) {
-      return $r('sys.color.alert');
-    }
-    return $r('sys.color.confirm');
-  }
-
-  // 警报状态
-  private getAlertsStatus(): string {
-    const threshold = this.pk.alarm_threshold.baseThreshold || 70;
-    const db = this.ak.uiDisplayState.displayDb;
-    if (db > threshold) {
-      return `警报中: ${db}dB > ${threshold}dB`;
-    }
-    return `阈值: ${threshold}dB`;
-  }
-
-  private getAlertsStatusColor(): Resource {
-    const db = this.ak.uiDisplayState.displayDb;
-    const threshold = this.pk.alarm_threshold.baseThreshold || 70;
-    if (db > threshold) {
-      return $r('sys.color.alert');
-    }
-    return $r('sys.color.confirm');
-  }
-
-  // 影响状态
-  private getExposureStatus(): string {
-    const db = this.ak.uiDisplayState.displayDb;
-    if (db < 40) {
-      return '当前环境: 低风险';
-    }
-    if (db < 60) {
-      return '当前环境: 中风险';
-    }
-    if (db < 80) {
-      return '当前环境: 高风险';
-    }
-    return '当前环境: 极高风险';
-  }
-
-  private getExposureStatusColor(): Resource {
-    const db = this.ak.uiDisplayState.displayDb;
-    if (db < 40) {
-      return $r('sys.color.confirm');
-    }
-    if (db < 60) {
-      return $r('sys.color.warning');
-    }
-    return $r('sys.color.alert');
-  }
-
-  // 参考状态
-  private getReferenceStatus(): string {
-    const db = this.ak.uiDisplayState.displayDb;
-    if (db < 30) {
-      return '当前场景: 极安静';
-    }
-    if (db < 50) {
-      return '当前场景: 安静';
-    }
-    if (db < 70) {
-      return '当前场景: 正常';
-    }
-    if (db < 90) {
-      return '当前场景: 嘈杂';
-    }
-    return '当前场景: 极嘈杂';
-  }
-
-  private getReferenceStatusColor(): Resource {
-    const db = this.ak.uiDisplayState.displayDb;
-    if (db < 50) {
-      return $r('sys.color.confirm');
-    }
-    if (db < 70) {
-      return $r('sys.color.warning');
-    }
-    return $r('sys.color.alert');
-  }
-
   // ==================== 页面打开方法 ====================
 
   // 打开设置页面
@@ -569,73 +389,10 @@ export struct MyContentComponent {
       .build();
     settingsDialog.show();
   }
-
-  // 打开警报页面
-  private openAlertsPage(): void {
-    let alertsDialog: InfSheet;
-    alertsDialog = DialogHub.getSheet()
-      .setStyle({ 
-        title: { title: '警报中心' },
-        backgroundColor: $r('sys.color.background_secondary') 
-      })
-      .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS })
-      .setComponentTargetId('mainId')
-      .setContent(wrapBuilder(AlertsContentBuilder))
-      .build();
-    alertsDialog.show();
-  }
-
-  // 打开影响页面
-  private openExposurePage(): void {
-    let exposureDialog: InfSheet;
-    exposureDialog = DialogHub.getSheet()
-      .setStyle({ 
-        title: { title: '影响分析' },
-        backgroundColor: $r('sys.color.background_secondary') 
-      })
-      .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS })
-      .setComponentTargetId('mainId')
-      .setContent(wrapBuilder(ExposureContentBuilder))
-      .build();
-    exposureDialog.show();
-  }
-
-  // 打开参考页面
-  private openReferencePage(): void {
-    let referenceDialog: InfSheet;
-    referenceDialog = DialogHub.getSheet()
-      .setStyle({ 
-        title: { title: '参考标准' },
-        backgroundColor: $r('sys.color.background_secondary') 
-      })
-      .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS })
-      .setComponentTargetId('mainId')
-      .setContent(wrapBuilder(ReferenceContentBuilder))
-      .build();
-    referenceDialog.show();
-  }
 }
 
 // 设置内容Builder
 @Builder
 function SettingsContentBuilder() {
   ToolsContent()
-}
-
-// 警报内容Builder
-@Builder
-function AlertsContentBuilder() {
-  AlertsContent()
-}
-
-// 影响内容Builder
-@Builder
-function ExposureContentBuilder() {
-  EnhancedExposureContent()
-}
-
-// 参考内容Builder
-@Builder
-function ReferenceContentBuilder() {
-  ReferenceContent()
 }
