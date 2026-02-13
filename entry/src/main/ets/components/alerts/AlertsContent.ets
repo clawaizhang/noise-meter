@@ -4,10 +4,22 @@ import { DesignConstants } from '../../constants/DesignConstants';
 import { AlertService } from '../../services/AlertService';
 import { AppStorageV2, PersistenceV2 } from '@kit.ArkUI';
 import { common } from '@kit.AbilityKit';
-import { NotificationPreferences } from './NotificationPreferences';
 import { PresetType } from '../../models/ThresholdConfig';
 import { AlertStateMachine } from '../../utils/AlertStateMachine';
 import { AlertEvent, AlertStatus } from '../../constants/AlertsConstants';
+import { DialogHub, type InfSheet } from '@hadss/dialoghub';
+import { AlertsSettingsBuilder, AlertsSettingsProps } from '../../pages/settings/AlertsSettingsNavigation';
+import { Throttle } from '../../utils/Debounce';
+
+// 警报记录数据模型
+interface AlertRecord {
+  id: string;
+  timestamp: number;
+  duration: number; // 秒
+  peakDecibel: number;
+  threshold: number;
+  location?: string;
+}
 
 @ComponentV2
 export struct AlertsContent {
@@ -15,15 +27,19 @@ export struct AlertsContent {
   @Local private ak: AppKeys = AppStorageV2.connect(AppKeys)!;
   @Local private pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys)!;
   // 警报服务
-  private alertService: AlertService = AlertService.getInstance(getContext() as common.UIAbilityContext,this.pk);
+  private alertService: AlertService = AlertService.getInstance(getContext() as common.UIAbilityContext, this.pk);
   // 状态机
   private stateMachine: AlertStateMachine = new AlertStateMachine();
+  // 警报历史记录（模拟数据，实际应从服务获取）
+  @Local private alertHistory: AlertRecord[] = [];
 
   aboutToAppear(): void {
     // 组件加载时更新权限状态
     this.alertService.updateSystemPermissionStatus();
     // 启动状态机监控
     this.stateMachine.handleEvent(AlertEvent.START_MONITORING);
+    // 加载警报历史
+    this.loadAlertHistory();
   }
 
   aboutToDisappear(): void {
@@ -32,6 +48,31 @@ export struct AlertsContent {
     // 停止状态机监控
     this.stateMachine.handleEvent(AlertEvent.STOP_MONITORING);
     this.stateMachine.destroy();
+  }
+
+  // 加载警报历史（模拟数据）
+  private loadAlertHistory(): void {
+    // TODO: 从实际的数据服务加载
+    // 这里使用模拟数据展示UI效果
+    const now = Date.now();
+    this.alertHistory = [
+      {
+        id: '1',
+        timestamp: now - 3600000, // 1小时前
+        duration: 72,
+        peakDecibel: 82,
+        threshold: 55,
+        location: '北京市朝阳区'
+      },
+      {
+        id: '2',
+        timestamp: now - 7200000, // 2小时前
+        duration: 45,
+        peakDecibel: 78,
+        threshold: 55,
+        location: '北京市海淀区'
+      }
+    ];
   }
 
   @Monitor('ak.uiDisplayState.displayDb')
@@ -44,7 +85,7 @@ export struct AlertsContent {
         AlertEvent.NOISE_LEVEL_CHANGED,
         { currentDecibel, threshold }
       );
-      
+
       if (transitionOccurred) {
         await this.updateAlertState();
       }
@@ -56,7 +97,7 @@ export struct AlertsContent {
     const currentState = this.stateMachine.CurrentState;
     const context = this.stateMachine.getContext();
     const threshold = this.pk.alarm_threshold.currentEffectiveThreshold;
-    
+
     switch (currentState) {
       case AlertStatus.ALERT_ACTIVE:
       case AlertStatus.ALERT_PERSISTENT:
@@ -68,7 +109,7 @@ export struct AlertsContent {
           triggerDecibel = context.currentDecibel;
           console.warn(`[AlertsContent] 警报触发分贝值不可用，使用上下文值: ${triggerDecibel}dB`);
         }
-        
+
         // 双重检查：确保当前分贝值确实超过阈值才触发警报
         if (triggerDecibel >= threshold) {
           await this.triggerAlarm(triggerDecibel);
@@ -91,18 +132,16 @@ export struct AlertsContent {
 
   // 触发警报
   private async triggerAlarm(currentDecibel: number): Promise<void> {
-    // 状态更新由状态机处理，AlertService 只负责通知
     const threshold = this.pk.alarm_threshold.currentEffectiveThreshold;
     await this.alertService.triggerAlert(currentDecibel, threshold);
   }
 
   // 解除警报
   private clearAlarm(): void {
-    // 状态更新由状态机处理，AlertService 只负责重置通知状态
     this.alertService.resetAlertState();
   }
 
-  // 构建状态显示区
+  // ========== 1. 实时状态区 ==========
   @Builder
   private buildStatusDisplay() {
     Column({ space: DesignConstants.SPACING_MD }) {
@@ -160,9 +199,9 @@ export struct AlertsContent {
         .fontColor(this.statusColor)
         .fontWeight(FontWeight.Medium)
 
-      // 警报持续时间（如果激活）
-      if (this.stateMachine.AlertActive) {
-        Row({ space: DesignConstants.SPACING_SM }) {
+      // 警报持续时间区域（固定高度，避免闪烁）
+      Row({ space: DesignConstants.SPACING_SM }) {
+        if (this.stateMachine.AlertActive) {
           Image($r('app.media.ic_alarm'))
             .width(16)
             .height(16)
@@ -173,6 +212,9 @@ export struct AlertsContent {
             .fontWeight(FontWeight.Medium)
         }
       }
+      .height(24) // 固定高度
+      .width('100%')
+      .justifyContent(FlexAlign.Center)
     }
     .padding(DesignConstants.SPACING_XL)
     .backgroundColor(this.statusBackground)
@@ -182,100 +224,352 @@ export struct AlertsContent {
     .alignItems(HorizontalAlign.Center)
   }
 
-  // 构建环境信息区
+  // ========== 2. 设置摘要区（方案A：极简卡片） ==========
   @Builder
-  private buildEnvironmentInfo() {
-    Column({ space: DesignConstants.SPACING_MD }) {
-      Text('环境信息')
-        .fontSize(DesignConstants.FONT_SIZE_XL)
-        .fontWeight(FontWeight.Bold)
-        .alignSelf(ItemAlign.Start)
-        .fontColor($r('sys.color.font_primary'))
+  private buildSettingsSummary() {
+    Row({ space: DesignConstants.SPACING_MD }) {
+      // 左侧：预设图标
+      Text(this.getPresetIcon(this.pk.alarm_threshold.currentPreset))
+        .fontSize(28)
 
-      // 环境质量评级
-      Row({ space: DesignConstants.SPACING_SM }) {
-        Text('环境质量:')
-          .fontSize(DesignConstants.FONT_SIZE_MD)
-          .fontColor($r('sys.color.font_primary'))
-
-        Text(this.environmentQuality)
-          .fontSize(DesignConstants.FONT_SIZE_MD)
-          .fontColor(this.environmentColor)
-          .fontWeight(FontWeight.Medium)
-      }
-
-      // 三条分列描述
+      // 中间：核心信息
       Column({ space: DesignConstants.SPACING_XS }) {
-        // 当前状态描述
+        // 第一行：预设名称 + 阈值
         Row({ space: DesignConstants.SPACING_SM }) {
-          Text('•')
-            .fontSize(DesignConstants.FONT_SIZE_SM)
-            .fontColor($r('sys.color.font_secondary'))
-          Text(this.currentStatusDescription)
-            .fontSize(DesignConstants.FONT_SIZE_SM)
-            .fontColor($r('sys.color.font_secondary'))
-            .textAlign(TextAlign.Start)
-        }
-        .alignSelf(ItemAlign.Start)
+          Text(this.getPresetShortName(this.pk.alarm_threshold.currentPreset))
+            .fontSize(DesignConstants.FONT_SIZE_LG)
+            .fontWeight(FontWeight.Medium)
+            .fontColor($r('sys.color.font_primary'))
 
-        // 影响描述
-        Row({ space: DesignConstants.SPACING_SM }) {
-          Text('•')
+          Text(`${this.pk.alarm_threshold.currentEffectiveThreshold}dB`)
+            .fontSize(DesignConstants.FONT_SIZE_LG)
+            .fontWeight(FontWeight.Bold)
+            .fontColor($r('sys.color.brand'))
+
+          Blank()
+        }
+        .width('100%')
+
+        // 第二行：次要信息（时段调度 + 通知状态）
+        Text(this.getSettingsSubtitle())
+          .fontSize(DesignConstants.FONT_SIZE_SM)
+          .fontColor($r('sys.color.font_secondary'))
+          .width('100%')
+      }
+      .layoutWeight(1)
+      .alignItems(HorizontalAlign.Start)
+
+      // 右侧：箭头
+      Image($r('app.media.ic_arrow_right'))
+        .width(20)
+        .height(20)
+        .fillColor($r('sys.color.font_tertiary'))
+    }
+    .width('100%')
+    .padding(DesignConstants.SPACING_LG)
+    .backgroundColor($r('sys.color.comp_background_primary'))
+    .borderRadius(DesignConstants.BORDER_RADIUS_LG)
+    .onClick(() => {
+      Throttle.click(() => {
+        this.openSettingsDialog();
+      });
+    })
+  }
+
+  // 打开设置弹窗
+  private openSettingsDialog(): void {
+    // 关闭当前警报中心弹窗
+    // 由于DialogHub的管理方式，我们需要通过回调来处理
+    // 这里直接打开设置弹窗，层级会覆盖
+    let settingsDialog = DialogHub.getSheet()
+      .setStyle({
+        // 不设置标题，使用组件内部的 EditableTitleBar
+        // showClose: false 隐藏DialogHub默认的关闭按钮，避免与EditableTitleBar的按钮重叠
+        showClose: false,
+        backgroundColor: $r('sys.color.background_secondary')
+      })
+      .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS })
+      .setComponentTargetId('mainId')
+      .setContent(wrapBuilder(AlertsSettingsBuilder), {
+        onSave: () => {
+          settingsDialog.dismiss();
+          // 保存成功后刷新当前显示
+          this.loadAlertHistory();
+        },
+        onClose: () => {
+          settingsDialog.dismiss();
+        }
+      } as AlertsSettingsProps)
+      .build();
+    settingsDialog.show();
+  }
+
+  // ========== 3. 警报历史区（新增） ==========
+  @Builder
+  private buildAlertHistory() {
+    Column({ space: DesignConstants.SPACING_MD }) {
+      // 标题行
+      Row({ space: DesignConstants.SPACING_SM }) {
+        Image($r('app.media.ic_history'))
+          .width(DesignConstants.ICON_SIZE_MD)
+          .height(DesignConstants.ICON_SIZE_MD)
+          .fillColor($r('sys.color.brand'))
+
+        Text('警报历史')
+          .fontSize(DesignConstants.FONT_SIZE_XL)
+          .fontWeight(FontWeight.Bold)
+          .fontColor($r('sys.color.font_primary'))
+          .layoutWeight(1)
+
+        // 今日统计
+        Text(`今日${this.todayAlertCount}次`)
+          .fontSize(DesignConstants.FONT_SIZE_MD)
+          .fontColor($r('sys.color.font_secondary'))
+      }
+      .width('100%')
+      .alignItems(VerticalAlign.Center)
+
+      // 分割线
+      Divider()
+        .strokeWidth(1)
+        .color($r('sys.color.comp_divider'))
+        .width('100%')
+
+      // 统计摘要
+      Row({ space: DesignConstants.SPACING_MD }) {
+        this.buildHistoryStatItem('今日警报', `${this.todayAlertCount}次`)
+        this.buildHistoryStatItem('累计时长', this.todayAlertDuration)
+        this.buildHistoryStatItem('最高峰值', `${this.todayPeakDecibel}dB`)
+      }
+      .width('100%')
+      .justifyContent(FlexAlign.SpaceBetween)
+
+      // 历史记录列表
+      if (this.alertHistory.length > 0) {
+        Column({ space: DesignConstants.SPACING_SM }) {
+          ForEach(this.alertHistory.slice(0, 3), (record: AlertRecord, index: number) => {
+            this.buildAlertHistoryItem(record, index)
+          }, (record: AlertRecord) => record.id)
+        }
+        .width('100%')
+        .margin({ top: DesignConstants.SPACING_SM })
+
+        if (this.alertHistory.length > 3) {
+          Text(`还有 ${this.alertHistory.length - 3} 条记录`)
             .fontSize(DesignConstants.FONT_SIZE_SM)
             .fontColor($r('sys.color.font_secondary'))
+            .alignSelf(ItemAlign.Center)
+            .margin({ top: DesignConstants.SPACING_SM })
+        }
+      } else {
+        // 空状态
+        Column({ space: DesignConstants.SPACING_SM }) {
+          Image($r('app.media.ic_history'))
+            .width(48)
+            .height(48)
+            .fillColor($r('sys.color.font_tertiary'))
+            .opacity(0.5)
+
+          Text('今日暂无警报记录')
+            .fontSize(DesignConstants.FONT_SIZE_MD)
+            .fontColor($r('sys.color.font_secondary'))
+
+          Text('环境良好，继续保持！')
+            .fontSize(DesignConstants.FONT_SIZE_SM)
+            .fontColor($r('sys.color.font_tertiary'))
+        }
+        .width('100%')
+        .padding(DesignConstants.SPACING_XL)
+        .alignItems(HorizontalAlign.Center)
+      }
+    }
+    .padding(DesignConstants.SPACING_LG)
+    .backgroundColor($r('sys.color.comp_background_primary'))
+    .borderRadius(DesignConstants.BORDER_RADIUS_LG)
+    .width('100%')
+  }
+
+  @Builder
+  private buildHistoryStatItem(label: string, value: string) {
+    Column({ space: DesignConstants.SPACING_XS }) {
+      Text(value)
+        .fontSize(DesignConstants.FONT_SIZE_LG)
+        .fontWeight(FontWeight.Bold)
+        .fontColor($r('sys.color.font_primary'))
+      Text(label)
+        .fontSize(DesignConstants.FONT_SIZE_SM)
+        .fontColor($r('sys.color.font_secondary'))
+    }
+    .layoutWeight(1)
+    .alignItems(HorizontalAlign.Center)
+  }
+
+  @Builder
+  private buildAlertHistoryItem(record: AlertRecord, index: number) {
+    Row({ space: DesignConstants.SPACING_SM }) {
+      // 时间线指示器
+      Column({ space: 0 }) {
+        Circle()
+          .width(8)
+          .height(8)
+          .fill($r('sys.color.alert'))
+        if (index < this.alertHistory.slice(0, 3).length - 1) {
+          Column()
+            .width(2)
+            .height(40)
+            .backgroundColor($r('sys.color.comp_divider'))
+        }
+      }
+      .width(16)
+      .alignItems(HorizontalAlign.Center)
+
+      // 记录内容
+      Column({ space: DesignConstants.SPACING_XS }) {
+        Row({ space: DesignConstants.SPACING_SM }) {
+          Text(this.formatTime(record.timestamp))
+            .fontSize(DesignConstants.FONT_SIZE_MD)
+            .fontWeight(FontWeight.Medium)
+            .fontColor($r('sys.color.font_primary'))
+
+          Blank()
+
+          Text(`峰值 ${record.peakDecibel}dB`)
+            .fontSize(DesignConstants.FONT_SIZE_SM)
+            .fontColor($r('sys.color.alert'))
+        }
+        .width('100%')
+
+        Text(`持续 ${this.formatDuration(record.duration)} · 阈值 ${record.threshold}dB`)
+          .fontSize(DesignConstants.FONT_SIZE_SM)
+          .fontColor($r('sys.color.font_secondary'))
+
+        if (record.location) {
+          Text(record.location)
+            .fontSize(DesignConstants.FONT_SIZE_SM)
+            .fontColor($r('sys.color.font_tertiary'))
+        }
+      }
+      .layoutWeight(1)
+      .padding(DesignConstants.SPACING_SM)
+      .backgroundColor($r('sys.color.background_secondary'))
+      .borderRadius(DesignConstants.BORDER_RADIUS_MD)
+    }
+    .width('100%')
+    .alignItems(VerticalAlign.Top)
+  }
+
+  // ========== 4. 环境洞察区（扩展） ==========
+  @Builder
+  private buildEnvironmentInsight() {
+    Column({ space: DesignConstants.SPACING_MD }) {
+      // 标题行
+      Row({ space: DesignConstants.SPACING_SM }) {
+        Image($r('app.media.ic_info'))
+          .width(DesignConstants.ICON_SIZE_MD)
+          .height(DesignConstants.ICON_SIZE_MD)
+          .fillColor($r('sys.color.brand'))
+
+        Text('环境洞察')
+          .fontSize(DesignConstants.FONT_SIZE_XL)
+          .fontWeight(FontWeight.Bold)
+          .fontColor($r('sys.color.font_primary'))
+          .layoutWeight(1)
+      }
+      .width('100%')
+      .alignItems(VerticalAlign.Center)
+
+      // 分割线
+      Divider()
+        .strokeWidth(1)
+        .color($r('sys.color.comp_divider'))
+        .width('100%')
+
+      // 环境质量评级卡片
+      Row({ space: DesignConstants.SPACING_MD }) {
+        // 左侧：评级
+        Column({ space: DesignConstants.SPACING_XS }) {
+          Text(this.environmentQuality)
+            .fontSize(32)
+            .fontWeight(FontWeight.Bold)
+            .fontColor(this.environmentColor)
+          Text('环境质量')
+            .fontSize(DesignConstants.FONT_SIZE_SM)
+            .fontColor($r('sys.color.font_secondary'))
+        }
+        .width(80)
+        .alignItems(HorizontalAlign.Center)
+
+        // 右侧：详情
+        Column({ space: DesignConstants.SPACING_XS }) {
+          Text(this.currentStatusDescription)
+            .fontSize(DesignConstants.FONT_SIZE_MD)
+            .fontColor($r('sys.color.font_primary'))
+            .fontWeight(FontWeight.Medium)
+            .width('100%')
+
           Text(this.impactDescription)
             .fontSize(DesignConstants.FONT_SIZE_SM)
             .fontColor($r('sys.color.font_secondary'))
-            .textAlign(TextAlign.Start)
+            .width('100%')
         }
-        .alignSelf(ItemAlign.Start)
-
-        // 建议措施
-        Row({ space: DesignConstants.SPACING_SM }) {
-          Text('•')
-            .fontSize(DesignConstants.FONT_SIZE_SM)
-            .fontColor($r('sys.color.font_secondary'))
-          Text(this.suggestionAction)
-            .fontSize(DesignConstants.FONT_SIZE_SM)
-            .fontColor($r('sys.color.font_secondary'))
-            .textAlign(TextAlign.Start)
-        }
-        .alignSelf(ItemAlign.Start)
+        .layoutWeight(1)
+        .alignItems(HorizontalAlign.Start)
       }
-      .alignSelf(ItemAlign.Start)
       .width('100%')
+      .padding(DesignConstants.SPACING_MD)
+      .backgroundColor($r('sys.color.background_secondary'))
+      .borderRadius(DesignConstants.BORDER_RADIUS_MD)
+
+      // 建议措施
+      Column({ space: DesignConstants.SPACING_SM }) {
+        Text('💡 建议措施')
+          .fontSize(DesignConstants.FONT_SIZE_MD)
+          .fontWeight(FontWeight.Medium)
+          .fontColor($r('sys.color.font_primary'))
+          .alignSelf(ItemAlign.Start)
+
+        Text(this.suggestionAction)
+          .fontSize(DesignConstants.FONT_SIZE_MD)
+          .fontColor($r('sys.color.font_secondary'))
+          .width('100%')
+      }
+      .width('100%')
+      .padding(DesignConstants.SPACING_MD)
+      .backgroundColor($r('sys.color.comp_background_secondary'))
+      .borderRadius(DesignConstants.BORDER_RADIUS_MD)
     }
     .padding(DesignConstants.SPACING_LG)
-    .width('100%')
     .backgroundColor($r('sys.color.comp_background_primary'))
     .borderRadius(DesignConstants.BORDER_RADIUS_LG)
+    .width('100%')
   }
+
+  // ========== 计算属性 ==========
 
   @Computed
   get statusColor(): Resource {
     const currentState = this.stateMachine.CurrentState;
-    
+
     switch (currentState) {
       case AlertStatus.ALERT_ACTIVE:
       case AlertStatus.ALERT_PERSISTENT:
       case AlertStatus.ALERT_ESCALATED:
-        return $r('sys.color.alert'); // 红色
+        return $r('sys.color.alert');
       case AlertStatus.WARNING:
-        return $r('sys.color.warning'); // 黄色
+        return $r('sys.color.warning');
       case AlertStatus.MONITORING:
-        return $r('sys.color.confirm'); // 绿色
+        return $r('sys.color.confirm');
       case AlertStatus.IDLE:
       case AlertStatus.MUTED:
       default:
-        return $r('sys.color.font_secondary'); // 灰色
+        return $r('sys.color.font_secondary');
     }
   }
 
-  // 辅助方法：获取状态文字
   @Computed
   get statusText(): string {
     const currentState = this.stateMachine.CurrentState;
-    
+
     switch (currentState) {
       case AlertStatus.ALERT_ACTIVE:
         return '警报触发中';
@@ -296,11 +590,10 @@ export struct AlertsContent {
     }
   }
 
-  // 辅助方法：获取状态背景色
   @Computed
   get statusBackground(): Resource {
     const currentState = this.stateMachine.CurrentState;
-    
+
     switch (currentState) {
       case AlertStatus.ALERT_ACTIVE:
       case AlertStatus.ALERT_PERSISTENT:
@@ -317,11 +610,10 @@ export struct AlertsContent {
     }
   }
 
-  // 辅助方法：获取环境质量评级（基于状态机状态）
   @Computed
   get environmentQuality(): string {
     const currentState = this.stateMachine.CurrentState;
-    
+
     switch (currentState) {
       case AlertStatus.ALERT_ACTIVE:
       case AlertStatus.ALERT_PERSISTENT:
@@ -338,11 +630,10 @@ export struct AlertsContent {
     }
   }
 
-  // 辅助方法：获取环境质量颜色（基于状态机状态）
   @Computed
   get environmentColor(): Resource {
     const currentState = this.stateMachine.CurrentState;
-    
+
     switch (currentState) {
       case AlertStatus.ALERT_ACTIVE:
       case AlertStatus.ALERT_PERSISTENT:
@@ -359,162 +650,37 @@ export struct AlertsContent {
     }
   }
 
-  // 辅助方法：获取当前状态描述
+  // 今日警报次数
   @Computed
-  get currentStatusDescription(): string {
-    const currentDecibel = this.ak.uiDisplayState.displayDb;
-    const threshold = this.pk.alarm_threshold.currentEffectiveThreshold;
-    const presetType = this.pk.alarm_threshold.currentPreset;
-    const presetName = this.getPresetDisplayName(presetType);
-
-    if (currentDecibel >= threshold) {
-      const difference = currentDecibel - threshold;
-      return `超过${presetName}阈值${difference}dB`;
-    } else if (currentDecibel >= threshold - 10) {
-      const difference = threshold - currentDecibel;
-      return `接近${presetName}阈值，仅差${difference}dB`;
-    } else if (currentDecibel >= threshold - 20) {
-      const difference = threshold - currentDecibel;
-      return `在${presetName}安全范围内，距离阈值${difference}dB`;
-    } else {
-      const difference = threshold - currentDecibel;
-      return `远低于${presetName}阈值${difference}dB`;
-    }
+  get todayAlertCount(): number {
+    return this.alertHistory.length;
   }
 
-  // 辅助方法：获取影响描述
+  // 今日警报累计时长
   @Computed
-  get impactDescription(): string {
-    const currentDecibel = this.ak.uiDisplayState.displayDb;
-    const threshold = this.pk.alarm_threshold.currentEffectiveThreshold;
-    const presetType = this.pk.alarm_threshold.currentPreset;
-
-    if (currentDecibel >= threshold) {
-      switch (presetType) {
-        case PresetType.QUIET_ENVIRONMENT:
-          return '可能影响专注度和休息质量';
-        case PresetType.GENERAL_ENVIRONMENT:
-          return '可能影响工作效率和舒适度';
-        case PresetType.NOISY_ENVIRONMENT:
-          return '长期暴露可能引起不适';
-        case PresetType.DANGEROUS_ENVIRONMENT:
-          return '长期暴露可能对听力造成损害';
-        default:
-          if (threshold <= 50) return '可能影响安静活动的质量';
-          else if (threshold <= 70) return '可能影响日常活动的舒适度';
-          else return '长期暴露可能对听力造成影响';
-      }
-    } else if (currentDecibel >= threshold - 10) {
-      switch (presetType) {
-        case PresetType.QUIET_ENVIRONMENT:
-          return '可能轻微影响安静环境';
-        case PresetType.GENERAL_ENVIRONMENT:
-          return '可能轻微影响工作学习环境';
-        case PresetType.NOISY_ENVIRONMENT:
-          return '可能引起轻微不适';
-        case PresetType.DANGEROUS_ENVIRONMENT:
-          return '需要保持警惕';
-        default:
-          return '需要适当关注环境变化';
-      }
-    } else if (currentDecibel >= threshold - 20) {
-      switch (presetType) {
-        case PresetType.QUIET_ENVIRONMENT:
-          return '适合专注和休息的环境';
-        case PresetType.GENERAL_ENVIRONMENT:
-          return '适合日常工作和学习活动';
-        case PresetType.NOISY_ENVIRONMENT:
-          return '适合短期停留的嘈杂环境';
-        case PresetType.DANGEROUS_ENVIRONMENT:
-          return '环境相对安全，建议保持防护意识';
-        default:
-          return '适合相应环境的活动';
-      }
-    } else {
-      switch (presetType) {
-        case PresetType.QUIET_ENVIRONMENT:
-          return '理想的安静环境';
-        case PresetType.GENERAL_ENVIRONMENT:
-          return '舒适的工作学习环境';
-        case PresetType.NOISY_ENVIRONMENT:
-          return '环境相对安静';
-        case PresetType.DANGEROUS_ENVIRONMENT:
-          return '环境相对安全';
-        default:
-          return '理想的环境状态';
-      }
+  get todayAlertDuration(): string {
+    const totalSeconds = this.alertHistory.reduce((sum, record) => sum + record.duration, 0);
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    if (minutes > 0) {
+      return `${minutes}分${seconds}秒`;
     }
+    return `${seconds}秒`;
   }
 
-  // 辅助方法：获取建议措施
+  // 今日峰值
   @Computed
-  get suggestionAction(): string {
-    const currentDecibel = this.ak.uiDisplayState.displayDb;
-    const threshold = this.pk.alarm_threshold.currentEffectiveThreshold;
-    const presetType = this.pk.alarm_threshold.currentPreset;
-
-    if (currentDecibel >= threshold) {
-      switch (presetType) {
-        case PresetType.QUIET_ENVIRONMENT:
-          return '建议寻找更安静的环境';
-        case PresetType.GENERAL_ENVIRONMENT:
-          return '建议适当调整环境';
-        case PresetType.NOISY_ENVIRONMENT:
-          return '建议减少停留时间';
-        case PresetType.DANGEROUS_ENVIRONMENT:
-          return '建议立即采取防护措施';
-        default:
-          if (threshold <= 50) return '建议寻找更安静的环境';
-          else if (threshold <= 70) return '建议适当调整环境';
-          else return '请注意防护';
-      }
-    } else if (currentDecibel >= threshold - 10) {
-      switch (presetType) {
-        case PresetType.QUIET_ENVIRONMENT:
-          return '建议保持关注环境变化';
-        case PresetType.GENERAL_ENVIRONMENT:
-          return '建议适当关注环境变化';
-        case PresetType.NOISY_ENVIRONMENT:
-          return '建议注意环境变化';
-        case PresetType.DANGEROUS_ENVIRONMENT:
-          return '建议准备必要的防护措施';
-        default:
-          return '建议保持关注环境变化';
-      }
-    } else if (currentDecibel >= threshold - 20) {
-      switch (presetType) {
-        case PresetType.QUIET_ENVIRONMENT:
-          return '适合需要专注和休息的活动';
-        case PresetType.GENERAL_ENVIRONMENT:
-          return '适合日常工作和学习活动';
-        case PresetType.NOISY_ENVIRONMENT:
-          return '适合短期停留';
-        case PresetType.DANGEROUS_ENVIRONMENT:
-          return '建议保持适当防护意识';
-        default:
-          return '适合相应环境的活动';
-      }
-    } else {
-      switch (presetType) {
-        case PresetType.QUIET_ENVIRONMENT:
-          return '适合深度专注和优质休息';
-        case PresetType.GENERAL_ENVIRONMENT:
-          return '继续保持良好环境';
-        case PresetType.NOISY_ENVIRONMENT:
-          return '适合较长时间停留';
-        case PresetType.DANGEROUS_ENVIRONMENT:
-          return '建议保持基本防护意识';
-        default:
-          return '继续保持良好环境';
-      }
-    }
+  get todayPeakDecibel(): number {
+    if (this.alertHistory.length === 0) return 0;
+    return Math.max(...this.alertHistory.map(r => r.peakDecibel));
   }
 
-  // 辅助方法：获取对比符号
+  // ========== 辅助方法 ==========
+
   private getComparisonSymbol(): string {
     const currentDecibel = this.ak.uiDisplayState.displayDb;
     const threshold = this.pk.alarm_threshold.currentEffectiveThreshold;
-    
+
     if (currentDecibel > threshold) {
       return '>';
     } else if (currentDecibel < threshold) {
@@ -524,12 +690,11 @@ export struct AlertsContent {
     }
   }
 
-  // 辅助方法：获取差值文本
   private getDifferenceText(): string {
     const currentDecibel = this.ak.uiDisplayState.displayDb;
     const threshold = this.pk.alarm_threshold.currentEffectiveThreshold;
     const difference = Math.abs(currentDecibel - threshold);
-    
+
     if (currentDecibel > threshold) {
       return `超过阈值 ${difference}dB`;
     } else if (currentDecibel < threshold) {
@@ -539,8 +704,39 @@ export struct AlertsContent {
     }
   }
 
-  // 辅助方法：获取预设类型显示名称
   private getPresetDisplayName(presetType: PresetType): string {
+    switch (presetType) {
+      case PresetType.QUIET_ENVIRONMENT:
+        return '🌙 安静环境';
+      case PresetType.GENERAL_ENVIRONMENT:
+        return '🏢 一般环境';
+      case PresetType.NOISY_ENVIRONMENT:
+        return '🛣️ 嘈杂环境';
+      case PresetType.DANGEROUS_ENVIRONMENT:
+        return '⚠️ 危险环境';
+      default:
+        return '⚙️ 自定义';
+    }
+  }
+
+  // 获取预设图标（用于极简卡片）
+  private getPresetIcon(presetType: PresetType): string {
+    switch (presetType) {
+      case PresetType.QUIET_ENVIRONMENT:
+        return '🌙';
+      case PresetType.GENERAL_ENVIRONMENT:
+        return '🏢';
+      case PresetType.NOISY_ENVIRONMENT:
+        return '🛣️';
+      case PresetType.DANGEROUS_ENVIRONMENT:
+        return '⚠️';
+      default:
+        return '⚙️';
+    }
+  }
+
+  // 获取预设短名称（用于极简卡片）
+  private getPresetShortName(presetType: PresetType): string {
     switch (presetType) {
       case PresetType.QUIET_ENVIRONMENT:
         return '安静环境';
@@ -551,126 +747,112 @@ export struct AlertsContent {
       case PresetType.DANGEROUS_ENVIRONMENT:
         return '危险环境';
       default:
-        return '您设置';
+        return '自定义';
     }
   }
 
-  // 辅助方法：获取环境建议（基于用户阈值和阈值类型）
+  // 获取设置卡片副标题
+  private getSettingsSubtitle(): string {
+    const parts: string[] = [];
+    
+    // 时段调度
+    if (this.pk.alarm_threshold.timeSchedulingEnabled) {
+      parts.push(`时段调度 ${this.pk.alarm_threshold.daytimeThreshold}/${this.pk.alarm_threshold.nighttimeThreshold}dB`);
+    } else {
+      parts.push('全天统一');
+    }
+    
+    // 通知状态
+    parts.push(this.pk.system_notification_enabled ? '通知已开启' : '通知已关闭');
+    
+    return parts.join(' · ');
+  }
+
   @Computed
-  get environmentSuggestion(): string {
+  get currentStatusDescription(): string {
     const currentDecibel = this.ak.uiDisplayState.displayDb;
     const threshold = this.pk.alarm_threshold.currentEffectiveThreshold;
-    const presetType = this.pk.alarm_threshold.currentPreset;
 
-    // 根据阈值类型和当前分贝值生成智能建议
     if (currentDecibel >= threshold) {
-      return this.getExceedThresholdSuggestion(presetType, currentDecibel, threshold);
+      const difference = currentDecibel - threshold;
+      return `已超过阈值 ${difference}dB`;
     } else if (currentDecibel >= threshold - 10) {
-      return this.getNearThresholdSuggestion(presetType, currentDecibel, threshold);
-    } else if (currentDecibel >= threshold - 20) {
-      return this.getSafeThresholdSuggestion(presetType, currentDecibel, threshold);
+      const difference = threshold - currentDecibel;
+      return `接近阈值，仅差 ${difference}dB`;
     } else {
-      return this.getExcellentThresholdSuggestion(presetType, currentDecibel, threshold);
+      return '处于安全范围内';
     }
   }
 
-  // 超过阈值的建议
-  private getExceedThresholdSuggestion(presetType: PresetType, currentDecibel: number, threshold: number): string {
-    const difference = currentDecibel - threshold;
-    
-    switch (presetType) {
-      case PresetType.QUIET_ENVIRONMENT:
-        return `当前环境噪音超过您设置的安静环境阈值${difference}dB。这可能会影响您的专注度和休息质量，建议寻找更安静的环境。`;
-      case PresetType.GENERAL_ENVIRONMENT:
-        return `当前环境噪音超过您设置的一般环境阈值${difference}dB。这可能会影响工作效率和舒适度，建议适当调整环境。`;
-      case PresetType.NOISY_ENVIRONMENT:
-        return `当前环境噪音超过您设置的嘈杂环境阈值${difference}dB。长期暴露可能引起不适，建议减少停留时间。`;
-      case PresetType.DANGEROUS_ENVIRONMENT:
-        return `当前环境噪音超过您设置的危险环境阈值${difference}dB。长期暴露可能对听力造成损害，建议立即采取防护措施。`;
-      default:
-        if (threshold <= 50) {
-          return `当前环境噪音超过您设置的阈值${difference}dB。这可能会影响安静活动的质量。`;
-        } else if (threshold <= 70) {
-          return `当前环境噪音超过您设置的阈值${difference}dB。这可能会影响日常活动的舒适度。`;
-        } else {
-          return `当前环境噪音超过您设置的阈值${difference}dB。长期暴露可能对听力造成影响，请注意防护。`;
-        }
+  @Computed
+  get impactDescription(): string {
+    const currentDecibel = this.ak.uiDisplayState.displayDb;
+    const threshold = this.pk.alarm_threshold.currentEffectiveThreshold;
+
+    if (currentDecibel >= threshold) {
+      return '长期暴露可能影响健康，建议采取措施';
+    } else if (currentDecibel >= threshold - 10) {
+      return '需要注意环境变化';
+    } else if (currentDecibel >= 70) {
+      return '环境噪音中等，适合一般活动';
+    } else {
+      return '环境良好，适合专注和休息';
     }
   }
 
-  // 接近阈值的建议
-  private getNearThresholdSuggestion(presetType: PresetType, currentDecibel: number, threshold: number): string {
-    const difference = threshold - currentDecibel;
-    
-    switch (presetType) {
-      case PresetType.QUIET_ENVIRONMENT:
-        return `噪音水平接近您设置的安静环境阈值，仅差${difference}dB。建议保持关注，避免噪音进一步升高影响安静环境。`;
-      case PresetType.GENERAL_ENVIRONMENT:
-        return `噪音水平接近您设置的一般环境阈值，仅差${difference}dB。建议适当关注环境变化，确保工作学习环境舒适。`;
-      case PresetType.NOISY_ENVIRONMENT:
-        return `噪音水平接近您设置的嘈杂环境阈值，仅差${difference}dB。建议注意环境变化，避免长时间处于嘈杂环境。`;
-      case PresetType.DANGEROUS_ENVIRONMENT:
-        return `噪音水平接近您设置的危险环境阈值，仅差${difference}dB。请保持警惕，准备必要的听力防护措施。`;
-      default:
-        return `噪音水平接近您设置的阈值，仅差${difference}dB。建议保持关注环境变化。`;
+  @Computed
+  get suggestionAction(): string {
+    const currentDecibel = this.ak.uiDisplayState.displayDb;
+    const threshold = this.pk.alarm_threshold.currentEffectiveThreshold;
+
+    if (currentDecibel >= threshold) {
+      return '建议寻找更安静的环境，或减少暴露时间';
+    } else if (currentDecibel >= threshold - 10) {
+      return '建议关注环境变化，准备应对措施';
+    } else if (currentDecibel >= 70) {
+      return '如需专注，建议佩戴降噪耳机';
+    } else {
+      return '当前环境适合工作和学习，继续保持';
     }
   }
 
-  // 安全范围内的建议
-  private getSafeThresholdSuggestion(presetType: PresetType, currentDecibel: number, threshold: number): string {
-    const difference = threshold - currentDecibel;
-    
-    switch (presetType) {
-      case PresetType.QUIET_ENVIRONMENT:
-        return `环境噪音在安静环境的安全范围内，距离阈值还有${difference}dB。适合需要专注和休息的环境。`;
-      case PresetType.GENERAL_ENVIRONMENT:
-        return `环境噪音在一般环境的安全范围内，距离阈值还有${difference}dB。适合日常工作和学习活动。`;
-      case PresetType.NOISY_ENVIRONMENT:
-        return `环境噪音在嘈杂环境的安全范围内，距离阈值还有${difference}dB。适合短期停留的嘈杂环境。`;
-      case PresetType.DANGEROUS_ENVIRONMENT:
-        return `环境噪音在危险环境的安全范围内，距离阈值还有${difference}dB。但仍建议保持适当防护意识。`;
-      default:
-        return `环境噪音在安全范围内，距离您设置的阈值还有${difference}dB。适合相应环境的活动。`;
-    }
+  private formatTime(timestamp: number): string {
+    const date = new Date(timestamp);
+    const hours = date.getHours().toString().padStart(2, '0');
+    const minutes = date.getMinutes().toString().padStart(2, '0');
+    return `${hours}:${minutes}`;
   }
 
-  // 优秀环境的建议
-  private getExcellentThresholdSuggestion(presetType: PresetType, currentDecibel: number, threshold: number): string {
-    const difference = threshold - currentDecibel;
-    
-    switch (presetType) {
-      case PresetType.QUIET_ENVIRONMENT:
-        return `环境噪音水平优秀，远低于安静环境阈值${difference}dB。这是理想的安静环境，适合深度专注和优质休息。`;
-      case PresetType.GENERAL_ENVIRONMENT:
-        return `环境噪音水平优秀，远低于一般环境阈值${difference}dB。这是舒适的工作学习环境，继续保持。`;
-      case PresetType.NOISY_ENVIRONMENT:
-        return `环境噪音水平优秀，远低于嘈杂环境阈值${difference}dB。环境相对安静，适合较长时间停留。`;
-      case PresetType.DANGEROUS_ENVIRONMENT:
-        return `环境噪音水平优秀，远低于危险环境阈值${difference}dB。环境相对安全，但仍建议保持基本防护意识。`;
-      default:
-        return `环境噪音水平优秀，远低于您设置的阈值${difference}dB。这是理想的环境状态，继续保持。`;
+  private formatDuration(seconds: number): string {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    if (mins > 0) {
+      return `${mins}分${secs}秒`;
     }
+    return `${secs}秒`;
   }
 
+  // ========== 主构建方法 ==========
   build() {
     Scroll() {
       Column({ space: DesignConstants.SPACING_LG }) {
-        // 状态显示区（最突出）
+        // 1. 实时状态区（最突出）
         this.buildStatusDisplay()
 
-        NotificationPreferences({
-          systemNotificationEnabled: this.pk.system_notification_enabled,
-          onSystemNotificationChange: (enabled: boolean) => {
-            this.pk.system_notification_enabled = enabled;
-          }
-        })
-        // 环境信息区
-        this.buildEnvironmentInfo()
+        // 2. 设置摘要区（新增）
+        this.buildSettingsSummary()
+
+        // 3. 警报历史区（新增）
+        this.buildAlertHistory()
+
+        // 4. 环境洞察区（扩展）
+        this.buildEnvironmentInsight()
       }
       .width('100%')
+      .padding({ bottom: DesignConstants.SPACING_XL })
     }
     .align(Alignment.Top)
-    .width('90%')
+    .width('100%')
     .height('100%')
     .scrollable(ScrollDirection.Vertical)
     .scrollBar(BarState.Off)
@@ -679,3 +861,5 @@ export struct AlertsContent {
     .backgroundColor($r('sys.color.background_secondary'))
   }
 }
+
+
