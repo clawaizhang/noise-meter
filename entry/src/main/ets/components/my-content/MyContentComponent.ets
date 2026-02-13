@@ -41,24 +41,23 @@ export struct MyContentComponent {
 
   build() {
     Scroll() {
-      Column({ space: DesignConstants.SPACING_LG }) {
+      Column({ space: DesignConstants.SPACING_MD }) {
         // 会员状态卡片
         MembershipStatusCard()
-          .margin({ left: 16, right: 16 })
 
-        // 测量精度设置入口
+        // 测量精度设置入口（无标题，卡片即标题）
         this.buildMeasurementPrecisionEntry()
 
-        // 数据与警报设置入口
+        // 数据与警报设置入口（无标题，卡片即标题）
         this.buildDataAndAlertsEntry()
 
         // 其他设置列表
         this.buildOtherSettingsList()
       }
       .justifyContent(FlexAlign.Start)
-      .alignItems(HorizontalAlign.Start)
+      .alignItems(HorizontalAlign.Center)
       .width('100%')
-      .padding({ bottom: DesignConstants.SPACING_LG })
+      .padding({ left: 16, right: 16, bottom: DesignConstants.SPACING_LG })
     }
     .align(Alignment.Top)
     .scrollBar(BarState.Auto)
@@ -72,68 +71,54 @@ export struct MyContentComponent {
 
   @Builder
   private buildMeasurementPrecisionEntry() {
-    Column({ space: DesignConstants.SPACING_SM }) {
-      // 标题
-      Text('测量精度')
-        .fontSize(DesignConstants.FONT_SIZE_MD)
-        .fontWeight(FontWeight.Medium)
-        .fontColor($r('sys.color.font_primary'))
-        .alignSelf(ItemAlign.Start)
-        .margin({ left: 16 })
-
-      // 设置入口卡片
-      Column() {
-        // 标题行
-        Row({ space: 12 }) {
-          // 左侧图标
-          Row() {
-            Image($r('app.media.ic_calibration'))
-              .width(24)
-              .height(24)
-              .fillColor($r('sys.color.icon_primary'))
-          }
-          .width(44)
-          .height(44)
-          .backgroundColor($r('sys.color.comp_background_secondary'))
-          .borderRadius(12)
-          .justifyContent(FlexAlign.Center)
-          .alignItems(VerticalAlign.Center)
-
-          // 中间内容
-          Column({ space: 4 }) {
-            Text('精度设置')
-              .fontSize(16)
-              .fontWeight(FontWeight.Medium)
-              .fontColor($r('sys.color.font_primary'))
-
-            // 状态摘要
-            Text(this.getPrecisionSummary())
-              .fontSize(13)
-              .fontColor($r('sys.color.font_secondary'))
-              .maxLines(1)
-              .textOverflow({ overflow: TextOverflow.Ellipsis })
-          }
-          .layoutWeight(1)
-          .alignItems(HorizontalAlign.Start)
-
-          // 箭头
-          Image($r('app.media.ic_arrow_right'))
-            .width(16)
-            .height(16)
-            .fillColor($r('sys.color.font_tertiary'))
-        }
-        .width('100%')
+    // 设置入口卡片（无外部标题，卡片即标题）
+    Row({ space: 12 }) {
+      // 左侧图标
+      Row() {
+        Image($r('app.media.ic_calibration'))
+          .width(24)
+          .height(24)
+          .fillColor($r('sys.color.icon_primary'))
       }
-      .width('100%')
-      .padding(16)
-      .backgroundColor($r('sys.color.comp_background_primary'))
-      .borderRadius(16)
-      .margin({ left: 16, right: 16 })
-      .onClick(() => {
-        Throttle.click(() => this.openMeasurementPrecisionPage());
-      })
+      .width(44)
+      .height(44)
+      .backgroundColor($r('sys.color.comp_background_secondary'))
+      .borderRadius(12)
+      .justifyContent(FlexAlign.Center)
+      .alignItems(VerticalAlign.Center)
+
+      // 中间内容
+      Column({ space: 4 }) {
+        Text('测量精度')
+          .fontSize(16)
+          .fontWeight(FontWeight.Medium)
+          .fontColor($r('sys.color.font_primary'))
+
+        // 状态摘要
+        Text(this.getPrecisionSummary())
+          .fontSize(13)
+          .fontColor($r('sys.color.font_secondary'))
+          .maxLines(1)
+          .textOverflow({ overflow: TextOverflow.Ellipsis })
+      }
+      .layoutWeight(1)
+      .alignItems(HorizontalAlign.Start)
+
+      // 箭头
+      Image($r('app.media.ic_arrow_right'))
+        .width(16)
+        .height(16)
+        .fillColor($r('sys.color.font_tertiary'))
     }
     .width('100%')
+    .height(64)
+    .padding({ left: 12, right: 16 })
+    .backgroundColor($r('sys.color.comp_background_primary'))
+    .borderRadius(16)
+    .alignItems(VerticalAlign.Center)
+    .onClick(() => {
+      Throttle.click(() => this.openMeasurementPrecisionPage());
+    })
   }
 
   // 获取测量精度摘要
@@ -172,68 +157,54 @@ export struct MyContentComponent {
 
   @Builder
   private buildDataAndAlertsEntry() {
-    Column({ space: DesignConstants.SPACING_SM }) {
-      // 标题
-      Text('数据与警报')
-        .fontSize(DesignConstants.FONT_SIZE_MD)
-        .fontWeight(FontWeight.Medium)
-        .fontColor($r('sys.color.font_primary'))
-        .alignSelf(ItemAlign.Start)
-        .margin({ left: 16 })
-
-      // 设置入口卡片
-      Column() {
-        // 标题行
-        Row({ space: 12 }) {
-          // 左侧图标
-          Row() {
-            Image($r('app.media.ic_save'))
-              .width(24)
-              .height(24)
-              .fillColor($r('sys.color.icon_primary'))
-          }
-          .width(44)
-          .height(44)
-          .backgroundColor($r('sys.color.comp_background_secondary'))
-          .borderRadius(12)
-          .justifyContent(FlexAlign.Center)
-          .alignItems(VerticalAlign.Center)
-
-          // 中间内容
-          Column({ space: 4 }) {
-            Text('数据与警报')
-              .fontSize(16)
-              .fontWeight(FontWeight.Medium)
-              .fontColor($r('sys.color.font_primary'))
-
-            // 状态摘要
-            Text(this.getDataAlertsSummary())
-              .fontSize(13)
-              .fontColor($r('sys.color.font_secondary'))
-              .maxLines(1)
-              .textOverflow({ overflow: TextOverflow.Ellipsis })
-          }
-          .layoutWeight(1)
-          .alignItems(HorizontalAlign.Start)
-
-          // 箭头
-          Image($r('app.media.ic_arrow_right'))
-            .width(16)
-            .height(16)
-            .fillColor($r('sys.color.font_tertiary'))
-        }
-        .width('100%')
+    // 设置入口卡片（无外部标题，卡片即标题）
+    Row({ space: 12 }) {
+      // 左侧图标
+      Row() {
+        Image($r('app.media.ic_save'))
+          .width(24)
+          .height(24)
+          .fillColor($r('sys.color.icon_primary'))
       }
-      .width('100%')
-      .padding(16)
-      .backgroundColor($r('sys.color.comp_background_primary'))
-      .borderRadius(16)
-      .margin({ left: 16, right: 16 })
-      .onClick(() => {
-        Throttle.click(() => this.openDataAndAlertsPage());
-      })
+      .width(44)
+      .height(44)
+      .backgroundColor($r('sys.color.comp_background_secondary'))
+      .borderRadius(12)
+      .justifyContent(FlexAlign.Center)
+      .alignItems(VerticalAlign.Center)
+
+      // 中间内容
+      Column({ space: 4 }) {
+        Text('数据与警报')
+          .fontSize(16)
+          .fontWeight(FontWeight.Medium)
+          .fontColor($r('sys.color.font_primary'))
+
+        // 状态摘要
+        Text(this.getDataAlertsSummary())
+          .fontSize(13)
+          .fontColor($r('sys.color.font_secondary'))
+          .maxLines(1)
+          .textOverflow({ overflow: TextOverflow.Ellipsis })
+      }
+      .layoutWeight(1)
+      .alignItems(HorizontalAlign.Start)
+
+      // 箭头
+      Image($r('app.media.ic_arrow_right'))
+        .width(16)
+        .height(16)
+        .fillColor($r('sys.color.font_tertiary'))
     }
     .width('100%')
+    .height(64)
+    .padding({ left: 12, right: 16 })
+    .backgroundColor($r('sys.color.comp_background_primary'))
+    .borderRadius(16)
+    .alignItems(VerticalAlign.Center)
+    .onClick(() => {
+      Throttle.click(() => this.openDataAndAlertsPage());
+    })
   }
 
   // 获取数据与警报摘要
@@ -263,7 +234,7 @@ export struct MyContentComponent {
 
   @Builder
   private buildOtherSettingsList() {
-    Column({ space: DesignConstants.SPACING_LG }) {
+    Column({ space: DesignConstants.SPACING_MD }) {
       // 色彩模式设置项
       this.buildColorModeItem()
 
@@ -274,7 +245,6 @@ export struct MyContentComponent {
       this.buildAboutItem()
     }
     .width('100%')
-    .margin({ top: DesignConstants.SPACING_LG })
   }
 
   // 色彩模式设置项
@@ -324,7 +294,6 @@ export struct MyContentComponent {
     .padding({ left: 12, right: 16 })
     .backgroundColor($r('sys.color.comp_background_primary'))
     .borderRadius(16)
-    .margin({ left: 16, right: 16 })
     .alignItems(VerticalAlign.Center)
     .onClick(() => {
       Throttle.click(() => {
@@ -382,7 +351,6 @@ export struct MyContentComponent {
     .padding({ left: 12, right: 16 })
     .backgroundColor($r('sys.color.comp_background_primary'))
     .borderRadius(16)
-    .margin({ left: 16, right: 16 })
     .alignItems(VerticalAlign.Center)
     .onClick(() => {
       this.showCommentDialog();
@@ -429,7 +397,6 @@ export struct MyContentComponent {
     .padding({ left: 12, right: 16 })
     .backgroundColor($r('sys.color.comp_background_primary'))
     .borderRadius(16)
-    .margin({ left: 16, right: 16 })
     .alignItems(VerticalAlign.Center)
     .onClick(() => {
       Throttle.click(() => {
