@@ -68,8 +68,13 @@ class DecibelRecordDataSource implements IDataSource {
   }
 }
 
+interface HistoryContentParams {
+  isActiveTab?: boolean;
+}
+
 @ComponentV2
 export struct HistoryContent {
+  @Param isActiveTab: boolean = false;
   @Local records: DecibelRecord[] = [];
   @Local dataSource: DecibelRecordDataSource = new DecibelRecordDataSource([]);
   @Local selectedRecord: DecibelRecord | null = null;
@@ -96,6 +101,15 @@ export struct HistoryContent {
 
   aboutToAppear() {
     this.loadInitialRecords();
+  }
+
+  // 监听 Tab 切换，当切换到历史 Tab 时刷新数据
+  @Monitor('isActiveTab')
+  onActiveTabChange(monitor:IMonitor) {
+    const isActive = monitor.value<boolean>()?.now;
+    if (isActive) {
+      this.loadInitialRecords();
+    }
   }
 
   async loadInitialRecords() {

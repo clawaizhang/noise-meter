@@ -149,7 +149,9 @@ export struct MainNoiseMeter {
 
   @Builder
   HistoryContentBuilder() {
-    HistoryContent()
+    HistoryContent({
+      isActiveTab: this.currentIndex === TabType.HISTORY
+    })
       .opacity(this.currentIndex === TabType.HISTORY ? 1 : 0)
       .scale({ x: this.currentIndex === TabType.HISTORY ? 1 : 0.95, 
               y: this.currentIndex === TabType.HISTORY ? 1 : 0.95 })
