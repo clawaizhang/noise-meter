@@ -257,17 +257,37 @@ export struct HistoryContent {
 
   @Builder
   RecordItem(record: DecibelRecord) {
-    Row() {
-      // 左侧位置和时间信息列
-      this.LocationNoteDateTime(record)
-      // 右侧区域：分贝值信息
-      this.decibelInfoPlayer(record)
+    Column() {
+      Row() {
+        // 左侧严重程度色条（细线指示）
+        Column()
+          .width(3)
+          .backgroundColor(DecibelService.getDecibelColor(record.avgDecibel))
+          .borderRadius({ topLeft: 16, bottomLeft: 16 })
+          .alignSelf(ItemAlign.Stretch)
+        
+        // 主内容区域
+        Column({ space: 12 }) {
+          // Header: 时间 + 徽章
+          this.RecordHeader(record)
+          
+          // 核心数据区域：平均分贝 + 极值 + 范围条
+          this.RecordCoreData(record)
+          
+          // 位置/备注信息
+          this.RecordLocationInfo(record)
+          
+          // 底部操作栏
+          this.RecordActionBar(record)
+        }
+        .layoutWeight(1)
+        .padding({ left: 12, right: 16, top: 12, bottom: 12 })
+      }
+      .width('100%')
     }
     .backgroundColor($r('sys.color.comp_background_primary'))
-    .justifyContent(FlexAlign.SpaceBetween)
-    .alignItems(VerticalAlign.Top)
-    .padding(16)
     .borderRadius(16)
+    .shadow(DesignConstants.SHADOW_SM)
     .onClick(() => {
       Throttle.click(() => {
         this.showNoiseDetails(record);
@@ -277,208 +297,401 @@ export struct HistoryContent {
       .combine(TransitionEffect.translate({ x: 150 }).animation({ curve: curves.springMotion() })))
   }
 
-  private showNoiseDetails(record: DecibelRecord) {
-    this.selectedRecord = record;
-    this.showDetailDialog();
+  @Builder
+  RecordHeader(record: DecibelRecord) {
+    Row() {
+      Text(this.formatTimestamp(record.timestamp))
+        .fontSize(DesignConstants.FONT_SIZE_SM)
+        .fontColor($r('sys.color.font_secondary'))
+      
+      Blank()
+      
+      Row({ space: 8 }) {
+        // 收藏徽章
+        if (record.isFavorite) {
+          Image($r('app.media.ic_favorite'))
+            .width(16)
+            .height(16)
+            .fillColor('#FF4081')
+        }
+        // 音频徽章
+        if (record.audioFilePath) {
+          Image($r('app.media.ic_audio_analysis'))
+            .width(16)
+            .height(16)
+            .fillColor($r('sys.color.brand'))
+        }
+        
+        // 操作模式下的按钮
+        this.RecordActionButtons(record)
+      }
+    }
+    .width('100%')
   }
 
   @Builder
-  shouChangShanChuButton(record: DecibelRecord) {
-    // 右侧按钮组
+  RecordCoreData(record: DecibelRecord) {
     Column({ space: 8 }) {
-      // 删除记录模式按钮
-      if (this.deleteRecordMode) {
-        // 删除确认按钮
-        if (record.id === this.pendingDeleteId) {
-          Button('删除并清空检测报告')
-            .height(36)
-            .type(ButtonType.Capsule)
-            .backgroundColor($r('sys.color.warning'))
-            .animation({ curve: Curve.EaseInOut })
-            .transition(TransitionEffect.scale({ x: 0, y: 0 })
-              .combine(TransitionEffect.opacity(1))
-              .animation({ curve: curves.springMotion(0.6, 0.8) }))
-            .onClick(() => {
-              Throttle.click(() => {
-                this.deleteRecord(record);
-              });
-            });
-        } else {
-          Button('删除')
-            .height(36)
-            .type(ButtonType.Capsule)
-            .backgroundColor($r('sys.color.alert'))
-            .animation({ curve: Curve.EaseInOut })
-            .transition(TransitionEffect.scale({ x: 0, y: 0 })
-              .combine(TransitionEffect.opacity(1))
-              .animation({ curve: curves.springMotion(0.6, 0.8) }))
-            .onClick(() => {
-              Throttle.click(() => {
-                this.pendingDeleteId = record.id;
-              });
-            });
+      // 第一行：平均分贝 + 等级标签（左对齐） + 极值数据（右对齐）
+      Row() {
+        // 左侧：大数字平均分贝 + 等级
+        Row({ space: 8 }) {
+          Text(`${record.avgDecibel}`)
+            .fontSize(40)
+            .fontWeight(FontWeight.Bold)
+            .fontColor(DecibelService.getDecibelColor(record.avgDecibel))
+          
+          Text(DecibelService.getDecibelLevel(record.avgDecibel))
+            .fontSize(DesignConstants.FONT_SIZE_SM)
+            .fontColor($r('sys.color.font_secondary'))
+            .alignSelf(ItemAlign.End)
+            .margin({ bottom: 6 })
         }
-      }
-
-      // 删除音频模式按钮
-      if (this.deleteAudioMode) {
-        if (record.id === this.pendingDeleteAudioId) {
-          Button('确认删除音频文件')
-            .height(36)
-            .type(ButtonType.Capsule)
-            .backgroundColor($r('sys.color.warning'))
-            .animation({ curve: Curve.EaseInOut })
-            .transition(TransitionEffect.scale({ x: 0, y: 0 })
-              .combine(TransitionEffect.opacity(1))
-              .animation({ curve: curves.springMotion(0.6, 0.8) }))
-            .onClick(() => {
-              Throttle.click(() => {
-                this.deleteRecordAudio(record);
-              });
-            });
-        } else {
-          if (record.audioFilePath) {
-            Button('删除音频文件')
-              .height(36)
-              .type(ButtonType.Capsule)
-              .backgroundColor($r('sys.color.alert'))
-              .animation({ curve: Curve.EaseInOut })
-              .transition(TransitionEffect.scale({ x: 0, y: 0 })
-                .combine(TransitionEffect.opacity(1))
-                .animation({ curve: curves.springMotion(0.6, 0.8) }))
-              .onClick(() => {
-                Throttle.click(() => {
-                  this.pendingDeleteAudioId = record.id;
-                });
-              });
+        
+        Blank()
+        
+        // 右侧：极值数据（水平排列）- 从左到右递增：最小 → 最大
+        Row({ space: 12 }) {
+          // 最小值（左）
+          Column({ space: 2 }) {
+            Text(`${record.minDecibel}`)
+              .fontSize(DesignConstants.FONT_SIZE_LG)
+              .fontWeight(FontWeight.Medium)
+              .fontColor(DecibelService.getDecibelColor(record.minDecibel))
+            Text('最小')
+              .fontSize(DesignConstants.FONT_SIZE_XS)
+              .fontColor($r('sys.color.font_tertiary'))
+          }
+          
+          // 最大值（右）
+          Column({ space: 2 }) {
+            Text(`${record.maxDecibel}`)
+              .fontSize(DesignConstants.FONT_SIZE_LG)
+              .fontWeight(FontWeight.Medium)
+              .fontColor(DecibelService.getDecibelColor(record.maxDecibel))
+            Text('最大')
+              .fontSize(DesignConstants.FONT_SIZE_XS)
+              .fontColor($r('sys.color.font_tertiary'))
           }
         }
       }
-
-      // 收藏模式按钮
-      if (this.shouChangMode) {
-        Button(record.isFavorite ? '取消收藏' : '收藏')
-          .fontColor(record.isFavorite ? '#FF4081' : Color.White)
-          .type(ButtonType.Capsule)
-          .height(36)
-          .backgroundColor(record.isFavorite ? '#FFE0EB' : '#FF4081')
-          .animation({ curve: Curve.EaseOut })
-          .transition(TransitionEffect.scale({ x: 0, y: 0 })
-            .combine(TransitionEffect.opacity(1))
-            .animation({ curve: curves.springMotion(0.6, 0.8) }))
-          .onClick(() => {
-            Throttle.click(async () => {
-              record.isFavorite = !record.isFavorite;
-              await this.recordService.updateRecord(record);
-              // 显示操作提示
-              this.promptAction.showToast({
-                message: record.isFavorite ? '已添加到收藏' : '已取消收藏',
-                duration: 2000,
-                bottom: '50%'
-              });
-            });
-          });
+      .width('100%')
+      
+      // 第二行：范围条（贯穿整行）
+      this.RangeBarFull(record)
+    }
+    .width('100%')
+  }
+  
+  // 全宽范围条
+  @Builder
+  RangeBarFull(record: DecibelRecord) {
+    Row({ space: 6 }) {
+      Text(`${record.minDecibel}`)
+        .fontSize(DesignConstants.FONT_SIZE_XS)
+        .fontColor($r('sys.color.font_tertiary'))
+      
+      // 范围条背景
+      Stack({ alignContent: Alignment.Start }) {
+        Row()
+          .width('100%')
+          .height(4)
+          .backgroundColor($r('sys.color.comp_background_secondary'))
+          .borderRadius(2)
+        
+        // 平均值指示点
+        Row()
+          .width(8)
+          .height(8)
+          .backgroundColor(DecibelService.getDecibelColor(record.avgDecibel))
+          .borderRadius(4)
+          .position({
+            x: this.calculateAvgPosition(record.minDecibel, record.avgDecibel, record.maxDecibel),
+            y: -2
+          })
       }
-    }.justifyContent(FlexAlign.End).alignItems(HorizontalAlign.End).transition(TransitionEffect.opacity(1)
-      .animation({ curve: curves.springMotion(0.6, 0.8) }))
+      .layoutWeight(1)
+      .height(4)
+      
+      Text(`${record.maxDecibel}`)
+        .fontSize(DesignConstants.FONT_SIZE_XS)
+        .fontColor($r('sys.color.font_tertiary'))
+    }
+    .width('100%')
   }
 
   @Builder
-  decibelInfoPlayer(record: DecibelRecord) {
-    // 右侧区域：分贝值信息
-    Column({ space: 8 }) {
-      Row() {
-        this.decibelAverages(record)
+  RecordRangeBar(record: DecibelRecord) {
+    Column({ space: 4 }) {
+      // 范围条 - 使用 Stack 实现平均值指示器
+      Stack({ alignContent: Alignment.Start }) {
+        // 背景条
+        Row()
+          .width('100%')
+          .height(4)
+          .backgroundColor($r('sys.color.comp_background_secondary'))
+          .borderRadius(2)
+        
+        // 平均值指示器
+        Row()
+          .width(8)
+          .height(8)
+          .backgroundColor(DecibelService.getDecibelColor(record.avgDecibel))
+          .borderRadius(4)
+          .position({
+            x: this.calculateAvgPosition(record.minDecibel, record.avgDecibel, record.maxDecibel),
+            y: -2
+          })
       }
-
+      .width('100%')
+      .height(8)
+      
+      // 数值标注
       Row() {
-        if (record!.audioFilePath) {
-          AudioPlayer({
-            audioFilePath: record!.audioFilePath,
-          });
+        Text(`${record.minDecibel}`)
+          .fontSize(DesignConstants.FONT_SIZE_XS)
+          .fontColor($r('sys.color.font_tertiary'))
+        
+        Text('平均值')
+          .fontSize(DesignConstants.FONT_SIZE_XS)
+          .fontColor($r('sys.color.font_tertiary'))
+        
+        Text(`${record.maxDecibel}`)
+          .fontSize(DesignConstants.FONT_SIZE_XS)
+          .fontColor($r('sys.color.font_tertiary'))
+      }
+      .width('100%')
+      .justifyContent(FlexAlign.SpaceBetween)
+    }
+    .width('100%')
+  }
+  
+  // 计算平均值在范围条中的位置
+  private calculateAvgPosition(min: number, avg: number, max: number): string {
+    const range = max - min || 1
+    const position = ((avg - min) / range) * 100
+    // 限制在 0-100 范围内
+    const clampedPosition = Math.max(0, Math.min(100, position))
+    return `${clampedPosition}%`
+  }
+
+  @Builder
+  RecordLocationInfo(record: DecibelRecord) {
+    Column({ space: 4 }) {
+      if (record.location) {
+        Row({ space: 4 }) {
+          Image($r('app.media.ic_location'))
+            .width(12)
+            .height(12)
+            .fillColor($r('sys.color.font_tertiary'))
+          Text(record.location)
+            .fontSize(DesignConstants.FONT_SIZE_SM)
+            .fontColor($r('sys.color.font_secondary'))
+            .maxLines(1)
+            .textOverflow({ overflow: TextOverflow.Ellipsis })
+            .layoutWeight(1)
         }
       }
-
-      Row() {
-        this.shouChangShanChuButton(record)
+      
+      if (record.comment) {
+        Row({ space: 4 }) {
+          Image($r('app.media.ic_document_edit'))
+            .width(12)
+            .height(12)
+            .fillColor($r('sys.color.font_tertiary'))
+          Text(record.comment)
+            .fontSize(DesignConstants.FONT_SIZE_SM)
+            .fontColor($r('sys.color.font_secondary'))
+            .maxLines(1)
+            .textOverflow({ overflow: TextOverflow.Ellipsis })
+            .layoutWeight(1)
+        }
       }
     }
-    .alignItems(HorizontalAlign.End).justifyContent(FlexAlign.Start)
+    .width('100%')
   }
 
   @Builder
-  decibelAverages(record: DecibelRecord) {
-    Row({ space: 8 }) {
-      Column({ space: 4 }) {
-        Text('最小值')
-          .fontSize(DesignConstants.FONT_SIZE_SM)
-        Text(`${record.minDecibel}`)
-          .fontSize(DesignConstants.FONT_SIZE_LG)
-          .fontWeight(FontWeight.Medium)
-          .fontColor(DecibelService.getDecibelColor(record.minDecibel));
-      }
-      .height(40);
-
-      Column({ space: 4 }) {
-        Text('平均值')
-          .fontSize(DesignConstants.FONT_SIZE_SM)
-        Text(`${record.avgDecibel}`)
-          .fontSize(DesignConstants.FONT_SIZE_LG)
-          .fontWeight(FontWeight.Medium)
-          .fontColor(DecibelService.getDecibelColor(record.avgDecibel));
-      }
-      .height(40);
-
-      Column({ space: 4 }) {
-        Text('最大值')
-          .fontSize(DesignConstants.FONT_SIZE_SM)
-        Text(`${record.maxDecibel}`)
-          .fontSize(DesignConstants.FONT_SIZE_LG)
-          .fontWeight(FontWeight.Medium)
-          .fontColor(DecibelService.getDecibelColor(record.maxDecibel));
-      }
-      .height(40);
-    }
-  }
-
-  @Builder
-  LocationNoteDateTime(record: DecibelRecord) {
-    // 左侧位置和时间信息列
-    Column({ space: 8 }) {
-      // 位置信息显示
-      Text(record.location || '未获取位置信息')
-        .fontSize(14)
-        .maxLines(3)
-        .textOverflow({ overflow: TextOverflow.Ellipsis });
-
-      Text(record.comment || '无备注')
-        .fontSize(14)
-        .maxLines(3)
-        .textOverflow({ overflow: TextOverflow.Ellipsis })
-
-      // 时间信息
-      Text(new Date(record.timestamp).toLocaleString('zh-CN', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: false
-      }))
-        .fontSize(14)
-
-      // 检测时长
-      Text(`时长: ${record.duration}秒`)
-        .fontSize(14)
-
+  RecordActionBar(record: DecibelRecord) {
+    Row() {
+      // 左侧：音频播放器
       if (record.audioFilePath) {
-        Text(`音频大小: ${this.formatBytes(FileUtils.getFileInfoSync(record.audioFilePath.replace(FileUtils.getBasePath(),
-          '')).size)}`)
-          .fontSize(14)
+        AudioPlayer({
+          audioFilePath: record.audioFilePath,
+          compact: true
+        })
+      } else {
+        // 无音频时占位
+        Row().width(32).height(32)
+      }
+      
+      Blank()
+      
+      // 右侧：时长和大小
+      Row({ space: 6 }) {
+        Text(`⏱️ ${record.duration}秒`)
+          .fontSize(DesignConstants.FONT_SIZE_XS)
+          .fontColor($r('sys.color.font_tertiary'))
+        
+        if (record.audioFilePath) {
+          Text(`·`)
+            .fontSize(DesignConstants.FONT_SIZE_XS)
+            .fontColor($r('sys.color.font_tertiary'))
+          Text(this.getAudioSizeText(record.audioFilePath))
+            .fontSize(DesignConstants.FONT_SIZE_XS)
+            .fontColor($r('sys.color.font_tertiary'))
+        }
       }
     }
-    .layoutWeight(1)
-    .alignItems(HorizontalAlign.Start).animation({ curve: Curve.EaseOut })
+    .width('100%')
+    .height(32)
+  }
+
+  @Builder
+  RecordActionButtons(record: DecibelRecord) {
+    // 收藏/删除模式按钮组
+    if (this.shouChangMode || this.deleteRecordMode || this.deleteAudioMode) {
+      Column({ space: 4 }) {
+        // 收藏按钮
+        if (this.shouChangMode) {
+          Button(record.isFavorite ? '取消' : '收藏')
+            .fontSize(DesignConstants.FONT_SIZE_XS)
+            .fontColor(record.isFavorite ? '#FF4081' : Color.White)
+            .height(24)
+            .padding({ left: 8, right: 8 })
+            .backgroundColor(record.isFavorite ? '#FFE0EB' : '#FF4081')
+            .borderRadius(12)
+            .gesture(
+              TapGesture()
+                .onAction(() => {
+                  Throttle.click(async () => {
+                    record.isFavorite = !record.isFavorite;
+                    await this.recordService.updateRecord(record);
+                    this.promptAction.showToast({
+                      message: record.isFavorite ? '已添加到收藏' : '已取消收藏',
+                      duration: 2000,
+                      bottom: '50%'
+                    });
+                  })
+                })
+            )
+        }
+        
+        // 删除记录按钮
+        if (this.deleteRecordMode) {
+          if (record.id === this.pendingDeleteId) {
+            Button('确认')
+              .fontSize(DesignConstants.FONT_SIZE_XS)
+              .fontColor(Color.White)
+              .height(24)
+              .padding({ left: 8, right: 8 })
+              .backgroundColor($r('sys.color.warning'))
+              .borderRadius(12)
+              .gesture(
+                TapGesture()
+                  .onAction(() => {
+                    Throttle.click(() => {
+                      this.deleteRecord(record)
+                    })
+                  })
+              )
+          } else {
+            Button('删除')
+              .fontSize(DesignConstants.FONT_SIZE_XS)
+              .fontColor(Color.White)
+              .height(24)
+              .padding({ left: 8, right: 8 })
+              .backgroundColor($r('sys.color.alert'))
+              .borderRadius(12)
+              .gesture(
+                TapGesture()
+                  .onAction(() => {
+                    Throttle.click(() => {
+                      this.pendingDeleteId = record.id
+                    })
+                  })
+              )
+          }
+        }
+        
+        // 删除音频按钮
+        if (this.deleteAudioMode && record.audioFilePath) {
+          if (record.id === this.pendingDeleteAudioId) {
+            Button('确认')
+              .fontSize(DesignConstants.FONT_SIZE_XS)
+              .fontColor(Color.White)
+              .height(24)
+              .padding({ left: 8, right: 8 })
+              .backgroundColor($r('sys.color.warning'))
+              .borderRadius(12)
+              .gesture(
+                TapGesture()
+                  .onAction(() => {
+                    Throttle.click(() => {
+                      this.deleteRecordAudio(record)
+                    })
+                  })
+              )
+          } else {
+            Button('删音频')
+              .fontSize(DesignConstants.FONT_SIZE_XS)
+              .fontColor(Color.White)
+              .height(24)
+              .padding({ left: 8, right: 8 })
+              .backgroundColor($r('sys.color.alert'))
+              .borderRadius(12)
+              .gesture(
+                TapGesture()
+                  .onAction(() => {
+                    Throttle.click(() => {
+                      this.pendingDeleteAudioId = record.id
+                    })
+                  })
+              )
+          }
+        }
+      }
+    }
+  }
+
+  // 格式化时间戳（今天/昨天/星期几/日期）
+  private formatTimestamp(timestamp: number): string {
+    const now = new Date()
+    const date = new Date(timestamp)
+    const diffDays = Math.floor((now.getTime() - timestamp) / (1000 * 60 * 60 * 24))
+    
+    const timeStr = date.toLocaleTimeString('zh-CN', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    })
+    
+    // 今天
+    if (diffDays === 0 && now.getDate() === date.getDate()) {
+      return `今天 ${timeStr}`
+    }
+    // 昨天
+    if (diffDays === 1 || (diffDays === 0 && now.getDate() !== date.getDate())) {
+      return `昨天 ${timeStr}`
+    }
+    // 本周内
+    if (diffDays < 7) {
+      const weekdays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
+      return `${weekdays[date.getDay()]} ${timeStr}`
+    }
+    // 更早
+    return date.toLocaleString('zh-CN', {
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    })
+  }
+
+  private showNoiseDetails(record: DecibelRecord) {
+    this.selectedRecord = record;
+    this.showDetailDialog();
   }
 
   private formatBytes(bytes: number): string {
@@ -489,6 +702,16 @@ export struct HistoryContent {
     const sizes = ['B', 'KB', 'MB', 'GB', 'TB']
     const i = Math.floor(Math.log(bytes) / Math.log(k))
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
+  }
+  
+  // 安全获取音频文件大小
+  private getAudioSizeText(audioPath: string): string {
+    try {
+      const fileInfo = FileUtils.getFileInfoSync(audioPath.replace(FileUtils.getBasePath(), ''))
+      return this.formatBytes(fileInfo.size)
+    } catch (error) {
+      return ''
+    }
   }
 
   private async deleteRecord(record: DecibelRecord) {
