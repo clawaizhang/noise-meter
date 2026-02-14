@@ -748,6 +748,8 @@ export struct HomePageContent {
       const isServiceEnabled = this.locationService.checkLocationEnabled();
       if (!isServiceEnabled) {
         this.currentLocation = null;
+        // 清除 AudioControllerService 中的位置缓存
+        this.audioControllerService.updateLocation(null);
         return;
       }
 
@@ -755,6 +757,8 @@ export struct HomePageContent {
       const hasPermission = await this.locationService.requestLocationPermission();
       if (!hasPermission) {
         this.currentLocation = null;
+        // 清除 AudioControllerService 中的位置缓存
+        this.audioControllerService.updateLocation(null);
         this.pk.location_enabled = false;
         return;
       }
@@ -762,9 +766,14 @@ export struct HomePageContent {
       // 获取位置信息
       const locationInfo: LocationInfo = await this.locationService.requestSingleLocation();
       this.currentLocation = locationInfo;
+      
+      // 将位置信息传递给 AudioControllerService，确保保存记录时包含位置
+      this.audioControllerService.updateLocation(locationInfo);
     } catch (error) {
       console.error('获取位置信息失败:', error);
       this.currentLocation = null;
+      // 清除 AudioControllerService 中的位置缓存
+      this.audioControllerService.updateLocation(null);
     } finally {
       this.isLocationRefreshing = false;
     }
@@ -782,6 +791,8 @@ export struct HomePageContent {
       } else {
         // 关闭时清空位置信息
         this.currentLocation = null;
+        // 清除 AudioControllerService 中的位置缓存
+        this.audioControllerService.updateLocation(null);
       }
     }
   }

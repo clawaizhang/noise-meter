@@ -38,7 +38,7 @@ export struct ReportWatermark {
 
       // 版本和生成时间
       Row({ space: DesignConstants.SPACING_MD }) {
-        Text('v1.6.55')
+        Text('v2.0.0')
           .fontSize(DesignConstants.FONT_SIZE_XS)
           .fontColor($r('sys.color.font_secondary'))
         
