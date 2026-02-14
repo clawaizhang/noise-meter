@@ -155,6 +155,96 @@ export class DecibelRecordService {
   }
 
   /**
+   * 清空所有记录（包括收藏的）
+   */
+  async clearAllRecords(): Promise<void> {
+    try {
+      // 删除所有记录
+      const deleteSql = 'DELETE FROM decibel_records';
+      await this.relationalStoreService.execute(deleteSql);
+      
+      hilog.info(DOMAIN, TAG, '已清空所有记录');
+    } catch (error) {
+      hilog.error(DOMAIN, TAG, '清空所有记录失败: %{public}s',
+        error instanceof Error ? error.message : String(error));
+      throw new Error('清空所有记录失败');
+    }
+  }
+
+  /**
+   * 收藏所有未收藏的记录
+   * @returns 返回被收藏的记录数量
+   */
+  async favoriteAllRecords(): Promise<number> {
+    try {
+      // 先获取有多少条未收藏的记录
+      const countSql = 'SELECT COUNT(*) as count FROM decibel_records WHERE isFavorite = 0';
+      const resultSet = await this.relationalStoreService.query(countSql);
+      let count = 0;
+      if (resultSet.goToFirstRow()) {
+        count = resultSet.getLong(resultSet.getColumnIndex('count'));
+      }
+      resultSet.close();
+
+      if (count === 0) {
+        return 0;
+      }
+
+      // 更新所有未收藏的记录为已收藏
+      const updateSql = 'UPDATE decibel_records SET isFavorite = 1 WHERE isFavorite = 0';
+      await this.relationalStoreService.execute(updateSql);
+      
+      hilog.info(DOMAIN, TAG, '已收藏所有 %{public}d 条记录', count);
+      return count;
+    } catch (error) {
+      hilog.error(DOMAIN, TAG, '收藏所有记录失败: %{public}s',
+        error instanceof Error ? error.message : String(error));
+      throw new Error('收藏所有记录失败');
+    }
+  }
+
+  /**
+   * 删除所有音频文件（保留记录）
+   * @returns 返回被删除的音频文件数量
+   */
+  async deleteAllAudios(): Promise<number> {
+    try {
+      // 先获取所有有音频的记录
+      const sql = 'SELECT * FROM decibel_records WHERE audioFilePath IS NOT NULL AND audioFilePath != ""';
+      const resultSet = await this.relationalStoreService.query(sql);
+
+      const records: DecibelRecord[] = [];
+      while (resultSet.goToNextRow()) {
+        records.push(DecibelRecord.fromResultSet(resultSet));
+      }
+      resultSet.close();
+
+      // 删除音频文件并更新记录
+      for (const record of records) {
+        if (record.audioFilePath) {
+          try {
+            await FileUtils.deleteFile(record.audioFilePath);
+          } catch (error) {
+            hilog.error(DOMAIN, TAG, '删除音频文件失败: %{public}s',
+              error instanceof Error ? error.message : String(error));
+          }
+        }
+      }
+
+      // 更新所有记录的 audioFilePath 为空
+      const updateSql = 'UPDATE decibel_records SET audioFilePath = NULL WHERE audioFilePath IS NOT NULL AND audioFilePath != ""';
+      await this.relationalStoreService.execute(updateSql);
+
+      hilog.info(DOMAIN, TAG, '已删除所有 %{public}d 个音频文件', records.length);
+      return records.length;
+    } catch (error) {
+      hilog.error(DOMAIN, TAG, '删除所有音频失败: %{public}s',
+        error instanceof Error ? error.message : String(error));
+      throw new Error('删除所有音频失败');
+    }
+  }
+
+  /**
    * 更新记录
    */
   async updateRecord(record: DecibelRecord): Promise<void> {

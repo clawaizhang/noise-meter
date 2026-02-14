@@ -39,8 +39,8 @@ export struct MeasurementPrecisionContent {
         // 频率加权设置项
         this.buildFrequencyWeightingItem()
 
-        // 时间加权设置项
-        this.buildTimeWeightingItem()
+        // 分析模式设置项
+        this.buildAnalysisModeItem()
       }
       .width('100%')
       .alignItems(HorizontalAlign.Start)
@@ -198,9 +198,9 @@ export struct MeasurementPrecisionContent {
     .borderRadius(DesignConstants.BORDER_RADIUS_LG)
   }
 
-  // 时间加权设置项
+  // 分析模式设置项
   @Builder
-  private buildTimeWeightingItem() {
+  private buildAnalysisModeItem() {
     Column({ space: DesignConstants.SPACING_MD }) {
       // 主内容行
       Row({ space: DesignConstants.SPACING_MD }) {
@@ -220,7 +220,7 @@ export struct MeasurementPrecisionContent {
 
         // 内容区
         Column({ space: 4 }) {
-          Text('时间加权')
+          Text('分析模式')
             .fontSize(DesignConstants.FONT_SIZE_MD)
             .fontWeight(FontWeight.Medium)
             .fontColor($r('sys.color.font_primary'))
@@ -242,14 +242,14 @@ export struct MeasurementPrecisionContent {
           .padding({ left: 16, right: 16 })
           .onClick(() => {
             Throttle.click(() => {
-              this.openTimeWeightingDialog();
+              this.openAnalysisModeDialog();
             });
           })
       }
       .width('100%')
 
       // 说明文字
-      Text('调整声级计对信号变化的响应速度。快速(F)适用于实时测量，慢速(S)提供更稳定的读数，脉冲(I)用于捕获短时噪声。')
+      Text('选择适合您测量场景的分析模式。快速/慢速/脉冲为专业预设模式，也可自定义FFT、更新间隔等底层参数进行精细调整。')
         .fontSize(DesignConstants.FONT_SIZE_SM)
         .fontColor($r('sys.color.font_secondary'))
         .width('100%')
@@ -307,14 +307,14 @@ export struct MeasurementPrecisionContent {
     frequencyDialog.show();
   }
 
-  // 打开时间加权弹窗
-  private openTimeWeightingDialog(): void {
+  // 打开分析模式弹窗
+  private openAnalysisModeDialog(): void {
     let timeDialog: InfSheet;
     let param: TimeWeightingDialogParams = {
       currentMode: this.pk.audio_analysis_mode,
       onSettingsApplied: (selectedMode: AudioAnalysisMode) => {
         // 设置已应用
-        console.info('时间加权已更新:', selectedMode);
+        console.info('分析模式已更新:', selectedMode);
       },
       onClose: () => {
         timeDialog?.dismiss();

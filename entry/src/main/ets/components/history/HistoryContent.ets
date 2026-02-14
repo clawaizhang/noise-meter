@@ -88,6 +88,8 @@ export struct HistoryContent {
   @Local ak: AppKeys = AppStorageV2.connect(AppKeys)!;
   @Local currentModeName: string = '';
   @Local isLoading: boolean = false;
+  // 选中状态存储 - 用 Set 提高查找性能
+  @Local selectedIdSet: Set<string> = new Set();
   @Local isLoadingMore: boolean = false;
   @Local hasMoreData: boolean = true;
   @Local totalRecords: number = 0;
@@ -269,23 +271,71 @@ export struct HistoryContent {
     });
   }
 
+
+
   @Builder
   RecordItem(record: DecibelRecord) {
     Column() {
+      // 第一行：复选框 + 头部信息（时间、徽章）
+      if (this.isInAnyMode) {
+        // 操作模式：复选框在左上角，与时间同行
+        Row() {
+          // 左侧复选框
+          // 复选框 - 使用 @Computed 缓存的选中状态
+          this.RecordCheckboxBuilder(record)
+          
+          // 时间
+          Text(this.formatTimestamp(record.timestamp))
+            .fontSize(DesignConstants.FONT_SIZE_SM)
+            .fontColor($r('sys.color.font_secondary'))
+            .margin({ left: 8 })
+          
+          Blank()
+          
+          // 徽章区域
+          Row({ space: 8 }) {
+            if (record.isFavorite) {
+              Image($r('app.media.ic_favorite'))
+                .width(16)
+                .height(16)
+                .fillColor('#FF4081')
+            }
+            if (record.audioFilePath) {
+              Image($r('app.media.ic_audio_analysis'))
+                .width(16)
+                .height(16)
+                .fillColor($r('sys.color.brand'))
+            }
+            this.RecordActionButtons(record)
+          }
+        }
+        .width('100%')
+        .padding({ left: 12, right: 16, top: 12, bottom: 4 })
+        
+        // 分隔线
+        Divider()
+          .color($r('sys.color.comp_divider'))
+          .height(1)
+          .margin({ left: 12, right: 16 })
+      }
+      
+      // 主要内容区域（左侧色条 + 内容）
       Row() {
-        // 左侧严重程度色条（细线指示）
+        // 左侧严重程度色条
         Column()
           .width(3)
           .backgroundColor(DecibelService.getDecibelColor(record.avgDecibel))
           .borderRadius({ topLeft: 16, bottomLeft: 16 })
           .alignSelf(ItemAlign.Stretch)
         
-        // 主内容区域
+        // 主内容
         Column({ space: 12 }) {
-          // Header: 时间 + 徽章
-          this.RecordHeader(record)
+          // 非操作模式时显示头部
+          if (!this.isInAnyMode) {
+            this.RecordHeader(record)
+          }
           
-          // 核心数据区域：平均分贝 + 极值 + 范围条
+          // 核心数据区域
           this.RecordCoreData(record)
           
           // 位置/备注信息
@@ -295,17 +345,25 @@ export struct HistoryContent {
           this.RecordActionBar(record)
         }
         .layoutWeight(1)
-        .padding({ left: 12, right: 16, top: 12, bottom: 12 })
+        .padding({ 
+          left: 12, 
+          right: 16, 
+          top: this.isInAnyMode ? 8 : 12,
+          bottom: 12 
+        })
       }
       .width('100%')
     }
     .backgroundColor($r('sys.color.comp_background_primary'))
     .borderRadius(16)
     .shadow(DesignConstants.SHADOW_SM)
+    // 点击卡片打开详情（只在非操作模式）
     .onClick(() => {
-      Throttle.click(() => {
-        this.showNoiseDetails(record);
-      });
+      if (!this.isInAnyMode) {
+        Throttle.click(() => {
+          this.showNoiseDetails(record);
+        });
+      }
     })
     .transition(TransitionEffect.scale({ x: 0, y: 0 })
       .combine(TransitionEffect.translate({ x: 150 }).animation({ curve: curves.springMotion() })))
@@ -772,20 +830,22 @@ export struct HistoryContent {
   }
 
   // 判断是否处于任何操作模式
-  private isInAnyMode(): boolean {
+  @Computed
+   get isInAnyMode(): boolean {
     return this.shouChangMode || this.deleteRecordMode || this.deleteAudioMode;
   }
 
   // 获取当前模式名称
-  private getCurrentModeName(): string {
+  @Computed
+   get getCurrentModeName(): string {
     if (this.shouChangMode) {
-      return '收藏模式';
+      return '收藏';
     }
     if (this.deleteRecordMode) {
-      return '删除记录模式';
+      return '删除记录';
     }
     if (this.deleteAudioMode) {
-      return '删除音频模式';
+      return '删除音频';
     }
     return '';
   }
@@ -798,11 +858,202 @@ export struct HistoryContent {
     this.pendingDeleteId = '';
     this.pendingDeleteAudioId = '';
     this.currentModeName = '';
+    this.selectedIdSet = new Set();
+  }
+
+  // 切换记录选中状态
+  private toggleSelection(recordId: string): void {
+    const newSet = new Set(this.selectedIdSet);
+    if (newSet.has(recordId)) {
+      newSet.delete(recordId);
+    } else {
+      newSet.add(recordId);
+    }
+    this.selectedIdSet = newSet;
+  }
+
+  // 获取实际选中的记录ID列表
+  private getSelectedIds(): string[] {
+    return Array.from(this.selectedIdSet);
+  }
+
+  // 获取选中记录中的收藏统计 - 返回数组 [已收藏数, 未收藏数]
+  private getSelectedFavoriteStats(): number[] {
+    const selectedIds = this.getSelectedIds();
+    const selectedRecords = this.records.filter(r => selectedIds.includes(r.id));
+    const favorited = selectedRecords.filter(r => r.isFavorite).length;
+    const unfavorited = selectedRecords.filter(r => !r.isFavorite).length;
+    return [favorited, unfavorited];
+  }
+
+  // 复选框 Builder - 直接访问 Set 而不是调用方法
+  @Builder
+  RecordCheckboxBuilder(record: DecibelRecord) {
+    // 直接在模板中访问 Set，避免方法调用开销
+    Checkbox()
+      .select(this.selectedIdSet.has(record.id))
+      .selectedColor($r('sys.color.brand'))
+      .width(20)
+      .height(20)
+      .onChange(() => {
+        this.toggleSelection(record.id);
+      })
+  }
+
+  // 批量收藏（只收藏未收藏的记录）
+  private async batchFavoriteRecords(): Promise<void> {
+    const selectedIds = this.getSelectedIds();
+    const selectedRecords = this.records.filter(r => selectedIds.includes(r.id) && !r.isFavorite);
+    
+    if (selectedRecords.length === 0) {
+      this.promptAction.showToast({ message: '没有需要收藏的记录', duration: 2000, bottom: '50%' });
+      return;
+    }
+    
+    try {
+      for (const record of selectedRecords) {
+        record.isFavorite = true;
+        await this.recordService.updateRecord(record);
+      }
+      
+      this.promptAction.showToast({
+        message: `已收藏 ${selectedRecords.length} 条记录`,
+        duration: 2000,
+        bottom: '50%'
+      });
+      
+      this.exitAllModes();
+    } catch (error) {
+      console.error('批量收藏失败:', error);
+    }
+  }
+
+  // 批量取消收藏（只取消已收藏的记录）
+  private async batchUnfavoriteRecords(): Promise<void> {
+    const selectedIds = this.getSelectedIds();
+    const selectedRecords = this.records.filter(r => selectedIds.includes(r.id) && r.isFavorite);
+    
+    if (selectedRecords.length === 0) {
+      this.promptAction.showToast({ message: '没有需要取消收藏的记录', duration: 2000, bottom: '50%' });
+      return;
+    }
+    
+    try {
+      for (const record of selectedRecords) {
+        record.isFavorite = false;
+        await this.recordService.updateRecord(record);
+      }
+      
+      this.promptAction.showToast({
+        message: `已取消收藏 ${selectedRecords.length} 条记录`,
+        duration: 2000,
+        bottom: '50%'
+      });
+      
+      this.exitAllModes();
+    } catch (error) {
+      console.error('批量取消收藏失败:', error);
+    }
+  }
+
+  // 批量删除记录
+  private async batchDeleteRecords(): Promise<void> {
+    const selectedCount = this.selectedIdSet.size;
+    if (selectedCount === 0) {
+      this.promptAction.showToast({ message: '请先选择记录', duration: 2000, bottom: '50%' });
+      return;
+    }
+    
+    AlertDialog.show({
+      title: '批量删除记录',
+      message: `确定要删除选中的 ${selectedCount} 条记录吗？`,
+      alignment: DialogAlignment.Center,
+      offset: { dx: 0, dy: -20 },
+      primaryButton: {
+        value: '取消',
+        action: () => {}
+      },
+      secondaryButton: {
+        value: '删除',
+        action: async () => {
+          try {
+            const idsToDelete = this.getSelectedIds();
+            for (const id of idsToDelete) {
+              await this.recordService.deleteRecord(id);
+            }
+            // 从列表中移除
+            this.records = this.records.filter(r => !idsToDelete.includes(r.id));
+            this.dataSource.replaceData(this.records);
+            this.dataSource.notifyDataReload();
+            this.totalRecords -= idsToDelete.length;
+            
+            this.promptAction.showToast({
+              message: `已删除 ${idsToDelete.length} 条记录`,
+              duration: 2000,
+              bottom: '50%'
+            });
+            this.exitAllModes();
+          } catch (error) {
+            console.error('批量删除记录失败:', error);
+          }
+        }
+      }
+    });
+  }
+
+  // 批量删除音频
+  private async batchDeleteAudios(): Promise<void> {
+    const selectedIds = this.getSelectedIds();
+    if (selectedIds.length === 0) {
+      this.promptAction.showToast({ message: '请先选择记录', duration: 2000, bottom: '50%' });
+      return;
+    }
+    
+    const selectedRecords = this.records.filter(r => selectedIds.includes(r.id) && r.audioFilePath);
+    if (selectedRecords.length === 0) {
+      this.promptAction.showToast({ message: '选中的记录中没有音频文件', duration: 2000, bottom: '50%' });
+      return;
+    }
+    
+    AlertDialog.show({
+      title: '批量删除音频',
+      message: `确定要删除选中的 ${selectedRecords.length} 个音频文件吗？`,
+      alignment: DialogAlignment.Center,
+      offset: { dx: 0, dy: -20 },
+      primaryButton: {
+        value: '取消',
+        action: () => {}
+      },
+      secondaryButton: {
+        value: '删除',
+        action: async () => {
+          try {
+            for (const record of selectedRecords) {
+              const audioPath = record.audioFilePath;
+              record.audioFilePath = '';
+              await this.recordService.updateRecord(record);
+              if (audioPath) {
+                await FileUtils.deleteFile(audioPath.replace(FileUtils.getBasePath(), ''));
+              }
+            }
+            
+            this.promptAction.showToast({
+              message: `已删除 ${selectedIds.length} 个音频文件`,
+              duration: 2000,
+              bottom: '50%'
+            });
+            this.exitAllModes();
+          } catch (error) {
+            console.error('批量删除音频失败:', error);
+          }
+        }
+      }
+    });
   }
 
   // 更新当前模式名称
   private updateCurrentModeName(): void {
-    this.currentModeName = this.getCurrentModeName();
+    this.currentModeName = this.getCurrentModeName;
   }
 
   async showDetailDialog() {
@@ -831,7 +1082,7 @@ export struct HistoryContent {
   @Builder
   MenuBuilder() {
     Column({ space: 8 }) {
-      // 收藏菜单项
+      // 批量收藏菜单项
       Button() {
         Row() {
           Image($r('app.media.ic_favorite'))
@@ -852,18 +1103,14 @@ export struct HistoryContent {
       .backgroundColor($r('sys.color.comp_background_primary'))
       .borderRadius(8)
       .onClick(() => {
-        this.shouChangMode = !this.shouChangMode;
-        if (this.shouChangMode) {
-          this.deleteRecordMode = false;
-          this.deleteAudioMode = false;
-          this.updateCurrentModeName();
-        } else {
-          this.exitAllModes();
-        }
+        this.shouChangMode = true;
+        this.deleteRecordMode = false;
+        this.deleteAudioMode = false;
+        this.updateCurrentModeName();
         this.showMenu = false;
       })
 
-      // 删除记录菜单项
+      // 批量删除记录菜单项
       Button() {
         Row() {
           Image($r('app.media.ic_delete'))
@@ -884,18 +1131,14 @@ export struct HistoryContent {
       .backgroundColor($r('sys.color.comp_background_primary'))
       .borderRadius(8)
       .onClick(() => {
-        this.deleteRecordMode = !this.deleteRecordMode;
-        if (this.deleteRecordMode) {
-          this.shouChangMode = false;
-          this.deleteAudioMode = false;
-          this.updateCurrentModeName();
-        } else {
-          this.exitAllModes();
-        }
+        this.deleteRecordMode = true;
+        this.shouChangMode = false;
+        this.deleteAudioMode = false;
+        this.updateCurrentModeName();
         this.showMenu = false;
       })
 
-      // 删除音频菜单项
+      // 批量删除音频菜单项
       Button() {
         Row() {
           Image($r('app.media.ic_audio_analysis'))
@@ -916,20 +1159,16 @@ export struct HistoryContent {
       .backgroundColor($r('sys.color.comp_background_primary'))
       .borderRadius(8)
       .onClick(() => {
-        this.deleteAudioMode = !this.deleteAudioMode;
-        if (this.deleteAudioMode) {
-          this.shouChangMode = false;
-          this.deleteRecordMode = false;
-          this.updateCurrentModeName();
-        } else {
-          this.exitAllModes();
-        }
+        this.deleteAudioMode = true;
+        this.shouChangMode = false;
+        this.deleteRecordMode = false;
+        this.updateCurrentModeName();
         this.showMenu = false;
       })
     }
     .padding(8)
     .borderRadius(12)
-    .width(140)
+    .width(160)
   }
 
   @Builder
@@ -960,9 +1199,43 @@ export struct HistoryContent {
   @Builder
   HeaderBar() {
     Row() {
-      Text(`共 ${this.totalRecords} 条记录`)
-        .fontSize(DesignConstants.FONT_SIZE_MD)
-        .fontColor($r('sys.color.font_secondary'))
+      // 左侧：根据模式显示不同内容
+      if (this.isInAnyMode) {
+        Row({ space: 8 }) {
+          // 关闭按钮
+          Button() {
+            Image($r('app.media.ic_close'))
+              .width(20)
+              .height(20)
+              .fillColor($r('sys.color.font_secondary'))
+          }
+          .type(ButtonType.Circle)
+          .backgroundColor(Color.Transparent)
+          .width(32)
+          .height(32)
+          .onClick(() => {
+            Throttle.click(() => {
+              this.exitAllModes();
+            });
+          })
+          
+          // 模式名称和已选数量
+          Column({ space: 2 }) {
+            Text(this.currentModeName)
+              .fontSize(DesignConstants.FONT_SIZE_MD)
+              .fontWeight(FontWeight.Medium)
+              .fontColor($r('sys.color.font_primary'))
+            Text(`已选 ${this.selectedIdSet.size} 项`)
+              .fontSize(DesignConstants.FONT_SIZE_SM)
+              .fontColor($r('sys.color.brand'))
+          }
+          .alignItems(HorizontalAlign.Start)
+        }
+      } else {
+        Text(`共 ${this.totalRecords} 条记录`)
+          .fontSize(DesignConstants.FONT_SIZE_MD)
+          .fontColor($r('sys.color.font_secondary'))
+      }
       
       Blank()
       
@@ -1031,7 +1304,8 @@ export struct HistoryContent {
             breakpoints: { reference: BreakpointsReference.WindowSize },
             gutter: 16
           }) {
-            LazyForEach(this.dataSource, (record: DecibelRecord) => {
+            // 使用 ForEach 代替 LazyForEach，避免复用导致的选中状态问题
+            ForEach(this.records, (record: DecibelRecord) => {
               GridCol({ span: 1 }) {
                 this.RecordItem(record)
               }.animation({
@@ -1063,9 +1337,121 @@ export struct HistoryContent {
           this.loadMoreRecords();
         }
       })
+      
+      // 底部批量操作栏（仅在操作模式显示）
+      if (this.isInAnyMode) {
+        this.BatchActionBar()
+      }
     }
     .width('100%')
     .height('100%')
+  }
+
+  /**
+   * 底部批量操作栏
+   */
+  @Builder
+  BatchActionBar() {
+    Column() {
+      // 分割线
+      Divider()
+        .color($r('sys.color.comp_divider'))
+        .height(1)
+      
+      Row() {
+        // 左下角：提示文字
+        if (this.shouChangMode) {
+          Text('选择要收藏的记录')
+            .fontSize(DesignConstants.FONT_SIZE_MD)
+            .fontColor($r('sys.color.font_secondary'))
+        } else if (this.deleteRecordMode) {
+          Text('选择要删除的记录')
+            .fontSize(DesignConstants.FONT_SIZE_MD)
+            .fontColor($r('sys.color.font_secondary'))
+        } else if (this.deleteAudioMode) {
+          Text('选择要删除音频的记录')
+            .fontSize(DesignConstants.FONT_SIZE_MD)
+            .fontColor($r('sys.color.font_secondary'))
+        }
+        
+        Blank()
+        
+        // 右下角：确认操作选中的按钮
+        if (this.shouChangMode) {
+          // 有已收藏的记录：显示取消收藏按钮
+          if (this.getSelectedFavoriteStats()[0] > 0) {
+            Button(`取消收藏(${this.selectedIdSet.size})`)
+              .fontSize(DesignConstants.FONT_SIZE_MD)
+              .fontColor('#FF4081')
+              .backgroundColor('#FFE0EB')
+              .height(40)
+              .padding({ left: 16, right: 16 })
+              .borderRadius(20)
+              .margin({ right: 8 })
+              .onClick(() => {
+                Throttle.click(() => {
+                  this.batchUnfavoriteRecords();
+                });
+              })
+          }
+          
+          // 有未收藏的记录：显示确认收藏按钮
+          if (this.getSelectedFavoriteStats()[1] > 0) {
+            Button(`确认收藏(${this.selectedIdSet.size})`)
+              .fontSize(DesignConstants.FONT_SIZE_MD)
+              .fontColor(Color.White)
+              .backgroundColor('#FF4081')
+              .height(40)
+              .padding({ left: 16, right: 16 })
+              .borderRadius(20)
+              .onClick(() => {
+                Throttle.click(() => {
+                  this.batchFavoriteRecords();
+                });
+              })
+          }
+        } else if (this.deleteRecordMode) {
+          Button(`删除记录(${this.selectedIdSet.size})`)
+            .fontSize(DesignConstants.FONT_SIZE_MD)
+            .fontColor(Color.White)
+            .backgroundColor($r('sys.color.alert'))
+            .height(40)
+            .padding({ left: 20, right: 20 })
+            .borderRadius(20)
+            .enabled(this.selectedIdSet.size > 0)
+            .onClick(() => {
+              Throttle.click(() => {
+                this.batchDeleteRecords();
+              });
+            })
+        } else if (this.deleteAudioMode) {
+          Button(`删除音频(${this.selectedIdSet.size})`)
+            .fontSize(DesignConstants.FONT_SIZE_MD)
+            .fontColor(Color.White)
+            .backgroundColor($r('sys.color.warning'))
+            .height(40)
+            .padding({ left: 20, right: 20 })
+            .borderRadius(20)
+            .enabled(this.selectedIdSet.size > 0)
+            .onClick(() => {
+              Throttle.click(() => {
+                this.batchDeleteAudios();
+              });
+            })
+        }
+      }
+      .width('100%')
+      .height(64)
+      .padding({ left: 16, right: 16 })
+      .backgroundColor($r('sys.color.comp_background_primary'))
+    }
+    .width('100%')
+    .shadow({
+      radius: 8,
+      color: '#1A000000',
+      offsetX: 0,
+      offsetY: -2
+    })
   }
 
   /**
@@ -1109,6 +1495,45 @@ export struct HistoryContent {
     .width('100%')
     .height('100%')
     .backgroundColor($r('sys.color.background_secondary'))
+  }
+}
+
+// 历史记录复选框子组件（独立管理自身状态）
+@Component
+struct HistoryRecordCheckbox {
+  @Prop recordId: string = '';
+  @Prop isChecked: boolean = false;
+  onToggle: (id: string) => void = () => {};
+  
+  build() {
+    Stack({ alignContent: Alignment.Center }) {
+      // 未选中状态：空心圆圈
+      Circle()
+        .width(20)
+        .height(20)
+        .fill(Color.Transparent)
+        .stroke($r('sys.color.font_tertiary'))
+        .strokeWidth(2)
+        .visibility(this.isChecked ? Visibility.Hidden : Visibility.Visible)
+      
+      // 选中状态：实心圆
+      Circle()
+        .width(20)
+        .height(20)
+        .fill($r('sys.color.brand'))
+        .visibility(this.isChecked ? Visibility.Visible : Visibility.Hidden)
+      
+      // 对勾图标
+      Text('✓')
+        .fontSize(14)
+        .fontColor(Color.White)
+        .visibility(this.isChecked ? Visibility.Visible : Visibility.Hidden)
+    }
+    .width(32)
+    .height(32)
+    .onClick(() => {
+      this.onToggle(this.recordId);
+    })
   }
 }
 

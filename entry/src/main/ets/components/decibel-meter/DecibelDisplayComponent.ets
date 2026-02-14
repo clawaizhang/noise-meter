@@ -185,9 +185,9 @@ export struct DecibelDisplayComponent {
         .fontSize(14)
         .fontColor($r('sys.color.ohos_id_color_text_secondary'))
         .fontWeight(FontWeight.Medium)
-      
-      // 分贝值 - 缩小字体作为技术参考
-      Row({ space: 8 }) {
+
+      // 分贝值和 dB 单位
+      Row({ space: 2 }) {
         if (config.currentDecibel === 0) {
           Text('-')
             .fontSize(36)
@@ -195,13 +195,21 @@ export struct DecibelDisplayComponent {
             .fontColor($r('sys.color.alert'))
             .transition(TransitionEffect.scale({ x: 0, y: 0 }).animation({ curve: curves.springMotion() }));
         } else {
-          Text(`${config.currentDecibel}dB`)
+          // 数字部分
+          Text(`${config.currentDecibel}`)
             .fontSize(36)
             .fontWeight(FontWeight.Bold)
             .fontColor($r('sys.color.alert'))
             .transition(TransitionEffect.scale({ x: 0, y: 0 }).animation({ curve: curves.springMotion() }));
+          // dB 单位 - 显示在右下角
+          Text('dB')
+            .fontSize(14)
+            .fontWeight(FontWeight.Medium)
+            .fontColor($r('sys.color.alert'))
+            .margin({ bottom: 4 });
         }
       }
+      .alignItems(VerticalAlign.Bottom)
     }
     .padding({ top: 8, bottom: 8 })
     .width('100%')
