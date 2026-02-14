@@ -688,7 +688,7 @@ export struct AlertsContent {
             .fontWeight(FontWeight.Medium)
 
           // 时长
-          Text(record.getFormattedDuration())
+          Text(record.getFormattedDuration)
             .fontSize(DesignConstants.FONT_SIZE_SM)
             .fontColor($r('sys.color.font_secondary'))
         }

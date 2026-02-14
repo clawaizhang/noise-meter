@@ -706,7 +706,7 @@ export struct AlertHistoryNavigation {
       .alignItems(HorizontalAlign.Start)
 
       // 持续时间
-      Text(record.getFormattedDuration())
+      Text(record.getFormattedDuration)
         .fontSize(DesignConstants.FONT_SIZE_MD)
         .fontColor($r('sys.color.font_primary'))
         .width('20%')

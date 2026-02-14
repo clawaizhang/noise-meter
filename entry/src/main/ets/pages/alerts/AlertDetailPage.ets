@@ -430,7 +430,7 @@ struct AlertDetailPage {
             .fontSize(DesignConstants.FONT_SIZE_LG)
             .fontWeight(FontWeight.Bold)
             .fontColor($r('sys.color.font_primary'))
-          Text(`持续 ${this.record!.getFormattedDuration()}`)
+          Text(`持续 ${this.record!.getFormattedDuration}`)
             .fontSize(DesignConstants.FONT_SIZE_SM)
             .fontColor($r('sys.color.font_secondary'))
         }

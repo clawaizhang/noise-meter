@@ -197,7 +197,12 @@ export class AlertRecord {
   /**
    * 格式化持续时间为可读文本
    */
-  public getFormattedDuration(): string {
+  @Computed
+  public get getFormattedDuration(): string {
+    // 0秒显示为"<1秒"，表示持续时间小于1秒
+    if (this.duration === 0) {
+      return '<1秒';
+    }
     const mins = Math.floor(this.duration / 60);
     const secs = this.duration % 60;
     if (mins > 0) {
