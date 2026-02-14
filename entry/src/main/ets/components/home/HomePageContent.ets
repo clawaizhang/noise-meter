@@ -12,7 +12,7 @@ import { NoiseExposureStandard } from '../../constants/ExposureStandardConstants
 import { AudioControllerLifecycleState, StateTransitionEvent } from '../../models/AudioControllerLifecycleState';
 import { StatusAlertsComponent } from '../status-alerts/StatusAlertsComponent';
 import { AlertsContent } from '../alerts/AlertsContent';
-import { EnhancedExposureContent } from '../exposure/EnhancedExposureContent';
+import { ExposureSummaryCard } from '../summary/ExposureSummaryCard';
 import { ReferenceContent } from '../reference/ReferenceContent';
 import { ToolsContent } from '../tools/ToolsContent';
 import { DialogHub, type InfSheet } from '@hadss/dialoghub';
@@ -20,6 +20,7 @@ import { SpringFestivalConstants } from '../../constants/SpringFestivalConstants
 import { BenefitActivityDialogBuilder, BenefitActivityDialogProps } from '../membership/BenefitActivityDialog';
 import { DashboardHomeCard } from './DashboardHomeCard';
 import { InputDialog } from '../decibel-meter/InputDialog';
+import { EnhancedExposureContent } from '../exposure/EnhancedExposureContent';
 
 // 数据摘要卡片配置接口
 interface SummaryCardConfig {
@@ -69,16 +70,17 @@ export struct HomePageContent {
         // 马年抽签活动入口（最顶部）
         this.buildNewYearActivityCard()
         
+        // 系统状态提示（权限、设备等）
         StatusAlertsComponent()
 
-        // 主页仪表卡片（频谱分析）- 放在分贝显示上方
+        // 主页仪表卡片（频谱分析）
         DashboardHomeCard()
           .transition(TransitionEffect.scale({ x: 0.95, y: 0.95 }).animation({ curve: curves.springMotion() }))
 
         // 核心分贝显示区 + 音频控制整合
         this.buildCombinedDecibelControlCard()
 
-        // 警报状态条
+        // 实时状态条（环境状态，放在分贝卡下方方便查看）
         this.buildAlertStatusBar()
 
         // 数据摘要和工具区
@@ -1039,17 +1041,17 @@ export struct HomePageContent {
     return $r('sys.color.confirm');
   }
 
-  // 获取警报状态文字
+  // 获取警报状态文字（通俗易懂，不带emoji避免重复）
   private getAlertStatusText(): string {
     const db = this.ak.uiDisplayState.displayDb;
     const threshold = this.pk.alarm_threshold.baseThreshold || 70;
     if (db > threshold) {
-      return '⚠️ 超过阈值';
+      return '环境嘈杂';  // 超过阈值
     }
     if (db > threshold - 10) {
-      return '⚡ 接近阈值';
+      return '注意噪音';  // 接近阈值
     }
-    return '🟢 环境安全';
+    return '环境适宜';     // 安全范围
   }
 
   // 打开警报页面
@@ -1067,35 +1069,88 @@ export struct HomePageContent {
     alertsDialog.show();
   }
 
-  // ==================== 数据摘要和工具区 ====================
+  // ==================== 数据摘要和工具区（优化版）====================
 
   @Builder
   private buildDataSummarySection() {
     Column({ space: DesignConstants.SPACING_MD }) {
-      // 数据摘要卡片行
-      Row({ space: DesignConstants.SPACING_MD }) {
-        // 噪音影响程度卡片
-        this.buildSummaryCard({
-          title: '噪音影响',
-          value: this.getExposurePercentage(),
-          subtitle: '查看详情',
-          onTap: () => this.openExposurePage()
-        })
+      // 暴露统计卡片（今日噪音暴露概览）
+      ExposureSummaryCard()
 
-        // 今日峰值卡片
-        this.buildSummaryCard({
-          title: '今日峰值',
-          value: this.getTodayPeak(),
-          subtitle: '查看分布',
-          onTap: () => this.openExposurePage()
-        })
-
-        // 工具箱卡片
-        this.buildToolsCard()
-      }
-      .width('100%')
+      // 健康指南快捷入口
+      this.buildHealthGuideCard()
     }
     .width('100%')
+  }
+
+  /**
+   * 健康指南卡片
+   */
+  @Builder
+  private buildHealthGuideCard() {
+    Row({ space: DesignConstants.SPACING_MD }) {
+      Image($r('app.media.ic_info'))
+        .width(24)
+        .height(24)
+        .fillColor($r('sys.color.brand'))
+
+      Column({ space: DesignConstants.SPACING_XS }) {
+        Text('健康指南')
+          .fontSize(DesignConstants.FONT_SIZE_MD)
+          .fontWeight(FontWeight.Medium)
+          .fontColor($r('sys.color.font_primary'))
+
+        Text('了解噪音对健康的影响及防护建议')
+          .fontSize(DesignConstants.FONT_SIZE_SM)
+          .fontColor($r('sys.color.font_secondary'))
+      }
+      .layoutWeight(1)
+      .alignItems(HorizontalAlign.Start)
+
+      Image($r('app.media.ic_arrow_right'))
+        .width(20)
+        .height(20)
+        .fillColor($r('sys.color.font_tertiary'))
+    }
+    .width('100%')
+    .height(56)
+    .padding({ left: DesignConstants.SPACING_MD, right: DesignConstants.SPACING_MD })
+    .backgroundColor($r('sys.color.comp_background_primary'))
+    .borderRadius(DesignConstants.BORDER_RADIUS_LG)
+    .onClick(() => {
+      Throttle.click(() => this.openReferencePage());
+    })
+  }
+
+  /**
+   * 工具卡片
+   */
+  @Builder
+  private buildToolCard(icon: Resource, title: string, subtitle: string, onTap: () => void) {
+    Column({ space: DesignConstants.SPACING_XS }) {
+      Image(icon)
+        .width(24)
+        .height(24)
+        .fillColor($r('sys.color.brand'))
+
+      Text(title)
+        .fontSize(DesignConstants.FONT_SIZE_MD)
+        .fontWeight(FontWeight.Medium)
+        .fontColor($r('sys.color.font_primary'))
+
+      Text(subtitle)
+        .fontSize(DesignConstants.FONT_SIZE_XS)
+        .fontColor($r('sys.color.font_emphasize'))
+    }
+    .layoutWeight(1)
+    .height(80)
+    .padding(DesignConstants.SPACING_SM)
+    .backgroundColor($r('sys.color.comp_background_primary'))
+    .borderRadius(DesignConstants.BORDER_RADIUS_LG)
+    .justifyContent(FlexAlign.Center)
+    .onClick(() => {
+      Throttle.click(() => onTap());
+    })
   }
 
   // 数据摘要卡片
@@ -1181,27 +1236,6 @@ export struct HomePageContent {
           Throttle.click(() => this.openReferencePage());
         })
     }
-  }
-
-  // 获取噪音影响程度百分比
-  private getExposurePercentage(): string {
-    // 简化显示，实际可以从服务获取
-    const db = this.ak.uiDisplayState.displayDb;
-    if (db < 70) {
-      return '低';
-    }
-    if (db < 85) {
-      return '中';
-    }
-    return '高';
-  }
-
-  // 获取今日峰值
-  private getTodayPeak(): string {
-    if (this.todayPeak > 0) {
-      return `${this.todayPeak.toFixed(1)} dB`;
-    }
-    return '-- dB';
   }
 
   // 打开影响分析页面

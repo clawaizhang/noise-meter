@@ -42,6 +42,13 @@ export const dbConfig: DbConfig = {
         TableCreateSql.ADD_ALERT_HISTORY_STARTTIME_INDEX,
         TableCreateSql.ADD_ALERT_HISTORY_SEVERITY_INDEX
       ]
+    },
+    {
+      version: 6,
+      sqls: [
+        TableCreateSql.ALERT_HISTORY_SAMPLES,
+        TableCreateSql.ADD_ALERT_HISTORY_SAMPLES_ALERTID_INDEX
+      ]
     }
   ]
 }

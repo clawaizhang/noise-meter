@@ -85,4 +85,26 @@ export class TableCreateSql {
     CREATE INDEX IF NOT EXISTS idx_alert_history_severity
     ON alert_history(severity)
   `;
+
+  /**
+   * 警报历史采样数据表
+   * 存储警报期间的详细分贝采样数据
+   */
+  static readonly ALERT_HISTORY_SAMPLES = `
+    CREATE TABLE IF NOT EXISTS alert_history_samples (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      alertId TEXT NOT NULL,
+      timestamp INTEGER NOT NULL,
+      decibel REAL NOT NULL,
+      FOREIGN KEY (alertId) REFERENCES alert_history(id) ON DELETE CASCADE
+    )
+  `;
+
+  /**
+   * 为alert_history_samples表的alertId字段添加索引
+   */
+  static readonly ADD_ALERT_HISTORY_SAMPLES_ALERTID_INDEX = `
+    CREATE INDEX IF NOT EXISTS idx_alert_history_samples_alertId
+    ON alert_history_samples(alertId)
+  `;
 }

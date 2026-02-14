@@ -14,6 +14,8 @@ import { AppStorageV2, PersistenceV2 } from '@kit.ArkUI';
 import { hilog } from '@kit.PerformanceAnalysisKit';
 import { promptAction } from '@kit.ArkUI';
 import { PreferenceKeys } from '../../models/PreferenceKeys';
+import { DialogHub, type InfSheet } from '@hadss/dialoghub';
+import { AlertDetailPageBuilder, AlertDetailPageParams } from './AlertDetailPage';
 
 const TAG = 'AlertHistoryNavigation';
 const DOMAIN = 0xFF00;
@@ -398,6 +400,9 @@ export struct AlertHistoryNavigation {
           .borderRadius(DesignConstants.BORDER_RADIUS_MD)
           // 使用相同的 margin 确保对齐
           .margin({ left: 4, right: 4 })
+          .onClick(() => {
+            this.navigateToDetail(record.id);
+          })
         }, (record: AlertRecord) => record.id)
 
         // 底部加载状态
@@ -580,5 +585,21 @@ export struct AlertHistoryNavigation {
       default:
         return '#999999';
     }
+  }
+
+  /**
+   * 跳转到详情页
+   */
+  private navigateToDetail(alertId: string): void {
+    let detailDialog: InfSheet = DialogHub.getSheet()
+      .setStyle({
+        title: { title: '警报详情' },
+        backgroundColor: $r('sys.color.background_secondary')
+      })
+      .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS })
+      .setComponentTargetId('mainId')
+      .setContent(wrapBuilder(AlertDetailPageBuilder), { alertId } as AlertDetailPageParams)
+      .build();
+    detailDialog.show();
   }
 }

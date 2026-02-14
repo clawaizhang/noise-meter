@@ -25,6 +25,14 @@ const TAG = 'AlertHistoryService';
 const DOMAIN = 0xFF00;
 
 /**
+ * 分贝采样点
+ */
+export interface DecibelSample {
+  timestamp: number;  // 采样时间戳
+  decibel: number;    // 分贝值
+}
+
+/**
  * 活跃警报会话
  * 用于跟踪正在进行的警报
  */
@@ -40,6 +48,8 @@ interface ActiveAlertSession {
   location: string;
   latitude: number;
   longitude: number;
+  samples: DecibelSample[];  // 采样数据数组
+  lastSampleTime: number;    // 上次采样时间（用于控制采样频率）
 }
 
 /**
@@ -135,9 +145,10 @@ export class AlertHistoryService {
       const locationInfo = await this.getCurrentLocation();
 
       // 创建新会话
+      const now = Date.now();
       const session: ActiveAlertSession = {
         id: generateUUID(),
-        startTime: Date.now(),
+        startTime: now,
         peakDecibel: currentDecibel,
         minDecibel: currentDecibel,
         decibelSum: currentDecibel,
@@ -146,7 +157,9 @@ export class AlertHistoryService {
         alertType: alertType,
         location: locationInfo ? locationInfo.address : '',
         latitude: locationInfo ? locationInfo.latitude : 0,
-        longitude: locationInfo ? locationInfo.longitude : 0
+        longitude: locationInfo ? locationInfo.longitude : 0,
+        samples: [{ timestamp: now, decibel: currentDecibel }],  // 初始采样点
+        lastSampleTime: now
       };
 
       this.activeSession = session;
@@ -182,6 +195,16 @@ export class AlertHistoryService {
     // 更新累加值用于计算平均值
     this.activeSession.decibelSum += currentDecibel;
     this.activeSession.decibelCount++;
+
+    // 添加采样点（每3秒采样一次，避免数据量过大）
+    const now = Date.now();
+    if (now - this.activeSession.lastSampleTime >= 3000) {
+      this.activeSession.samples.push({
+        timestamp: now,
+        decibel: currentDecibel
+      });
+      this.activeSession.lastSampleTime = now;
+    }
   }
 
   /**
@@ -227,6 +250,9 @@ export class AlertHistoryService {
 
       // 保存到数据库
       await this.saveAlertRecord(record);
+
+      // 保存采样数据
+      await this.saveAlertSamples(session.id, session.samples);
 
       // 清除活跃会话
       this.activeSession = null;
@@ -757,6 +783,76 @@ export class AlertHistoryService {
     if (this.activeSession) {
       hilog.info(DOMAIN, TAG, `取消活跃警报会话: ${this.activeSession.id}`);
       this.activeSession = null;
+    }
+  }
+
+  // ==================== 采样数据管理 ====================
+
+  /**
+   * 保存警报采样数据
+   */
+  private async saveAlertSamples(alertId: string, samples: DecibelSample[]): Promise<boolean> {
+    if (samples.length === 0) {
+      return true;
+    }
+
+    try {
+      // 使用批量插入提高效率
+      const placeholders = samples.map(() => '(?, ?, ?)').join(', ');
+      const sql = `INSERT INTO alert_history_samples (alertId, timestamp, decibel) VALUES ${placeholders}`;
+      
+      const params: Array<string | number> = [];
+      for (const sample of samples) {
+        params.push(alertId, sample.timestamp, sample.decibel);
+      }
+
+      await this.dbService.execute(sql, params);
+      hilog.info(DOMAIN, TAG, `保存警报采样数据: ${alertId}, ${samples.length} 个采样点`);
+      return true;
+    } catch (error) {
+      const err = error as BusinessError;
+      hilog.error(DOMAIN, TAG, `保存采样数据失败: ${err.message}`);
+      return false;
+    }
+  }
+
+  /**
+   * 获取警报的采样数据
+   */
+  public async getAlertSamples(alertId: string): Promise<DecibelSample[]> {
+    try {
+      const sql = 'SELECT * FROM alert_history_samples WHERE alertId = ? ORDER BY timestamp ASC';
+      const resultSet = await this.dbService.query(sql, [alertId]);
+      
+      const samples: DecibelSample[] = [];
+      while (resultSet.goToNextRow()) {
+        const timestamp = this.getNumberFromResultSet(resultSet, 'timestamp');
+        const decibel = this.getNumberFromResultSet(resultSet, 'decibel');
+        samples.push({ timestamp, decibel });
+      }
+      
+      resultSet.close();
+      return samples;
+    } catch (error) {
+      const err = error as BusinessError;
+      hilog.error(DOMAIN, TAG, `获取采样数据失败: ${err.message}`);
+      return [];
+    }
+  }
+
+  /**
+   * 删除警报的采样数据
+   */
+  public async deleteAlertSamples(alertId: string): Promise<boolean> {
+    try {
+      const sql = 'DELETE FROM alert_history_samples WHERE alertId = ?';
+      await this.dbService.execute(sql, [alertId]);
+      hilog.info(DOMAIN, TAG, `删除警报采样数据: ${alertId}`);
+      return true;
+    } catch (error) {
+      const err = error as BusinessError;
+      hilog.error(DOMAIN, TAG, `删除采样数据失败: ${err.message}`);
+      return false;
     }
   }
 }
