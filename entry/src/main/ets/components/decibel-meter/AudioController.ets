@@ -552,10 +552,11 @@ export struct AudioController {
    */
   private prepareForRecording(): void {
     // 重置数据状态
-    this.ak.dataProcessingState.statisticsData.startTime = new Date().getTime();
+    const startTime = new Date().getTime();
+    this.ak.dataProcessingState.statisticsData.startTime = startTime;
     this.clearErrorMessage();
 
-    // 创建新的记录对象
+    // 创建新的记录对象，使用开始时间作为时间戳
     this.currentRecord = new DecibelRecord(
       0, // minDecibel
       0, // maxDecibel
@@ -565,6 +566,8 @@ export struct AudioController {
       undefined, // location
       undefined// audioFilePath
     );
+    // 设置检测开始时间（而非结束时间）
+    this.currentRecord.timestamp = startTime;
 
     // 启动数据清理监控
     this.startDataCleanupMonitoring();

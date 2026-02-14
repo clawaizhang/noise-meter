@@ -10,7 +10,7 @@ import { AppKeys } from '../../models/AppKeys';
 import { Throttle } from '../../utils/Debounce';
 import { FilterPanel } from '../../components/filter/FilterPanel';
 import { FilterConfig, FilterManager } from '../../models/FilterConfig';
-import { DetailDialogBuilder, DetailDialogParams } from '../../pages/noisemeter/DetailDialogNavigation';
+import { DetailDialogBuilderV2, DetailDialogParamsV2 } from '../../pages/noisemeter/DetailDialogNavigationV2';
 import { DialogHub, InfSheet } from '@hadss/dialoghub';
 
 // 历史记录数据源
@@ -1063,15 +1063,18 @@ export struct HistoryContent {
 
     try {
       // 创建导航参数
-      const params: DetailDialogParams = {
+      const params: DetailDialogParamsV2 = {
         selectedRecord: this.selectedRecord,
         context: getContext(this),
       };
       let detailDialog = DialogHub.getSheet()
         .setComponentTargetId('mainId')
-        .setStyle({ backgroundColor: $r('sys.color.background_secondary') })
+        .setStyle({ 
+          backgroundColor: $r('sys.color.background_secondary'),
+          showClose: false  // 隐藏关闭按钮
+        })
         .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS })
-        .setContent(wrapBuilder(DetailDialogBuilder), params)
+        .setContent(wrapBuilder(DetailDialogBuilderV2), params)
         .build();
       detailDialog.show();
     } catch (error) {

@@ -25,25 +25,42 @@ export class ScreenshotUtils {
     shareDescription: string
   ): Promise<void> {
     try {
+      console.info(`[Screenshot] 开始截图，组件ID: ${componentId}`);
+      
       const filePath = context.tempDir + '/' + fileName;
 
+      // 检查 UIContext
+      if (!uiContext) {
+        throw new Error('UIContext is null or undefined');
+      }
+      
       // 获取截图
-      const pixmap = await uiContext.getComponentSnapshot().get(componentId, {
-        scale: 2,
+      console.info(`[Screenshot] 正在获取组件截图...`);
+      const snapshot = uiContext.getComponentSnapshot();
+      const pixmap = await snapshot.get(componentId, {
+        scale: 1,
         waitUntilRenderFinished: true
       });
+      
+      if (!pixmap) {
+        throw new Error('截图返回空');
+      }
+      
+      console.info(`[Screenshot] 截图成功`);
 
       // 编码图片
       const imagePacker = image.createImagePacker();
       const packOptions: image.PackingOption = {
         format: "image/jpeg",
-        quality: 100
+        quality: 90
       };
       const data = await imagePacker.packToData(pixmap, packOptions);
-
+      
       // 保存文件
       const file = await fileIo.open(filePath, fileIo.OpenMode.CREATE | fileIo.OpenMode.READ_WRITE);
       await fileIo.write(file.fd, data);
+      await fileIo.close(file.fd);
+      console.info(`[Screenshot] 文件保存成功: ${filePath}`);
 
       // 设置分享数据
       const utdTypeId = utd.getUniformDataTypeByFilenameExtension('.jpg', utd.UniformDataType.IMAGE);
@@ -60,10 +77,13 @@ export class ScreenshotUtils {
         selectionMode: systemShare.SelectionMode.SINGLE,
         previewMode: systemShare.SharePreviewMode.DETAIL,
       });
-      console.info('分享成功');
+      console.info('[Screenshot] 分享成功');
+      
     } catch (error) {
-      console.error(`分享失败: code=${error.code}, message=${error.message}`);
-      throw new Error(error);
+      const errorCode = (error as BusinessError).code ?? 'unknown';
+      const errorMessage = (error as BusinessError).message ?? String(error);
+      console.error(`[Screenshot] 分享失败: code=${errorCode}, message=${errorMessage}`);
+      throw new Error(`截图分享失败: ${errorMessage}`);
     }
   }
 }

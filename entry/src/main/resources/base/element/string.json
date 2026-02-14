@@ -253,6 +253,10 @@
       "value": "需要振动权限来提供警报震动反馈"
     },
     {
+      "name": "write_storage_permission_reason",
+      "value": "需要存储权限来保存分享截图"
+    },
+    {
       "name": "privacy_policy_link",
       "value": "https://agreement-drcn.hispace.dbankcloud.cn/index.html?lang=zh&agreementId=1772080835588051136"
     },

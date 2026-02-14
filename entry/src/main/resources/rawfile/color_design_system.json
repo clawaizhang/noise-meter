@@ -1,0 +1,45 @@
+{
+  "description": "噪音检测报告V2 设计系统颜色定义",
+  "scoreColors": {
+    "excellent": "#4CAF50",
+    "excellent_bg": "#E8F5E9",
+    "good": "#8BC34A",
+    "good_bg": "#F1F8E9",
+    "fair": "#FFC107",
+    "fair_bg": "#FFF8E1",
+    "poor": "#FF9800",
+    "poor_bg": "#FFF3E0",
+    "danger": "#F44336",
+    "danger_bg": "#FFEBEE"
+  },
+  "riskColors": {
+    "low": "#4CAF50",
+    "low_bg": "#E8F5E9",
+    "moderate": "#FFC107",
+    "moderate_bg": "#FFF8E1",
+    "high": "#FF9800",
+    "high_bg": "#FFF3E0",
+    "extreme": "#F44336",
+    "extreme_bg": "#FFEBEE"
+  },
+  "standardLineColors": {
+    "sanatorium": "#4CAF50",
+    "residential": "#8BC34A",
+    "commercial": "#FFC107",
+    "industrial": "#FF9800",
+    "traffic": "#F44336"
+  },
+  "chartColors": {
+    "primary_line": "#2196F3",
+    "primary_fill_start": "rgba(33, 150, 243, 0.3)",
+    "primary_fill_end": "rgba(33, 150, 243, 0.05)",
+    "peak_marker": "#F44336",
+    "grid_line": "rgba(0,0,0,0.05)",
+    "axis_text": "rgba(0,0,0,0.4)"
+  },
+  "semanticColors": {
+    "insight_bg": "#E3F2FD",
+    "recommendation_bg": "#F5F5F5",
+    "metric_highlight_bg": "rgba(33, 150, 243, 0.08)"
+  }
+}
