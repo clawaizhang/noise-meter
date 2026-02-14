@@ -43,4 +43,46 @@ export class TableCreateSql {
     CREATE INDEX IF NOT EXISTS idx_decibel_records_timestamp
     ON decibel_records(timestamp DESC)
   `;
+
+  /**
+   * 警报历史记录表
+   * 存储所有触发的警报事件
+   */
+  static readonly ALERT_HISTORY = `
+    CREATE TABLE IF NOT EXISTS alert_history (
+      id TEXT PRIMARY KEY NOT NULL,
+      startTime INTEGER NOT NULL,
+      endTime INTEGER NOT NULL,
+      duration INTEGER NOT NULL,
+      peakDecibel REAL NOT NULL,
+      avgDecibel REAL NOT NULL,
+      minDecibel REAL NOT NULL,
+      threshold REAL NOT NULL,
+      location TEXT,
+      latitude REAL,
+      longitude REAL,
+      alertType TEXT NOT NULL,
+      status TEXT NOT NULL,
+      severity INTEGER NOT NULL,
+      extraData TEXT,
+      createdAt INTEGER NOT NULL,
+      updatedAt INTEGER NOT NULL
+    )
+  `;
+
+  /**
+   * 为alert_history表的startTime字段添加索引
+   */
+  static readonly ADD_ALERT_HISTORY_STARTTIME_INDEX = `
+    CREATE INDEX IF NOT EXISTS idx_alert_history_startTime
+    ON alert_history(startTime DESC)
+  `;
+
+  /**
+   * 为alert_history表的severity字段添加索引
+   */
+  static readonly ADD_ALERT_HISTORY_SEVERITY_INDEX = `
+    CREATE INDEX IF NOT EXISTS idx_alert_history_severity
+    ON alert_history(severity)
+  `;
 }

@@ -54,6 +54,11 @@
       "name": "AboutSettings",
       "pageSourceFile": "src/main/ets/pages/settings/AboutSettingsNavigation.ets",
       "buildFunction": "AboutSettingsBuilder"
+    },
+    {
+      "name": "AlertHistory",
+      "pageSourceFile": "src/main/ets/pages/alerts/AlertHistoryNavigation.ets",
+      "buildFunction": "AlertHistoryNavigationBuilder"
     }
   ]
 } 

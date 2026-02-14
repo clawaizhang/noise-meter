@@ -34,6 +34,14 @@ export const dbConfig: DbConfig = {
       version: 4,
       sqls: [
         TableCreateSql.ADD_TIMESTAMP_INDEX]
+    },
+    {
+      version: 5,
+      sqls: [
+        TableCreateSql.ALERT_HISTORY,
+        TableCreateSql.ADD_ALERT_HISTORY_STARTTIME_INDEX,
+        TableCreateSql.ADD_ALERT_HISTORY_SEVERITY_INDEX
+      ]
     }
   ]
 }
