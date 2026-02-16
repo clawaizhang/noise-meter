@@ -1,6 +1,9 @@
 {
   "src": [
     "pages/Index",
-    "pages/wearable/WatchIndex"
+    "pages/wearable/WatchIndex",
+    "pages/wearable/WatchSettings",
+    "pages/wearable/WatchThresholdSettings",
+    "pages/wearable/WatchCalibrationSettings"
   ]
 }

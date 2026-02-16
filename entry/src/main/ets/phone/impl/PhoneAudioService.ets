@@ -5,7 +5,7 @@ import {
   DecibelStatistics 
 } from '../../core/interfaces/IAudioService';
 import { AudioCoreService } from '../../common/services/AudioCoreService';
-import { DecibelCalculator } from '../../common/utils/DecibelCalculator';
+import { DecibelCalculator, WeightingType } from '../../common/utils/DecibelCalculator';
 
 const TAG = 'PhoneAudioService';
 const DOMAIN = 0x0000;
@@ -21,6 +21,16 @@ export class PhoneAudioService implements IAudioService {
   private currentDecibel: number = 0;
   private dataCallbacks: Array<(data: AudioData) => void> = [];
   private calibrationValue: number = 0;
+  private weightingType: WeightingType = WeightingType.A;
+
+  setWeightingType(type: WeightingType): void {
+    this.weightingType = type;
+    hilog.info(DOMAIN, TAG, `Weighting type set to ${type}`);
+  }
+
+  getWeightingType(): WeightingType {
+    return this.weightingType;
+  }
 
   constructor() {
     this.audioCore = AudioCoreService.getInstance();
@@ -101,7 +111,7 @@ export class PhoneAudioService implements IAudioService {
   }
 
   private processAudioData(buffer: ArrayBuffer, size: number): void {
-    const db = DecibelCalculator.calculate(buffer, size, this.calibrationValue);
+    const db = DecibelCalculator.calculate(buffer, size, this.calibrationValue, this.weightingType);
     this.currentDecibel = db;
     this.decibelReadings.push(db);
 

@@ -15,8 +15,8 @@ export class WatchPreferenceKeys {
   // 是否启用后台检测
   @Trace backgroundDetection: boolean = false;
 
-  // 频率加权类型 (A/C/Z)
-  @Trace weightingType: string = 'A';
+  // 频率加权类型 (A/C/Z) - 手表端固定A计权，但保留设置以便同步手机
+  @Trace weightingType: string = 'A';  // 默认A计权
 
   // 校准值
   @Trace calibrationValue: number = 0;

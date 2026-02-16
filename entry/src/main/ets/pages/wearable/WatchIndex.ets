@@ -10,6 +10,7 @@ import { PermissionUtil } from '@pura/harmony-utils';
 import { WatchPreferenceKeys } from '../../models/WatchPreferenceKeys';
 import vibrator from '@ohos.vibrator';
 import deviceInfo from '@ohos.deviceInfo';
+import { router } from '@kit.ArkUI';
 
 const TAG = 'WatchIndex';
 
@@ -68,6 +69,17 @@ struct WatchIndex {
     console.info(`[${TAG}] Watch page disappearing`);
     this.audioService.release();
     this.alertService.stopAlert();
+  }
+
+  // 页面显示时刷新（从其他页面返回时触发）
+  onPageShow(): void {
+    // 刷新校准值显示
+    const newCalibration = this.preferenceKeys.calibrationValue;
+    if (newCalibration !== this.calibrationValue) {
+      this.calibrationValue = newCalibration;
+      (this.audioService as WatchAudioService).setCalibration(newCalibration);
+      console.info(`[${TAG}] Calibration refreshed: ${newCalibration}`);
+    }
   }
 
   /**
@@ -205,6 +217,24 @@ struct WatchIndex {
         .height('100%')
         .padding({ top: 20, bottom: 20, left: 16, right: 16 })
       }
+      
+      // 设置按钮 - 右侧中间（圆形表盘黄金位置）
+      if (this.isReady) {
+        Button() {
+          Image($r('app.media.ic_settings'))
+            .width(18)
+            .height(18)
+            .opacity(0.5)
+        }
+        .width(36)
+        .height(36)
+        .backgroundColor('#2C2C2E')
+        .position({ x: '100%', y: '50%' })
+        .translate({ x: -44, y: -18 })
+        .onClick((): void => {
+          router.pushUrl({ url: 'pages/wearable/WatchSettings' });
+        })
+      }
     }
     .width('100%')
     .height('100%')
@@ -216,7 +246,7 @@ struct WatchIndex {
     Column({ space: this.isRoundScreen ? 2 : 4 }) {
       // 权限检查中
       if (this.permissionState === PermissionState.CHECKING) {
-        this.buildStatusView('检测音频能力...', '#8E8E93', null)
+        this.buildStatusView('检测音频能力...', '#8E8E93')
       }
       // 权限被拒绝
       else if (this.permissionState === PermissionState.DENIED) {
@@ -248,7 +278,7 @@ struct WatchIndex {
   buildNormalView() {
     // 顶部：校准值显示（如果有）
     if (this.calibrationValue !== 0) {
-      Text(`校准: ${this.calibrationValue > 0 ? '+' : ''}${this.calibrationValue}dB`)
+      Text(`校准: ${this.calibrationValue > 0 ? '+' : ''}${this.calibrationValue}分贝`)
         .fontSize(this.isRoundScreen ? 10 : 12)
         .fontColor('#8E8E93')
         .position({
@@ -266,10 +296,14 @@ struct WatchIndex {
         .fontColor(this.isAlerting ? '#FF3B30' : this.getDecibelColor())
         .height(this.isRoundScreen ? 70 : 90);
 
-      Text('dB')
-        .fontSize(this.isRoundScreen ? 18 : 24)
-        .fontColor('#8E8E93')
-        .margin({ top: this.isRoundScreen ? -4 : -8 });
+      Row({ space: 4 }) {
+        Text('dB')
+          .fontSize(this.isRoundScreen ? 18 : 24)
+          .fontColor('#8E8E93')
+        
+
+      }
+      .margin({ top: this.isRoundScreen ? -4 : -8 })
     }
     .margin({ top: this.isRoundScreen ? 30 : 40 })
 
@@ -322,6 +356,14 @@ struct WatchIndex {
       .padding({ top: 4, bottom: 4, left: 10, right: 10 })
       .backgroundColor('#1AFF3B30')
       .borderRadius(16);
+    }
+
+    // 算法说明
+    if (this.isReady) {
+      Text('A计权 · 快速响应')
+        .fontSize(this.isRoundScreen ? 8 : 10)
+        .fontColor('#666666')
+        .margin({ top: this.isRoundScreen ? 8 : 12 })
     }
   }
 
@@ -381,7 +423,7 @@ struct WatchIndex {
   }
 
   @Builder
-  buildStatusView(mainText: string, mainColor: string, subText: string | null) {
+  buildStatusView(mainText: string, mainColor: string, subText?: string) {
     Column({ space: 8 }) {
       if (this.permissionState === PermissionState.CHECKING) {
         LoadingProgress()

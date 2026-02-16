@@ -6,7 +6,7 @@ import {
   DecibelStatistics 
 } from '../../core/interfaces/IAudioService';
 import { AudioCoreService } from '../../common/services/AudioCoreService';
-import { DecibelCalculator } from '../../common/utils/DecibelCalculator';
+import { DecibelCalculator, WeightingType } from '../../common/utils/DecibelCalculator';
 
 const TAG = 'WatchAudioService';
 const DOMAIN = 0x0000;
@@ -123,7 +123,8 @@ export class WatchAudioService implements IAudioService {
   }
 
   private processAudioData(buffer: ArrayBuffer, size: number): void {
-    const db = DecibelCalculator.calculate(buffer, size, this.calibrationValue);
+    // 使用A计权滤波计算分贝
+    const db = DecibelCalculator.calculate(buffer, size, this.calibrationValue, WeightingType.A);
     this.currentDecibel = db;
     this.decibelReadings.push(db);
 
