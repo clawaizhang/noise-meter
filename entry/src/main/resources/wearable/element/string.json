@@ -1,0 +1,48 @@
+{
+  "string": [
+    {
+      "name": "app_name",
+      "value": "静喵Sound"
+    },
+    {
+      "name": "page_title",
+      "value": "噪音检测"
+    },
+    {
+      "name": "start_button",
+      "value": "开始"
+    },
+    {
+      "name": "stop_button",
+      "value": "停止"
+    },
+    {
+      "name": "mark_button",
+      "value": "标记"
+    },
+    {
+      "name": "noise_level_quiet",
+      "value": "安静"
+    },
+    {
+      "name": "noise_level_normal",
+      "value": "正常"
+    },
+    {
+      "name": "noise_level_noisy",
+      "value": "吵闹"
+    },
+    {
+      "name": "noise_level_danger",
+      "value": "危险"
+    },
+    {
+      "name": "alert_title",
+      "value": "警告"
+    },
+    {
+      "name": "alert_message",
+      "value": "噪音超标"
+    }
+  ]
+}

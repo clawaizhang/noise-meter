@@ -6,6 +6,6 @@
   "author": "yu.zhang",
   "license": "ISC",
   "dependencies": {
-    "@pura/harmony-utils": "^1.0.0",
+    "@pura/harmony-utils": "^1.0.0"
   }
 }

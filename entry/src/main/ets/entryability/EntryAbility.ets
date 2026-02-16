@@ -1,5 +1,6 @@
 import UIAbility from '@ohos.app.ability.UIAbility';
 import window from '@ohos.window';
+import deviceInfo from '@ohos.deviceInfo';
 import { AbilityConstant, Want } from '@kit.AbilityKit';
 import { BusinessError } from '@kit.BasicServicesKit';
 import hilog from '@ohos.hilog';
@@ -10,6 +11,8 @@ import { DisplayManager } from '../utils/DisplayManager';
 import { NotificationHelper } from '../utils/NotificationHelper';
 import { PreferenceKeys } from '../models/PreferenceKeys';
 import { AppKeys } from '../models/AppKeys';
+import { WatchAppKeys } from '../models/WatchAppKeys';
+import { WatchPreferenceKeys } from '../models/WatchPreferenceKeys';
 import { AppUtil, PermissionUtil } from '@pura/harmony-utils';
 import { camera } from '@kit.CameraKit';
 import { AppStorageV2, display, PersistenceV2 } from '@kit.ArkUI';
@@ -55,19 +58,37 @@ export default class EntryAbility extends UIAbility {
 
   onWindowStageCreate(windowStage: window.WindowStage): void {
     hilog.info(DOMAIN, TAG, 'Ability onWindowStageCreate');
+    
+    // 判断设备类型
+    const deviceType = deviceInfo.deviceType;
+    const isWearable = deviceType === 'wearable';
+    hilog.info(DOMAIN, TAG, `Device type: ${deviceType}, isWearable: ${isWearable}`);
+    
+    // 根据设备类型加载不同页面
+    const targetPage = isWearable ? 'pages/wearable/WatchIndex' : 'pages/Index';
+    
     // 注册窗口并加载内容
     const windowManager = WindowManager.getInstance();
     windowManager.registerWindowStage(windowStage);
-    windowManager.loadContent('pages/Index', (windowStageRegistered) => {
+    windowManager.loadContent(targetPage, (windowStageRegistered) => {
       AppUtil.init(this.context);
-      let pk = PersistenceV2.connect(PreferenceKeys, () => new PreferenceKeys())!;
-      AppStorageV2.connect(AppKeys, () => new AppKeys())!;
-      AppStorageV2.connect(DataProcessingState, () => new DataProcessingState())!;
-      AppStorageV2.connect(UIDisplayState, () => new UIDisplayState())!;
-      PersistenceV2.notifyOnError((key: string, reason: string, msg: string) => {
-        console.error(`error key: ${key}, reason: ${reason}, message: ${msg}`);
-      });
-      AudioPresets.init(pk);
+      
+      if (isWearable) {
+        // 手表端：初始化简化版状态管理
+        AppStorageV2.connect(WatchAppKeys, () => new WatchAppKeys())!;
+        PersistenceV2.connect(WatchPreferenceKeys, () => new WatchPreferenceKeys())!;
+      } else {
+        // 手机/平板端：初始化完整版状态管理
+        let pk = PersistenceV2.connect(PreferenceKeys, () => new PreferenceKeys())!;
+        AppStorageV2.connect(AppKeys, () => new AppKeys())!;
+        AppStorageV2.connect(DataProcessingState, () => new DataProcessingState())!;
+        AppStorageV2.connect(UIDisplayState, () => new UIDisplayState())!;
+        PersistenceV2.notifyOnError((key: string, reason: string, msg: string) => {
+          console.error(`error key: ${key}, reason: ${reason}, message: ${msg}`);
+        });
+        AudioPresets.init(pk);
+      }
+      
       // 获取设备类型并设置窗口方向
       windowStageRegistered?.getMainWindow((err: BusinessError, windowClass) => {
         if (err.code || !windowClass) {

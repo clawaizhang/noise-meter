@@ -1,0 +1,36 @@
+{
+  "color": [
+    {
+      "name": "background_primary",
+      "value": "#000000"
+    },
+    {
+      "name": "text_primary",
+      "value": "#FFFFFF"
+    },
+    {
+      "name": "text_secondary",
+      "value": "#999999"
+    },
+    {
+      "name": "decibel_safe",
+      "value": "#4CAF50"
+    },
+    {
+      "name": "decibel_warning",
+      "value": "#FFC107"
+    },
+    {
+      "name": "decibel_danger",
+      "value": "#F44336"
+    },
+    {
+      "name": "button_primary",
+      "value": "#0A59F7"
+    },
+    {
+      "name": "button_danger",
+      "value": "#E84026"
+    }
+  ]
+}
