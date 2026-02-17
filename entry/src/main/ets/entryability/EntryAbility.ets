@@ -13,6 +13,7 @@ import { PreferenceKeys } from '../models/PreferenceKeys';
 import { AppKeys } from '../models/AppKeys';
 import { WatchAppKeys } from '../models/WatchAppKeys';
 import { WatchPreferenceKeys } from '../models/WatchPreferenceKeys';
+import { WatchUsageData } from '../models/WatchUsageData';
 import { AppUtil, PermissionUtil } from '@pura/harmony-utils';
 import { camera } from '@kit.CameraKit';
 import { AppStorageV2, display, PersistenceV2 } from '@kit.ArkUI';
@@ -77,6 +78,8 @@ export default class EntryAbility extends UIAbility {
         // 手表端：初始化简化版状态管理
         AppStorageV2.connect(WatchAppKeys, () => new WatchAppKeys())!;
         PersistenceV2.connect(WatchPreferenceKeys, () => new WatchPreferenceKeys())!;
+        PersistenceV2.connect(PreferenceKeys, () => new PreferenceKeys())!;
+        // WatchUsageData 在 WatchIndex 中初始化
       } else {
         // 手机/平板端：初始化完整版状态管理
         let pk = PersistenceV2.connect(PreferenceKeys, () => new PreferenceKeys())!;
