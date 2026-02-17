@@ -1,6 +1,7 @@
 {
   "src": [
     "pages/Index",
+    "pages/membership/MembershipCenterNavigation",
     "pages/wearable/WatchIndex",
     "pages/wearable/WatchSettings",
     "pages/wearable/WatchThresholdSettings",

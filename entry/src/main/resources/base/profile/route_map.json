@@ -59,6 +59,11 @@
       "name": "AlertHistory",
       "pageSourceFile": "src/main/ets/pages/alerts/AlertHistoryNavigation.ets",
       "buildFunction": "AlertHistoryNavigationBuilder"
+    },
+    {
+      "name": "MembershipCenter",
+      "pageSourceFile": "src/main/ets/pages/membership/MembershipCenterNavigation.ets",
+      "buildFunction": "MembershipCenterBuilder"
     }
   ]
 } 
