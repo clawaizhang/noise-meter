@@ -1,6 +1,9 @@
 /**
  * 暴露统计卡片
  * 专业UI设计展示今日噪音暴露关键指标
+ * 
+ * 免费版：显示当日统计
+ * 专业版：显示完整历史趋势分析
  */
 
 import { ExposureStatisticsService } from '../../services/ExposureStatisticsService';
@@ -12,6 +15,14 @@ import { DialogHub, type InfSheet } from '@hadss/dialoghub';
 import { EnhancedExposureContent } from '../exposure/EnhancedExposureContent';
 import { NoiseExposureStandard } from '../../constants/ExposureStandardConstants';
 import common from '@ohos.app.ability.common';
+import { PreferenceKeys } from '../../models/PreferenceKeys';
+import { PersistenceV2 } from '@kit.ArkUI';
+import {
+  PremiumFeature,
+  PremiumLockMode,
+  createFeatureLimit,
+  LimitType
+} from '../membership/PremiumFeature';
 
 const TAG = 'ExposureSummaryCard';
 const DOMAIN = 0xFF00;
@@ -22,12 +33,16 @@ export struct ExposureSummaryCard {
 
   @Local private isLoading: boolean = true;
   @Local private refreshTimer: number = 0;
+  @Local pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys)!;
 
   // 显示数据
   @Local private exposurePercent: number = 0;
   @Local private todayPeak: number = 0;
   @Local private todayAverage: number = 0;
   @Local private remainingTime: string = '';
+  
+  // 历史数据天数（用于软限制显示）
+  @Local private historyDays: number = 0;
 
   async aboutToAppear(): Promise<void> {
     const context = getContext(this) as common.UIAbilityContext;
@@ -106,7 +121,19 @@ export struct ExposureSummaryCard {
     return '严重超标';
   }
 
+  // 软限制配置：免费版可看当日（视为0天历史），专业版可看365天
+  private getLimitConfig() {
+    return createFeatureLimit(
+      LimitType.TIME,
+      0,      // 免费版：当日数据（0天历史）
+      365,    // 专业版：1年历史
+      this.historyDays,
+      '天'
+    );
+  }
+
   build() {
+    
     Column({ space: DesignConstants.SPACING_SM }) {
       // 第一行：标题 + 状态标签
       Row() {
@@ -244,26 +271,42 @@ export struct ExposureSummaryCard {
       }
       .width('100%')
 
-      // 第三行：查看详情（底部）
-      Row() {
-        Text('查看详细分析报告')
-          .fontSize(DesignConstants.FONT_SIZE_SM)
-          .fontColor($r('sys.color.brand'))
-
-        Blank()
-
-        Image($r('app.media.ic_arrow_right'))
-          .width(16)
-          .height(16)
-          .fillColor($r('sys.color.brand'))
-      }
-      .width('100%')
-      .padding({ top: DesignConstants.SPACING_XS })
+      // 第三行：查看详情（底部）- 使用 PremiumFeature 软限制
+      PremiumFeature({
+        featureId: 'exposure_detail',
+        featureName: '详细暴露分析',
+        featureDesc: '查看长期噪音暴露趋势、健康风险评估及历史数据分析',
+        icon: $r('app.media.ic_atom'),
+        lockMode: PremiumLockMode.SOFT_LIMIT,
+        limit: this.getLimitConfig(),
+        showTrialTip: true,
+        freeContent: () => { this.buildDetailEntry() },
+        proContent: () => { this.buildDetailEntry() }
+      })
     }
     .width('100%')
     .padding(DesignConstants.SPACING_MD)
     .backgroundColor($r('sys.color.comp_background_primary'))
     .borderRadius(DesignConstants.BORDER_RADIUS_LG)
+  }
+  
+  // 查看详情入口
+  @Builder
+  private buildDetailEntry() {
+    Row() {
+      Text('查看详细分析报告')
+        .fontSize(DesignConstants.FONT_SIZE_SM)
+        .fontColor($r('sys.color.brand'))
+
+      Blank()
+
+      Image($r('app.media.ic_arrow_right'))
+        .width(16)
+        .height(16)
+        .fillColor($r('sys.color.brand'))
+    }
+    .width('100%')
+    .padding({ top: DesignConstants.SPACING_XS })
     .onClick(() => {
       Throttle.click(() => this.openExposureDetail());
     })

@@ -11,6 +11,10 @@ import {
   AutoSaveSettingsDialogBuilder,
 } from '../auto-save/AutoSaveSettingsDialog';
 import { AlertsSettingsBuilder, AlertsSettingsProps } from '../../pages/settings/AlertsSettingsNavigation';
+import {
+  PremiumFeature,
+  PremiumLockMode
+} from '../membership/PremiumFeature';
 
 /**
  * 数据与警报设置内容组件
@@ -116,9 +120,30 @@ export struct DataAndAlertsContent {
     .borderRadius(DesignConstants.BORDER_RADIUS_LG)
   }
 
-  // 自动保存设置项
+  // 自动保存设置项 - 完全锁定模式
   @Builder
   private buildAutoSaveItem() {
+    PremiumFeature({
+      featureId: 'auto_save',
+      featureName: '自动保存',
+      featureDesc: '按设定时间间隔自动保存检测数据，防止数据丢失',
+      icon: $r('app.media.ic_save'),
+      lockMode: PremiumLockMode.FULL_LOCK,
+      showTrialTip: true,
+      freeContent: () => { this.buildAutoSaveContent() },
+      proContent: () => { this.buildAutoSaveContent() },
+      onUnlock: () => {
+        // 用户升级后，如果自动保存未开启，提示用户开启
+        if (!this.pk.auto_save_enabled) {
+          this.pk.auto_save_enabled = true;
+        }
+      }
+    })
+  }
+
+  // 自动保存内容
+  @Builder
+  private buildAutoSaveContent() {
     Row({ space: DesignConstants.SPACING_MD }) {
       // 左侧图标
       Row() {
@@ -179,9 +204,28 @@ export struct DataAndAlertsContent {
     .borderRadius(DesignConstants.BORDER_RADIUS_MD)
   }
 
-  // 音频记录设置项
+  // 音频记录设置项 - 完全锁定模式
   @Builder
   private buildAudioRecordingItem() {
+    PremiumFeature({
+      featureId: 'audio_recording',
+      featureName: '音频记录',
+      featureDesc: '录制并保存原始音频文件，支持后续回放和分析',
+      icon: $r('app.media.ic_mic'),
+      lockMode: PremiumLockMode.FULL_LOCK,
+      showTrialTip: true,
+      freeContent: () => { this.buildAudioRecordingContent() },
+      proContent: () => { this.buildAudioRecordingContent() },
+      onUnlock: () => {
+        // 用户升级后，提示用户音频记录功能已解锁
+        console.info('音频记录功能已解锁');
+      }
+    })
+  }
+
+  // 音频记录内容
+  @Builder
+  private buildAudioRecordingContent() {
     Row({ space: DesignConstants.SPACING_MD }) {
       // 左侧图标
       Row() {

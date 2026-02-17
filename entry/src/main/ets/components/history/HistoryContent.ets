@@ -5,13 +5,15 @@ import { AudioPlayer } from '../../components/business/AudioPlayer';
 import { DecibelRecord } from '../../models/DecibelRecord';
 import { FileUtils } from '../../utils/FileUtils';
 import { DesignConstants } from '../../constants/DesignConstants';
-import { AppStorageV2, curves } from '@kit.ArkUI';
+import { AppStorageV2, curves, PersistenceV2 } from '@kit.ArkUI';
 import { AppKeys } from '../../models/AppKeys';
+import { PreferenceKeys } from '../../models/PreferenceKeys';
 import { Throttle } from '../../utils/Debounce';
 import { FilterPanel } from '../../components/filter/FilterPanel';
 import { FilterConfig, FilterManager } from '../../models/FilterConfig';
 import { DetailDialogBuilderV2, DetailDialogParamsV2 } from '../../pages/noisemeter/DetailDialogNavigationV2';
 import { DialogHub, InfSheet } from '@hadss/dialoghub';
+import { MembershipCenterDialog, MembershipCenterDialogProps } from '../membership/MembershipCenterDialog';
 
 // 历史记录数据源
 class DecibelRecordDataSource implements IDataSource {
@@ -96,10 +98,13 @@ export struct HistoryContent {
   @Local currentOffset: number = 0;
   @Local currentFilters: FilterConfig = new FilterConfig(false);
   @Local filterManager: FilterManager = new FilterManager();
+  @Local pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys)!;
   private readonly PAGE_SIZE: number = 10;
+  private readonly FREE_USER_LIMIT: number = 3; // 免费用户限制3条
   private context: Context = getContext(this)
   private recordService: DecibelRecordService = new DecibelRecordService(this.context);
   private promptAction: PromptAction = this.getUIContext().getPromptAction();
+  private membershipDialog?: InfSheet;
 
   aboutToAppear() {
     this.loadInitialRecords();
@@ -114,6 +119,13 @@ export struct HistoryContent {
     }
   }
 
+  /**
+   * 检查是否是专业版会员
+   */
+  private isProMember(): boolean {
+    return this.pk.member_ship.can;
+  }
+
   async loadInitialRecords() {
     if (this.isLoading) {
       return;
@@ -122,15 +134,22 @@ export struct HistoryContent {
     this.isLoading = true;
     try {
       // 获取总记录数
-      this.totalRecords = await this.recordService.getTotalCount();
+      const actualTotal = await this.recordService.getTotalCount();
+      this.totalRecords = actualTotal;
+
+      // 根据会员状态决定加载数量
+      const isMember = this.isProMember();
+      const limit = isMember ? this.PAGE_SIZE : Math.min(this.FREE_USER_LIMIT, actualTotal);
 
       // 根据过滤器状态加载记录
       let initialRecords: DecibelRecord[];
       if (this.currentFilters.isActive) {
-        initialRecords = await this.recordService.getFilteredRecordsPaged(this.currentFilters, this.PAGE_SIZE, 0);
-        this.totalRecords = await this.recordService.getFilteredTotalCount(this.currentFilters);
+        initialRecords = await this.recordService.getFilteredRecordsPaged(this.currentFilters, limit, 0);
+        const filteredTotal = await this.recordService.getFilteredTotalCount(this.currentFilters);
+        this.totalRecords = isMember ? filteredTotal : Math.min(filteredTotal, this.FREE_USER_LIMIT);
       } else {
-        initialRecords = await this.recordService.getRecordsPaged(this.PAGE_SIZE, 0);
+        initialRecords = await this.recordService.getRecordsPaged(limit, 0);
+        this.totalRecords = isMember ? actualTotal : Math.min(actualTotal, this.FREE_USER_LIMIT);
       }
 
       this.records = initialRecords;
@@ -143,8 +162,8 @@ export struct HistoryContent {
         this.dataSource = new DecibelRecordDataSource(this.records);
       }
 
-      // 检查是否还有更多数据
-      this.hasMoreData = this.currentOffset < this.totalRecords;
+      // 检查是否还有更多数据（仅专业版用户）
+      this.hasMoreData = isMember && this.currentOffset < actualTotal;
     } catch (error) {
       console.error('加载历史记录失败:', error);
     } finally {
@@ -153,7 +172,8 @@ export struct HistoryContent {
   }
 
   async loadMoreRecords() {
-    if (this.isLoadingMore || !this.hasMoreData) {
+    // 免费用户不允许加载更多
+    if (!this.isProMember() || this.isLoadingMore || !this.hasMoreData) {
       return;
     }
 
@@ -1329,6 +1349,11 @@ export struct HistoryContent {
               .alignSelf(ItemAlign.Center)
               .margin({ top: 16 })
           }
+
+          // 免费用户限制提示
+          if (!this.isProMember() && this.totalRecords >= this.FREE_USER_LIMIT) {
+            this.FreeUserLimitTip()
+          }
         }.margin({ left: 16, right: 16, top: 8 })
       }
       .scrollBar(BarState.Off)
@@ -1348,6 +1373,90 @@ export struct HistoryContent {
     }
     .width('100%')
     .height('100%')
+  }
+
+  /**
+   * 免费用户限制提示
+   */
+  @Builder
+  FreeUserLimitTip() {
+    Column({ space: DesignConstants.SPACING_SM }) {
+      // 提示信息
+      Row({ space: DesignConstants.SPACING_SM }) {
+        Image($r('app.media.ic_info'))
+          .width(16)
+          .height(16)
+          .fillColor('#FF6B6B')
+
+        Text('免费版仅显示最近3条记录')
+          .fontSize(DesignConstants.FONT_SIZE_MD)
+          .fontColor($r('sys.color.font_primary'))
+
+        Blank()
+      }
+      .width('100%')
+
+      Text('开通会员解锁全部历史记录')
+        .fontSize(DesignConstants.FONT_SIZE_SM)
+        .fontColor($r('sys.color.font_secondary'))
+        .width('100%')
+
+      // 升级按钮
+      Button() {
+        Row({ space: DesignConstants.SPACING_SM }) {
+          Text('💎')
+            .fontSize(16)
+
+          Text('开通会员')
+            .fontSize(DesignConstants.FONT_SIZE_MD)
+            .fontColor(Color.White)
+            .fontWeight(FontWeight.Medium)
+        }
+      }
+      .width('100%')
+      .height(40)
+      .backgroundColor('#FF6B6B')
+      .borderRadius(20)
+      .margin({ top: DesignConstants.SPACING_SM })
+      .onClick(() => {
+        // 打开会员中心
+        this.showMembershipCenter();
+      })
+    }
+    .padding(DesignConstants.SPACING_MD)
+    .backgroundColor('rgba(255, 107, 107, 0.1)')
+    .borderRadius(DesignConstants.BORDER_RADIUS_MD)
+    .margin({ top: 16, left: 16, right: 16, bottom: 16 })
+    .width('100%')
+  }
+
+  /**
+   * 显示会员中心
+   */
+  private showMembershipCenter(): void {
+    let props: MembershipCenterDialogProps = {
+      onClose: () => {
+        if (this.membershipDialog) {
+          this.membershipDialog.dismiss();
+        }
+        // 刷新会员状态
+        this.loadInitialRecords();
+      }
+    };
+
+    this.membershipDialog = DialogHub.getSheet()
+      .setStyle({
+        title: { title: '会员中心' },
+        backgroundColor: $r('sys.color.background_secondary')
+      })
+      .setConfig({
+        scrollSizeMode: ScrollSizeMode.CONTINUOUS
+      })
+      .setComponentTargetId('mainId')
+      .setContent(wrapBuilder(MembershipCenterDialogBuilder), props)
+      .build();
+
+    this.membershipDialog.show();
   }
 
   /**
@@ -1558,4 +1667,10 @@ function FilterPanelBuilder(params: FilterPanelParams) {
       params.onReset();
     }
   })
+}
+
+// 会员中心弹窗Builder
+@Builder
+function MembershipCenterDialogBuilder(props: MembershipCenterDialogProps) {
+  MembershipCenterDialog({ onClose: props.onClose })
 }
