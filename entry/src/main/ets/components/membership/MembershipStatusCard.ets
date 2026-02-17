@@ -1,6 +1,6 @@
 /**
  * 会员状态卡片组件
- * 集成新版华为IAP会员系统
+ * 集成新版华为IAP会员系统 - 弹窗交互
  */
 
 import { navigationStack } from '../../constants/ProviderConstant';
@@ -8,12 +8,10 @@ import { DesignConstants } from '../../constants/DesignConstants';
 import { PersistenceV2 } from '@kit.ArkUI';
 import { PreferenceKeys } from '../../models/PreferenceKeys';
 import { DialogHub, InfSheet } from '@hadss/dialoghub';
-import {
-  defaultPricingPlans, UpgradeContentBuilder, UpgradeContentProps
-} from './UpgradeContent';
 import { Throttle } from '../../utils/Debounce';
 import { VipService, VipSource, VipStatus } from '../../services/VipService';
 import { common } from '@kit.AbilityKit';
+import { MembershipCenterDialog, MembershipCenterDialogProps } from './MembershipCenterDialog';
 
 @ComponentV2
 export struct MembershipStatusCard {
@@ -67,232 +65,324 @@ export struct MembershipStatusCard {
   get membershipStatusColor(): Resource {
     if (!this.vipStatus) return $r('sys.color.font_secondary');
     
-    if (this.vipStatus.isPermanent || this.vipStatus.source === VipSource.SUBSCRIPTION) {
-      return $r('sys.color.confirm');
+    if (this.vipStatus.isPermanent) {
+      return $r('sys.color.warning'); // 金色
+    } else if (this.vipStatus.source === VipSource.SUBSCRIPTION) {
+      return $r('sys.color.brand'); // 品牌蓝
     } else if (this.vipStatus.hasLegacyVoucher) {
-      return $r('sys.color.warning');
+      return $r('sys.color.confirm'); // 绿色提示
     }
     return $r('sys.color.font_secondary');
   }
 
   /**
-   * 【新版】构建会员头部信息
+   * 【新版】构建会员状态卡片 - 4种状态清晰展示
    */
-  @Builder
-  private buildMembershipHeader() {
-    Column({ space: DesignConstants.SPACING_SM }) {
-      // 标题
-      Row({ space: DesignConstants.SPACING_SM }) {
-        Image($r('app.media.ic_vip'))
-          .width(DesignConstants.ICON_SIZE_MD)
-          .height(DesignConstants.ICON_SIZE_MD)
-          .fillColor(this.membershipStatusColor)
-
-        Text('会员状态')
-          .fontSize(DesignConstants.FONT_SIZE_LG)
-          .fontWeight(FontWeight.Bold)
-          .fontColor($r('sys.color.font_primary'))
+  build() {
+    Column({ space: DesignConstants.SPACING_MD }) {
+      // 根据4种状态显示不同UI
+      if (!this.vipStatus) {
+        this.buildLoadingState()
+      } else if (this.vipStatus.hasLegacyVoucher) {
+        this.buildLegacyVoucherState()
+      } else if (this.vipStatus.isPermanent) {
+        this.buildPermanentState()
+      } else if (this.vipStatus.source === VipSource.SUBSCRIPTION) {
+        this.buildSubscriptionState()
+      } else {
+        this.buildNonMemberState()
       }
-      .alignItems(VerticalAlign.Center)
-
-      // 会员状态
-      Row() {
-        Text(this.membershipStatusText)
-          .fontSize(DesignConstants.FONT_SIZE_MD)
-          .fontColor(this.membershipStatusColor)
-      }
-      .alignItems(VerticalAlign.Center)
     }
-    .alignItems(HorizontalAlign.Start)
     .width('100%')
   }
 
-  /**
-   * 【新版】构建会员操作区域
-   */
+  // ========== 状态1: 加载中 ==========
   @Builder
-  private buildMemberActions() {
-    if (!this.vipStatus) {
-      // 未加载状态，显示空
-      Blank()
-    } else if (this.vipStatus.hasLegacyVoucher) {
-      // 遗留会员待转换
-      Column({ space: DesignConstants.SPACING_SM }) {
-        Text(`检测到 ${this.vipStatus.legacyDays} 天历史会员`)
-          .fontSize(DesignConstants.FONT_SIZE_SM)
-          .fontColor($r('sys.color.font_secondary'))
-        
-        Text(this.vipStatus.legacyDays > 1095 ? '可转为永久会员' : '可转为订阅会员')
-          .fontSize(DesignConstants.FONT_SIZE_SM)
-          .fontColor($r('sys.color.warning'))
-
-        Button('立即转换')
-          .width('100%')
-          .fontSize(DesignConstants.FONT_SIZE_MD)
-          .backgroundColor($r('sys.color.brand'))
-          .fontColor($r('sys.color.font_on_primary'))
-          .borderRadius(DesignConstants.BORDER_RADIUS_MD)
-          .onClick(() => {
-            Throttle.click(() => {
-              this.gotoMembershipCenter();
-            });
-          })
-      }
-      .width('100%')
-      .padding(DesignConstants.SPACING_MD)
-      .backgroundColor('rgba(255, 193, 7, 0.1)')
-      .borderRadius(DesignConstants.BORDER_RADIUS_MD)
-      .onClick(() => {
-        Throttle.click(() => {
-          this.gotoMembershipCenter();
-        });
-      })
-    } else if (this.vipStatus.isVip) {
-      // 已经是会员，显示续费/管理入口
-      Row({ space: DesignConstants.SPACING_SM }) {
-        if (this.vipStatus.isPermanent) {
-          Text('👑 永久会员，无需续费')
-            .fontSize(DesignConstants.FONT_SIZE_SM)
-            .fontColor($r('sys.color.confirm'))
-            .layoutWeight(1)
-        } else {
-          Text(this.vipStatus.autoRenew ? '🔔 已开启自动续费' : '⏰ 手动续期')
-            .fontSize(DesignConstants.FONT_SIZE_SM)
-            .fontColor($r('sys.color.font_secondary'))
-            .layoutWeight(1)
-        }
-
-        Button('管理会员')
-          .fontSize(DesignConstants.FONT_SIZE_SM)
-          .backgroundColor($r('sys.color.comp_background_secondary'))
-          .fontColor($r('sys.color.brand'))
-          .borderRadius(DesignConstants.BORDER_RADIUS_SM)
-          .onClick(() => {
-            Throttle.click(() => {
-              this.gotoMembershipCenter();
-            });
-          })
-      }
-      .width('100%')
-      .padding({ top: DesignConstants.SPACING_SM })
-    } else {
-      // 非会员，引导升级
-      Column({ space: DesignConstants.SPACING_SM }) {
-        Text('🎁 免费试用7天会员')
-          .fontSize(DesignConstants.FONT_SIZE_SM)
-          .fontColor($r('sys.color.font_secondary'))
-
-        Button('立即开通会员')
-          .width('100%')
-          .fontSize(DesignConstants.FONT_SIZE_MD)
-          .backgroundColor($r('sys.color.brand'))
-          .fontColor($r('sys.color.font_on_primary'))
-          .borderRadius(DesignConstants.BORDER_RADIUS_MD)
-          .onClick(() => {
-            Throttle.click(() => {
-              this.gotoMembershipCenter();
-            });
-          })
-      }
-      .width('100%')
-      .padding({ top: DesignConstants.SPACING_SM })
+  buildLoadingState() {
+    Row({ space: DesignConstants.SPACING_SM }) {
+      LoadingProgress()
+        .width(20)
+        .height(20)
+      
+      Text('加载会员信息...')
+        .fontSize(DesignConstants.FONT_SIZE_MD)
+        .fontColor($r('sys.color.font_secondary'))
     }
+    .padding(DesignConstants.SPACING_LG)
+    .backgroundColor($r('sys.color.comp_background_primary'))
+    .borderRadius(DesignConstants.BORDER_RADIUS_LG)
+    .width('100%')
+    .justifyContent(FlexAlign.Center)
   }
 
-  /**
-   * 【新版】构建升级提示
-   */
+  // ========== 状态2: 遗留会员待转换（重点提示） ==========
   @Builder
-  buildUpgradeNotice() {
-    if (!this.vipStatus?.isVip && !this.vipStatus?.hasLegacyVoucher) {
+  buildLegacyVoucherState() {
+    Column({ space: DesignConstants.SPACING_MD }) {
+      // 顶部红色提示条
+      Row({ space: DesignConstants.SPACING_SM }) {
+        Text('!')
+          .fontSize(14)
+          .fontWeight(FontWeight.Bold)
+          .fontColor(Color.White)
+          .width(20)
+          .height(20)
+          .backgroundColor('#FF6B6B')
+          .borderRadius(10)
+          .textAlign(TextAlign.Center)
+        
+        Text('会员数据迁移')
+          .fontSize(DesignConstants.FONT_SIZE_MD)
+          .fontWeight(FontWeight.Medium)
+          .fontColor('#FF6B6B')
+        
+        Blank()
+        
+        Text('立即处理 >')
+          .fontSize(DesignConstants.FONT_SIZE_SM)
+          .fontColor('#FF6B6B')
+      }
+      .padding(DesignConstants.SPACING_MD)
+      .backgroundColor('rgba(255, 107, 107, 0.1)')
+      .borderRadius(DesignConstants.BORDER_RADIUS_MD)
+      .width('100%')
+
+      // 主要内容
+      Row({ space: DesignConstants.SPACING_MD }) {
+        // 左侧图标
+        Column() {
+          Text('🎁')
+            .fontSize(40)
+        }
+        
+        // 中间信息
+        Column({ space: DesignConstants.SPACING_XS }) {
+          Text(`检测到 ${this.vipStatus!.legacyDays} 天历史会员`)
+            .fontSize(DesignConstants.FONT_SIZE_LG)
+            .fontWeight(FontWeight.Medium)
+            .fontColor($r('sys.color.font_primary'))
+          
+          Text(this.vipStatus!.legacyDays > 1095 ? '可转为永久会员' : '可转为订阅会员')
+            .fontSize(DesignConstants.FONT_SIZE_MD)
+            .fontColor($r('sys.color.font_secondary'))
+        }
+        .layoutWeight(1)
+        
+        // 右侧按钮
+        Button('立即转换')
+          .fontSize(DesignConstants.FONT_SIZE_MD)
+          .backgroundColor('#FF6B6B')
+          .fontColor(Color.White)
+          .borderRadius(DesignConstants.BORDER_RADIUS_MD)
+          .onClick(() => {
+            Throttle.click(() => {
+              this.showMembershipDialog();
+            });
+          })
+      }
+      .padding(DesignConstants.SPACING_LG)
+      .backgroundColor($r('sys.color.comp_background_primary'))
+      .borderRadius(DesignConstants.BORDER_RADIUS_LG)
+      .border({ width: 2, color: '#FF6B6B' })
+      .width('100%')
+    }
+    .onClick(() => {
+      Throttle.click(() => {
+        this.showMembershipDialog();
+      });
+    })
+  }
+
+  // ========== 状态3: 永久会员 ==========
+  @Builder
+  buildPermanentState() {
+    Row({ space: DesignConstants.SPACING_MD }) {
+      // 左侧图标
+      Column() {
+        Text('👑')
+          .fontSize(36)
+      }
+      
+      // 中间信息
+      Column({ space: DesignConstants.SPACING_XS }) {
+        Text('永久会员')
+          .fontSize(DesignConstants.FONT_SIZE_LG)
+          .fontWeight(FontWeight.Medium)
+          .fontColor('#FFD700')
+        
+        Text('终身尊享所有特权')
+          .fontSize(DesignConstants.FONT_SIZE_MD)
+          .fontColor($r('sys.color.font_secondary'))
+      }
+      .layoutWeight(1)
+      
+      // 右侧标签
+      Text('VIP')
+        .fontSize(12)
+        .fontWeight(FontWeight.Bold)
+        .fontColor('#FFD700')
+        .padding({ left: 8, right: 8, top: 4, bottom: 4 })
+        .backgroundColor('rgba(255, 215, 0, 0.2)')
+        .borderRadius(12)
+    }
+    .padding(DesignConstants.SPACING_LG)
+    .backgroundColor($r('sys.color.comp_background_primary'))
+    .borderRadius(DesignConstants.BORDER_RADIUS_LG)
+    .border({ width: 2, color: '#FFD700' })
+    .width('100%')
+    .onClick(() => {
+      Throttle.click(() => {
+        this.showMembershipDialog();
+      });
+    })
+  }
+
+  // ========== 状态4: 订阅会员 ==========
+  @Builder
+  buildSubscriptionState() {
+    Row({ space: DesignConstants.SPACING_MD }) {
+      // 左侧图标
+      Column() {
+        Text('💎')
+          .fontSize(36)
+      }
+      
+      // 中间信息
+      Column({ space: DesignConstants.SPACING_XS }) {
+        Text('订阅会员')
+          .fontSize(DesignConstants.FONT_SIZE_LG)
+          .fontWeight(FontWeight.Medium)
+          .fontColor($r('sys.color.brand'))
+        
+        Text(`剩余 ${Math.ceil((this.vipStatus!.expireTime - Date.now()) / (1000 * 60 * 60 * 24))} 天${this.vipStatus!.autoRenew ? ' · 自动续费' : ''}`)
+          .fontSize(DesignConstants.FONT_SIZE_MD)
+          .fontColor($r('sys.color.font_secondary'))
+      }
+      .layoutWeight(1)
+      
+      // 右侧按钮
+      Button('管理')
+        .fontSize(DesignConstants.FONT_SIZE_MD)
+        .backgroundColor($r('sys.color.comp_background_secondary'))
+        .fontColor($r('sys.color.brand'))
+        .borderRadius(DesignConstants.BORDER_RADIUS_MD)
+        .onClick(() => {
+          Throttle.click(() => {
+            this.showMembershipDialog();
+          });
+        })
+    }
+    .padding(DesignConstants.SPACING_LG)
+    .backgroundColor($r('sys.color.comp_background_primary'))
+    .borderRadius(DesignConstants.BORDER_RADIUS_LG)
+    .width('100%')
+    .onClick(() => {
+      Throttle.click(() => {
+        this.showMembershipDialog();
+      });
+    })
+  }
+
+  // ========== 状态5: 非会员 ==========
+  @Builder
+  buildNonMemberState() {
+    Column({ space: DesignConstants.SPACING_MD }) {
+      Row({ space: DesignConstants.SPACING_MD }) {
+        // 左侧图标
+        Column() {
+          Text('💎')
+            .fontSize(36)
+        }
+        
+        // 中间信息
+        Column({ space: DesignConstants.SPACING_XS }) {
+          Text('基础版')
+            .fontSize(DesignConstants.FONT_SIZE_LG)
+            .fontWeight(FontWeight.Medium)
+            .fontColor($r('sys.color.font_primary'))
+          
+          Text('开通会员解锁全部功能')
+            .fontSize(DesignConstants.FONT_SIZE_MD)
+            .fontColor($r('sys.color.font_secondary'))
+        }
+        .layoutWeight(1)
+        
+        // 右侧按钮
+        Button('开通')
+          .fontSize(DesignConstants.FONT_SIZE_MD)
+          .backgroundColor($r('sys.color.brand'))
+          .fontColor($r('sys.color.font_on_primary'))
+          .borderRadius(DesignConstants.BORDER_RADIUS_MD)
+          .onClick(() => {
+            Throttle.click(() => {
+              this.showMembershipDialog();
+            });
+          })
+      }
+      .padding(DesignConstants.SPACING_LG)
+      .backgroundColor($r('sys.color.comp_background_primary'))
+      .borderRadius(DesignConstants.BORDER_RADIUS_LG)
+      .width('100%')
+
+      // 试用提示条
       Row({ space: DesignConstants.SPACING_SM }) {
         Image($r('app.media.ic_info'))
-          .width(DesignConstants.ICON_SIZE_SM)
-          .height(DesignConstants.ICON_SIZE_SM)
+          .width(16)
+          .height(16)
           .fillColor('#339AF0')
         
-        Text('会员服务已升级，前往查看新方案')
+        Text('🎁 免费试用7天会员')
           .fontSize(DesignConstants.FONT_SIZE_SM)
           .fontColor('#339AF0')
           .layoutWeight(1)
+        
+        Text('立即领取 >')
+          .fontSize(DesignConstants.FONT_SIZE_SM)
+          .fontColor('#339AF0')
       }
       .padding(DesignConstants.SPACING_MD)
       .backgroundColor('rgba(51, 154, 240, 0.1)')
       .borderRadius(DesignConstants.BORDER_RADIUS_MD)
+      .width('100%')
       .onClick(() => {
         Throttle.click(() => {
-          this.gotoMembershipCenter();
+          this.showMembershipDialog();
         });
       })
-    } else {
-      Blank()
     }
   }
 
   /**
-   * 【私有方法】跳转到会员中心
+   * 【核心】显示会员中心弹窗
    */
-  private gotoMembershipCenter(): void {
-    console.info('[MembershipStatusCard] 跳转到会员中心');
-    this.navStack.pushPathByName('MembershipCenter', new Object() as Record<string, Object>);
-  }
-
-  /**
-   * 显示专业版详情
-   */
-  private showProDetails(): void {
-    const props: UpgradeContentProps = {
-      featureName: '专业版',
-      featureDesc: '您已解锁所有高级功能',
-      icon: $r('app.media.ic_vip'),
-      pricingPlans: defaultPricingPlans,
-      onUpgrade: () => {
-        console.info('[会员管理] 专业版用户查看详情');
+  private showMembershipDialog(): void {
+    let props: MembershipCenterDialogProps = {
+      onClose: () => {
         if (this.dialog) {
           this.dialog.dismiss();
         }
-      },
-      onLater: () => {
-        if (this.dialog) {
-          this.dialog.dismiss();
-        }
-      },
-      showTrialOption: false
+        // 刷新状态
+        this.loadVipStatus();
+      }
     };
 
     this.dialog = DialogHub.getSheet()
       .setStyle({
-        title: { title: '专业版' },
+        title: { title: '' }, // 弹窗内部有自己的标题
         backgroundColor: $r('sys.color.background_secondary')
       })
       .setConfig({
         scrollSizeMode: ScrollSizeMode.CONTINUOUS
       })
       .setComponentTargetId('mainId')
-      .setContent(wrapBuilder(UpgradeContentBuilder), props)
+      .setContent(wrapBuilder(MembershipCenterDialogBuilder), props)
       .build();
+    
     this.dialog.show();
   }
+}
 
-  build() {
-    Column({ space: DesignConstants.SPACING_MD }) {
-      this.buildMembershipHeader()
-      this.buildMemberActions()
-      this.buildUpgradeNotice()
-    }
-    .padding(DesignConstants.SPACING_LG)
-    .backgroundColor($r('sys.color.comp_background_primary'))
-    .borderRadius(DesignConstants.BORDER_RADIUS_LG)
-    .border({
-      width: DesignConstants.BORDER_WIDTH_SM,
-      color: $r('sys.color.comp_border_color')
-    })
-    .width('100%')
-    .onClick(() => {
-      // 点击整个卡片跳转到会员中心
-      Throttle.click(() => {
-        this.gotoMembershipCenter();
-      });
-    })
-  }
+@Builder
+function MembershipCenterDialogBuilder(props: MembershipCenterDialogProps) {
+  MembershipCenterDialog({ onClose: props.onClose })
 }
