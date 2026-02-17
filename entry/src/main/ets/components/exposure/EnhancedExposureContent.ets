@@ -15,7 +15,7 @@ import {
   StandardConfigs
 } from '../../constants/ExposureStandardConstants';
 import common from '@ohos.app.ability.common';
-import { PremiumFeature } from '../membership/PremiumFeature';
+import { SettingLockView, isProMember, BenefitTagItem } from '../membership/PremiumLockViews';
 import promptAction from '@ohos.promptAction';
 import { Throttle } from '../../utils/Debounce';
 
@@ -316,6 +316,58 @@ export struct EnhancedExposureContent {
         .borderRadius(DesignConstants.BORDER_RADIUS_MD)
         .margin({ top: DesignConstants.SPACING_XS })
       }
+    }
+    .width('100%')
+  }
+
+  // 标准选择器（锁定预览版）
+  @Builder
+  private buildStandardSelectorLocked() {
+    Column({ space: DesignConstants.SPACING_SM }) {
+      // 标准选择标题和说明
+      Column({ space: DesignConstants.SPACING_XS }) {
+        Text('选择计算方式')
+          .fontSize(DesignConstants.FONT_SIZE_LG)
+          .fontWeight(FontWeight.Medium)
+          .fontColor($r('sys.color.font_primary'))
+
+        Text('不同场景使用不同的计算标准')
+          .fontSize(DesignConstants.FONT_SIZE_MD)
+          .fontColor($r('sys.color.font_secondary'))
+      }
+      .width('100%')
+      .alignItems(HorizontalAlign.Start)
+
+      // 标准选择按钮（禁用状态预览）
+      Row({ space: DesignConstants.SPACING_MD }) {
+        Column({ space: DesignConstants.SPACING_XS }) {
+          Row({ space: DesignConstants.SPACING_SM }) {
+            Text('职业标准')
+              .fontSize(DesignConstants.FONT_SIZE_MD)
+              .fontWeight(FontWeight.Medium)
+              .fontColor($r('sys.color.font_primary'))
+          }
+
+          Text('工作场所噪音暴露评估')
+            .fontSize(DesignConstants.FONT_SIZE_XS)
+            .fontColor($r('sys.color.font_secondary'))
+
+          // 标准参数说明
+          Text('基准值: 85dB | 时长: 8小时')
+            .fontSize(DesignConstants.FONT_SIZE_SM)
+            .fontColor($r('sys.color.font_tertiary'))
+        }
+        .layoutWeight(1)
+
+        Image($r('app.media.ic_arrow_right'))
+          .width(16)
+          .height(16)
+          .fillColor($r('sys.color.font_secondary'))
+      }
+      .width('100%')
+      .padding(DesignConstants.SPACING_MD)
+      .backgroundColor($r('sys.color.comp_background_primary'))
+      .borderRadius(DesignConstants.BORDER_RADIUS_MD)
     }
     .width('100%')
   }
@@ -663,8 +715,29 @@ export struct EnhancedExposureContent {
     Scroll() {
       Column({ space: DesignConstants.SPACING_LG }) {
         // 1. 标准选择区
-        PremiumFeature({ featureName: '噪音影响程度', featureDesc: '专业噪音影响程度计算' }) {
+        if (isProMember()) {
+          // 专业版：正常显示
           this.buildStandardSelector()
+        } else {
+          // 免费版：显示置灰的选择器 + 底部锁定提示
+          SettingLockView({
+            params: {
+              featureId: 'noise_impact',
+              featureName: '噪音影响程度',
+              featureDesc: '专业噪音影响评估，了解噪音对健康的潜在风险',
+              benefitTags: [
+                { icon: '🎁', text: '7天免费试用' } as BenefitTagItem,
+                { icon: '📊', text: '健康评估' } as BenefitTagItem
+              ],
+              trialPrice: '0.01元立即试用',
+              onUpgrade: () => {
+                // 升级回调
+              }
+            }
+          }) {
+            // 置灰的选择器预览
+            this.buildStandardSelectorLocked()
+          }
         }
 
         // 2. 核心指标区（已整合今日峰值和平均值）

@@ -6,7 +6,7 @@
 import { DesignConstants } from '../../constants/DesignConstants';
 import { curves, promptAction } from '@kit.ArkUI';
 import { CALIBRATION_COLORS } from '../../constants/CalibrationConstants';
-import { PremiumFeature } from '../membership/PremiumFeature';
+import { SettingLockView, isProMember, BenefitTagItem } from '../membership/PremiumLockViews';
 import { Throttle } from '../../utils/Debounce';
 
 @ComponentV2
@@ -262,14 +262,41 @@ export struct ImprovedAutoCalibration {
       .width('100%')
       .alignItems(VerticalAlign.Center)
 
-      // 环境检测 - 只在非校准状态下显示
+      // 环境检测区域 - 始终可见（让用户知道功能状态）
       if (!this.isCalibrating) {
         this.buildEnvironmentCheck()
       }
 
-      // 主按钮区域
-      PremiumFeature({ featureName: '自动校准', featureDesc: '自动计算并设置最佳校准值，确保测量准确性。' }) {
+      // 主按钮区域 - 使用 SettingLockView 只锁定按钮
+      if (isProMember()) {
+        // 专业版：正常显示按钮
         this.buildMainButton()
+      } else {
+        // 免费版：底部卡片式锁定
+        SettingLockView({
+          params: {
+            featureId: 'auto_calibration',
+            featureName: '智能自动校准',
+            featureDesc: '智能分析环境噪声，自动计算最佳校准值',
+            benefitTags: [
+              { icon: '🎁', text: '7天免费试用' } as BenefitTagItem,
+              { icon: '🎯', text: '一键校准' } as BenefitTagItem
+            ],
+            trialPrice: '0.01元立即试用',
+            onUpgrade: () => {
+              // 升级后自动开始校准
+              this.onStartCalibration();
+            }
+          }
+        }) {
+          // 置灰的按钮预览
+          Button('开始自动校准')
+            .width('100%')
+            .height(48)
+            .backgroundColor($r('sys.color.brand'))
+            .borderRadius(24)
+            .enabled(false)
+        }
       }
 
       // 说明文本

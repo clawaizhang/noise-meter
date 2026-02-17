@@ -11,10 +11,8 @@ import {
   AutoSaveSettingsDialogBuilder,
 } from '../auto-save/AutoSaveSettingsDialog';
 import { AlertsSettingsBuilder, AlertsSettingsProps } from '../../pages/settings/AlertsSettingsNavigation';
-import {
-  PremiumFeature,
-  PremiumLockMode
-} from '../membership/PremiumFeature';
+import { isProMember } from '../membership/PremiumLockViews';
+
 
 /**
  * 数据与警报设置内容组件
@@ -120,25 +118,10 @@ export struct DataAndAlertsContent {
     .borderRadius(DesignConstants.BORDER_RADIUS_LG)
   }
 
-  // 自动保存设置项 - 完全锁定模式
+  // 自动保存设置项 - 所有用户都可点击进入弹窗
   @Builder
   private buildAutoSaveItem() {
-    PremiumFeature({
-      featureId: 'auto_save',
-      featureName: '自动保存',
-      featureDesc: '按设定时间间隔自动保存检测数据，防止数据丢失',
-      icon: $r('app.media.ic_save'),
-      lockMode: PremiumLockMode.FULL_LOCK,
-      showTrialTip: true,
-      freeContent: () => { this.buildAutoSaveContent() },
-      proContent: () => { this.buildAutoSaveContent() },
-      onUnlock: () => {
-        // 用户升级后，如果自动保存未开启，提示用户开启
-        if (!this.pk.auto_save_enabled) {
-          this.pk.auto_save_enabled = true;
-        }
-      }
-    })
+    this.buildAutoSaveContent()
   }
 
   // 自动保存内容
@@ -172,31 +155,57 @@ export struct DataAndAlertsContent {
       .layoutWeight(1)
       .alignItems(HorizontalAlign.Start)
 
-      // 配置按钮（仅在开启时显示）或开关
-      if (this.pk.auto_save_enabled) {
-        Button('配置')
-          .fontSize(DesignConstants.FONT_SIZE_SM)
-          .fontColor($r('sys.color.font_emphasize'))
-          .backgroundColor($r('sys.color.comp_background_secondary'))
-          .height(32)
-          .padding({ left: 12, right: 12 })
-          .margin({ right: 8 })
-          .onClick(() => {
-            Throttle.click(() => {
-              this.openAutoSaveDialog();
-            });
-          })
-      }
+      if (isProMember()) {
+        // 专业版：配置按钮 + Toggle
+        if (this.pk.auto_save_enabled) {
+          Button('配置')
+            .fontSize(DesignConstants.FONT_SIZE_SM)
+            .fontColor($r('sys.color.font_emphasize'))
+            .backgroundColor($r('sys.color.comp_background_secondary'))
+            .height(32)
+            .padding({ left: 12, right: 12 })
+            .margin({ right: 8 })
+            .onClick(() => {
+              Throttle.click(() => {
+                this.openAutoSaveDialog();
+              });
+            })
+        }
 
-      Toggle({ type: ToggleType.Switch, isOn: this.pk.auto_save_enabled })
-        .selectedColor($r('sys.color.font_emphasize'))
-        .onChange((isOn: boolean) => {
-          this.pk.auto_save_enabled = isOn;
-          // 如果开启，打开配置弹窗
-          if (isOn) {
-            this.openAutoSaveDialog();
+        Toggle({ type: ToggleType.Switch, isOn: this.pk.auto_save_enabled })
+          .selectedColor($r('sys.color.font_emphasize'))
+          .onChange((isOn: boolean) => {
+            this.pk.auto_save_enabled = isOn;
+          })
+      } else {
+        // 免费版：未开启 + 🔒配置按钮
+        Row({ space: DesignConstants.SPACING_SM }) {
+          Text('未开启')
+            .fontSize(DesignConstants.FONT_SIZE_SM)
+            .fontColor($r('sys.color.font_secondary'))
+
+          Button() {
+            Row({ space: 4 }) {
+              Image($r('app.media.ic_lock'))
+                .width(12)
+                .height(12)
+                .fillColor('#FF6B6B')
+              Text('配置')
+                .fontSize(DesignConstants.FONT_SIZE_SM)
+                .fontColor('#FF6B6B')
+            }
           }
+          .height(28)
+          .padding({ left: 10, right: 10 })
+          .backgroundColor('rgba(255, 107, 107, 0.1)')
+          .borderRadius(14)
+        }
+        .onClick(() => {
+          Throttle.click(() => {
+            this.openAutoSaveDialog();
+          });
         })
+      }
     }
     .width('100%')
     .padding(DesignConstants.SPACING_MD)
@@ -204,23 +213,10 @@ export struct DataAndAlertsContent {
     .borderRadius(DesignConstants.BORDER_RADIUS_MD)
   }
 
-  // 音频记录设置项 - 完全锁定模式
+  // 音频记录设置项 - 所有人都可以使用
   @Builder
   private buildAudioRecordingItem() {
-    PremiumFeature({
-      featureId: 'audio_recording',
-      featureName: '音频记录',
-      featureDesc: '录制并保存原始音频文件，支持后续回放和分析',
-      icon: $r('app.media.ic_mic'),
-      lockMode: PremiumLockMode.FULL_LOCK,
-      showTrialTip: true,
-      freeContent: () => { this.buildAudioRecordingContent() },
-      proContent: () => { this.buildAudioRecordingContent() },
-      onUnlock: () => {
-        // 用户升级后，提示用户音频记录功能已解锁
-        console.info('音频记录功能已解锁');
-      }
-    })
+    this.buildAudioRecordingContent()
   }
 
   // 音频记录内容
