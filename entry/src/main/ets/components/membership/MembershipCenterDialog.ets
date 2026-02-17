@@ -4,9 +4,11 @@
  */
 
 import { DesignConstants } from '../../constants/DesignConstants';
+import { MembershipAgreement } from '../../constants/MembershipAgreement';
 import { VipService, VipSource, VipStatus } from '../../services/VipService';
 import { common } from '@kit.AbilityKit';
-import { promptAction } from '@kit.ArkUI';
+import { PersistenceV2, promptAction } from '@kit.ArkUI';
+import { PreferenceKeys } from '../../models/PreferenceKeys';
 
 export interface MembershipCenterDialogProps {
   onClose: () => void;
@@ -26,10 +28,12 @@ export struct MembershipCenterDialog {
   }
   @Local isLoading: boolean = true
   @Local isConverting: boolean = false
+  @Local agreedToTerms: boolean = false
+  @Local pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys)!;
   private vipService: VipService | null = null
 
   aboutToAppear(): void {
-    this.vipService = new VipService(getContext(this) as common.UIAbilityContext);
+    this.vipService = new VipService(getContext(this) as common.UIAbilityContext, this.pk);
     this.vipService.init().then(() => {
       this.refreshStatus()
     })
@@ -44,9 +48,6 @@ export struct MembershipCenterDialog {
 
   build() {
     Column() {
-      // 顶部标题栏
-      this.buildHeader()
-
       if (this.isLoading) {
         LoadingProgress()
           .width(50)
@@ -66,7 +67,7 @@ export struct MembershipCenterDialog {
               this.buildNonMemberCard()
             }
           }
-          .padding(DesignConstants.SPACING_LG)
+          .padding({ left: DesignConstants.SPACING_LG, right: DesignConstants.SPACING_LG, bottom: DesignConstants.SPACING_LG })
         }
         .width('100%')
         .height('100%')
@@ -78,127 +79,243 @@ export struct MembershipCenterDialog {
     .backgroundColor($r('sys.color.background_secondary'))
   }
 
-  @Builder
-  buildHeader() {
-    Row() {
-      Image($r('app.media.ic_back'))
-        .width(24)
-        .height(24)
-        .onClick(() => {
-          this.onClose()
-        })
-      
-      Text('会员中心')
-        .fontSize(DesignConstants.FONT_SIZE_XL)
-        .fontWeight(FontWeight.Bold)
-        .layoutWeight(1)
-        .textAlign(TextAlign.Center)
-      
-      Blank().width(24)
-    }
-    .width('100%')
-    .padding(DesignConstants.SPACING_LG)
-    .backgroundColor(Color.White)
-  }
-
   // ========== 状态1: 遗留会员转换 ==========
   @Builder
   buildLegacyConvertCard() {
     Column({ space: DesignConstants.SPACING_LG }) {
-      // 顶部提示条
-      Row({ space: DesignConstants.SPACING_SM }) {
-        Image($r('app.media.ic_info'))
-          .width(20)
-          .height(20)
-          .fillColor('#FF6B6B')
-        
-        Text('会员数据迁移')
-          .fontSize(DesignConstants.FONT_SIZE_MD)
-          .fontColor('#FF6B6B')
-          .fontWeight(FontWeight.Medium)
-      }
-      .padding({ left: 12, right: 12, top: 6, bottom: 6 })
-      .backgroundColor('rgba(255, 107, 107, 0.1)')
-      .borderRadius(DesignConstants.BORDER_RADIUS_SM)
-      .alignSelf(ItemAlign.Start)
+      // ===== 核心转化区：一眼看到福利+价格+CTA（无需滚动）=====
+      Column({ space: DesignConstants.SPACING_MD }) {
+        // 福利标签
+        Row() {
+          Text('🎁 老用户专属回馈')
+            .fontSize(DesignConstants.FONT_SIZE_MD)
+            .fontColor('#B8860B')
+            .fontWeight(FontWeight.Medium)
+        }
+        .padding({ left: 12, right: 12, top: 6, bottom: 6 })
+        .backgroundColor('rgba(255, 215, 0, 0.2)')
+        .borderRadius(DesignConstants.BORDER_RADIUS_MD)
+        .alignSelf(ItemAlign.Start)
 
-      // 大标题
-      Column({ space: DesignConstants.SPACING_SM }) {
-        Text(this.vipStatus.legacyDays > 1095 ? '👑 终身会员资格' : '💎 升级在线会员')
-          .fontSize(28)
-          .fontWeight(FontWeight.Bold)
-          .fontColor(this.vipStatus.legacyDays > 1095 ? '#FFD700' : '#339AF0')
-
-        Text(`检测到您有 ${this.vipStatus.legacyDays} 天历史会员`)
+        // 用户贡献（简化显示，避免过长）
+        Text(`您已累计获得 ${this.formatDays(this.vipStatus.legacyDays)}会员`)
           .fontSize(DesignConstants.FONT_SIZE_MD)
           .fontColor($r('sys.color.font_secondary'))
-      }
 
-      // 转换方案卡片
-      Column({ space: DesignConstants.SPACING_MD }) {
-        Text('转换方案')
-          .fontSize(DesignConstants.FONT_SIZE_LG)
-          .fontWeight(FontWeight.Medium)
-          .alignSelf(ItemAlign.Start)
-
+        // 核心福利（超大字号，视觉冲击）
         if (this.vipStatus.legacyDays > 1095) {
-          // 永久会员方案
-          this.buildConvertOption(
-            '永久会员',
-            '终身免费使用所有功能\n换设备登录自动恢复',
-            '#FFD700',
-            '¥0',
-            '立即获得永久会员'
-          )
+          Text('👑 永久会员')
+            .fontSize(36)
+            .fontWeight(FontWeight.Bold)
+            .fontColor('#FFD700')
+
+          Text('终身免费 · 换机恢复')
+            .fontSize(DesignConstants.FONT_SIZE_LG)
+            .fontColor($r('sys.color.font_secondary'))
         } else {
-          // 订阅会员方案
-          this.buildSubscriptionOffer(this.vipStatus.legacyDays)
+          Row({ space: DesignConstants.SPACING_SM }) {
+            Text(`${this.calculateOfferMonths(this.vipStatus.legacyDays)}`)
+              .fontSize(56)
+              .fontWeight(FontWeight.Bold)
+              .fontColor('#FF6B6B')
+
+            Column({ space: 2 }) {
+              Text('个月')
+                .fontSize(20)
+                .fontColor($r('sys.color.font_primary'))
+
+              Text('免费使用')
+                .fontSize(14)
+                .fontColor($r('sys.color.font_secondary'))
+            }
+          }
+          .alignItems(VerticalAlign.Bottom)
+
+          Text('在线会员 · 换机恢复')
+            .fontSize(DesignConstants.FONT_SIZE_MD)
+            .fontColor($r('sys.color.font_secondary'))
         }
+
+        // 价格区域（醒目）
+        Row({ space: DesignConstants.SPACING_SM }) {
+          Text('¥0.01')
+            .fontSize(40)
+            .fontWeight(FontWeight.Bold)
+            .fontColor('#FF6B6B')
+
+          Column({ space: 2 }) {
+            Text('限时升级价')
+              .fontSize(DesignConstants.FONT_SIZE_SM)
+              .fontColor($r('sys.color.font_tertiary'))
+
+            if (this.vipStatus.legacyDays > 1095) {
+              Text('原价 ¥99')
+                .fontSize(DesignConstants.FONT_SIZE_MD)
+                .fontColor($r('sys.color.font_tertiary'))
+                .decoration({ type: TextDecorationType.LineThrough })
+            } else {
+              Text(`价值 ¥${this.calculateOfferMonths(this.vipStatus.legacyDays) * 6}`)
+                .fontSize(DesignConstants.FONT_SIZE_MD)
+                .fontColor($r('sys.color.font_tertiary'))
+                .decoration({ type: TextDecorationType.LineThrough })
+            }
+          }
+          .alignItems(HorizontalAlign.Start)
+        }
+        .alignItems(VerticalAlign.Bottom)
+
+        // 【核心CTA】立即行动按钮 - 放在第一屏可见区域
+        Button() {
+          if (this.isConverting) {
+            Row({ space: DesignConstants.SPACING_SM }) {
+              LoadingProgress()
+                .width(24)
+                .height(24)
+                .color(Color.White)
+              Text('升级中...')
+                .fontSize(DesignConstants.FONT_SIZE_LG)
+                .fontColor(Color.White)
+            }
+          } else {
+            Row({ space: DesignConstants.SPACING_SM }) {
+              Text(this.vipStatus.legacyDays > 1095 ? '👑' : '💎')
+                .fontSize(20)
+
+              Text(this.vipStatus.legacyDays > 1095 ? '立即 0.01 元升级永久会员' : '立即 0.01 元升级')
+                .fontSize(DesignConstants.FONT_SIZE_LG)
+                .fontColor(Color.White)
+                .fontWeight(FontWeight.Bold)
+            }
+          }
+        }
+        .width('100%')
+        .height(52)
+        .backgroundColor('#FF6B6B')
+        .enabled(!this.isConverting)
+        .borderRadius(26)
+        .shadow({ radius: 8, color: 'rgba(255, 107, 107, 0.4)', offsetX: 0, offsetY: 4 })
+        .onClick(() => {
+          if (!this.agreedToTerms) {
+            this.showAgreementReminder()
+            return
+          }
+          this.showConvertNotice()
+        })
+
+        // 会员协议勾选
+        Row({ space: DesignConstants.SPACING_SM }) {
+          Checkbox()
+            .select(this.agreedToTerms)
+            .selectedColor('#339AF0')
+            .width(20)
+            .height(20)
+            .onChange((value: boolean) => {
+              this.agreedToTerms = value
+            })
+
+          Text() {
+            Span('我已阅读并同意 ')
+            Span('《会员服务协议》')
+              .fontColor('#339AF0')
+              .onClick(() => {
+                this.showMembershipAgreement()
+              })
+          }
+          .fontSize(DesignConstants.FONT_SIZE_SM)
+          .fontColor($r('sys.color.font_secondary'))
+          .layoutWeight(1)
+        }
+        .width('100%')
+
+        // 信任背书
+        Text('仅需 0.01 元 · 华为支付最低价格')
+          .fontSize(DesignConstants.FONT_SIZE_SM)
+          .fontColor($r('sys.color.font_tertiary'))
       }
       .padding(DesignConstants.SPACING_LG)
-      .backgroundColor(Color.White)
+      .backgroundColor($r('sys.color.comp_background_primary'))
       .borderRadius(DesignConstants.BORDER_RADIUS_LG)
       .width('100%')
 
-      // 转换按钮
-      Button() {
-        if (this.isConverting) {
-          Row({ space: DesignConstants.SPACING_SM }) {
-            LoadingProgress()
-              .width(24)
-              .height(24)
-              .color(Color.White)
-            Text('转换中...')
-              .fontSize(DesignConstants.FONT_SIZE_LG)
-              .fontColor(Color.White)
-          }
-        } else {
-          Text(this.vipStatus.legacyDays > 1095 ? '立即获得永久会员' : '立即零元升级')
-            .fontSize(DesignConstants.FONT_SIZE_LG)
-            .fontColor(Color.White)
-        }
-      }
-      .width('100%')
-      .height(56)
-      .backgroundColor(this.vipStatus.legacyDays > 1095 ? '#FFD700' : '#339AF0')
-      .enabled(!this.isConverting)
-      .borderRadius(28)
-      .onClick(() => {
-        this.showConvertNotice()
-      })
+      // ===== 辅助信息：升级对比（可滚动区域，次要信息）=====
+      Column({ space: DesignConstants.SPACING_MD }) {
+        Text('升级后您将获得')
+          .fontSize(DesignConstants.FONT_SIZE_LG)
+          .fontWeight(FontWeight.Medium)
+          .fontColor($r('sys.color.font_primary'))
+          .alignSelf(ItemAlign.Start)
 
-      // 说明文字
-      Column({ space: DesignConstants.SPACING_XS }) {
-        Text('升级后数据更安全，换设备不丢失')
-          .fontSize(DesignConstants.FONT_SIZE_SM)
-          .fontColor($r('sys.color.font_tertiary'))
-        
-        Text('您也可以稍后升级，本地会员可继续使用至到期')
-          .fontSize(DesignConstants.FONT_SIZE_SM)
-          .fontColor($r('sys.color.font_tertiary'))
+        // 对比表格 - 简化显示
+        this.buildComparisonRow('数据存储', '本机保存', '云端同步', true)
+        this.buildComparisonRow('换机恢复', '无法恢复', '华为账号自动恢复', true)
+        this.buildComparisonRow('卸载重装', '会员丢失', '会员保留', true)
+      }
+      .padding(DesignConstants.SPACING_LG)
+      .backgroundColor($r('sys.color.comp_background_secondary'))
+      .borderRadius(DesignConstants.BORDER_RADIUS_LG)
+      .width('100%')
+
+      // 取消自动续费说明（订阅会员）
+      if (this.vipStatus.legacyDays <= 1095) {
+        Row({ space: DesignConstants.SPACING_SM }) {
+          Image($r('app.media.ic_info'))
+            .width(16)
+            .height(16)
+            .fillColor('#339AF0')
+
+          Text(`免费期结束后自动按¥6/月续费，可随时取消`)
+            .fontSize(DesignConstants.FONT_SIZE_SM)
+            .fontColor('#339AF0')
+            .layoutWeight(1)
+        }
+        .padding(DesignConstants.SPACING_MD)
+        .backgroundColor('rgba(51, 154, 240, 0.1)')
+        .borderRadius(DesignConstants.BORDER_RADIUS_MD)
+        .width('100%')
       }
     }
     .width('100%')
+  }
+
+  // 格式化天数显示
+  private formatDays(days: number): string {
+    if (days >= 3650) {
+      return `${(days / 365).toFixed(0)}年`
+    } else if (days >= 1000) {
+      return `${(days / 1000).toFixed(1)}千天`
+    }
+    return `${days}天`
+  }
+
+  // 对比行组件
+  @Builder
+  buildComparisonRow(label: string, before: string, after: string, isBetter: boolean) {
+    Row() {
+      Text(label)
+        .fontSize(DesignConstants.FONT_SIZE_MD)
+        .fontColor($r('sys.color.font_secondary'))
+        .width(90)
+
+      // 原来的状态 - 划掉表示已过时
+      Text(before)
+        .fontSize(DesignConstants.FONT_SIZE_MD)
+        .fontColor($r('sys.color.font_tertiary'))
+        .decoration({ type: TextDecorationType.LineThrough })
+        .width('35%')
+
+      Image($r('app.media.ic_arrow_right'))
+        .width(16)
+        .height(16)
+        .fillColor($r('sys.color.font_tertiary'))
+
+      Text(after)
+        .fontSize(DesignConstants.FONT_SIZE_MD)
+        .fontColor(isBetter ? '#51CF66' : $r('sys.color.font_primary'))
+        .fontWeight(isBetter ? FontWeight.Medium : FontWeight.Normal)
+        .layoutWeight(1)
+    }
+    .width('100%')
+    .height(36)
   }
 
   // ========== 状态2: 永久会员 ==========
@@ -228,7 +345,7 @@ export struct MembershipCenterDialog {
         this.buildBenefitRow('✓', '无需续费', '#51CF66')
       }
       .padding(DesignConstants.SPACING_LG)
-      .backgroundColor('rgba(255, 215, 0, 0.1)')
+      .backgroundColor($r('sys.color.comp_background_secondary'))
       .borderRadius(DesignConstants.BORDER_RADIUS_LG)
       .border({ width: 2, color: '#FFD700' })
       .width('100%')
@@ -239,7 +356,7 @@ export struct MembershipCenterDialog {
     }
     .width('100%')
     .padding(DesignConstants.SPACING_LG)
-    .backgroundColor(Color.White)
+    .backgroundColor($r('sys.color.comp_background_primary'))
     .borderRadius(DesignConstants.BORDER_RADIUS_LG)
   }
 
@@ -294,7 +411,7 @@ export struct MembershipCenterDialog {
             .fontColor('#51CF66')
         }
         .padding(DesignConstants.SPACING_MD)
-        .backgroundColor('rgba(81, 207, 102, 0.1)')
+        .backgroundColor($r('sys.color.comp_background_secondary'))
         .borderRadius(DesignConstants.BORDER_RADIUS_MD)
         .width('100%')
       } else {
@@ -315,7 +432,7 @@ export struct MembershipCenterDialog {
             .fontColor($r('sys.color.font_tertiary'))
         }
         .padding(DesignConstants.SPACING_MD)
-        .backgroundColor('rgba(255, 107, 107, 0.1)')
+        .backgroundColor($r('sys.color.comp_background_secondary'))
         .borderRadius(DesignConstants.BORDER_RADIUS_MD)
         .width('100%')
       }
@@ -334,7 +451,7 @@ export struct MembershipCenterDialog {
     }
     .width('100%')
     .padding(DesignConstants.SPACING_LG)
-    .backgroundColor(Color.White)
+    .backgroundColor($r('sys.color.comp_background_primary'))
     .borderRadius(DesignConstants.BORDER_RADIUS_LG)
   }
 
@@ -350,6 +467,7 @@ export struct MembershipCenterDialog {
         Text('开通会员')
           .fontSize(28)
           .fontWeight(FontWeight.Bold)
+          .fontColor($r('sys.color.font_primary'))
         
         Text('解锁全部专业功能')
           .fontSize(DesignConstants.FONT_SIZE_MD)
@@ -380,9 +498,19 @@ export struct MembershipCenterDialog {
           this.showAgreementThenTrial()
         })
 
-      Text('试用到期后 ¥6/月，可随时取消')
-        .fontSize(DesignConstants.FONT_SIZE_SM)
-        .fontColor($r('sys.color.font_tertiary'))
+      // 【重要】自动续费提示
+      Row({ space: DesignConstants.SPACING_SM }) {
+        Image($r('app.media.ic_info'))
+          .width(14)
+          .height(14)
+          .fillColor($r('sys.color.font_tertiary'))
+        
+        Text('试用到期前24小时自动续费，可随时取消')
+          .fontSize(DesignConstants.FONT_SIZE_SM)
+          .fontColor($r('sys.color.font_tertiary'))
+          .layoutWeight(1)
+      }
+      .width('100%')
 
       // 其他方案
       Row({ space: DesignConstants.SPACING_MD }) {
@@ -412,7 +540,7 @@ export struct MembershipCenterDialog {
     }
     .width('100%')
     .padding(DesignConstants.SPACING_LG)
-    .backgroundColor(Color.White)
+    .backgroundColor($r('sys.color.comp_background_primary'))
     .borderRadius(DesignConstants.BORDER_RADIUS_LG)
   }
 
@@ -436,7 +564,7 @@ export struct MembershipCenterDialog {
         .margin({ top: DesignConstants.SPACING_SM })
     }
     .padding(DesignConstants.SPACING_LG)
-    .backgroundColor(`rgba(${this.hexToRgb(color)}, 0.1)`)
+    .backgroundColor($r('sys.color.comp_background_secondary'))
     .borderRadius(DesignConstants.BORDER_RADIUS_MD)
     .width('100%')
   }
@@ -460,7 +588,7 @@ export struct MembershipCenterDialog {
     Row({ space: DesignConstants.SPACING_SM }) {
       Text('✓')
         .fontSize(16)
-        .fontColor('#339AF0')
+        .fontColor($r('sys.color.brand'))
       
       Column({ space: DesignConstants.SPACING_XS }) {
         Text(title)
@@ -481,31 +609,54 @@ export struct MembershipCenterDialog {
   @Builder
   buildSubscriptionOffer(legacyDays: number) {
     Column({ space: DesignConstants.SPACING_SM }) {
-      Text(`首${this.calculateOfferMonths(legacyDays)}个月免费`)
+      Text(`💎 在线会员`)
         .fontSize(24)
         .fontWeight(FontWeight.Bold)
         .fontColor('#339AF0')
       
-      this.buildBonusDaysText(legacyDays)
-      
-      Text(`${this.calculateOfferMonths(legacyDays)}个月后可自主选择续费`)
+      Text(`老用户福利：${this.calculateOfferMonths(legacyDays)}个月免费使用`)
         .fontSize(DesignConstants.FONT_SIZE_MD)
         .fontColor($r('sys.color.font_secondary'))
       
-      Text('换设备登录华为账号可恢复')
+      // 价值说明
+      Row({ space: DesignConstants.SPACING_XS }) {
+        Text(`价值 ¥${this.calculateOfferMonths(legacyDays) * 6}`)
+          .fontSize(DesignConstants.FONT_SIZE_MD)
+          .fontColor($r('sys.color.font_secondary'))
+          .decoration({ type: TextDecorationType.LineThrough })
+        
+        Text(' 现在仅需 ¥0.01')
+          .fontSize(DesignConstants.FONT_SIZE_MD)
+          .fontColor('#51CF66')
+          .fontWeight(FontWeight.Medium)
+      }
+      
+      Text('换设备登录华为账号可恢复会员')
         .fontSize(DesignConstants.FONT_SIZE_SM)
         .fontColor('#51CF66')
+        .margin({ top: DesignConstants.SPACING_XS })
     }
     .padding(DesignConstants.SPACING_LG)
-    .backgroundColor('rgba(51, 154, 240, 0.1)')
+    .backgroundColor($r('sys.color.comp_background_secondary'))
     .borderRadius(DesignConstants.BORDER_RADIUS_MD)
     .width('100%')
 
-    // 价格
-    Text('¥0')
-      .fontSize(48)
-      .fontWeight(FontWeight.Bold)
-      .fontColor('#51CF66')
+    // 【重要】自动续费提示 - 使用更温和的蓝色
+    Row({ space: DesignConstants.SPACING_SM }) {
+      Image($r('app.media.ic_info'))
+        .width(16)
+        .height(16)
+        .fillColor('#339AF0')
+      
+      Text(`免费期结束后自动按¥6/月续费，可随时在系统设置中取消`)
+        .fontSize(DesignConstants.FONT_SIZE_SM)
+        .fontColor('#339AF0')
+        .layoutWeight(1)
+    }
+    .padding(DesignConstants.SPACING_MD)
+    .backgroundColor('rgba(51, 154, 240, 0.1)')
+    .borderRadius(DesignConstants.BORDER_RADIUS_MD)
+    .width('100%')
   }
 
   // 赠送天数文本（条件渲染）
@@ -522,19 +673,36 @@ export struct MembershipCenterDialog {
 
   // ========== 业务逻辑 ==========
   showConvertNotice() {
+    // 根据转换类型构建不同的提示信息
+    const isPermanent = this.vipStatus.legacyDays > 1095;
+    const offerMonths = this.calculateOfferMonths(this.vipStatus.legacyDays);
+    
+    const message = isPermanent 
+      ? '确认支付 ¥0.01 升级永久会员？\n\n' +
+        '升级后您将获得：\n' +
+        '• 终身免费使用所有功能\n' +
+        '• 换设备登录华为账号自动恢复\n' +
+        '• 数据云端同步，永不丢失\n\n' +
+        '（0.01元为华为支付系统最低价格）'
+      : `确认支付 ¥0.01 升级在线会员？\n\n` +
+        `升级后您将获得：\n` +
+        `• ${offerMonths}个月免费使用（价值¥${offerMonths * 6}）\n` +
+        `• 换设备登录华为账号自动恢复\n` +
+        `• 数据云端同步，永不丢失\n\n` +
+        `免费期结束后自动按¥6/月续费，可随时取消\n\n` +
+        `（0.01元为华为支付系统最低价格）`;
+    
     AlertDialog.show({
-      title: '会员服务变更通知',
-      message: '原「连续使用送会员」活动已圆满结束，我们全面升级了会员服务体系。' +
-               '您的现有 ' + this.vipStatus.legacyDays + ' 天会员将全额保留，' +
-               '转换后可享受换设备自动恢复等云服务功能。',
+      title: '确认支付',
+      message: message,
       primaryButton: {
-        value: '立即升级',
+        value: '确认支付 0.01 元',
         action: () => {
           this.handleConvert()
         }
       },
       secondaryButton: {
-        value: '稍后再说',
+        value: '再想想',
         action: () => {}
       }
     })
@@ -549,10 +717,16 @@ export struct MembershipCenterDialog {
     this.isConverting = false
     
     if (result.success) {
-      promptAction.showToast({ message: result.message })
+      promptAction.showToast({ 
+        message: '兑换成功！感谢您的支持',
+        duration: 3000
+      })
       this.refreshStatus()
     } else {
-      promptAction.showToast({ message: result.message })
+      promptAction.showToast({ 
+        message: result.message,
+        duration: 3000
+      })
     }
   }
 
@@ -620,6 +794,44 @@ export struct MembershipCenterDialog {
     } else {
       promptAction.showToast({ message: '订阅失败，请重试' })
     }
+  }
+
+  // 提示用户同意协议
+  private showAgreementReminder(): void {
+    AlertDialog.show({
+      title: '请同意会员服务协议',
+      message: '为保障您的权益，请先阅读并同意《会员服务协议》后再进行升级。',
+      primaryButton: {
+        value: '查看协议',
+        action: () => {
+          this.showMembershipAgreement()
+        }
+      },
+      secondaryButton: {
+        value: '稍后再说',
+        action: () => {}
+      }
+    })
+  }
+
+  // 显示会员服务协议
+  private showMembershipAgreement(): void {
+    AlertDialog.show({
+      title: '会员服务协议',
+      message: MembershipAgreement.AGREEMENT_TEXT,
+      primaryButton: {
+        value: '同意并继续',
+        action: () => {
+          this.agreedToTerms = true
+          // 同意后直接弹出支付确认
+          this.showConvertNotice()
+        }
+      },
+      secondaryButton: {
+        value: '我再看看',
+        action: () => {}
+      }
+    })
   }
 
   calculateOfferMonths(days: number): number {

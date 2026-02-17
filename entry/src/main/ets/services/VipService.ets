@@ -3,6 +3,9 @@ import dataPreferences from '@ohos.data.preferences';
 import { buffer } from '@kit.ArkTS';
 import { common } from '@kit.AbilityKit';
 import { BusinessError } from '@kit.BasicServicesKit';
+import { PersistenceV2 } from '@kit.ArkUI';
+import { PreferenceKeys } from '../models/PreferenceKeys';
+import { MembershipLevel } from './MembershipManager';
 
 export enum VipSource {
   NONE = 'none',
@@ -147,9 +150,11 @@ export class VipService {
   private context: common.UIAbilityContext;
   private pref: dataPreferences.Preferences | null = null;
   private iapAvailable: boolean = true;
+  private pk: PreferenceKeys | null = null;
 
-  constructor(context: Context) {
+  constructor(context: Context, pk?: PreferenceKeys) {
     this.context = context as common.UIAbilityContext;
+    this.pk = pk ?? null;
   }
 
   async init(): Promise<void> {
@@ -473,30 +478,45 @@ export class VipService {
   }
 
   async hasLegacyVoucher(): Promise<LegacyCheckResult> {
-    const converted = (await this.pref?.get('legacy_converted', false)) as boolean;
-    if (converted) {
-      return { has: false, days: 0 };
-    }
-
-    const expireTime = (await this.pref?.get('local_expire_time', 0)) as number;
-    if (expireTime <= 0) {
-      return { has: false, days: 0 };
-    }
-
     const now = Date.now();
-    if (expireTime <= now) {
-      await this.markLegacyConverted();
+    let days: number = 0;
+
+    // 检查 member_ship.expiryDate（从 UI 层传入的 pk）
+    if (this.pk && this.pk.member_ship) {
+      const membershipExpiry = this.pk.member_ship.expiryDate;
+      // 检查是否已经是 PRO 会员且未过期
+      if (this.pk.member_ship.level === MembershipLevel.PRO && membershipExpiry > now) {
+        days = Math.ceil((membershipExpiry - now) / (24 * 60 * 60 * 1000));
+      }
+    }
+
+    // 检查是否有订阅会员（已经有华为IAP订阅的，不再显示转换）
+    try {
+      const subStatus = await this.querySubscriptionStatus();
+      if (subStatus.hasSubscription) {
+        // 已有华为订阅，标记为已转换，避免重复显示
+        this.markLegacyConverted();
+        return { has: false, days: 0 };
+      }
+    } catch (e) {
+      // 忽略错误，继续处理
+    }
+
+    if (days <= 0) {
       return { has: false, days: 0 };
     }
 
-    const days = Math.ceil((expireTime - now) / (24 * 60 * 60 * 1000));
-    return { has: days > 0, days };
+    return { has: true, days };
   }
 
-  private async markLegacyConverted(): Promise<void> {
-    await this.pref?.put('legacy_converted', true);
-    await this.pref?.put('legacy_converted_at', Date.now());
-    await this.pref?.flush();
+  private markLegacyConverted(): void {
+    // 使用 PersistenceV2 存储转换状态
+    if (this.pk) {
+      // 将会员标记为 FREE（已转换到华为IAP）
+      this.pk.member_ship.level = MembershipLevel.FREE;
+      this.pk.member_ship.expiryDate = 0;
+      console.info('[遗留转换] 已使用 PersistenceV2 标记会员为已转换');
+    }
   }
 
   /**
@@ -643,11 +663,20 @@ export class VipService {
 
   private async convertToPermanent(): Promise<ConvertResult> {
     try {
+      // 【AGC后台配置要求】
+      // 1. 创建非消耗型商品: productId = 'vip_permanent'
+      // 2. 价格设置为 ¥0.01 (华为IAP最低价格)
+      // 3. 商品名称: '永久会员'
+      // 4. 商品描述: '终身免费使用所有功能，换设备自动恢复'
+      
+      console.info('[遗留转换] 转换永久会员 (>3年)');
+      
       const result = await iap.createPurchase(this.context, {
         productId: 'vip_permanent',
         productType: iap.ProductType.NONCONSUMABLE,
         developerPayload: JSON.stringify({
           type: 'legacy_convert',
+          convertType: 'permanent',
           timestamp: Date.now()
         })
       });
@@ -662,12 +691,26 @@ export class VipService {
 
   private async convertToSubscription(days: number): Promise<ConvertResult> {
     try {
+      // 根据遗留天数计算赠送月数和对应的促销优惠ID
+      const offerInfo = this.selectOfferByDays(days);
+      
+      console.info('[遗留转换] 转换订阅:', days, '天 →', offerInfo.months, '个月, 优惠ID:', offerInfo.offerId);
+      
+      // 【重要】使用促销优惠ID实现免费转换
+      // 需要在AGC后台配置对应的促销活动：
+      // - offer_legacy_3m: 3个月免费
+      // - offer_legacy_6m: 6个月免费  
+      // - offer_legacy_1y: 12个月免费
+      // - offer_legacy_2y: 24个月免费
+      // - offer_legacy_3y: 36个月免费
       const result = await iap.createPurchase(this.context, {
         productId: 'vip_monthly',
         productType: iap.ProductType.AUTORENEWABLE,
+        promotionalOfferId: offerInfo.offerId, // 【关键】传入促销优惠ID实现免费
         developerPayload: JSON.stringify({
           type: 'legacy_convert',
           originalDays: days,
+          offerMonths: offerInfo.months,
           timestamp: Date.now()
         })
       });
@@ -714,7 +757,7 @@ export class VipService {
         await this.finishSubscriptionPurchase(lastOrder);
       }
 
-      await this.markLegacyConverted();
+      this.markLegacyConverted();
       return {
         success: true,
         type: 'subscription',
@@ -738,7 +781,7 @@ export class VipService {
       const delivered = await this.deliverNonConsumable(purchaseOrder);
       
       if (delivered) {
-        await this.markLegacyConverted();
+        this.markLegacyConverted();
         return {
           success: true,
           type: 'permanent',

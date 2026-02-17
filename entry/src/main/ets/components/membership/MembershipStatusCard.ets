@@ -23,7 +23,7 @@ export struct MembershipStatusCard {
   private dialog?: InfSheet;
 
   aboutToAppear(): void {
-    this.vipService = new VipService(getContext(this) as common.UIAbilityContext);
+    this.vipService = new VipService(getContext(this) as common.UIAbilityContext, this.pk);
     this.loadVipStatus();
   }
 
@@ -52,7 +52,7 @@ export struct MembershipStatusCard {
       const remainingDays = Math.ceil((this.vipStatus.expireTime - Date.now()) / (1000 * 60 * 60 * 24));
       return `💎 订阅会员 · 剩余${remainingDays}天`;
     } else if (this.vipStatus.hasLegacyVoucher) {
-      return `🎁 待转换 · ${this.vipStatus.legacyDays}天`;
+      return '🚀 会员服务可升级';
     } else {
       return '基础版';
     }
@@ -115,82 +115,100 @@ export struct MembershipStatusCard {
     .justifyContent(FlexAlign.Center)
   }
 
-  // ========== 状态2: 遗留会员待转换（重点提示） ==========
+  // ========== 状态2: 遗留会员待转换（福利提示） ==========
   @Builder
   buildLegacyVoucherState() {
     Column({ space: DesignConstants.SPACING_MD }) {
-      // 顶部红色提示条
-      Row({ space: DesignConstants.SPACING_SM }) {
-        Text('!')
-          .fontSize(14)
-          .fontWeight(FontWeight.Bold)
-          .fontColor(Color.White)
-          .width(20)
-          .height(20)
-          .backgroundColor('#FF6B6B')
-          .borderRadius(10)
-          .textAlign(TextAlign.Center)
-        
-        Text('会员数据迁移')
-          .fontSize(DesignConstants.FONT_SIZE_MD)
-          .fontWeight(FontWeight.Medium)
-          .fontColor('#FF6B6B')
-        
-        Blank()
-        
-        Text('立即处理 >')
-          .fontSize(DesignConstants.FONT_SIZE_SM)
-          .fontColor('#FF6B6B')
-      }
-      .padding(DesignConstants.SPACING_MD)
-      .backgroundColor('rgba(255, 107, 107, 0.1)')
-      .borderRadius(DesignConstants.BORDER_RADIUS_MD)
-      .width('100%')
+      // 主要内容 - 采用上下布局，避免左侧天数过多导致空间不足
+      Column({ space: DesignConstants.SPACING_SM }) {
+        // 第一行：天数和标题并排（自适应）
+        Row({ space: DesignConstants.SPACING_SM }) {
+          // 天数使用自适应宽度，根据长度调整
+          Text(this.formatDays(this.vipStatus!.legacyDays))
+            .fontSize(28)
+            .fontWeight(FontWeight.Bold)
+            .fontColor('#339AF0')
 
-      // 主要内容
-      Row({ space: DesignConstants.SPACING_MD }) {
-        // 左侧图标
-        Column() {
-          Text('🎁')
-            .fontSize(40)
-        }
-        
-        // 中间信息
-        Column({ space: DesignConstants.SPACING_XS }) {
-          Text(`检测到 ${this.vipStatus!.legacyDays} 天历史会员`)
-            .fontSize(DesignConstants.FONT_SIZE_LG)
-            .fontWeight(FontWeight.Medium)
-            .fontColor($r('sys.color.font_primary'))
-          
-          Text(this.vipStatus!.legacyDays > 1095 ? '可转为永久会员' : '可转为订阅会员')
+          Text('「连续使用送会员」奖励')
             .fontSize(DesignConstants.FONT_SIZE_MD)
             .fontColor($r('sys.color.font_secondary'))
+            .layoutWeight(1)
+            .maxLines(1)
+            .textOverflow({ overflow: TextOverflow.Ellipsis })
         }
-        .layoutWeight(1)
-        
-        // 右侧按钮
-        Button('立即转换')
-          .fontSize(DesignConstants.FONT_SIZE_MD)
-          .backgroundColor('#FF6B6B')
-          .fontColor(Color.White)
-          .borderRadius(DesignConstants.BORDER_RADIUS_MD)
-          .onClick(() => {
-            Throttle.click(() => {
-              this.showMembershipDialog();
-            });
-          })
+        .width('100%')
+
+        // 第二行：升级权益（大字号突出）
+        if (this.vipStatus!.legacyDays > 1095) {
+          Text('👑 0.01 元升级永久会员')
+            .fontSize(20)
+            .fontWeight(FontWeight.Bold)
+            .fontColor('#FFD700')
+        } else {
+          Text(`💎 0.01 元升级，享 ${this.calculateOfferMonths(this.vipStatus!.legacyDays)} 个月免费`)
+            .fontSize(18)
+            .fontWeight(FontWeight.Bold)
+            .fontColor('#FF6B6B')
+        }
+
+        // 第三行：行动按钮（横向展开，更容易点击）
+        Button() {
+          Row({ space: DesignConstants.SPACING_SM }) {
+            Text(this.vipStatus!.legacyDays > 1095 ? '👑' : '💎')
+              .fontSize(20)
+
+            Text('立即 0.01 元升级')
+              .fontSize(DesignConstants.FONT_SIZE_LG)
+              .fontWeight(FontWeight.Bold)
+              .fontColor(Color.White)
+
+            Text('→')
+              .fontSize(20)
+              .fontColor(Color.White)
+          }
+        }
+        .width('100%')
+        .height(44)
+        .backgroundColor('#FF6B6B')
+        .borderRadius(22)
+        .margin({ top: DesignConstants.SPACING_SM })
+        .onClick(() => {
+          Throttle.click(() => {
+            this.showMembershipDialog();
+          });
+        })
       }
       .padding(DesignConstants.SPACING_LG)
       .backgroundColor($r('sys.color.comp_background_primary'))
       .borderRadius(DesignConstants.BORDER_RADIUS_LG)
-      .border({ width: 2, color: '#FF6B6B' })
+      .border({ width: 1.5, color: 'rgba(255, 107, 107, 0.3)' })
+      .shadow({ radius: 8, color: 'rgba(255, 107, 107, 0.1)', offsetX: 0, offsetY: 2 })
       .width('100%')
+      .onClick(() => {
+        Throttle.click(() => {
+          this.showMembershipDialog();
+        });
+      })
     }
-    .onClick(() => {
-      Throttle.click(() => {
-        this.showMembershipDialog();
-      });
-    })
+  }
+
+  // 格式化天数显示（超过999显示为X年或简化）
+  private formatDays(days: number): string {
+    if (days >= 3650) {
+      return `${(days / 365).toFixed(0)}年`
+    } else if (days >= 1000) {
+      return `${(days / 1000).toFixed(1)}千天`
+    }
+    return `${days}天`
+  }
+
+  // 计算兑换月数
+  private calculateOfferMonths(days: number): number {
+    if (days <= 89) return 3
+    if (days <= 179) return 6
+    if (days <= 364) return 12
+    if (days <= 729) return 24
+    return 36
   }
 
   // ========== 状态3: 永久会员 ==========
@@ -222,7 +240,7 @@ export struct MembershipStatusCard {
         .fontWeight(FontWeight.Bold)
         .fontColor('#FFD700')
         .padding({ left: 8, right: 8, top: 4, bottom: 4 })
-        .backgroundColor('rgba(255, 215, 0, 0.2)')
+        .backgroundColor($r('sys.color.comp_background_secondary'))
         .borderRadius(12)
     }
     .padding(DesignConstants.SPACING_LG)
@@ -368,7 +386,7 @@ export struct MembershipStatusCard {
 
     this.dialog = DialogHub.getSheet()
       .setStyle({
-        title: { title: '' }, // 弹窗内部有自己的标题
+        title: { title: '会员中心' },
         backgroundColor: $r('sys.color.background_secondary')
       })
       .setConfig({
