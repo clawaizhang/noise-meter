@@ -542,7 +542,8 @@ export struct UpgradeContent {
 
     // 关闭当前升级对话框
     this.onLater();
-    // 会员中心弹窗由父组件控制打开
+    // 【已修改】跳转到新会员中心
+    this.navStack.pushPathByName('MembershipCenter', new Object() as Record<string, Object>);
   }
 
   // 处理升级逻辑（保留原有逻辑，但暂时不使用）
