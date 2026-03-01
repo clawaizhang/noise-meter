@@ -22,7 +22,7 @@ export struct ReportWatermark {
           .height(16)
           .fillColor($r('sys.color.brand'))
         
-        Text('静喵Sound')
+        Text('静喵-噪音检测分贝仪')
           .fontSize(DesignConstants.FONT_SIZE_MD)
           .fontWeight(FontWeight.Medium)
           .fontColor($r('sys.color.font_primary'))
