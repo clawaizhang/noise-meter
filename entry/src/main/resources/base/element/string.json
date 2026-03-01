@@ -10,7 +10,7 @@
     },
     {
       "name": "EntryAbility_label",
-      "value": "静喵-噪音检测分贝仪"
+      "value": "静喵Sound"
     },
     {
       "name": "microphone_permission_reason",
@@ -178,7 +178,7 @@
     },
     {
       "name": "privacy_policy_welcome",
-      "value": "欢迎使用静喵-噪音检测分贝仪"
+      "value": "欢迎使用静喵Sound噪音检测应用"
     },
     {
       "name": "privacy_policy_description",

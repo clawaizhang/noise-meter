@@ -40,7 +40,7 @@ struct WatchSettings {
   private showAbout(): void {
     promptAction.showDialog({
       title: '关于',
-      message: '静喵-噪音检测分贝仪\n版本：2.0.0\n\n' +
+      message: '静喵Sound\n版本：2.0.0\n\n' +
                '测量算法：A计权滤波 · 快速响应\n' +
                '使用A计权曲线模拟人耳听觉特性，适合环境噪音检测。',
       buttons: [{ text: '知道了', color: '#34C759' }]

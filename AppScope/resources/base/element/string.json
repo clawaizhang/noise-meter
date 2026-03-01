@@ -2,11 +2,11 @@
   "string": [
     {
       "name": "app_name",
-      "value": "静喵-噪音检测分贝仪"
+      "value": "静喵Sound"
     },
     {
       "name": "noise_meter_app_name",
-      "value": "静喵-噪音检测分贝仪"
+      "value": "静喵Sound"
     },
     {
       "name": "device_manager_app_name",

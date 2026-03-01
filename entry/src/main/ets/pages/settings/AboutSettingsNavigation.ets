@@ -88,7 +88,7 @@ export struct AboutSettings {
               .objectFit(ImageFit.Contain)
 
             // 应用名称
-            Text('静喵-噪音检测分贝仪')
+            Text('静喵Sound')
               .fontSize(DesignConstants.FONT_SIZE_XL)
               .fontWeight(FontWeight.Bold)
               .fontColor($r('sys.color.font_primary'))

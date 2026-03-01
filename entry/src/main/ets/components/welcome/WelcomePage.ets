@@ -76,7 +76,7 @@ export struct WelcomePage {
 
       // 标题和描述区域
       Column({ space: DesignConstants.SPACING_MD }) {
-        Text('静喵-噪音检测分贝仪')
+        Text('静喵Sound')
           .fontSize(DesignConstants.FONT_SIZE_4XL)
           .fontWeight(FontWeight.Bold)
           .fontColor($r('sys.color.font_emphasize'))

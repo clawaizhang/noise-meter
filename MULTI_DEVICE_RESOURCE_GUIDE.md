@@ -81,7 +81,7 @@ Text($r('app.string.app_name'))
 ```json
 {
   "string": [
-    { "name": "app_name", "value": "静喵-噪音检测分贝仪" },
+    { "name": "app_name", "value": "静喵Sound" },
     { "name": "start_button", "value": "开始" },
     { "name": "stop_button", "value": "停止" }
   ]
