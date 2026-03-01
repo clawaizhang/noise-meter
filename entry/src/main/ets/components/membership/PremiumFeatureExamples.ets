@@ -48,6 +48,10 @@ export struct HistoryRecordsExample {
       // 免费版内容（超过3条后会显示限制提示）
       this.buildHistoryContent()
     }
+    .proContent(() => {
+      // 专业版内容（可选，可以与免费版相同）
+      this.buildHistoryContent()
+    })
     .onUnlock(() => {
       console.info('用户升级成功，刷新历史记录列表');
       // 重新加载所有记录
@@ -95,6 +99,10 @@ export struct SpectrumSettingsExample {
         // 锁定状态下的占位内容（置灰显示）
         this.buildSpectrumSettingsPlaceholder()
       }
+      .proContent(() => {
+        // 专业版解锁后的真实设置界面
+        this.buildSpectrumSettingsReal()
+      })
     }
     .width('100%')
     .padding(DesignConstants.SPACING_MD)
@@ -175,6 +183,10 @@ export struct FrequencyWeightingExample {
       // 免费版：仅显示A计权
       this.buildAWeightingOnly()
     }
+    .proContent(() => {
+      // 专业版：显示全部加权选项
+      this.buildAllWeightingOptions()
+    })
   }
   
   @Builder
@@ -261,6 +273,9 @@ export struct ExposureStatsExample {
       }) {
         this.buildHistoryStatsPlaceholder()
       }
+      .proContent(() => {
+        this.buildHistoryStatsReal()
+      })
     }
     .width('100%')
     .padding(DesignConstants.SPACING_MD)
@@ -475,6 +490,10 @@ export struct MeasurementPrecisionPageExample {
       // 免费版只有快速模式
       this.buildModeSelector(['快速模式'])
     }
+    .proContent(() => {
+      // 专业版有全部模式
+      this.buildModeSelector(['快速模式', '慢速模式', '脉冲模式', '自定义'])
+    })
   }
   
   @Builder

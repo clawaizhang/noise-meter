@@ -17,7 +17,11 @@ import {
 import {
   TimeWeightingDialogBuilder, TimeWeightingDialogParams,
 } from '../time-weighting/TimeWeightingDialog';
-import { isProMember } from '../membership/PremiumLockViews';
+import {
+  PremiumFeature,
+  PremiumLockMode,
+  createFeatureComparison
+} from '../membership/PremiumFeature';
 
 /**
  * 测量精度设置内容组件
@@ -137,10 +141,24 @@ export struct MeasurementPrecisionContent {
     .borderRadius(DesignConstants.BORDER_RADIUS_LG)
   }
 
-  // 频率加权设置项 - 所有用户都可点击进入弹框
+  // 频率加权设置项 - 使用对比模式
   @Builder
   private buildFrequencyWeightingItem() {
-    this.buildFrequencyWeightingContent()
+    PremiumFeature({
+      featureId: 'frequency_weighting',
+      featureName: '频率加权',
+      featureDesc: '选择不同的频率加权模式以符合各种测量标准',
+      icon: $r('app.media.ic_frequency_weighting'),
+      lockMode: PremiumLockMode.COMPARISON,
+      comparisonList: [
+        createFeatureComparison('A计权', '✓ 可用', '✓ 可用', false),
+        createFeatureComparison('C计权', '✗ 不可用', '✓ 可用', true),
+        createFeatureComparison('Z计权', '✗ 不可用', '✓ 可用', true),
+      ],
+      showTrialTip: true,
+      freeContent: () => { this.buildFrequencyWeightingContent() },
+      proContent: () => { this.buildFrequencyWeightingContent() }
+    })
   }
 
   // 频率加权内容
@@ -193,8 +211,8 @@ export struct MeasurementPrecisionContent {
       }
       .width('100%')
 
-      // 说明文字（灰色，和其他卡片一致）
-      Text('模拟人耳对不同频率声音的响应。A计权适用于环境噪声测量。')
+      // 说明文字
+      Text('模拟人耳对不同频率声音的响应。A计权适用于环境噪声测量，C计权适用于高声压级，Z计权为平坦响应。')
         .fontSize(DesignConstants.FONT_SIZE_SM)
         .fontColor($r('sys.color.font_secondary'))
         .width('100%')
@@ -205,10 +223,25 @@ export struct MeasurementPrecisionContent {
     .borderRadius(DesignConstants.BORDER_RADIUS_LG)
   }
 
-  // 分析模式设置项 - 所有用户都可点击进入弹框
+  // 分析模式设置项 - 使用对比模式
   @Builder
   private buildAnalysisModeItem() {
-    this.buildAnalysisModeContent()
+    PremiumFeature({
+      featureId: 'audio_analysis_mode',
+      featureName: '音频分析模式',
+      featureDesc: '选择不同的时间响应模式以适应各种测量场景',
+      icon: $r('app.media.ic_time_weighting'),
+      lockMode: PremiumLockMode.COMPARISON,
+      comparisonList: [
+        createFeatureComparison('快速(F)', '✓ 可用', '✓ 可用', false),
+        createFeatureComparison('慢速(S)', '✗ 不可用', '✓ 可用', true),
+        createFeatureComparison('脉冲(I)', '✗ 不可用', '✓ 可用', true),
+        createFeatureComparison('自定义', '✗ 不可用', '✓ 可用', true),
+      ],
+      showTrialTip: true,
+      freeContent: () => { this.buildAnalysisModeContent() },
+      proContent: () => { this.buildAnalysisModeContent() }
+    })
   }
 
   // 分析模式内容

@@ -106,8 +106,10 @@ export struct PremiumFeature {
   @Param showTrialTip: boolean = true;
   @Param trialDays: number = 7;
   
-  // 内容构建器 - 只有一个@BuilderParam，通过trailing lambda传入
-  @BuilderParam content: () => void;
+  // 内容构建器
+  @BuilderParam freeContent: () => void;      // 免费版内容
+  @BuilderParam proContent?: () => void;      // 专业版内容（可选，与免费版不同）
+  @BuilderParam lockedOverlay?: () => void;   // 自定义锁定覆盖层（可选）
   
   // 回调
   @Event onUpgradeClick: () => void = () => {};
@@ -151,7 +153,7 @@ export struct PremiumFeature {
   build() {
     Stack({ alignContent: Alignment.TopEnd }) {
       // 主要内容区域
-      this.content()
+      this.buildMainContent()
       
       // 根据模式显示不同的锁定UI
       if (!this.isProMember) {
@@ -160,6 +162,18 @@ export struct PremiumFeature {
     }
     .width('100%')
     .height('100%')
+  }
+  
+  // 构建主要内容
+  @Builder
+  private buildMainContent() {
+    if (this.isProMember && this.proContent) {
+      // 专业版用户且有专业版内容
+      this.proContent()
+    } else {
+      // 免费版内容或专业版未定义专业内容
+      this.freeContent()
+    }
   }
   
   // 构建锁定覆盖层
@@ -182,7 +196,7 @@ export struct PremiumFeature {
     Column() {
       // 置灰层
       Column() {
-        this.content()
+        this.freeContent()
       }
       .width('100%')
       .height('100%')
@@ -262,7 +276,7 @@ export struct PremiumFeature {
       
       // 内容区域（可点击）
       Column() {
-        this.content()
+        this.freeContent()
       }
       .width('100%')
       .layoutWeight(1)

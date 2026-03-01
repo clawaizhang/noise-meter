@@ -15,9 +15,7 @@ import { CollapsibleSection } from './CollapsibleSection';
 import { EnhancedCustomConfigPanel } from './EnhancedCustomConfigPanel';
 import { PreferenceKeys } from '../../models/PreferenceKeys';
 import { EditableLeftIconType, EditableTitleBar, PersistenceV2, promptAction } from '@kit.ArkUI';
-import { isProMember, SettingLockView, BenefitTagItem } from '../membership/PremiumLockViews';
-import { MembershipCenterDialog, MembershipCenterDialogProps } from '../membership/MembershipCenterDialog';
-import { DialogHub, InfSheet } from '@hadss/dialoghub';
+import { PremiumFeature } from '../membership/PremiumFeature';
 
 @ComponentV2
 export struct TimeWeightingDialog {
@@ -27,24 +25,10 @@ export struct TimeWeightingDialog {
   @Local pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys)!;
   @Local tempSelectedMode!: AudioAnalysisMode; // 临时选中的模式
   @Local hoveredMode: AudioAnalysisMode | null = null; // 悬停的模式
-  @Local previewMode: AudioAnalysisMode | null = null; // 预览的模式（用于锁定Tab的预览）
   @Local isTechnicalParamsExpanded: boolean = false; // 技术参数是否展开
   @Local isAcousticTheoryExpanded: boolean = false; // 声学原理是否展开
   @Local tempCustomModeEnabled: boolean = false; // 临时自定义模式开关状态
   @Local tempCustomConfig: AudioAnalysisConfig = this.pk.custom_audio_config.clone(); // 临时自定义配置
-  @Local previewCustomMode: boolean = false; // 是否正在预览自定义模式
-  
-  // 当前显示的模式（预览优先）
-  @Computed
-  get displayMode(): AudioAnalysisMode {
-    return this.previewMode ?? this.tempSelectedMode;
-  }
-  
-  // 是否显示自定义模式界面（预览或已启用）
-  @Computed
-  get showCustomModePanel(): boolean {
-    return this.tempCustomModeEnabled || this.previewCustomMode;
-  }
 
   aboutToAppear() {
     // 初始化临时状态
@@ -141,37 +125,27 @@ export struct TimeWeightingDialog {
   // 构建自定义模式开关
   @Builder
   private buildCustomModeSwitch() {
-    Row({ space: DesignConstants.SPACING_MD }) {
-      Text('自定义模式')
-        .fontSize(DesignConstants.FONT_SIZE_MD)
-        .fontColor((this.previewCustomMode && !isProMember()) ? $r('sys.color.font_emphasize') : $r('sys.color.font_primary'))
-        .fontWeight(FontWeight.Medium)
-        .layoutWeight(1)
+    PremiumFeature({ featureName: '自定义模式', featureDesc: '自定义所有FFT参数' }) {
+      Row({ space: DesignConstants.SPACING_MD }) {
+        Text('自定义模式')
+          .fontSize(DesignConstants.FONT_SIZE_MD)
+          .fontColor($r('sys.color.font_primary'))
+          .fontWeight(FontWeight.Medium)
+          .layoutWeight(1)
 
-      Toggle({ type: ToggleType.Switch, isOn: this.showCustomModePanel })
-        .enabled(isProMember()) // 免费版禁用，但可点击预览
-        .onChange((isOn: boolean) => {
-          if (isProMember()) {
-            // 专业版：正常切换
+        Toggle({ type: ToggleType.Switch, isOn: this.tempCustomModeEnabled })
+          .onChange((isOn: boolean) => {
             this.handleCustomModeToggle(isOn);
-          }
-        })
-    }
-    .justifyContent(FlexAlign.Center)
-    .alignItems(VerticalAlign.Center)
-    .width('100%')
-    .backgroundColor((this.previewCustomMode && !isProMember()) ? 'rgba(51, 154, 240, 0.15)' : $r('sys.color.comp_background_primary'))
-    .padding(16)
-    .borderRadius(16)
-    .height(56)
-    .onClick(() => {
-      // 免费版点击开关进入预览模式
-      if (!isProMember()) {
-        Throttle.click(() => {
-          this.previewCustomMode = true;
-        });
+          })
       }
-    })
+      .justifyContent(FlexAlign.Center)
+      .alignItems(VerticalAlign.Center)
+      .width('100%')
+      .backgroundColor($r('sys.color.comp_background_primary'))
+      .padding(16)
+      .borderRadius(16)
+      .height(56)
+    }
   }
 
   // 构建标准模式选择面板
@@ -180,129 +154,24 @@ export struct TimeWeightingDialog {
     // 选项卡容器
     Row({ space: 0 }) {
       ForEach(TimeWeightingConstants.getAvailableModes(), (mode: AudioAnalysisMode) => {
-        // 所有模式都可见，专业模式带锁定标记
-        this.buildModeTab(mode)
+        if (mode == AudioAnalysisMode.SLOW_TIME_WEIGHTING || mode == AudioAnalysisMode.IMPULSE_TIME_WEIGHTING) {
+          Row() {
+            PremiumFeature({
+              featureName: TimeWeightingConstants.MODE_DISPLAY_NAMES[mode],
+              featureDesc: TimeWeightingConstants.MODE_DESCRIPTIONS[mode]
+            }) {
+              this.modeSelect(mode)
+            }
+          }.layoutWeight(1)
+        } else {
+          this.modeSelect(mode)
+        }
       })
     }
     .backgroundColor($r('sys.color.comp_background_primary'))
     .margin({ left: 16, right: 16, bottom: 16 })
     .borderRadius(16)
     .height(56)
-  }
-  
-  // 构建单个模式选项卡
-  @Builder
-  private buildModeTab(mode: AudioAnalysisMode) {
-    // 专业功能且非会员：显示锁定，点击预览
-    if ((mode == AudioAnalysisMode.SLOW_TIME_WEIGHTING || mode == AudioAnalysisMode.IMPULSE_TIME_WEIGHTING) && !isProMember()) {
-      Stack({ alignContent: Alignment.TopEnd }) {
-        // Tab内容（预览状态高亮）
-        this.buildPreviewModeContent(mode, this.previewMode === mode)
-        
-        // 锁定角标
-        Row({ space: 2 }) {
-          Image($r('app.media.ic_lock'))
-            .width(10)
-            .height(10)
-            .fillColor('#FF6B6B')
-          
-          Text('PRO')
-            .fontSize(8)
-            .fontWeight(FontWeight.Bold)
-            .fontColor('#FF6B6B')
-        }
-        .padding({ left: 4, right: 4, top: 2, bottom: 2 })
-        .backgroundColor('rgba(255, 255, 255, 0.95)')
-        .borderRadius(8)
-        .margin({ top: 4, right: 4 })
-      }
-      .layoutWeight(1)
-      .height(56)
-      .onClick(() => {
-        Throttle.click(() => {
-          // 设置预览模式，让用户看到该模式的详细内容
-          this.previewMode = mode;
-        });
-      })
-    } else {
-      // 免费功能或已解锁：正常可点击
-      Stack({ alignContent: Alignment.TopEnd }) {
-        this.modeSelect(mode)
-      }
-      .layoutWeight(1)
-      .height(56)
-      .onClick(() => {
-        Throttle.click(() => {
-          this.previewMode = null;
-          this.handleModeSelect(mode);
-        });
-      })
-    }
-  }
-  
-  // 构建预览状态的模式内容（高亮显示正在预览）
-  @Builder
-  private buildPreviewModeContent(mode: AudioAnalysisMode, isPreviewing: boolean) {
-    Row({ space: DesignConstants.SPACING_SM }) {
-      // 模式图标
-      Image(TimeWeightingConstants.getModeIcon(mode))
-        .width(DesignConstants.ICON_SIZE_SM)
-        .height(DesignConstants.ICON_SIZE_SM)
-        .fillColor(isPreviewing ? $r('sys.color.font_emphasize') : $r('sys.color.font_tertiary'))
-
-      // 模式名称
-      Text(TimeWeightingConstants.MODE_DISPLAY_NAMES[mode])
-        .fontSize(DesignConstants.FONT_SIZE_MD)
-        .fontWeight(isPreviewing ? FontWeight.Bold : FontWeight.Medium)
-        .fontColor(isPreviewing ? $r('sys.color.font_emphasize') : $r('sys.color.font_tertiary'))
-    }
-    .alignItems(VerticalAlign.Center)
-    .justifyContent(FlexAlign.Center)
-    .layoutWeight(1)
-    .height(56)
-    .backgroundColor(isPreviewing ? 'rgba(51, 154, 240, 0.15)' : $r('sys.color.comp_background_primary'))
-    .borderRadius(DesignConstants.BORDER_RADIUS_MD)
-    .padding(DesignConstants.SPACING_MD)
-  }
-  
-  // 显示模式解锁弹窗
-  private showModeUnlockDialog(mode: AudioAnalysisMode): void {
-    let upgradeDialog: InfSheet | null = null;
-    let params: ModeUnlockParams = {
-      modeName: TimeWeightingConstants.MODE_DISPLAY_NAMES[mode],
-      modeDesc: TimeWeightingConstants.MODE_DESCRIPTIONS[mode],
-      onUpgrade: () => {
-        upgradeDialog?.dismiss();
-        this.openMembershipCenter();
-      }
-    };
-    upgradeDialog = DialogHub.getSheet()
-      .setStyle({
-        title: { title: `解锁${TimeWeightingConstants.MODE_DISPLAY_NAMES[mode]}` },
-        backgroundColor: $r('sys.color.background_secondary')
-      })
-      .setConfig({ scrollSizeMode: ScrollSizeMode.FOLLOW_DETENT })
-      .setComponentTargetId('mainId')
-      .setContent(wrapBuilder(ModeUnlockContentBuilder), params)
-      .build();
-    upgradeDialog.show();
-  }
-  
-  // 打开会员中心
-  private openMembershipCenter(): void {
-    let props: MembershipCenterDialogProps = {
-      onClose: () => {}
-    };
-    DialogHub.getSheet()
-      .setStyle({
-        title: { title: '会员中心' },
-        backgroundColor: $r('sys.color.background_secondary')
-      })
-      .setConfig({ scrollSizeMode: ScrollSizeMode.CONTINUOUS })
-      .setComponentTargetId('mainId')
-      .setContent(wrapBuilder(MembershipCenterDialogBuilder), props)
-      .build()
-      .show();
   }
 
   @Builder
@@ -340,6 +209,11 @@ export struct TimeWeightingDialog {
       $r('sys.color.comp_background_primary')))
     .borderRadius(DesignConstants.BORDER_RADIUS_MD)
     .padding(DesignConstants.SPACING_MD)
+    .onClick(() => {
+      Throttle.click(() => {
+        this.handleModeSelect(mode);
+      });
+    })
     .onHover((isHover: boolean) => {
       if (isHover) {
         this.hoveredMode = mode;
@@ -353,116 +227,18 @@ export struct TimeWeightingDialog {
   @Builder
   private buildPrimaryContentArea() {
     Column({ space: DesignConstants.SPACING_LG }) {
-      // 实时预览面板（显示预览或选中的模式）
+      // 实时预览面板
       PreviewPanel({
         currentMode: this.currentMode,
-        selectedMode: this.displayMode
+        selectedMode: this.tempSelectedMode
       })
 
-      // 场景展示（显示预览或选中的模式）
+      // 场景展示
       ScenarioDisplay({
-        selectedMode: this.displayMode
+        selectedMode: this.tempSelectedMode
       })
     }
     .width('100%')
-  }
-  
-  // 构建底部解锁引导卡片
-  @Builder
-  private buildUnlockPromptCard() {
-    Column({ space: DesignConstants.SPACING_MD }) {
-      // 标题行
-      Row({ space: DesignConstants.SPACING_SM }) {
-        Image($r('app.media.ic_vip'))
-          .width(24)
-          .height(24)
-          .fillColor('#FFD700')
-        
-        Text(`解锁${TimeWeightingConstants.MODE_DISPLAY_NAMES[this.previewMode!]}`)
-          .fontSize(DesignConstants.FONT_SIZE_LG)
-          .fontWeight(FontWeight.Bold)
-          .fontColor($r('sys.color.font_primary'))
-          .layoutWeight(1)
-        
-        // 关闭预览按钮
-        Button('×')
-          .fontSize(20)
-          .fontColor($r('sys.color.font_tertiary'))
-          .backgroundColor(Color.Transparent)
-          .width(32)
-          .height(32)
-          .onClick(() => {
-            this.previewMode = null;
-          })
-      }
-      .width('100%')
-      
-      // 功能描述
-      Text(`解锁后即可使用${TimeWeightingConstants.MODE_DISPLAY_NAMES[this.previewMode!]}进行专业测量，适用于特定场景。`)
-        .fontSize(DesignConstants.FONT_SIZE_MD)
-        .fontColor($r('sys.color.font_secondary'))
-        .width('100%')
-      
-      // 权益标签
-      Row({ space: DesignConstants.SPACING_SM }) {
-        Row({ space: 4 }) {
-          Text('🎁')
-            .fontSize(12)
-          Text('7天免费试用')
-            .fontSize(12)
-            .fontColor($r('sys.color.font_secondary'))
-        }
-        .padding({ left: 8, right: 8, top: 4, bottom: 4 })
-        .backgroundColor($r('sys.color.comp_background_secondary'))
-        .borderRadius(10)
-        
-        Row({ space: 4 }) {
-          Text('⚡')
-            .fontSize(12)
-          Text('专业测量')
-            .fontSize(12)
-            .fontColor($r('sys.color.font_secondary'))
-        }
-        .padding({ left: 8, right: 8, top: 4, bottom: 4 })
-        .backgroundColor($r('sys.color.comp_background_secondary'))
-        .borderRadius(10)
-      }
-      .width('100%')
-      
-      // 解锁按钮
-      Button() {
-        Row({ space: DesignConstants.SPACING_SM }) {
-          Text('🔓')
-            .fontSize(16)
-          Text('0.01元立即试用')
-            .fontSize(DesignConstants.FONT_SIZE_MD)
-            .fontWeight(FontWeight.Medium)
-            .fontColor(Color.White)
-        }
-      }
-      .width('100%')
-      .height(44)
-      .backgroundColor('#FF6B6B')
-      .borderRadius(22)
-      .shadow({
-        radius: 8,
-        color: 'rgba(255, 107, 107, 0.35)',
-        offsetX: 0,
-        offsetY: 3
-      })
-      .onClick(() => {
-        this.openMembershipCenter();
-      })
-    }
-    .width('100%')
-    .padding(DesignConstants.SPACING_MD)
-    .backgroundColor($r('sys.color.background_primary'))
-    .borderRadius(DesignConstants.BORDER_RADIUS_LG)
-    .shadow({
-      radius: 12,
-      color: 'rgba(0, 0, 0, 0.08)'
-    })
-    .margin({ left: 16, right: 16, bottom: 8 })
   }
 
   // 构建可折叠的专业内容区域
@@ -479,7 +255,7 @@ export struct TimeWeightingDialog {
       }) {
         TechnicalParamsDisplay({
           currentMode: this.currentMode,
-          selectedMode: this.displayMode
+          selectedMode: this.tempSelectedMode
         })
       }
 
@@ -492,110 +268,12 @@ export struct TimeWeightingDialog {
         }
       }) {
         AcousticExplanationComp({
-          selectedMode: this.displayMode
+          selectedMode: this.tempSelectedMode
         })
       }
 
     }
     .width('100%')
-  }
-  
-  // 构建自定义模式解锁引导卡片
-  @Builder
-  private buildCustomModeUnlockCard() {
-    Column({ space: DesignConstants.SPACING_MD }) {
-      // 标题行
-      Row({ space: DesignConstants.SPACING_SM }) {
-        Image($r('app.media.ic_vip'))
-          .width(24)
-          .height(24)
-          .fillColor('#FFD700')
-        
-        Text('解锁自定义模式')
-          .fontSize(DesignConstants.FONT_SIZE_LG)
-          .fontWeight(FontWeight.Bold)
-          .fontColor($r('sys.color.font_primary'))
-          .layoutWeight(1)
-        
-        // 关闭预览按钮
-        Button('×')
-          .fontSize(20)
-          .fontColor($r('sys.color.font_tertiary'))
-          .backgroundColor(Color.Transparent)
-          .width(32)
-          .height(32)
-          .onClick(() => {
-            this.previewCustomMode = false;
-          })
-      }
-      .width('100%')
-      
-      // 功能描述
-      Text('解锁后即可自定义FFT大小、窗函数类型、更新间隔等专业参数，满足专业测量需求。')
-        .fontSize(DesignConstants.FONT_SIZE_MD)
-        .fontColor($r('sys.color.font_secondary'))
-        .width('100%')
-      
-      // 权益标签
-      Row({ space: DesignConstants.SPACING_SM }) {
-        Row({ space: 4 }) {
-          Text('🎁')
-            .fontSize(12)
-          Text('7天免费试用')
-            .fontSize(12)
-            .fontColor($r('sys.color.font_secondary'))
-        }
-        .padding({ left: 8, right: 8, top: 4, bottom: 4 })
-        .backgroundColor($r('sys.color.comp_background_secondary'))
-        .borderRadius(10)
-        
-        Row({ space: 4 }) {
-          Text('⚙️')
-            .fontSize(12)
-          Text('专业参数')
-            .fontSize(12)
-            .fontColor($r('sys.color.font_secondary'))
-        }
-        .padding({ left: 8, right: 8, top: 4, bottom: 4 })
-        .backgroundColor($r('sys.color.comp_background_secondary'))
-        .borderRadius(10)
-      }
-      .width('100%')
-      
-      // 解锁按钮
-      Button() {
-        Row({ space: DesignConstants.SPACING_SM }) {
-          Text('🔓')
-            .fontSize(16)
-          Text('0.01元立即试用')
-            .fontSize(DesignConstants.FONT_SIZE_MD)
-            .fontWeight(FontWeight.Medium)
-            .fontColor(Color.White)
-        }
-      }
-      .width('100%')
-      .height(44)
-      .backgroundColor('#FF6B6B')
-      .borderRadius(22)
-      .shadow({
-        radius: 8,
-        color: 'rgba(255, 107, 107, 0.35)',
-        offsetX: 0,
-        offsetY: 3
-      })
-      .onClick(() => {
-        this.openMembershipCenter();
-      })
-    }
-    .width('100%')
-    .padding(DesignConstants.SPACING_MD)
-    .backgroundColor($r('sys.color.background_primary'))
-    .borderRadius(DesignConstants.BORDER_RADIUS_LG)
-    .shadow({
-      radius: 12,
-      color: 'rgba(0, 0, 0, 0.08)'
-    })
-    .margin({ left: 16, right: 16, top: 8 })
   }
 
   build() {
@@ -619,14 +297,9 @@ export struct TimeWeightingDialog {
       }.padding(16)
 
       // 根据自定义模式状态显示不同界面
-      if (!this.showCustomModePanel) {
+      if (!this.tempCustomModeEnabled) {
         // 标准模式界面
         this.buildStandardModeSelectionPanel()
-
-        // 如果是预览锁定模式，显示解锁引导卡片（在Tab下方、详情上方）
-        if (this.previewMode !== null && !isProMember()) {
-          this.buildUnlockPromptCard()
-        }
 
         // 可滚动内容区域
         Scroll() {
@@ -652,33 +325,24 @@ export struct TimeWeightingDialog {
         .align(Alignment.TopStart)
       } else {
         // 自定义模式界面
-        Column({ space: DesignConstants.SPACING_MD }) {
-          // 如果是预览自定义模式（免费版），显示解锁引导卡片
-          if (this.previewCustomMode && !isProMember()) {
-            this.buildCustomModeUnlockCard()
+        Scroll() {
+          Column() {
+            EnhancedCustomConfigPanel({
+              onSelectedChange: () => {
+                // 自定义配置面板的更改在保存时应用
+                // 这里不需要立即生效
+              },
+              onConfigChange: (config: AudioAnalysisConfig) => {
+                this.handleCustomConfigChange(config);
+              }
+            })
+            Blank()
           }
-          
-          Scroll() {
-            Column() {
-              EnhancedCustomConfigPanel({
-                onSelectedChange: () => {
-                  // 自定义配置面板的更改在保存时应用
-                  // 这里不需要立即生效
-                },
-                onConfigChange: (config: AudioAnalysisConfig) => {
-                  this.handleCustomConfigChange(config);
-                }
-              })
-              Blank()
-            }
-            .justifyContent(FlexAlign.Start)
-          }
-          .scrollBar(BarState.Auto)
-          .edgeEffect(EdgeEffect.Spring)
-          .scrollable(ScrollDirection.Vertical)
-          .width('100%')
-          .layoutWeight(1)
+          .justifyContent(FlexAlign.Start)
         }
+        .scrollBar(BarState.Auto)
+        .edgeEffect(EdgeEffect.Spring)
+        .scrollable(ScrollDirection.Vertical)
         .width('100%')
         .layoutWeight(1)
       }
@@ -706,96 +370,4 @@ export interface TimeWeightingDialogParams {
   currentMode: AudioAnalysisMode;
   onClose: () => void;
   onSettingsApplied?: (mode: AudioAnalysisMode) => void; // 新增：设置应用回调
-}
-
-// ============ 解锁弹窗内容 ============
-
-interface ModeUnlockParams {
-  modeName: string;
-  modeDesc: string;
-  onUpgrade: () => void;
-}
-
-@Builder
-function ModeUnlockContentBuilder(params: ModeUnlockParams) {
-  Column({ space: DesignConstants.SPACING_LG }) {
-    // 功能图标和名称
-    Column({ space: DesignConstants.SPACING_MD }) {
-      Stack() {
-        Circle()
-          .width(64)
-          .height(64)
-          .fill('rgba(255, 215, 0, 0.15)')
-        
-        Text('🔒')
-          .fontSize(32)
-      }
-      
-      Text(params.modeName)
-        .fontSize(DesignConstants.FONT_SIZE_XL)
-        .fontWeight(FontWeight.Bold)
-        .fontColor($r('sys.color.font_primary'))
-      
-      Text(params.modeDesc)
-        .fontSize(DesignConstants.FONT_SIZE_MD)
-        .fontColor($r('sys.color.font_secondary'))
-        .textAlign(TextAlign.Center)
-        .width('100%')
-    }
-    .width('100%')
-    .padding(DesignConstants.SPACING_LG)
-    
-    // 试用提示
-    Row({ space: DesignConstants.SPACING_SM }) {
-      Text('🎁')
-        .fontSize(24)
-      
-      Column({ space: DesignConstants.SPACING_XS }) {
-        Text('免费试用7天')
-          .fontSize(DesignConstants.FONT_SIZE_LG)
-          .fontWeight(FontWeight.Medium)
-          .fontColor($r('sys.color.brand'))
-        
-        Text('体验期间解锁全部专业功能')
-          .fontSize(DesignConstants.FONT_SIZE_SM)
-          .fontColor($r('sys.color.font_secondary'))
-      }
-      .layoutWeight(1)
-    }
-    .width('100%')
-    .padding(DesignConstants.SPACING_MD)
-    .backgroundColor('rgba(51, 154, 240, 0.1)')
-    .borderRadius(DesignConstants.BORDER_RADIUS_MD)
-    
-    // 操作按钮
-    Row({ space: DesignConstants.SPACING_MD }) {
-      Button('稍后再说')
-        .layoutWeight(1)
-        .fontSize(DesignConstants.FONT_SIZE_MD)
-        .backgroundColor($r('sys.color.comp_background_secondary'))
-        .fontColor($r('sys.color.font_primary'))
-        .borderRadius(DesignConstants.BORDER_RADIUS_MD)
-        .onClick(() => {
-          params.onUpgrade();
-        })
-      
-      Button('0.01元试用')
-        .layoutWeight(1)
-        .fontSize(DesignConstants.FONT_SIZE_MD)
-        .backgroundColor('#FF6B6B')
-        .fontColor(Color.White)
-        .borderRadius(DesignConstants.BORDER_RADIUS_MD)
-        .onClick(() => {
-          params.onUpgrade();
-        })
-    }
-    .width('100%')
-  }
-  .width('100%')
-  .padding(DesignConstants.SPACING_LG)
-}
-
-@Builder
-function MembershipCenterDialogBuilder(props: MembershipCenterDialogProps) {
-  MembershipCenterDialog({ onClose: props.onClose })
 }
