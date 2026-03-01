@@ -116,17 +116,17 @@ export class ToolConfigFactory {
   }
 
   // 创建频谱显示工具
-  createSpectrumDisplayTool(navigateToSpectrumDisplaySettings: () => void, getSpectrumDisplayModeText: () => string): ToolConfig {
+  createSpectrumDisplayTool(navigateToSpectrumDisplaySettings: () => void): ToolConfig {
     return {
       id: 'spectrum_display',
       title: '频谱显示设置',
       icon: $r('app.media.ic_frequency_weighting'),
-      description: '线形图/柱状图/混合模式',
+      description: '平滑、峰值、频率范围',
       category: ToolCategory.DISPLAY_SETTINGS,
       priority: ToolPriority.RECOMMENDED,
-      usageHint: '选择最适合的分析视图',
+      usageHint: '调整频谱图的显示效果',
       learnMore: () => this.showLearnMore('频谱显示'),
-      getStatus: () => getSpectrumDisplayModeText(),
+      getStatus: () => '可调整',
       getStatusColor: () => $r('sys.color.font_primary'),
       onTap: navigateToSpectrumDisplaySettings
     };

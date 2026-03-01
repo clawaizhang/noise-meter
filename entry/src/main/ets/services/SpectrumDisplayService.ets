@@ -62,7 +62,7 @@ export class DecibelRangeConfig {
  * 频谱显示配置接口
  */
 export interface SpectrumDisplayConfig {
-  displayMode: SpectrumDisplayMode;
+  displayMode?: SpectrumDisplayMode; // 可选，默认为 LINE
   smoothingFactor: number;
   exponentialSmoothingFactor: number; // 新增：指数平滑因子
   showPeakFrequency: boolean;
@@ -133,7 +133,6 @@ export class SpectrumDisplayService {
    * 应用频谱显示配置到PreferenceKeys
    */
   applyDisplayConfig(pk: PreferenceKeys, config: SpectrumDisplayConfig): void {
-    pk.spectrum_display_mode = config.displayMode;
     pk.spectrum_smoothing_factor = config.smoothingFactor;
     pk.custom_audio_config.exponentialSmoothingFactor = config.exponentialSmoothingFactor; // 保存指数平滑因子到custom_audio_config
     pk.spectrum_show_peak_frequency = config.showPeakFrequency;
@@ -176,8 +175,8 @@ export class SpectrumDisplayService {
     const minDb = decibelRangeConfig.minDb;
     const maxDb = decibelRangeConfig.maxDb;
     
-    // 3. 生成增强的频谱数据点
-    const dataPoints = SpectrumDataProcessor.generateEnhancedSpectrumData(
+    // 3. 生成频谱数据点（注意：smoothedSpectrumData 已经是分贝值）
+    const dataPoints = this.generateSpectrumDataPointsFromDb(
       smoothedSpectrumData,
       fftSize,
       sampleRate,
@@ -239,7 +238,8 @@ export class SpectrumDisplayService {
         frequency: currentPeakInfo.frequency,
         dbValue: currentPeakInfo.dbValue,
         index: currentPeakInfo.index,
-        amplitude: currentPeakInfo.amplitude
+        amplitude: currentPeakInfo.amplitude,
+        confidence: currentPeakInfo.confidence
       };
       this.lastPeakUpdateTime = currentTime;
       return this.smoothedPeakInfo;
@@ -264,7 +264,8 @@ export class SpectrumDisplayService {
       frequency: smoothingFactor * currentPeakInfo.frequency + (1 - smoothingFactor) * previousSmoothedPeakInfo.frequency,
       dbValue: smoothingFactor * currentPeakInfo.dbValue + (1 - smoothingFactor) * previousSmoothedPeakInfo.dbValue,
       index: currentPeakInfo.index,
-      amplitude: smoothingFactor * currentPeakInfo.amplitude + (1 - smoothingFactor) * previousSmoothedPeakInfo.amplitude
+      amplitude: smoothingFactor * currentPeakInfo.amplitude + (1 - smoothingFactor) * previousSmoothedPeakInfo.amplitude,
+      confidence: currentPeakInfo.confidence
     };
     
     this.lastPeakUpdateTime = currentTime;
@@ -362,6 +363,42 @@ export class SpectrumDisplayService {
   }
   
   /**
+   * 从分贝值生成频谱数据点
+   * 注意：输入的 spectrumData 已经是分贝值，不需要再次转换
+   */
+  private generateSpectrumDataPointsFromDb(
+    spectrumData: Float32Array,
+    fftSize: number,
+    sampleRate: number,
+    minFreq: number,
+    maxFreq: number
+  ): SpectrumDataPoint[] {
+    const dataPoints: SpectrumDataPoint[] = [];
+    
+    for (let i = 0; i < fftSize / 2 && i < spectrumData.length; i++) {
+      const frequency = (i * sampleRate) / fftSize;
+      
+      if (frequency < minFreq || frequency > maxFreq) {
+        continue;
+      }
+      
+      // 直接使用分贝值，不需要转换
+      const dbValue = spectrumData[i];
+      // 将dB转回幅度用于显示（如果需要原始幅度）
+      const amplitude = Math.pow(10, dbValue / 20);
+      
+      dataPoints.push({
+        frequency,
+        amplitude,
+        dbValue,
+        index: i
+      });
+    }
+    
+    return dataPoints;
+  }
+  
+  /**
    * 过滤数据点到指定范围
    */
   private filterDataPoints(
@@ -403,7 +440,8 @@ export class SpectrumDisplayService {
       frequency: maxPoint.frequency,
       dbValue: maxPoint.dbValue,
       index: maxPoint.index,
-      amplitude: maxPoint.amplitude
+      amplitude: maxPoint.amplitude,
+      confidence: 1.0
     };
   }
   
@@ -434,8 +472,7 @@ export class SpectrumDisplayService {
       peakCount,
       10, // 最小峰值间隔
       -60, // 最小峰值高度
-      true, // 使用插值
-      PeakInterpolationMethod.ADAPTIVE // 使用自适应插值方法
+      true // 使用插值
     );
   }
   

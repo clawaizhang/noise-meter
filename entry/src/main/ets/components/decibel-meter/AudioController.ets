@@ -22,7 +22,7 @@ import {
   ResumeRecordingEvent
 } from '../../models/AudioControllerEvents';
 import { AutoSaveService } from '../../services/AutoSaveService';
-import { PeakInterpolationMethod, SpectrumDataProcessor } from './SpectrumDataProcessor';
+import { SpectrumDataProcessor } from './SpectrumDataProcessor';
 
 /**
  * 带时间戳的分贝值接口
@@ -684,8 +684,7 @@ export struct AudioController {
               config.sampleRate,
               16,
               20000,
-              true,
-              PeakInterpolationMethod.ADAPTIVE
+              true
             );
             
             if (peakInfo) {

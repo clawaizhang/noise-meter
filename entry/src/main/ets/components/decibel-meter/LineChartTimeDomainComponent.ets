@@ -45,6 +45,10 @@ export struct LineChartTimeDomainComponent {
   
   // 滑动窗口相关
   @Local private maxWindowDataPoints: number = 500; // 滑动窗口最大数据点数
+  
+  // 性能优化：帧率控制
+  private lastUpdateTime: number = 0;
+  private readonly MIN_UPDATE_INTERVAL: number = 100; // 最小更新间隔 100ms (10 FPS)
 
   // LineChart 相关
   @Local private model: LineChartModel | null = null;
@@ -78,6 +82,13 @@ export struct LineChartTimeDomainComponent {
     if (!this.isVisible) {
       return;
     }
+    
+    // 性能优化：帧率控制
+    const now = Date.now();
+    if (now - this.lastUpdateTime < this.MIN_UPDATE_INTERVAL) {
+      return;
+    }
+    this.lastUpdateTime = now;
     
     if (this.ak.isDisplayApp) {
       // 直接使用最新的时域数据，因为AudioController已经限制了数据量（512个点）

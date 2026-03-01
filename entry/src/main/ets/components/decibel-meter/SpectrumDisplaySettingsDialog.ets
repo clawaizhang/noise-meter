@@ -1,4 +1,4 @@
-import { SpectrumDisplayService, SpectrumDisplayMode, FrequencyRange, DecibelRange, SpectrumDisplayConfig } from '../../services/SpectrumDisplayService';
+import { SpectrumDisplayService, FrequencyRange, DecibelRange, SpectrumDisplayConfig } from '../../services/SpectrumDisplayService';
 import { PreferenceKeys } from '../../models/PreferenceKeys';
 import { DesignConstants } from '../../constants/DesignConstants';
 import { PersistenceV2 } from '@ohos.arkui.StateManagement';
@@ -593,9 +593,8 @@ export struct SpectrumDisplaySettingsDialog {
       .backgroundColor($r('sys.color.icon_emphasize'))
       .borderRadius(DesignConstants.BORDER_RADIUS_MD)
       .onClick(() => {
-        // 创建配置对象，固定使用线性图模式
+        // 创建配置对象
         const config: SpectrumDisplayConfig = {
-          displayMode: SpectrumDisplayMode.LINE,
           smoothingFactor: this.smoothingFactor,
           showPeakFrequency: this.showPeakFrequency,
           peakCount: this.peakCount,

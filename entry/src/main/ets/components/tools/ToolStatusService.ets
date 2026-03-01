@@ -41,20 +41,6 @@ export class ToolStatusService {
     }
   }
 
-  // 获取频谱显示模式显示名称
-  getSpectrumDisplayModeText(): string {
-    switch (this.pk.spectrum_display_mode) {
-      case 'line':
-        return '线形图';
-      case 'bar':
-        return '柱状图';
-      case 'hybrid':
-        return '混合模式';
-      default:
-        return '线形图';
-    }
-  }
-
   // 获取采样率显示文本
   getSampleRateDisplayText(): string {
     const sampleRateText = `${(this.pk.audio_sample_rate / 1000).toFixed(1)}kHz`;

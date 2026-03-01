@@ -141,12 +141,6 @@ export class PreferenceKeys {
   @Trace
   
   /**
-   * 频谱显示模式
-   */
-  @Trace
-  spectrum_display_mode: string = PreferencesUtil.getStringSync('spectrum_display_mode', 'line');
-  
-  /**
    * 频谱平滑因子
    */
   @Trace

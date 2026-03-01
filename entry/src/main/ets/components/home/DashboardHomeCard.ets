@@ -6,6 +6,7 @@ import { LineChartSpectrumComponent } from '../decibel-meter/LineChartSpectrumCo
 import { LineChartTimeDomainComponent } from '../decibel-meter/LineChartTimeDomainComponent';
 import { StatisticsChartComponent } from '../statistics/StatisticsChartComponent';
 import { AudioControllerService } from '../../services/AudioControllerService';
+import { SpectrumQuickSettings } from '../decibel-meter/SpectrumQuickSettings';
 
 // 图表类型配置接口
 interface ChartTypeConfig {
@@ -73,26 +74,35 @@ export struct DashboardHomeCard {
       .width('100%')
       .height('100%')
 
-      // 右下角悬浮全屏按钮 - 始终可见，半透明设计
-      Button() {
-        Text('⛶')
-          .fontSize(14)
-          .fontColor(Color.White)
+      // 左下角快捷设置工具栏 + 全屏按钮
+      Row({ space: 8 }) {
+        // 快捷设置工具栏 - 放在全屏按钮左边
+        SpectrumQuickSettings()
+
+        // 全屏按钮
+        Button() {
+          Text('⛶')
+            .fontSize(14)
+            .fontColor(Color.White)
+        }
+        .width(32)
+        .height(32)
+        .backgroundColor('rgba(0, 0, 0, 0.4)')
+        .borderRadius(16)
+        .stateEffect(true)
+        .onClick(() => {
+          this.enterFullscreen();
+        })
       }
-      .width(32)
-      .height(32)
-      .backgroundColor('rgba(0, 0, 0, 0.4)')
-      .borderRadius(16)
-      .margin({ right: 12, bottom: 12 })
-      .stateEffect(true)
-      .onClick(() => {
-        this.enterFullscreen();
-      })
+      .position({ x: '100%', y: '100%' })
+      .translate({ x: -120, y: -44 })  // 往左移，避免超出
+      .zIndex(10)
+      .alignItems(VerticalAlign.Bottom)
     }
     .width('100%')
     .height(this.chartHeight)
     .backgroundColor($r('sys.color.background_secondary'))
-    .clip(true)
+    .clip(false) // 修改为false，避免裁剪快捷设置按钮
   }
 
   /**

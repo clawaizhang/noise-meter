@@ -5,7 +5,7 @@ import { PreferenceKeys } from '../../models/PreferenceKeys';
 import { AudioPresets } from '../../common/AudioConfig';
 import { SpectrumDataProcessor, PeakInfo, PeakInterpolationMethod } from './SpectrumDataProcessor';
 import { UnifiedChartStyle } from '../common/charts/UnifiedChartStyle';
-import { SpectrumDisplayService } from '../../services/SpectrumDisplayService';
+import { SpectrumDisplayService, SpectrumDisplayData } from '../../services/SpectrumDisplayService';
 import { PeakFrequencyDisplay } from './PeakFrequencyDisplay';
 import { MultiplePeakFrequencyDisplay } from './MultiplePeakFrequencyDisplay';
 import {
@@ -50,16 +50,11 @@ class StandardFrequencyAxisValueFormatter implements IAxisValueFormatter {
       const xValue = ((logFreq - StandardFrequencyAxisValueFormatter.LOG_MIN_FREQ) /
         (StandardFrequencyAxisValueFormatter.LOG_MAX_FREQ - StandardFrequencyAxisValueFormatter.LOG_MIN_FREQ)) * 20000;
       map.set(freq, xValue);
-      // 调试日志：记录频率到X轴的映射
-      console.info(`[X轴格式化器初始化] 频率${freq}Hz -> X值${xValue}`);
     }
     return map;
   })();
   
   getFormattedValue(value: number, axis: AxisBase): string {
-    // 调试日志：记录输入的X值
-    console.info(`[X轴格式化器] 输入X值: ${value}`);
-    
     // 查找当前X值最接近的标准频率点
     let closestFreq = StandardFrequencyAxisValueFormatter.STANDARD_FREQUENCIES[0];
     let minDistance = Math.abs(value - StandardFrequencyAxisValueFormatter.FREQUENCY_TO_X_MAP.get(closestFreq)!);
@@ -73,25 +68,18 @@ class StandardFrequencyAxisValueFormatter implements IAxisValueFormatter {
       }
     }
     
-    // 调试日志：记录找到的最接近频率和距离
-    console.info(`[X轴格式化器] 最接近频率: ${closestFreq}Hz, 距离: ${minDistance}`);
-    
     // 根据频率范围使用不同的容差
     let threshold: number;
     if (closestFreq <= 63) {
-      threshold = 200; // 低频区域使用更大容差，确保63Hz能匹配
+      threshold = 200;
     } else if (closestFreq <= 1000) {
-      threshold = 450; // 中频区域使用中等容差，特别为1000Hz增加容差
+      threshold = 450;
     } else {
-      threshold = 700; // 高频区域使用较大容差
+      threshold = 700;
     }
-    
-    // 调试日志：记录容差和比较结果
-    console.info(`[X轴格式化器] 容差: ${threshold}, 是否匹配: ${minDistance <= threshold}`);
     
     // 隐藏第一个和最后一个标签
     if (closestFreq === 16 || closestFreq === 16000) {
-      console.info(`[X轴格式化器] 隐藏首尾标签: ${closestFreq}Hz`);
       return '';
     }
     
@@ -103,16 +91,10 @@ class StandardFrequencyAxisValueFormatter implements IAxisValueFormatter {
       } else {
         formattedValue = `${Math.round(closestFreq)}`;
       }
-      
-      // 调试日志：记录最终返回的标签
-      console.info(`[X轴格式化器] 返回标签: "${formattedValue}"`);
       return formattedValue;
     } else {
-      // 调试日志：记录不匹配的情况
-      console.info(`[X轴格式化器] 不匹配，返回空字符串`);
       return '';
     }
-
   }
 }
 
@@ -121,19 +103,20 @@ class StandardFrequencyAxisValueFormatter implements IAxisValueFormatter {
  * 用于隐藏第一个和最后一个Y轴标签
  */
 class YAxisValueFormatter implements IAxisValueFormatter {
+  private minDb: number = -20;
+  private maxDb: number = 140;
+  
+  setRange(minDb: number, maxDb: number): void {
+    this.minDb = minDb;
+    this.maxDb = maxDb;
+  }
+  
   getFormattedValue(value: number, axis: AxisBase): string {
-    // 获取分贝步进值
-    const dbSteps: number[] = SpectrumDataProcessor.getDbSteps();
-    
     // 隐藏第一个和最后一个标签
-    if (value === dbSteps[0] || value === dbSteps[dbSteps.length - 1]) {
-      console.info(`[Y轴格式化器] 隐藏首尾标签: ${value}dB`);
+    if (value <= this.minDb + 0.1 || value >= this.maxDb - 0.1) {
       return '';
     }
-    
-    // 返回正常的分贝值标签
-    console.info(`[Y轴格式化器] 返回标签: ${value}dB`);
-    return `${value}`;
+    return `${Math.round(value)}`;
   }
 }
 
@@ -152,7 +135,10 @@ export struct LineChartSpectrumComponent {
   // 频谱数据
   @Local private currentSpectrumData: Float32Array = new Float32Array();
   @Local private peakInfo: PeakInfo | null = null;
-  @Local private peakInfos: PeakInfo[] = []; // 新增：多个峰值信息
+  @Local private peakInfos: PeakInfo[] = [];
+  
+  // 性能优化：缓存 displayData 避免重复处理
+  private cachedDisplayData: SpectrumDisplayData | null = null;
 
   // LineChart 相关
   @Local private model: LineChartModel | null = null;
@@ -162,6 +148,13 @@ export struct LineChartSpectrumComponent {
   @Local private xAxis: XAxis | null = null;
   @Local private limitLine1: LimitLine | null = null;
   @Local private limitLine2: LimitLine | null = null;
+  
+  // 性能优化：帧率控制
+  private lastUpdateTime: number = 0;
+  private readonly MIN_UPDATE_INTERVAL: number = 100; // 最小更新间隔 100ms (10 FPS)
+  
+  // 性能优化：Y轴格式化器缓存
+  private yAxisFormatter: YAxisValueFormatter = new YAxisValueFormatter();
 
   @Computed
   get fftSize() {
@@ -187,6 +180,13 @@ export struct LineChartSpectrumComponent {
       return;
     }
     
+    // 性能优化：帧率控制
+    const now = Date.now();
+    if (now - this.lastUpdateTime < this.MIN_UPDATE_INTERVAL) {
+      return;
+    }
+    this.lastUpdateTime = now;
+    
     const newSpectrum = monitor.value<Float32Array>()?.now;
     if (newSpectrum && this.ak.isDisplayApp) {
       this.currentSpectrumData = newSpectrum;
@@ -195,7 +195,8 @@ export struct LineChartSpectrumComponent {
       const spectrumConfig = this.spectrumDisplayService.getDisplayConfig(this.pk);
       
       // 使用SpectrumDisplayService处理频谱数据
-      const displayData = this.spectrumDisplayService.processSpectrumData(
+      // 性能优化：缓存 displayData 供 generateLineData 使用
+      this.cachedDisplayData = this.spectrumDisplayService.processSpectrumData(
         this.currentSpectrumData,
         this.fftSize,
         this.sampleRate,
@@ -203,8 +204,8 @@ export struct LineChartSpectrumComponent {
       );
       
       // 使用处理后的峰值信息
-      this.peakInfo = displayData.peakInfo;
-      this.peakInfos = displayData.peakInfos; // 新增：获取多个峰值信息
+      this.peakInfo = this.cachedDisplayData.peakInfo;
+      this.peakInfos = this.cachedDisplayData.peakInfos;
       
       // 更新图表数据
       this.updateChartData();
@@ -235,16 +236,18 @@ export struct LineChartSpectrumComponent {
   private generateLineData(): LineData {
     const values: JArrayList<EntryOhos> = new JArrayList<EntryOhos>();
     
+    // 性能优化：使用缓存的 displayData
+    const displayData = this.cachedDisplayData;
+    if (!displayData) {
+      // 如果没有缓存数据，返回空数据集
+      const emptyDataSetList: JArrayList<ILineDataSet> = new JArrayList<ILineDataSet>();
+      const emptyDataSet = new LineDataSet(values, '频谱数据');
+      emptyDataSetList.add(emptyDataSet);
+      return new LineData(emptyDataSetList);
+    }
+    
     // 获取频谱显示配置
     const spectrumConfig = this.spectrumDisplayService.getDisplayConfig(this.pk);
-    
-    // 使用SpectrumDisplayService处理频谱数据
-    const displayData = this.spectrumDisplayService.processSpectrumData(
-      this.currentSpectrumData,
-      this.fftSize,
-      this.sampleRate,
-      spectrumConfig
-    );
     
     // 获取频率和分贝范围
     const frequencyRangeConfig = this.spectrumDisplayService.getFrequencyRange(spectrumConfig, this.fftSize, this.sampleRate);
@@ -266,11 +269,6 @@ export struct LineChartSpectrumComponent {
       // 这样低频率部分会有更多的显示空间，高频率部分会被压缩
       const logFreq: number = Math.log10(frequency);
       const mappedX: number = ((logFreq - LOG_MIN_FREQ) / (logMaxFreq - LOG_MIN_FREQ)) * 20000;
-      
-      // 调试信息：只记录前几个数据点
-      if (displayData.dataPoints.indexOf(dataPoint) < 5) {
-        console.info(`[频谱图] 数据点: 频率=${frequency}Hz, 映射X值=${mappedX}, 分贝=${clampedDbValue}dB`);
-      }
       
       // 使用映射后的X值，确保与原来的Canvas实现完全一致
       values.add(new EntryOhos(mappedX, clampedDbValue));
@@ -383,8 +381,8 @@ export struct LineChartSpectrumComponent {
       this.leftAxis.setCenterAxisLabels(false); // 禁用中心轴标签，确保只显示定义的刻度
       
       // 使用自定义的Y轴格式化器，隐藏第一个和最后一个标签
-      const yAxisFormatter = new YAxisValueFormatter();
-      this.leftAxis.setValueFormatter(yAxisFormatter);
+      this.yAxisFormatter.setRange(decibelRangeConfig.minDb, decibelRangeConfig.maxDb);
+      this.leftAxis.setValueFormatter(this.yAxisFormatter);
     }
 
     // 设置图表右Y轴信息
