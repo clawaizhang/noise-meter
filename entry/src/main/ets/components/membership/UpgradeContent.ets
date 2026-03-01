@@ -2,7 +2,7 @@ import { DesignConstants } from '../../constants/DesignConstants'
 import { PreferenceKeys } from '../../models/PreferenceKeys';
 import { PersistenceV2 } from '@kit.ArkUI';
 import { MembershipLevel } from '../../services/MembershipManager';
-import { navigationStack } from '../../constants/ProviderConstant';
+import { MembershipAgreementDialogBuilder, MembershipAgreementDialogProps } from './MembershipAgreementDialog';
 import { DialogHub } from '@hadss/dialoghub';
 import { MembershipRewardService } from '../../services/MembershipRewardService';
 import { ContinuousUsageManager } from '../../services/ContinuousUsageManager';
@@ -48,7 +48,6 @@ export struct UpgradeContent {
   @Local purchaseState: 'idle' | 'loading' | 'success' | 'error' = 'idle';
   // 会员状态管理
   @Local pk: PreferenceKeys = PersistenceV2.connect(PreferenceKeys)!;
-  @Consumer(navigationStack) navStack: NavPathStack = new NavPathStack();
 
   aboutToAppear() {
     // 默认选中推荐方案
@@ -542,8 +541,23 @@ export struct UpgradeContent {
 
     // 关闭当前升级对话框
     this.onLater();
-    // 【已修改】跳转到新会员中心
-    this.navStack.pushPathByName('MembershipCenter', new Object() as Record<string, Object>);
+    // 使用DialogHub显示会员协议对话框
+    let props: MembershipAgreementDialogProps = {
+      onAgree: () => {
+        this.handleAgreementAgree();
+        dialog.dismiss();
+      },
+      onCancel: () => {
+        this.handleAgreementCancel();
+        dialog.dismiss();
+      }
+    };
+    const dialog = DialogHub.getSheet()
+      .setComponentTargetId('mainId')
+      .setStyle({ backgroundColor: $r('sys.color.background_secondary') })
+      .setContent(wrapBuilder(MembershipAgreementDialogBuilder), props)
+      .build();
+    dialog.show();
   }
 
   // 处理升级逻辑（保留原有逻辑，但暂时不使用）

@@ -235,10 +235,15 @@ struct Index {
   }
 
   // 初始化福利活动
-  // 【已禁用】本地福利活动已下线
   private initBenefitActivity(): void {
-    // 福利活动已迁移到华为IAP，本地活动不再初始化
-    console.info('[福利活动] 本地活动已下线');
+    const membershipRewardService = MembershipRewardService.getInstance(this.pk);
+
+    // 检查是否已初始化福利活动
+    if (!this.pk.benefit_activity_data.hasBenefitActivity) {
+      // 初始化福利活动
+      membershipRewardService.initBenefitActivity();
+      console.info('[福利活动] 福利活动已初始化');
+    }
   }
 
   // 处理使用完成
@@ -248,9 +253,32 @@ struct Index {
 
     // 获取连续天数
     const consecutiveDays = continuousUsageManager.getConsecutiveDays();
-    
-    // 【本地奖励已下线】仅记录日志
-    console.info(`[使用完成] 连续${consecutiveDays}天，本地奖励已下线，请前往会员中心`);
+
+    // 检查用户是否已同意会员奖励协议
+    if (!this.pk.has_agreed_membership_reward) {
+      // 用户未同意协议，不主动弹出，只记录日志
+      console.info(`[使用完成] 连续${consecutiveDays}天，用户未同意会员奖励协议，等待用户主动点击`);
+      return;
+    }
+
+    // 用户已同意协议，应用会员奖励
+    membershipRewardService.applyMembershipReward(consecutiveDays);
+
+    // 获取奖励信息
+    const rewardDays = membershipRewardService.calculateRewardDays(consecutiveDays);
+    const expiryDate = this.pk.member_ship.expiryDate;
+
+    // 检查用户是否选择不再显示弹框
+    if (!this.pk.show_reward_dialog) {
+      // 用户选择不再显示，只记录日志
+      console.info(`[使用完成] 连续${consecutiveDays}天，获得${rewardDays}天会员，用户已选择不再显示弹框`);
+      return;
+    }
+
+    // 显示完成弹窗
+    showRewardCompletionDialog(consecutiveDays, rewardDays, expiryDate, this.pk.show_reward_dialog);
+
+    console.info(`[使用完成] 连续${consecutiveDays}天，获得${rewardDays}天会员`);
   }
 
   build() {
