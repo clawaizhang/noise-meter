@@ -195,7 +195,7 @@ export struct HomePageContent {
     .shadow(DesignConstants.SHADOW_SM)
   }
 
-  // 状态指示器（带圆点）
+  // 状态指示器（带圆点）- 移除发光阴影，动画已足够表达"进行中"
   @Builder
   private buildStatusIndicator() {
     Row({ space: DesignConstants.SPACING_XS }) {
@@ -205,12 +205,6 @@ export struct HomePageContent {
           .width(8)
           .height(8)
           .fill(this.detectionStatusColor)
-          .shadow({
-            radius: 4,
-            color: this.detectionStatusColor,
-            offsetX: 0,
-            offsetY: 0
-          })
         
         // 检测中时显示脉动动画效果
         if (this.isDetectionRecording) {
@@ -218,10 +212,10 @@ export struct HomePageContent {
             .width(8)
             .height(8)
             .fill(this.detectionStatusColor)
-            .opacity(0.5)
-            .scale({ x: 1.5, y: 1.5 })
+            .opacity(0.4)
+            .scale({ x: 1.6, y: 1.6 })
             .animation({
-              duration: 1000,
+              duration: 1200,
               curve: Curve.EaseInOut,
               iterations: -1,
               playMode: PlayMode.Alternate
@@ -285,22 +279,22 @@ export struct HomePageContent {
     } else {
       // 运行状态：显示停止+重置+保存
       Column({ space: DesignConstants.SPACING_SM }) {
-        // 停止按钮（主要）
+        // 停止按钮（主要）- 使用中性背景+红色图标，降低侵略感
         Button({ type: ButtonType.Capsule }) {
           Row({ space: 4 }) {
             Image($r('app.media.ic_stop'))
               .width(14)
               .height(14)
-              .fillColor(Color.White)
+              .fillColor($r('sys.color.alert'))
             Text('停止检测')
               .fontSize(13)
-              .fontColor(Color.White)
+              .fontColor($r('sys.color.font_primary'))
               .fontWeight(FontWeight.Medium)
           }
         }
         .width('100%')
         .height(32)
-        .backgroundColor($r('sys.color.alert'))
+        .backgroundColor($r('sys.color.comp_background_secondary'))
         .enabled(this.isDetectionRecording)
         .onClick(() => {
           Throttle.click(() => this.showStopConfirmation());
@@ -327,21 +321,21 @@ export struct HomePageContent {
             Throttle.click(() => this.showResetConfirmation());
           })
 
-          // 保存按钮（图标+文字）
+          // 保存按钮（图标+文字）- 使用品牌色，避免红绿冲突
           Button({ type: ButtonType.Capsule }) {
             Row({ space: 4 }) {
               Image($r('app.media.ic_save'))
                 .width(14)
                 .height(14)
-                .fillColor(this.isDetectionRecording ? Color.White : $r('sys.color.font_secondary'))
+                .fillColor(this.isDetectionRecording ? $r('sys.color.brand') : $r('sys.color.font_secondary'))
               Text('保存')
                 .fontSize(12)
-                .fontColor(this.isDetectionRecording ? Color.White : $r('sys.color.font_secondary'))
+                .fontColor(this.isDetectionRecording ? $r('sys.color.font_primary') : $r('sys.color.font_secondary'))
             }
           }
           .layoutWeight(1)
           .height(32)
-          .backgroundColor(this.isDetectionRecording ? $r('sys.color.confirm') : $r('sys.color.comp_background_secondary'))
+          .backgroundColor($r('sys.color.comp_background_secondary'))
           .enabled(this.isDetectionRecording)
           .opacity(this.saveAnimationOpacity)
           .onClick(() => {
