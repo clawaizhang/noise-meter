@@ -1,8 +1,7 @@
 /**
  * 会员服务协议文本
  */
-export class MembershipAgreement {
-  static readonly AGREEMENT_TEXT = `《噪音检测专业版会员服务协议》
+export const MEMBERSHIP_AGREEMENT = `《噪音检测专业版会员服务协议》
 
 欢迎使用噪音检测专业版会员服务！本协议由您与噪音检测APP运营方共同签署，请您仔细阅读。
 
@@ -70,4 +69,3 @@ export class MembershipAgreement {
 如您对本协议有任何疑问，请联系客服。
 
 生效日期：2025年2月`;
-}
