@@ -204,7 +204,7 @@ onWindowStageCreate(windowStage: window.WindowStage) {
 |-------|-------------|-----------------|------|
 | start_button | 开始检测 | 开始 | 按钮文字（手表更简洁） |
 | stop_button | 停止检测 | 停止 | 按钮文字 |
-| app_name | 静喵Sound Pro | 静喵Sound | 应用名称 |
+| app_name | 静喵-噪音检测分贝仪 Pro | 静喵-噪音检测分贝仪 | 应用名称 |
 
 ## 构建与运行
 
