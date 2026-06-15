@@ -1,187 +1,200 @@
-# 噪音监测与分析系统
+# 静喵 · 噪音检测分贝仪 (Noise Meter Pro)
 
-基于HarmonyOS的专业噪音监测与分析系统，采用ArkTS开发框架，提供实时分贝检测、频谱分析、数据记录等功能。
+> 基于 HarmonyOS 的智能噪音监测与分析系统，支持手机、平板、手表、车机等全场景设备。
+>
+> 包名：`yu.zhang.myapplication.noise_meter_pro` | 版本：2.0.0 | API：20+
 
-## 核心功能
+![HarmonyOS](https://img.shields.io/badge/HarmonyOS-6.0-blue)
+![API](https://img.shields.io/badge/API-20-green)
+![License](https://img.shields.io/badge/License-MIT-orange)
 
-1. **实时音频分析**
-   - 多种加权方式(A/C/Z)支持
-   - 实时频谱分析与显示
-   - 快速/慢速时间加权选项
+---
 
-2. **数据管理**
-   - 本地数据持久化存储
-   - 历史记录查询与统计
-   - 数据导出功能
+## 📱 功能概览
 
-3. **位置服务**
-   - 噪音数据地理位置标记
-   - 位置信息可视化
+| 功能 | 描述 |
+|------|------|
+| **实时噪音检测** | 高精度分贝测量，支持 A/C/Z 频率加权 & 快/慢/脉冲时间加权 |
+| **频谱分析** | FFT 实时频谱图，带平滑处理、峰值追踪、瀑布图可视化 |
+| **噪音警报** | 可自定义阈值，超限触发通知/振动/记录，支持历史查询 |
+| **数据记录** | 本地持久化存储（RDB），支持筛选、统计、导出 |
+| **地理位置** | 噪音数据自动地理位置标记，查看时空分布 |
+| **健康暴露** | 基于 NIOSH/OSHA 标准的噪音暴露评估与建议 |
+| **频谱设置** | 窗口函数选择、采样率/FFT 点数配置、动态分辨率调节 |
+| **音频录制** | 噪音环境 WAV 录制与回放 |
+| **会员福利** | 连续签到奖励、抽奖活动、会员权益升级 |
+| **全场景适配** | 手机 / 平板 / 手表 / 车机 / 2合1 设备自适应 |
 
-4. **音频处理**
-   - WAV文件生成与保存
-   - FFT频谱分析
-   - 音频增强处理
+---
 
-## 技术架构
+## 🏗️ 技术架构
 
-### 开发环境
-- HarmonyOS API 9
-- DevEco Studio 3.1+
-- Node.js 16+
+```
+entry/src/main/ets/
+├── core/                  # 核心业务逻辑与抽象接口
+│   ├── SpectrumAnalysisCore.ets  # FFT 频谱分析引擎
+│   ├── components/               # 核心组件
+│   ├── factory/                  # 服务工厂 (DI)
+│   └── interfaces/              # 抽象接口定义
+├── services/              # 应用服务层 (27个)
+│   ├── AudioControllerService.ets # 音频控制器
+│   ├── AlertService.ets          # 警报服务
+│   ├── DecibelService.ets        # 分贝测量
+│   ├── ExposureStatisticsService.ets # 暴露统计
+│   ├── LocationService.ets       # 位置服务
+│   ├── RelationalStoreService.ets # 数据库服务
+│   └── ...
+├── pages/                 # 页面导航
+│   ├── Index.ets                 # 首页入口
+│   ├── noisemeter/              # 噪音计主页面 & 弹窗
+│   ├── settings/                # 设置页面
+│   ├── alerts/                  # 警报页面
+│   └── wearable/               # 手表专属页面
+├── components/            # UI 组件 (25个分类)
+│   ├── decibel-meter/            # 分贝表盘、仪表板
+│   ├── dashboard/               # 首页看板
+│   ├── frequency-weighting/     # 频率加权
+│   ├── time-weighting/          # 时间加权
+│   ├── calibration/             # 校准
+│   ├── spectrum/                # 频谱图
+│   ├── exposure/                # 健康暴露
+│   ├── membership/              # 会员系统
+│   └── ...
+├── models/                # 数据模型 & 状态管理 (@ObservedV2 / @AppStorageV2)
+├── constants/             # 常量定义 (16个)
+├── utils/                 # 工具类 (26个)
+├── concurrent/            # 并发任务 (FFT / 色图生成)
+├── phone/impl/            # 手机端服务实现
+├── wearable/impl/         # 手表端服务实现
+└── entryability/          # 应用入口
+```
 
 ### 核心依赖
-```json
-{
-  "@pura/harmony-utils": "^1.0.0",
-  "@ohos.multimedia.audio": "9.0.0",
-  "@ohos.data.relationalStore": "9.0.0"
-}
-```
 
-## 项目结构
+| 包 | 用途 |
+|---|------|
+| `@pura/harmony-utils` | HarmonyOS 工具库 (AppUtil, PermissionUtil) |
+| `@ohos/lottie-turbo` | 高性能 Lottie 动画渲染 |
+| `@hadss/dialoghub` | 弹窗管理 |
+| `rxjs` | 响应式编程 |
+| `@ohos/mpchart` | 图表渲染 (统计/报告) |
+| `@ohos/hypium` | 单元测试框架 |
+
+---
+
+## 🔧 开发环境
+
+| 工具 | 版本 |
+|------|------|
+| HarmonyOS | 6.0.0 (API 20) |
+| ArkTS | Stage 模型 |
+| DevEco Studio | 5.0+ |
+| Hvigor | 最新 |
+| Node.js | 18+ |
+
+---
+
+## 🚀 快速开始
 
 ```bash
-entry/
-├── src/
-│   ├── library/ets/           # 核心库
-│   │   ├── components/        # 组件
-│   │   │   ├── business/     # 业务组件
-│   │   │   └── common/       # 通用组件
-│   │   ├── services/         # 服务层
-│   │   │   ├── AudioService.ets        # 音频服务
-│   │   │   ├── LocationService.ets     # 位置服务
-│   │   │   └── RelationalStoreService.ets  # 数据库服务
-│   │   └── utils/            # 工具类
-│   │       ├── FFTAnalyzer.ets         # FFT分析器
-│   │       └── WavFileGenerator.ets     # WAV文件生成器
-│   └── main/
-│       └── ets/
-│           ├── pages/        # 页面
-│           └── entryability/ # 入口能力
+# 克隆项目
+git clone https://github.com/clawaizhang/noise-meter.git
+
+# 打开项目
+# 使用 DevEco Studio 打开项目根目录
+
+# 安装依赖
+ohpm install
+
+# 构建 & 运行
+# DevEco Studio → 运行 → 选择目标设备
 ```
 
-## 数据存储
+---
 
-### 数据库结构
-```sql
--- 分贝记录表
-CREATE TABLE IF NOT EXISTS DecibelRecords (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  value REAL NOT NULL,                    -- 分贝值
-  timestamp INTEGER,                      -- 记录时间
-  weighting TEXT,                         -- 加权类型(A/C/Z)
-  location TEXT,                          -- 位置信息
-  note TEXT,                             -- 备注
-  spectrum BLOB                          -- 频谱数据
-);
-```
+## 📦 构建发布
 
-### 首选项配置
-```typescript
-// 音频分析配置
-const PREF_ANALYSIS_MODE = 'audio_analysis_mode';    // 分析模式
-const PREF_TARGET_SAMPLES = 'audio_target_samples';  // 目标采样数
-const PREF_PROCESS_INTERVAL = 'audio_process_interval'; // 处理间隔
-```
-
-## 音频处理流程
-
-1. **采集初始化**
-   ```typescript
-   audioCapturerOptions = {
-     streamInfo: {
-       samplingRate: 44100,
-       channels: CHANNEL_1,
-       sampleFormat: SAMPLE_FORMAT_S16LE,
-       encodingType: ENCODING_TYPE_RAW
-     }
-   };
-   ```
-
-2. **实时处理**
-   - 音频数据缓冲
-   - FFT频谱分析
-   - 分贝值计算
-   - 数据持久化
-
-3. **数据输出**
-   - 实时显示
-   - 文件保存
-   - 数据库存储
-
-## 安全特性
-
-1. **数据安全**
-   - 数据库加密（SecurityLevel.S1）
-   - 事务完整性保护
-   - SQL注入防护
-
-2. **权限管理**
-   - 麦克风权限
-   - 位置权限
-   - 存储权限
-
-## 使用说明
-
-1. **环境准备**
-   ```bash
-   # 安装依赖
-   npm install
-   ```
-
-2. **开发调试**
-   - 使用DevEco Studio打开项目
-   - 选择目标设备或模拟器
-   - 点击运行按钮
-
-3. **发布部署**
-   ```bash
-   # 构建发布包
-   npm run build
-   ```
-
-## 调试工具
-
-### 数据库调试
 ```bash
-# 查看数据库结构
-adb shell "run-as com.example.myapplication6 sqlite3 
-  /data/app/el2/100/database/NoiseMeterDb/NoiseMeter.db 
-  '.schema'"
+# 调试构建
+hvigorw assembleHap --mode module -p product=default
+
+# 正式构建 (noise_meter_pro)
+hvigorw assembleHap --mode module -p product=noise_meter_pro
+
+# 构建 App Pack (发布)
+hvigorw assembleApp --mode project -p product=noise_meter_pro
 ```
 
-### 日志查看
-```bash
-# 查看应用日志
-hdc shell hilog | grep com.example.myapplication6
-```
+---
 
-## 版本历史
+## 📋 功能详情
 
-### v2.1.0 (2025-01-31)
-- 新增频谱分析功能
-- 优化音频处理性能
-- 添加位置服务支持
+### 🔊 噪音检测
+- 实时分贝值显示（数字 + 指针表盘）
+- 多种频率加权：A 加权（人耳模拟）、C 加权（低频）、Z 加权（全频平直）
+- 时间加权：快 (125ms) / 慢 (1s) / 脉冲
+- 校准功能：自动校准 & 手动偏移补偿
 
-### v2.0.0
-- 实现多种加权方式
-- 重构音频处理模块
-- 优化数据存储结构
+### 📊 频谱分析
+- FFT 实时频谱图（16Hz - 16kHz）
+- 峰值频率追踪与标记
+- 瀑布图（时间-频率三维可视化）
+- 窗口函数选择（Hanning / Hamming / Blackman / 矩形）
+- 频谱平滑处理
+- 自适应分辨率调节
+- 动态色图渲染（并发 Worker 优化）
 
-### v1.0.0
-- 基础噪音检测
-- 数据库支持
-- 配置管理
+### ⚠️ 噪音警报
+- 自定义阈值（支持多次阈值设置）
+- 超限触发：通知栏提醒 + 振动 + 自动记录
+- 警报历史查询与管理
+- 健康暴露评估（NIOSH / OSHA 标准）
 
-## 参与贡献
+### 📈 数据管理
+- 本地 RDB 数据库存储
+- 历史记录查询（按时间/地点/加权方式筛选）
+- 噪音暴露统计图表（日/周/月/年）
+- 数据导出
 
-1. Fork 项目
-2. 创建特性分支
-3. 提交更改
-4. 推送到分支
-5. 创建 Pull Request
+### 🌍 位置服务
+- 自动获取地理位置
+- 噪音数据地图标记
+- 位置信息可视化
 
-## 开源协议
+### 👤 会员系统
+- 会员权益与等级
+- 连续签到奖励（7 天签到最高获 1095 天会员）
+- 抽奖活动
+- 五星好评引导
 
-本项目采用 MIT 协议开源，详见 [LICENSE](LICENSE) 文件。
+---
+
+## 📱 多设备适配
+
+应用通过 `deviceInfo.deviceType` 在运行时自动识别设备类型：
+
+| 设备类型 | 界面 | 功能 |
+|---------|------|------|
+| **Phone** | 全功能 UI | 完整噪音检测、频谱、警报、会员等 |
+| **Tablet** | 自适应布局 | 同上，利用大屏优势 |
+| **Wearable** | 精简 UI | WatchIndex + WatchSettings + 阈值/校准配置 |
+| **Car / 2in1** | 自适应 | 根据屏幕尺寸调整布局 |
+
+---
+
+## 🔒 权限说明
+
+| 权限 | 用途 |
+|------|------|
+| `MICROPHONE` | 环境噪音采集 |
+| `LOCATION` | 噪音地理位置标记 |
+| `KEEP_BACKGROUND_RUNNING` | 后台持续监测 |
+| `CAMERA` | 手电筒控制 |
+| `VIBRATE` | 警报振动反馈 |
+| `INTERNET` | 定位服务网络请求 |
+
+---
+
+## 📄 开源协议
+
+本项目采用 MIT 协议 — 详见 [LICENSE](LICENSE) 文件。
