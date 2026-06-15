@@ -1,7 +1,7 @@
 #Requires -Version 5.1
 <#
 .SYNOPSIS
-    清洗 noise-meter 仓库的 Git 历史，移除敏感文件和邮箱。
+    清洗仓库 Git 历史的通用脚本。
 
 .DESCRIPTION
     本脚本会：
@@ -13,28 +13,35 @@
        - entry/.hvigor/outputs/build-logs/build.log
        - .cursorrules
        - .windsurfrules
-    3. 将历史提交中的 ko171@qq.com 替换为 GitHub noreply 邮箱
+    3. 将历史提交中的旧邮箱替换为新邮箱
 
 .WARNING
+    运行此脚本前必须修改以下参数：
+    - $OldEmail：要替换的旧邮箱地址
+    - $NewEmail：替换后的新邮箱地址
+
     运行此脚本后：
     - 所有 commit 的 hash 会改变
-    - 必须执行 git push --force 才能同步到 GitHub
+    - 必须执行 git push --force 才能同步到远程
     - 如果其他人已经 fork 或 clone 了本仓库，他们的本地副本仍会保留旧历史
     - 所有协作者都需要重新 clone 或使用 force pull
-
-    如果你非常看重现有的 commit hash / 提交记录时间线，建议不要运行本脚本。
-    仅提交当前工作区的改动（build-profile.json5 占位符化 + .gitignore 更新）已经足够安全。
 #>
 
 param(
-    [switch]$Force
+    [switch]$Force,
+    [string]$OldEmail = "<YOUR_OLD_EMAIL>",
+    [string]$NewEmail = "<YOUR_NEW_EMAIL>"
 )
 
 $ErrorActionPreference = "Stop"
 
+if ($OldEmail -eq "<YOUR_OLD_EMAIL>" -or $NewEmail -eq "<YOUR_NEW_EMAIL>") {
+    Write-Host "错误：请先编辑脚本，设置 `$OldEmail 和 `$NewEmail。" -ForegroundColor Red
+    exit 1
+}
+
 $repoRoot = Split-Path -Parent $PSScriptRoot
 $backupDir = Join-Path (Split-Path -Parent $repoRoot) ("noise-meter-backup-" + (Get-Date -Format "yyyyMMdd-HHmmss"))
-$repoName = Split-Path -Leaf $repoRoot
 
 function Test-GitFilterRepo {
     try {
@@ -49,6 +56,9 @@ function Test-GitFilterRepo {
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host "noise-meter Git 历史敏感信息清洗脚本" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
+Write-Host ""
+Write-Host "旧邮箱: $OldEmail" -ForegroundColor Yellow
+Write-Host "新邮箱: $NewEmail" -ForegroundColor Yellow
 Write-Host ""
 Write-Host "本脚本会重写 Git 历史。" -ForegroundColor Yellow
 Write-Host "运行后所有 commit hash 都会改变，必须 force push。" -ForegroundColor Yellow
@@ -115,8 +125,8 @@ if (Test-Path $tempBuildProfile) {
 
 # 清洗作者邮箱历史
 Write-Host "正在替换历史提交中的邮箱..." -ForegroundColor Cyan
-& git-filter-repo --email-callback `
-    "return email if email != b'ko171@qq.com' else b'146507046+ZhangYuScott@users.noreply.github.com'" `--force
+$emailCallback = "return email if email != b'$OldEmail' else b'$NewEmail'"
+& git-filter-repo --email-callback $emailCallback --force
 
 Write-Host ""
 Write-Host "========================================" -ForegroundColor Green
