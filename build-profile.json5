@@ -1,0 +1,106 @@
+{
+  "app": {
+    "signingConfigs": [
+      {
+        "name": "default",
+        "type": "HarmonyOS",
+        "material": {
+          "certpath": "<PATH_TO_YOUR_DEBUG_CERT>",
+          "keyAlias": "debugKey",
+          "keyPassword": "<YOUR_ENCRYPTED_KEY_PASSWORD>",
+          "profile": "<PATH_TO_YOUR_DEBUG_PROFILE>",
+          "signAlg": "SHA256withECDSA",
+          "storeFile": "<PATH_TO_YOUR_DEBUG_KEYSTORE>",
+          "storePassword": "<YOUR_ENCRYPTED_STORE_PASSWORD>"
+        }
+      },
+      {
+        "name": "debug",
+        "type": "HarmonyOS",
+        "material": {
+          "certpath": "<PATH_TO_YOUR_DEBUG_CERT>",
+          "keyAlias": "debugKey",
+          "keyPassword": "<YOUR_ENCRYPTED_KEY_PASSWORD>",
+          "profile": "<PATH_TO_YOUR_DEBUG_PROFILE>",
+          "signAlg": "SHA256withECDSA",
+          "storeFile": "<PATH_TO_YOUR_DEBUG_KEYSTORE>",
+          "storePassword": "<YOUR_ENCRYPTED_STORE_PASSWORD>"
+        }
+      },
+      {
+        "name": "noisemeterpro",
+        "type": "HarmonyOS",
+        "material": {
+          "storeFile": "<PATH_TO_YOUR_RELEASE_KEYSTORE>",
+          "storePassword": "<YOUR_ENCRYPTED_STORE_PASSWORD>",
+          "keyAlias": "<YOUR_RELEASE_KEY_ALIAS>",
+          "keyPassword": "<YOUR_ENCRYPTED_KEY_PASSWORD>",
+          "signAlg": "SHA256withECDSA",
+          "profile": "<PATH_TO_YOUR_RELEASE_PROFILE>",
+          "certpath": "<PATH_TO_YOUR_RELEASE_CERT>"
+        }
+      }
+    ],
+    "products": [
+      {
+        "name": "default",
+        "compatibleSdkVersion": "5.0.5(17)",
+        "runtimeOS": "HarmonyOS",
+        "buildOption": {
+          "strictMode": {
+            "caseSensitiveCheck": true,
+            "useNormalizedOHMUrl": true
+          }
+        },
+        "bundleName": "yu.zhang.myapplication.noise_meter_pro",
+        "bundleType": "app",
+        "icon": "$media:app_icon_fore",
+        "label": "$string:noise_meter_app_name",
+        "signingConfig": "debug",
+        "targetSdkVersion": "6.0.0(20)"
+      },
+      {
+        "name": "noise_meter_pro",
+        "compatibleSdkVersion": "5.0.5(17)",
+        "runtimeOS": "HarmonyOS",
+        "buildOption": {
+          "strictMode": {
+            "caseSensitiveCheck": true,
+            "useNormalizedOHMUrl": true
+          }
+        },
+        "bundleName": "yu.zhang.myapplication.noise_meter_pro",
+        "bundleType": "app",
+        "icon": "$media:app_icon_fore",
+        "label": "$string:noise_meter_app_name",
+        "signingConfig": "noisemeterpro",
+        "targetSdkVersion": "6.0.0(20)"
+      }
+    ],
+    "buildModeSet": [
+      {
+        "name": "release"
+      }
+    ]
+  },
+  "modules": [
+    {
+      "name": "entry",
+      "srcPath": "./entry",
+      "targets": [
+        {
+          "name": "noise_meter_pro",
+          "applyToProducts": [
+            "noise_meter_pro"
+          ]
+        },
+        {
+          "name": "default",
+          "applyToProducts": [
+            "default"
+          ]
+        }
+      ]
+    }
+  ]
+}

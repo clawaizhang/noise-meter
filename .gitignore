@@ -10,3 +10,23 @@
 /.clang-tidy
 **/.test
 /.appanalyzer
+
+# 敏感配置文件：签名证书、密钥、密码
+build-profile.json5
+*.p12
+*.p7b
+*.cer
+*.pem
+*.jks
+*.keystore
+*.key
+
+# 本地 IDE / Agent 配置
+/.claude/
+/.cursorrules
+/.windsurfrules
+
+# 本地构建日志和错误日志
+error.log
+**/.hvigor/outputs/
+**/build-logs/
